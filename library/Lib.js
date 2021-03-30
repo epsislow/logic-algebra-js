@@ -14,6 +14,9 @@ var lib = {
   'nor': function(x1, x2) {
     return !(x1 | x2)?1:0;
   },
+  'nand': function(x1,x2) {
+    return !(x1 & x2)?1:0;
+  },
   'memory': {
     data: {},
     set: function(name, value) {
@@ -36,4 +39,4 @@ var lib = {
   }
 }
 
-lib.truth('nor');
+lib.truth('nand');
