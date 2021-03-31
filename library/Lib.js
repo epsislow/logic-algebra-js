@@ -86,6 +86,35 @@ class LogicOperation {
   perform(inputs) {
     return 0;
   }
+  
+  addLogicOpInput(LogicOpInput) {
+    this.inputObj[LogicOpInput.number]= LogicOpInput;
+    
+    return this;
+  }
+  
+  addLogicOpOutput(LogicOpOutput) {
+    this.outputObj[LogicOpOutput.number]= LogicOpOutput;
+    
+    return this;
+  }
+  
+  calc() {
+    if(!this.inputObj.length || !this.outputObj.length) {
+      throw "LogicOpInput/Output not added";
+    }
+    
+    for (var input in this.inputObj) {
+        inputs[input.number]=input.value;
+    }
+    
+    var outputs = this.perform(inputs);
+    var i = 1;
+    for (var output in outputs) {
+      i++;
+      this.outputObj[i].setValue(output);
+    }
+  }
 }
 
 class And extends LogicOperation {
@@ -127,6 +156,7 @@ class LogicOperationInput {
 
     this.logicOp = LogicOp;
     this.number = number;
+    this.value = 0;
   }
 
   connectToOutput(LogicOpOutput) {
@@ -150,8 +180,14 @@ class LogicOperationOutput {
 
     this.logicOp = LogicOp;
     this.number = number;
+    this.value = 0;
   }
 
+  setValue(value) {
+    this.value = value;
+    return this;
+  }
+  
   connectToInput(LogicOpInput) {
     if (!LogicOpInput instanceof LogicOperationInput) {
       throw "LogicOperationInput object expected";
