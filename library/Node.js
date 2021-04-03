@@ -33,11 +33,7 @@ class Nodes{
     
   }
   
-  addConnection(node1, node2) {
-    
-  }
-  
-  removeConnection(node1,node2) {
+  addConnection(node1,node2) {
     this.node1.connect(node2);
     this.node2.connect(node1);
   }
@@ -45,8 +41,24 @@ class Nodes{
   addLogic(logic) {
     this.logics[this.logics.length] = logic;
     
-    this.nodes.concat(this.logic.getNodes());
+    logic.addEventListener('tick', this.tickListener);
     
+    this.nodes.concat(this.logic.getNodes());
+  }
+  
+  tick() {
+    this.clockNode.value =!this.clockNode.value;
+    var tick = new Event('tick');
+    
+    this.clockNode.dispatchEvent(tick);
+    
+    var info = {};
+    for (outputNode in this.outputNodes) {
+      info[outputNode.name]=outputNode.value;
+    }
+  }
+    
+  initEvents() {
     
   }
 }
