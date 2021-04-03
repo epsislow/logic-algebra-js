@@ -28,3 +28,25 @@ class Node{
   }
 }
 
+class Nodes{
+  constructor() {
+    
+  }
+  
+  addConnection(node1, node2) {
+    
+  }
+  
+  removeConnection(node1,node2) {
+    this.node1.connect(node2);
+    this.node2.connect(node1);
+  }
+  
+  addLogic(logic) {
+    this.logics[this.logics.length] = logic;
+    
+    this.nodes.concat(this.logic.getNodes());
+    
+    
+  }
+}
