@@ -17,6 +17,18 @@ var lib = {
   'nand': function(x1,x2) {
     return !(x1 && x2);
   },
+  'gen': function(bits, value) {
+    return new Array(bits).fill(value);
+  },
+  'zero': function(bits) {
+    return this.gen(bits,0);
+  },
+  'one': function(bits) {
+    return this.gen(bits,1);
+  },
+  'rand': function(bits) {
+    return new Array(bits).map(x=>Math.round(Math.random()))
+  },
   'memory': {
     data: {},
     set: function(name, value) {
@@ -147,6 +159,32 @@ class DLatchNor extends LogicOperation {
   }
 }
 
+class BitsDlatch extends LogicOperation {
+  constructor() {
+    super(3,2);
+  }
+  
+  perform(inputs) {
+    var outputs={};
+    
+    for(var i=0;i<inputs.x.length;i++) {
+      var latch=[
+        inputs.x[i],
+        inputs.en,
+        inputs.qold[i]
+      ];
+      var outputdl=lib['d-latch-nor'].apply(this,latch);
+      outputs[i]={
+        en:inputs.en,
+        x:inputs.x[i],
+        y:outputdl.q,
+      };
+    }
+    
+    return outputs;
+  }
+}
+
 
 class LogicOperationInput {
   constructor(LogicOp, number) {
@@ -239,10 +277,27 @@ Connector
 
 var dlatch = new DLatchNor();
 
-console.log(dlatch.perform([x1=0, x2=0, qold=1]));
+
+console.log(
+  dlatch.perform([x1=1, x2=1, qold=1])
+);
+
+var Bits = new BitsDlatch();
+
+console.table(
+  Bits.perform(
+    {
+      en:1,
+      x:[1,0,1,0,1,0,1,0],
+      qold:[0,1,1,1,0,0,0,0]
+    })
+  );
+
+
 
 // -----------------
 
+/*
 lib.truth('and');
 lib.truth('or');
 lib.truth('not');
@@ -255,3 +310,6 @@ lib.truth('s-r-latch-nand');
 lib.truth('d-latch-nand');
 lib.truth('s-r-latch-nor');
 lib.truth('d-latch-nor');
+
+*/
+
