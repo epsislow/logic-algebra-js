@@ -86,6 +86,76 @@ var lib = {
       }
   },
   'getMatrixFromOp': function(op) {
+  },
+  parse: function(strTokens =[], untilComma=false) {
+    var count = 0;
+    var params = [];
+    var L = '';
+    var lastVar = assignTo = '';
+    
+    while(L=strTokens[count]){
+      switch(L) {
+        case 'A': {
+          op = 'and';
+          break;
+        }
+        case 'N': {
+          op = 'not';
+          break;
+        }
+        case '0': {
+          params[params.length] = 0;
+          break;
+        }
+        case '1': {
+          params[params.length] = 1;
+          break;
+        }
+        case ' ': 
+          break;
+        case ',':
+          break;
+        case '(': {
+          console.log(strTokens.slice(count+1));
+          var ob= this.parse(
+            strTokens.slice(count+1),true
+          );
+          count = ob.count;
+          params[params.length] = ob.result;
+          break;
+        }
+        case ')': {
+          console.log(op);
+          console.log(params);
+          result = this[op].apply(this, params);
+          if (assignTo) {
+            this.memory.set(assignTo, result);
+          }
+          return {result: result, count:count};
+          
+          break;
+        }
+        case ':': {
+          result = this[op].get(lastVar);
+          if (assignTo) {
+            this.memory.set(assignTo, result);
+          }
+          return {result: result, count:count};
+          
+          break;
+        }
+        case L >= 'a'|| L <= 'z': {
+          lastVar = L;
+          break;
+        }
+        case '=': {
+          assignTo= lastVar;
+          break;
+        }
+      }
+      console.log(L);
+      count++;
+    }
   }
 }
 
@@ -185,6 +255,15 @@ class BitsDlatch extends LogicOperation {
   }
 }
 
+class Demuxer extends LogicOperation {
+  constructor () {
+    super(3,1);
+  }
+  
+  perform (inputs) {
+    var outputs= [];
+  }
+}
 
 class LogicOperationInput {
   constructor(LogicOp, number) {
@@ -292,8 +371,12 @@ console.table(
       qold:[0,1,1,1,0,0,0,0]
     })
   );
-
-
+/*
+var str= "a=A(1,0)";
+console.table(
+  lib.parse(str.split(''))
+);
+*/
 
 // -----------------
 
