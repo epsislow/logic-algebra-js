@@ -17,6 +17,34 @@ var lib = {
   'nand': function(x1,x2) {
     return !(x1 && x2);
   },
+  'multi-and': function(xs) {
+    var res=1;
+    for(k in xs) {
+      res = lib.and(xs[k], res);
+    }
+    return res;
+  },
+  'multi-or': function(xs) {
+    var res=0;
+    for(k in xs) {
+      res = lib.or(xs[k], res);
+    }
+    return res;
+  },
+  'multi-nand': function(xs) {
+    var res = 1;
+    for(k in xs) {
+      res = lib.nand(res, xs[k]);
+    }
+    return res;
+  },
+  'enable': function(en,xs) {
+    var res;
+    for(k in xs) {
+      res = lib.and(en, xs[k]);
+    }
+    return res;
+  },
   'gen': function(bits, value) {
     return new Array(bits).fill(value);
   },
@@ -79,6 +107,40 @@ var lib = {
     nq = lib.nor(qold, lib.and(en,d));
     q = lib.nor(lib.and(lib.not(d),en), nq);
     return {'q': q?1:0, 'nq': nq?1:0};
+  },
+  'encoder': function(d,s0) {
+    return [
+      lib.and(d,lib.and(s0)),
+      lib.and(d,lib.and(lib.not(s0)))
+    ];
+  },
+  'encoder2': function (d, s1, s2) {
+    return [
+      lib.and(d,lib.and(s1,s2)),
+      lib.and(d,lib.and(s1,lib.not(s2))),
+      lib.and(d,lib.and(lib.not(s1), s2)),
+      lib.and(d,lib.and(lib.not(s1), lib.not(s2)))
+    ];
+  },
+  'multi-encoder': function(d, sel) {
+    var selc = [];
+    var i = 0;
+    for (key in sel) {
+      selc[key] = lib.not(sel[key]);
+    }
+    
+    var res = new Array(2**sel.length).fill(0);
+    for (key in sel) {
+      if (!selc[key]) {
+        i += 2**key;
+        selc[key] = sel[key];
+      }
+      if (lib['multi-and'](selc)) {
+        res[i]=d;
+        return res;
+      }
+    }
+    return res;
   },
   'constructFromMatrix': function (objects,connections) {
       for(connection in connections) {
@@ -257,11 +319,13 @@ class BitsDlatch extends LogicOperation {
 
 class Demuxer extends LogicOperation {
   constructor () {
-    super(3,1);
+    super(2,1);
   }
   
   perform (inputs) {
-    var outputs= [];
+    var outputs= lib['multi-encoder'](inputs.d, inputs.sel);
+    
+    return outputs;
   }
 }
 
@@ -371,6 +435,16 @@ console.table(
       qold:[0,1,1,1,0,0,0,0]
     })
   );
+  
+var Demux = new Demuxer();
+
+console.table(
+    Demux.perform({
+      d:1,
+      sel:[0,0,0]
+    })
+  );
+
 /*
 var str= "a=A(1,0)";
 console.table(
