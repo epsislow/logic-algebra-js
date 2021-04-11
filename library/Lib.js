@@ -477,6 +477,7 @@ class Optimizer {
   constructor() {
     this.data =[];
     this.outputkeys =[];
+    this.inputkeys =[];
   }
   
   addRow(values) {
@@ -487,6 +488,9 @@ class Optimizer {
         data[k] = values[k];
       } else if (values[k]=='*') {
         allValues[allValues.length] = k;
+      }
+      if(!this.inputkeys.includes(k)) {
+        this.inputkeys[this.inputkeys.length]= k;
       }
     }
     //console.log(data);
@@ -556,8 +560,16 @@ class Optimizer {
     return this;
   }
   
-  setOutputs(keys) {
+  setOutputs(keys, incOutputs =[], excInputs =[]) {
     this.outputkeys = keys;
+    this.incOutputs = incOutputs;
+    this.excInputs = excInputs;
+    for(var k in keys) {
+      var kid =this.inputkeys.findIndex((e) => e == keys[k]);
+      if (kid!== false) {
+        this.inputkeys.splice(kid, 1);
+      }
+    }
     return this;
   }
   
@@ -576,6 +588,22 @@ class Optimizer {
     
     return this;
   }
+  
+  createKmap(output) {
+    if(!this.outputkeys.includes(output)) {
+      throw "Not an output!";
+    }
+    
+    var kmap = [];
+    var inputs = [];
+    console.log(this.inputkeys);
+    var rownr =Math.ceil(Math.sqrt(this.inputkeys.length));
+    var colnr = this.inputkeys.length - rownr;
+    console.log(rownr, colnr);
+    
+    var rowkeys = this.inputkeys.slice(0, rownr);
+    console.log(rowkeys);
+  }
 }
 
 var o = new Optimizer();
@@ -587,4 +615,5 @@ o.addRow({a:'*',en:0,qold:'*',qnew:'*'})
  //.changeOrder(['a','en','qold','qnew'])
  .sortAll(['a','en','qold','qnew'])
  .showData()
+ .createKmap('qnew')
 ;
