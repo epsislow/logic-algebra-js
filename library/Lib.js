@@ -474,10 +474,9 @@ lib.truth('d-latch-nor');
 */
 
 class Optimizer {
-  constructor(nrinputs, nroutputs) {
-    this.nrinputs= nrinputs;
-    this.nroutputs= nroutputs;
+  constructor() {
     this.data =[];
+    this.outputkeys =[];
   }
   
   addRow(values) {
@@ -490,7 +489,7 @@ class Optimizer {
         allValues[allValues.length] = k;
       }
     }
-    console.log(data);
+    //console.log(data);
     var datas;
     if(allValues.length) {
       datas = this.getValuesForAllKeys([data], allValues);
@@ -499,6 +498,7 @@ class Optimizer {
     }
     
     this.data= this.data.concat(datas);
+    return this;
   }
   
   getValuesForAllKeys(datas, keys) {
@@ -508,33 +508,43 @@ class Optimizer {
     }
     
     var ds=[];
+    var qq;
     for(var d in datas) {
+      //console.log('a', datas[d]);
+      //qq = this.getValuesForKey(datas[d], key);
+      //console.log('b', qq);
       ds = ds.concat(this.getValuesForKey(datas[d], key));
     }
-    console.log('t');
-    console.table(ds);
+    //console.log('t');
     ds = this.getValuesForAllKeys(ds, keys);
     return ds;
   }
   
   getValuesForKey(data, key) {
-    console.log(data);
     var newdatas=[];
     var newdata= data;
     newdata[key]  = 0;
-    newdatas[newdatas.length] = newdata;
+    newdatas[newdatas.length] = Object.assign({}, newdata);
     newdata[key] =1;
-    newdata[newdatas.length] = newdata;
-    
+    newdatas[newdatas.length] = Object.assign({}, newdata);
     return newdatas;
   }
   
   showData() {
     console.table(this.data);
+    return this;
+  }
+  
+  setOutputs(keys) {
+    this.outputkeys = keys;
+    return this;
   }
 }
 
-var o = new Optimizer(3,2);
+var o = new Optimizer();
 
-o.addRow({a:0,b:1,c:'*'});
-o.showData();
+o.addRow({a:'*',en:0,qold:'*',qnew:'*'})
+ .addRow({a:0,en:1,qold:'*',qnew:0})
+ .addRow({a:1,en:1,qold:'*',qnew:1})
+ .setOutputs(['qnew'])
+ .showData();
