@@ -594,7 +594,7 @@ class Optimizer {
       throw "Not an output!";
     }
     
-    var kmap = [];
+    var kmap = {};
     var inputs = [];
     //console.log(this.inputkeys);
     var rownr =Math.ceil(Math.sqrt(this.inputkeys.length));
@@ -602,34 +602,76 @@ class Optimizer {
     //console.log(rownr, colnr);
     
     var rowkeys = this.inputkeys.slice(0, rownr);
-    console.log(rowkeys);
+    //console.log(rowkeys);
     var colkeys = this.inputkeys.slice(rownr);
-    console.log(colkeys);
+    //console.log(colkeys);
     
+    var rowvals = this.getValuesForAllKeys([{}], rowkeys);
+    
+    //console.table(rowvals);
+    
+    var colvals = this.getValuesForAllKeys([{}], colkeys);
+    
+    var row,col,values,vals,val,result = output + '= ';
+    for(var r in rowvals) {
+      values = {};
+      row = '';
+      for(var k in rowvals[r]) {
+        row += k + '=' + rowvals[r][k] + ' ';
+        values[k] = rowvals[r][k];
+      }
+      kmap[row] = {};
+      for(var c in colvals) {
+        col = '';
+        for(var k in colvals[c]) {
+          col+= k+'='+colvals[c][k];
+          values[k] = colvals[c][k];
+        }
+        vals = this.findValueFor(values);
+        if(vals === false) {
+          val = 0;
+        } else {
+          val = vals[output];
+        }
+        kmap[row][col] = val;
+        if(val) {
+          result += '('+ row +' '+ col + ') + ';
+        }
+      }
+    }
+
+    console.table(kmap);
+    console.log(result);
   }
   
   findValueFor(values) {
+    //console.table(values);
     for(var d in this.data) {
       if(!this.findSame(this.data[d], values)) {
         continue;
       }
       return this.data[d];
     }
+    return false;
   }
   
   findSame(row, values) {
-    for(var k in row) {
+   // console.table([row,values]);
+    for(var k in values) {
       if(row[k]!=values[k]){
+        //console.table([k,row[k],values[k]]);
         return false;
       }
     }
+   // console.log('tre');
     return true;
   }
 }
 
 var o = new Optimizer();
 
-o.addRow({a:'*',en:0,qold:'*',qnew:'*'})
+o.addRow({a:'*',en:0,qold:0,qnew:0})
+ .addRow({a:'*',en:0,qold:1,qnew:1})
  .addRow({a:0,en:1,qold:'*',qnew:0})
  .addRow({a:1,en:1,qold:'*',qnew:1})
  .setOutputs(['qnew'])
