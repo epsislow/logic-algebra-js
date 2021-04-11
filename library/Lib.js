@@ -477,42 +477,51 @@ class Optimizer {
   constructor(nrinputs, nroutputs) {
     this.nrinputs= nrinputs;
     this.nroutputs= nroutputs;
+    this.data =[];
   }
   
   addRow(values) {
     var allValues =[];
-    var data=[];
-    for(k in values) {
+    var data={};
+    for(var k in values) {
       if ([0,1].includes(values[k])) {
         data[k] = values[k];
       } else if (values[k]=='*') {
         allValues[allValues.length] = k;
       }
     }
-    var datas = this.getAllValuesForKey(data, allValues[v]);
+    console.log(data);
+    var datas;
+    if(allValues.length) {
+      datas = this.getValuesForAllKeys([data], allValues);
+    } else {
+      datas = [data];
+    }
     
     this.data= this.data.concat(datas);
   }
   
   getValuesForAllKeys(datas, keys) {
-    key = keys.shift();
+    var key = keys.shift();
     if(key == undefined) {
       return datas;
     }
     
-    ds=[];
-    for(d in datas) {
-      ds = ds.concat(getValuesForKey(datas[d], key));
+    var ds=[];
+    for(var d in datas) {
+      ds = ds.concat(this.getValuesForKey(datas[d], key));
     }
-    
-    ds = getValuesForAllKeys(ds, keys);
+    console.log('t');
+    console.table(ds);
+    ds = this.getValuesForAllKeys(ds, keys);
     return ds;
   }
   
   getValuesForKey(data, key) {
+    console.log(data);
     var newdatas=[];
-    newdata= data;
-    newdata[key] =0;
+    var newdata= data;
+    newdata[key]  = 0;
     newdatas[newdatas.length] = newdata;
     newdata[key] =1;
     newdata[newdatas.length] = newdata;
@@ -520,4 +529,12 @@ class Optimizer {
     return newdatas;
   }
   
+  showData() {
+    console.table(this.data);
+  }
 }
+
+var o = new Optimizer(3,2);
+
+o.addRow({a:0,b:1,c:'*'});
+o.showData();
