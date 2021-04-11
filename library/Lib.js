@@ -596,13 +596,34 @@ class Optimizer {
     
     var kmap = [];
     var inputs = [];
-    console.log(this.inputkeys);
+    //console.log(this.inputkeys);
     var rownr =Math.ceil(Math.sqrt(this.inputkeys.length));
     var colnr = this.inputkeys.length - rownr;
-    console.log(rownr, colnr);
+    //console.log(rownr, colnr);
     
     var rowkeys = this.inputkeys.slice(0, rownr);
     console.log(rowkeys);
+    var colkeys = this.inputkeys.slice(rownr);
+    console.log(colkeys);
+    
+  }
+  
+  findValueFor(values) {
+    for(var d in this.data) {
+      if(!this.findSame(this.data[d], values)) {
+        continue;
+      }
+      return this.data[d];
+    }
+  }
+  
+  findSame(row, values) {
+    for(var k in row) {
+      if(row[k]!=values[k]){
+        return false;
+      }
+    }
+    return true;
   }
 }
 
