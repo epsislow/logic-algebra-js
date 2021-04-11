@@ -530,6 +530,27 @@ class Optimizer {
     return newdatas;
   }
   
+  preferredOrder(obj, order) {
+    var newObject = {};
+    for (var i = 0; i < order.length; i++) {
+      if (obj.hasOwnProperty(order[i])) {
+        newObject[order[i]] = obj[order[i]];
+      }
+    }
+    return newObject;
+  }
+  
+  changeOrder(order) {
+    var qdata = [];
+    for(var r in this.data) {
+      qdata[r] = this.preferredOrder(this.data[r], order);
+      //console.table(q);
+      //console.table(this.data[r]);
+    }
+    this.data = qdata;
+    return this;
+  }
+  
   showData() {
     console.table(this.data);
     return this;
@@ -537,6 +558,22 @@ class Optimizer {
   
   setOutputs(keys) {
     this.outputkeys = keys;
+    return this;
+  }
+  
+  sortAll(order) {
+     this.data.sort(function(a,b) {
+       var k;
+      for(var ko in order) {
+        k = order[ko];
+        //console.log(k, a[k], b[k]);
+        if(a[k] != b[k]) {
+          return a[k] < b[k] ? -1 : 1;
+        }
+      }
+      return 0;
+    });
+    
     return this;
   }
 }
@@ -547,4 +584,7 @@ o.addRow({a:'*',en:0,qold:'*',qnew:'*'})
  .addRow({a:0,en:1,qold:'*',qnew:0})
  .addRow({a:1,en:1,qold:'*',qnew:1})
  .setOutputs(['qnew'])
- .showData();
+ //.changeOrder(['a','en','qold','qnew'])
+ .sortAll(['a','en','qold','qnew'])
+ .showData()
+;
