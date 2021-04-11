@@ -417,7 +417,7 @@ Connector
     .addLogicOp(new And(), 'and1')
     .addLogicOp(new And(), 'and2');
 
-
+/*
 var dlatch = new DLatchNor();
 
 
@@ -444,6 +444,9 @@ console.table(
       sel:[0,0,0]
     })
   );
+*/
+
+
 
 /*
 var str= "a=A(1,0)";
@@ -470,3 +473,51 @@ lib.truth('d-latch-nor');
 
 */
 
+class Optimizer {
+  constructor(nrinputs, nroutputs) {
+    this.nrinputs= nrinputs;
+    this.nroutputs= nroutputs;
+  }
+  
+  addRow(values) {
+    var allValues =[];
+    var data=[];
+    for(k in values) {
+      if ([0,1].includes(values[k])) {
+        data[k] = values[k];
+      } else if (values[k]=='*') {
+        allValues[allValues.length] = k;
+      }
+    }
+    var datas = this.getAllValuesForKey(data, allValues[v]);
+    
+    this.data= this.data.concat(datas);
+  }
+  
+  getValuesForAllKeys(datas, keys) {
+    key = keys.shift();
+    if(key == undefined) {
+      return datas;
+    }
+    
+    ds=[];
+    for(d in datas) {
+      ds = ds.concat(getValuesForKey(datas[d], key));
+    }
+    
+    ds = getValuesForAllKeys(ds, keys);
+    return ds;
+  }
+  
+  getValuesForKey(data, key) {
+    var newdatas=[];
+    newdata= data;
+    newdata[key] =0;
+    newdatas[newdatas.length] = newdata;
+    newdata[key] =1;
+    newdata[newdatas.length] = newdata;
+    
+    return newdatas;
+  }
+  
+}
