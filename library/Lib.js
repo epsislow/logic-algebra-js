@@ -666,6 +666,16 @@ class Optimizer {
    // console.log('tre');
     return true;
   }
+  
+  findSameValues(data,datb) {
+    var same ={};
+    for(var k in data) {
+      if (data[k]!=datb[k]) {
+        same[k]=data[b];
+      }
+    }
+    return same;
+  }
 }
 
 var o = new Optimizer();
