@@ -774,7 +774,7 @@ class Optimizer {
     return true;
   }
 
-  optimizeKmapResults() {
+  optimizeKmapResults(separator = '') {
     //console.table(this.kmapResults);
     var not=0;
     var table = {};
@@ -798,6 +798,7 @@ class Optimizer {
       }
     }
     for(var g = 0;g<3;g++) {
+    //console.log('g' +g);
     //console.table(table);
     for(var i in table) {
       for(var j in table) {
@@ -815,20 +816,22 @@ class Optimizer {
         }
       }
     }
+    if(otbl.length == 0) {
+      break;
+    }
     table = [];
     table = otbl;
     otbl =[];
-    //console.table(otbl);
   }
   
   //console.table(table);
-  this.transformToLinear(table);
+  this.transformToLinear(table, separator);
   return this;
   }
   
-  transformToLinear(data) {
+  transformToLinear(data, separator ='') {
     var result = [];
-    var output = 'f = ';
+    var output = 'f() = ';
     var row;
     for(var i in data) {
       row ='';
@@ -837,6 +840,7 @@ class Optimizer {
           row += '~';
         }
         row += k;
+        row += separator;
       }
       result[result.length] = row;
     }
@@ -847,21 +851,24 @@ class Optimizer {
 }
 
 var o = new Optimizer();
-/*
-o.addRow({a:'*',en:0,qold:0,qnew:0})
- .addRow({a:'*',en:0,qold:1,qnew:1})
- .addRow({a:0,en:1,qold:'*',qnew:0})
- .addRow({a:1,en:1,qold:'*',qnew:1})
- .setOutputs(['qnew'])
- //.changeOrder(['a','en','qold','qnew'])
- .sortAll(['a','en','qold','qnew'])
- .showData()
- .createKmap('qnew')
-;
-*/
 
-
-o
+var tests = {
+  'dflipflop': function () {
+    o
+      .addRow({a:'*',e:0,l:0,q:0})
+      .addRow({a:'*',e:0,l:1,q:1})
+      .addRow({a:0,e:1,l:'*',q:0})
+      .addRow({a:1,e:1,l:'*',q:1})
+      .setOutputs(['q'])
+    //.changeOrder(['a','e','l','q'])
+      .sortAll(['a','e','l','q'])
+      .showData()
+      .createKmap('q',0,0)
+      .optimizeKmapResults(' ')
+    ;
+  },
+  '1stkmapopti': function() {
+    o
     .addRow({a:0,b:0,c:0,d:1,f:1})
     .addRow({a:0,b:1,c:0,d:1,f:1})
     .addRow({a:1,b:0,c:0,d:1,f:1})
@@ -873,4 +880,23 @@ o
     .showData()
     .createKmap('f',0,0)
     .optimizeKmapResults();
+  },
+  'ifathenbelsec': function () {
+    o
+     .addRow({a:0,b:0,c:'*',d:0})
+     .addRow({a:0,b:1,c:'*',d:1})
+     .addRow({a:1,b:'*',c:0,d:0})
+     .addRow({a:1,b:'*',c:1,d:1})
+     .setOutputs(['d'])
+     .showData()
+     .createKmap('d',0,0)
+     .optimizeKmapResults();
+  }
+}
+/*
+
+*/
+
+//tests['ifathenbelsec']();
+tests['dflipflop']();
 
