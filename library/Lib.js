@@ -822,13 +822,14 @@ class Optimizer {
     table = [];
     table = otbl;
     otbl =[];
+    this.transformToLinear(table, separator);
   }
   
   //console.table(table);
   this.transformToLinear(table, separator);
   return this;
   }
-  
+
   transformToLinear(data, separator ='') {
     var result = [];
     var output = 'f() = ';
@@ -891,12 +892,23 @@ var tests = {
      .showData()
      .createKmap('d',0,0)
      .optimizeKmapResults();
+  },
+  'compareAnBthenArEQrB': function() {
+    o
+     .addRow({a:'*',b:'*', c:0,d:0, l:0})
+     .addRow({a:0,b:'*', c:1,d:0, l:1})
+     .addRow({a:0,b:0, c:0,d:1, l:1})
+     .addRow({a:0,b:'*', c:1,d:1, l:1})
+     .addRow({a:1,b:0,  c:1,d:1, l:1})
+     .addRow({a:0,b:0, c:0,d:1, l:1})
+     .setOutputs(['l'])
+     .showData()
+     .createKmap('l',0,0)
+     .optimizeKmapResults();
   }
 }
-/*
 
-*/
-
+tests['compareAnBthenArEQrB']();
 //tests['ifathenbelsec']();
-tests['dflipflop']();
+//tests['dflipflop']();
 
