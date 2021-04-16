@@ -777,7 +777,8 @@ class Optimizer {
   optimizeKmapResults(separator = '') {
     //console.table(this.kmapResults);
     var not=0;
-    var table = {};
+    var table = [];
+    var table2= [];
     var otbl = [];
     var ptbl = {};
     for(var i in this.kmapResults) {
@@ -797,11 +798,19 @@ class Optimizer {
         }
       }
     }
+
     for(var g = 0;g<3;g++) {
+      var used =[];
     //console.log('g' +g);
     //console.table(table);
     for(var i in table) {
+      if(used.includes(i)) {
+        continue;
+      }
       for(var j in table) {
+        if(used.includes(j)) {
+          continue;
+        }
         if(i >= j) {
           continue;
         }
@@ -811,20 +820,28 @@ class Optimizer {
         }
         if (obj!=={}) {
           otbl[otbl.length] = obj;
-          //console.log(table[i],table[j]);
-          //console.log(obj);
+          //console.log('     ',table[i],table[j], ' => ', obj);
         }
+        used[used.length] = i;
+        used[used.length] = j;
       }
     }
+    table2 = [];
+    for(var i in table) {
+      if(used.includes(i)) {
+        continue;
+      }
+      table2[table2.length]= table[i];
+    }
+    table =table2;
     if(otbl.length == 0) {
       break;
     }
-    table = [];
-    table = otbl;
+    table = table.concat(otbl);
     otbl =[];
-    this.transformToLinear(table, separator);
+    //this.transformToLinear(table, separator);
   }
-  
+
   //console.table(table);
   this.transformToLinear(table, separator);
   return this;
