@@ -775,10 +775,11 @@ class Optimizer {
   }
 
   optimizeKmapResults() {
-    console.table(this.kmapResults);
+    //console.table(this.kmapResults);
     var not=0;
     var table = {};
-    var otbl = {};
+    var otbl = [];
+    var ptbl = {};
     for(var i in this.kmapResults) {
       var q = this.kmapResults[i].split('');
       table[i] = {};
@@ -796,29 +797,52 @@ class Optimizer {
         }
       }
     }
-    console.table(table);
-    var q;
+    for(var g = 0;g<3;g++) {
+    //console.table(table);
     for(var i in table) {
       for(var j in table) {
-        if(i == j) {
+        if(i >= j) {
           continue;
         }
-        //console.table(table[j]);
-        if (i > j) {
-          q = j + i;
-        }
-        q = i + j;
         var obj = this.findSameValues(table[i], table[j], 1);
         if(!obj) {
           continue;
         }
         if (obj!=={}) {
-          otbl[q] = obj;
-          console.log(table[i],table[j]);
-          console.log(obj);
+          otbl[otbl.length] = obj;
+          //console.log(table[i],table[j]);
+          //console.log(obj);
         }
       }
     }
+    table = [];
+    table = otbl;
+    otbl =[];
+    //console.table(otbl);
+  }
+  
+  //console.table(table);
+  this.transformToLinear(table);
+  return this;
+  }
+  
+  transformToLinear(data) {
+    var result = [];
+    var output = 'f = ';
+    var row;
+    for(var i in data) {
+      row ='';
+      for(var k in data[i]) {
+        if(!data[i][k]) {
+          row += '~';
+        }
+        row += k;
+      }
+      result[result.length] = row;
+    }
+    console.log(output + result.join (' + '));
+    
+    return this;
   }
 }
 
