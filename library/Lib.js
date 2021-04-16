@@ -910,7 +910,7 @@ var tests = {
      .createKmap('d',0,0)
      .optimizeKmapResults();
   },
-  'compareAnBthenArEQrB': function() {
+  'compareAnBthenAorEQorB': function() {
     o
      .addRow({a:'*',b:'*', c:0,d:0, l:0})
      .addRow({a:0,b:'*', c:1,d:0, l:1})
@@ -922,10 +922,23 @@ var tests = {
      .showData()
      .createKmap('l',0,0)
      .optimizeKmapResults();
+     
+     var o2 = new Optimizer();
+     
+     o2
+      .addRow({a:0,b:0,c:0,d:0, e:1})
+      .addRow({a:0,b:1,c:0,d:1, e:1})
+      .addRow({a:1,b:0,c:1,d:0, e:1})
+      .addRow({a:1,b:1,c:1,d:1, e:1})
+      .setOutputs(['e'])
+      .showData()
+      .createKmap('e',0,0)
+      .optimizeKmapResults();
+      
   }
 }
 
-tests['compareAnBthenArEQrB']();
+tests['compareAnBthenAorEQorB']();
 //tests['ifathenbelsec']();
 //tests['dflipflop']();
 
