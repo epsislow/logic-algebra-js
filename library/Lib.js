@@ -740,20 +740,45 @@ class Optimizer {
     return true;
   }
   
-  findSameValues(data,datb) {
+  findSameValues(data,datb, oneValueDiff = false) {
+    if(!this.findIfSameKeys(data, datb)) {
+      return false;
+    }
+    var valueDiffs=0;
     var same ={};
     for(var k in data) {
-      if (data[k]!=datb[k]) {
-        same[k]=data[b];
+      if (data[k]==datb[k]) {
+        same[k]=data[k];
+      } else if (oneValueDiff) {
+        valueDiffs++;
+        if(valueDiffs>1) {
+          return false;
+        }
       }
     }
     return same;
+  }
+  
+  findIfSameKeys(data,datb) {
+    for(var k in data) {
+      if(!(k in datb)) {
+        return false;
+      }
+    }
+    
+    for(var k in datb) {
+      if (!(k in data)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   optimizeKmapResults() {
     console.table(this.kmapResults);
     var not=0;
     var table = {};
+    var otbl = {};
     for(var i in this.kmapResults) {
       var q = this.kmapResults[i].split('');
       table[i] = {};
@@ -772,6 +797,28 @@ class Optimizer {
       }
     }
     console.table(table);
+    var q;
+    for(var i in table) {
+      for(var j in table) {
+        if(i == j) {
+          continue;
+        }
+        //console.table(table[j]);
+        if (i > j) {
+          q = j + i;
+        }
+        q = i + j;
+        var obj = this.findSameValues(table[i], table[j], 1);
+        if(!obj) {
+          continue;
+        }
+        if (obj!=={}) {
+          otbl[q] = obj;
+          console.log(table[i],table[j]);
+          console.log(obj);
+        }
+      }
+    }
   }
 }
 
