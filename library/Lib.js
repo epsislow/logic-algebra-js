@@ -588,8 +588,17 @@ class Optimizer {
     
     return this;
   }
+
+  kmapResults = [];
   
-  createKmap(output) {
+  createKmap(output, fancyConsoleLog = 0, oldStyle = 0) {
+    var f = fancyConsoleLog;
+    var o = oldStyle;
+    var ft = [];
+    var ftmpR = [];
+    var ftmpC = [];
+    var nt = 'text-decoration:overline;';
+    var tt = 'text-decoration:none;';
     if(!this.outputkeys.includes(output)) {
       throw "Not an output!";
     }
@@ -612,19 +621,59 @@ class Optimizer {
     
     var colvals = this.getValuesForAllKeys([{}], colkeys);
     
-    var row,col,values,vals,val,result = output + '= ';
+    var row,col,values,vals,val,results = [], result = [];
+    var kmapResults = [], kmapResult = '';
+    var rowRes,colRes = '';
     for(var r in rowvals) {
       values = {};
       row = '';
+      rowRes = '';
+      ftmpR = [];
       for(var k in rowvals[r]) {
+        if (f) {
+          row += '%c';
+        }
         row += k + '=' + rowvals[r][k] + ' ';
+        if (rowvals[r][k] == 0) {
+          if (!f) {
+            rowRes += '~';
+          } else {
+            ftmpR[ftmpR.length] = nt;
+          }
+        } else if (f) {
+          ftmpR[ftmpR.length] = tt;
+        }
+        if (!f) {
+          rowRes += k;
+        } else {
+          rowRes += '%c' + k;
+        }
         values[k] = rowvals[r][k];
       }
-      kmap[row] = {};
+      kmap[row.replaceAll('%c','')] = {};
       for(var c in colvals) {
         col = '';
+        colRes = '';
+        ftmpC = [];
         for(var k in colvals[c]) {
-          col+= k+'='+colvals[c][k];
+          if (f) {
+            col += '%c';
+          }
+          col+= k+'='+colvals[c][k] + ' ';
+          if (colvals[c][k] == 0) {
+            if (!f) {
+              colRes += '~';
+            } else {
+              ftmpC[ftmpC.length] = nt;
+            }
+          } else if (f) {
+            ftmpC[ftmpC.length] = tt;
+          }
+          if (!f) {
+            colRes += k;
+          } else {
+            colRes += '%c' + k;
+          }
           values[k] = colvals[c][k];
         }
         vals = this.findValueFor(values);
@@ -633,16 +682,40 @@ class Optimizer {
         } else {
           val = vals[output];
         }
-        kmap[row][col] = val;
+        kmap[row.replaceAll('%c','')][col.replaceAll('%c','')] = val;
         if(val) {
-          result += '('+ row +' '+ col + ') + ';
+          if (o) {
+            result += '(' + row + col + ')';
+          } else {
+            result += rowRes + colRes;
+            kmapResult = rowRes + colRes;
+          }
+          if (f) {
+            ft = ft.concat(ftmpR);
+            ft = ft.concat(ftmpC);
+            result += '%c';
+            ft[ft.length] = tt;
+          }
+          results[results.length] = result;
+          kmapResults[kmapResults.length] = kmapResult;
+          result = '';
         }
       }
     }
 
     console.table(kmap);
-    console.log(result);
+    if (!f) {
+      console.log(output + '= ' + results.join(' + '));
+    } else {
+      ft.unshift(output + '= ' + results.join(' + '));
+      console.log.apply(console, ft);
+    }
+
+    this.kmapResults = kmapResults;
+
+    return this;
   }
+
   
   findValueFor(values) {
     //console.table(values);
@@ -676,10 +749,34 @@ class Optimizer {
     }
     return same;
   }
+
+  optimizeKmapResults() {
+    console.table(this.kmapResults);
+    var not=0;
+    var table = {};
+    for(var i in this.kmapResults) {
+      var q = this.kmapResults[i].split('');
+      table[i] = {};
+      not=0;
+      for(var j in q) {
+        if (q[j] == '~') {
+          not=1;
+        } else {
+          if (not == 1) {
+            table[i][q[j]] = 0;
+            not=0;
+          } else {
+            table[i][q[j]] = 1;
+          }
+        }
+      }
+    }
+    console.table(table);
+  }
 }
 
 var o = new Optimizer();
-
+/*
 o.addRow({a:'*',en:0,qold:0,qnew:0})
  .addRow({a:'*',en:0,qold:1,qnew:1})
  .addRow({a:0,en:1,qold:'*',qnew:0})
@@ -690,3 +787,19 @@ o.addRow({a:'*',en:0,qold:0,qnew:0})
  .showData()
  .createKmap('qnew')
 ;
+*/
+
+
+o
+    .addRow({a:0,b:0,c:0,d:1,f:1})
+    .addRow({a:0,b:1,c:0,d:1,f:1})
+    .addRow({a:1,b:0,c:0,d:1,f:1})
+    .addRow({a:1,b:1,c:0,d:0,f:1})
+    .addRow({a:1,b:1,c:0,d:1,f:1})
+    .addRow({a:1,b:1,c:1,d:0,f:1})
+    .addRow({a:1,b:1,c:1,d:1,f:1})
+    .setOutputs(['f'])
+    .showData()
+    .createKmap('f',0,0)
+    .optimizeKmapResults();
+
