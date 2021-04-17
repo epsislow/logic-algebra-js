@@ -979,7 +979,7 @@ var tests = {
      .setOutputs(['e'])
      .showData()
      .createKmap('e')
-     .optimizeKmapResults();
+     .optimizeKmapResults(1);
   },
    'testAll0': function() {
     o
@@ -987,13 +987,31 @@ var tests = {
      .setOutputs(['e'])
      .showData()
      .createKmap('e')
-     .optimizeKmapResults();
+     .optimizeKmapResults(1);
   },
-  
+  'ROTR1': function() {
+    o.addRow({a:0,b:0,c:0,A:0,B:0,C:0})
+     .addRow({a:0,b:0,c:1,A:0,B:1,C:0})
+     .addRow({a:0,b:1,c:0,A:1,B:0,C:0})
+     .addRow({a:0,b:1,c:1,A:1,B:1,C:0})
+     .addRow({a:1,b:0,c:0,A:0,B:0,C:1})
+     .addRow({a:1,b:0,c:1,A:0,B:1,C:1})
+     .addRow({a:1,b:1,c:0,A:1,B:0,C:1})
+     .addRow({a:1,b:1,c:1,A:1,B:1,C:1})
+     .setOutputs(['A','B','C'],{'B':['C']})
+     .showData()
+     .createKmap('A')
+     .optimizeKmapResults()
+     .createKmap('B')
+     .optimizeKmapResults()
+     .createKmap('C')
+     .optimizeKmapResults()
+     ;
+  }
 }
 
 //tests['compareAnBthenAorEQorB']();
 //tests['ifathenbelsec']();
-tests['dflipflop']();
+//tests['dflipflop']();
 //tests['testAll1']();
-
+tests['ROTR1']();
