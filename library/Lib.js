@@ -756,6 +756,9 @@ class Optimizer {
         }
       }
     }
+    //if (Object.keys(same).length == 0) {
+    //  return false;
+    //}
     return same;
   }
   
@@ -781,6 +784,7 @@ class Optimizer {
     var table2= [];
     var otbl = [];
     var ptbl = {};
+    var hasAone = false;
     for(var i in this.kmapResults) {
       var q = this.kmapResults[i].split('');
       table[i] = {};
@@ -794,9 +798,15 @@ class Optimizer {
             not=0;
           } else {
             table[i][q[j]] = 1;
+            hasAone = true;
           }
         }
       }
+    }
+    
+    if (!hasAone) {
+      this.transformToLinear(['0'], separator);
+      return this;
     }
 
     for(var g = 0;g<4;g++) {
@@ -818,12 +828,13 @@ class Optimizer {
         if(!obj) {
           continue;
         }
-        if (obj!=={}) {
+        if (Object.keys(obj).length!=0) {
           otbl[otbl.length] = obj;
-          //console.log('     ',table[i],table[j], ' => ', obj);
+          //console.log(i + '+' + j + '     ',table[i],table[j], ' => ', obj);
         }
         used[used.length] = i;
         used[used.length] = j;
+        break;
       }
     }
     table2 = [];
@@ -831,15 +842,19 @@ class Optimizer {
       if(used.includes(i)) {
         continue;
       }
+      if(Object.keys(table[i]).length == 0) {
+        continue;
+      }
       table2[table2.length]= table[i];
     }
-    table =table2;
-    if(otbl.length == 0) {
+    table = table2;
+    table = table.concat(otbl);
+    if(table.length == 0) {
+      table = ['1'];
       break;
     }
-    table = table.concat(otbl);
     otbl =[];
-    //this.transformToLinear(table, separator);
+    this.transformToLinear(table, separator);
   }
 
   //console.table(table);
@@ -850,6 +865,11 @@ class Optimizer {
   transformToLinear(data, separator ='') {
     var result = [];
     var output = 'f() = ';
+    if (data.length == 1 &&  ['1','0'].includes(data[0])) {
+      result = data;
+      console.log(output + result.join (' + '));
+      return this;
+    }
     var row;
     for(var i in data) {
       row ='';
@@ -943,7 +963,16 @@ var tests = {
      .showData()
      .createKmap('e')
      .optimizeKmapResults();
-  }
+  },
+   'testAll0': function() {
+    o
+     .addRow({a:'*', b:'*', c:'*', d:'*', e:0})
+     .setOutputs(['e'])
+     .showData()
+     .createKmap('e')
+     .optimizeKmapResults();
+  },
+  
 }
 
 //tests['compareAnBthenAorEQorB']();
