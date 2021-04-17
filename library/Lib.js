@@ -777,7 +777,7 @@ class Optimizer {
     return true;
   }
 
-  optimizeKmapResults(showInBetween = false, separator = '') {
+  optimizeKmapResults(showInBetween = false, oldStyle, separator = '') {
     //console.table(this.kmapResults);
     var not=0;
     var table = [];
@@ -805,7 +805,7 @@ class Optimizer {
     }
     
     if (!hasAone) {
-      this.transformToLinear(['0'], separator);
+      this.transformToLinear(['0'], oldStyle, separator);
       return this;
     }
 
@@ -855,16 +855,17 @@ class Optimizer {
     }
     otbl =[];
     if (showInBetween) {
-      this.transformToLinear(table, separator);
+      this.transformToLinear(table, oldStyle, separator);
     }
   }
 
   //console.table(table);
-  this.transformToLinear(table, separator);
+  this.transformToLinear(table, oldStyle, separator);
   return this;
   }
 
-  transformToLinear(data, separator ='') {
+  transformToLinear(data, oldStyle = 0, separator ='') {
+    var o = oldStyle;
     var result = [];
     var output = 'f() = ';
     if (data.length == 1 &&  ['1','0'].includes(data[0])) {
@@ -876,10 +877,14 @@ class Optimizer {
     for(var i in data) {
       row ='';
       for(var k in data[i]) {
-        if(!data[i][k]) {
-          row += '~';
+        if (!o) {
+          if(!data[i][k]) {
+            row += '~';
+          }
+          row += k;
+        } else {
+          row += k + '=' + data[i][k];
         }
-        row += k;
         row += separator;
       }
       result[result.length] = row;
@@ -914,7 +919,7 @@ var tests = {
       .sortAll(['a','e','l','q'])
       .showData()
       .createKmap('q',0,0)
-      .optimizeKmapResults(' ')
+      .optimizeKmapResults(' ', 1, ' ')
     ;
   },
   '1stkmapopti': function() {
@@ -988,7 +993,7 @@ var tests = {
 }
 
 //tests['compareAnBthenAorEQorB']();
-tests['ifathenbelsec']();
-//tests['dflipflop']();
+//tests['ifathenbelsec']();
+tests['dflipflop']();
 //tests['testAll1']();
 
