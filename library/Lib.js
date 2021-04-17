@@ -603,16 +603,21 @@ class Optimizer {
       throw "Not an output!";
     }
     
+    var inputkeys = this.inputkeys;
+    if(output in this.incOutputs) {
+      inputkeys = inputkeys.concat(this.incOutputs[output]);
+      console.log('inkeys:'+inputkeys);
+    }
     var kmap = {};
     var inputs = [];
     //console.log(this.inputkeys);
-    var rownr =Math.ceil(Math.sqrt(this.inputkeys.length));
-    var colnr = this.inputkeys.length - rownr;
+    var rownr =Math.ceil(Math.sqrt(inputkeys.length));
+    var colnr = inputkeys.length - rownr;
     //console.log(rownr, colnr);
     
-    var rowkeys = this.inputkeys.slice(0, rownr);
+    var rowkeys = inputkeys.slice(0, rownr);
     //console.log(rowkeys);
-    var colkeys = this.inputkeys.slice(rownr);
+    var colkeys = inputkeys.slice(rownr);
     //console.log(colkeys);
     
     var rowvals = this.getValuesForAllKeys([{}], rowkeys);
@@ -910,16 +915,19 @@ var o = new Optimizer();
 var tests = {
   'dflipflop': function () {
     o
-      .addRow({a:'*',e:0,l:0,q:0})
-      .addRow({a:'*',e:0,l:1,q:1})
-      .addRow({a:0,e:1,l:'*',q:0})
-      .addRow({a:1,e:1,l:'*',q:1})
-      .setOutputs(['q'])
+      .addRow({a:'*',e:0,l:0,q:0,n:1})
+      .addRow({a:'*',e:0,l:1,q:1,n:0})
+      .addRow({a:0,e:1,l:'*',q:0,n:1})
+    //  .addRow({a:1,e:1,l:'*',q:0,n:1})
+      .addRow({a:1,e:1,l:'*',q:1,n:0})
+      .setOutputs(['q','l','n'],{'q':['l'],'n':['q']})
     //.changeOrder(['a','e','l','q'])
-      .sortAll(['a','e','l','q'])
+    //  .sortAll(['a','e','l','q'])
       .showData()
-      .createKmap('q',0,0)
-      .optimizeKmapResults(' ', 1, ' ')
+      .createKmap('n',0,0)
+      .optimizeKmapResults(' ', 0, ' ')
+      .createKmap('q')
+      .optimizeKmapResults(' ', 0, ' ')
     ;
   },
   '1stkmapopti': function() {
@@ -998,14 +1006,14 @@ var tests = {
      .addRow({a:1,b:0,c:1,A:0,B:1,C:1})
      .addRow({a:1,b:1,c:0,A:1,B:0,C:1})
      .addRow({a:1,b:1,c:1,A:1,B:1,C:1})
-     .setOutputs(['A','B','C'],{'B':['C']})
+     .setOutputs(['A','B','C'])
      .showData()
      .createKmap('A')
      .optimizeKmapResults()
      .createKmap('B')
      .optimizeKmapResults()
      .createKmap('C')
-     .optimizeKmapResults()
+     .optimizeKmapResults(1)
      ;
   }
 }
@@ -1014,4 +1022,4 @@ var tests = {
 //tests['ifathenbelsec']();
 //tests['dflipflop']();
 //tests['testAll1']();
-tests['ROTR1']();
+//tests['ROTR1']();
