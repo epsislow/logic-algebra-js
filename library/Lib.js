@@ -899,6 +899,19 @@ class Optimizer {
     return this;
   }
   
+  reverseData(keys = []) {
+    var val;
+    for(var i in this.data) {
+      for(var j in this.data[i]) {
+        if(!keys.length || keys.includes(j)) {
+          val = this.data[i][j] == 1? 0: 1;
+          this.data[i][j] = val;
+        }
+      }
+    }
+    return this;
+  }
+  
   reset() {
     this.kmapResults = null;
     this.data = [];
@@ -1007,6 +1020,7 @@ var tests = {
      .addRow({a:1,b:1,c:0,A:1,B:0,C:1})
      .addRow({a:1,b:1,c:1,A:1,B:1,C:1})
      .setOutputs(['A','B','C'])
+   //  .reverseData()
      .showData()
      .createKmap('A')
      .optimizeKmapResults()
@@ -1015,6 +1029,23 @@ var tests = {
      .createKmap('C')
      .optimizeKmapResults(1)
      ;
+  },
+  'Maj': function(){
+    o
+      .addRow({a:0,b:0,c:0,m:0})
+      .addRow({a:0,b:0,c:1,m:0})
+      .addRow({a:0,b:1,c:0,m:0})
+      .addRow({a:0,b:1,c:1,m:1})
+      .addRow({a:1,b:0,c:0,m:0})
+      .addRow({a:1,b:0,c:1,m:1})
+      .addRow({a:1,b:1,c:0,m:1})
+      .addRow({a:1,b:1,c:1,m:1})
+      .setOutputs('m')
+   //   .reverseData(['m'])
+      .showData()
+      .createKmap('m')
+      .optimizeKmapResults()
+      ;
   }
 }
 
@@ -1023,3 +1054,4 @@ var tests = {
 //tests['dflipflop']();
 //tests['testAll1']();
 //tests['ROTR1']();
+tests['Maj']();
