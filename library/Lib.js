@@ -777,7 +777,7 @@ class Optimizer {
     return true;
   }
 
-  optimizeKmapResults(separator = '') {
+  optimizeKmapResults(showInBetween = false, separator = '') {
     //console.table(this.kmapResults);
     var not=0;
     var table = [];
@@ -854,7 +854,9 @@ class Optimizer {
       break;
     }
     otbl =[];
-    this.transformToLinear(table, separator);
+    if (showInBetween) {
+      this.transformToLinear(table, separator);
+    }
   }
 
   //console.table(table);
@@ -883,6 +885,16 @@ class Optimizer {
       result[result.length] = row;
     }
     console.log(output + result.join (' + '));
+    
+    return this;
+  }
+  
+  reset() {
+    this.kmapResults = null;
+    this.data = [];
+    this.outputkeys = [];
+    this.incOutputs = [];
+    this.excInputs = [];
     
     return this;
   }
@@ -943,9 +955,10 @@ var tests = {
      .createKmap('l',0,0)
      .optimizeKmapResults();
      
-     var o2 = new Optimizer();
+     //var o2 = new Optimizer();
      
-     o2
+    o
+      .reset()
       .addRow({a:0,b:0,c:0,d:0, e:1})
       .addRow({a:0,b:1,c:0,d:1, e:1})
       .addRow({a:1,b:0,c:1,d:0, e:1})
@@ -954,7 +967,6 @@ var tests = {
       .showData()
       .createKmap('e',0,0)
       .optimizeKmapResults();
-      
   },
   'testAll1': function() {
     o
@@ -976,7 +988,7 @@ var tests = {
 }
 
 //tests['compareAnBthenAorEQorB']();
-//tests['ifathenbelsec']();
+tests['ifathenbelsec']();
 //tests['dflipflop']();
-tests['testAll1']();
+//tests['testAll1']();
 
