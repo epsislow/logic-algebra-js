@@ -799,7 +799,7 @@ class Optimizer {
       }
     }
 
-    for(var g = 0;g<3;g++) {
+    for(var g = 0;g<4;g++) {
       var used =[];
     //console.log('g' +g);
     //console.table(table);
@@ -935,10 +935,19 @@ var tests = {
       .createKmap('e',0,0)
       .optimizeKmapResults();
       
+  },
+  'testAll1': function() {
+    o
+     .addRow({a:'*', b:'*', c:'*', d:'*', e:1})
+     .setOutputs(['e'])
+     .showData()
+     .createKmap('e')
+     .optimizeKmapResults();
   }
 }
 
-tests['compareAnBthenAorEQorB']();
+//tests['compareAnBthenAorEQorB']();
 //tests['ifathenbelsec']();
 //tests['dflipflop']();
+tests['testAll1']();
 
