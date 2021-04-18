@@ -899,13 +899,38 @@ class Optimizer {
     return this;
   }
   
-  reverseData(keys = []) {
+  linearToData(linear) {
+    var val = 1;
+    var tbl = [];
+    var obj = {};
+    var ltrs = linear.split('');
+    for(var j in ltrs){
+      l = ltrs[j];
+      val = 1
+      if(l=='~') {
+        val = 0;
+      } else if (l == '+') {
+        tbl[tbl.length] = obj;
+      } else if (l == ' ') {
+        continue;
+      } else {
+        obj[l] = val;
+      }
+    }
+  }
+  
+  
+  
+  reverseData(keys = [], useInternal = true, data = []) {
+    if (useInternal) {
+      data = this.data;
+    }
     var val;
-    for(var i in this.data) {
-      for(var j in this.data[i]) {
+    for(var i in data) {
+      for(var j in data[i]) {
         if(!keys.length || keys.includes(j)) {
-          val = this.data[i][j] == 1? 0: 1;
-          this.data[i][j] = val;
+          val = data[i][j] == 1? 0: 1;
+          data[i][j] = val;
         }
       }
     }
