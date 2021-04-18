@@ -490,7 +490,7 @@ class Optimizer {
         allValues[allValues.length] = k;
       }
       if(!this.inputkeys.includes(k)) {
-        this.inputkeys[this.inputkeys.length]= k;
+        this.inputkeys[this.inputkeys.length]=k;
       }
     }
     //console.log(data);
@@ -502,7 +502,40 @@ class Optimizer {
     }
     
     this.data= this.data.concat(datas);
+    
     return this;
+  }
+  
+  findKeyForValues(obj, data) {
+    var len = Object.keys(obj).length;
+    var lenok = 0;
+    for(var j in obj) {
+      for(var r in data) {
+        for(var k in data[r]) {
+          if(obj[j] != data[r][k]) {
+            lenok = 0;
+            break;
+          } else {
+            lenok++;
+            if(lenok == len) {
+              return r;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+  
+  concat(data, datb) {
+    for(var b in datb) {
+      var k = this.findKeyForValues(datb[b], data);
+      if(k === false) {
+        k = data.length;
+      }
+      data[k] = datb[b];
+    }
+    return data;
   }
   
   getValuesForAllKeys(datas, keys) {
@@ -899,27 +932,72 @@ class Optimizer {
     return this;
   }
   
-  linearToData(linear) {
+  linearToData(linear, output, allkeys = []) {
+    console.log(output+ '>='+ linear);
     var val = 1;
     var tbl = [];
     var obj = {};
+    var l;
     var ltrs = linear.split('');
+    var keys = [output];
     for(var j in ltrs){
       l = ltrs[j];
-      val = 1
+      //console.log(l);
       if(l=='~') {
         val = 0;
       } else if (l == '+') {
+        obj[output] = 1;
         tbl[tbl.length] = obj;
+        obj = {};
+      //  console.table(tbl);
       } else if (l == ' ') {
         continue;
       } else {
         obj[l] = val;
+        keys[keys.length] = l;
+        val = 1;
       }
     }
+    obj[output] = 1;
+    tbl[tbl.length] = obj;
+    // add zeros for undefined keys
+    var k;
+    for(var r in tbl) {
+      for(var j in keys) {
+        k = keys[j];
+        if(tbl[r][k] == undefined) {
+          tbl[r][k] = 0;
+        }
+      }
+    }
+    return tbl;
   }
   
+  setData(data) {
+    this.data = data;
+    return this;
+  }
   
+  translateLinear(linear, keyToTrans = {}) {
+    if(!Object.keys(keyToTrans).length) {
+      return this;
+    }
+    var trans = '';
+    var ltrs = linear.split('');
+    for (var j in ltrs) {
+      l = ltrs[j];
+      if (l == '~') {
+        trans += l;
+      } else if (l == '+') {
+        trans += '+';
+      } else if (l == ' ') {
+        trans += ' ';
+      } else {
+        trans += keyToTrans[l];
+      }
+    }
+    return this;
+  }
   
   reverseData(keys = [], useInternal = true, data = []) {
     if (useInternal) {
@@ -934,6 +1012,24 @@ class Optimizer {
         }
       }
     }
+    return this;
+  }
+  
+  addMissingValues(keys, output, value) {
+    var data = JSON.parse(JSON.stringify(this.data));
+    
+    for(var d in data) {
+      data[d][output] = value;
+    }
+    var data = this.getValuesForAllKeys(data, keys);
+    var olddata = JSON.parse(JSON.stringify(this.data));
+
+    this.data = data;
+    for(var d in olddata) {
+      this.addRow(olddata[d]);
+    }
+    //console.table(this.data);
+    
     return this;
   }
   
@@ -1052,7 +1148,7 @@ var tests = {
      .createKmap('B')
      .optimizeKmapResults()
      .createKmap('C')
-     .optimizeKmapResults(1)
+     .optimizeKmapResults()
      ;
   },
   'Maj': function(){
@@ -1071,6 +1167,17 @@ var tests = {
       .createKmap('m')
       .optimizeKmapResults()
       ;
+  },
+  'linear2kmap': function(){
+    var f = 'a~b + a~c';
+    o
+     .reset()
+     .setData(o.linearToData(f,'f'))
+     .addMissingValues(['a','b','c'], 'f', 0)
+     .showData()
+     .setOutputs('f')
+     .createKmap('f')
+     //.optimizeKmapResults();
   }
 }
 
@@ -1078,5 +1185,13 @@ var tests = {
 //tests['ifathenbelsec']();
 //tests['dflipflop']();
 //tests['testAll1']();
-//tests['ROTR1']();
-tests['Maj']();
+tests['ROTR1']();
+//tests['Maj']();
+//tests['linear2kmap']();
+
+/*
+var a = 0x1234abcd;
+t = (a >>> 0).toString(16);
+t2 = a.toString(2);
+console.log(a, t, t2);
+*/
