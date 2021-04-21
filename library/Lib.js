@@ -1078,7 +1078,7 @@ var tests = {
     .createKmap('f',0,0)
     .optimizeKmapResults();
   },
-  'ifathenbelsec': function () {
+  'Choice': function () {
     o
      .addRow({a:0,b:0,c:'*',d:0})
      .addRow({a:0,b:1,c:'*',d:1})
@@ -1178,16 +1178,34 @@ var tests = {
      .setOutputs('f')
      .createKmap('f')
      //.optimizeKmapResults();
+  },
+  'xor3': function() {
+    o
+      .addRow({a:0,b:0,c:0,x:0})
+      .addRow({a:0,b:0,c:1,x:1})
+      .addRow({a:0,b:1,c:0,x:1})
+      .addRow({a:0,b:1,c:1,x:0})
+      .addRow({a:1,b:0,c:0,x:1})
+      .addRow({a:1,b:0,c:1,x:0})
+      .addRow({a:1,b:1,c:0,x:0})
+      .addRow({a:1,b:1,c:1,x:1})
+      .setOutputs('x')
+    // .reverseData(['x'])
+      .showData()
+      .createKmap('x')
+      .optimizeKmapResults()
+      ;
   }
 }
 
 //tests['compareAnBthenAorEQorB']();
-//tests['ifathenbelsec']();
+//tests['Choice']();
 //tests['dflipflop']();
 //tests['testAll1']();
-tests['ROTR1']();
+//tests['ROTR1']();
 //tests['Maj']();
 //tests['linear2kmap']();
+tests['xor3']();
 
 /*
 var a = 0x1234abcd;
