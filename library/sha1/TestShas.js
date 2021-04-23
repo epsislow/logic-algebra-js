@@ -274,7 +274,7 @@ var intv;
 var start=false;
 $('#startstop').click(function() {
   if(!start) {
-    intv=setInterval(tryNextNounce,10);
+    intv=setInterval(tryNextNounce,5);
     start=true;
     $('#startstop').text('stop');
   } else {
