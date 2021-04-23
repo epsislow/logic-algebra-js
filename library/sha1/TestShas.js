@@ -212,16 +212,29 @@ function getNounce() {
   return $('#nounce').val();
 }
 
+var methodCheck =1;
+
 function checkSha(sha) {
   var con;
   var difc= parseInt($('#difc').val(),10);
-  //console.log(difc);
   var str ='';
-  //console.log(str.padStart(difc,0));
-  if (sha.substr(0,difc) == str.padStart(difc,'0')) {
+  var test;
+  
+  if (methodCheck == 1) {
+    test = (sha.substr(0,difc) == str.padStart(difc,'0'));
+  } else {
+    var newDifc = (sha.match(/0/g) || []).length;
+    test = newDifc >= difc;
+    if (test) {
+      difc = newDifc;
+      setDifc(difc);
+    }
+  }
+  
+  if(test) {
     con ="\n" +'Yes! This is it!';
     //over =true;
-    var desc = "Nounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
+    var desc = "Difc is "+difc +"\nNounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
     console.log(desc);
   } else {
     con ="\n" + 'Not yet';
@@ -271,6 +284,7 @@ $('#startstop').click(function() {
   }
 })
 
+methodCheck = 1;
 //136£ for 2
 //1588
 //2692
@@ -278,6 +292,7 @@ $('#startstop').click(function() {
 //2742
 //3339
 //3796
-setNounce(12300);
+setNounce(14900);
 setDifc(3);
 //12380 for 3
+14963
