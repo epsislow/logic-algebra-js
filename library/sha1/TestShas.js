@@ -200,6 +200,14 @@ function addNounce(num) {
   $('#nounce').val(parseInt(getNounce() ,10) + num);
 }
 
+function setNounce(num) {
+  $('#nounce').val(num);
+}
+
+function setDifc(num) {
+  $('#difc').val(num);
+}
+
 function getNounce() {
   return $('#nounce').val();
 }
@@ -212,7 +220,7 @@ function checkSha(sha) {
   //console.log(str.padStart(difc,0));
   if (sha.substr(0,difc) == str.padStart(difc,'0')) {
     con ="\n" +'Yes! This is it!';
-    over =true;
+    //over =true;
     var desc = "Nounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
     console.log(desc);
   } else {
@@ -253,7 +261,7 @@ var intv;
 var start=false;
 $('#startstop').click(function() {
   if(!start) {
-    intv=setInterval(tryNextNounce,100);
+    intv=setInterval(tryNextNounce,10);
     start=true;
     $('#startstop').text('stop');
   } else {
@@ -265,3 +273,11 @@ $('#startstop').click(function() {
 
 //136£ for 2
 //1588
+//2692
+//2707
+//2742
+//3339
+//3796
+setNounce(12300);
+setDifc(3);
+//12380 for 3
