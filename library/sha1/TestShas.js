@@ -196,21 +196,25 @@ for(var i =0; i<10; i++) {
 var test = "ahdhhrjdjvudjjsjrjrjfjcjjrjejrjfjvj28848584iwjcjgjt8383838hd4&÷&÷&&=€4)'kcm@€$€€%£/¥2₩₩÷(~}|}}~}838485910KWIRJFNDNRKQL3LFKbskfldjfjtj3j48";
 
 function addNounce(num) {
-  if(over) {
-    return;
-  }
-  $('#nounce').attr('value', parseInt(getNounce() ,10) + num);
+  over =false;
+  $('#nounce').val(parseInt(getNounce() ,10) + num);
 }
 
 function getNounce() {
-  return $('#nounce').attr('value');
+  return $('#nounce').val();
 }
 
 function checkSha(sha) {
   var con;
-  if (sha.substr(0,8) =='00000000') {
+  var difc= parseInt($('#difc').val(),10);
+  //console.log(difc);
+  var str ='';
+  //console.log(str.padStart(difc,0));
+  if (sha.substr(0,difc) == str.padStart(difc,'0')) {
     con ="\n" +'Yes! This is it!';
     over =true;
+    var desc = "Nounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
+    console.log(desc);
   } else {
     con ="\n" + 'Not yet';
     over =false;
@@ -234,5 +238,30 @@ $('#next').click(function() {
   checkSha(showSha(getNounce()));
 })
 
+tryNextNounce = function() {
+  if(over) {
+    start =false;
+    clearInterval(intv);
+    $('#startstop').text('start');
+    return;
+  }
+  addNounce(1);
+  checkSha(showSha(getNounce()));
+}
 
+var intv;
+var start=false;
+$('#startstop').click(function() {
+  if(!start) {
+    intv=setInterval(tryNextNounce,100);
+    start=true;
+    $('#startstop').text('stop');
+  } else {
+    start =false;
+    clearInterval(intv);
+    $('#startstop').text('start');
+  }
+})
 
+//136£ for 2
+//1588
