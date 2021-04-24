@@ -86,16 +86,28 @@ class Sha256 {
         M[N-1][14] = Math.floor(lenHi);
         M[N-1][15] = lenLo;
 
-
         // HASH COMPUTATION [§6.2.2]
 
         for (let i=0; i<N; i++) {
             const W = new Array(64);
 
             // 1 - prepare message schedule 'W'
-            for (let t=0;  t<16; t++) W[t] = M[i][t];
+            for (let t=0;  t<16; t++) {
+				W[t] = M[i][t];
+				//console.log('W['+t+']=' + W[t].toString(16));
+			}
             for (let t=16; t<64; t++) {
                 W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
+				
+				/*
+				if (t == 33) {
+					console.log(' Sha256.σ1(W['+ (t-2) + ']) ' +  (Sha256.σ1(W[t-2]) >>> 0).toString(16));
+					console.log(' W['+ (t-7) +']' + (W[t-7]  >>> 0).toString(16));
+					console.log(' Sha256.σ0(W['+ (t-15) + ']) ' + (Sha256.σ0(W[t-15]) >>> 0).toString(16));
+					console.log(' W['+ (t-16) +']' + (W[t-16] >>> 0).toString(16));
+				}
+				console.log('W['+t+']=' + W[t].toString(16));
+				*/
             }
 
             // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
@@ -105,6 +117,7 @@ class Sha256 {
             for (let t=0; t<64; t++) {
                 const T1 = h + Sha256.Σ1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
                 const T2 =     Sha256.Σ0(a) + Sha256.Maj(a, b, c);
+				
                 h = g;
                 g = f;
                 f = e;
@@ -113,6 +126,38 @@ class Sha256 {
                 c = b;
                 b = a;
                 a = (T1 + T2) >>> 0;
+				
+				if (t == -1) {
+					//console.log(' T1=' + (T1 >>> 0).toString(16));
+					/*
+					console.log('   h=' + h.toString(16));
+					console.log('   e=' + e.toString(16));
+					console.log('   Σ1(e)=' + Sha256.Σ1(e).toString(16));
+					console.log('   e=' + e.toString(16));
+					console.log('   f=' + f.toString(16));
+					console.log('   g=' + g.toString(16));
+					console.log('   Ch(e,f,g)=' + Sha256.Ch(e, f, g).toString(16));
+					console.log('   K[t]=' + K[t].toString(16));
+					console.log('   W[t]=' + W[t].toString(16));
+					*/
+					//console.log(' T2=' + (T2 >>> 0).toString(16));
+					/*console.log('  a=' + a.toString(16));
+					console.log('  b=' + b.toString(16));
+					console.log('  c=' + c.toString(16));
+					console.log('  Σ0(a)=' + (Sha256.Σ0(a) >>> 0).toString(16));
+					console.log('  Maj(a, b, c)=' + (Sha256.Maj(a, b, c) >>> 0).toString(16));*/
+					console.log('   K[t]=' + K[t].toString(16));
+					
+					console.log(' t = '+ t +' a=' + (a >>> 0).toString(16));
+					console.log(' t = '+ t +' b=' + (b >>> 0).toString(16));
+					console.log(' t = '+ t +' c=' + (c >>> 0).toString(16));
+					console.log(' t = '+ t +' d=' + (d >>> 0).toString(16));
+					console.log(' t = '+ t +' e=' + (e >>> 0).toString(16));
+					console.log(' t = '+ t +' f=' + (f >>> 0).toString(16));
+					console.log(' t = '+ t +' g=' + (g >>> 0).toString(16));
+					console.log(' t = '+ t +' h=' + (h >>> 0).toString(16));
+					
+				}
             }
 
             // 4 - compute the new intermediate hash value (note '>>> 0' for 'addition modulo 2^32')
@@ -166,11 +211,29 @@ class Sha256 {
      * @private
      */
     static Σ0(x) { return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); }
-    static Σ1(x) { return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); }
+	static Σ1(x) {return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); }
+    static Σ11(x) {
+		console.log('     x=' + (x >>> 0).toString(16));
+		console.log('     ROTR(6, x)=' + (Sha256.ROTR(6, x) >>> 0).toString(16));
+		console.log('     ROTR(11, x)=' + (Sha256.ROTR(11, x) >>> 0).toString(16));
+		console.log('     ROTR(25, x)=' + (Sha256.ROTR(25, x) >>> 0).toString(16));
+		console.log('     ROTR(6 ^ 11, x)=' + ((Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x)) >>> 0).toString(16));
+		
+		return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); 
+      }
+	  
     static σ0(x) { return Sha256.ROTR(7,  x) ^ Sha256.ROTR(18, x) ^ (x>>>3);  }
     static σ1(x) { return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); }
     static Ch(x, y, z)  { return (x & y) ^ (~x & z); }          // 'choice'
     static Maj(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); } // 'majority'
+	
+	static σ11(x) { 
+		console.log('   x=' + x.toString(16));
+		console.log('   Sha256.ROTR(17, x)=' + Sha256.ROTR(17, x).toString(16));
+		console.log('   Sha256.ROTR(19, x)=' + Sha256.ROTR(19, x).toString(16));
+		console.log('   (x>>>10)=' + (x>>>10).toString(16));
+		return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); 
+	}
 
 }
 

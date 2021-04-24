@@ -183,7 +183,8 @@ class Sha256 {
 var text = 'abc';
 var description = 'Sha256 for text `'+text + '` is: '+ Sha256.hash(text, {'outFormat':'hex-w'});
 
-console.log(description);
+//console.log(description);
+
 /*
 var testCase = "Sha256texttshdhfh GG hsahhchvdjjjfjkr";
 
@@ -235,13 +236,23 @@ function checkSha(sha) {
     con ="\n" +'Yes!';
     //over =true;
     var desc = "Difc is "+difc +"\nNounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
-    console.log(desc);
+    //console.log(desc);
+	addToText2(desc);
   } else {
     con ="\n" + 'Not yet';
     over =false;
   }
-  $('#text').append(con);
+  //$('#text').append(con);
 }
+
+function addToText2(con) {
+	$('#text2').prepend(con);
+	
+	if ($('#text2').text().length > 1000) {
+		$('#text2').text($('#text2').text().slice(0,899));
+	}
+}
+
 var over = false;
 function showSha(nounce) {
   var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
@@ -300,6 +311,15 @@ $('#startstop').click(function() {
     clearInterval(calcSpd);
     $('#startstop').text('start');
   }
+})
+
+$('#method').click(function () {
+	methodCheck++;
+	if (methodCheck > 2) {
+		methodCheck = 1;
+	}
+	$('#method').text('#' + methodCheck);
+	$('#text2').text();
 })
 
 methodCheck = 1;
