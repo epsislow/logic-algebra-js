@@ -232,7 +232,7 @@ function checkSha(sha) {
   }
   
   if(test) {
-    con ="\n" +'Yes! This is it!';
+    con ="\n" +'Yes!';
     //over =true;
     var desc = "Difc is "+difc +"\nNounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
     console.log(desc);
@@ -259,27 +259,45 @@ $('#next').click(function() {
   checkSha(showSha(getNounce()));
 })
 
+calcSpd = function() {
+  spdhashes = hashes;
+  hashes =0;
+}
+
+function showSpd() {
+  $('#text').append("\n" + spdhashes + ' h/s');
+}
+
 tryNextNounce = function() {
   if(over) {
     start =false;
     clearInterval(intv);
+    clearInterval(spdintv);
     $('#startstop').text('start');
     return;
   }
   addNounce(1);
   checkSha(showSha(getNounce()));
+  showSpd();
+  hashes++;
 }
 
 var intv;
+var spdintv;
+var hashes=0;
+var spdhashes = 0;
 var start=false;
 $('#startstop').click(function() {
   if(!start) {
     intv=setInterval(tryNextNounce,5);
+    spdintv=setInterval(calcSpd,1000);
     start=true;
     $('#startstop').text('stop');
   } else {
+    hashes = 0;
     start =false;
     clearInterval(intv);
+    clearInterval(calcSpd);
     $('#startstop').text('start');
   }
 })
@@ -359,12 +377,8 @@ setDifc(4);
 -----
 00000
 00000
------
-00000
-00000
 
-   
-   
+
 
 
 
