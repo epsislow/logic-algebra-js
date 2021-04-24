@@ -248,9 +248,9 @@ function checkSha(sha) {
 function addToText2(con) {
 	$('#text2').prepend(con);
 	
-	if ($('#text2').text().length > 1000) {
+/*	if ($('#text2').text().length > 1000) {
 		$('#text2').text($('#text2').text().slice(0,899));
-	}
+	}*/
 }
 
 var over = false;
