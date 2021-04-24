@@ -35,10 +35,13 @@ class Sha256 {
      *   import Sha256 from './sha256.js';
      *   const hash = Sha256.hash('abc'); // 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
      */
+    static mem = {};
+    static debug={'fromCache':{'S0':0,'S1':0}};
+    
     static hash(msg, options) {
         const defaults = { msgFormat: 'string', outFormat: 'hex' };
         const opt = Object.assign(defaults, options);
-
+        
         // note use throughout this routine of 'n >>> 0' to coerce Number 'n' to unsigned 32-bit integer
 
         switch (opt.msgFormat) {
@@ -131,8 +134,10 @@ class Sha256 {
 
         // concatenate H0..H7, with separator if required
         const separator = opt.outFormat=='hex-w' ? ' ' : '';
+        
+        Sha256.debug['mems'] = Object.keys(Sha256.mem).length;
 
-        return H.join(separator);
+        return [H.join(separator), Sha256.debug];
 
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
@@ -165,8 +170,23 @@ class Sha256 {
      * Logical functions [§4.1.2].
      * @private
      */
-    static Σ0(x) { return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); }
-    static Σ1(x) { return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); }
+    static Σ0(x) {/*
+      if(Sha256.mem['S0'+ x]) {
+        Sha256.debug['fromCache']['S0']++;
+        return Sha256.mem['S0'+x];
+      }
+      return Sha256.mem['S0'+ x] =*/
+      return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); 
+    }
+    static Σ1(x) { 
+    /*  if(Sha256.mem['S1' + x]) {
+        Sha256.debug['fromCache']['S1']++;
+        return Sha256.mem['S1'+x];
+      }
+      return Sha256.mem['S1'+ x] =*/
+      return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); 
+      
+    }
     static σ0(x) { return Sha256.ROTR(7,  x) ^ Sha256.ROTR(18, x) ^ (x>>>3);  }
     static σ1(x) { return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); }
     static Ch(x, y, z)  { return (x & y) ^ (~x & z); }          // 'choice'
@@ -180,8 +200,8 @@ class Sha256 {
 ///////////// sha256 ///////
 
 
-var text = 'abc';
-var description = 'Sha256 for text `'+text + '` is: '+ Sha256.hash(text, {'outFormat':'hex-w'});
+//var text = 'abc';
+//var description = 'Sha256 for text `'+text + '` is: '+ Sha256.hash(text, {'outFormat':'hex-w'});
 
 //console.log(description);
 
@@ -281,9 +301,12 @@ function addToText2(con) {
 var over = false;
 var needsSave = false;
 function showSha(nounce) {
-  var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
+  var shast = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
+  var sha = shast[0];
+  var debug = shast[1];
   var content = 'Nounce ' + nounce +":\n" + sha + "\n";
   $('#text').text(content);
+  //$('#text3').text(JSON.stringify(debug));
   return sha;
 }
 
