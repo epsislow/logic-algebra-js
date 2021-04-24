@@ -134,10 +134,8 @@ class Sha256 {
 
         // concatenate H0..H7, with separator if required
         const separator = opt.outFormat=='hex-w' ? ' ' : '';
-        
-        Sha256.debug['mems'] = Object.keys(Sha256.mem).length;
 
-        return [H.join(separator), Sha256.debug];
+        return H.join(separator);
 
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
@@ -156,7 +154,6 @@ class Sha256 {
     }
 
 
-
     /**
      * Rotates right (circular right shift) value x by n positions [§3.2.4].
      * @private
@@ -164,7 +161,6 @@ class Sha256 {
     static ROTR(n, x) {
         return (x >>> n) | (x << (32-n));
     }
-
 
     /**
      * Logical functions [§4.1.2].
@@ -216,8 +212,8 @@ for(var i =0; i<10; i++) {
 
 var test = "ahdhhrjdjvudjjsjrjrjfjcjjrjejrjfjvj28848584iwjcjgjt8383838hd4&÷&÷&&=€4)'kcm@€$€€%£/¥2₩₩÷(~}|}}~}838485910KWIRJFNDNRKQL3LFKbskfldjfjtj3j48";
 
+
 function addNounce(num) {
-  over =false;
   $('#nounce').val(parseInt(getNounce() ,10) + num);
 }
 
@@ -261,17 +257,13 @@ function checkSha(sha) {
   
   if(test) {
     con ="Yes!\n\n";
-    //over =true;
     var desc = "Difc is "+difc +"\nNounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
-    //console.log(desc);
 	  addToText2(desc);
   	lastFoundNounce = desc;
   	needsToSave();
   } else {
     con ="\n" + 'Not yet';
-    over =false;
   }
-  //$('#text').append(con);
 }
 
 function needsToSave() {
@@ -292,21 +284,15 @@ function clearNeedsToSave() {
 
 function addToText2(con) {
 	$('#text2').prepend(con);
-	
-/*	if ($('#text2').text().length > 1000) {
-		$('#text2').text($('#text2').text().slice(0,899));
-	}*/
 }
 
-var over = false;
 var needsSave = false;
 function showSha(nounce) {
-  var shast = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
-  var sha = shast[0];
-  var debug = shast[1];
+  var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
+  
   var content = 'Nounce ' + nounce +":\n" + sha + "\n";
   $('#text').text(content);
-  //$('#text3').text(JSON.stringify(debug));
+
   return sha;
 }
 
@@ -333,13 +319,6 @@ function showSpd() {
 }
 
 tryNextNounce = function() {
-  if(over) {
-    start =false;
-    clearInterval(intv);
-    clearInterval(spdintv);
-    $('#startstop').text('start');
-    return;
-  }
   addNounce(1);
   checkSha(showSha(getNounce()));
   showSpd();
