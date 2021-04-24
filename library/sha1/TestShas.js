@@ -226,10 +226,10 @@ function checkSha(sha) {
   
   if (methodCheck == 1) {
     test = (sha.substr(0,difc) == str.padStart(difc,'0'));
-	if (test && sha.charAt(difc) == '0') {
-		difc++;
-		setDifc(difc);
-	}
+	  if (test && sha.charAt(difc) == '0') {
+	  	difc++;
+  		setDifc(difc);
+  	}
   } else {
     var newDifc = (sha.match(/0/g) || []).length;
     test = newDifc >= difc;
@@ -244,13 +244,30 @@ function checkSha(sha) {
     //over =true;
     var desc = "Difc is "+difc +"\nNounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
     //console.log(desc);
-	addToText2(desc);
-	lastFoundNounce = desc;
+	  addToText2(desc);
+  	lastFoundNounce = desc;
+  	needsToSave();
   } else {
     con ="\n" + 'Not yet';
     over =false;
   }
   //$('#text').append(con);
+}
+
+function needsToSave() {
+  if (!needsSave) {
+    $('#save').removeClass('btn-success')
+    .addClass('btn-danger');
+  }
+  needsSave = true;
+}
+
+function clearNeedsToSave() {
+  if(needsSave) {
+    $('#save').removeClass('btn-danger')
+    .addClass('btn-success');
+  }
+  needsSave = false;
 }
 
 function addToText2(con) {
@@ -262,6 +279,7 @@ function addToText2(con) {
 }
 
 var over = false;
+var needsSave = false;
 function showSha(nounce) {
   var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
   var content = "\n"+'Nounce ' + nounce +":\n" + sha + "\n";
@@ -281,7 +299,10 @@ $('#next').click(function() {
 calcSpd = function() {
   spdhashes = hashes;
   hashes =0;
-  saveCache();
+  if(needsSave) {
+    saveCache();
+    clearNeedsToSave();
+  }
 }
 
 function showSpd() {
@@ -317,7 +338,7 @@ $('#startstop').click(function() {
     hashes = 0;
     start =false;
     clearInterval(intv);
-    clearInterval(calcSpd);
+    clearInterval(spdintv);
     $('#startstop').text('start');
   }
 })
@@ -331,6 +352,12 @@ $('#method').click(function () {
 	$('#text2').text('');
 	loadLastCache(0);
 })
+
+$('#save').click(function () {
+  needsToSave();
+  saveCache();
+  setTimeout(clearNeedsToSave,100);
+});
 
 function getCacheKey($key) {
 	return localStorage.getItem($key);
