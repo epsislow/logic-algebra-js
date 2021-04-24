@@ -214,15 +214,22 @@ function getNounce() {
 }
 
 var methodCheck =1;
+var lastFoundNounce = '';
+var difc = 0;
 
 function checkSha(sha) {
   var con;
-  var difc= parseInt($('#difc').val(),10);
   var str ='';
   var test;
   
+  difc = parseInt($('#difc').val(),10);
+  
   if (methodCheck == 1) {
     test = (sha.substr(0,difc) == str.padStart(difc,'0'));
+	if (test && sha.charAt(difc) == '0') {
+		difc++;
+		setDifc(difc);
+	}
   } else {
     var newDifc = (sha.match(/0/g) || []).length;
     test = newDifc >= difc;
@@ -233,11 +240,12 @@ function checkSha(sha) {
   }
   
   if(test) {
-    con ="\n" +'Yes!';
+    con ="Yes!\n\n";
     //over =true;
     var desc = "Difc is "+difc +"\nNounce is "+getNounce() +"\nSha: "+ sha + "\n" + con;
     //console.log(desc);
 	addToText2(desc);
+	lastFoundNounce = desc;
   } else {
     con ="\n" + 'Not yet';
     over =false;
@@ -273,6 +281,7 @@ $('#next').click(function() {
 calcSpd = function() {
   spdhashes = hashes;
   hashes =0;
+  saveCache();
 }
 
 function showSpd() {
@@ -319,10 +328,57 @@ $('#method').click(function () {
 		methodCheck = 1;
 	}
 	$('#method').text('#' + methodCheck);
-	$('#text2').text();
+	$('#text2').text('');
+	loadLastCache(0);
 })
 
+function getCacheKey($key) {
+	return localStorage.getItem($key);
+}
+
+function setCacheKey($key, $val) {
+	return localStorage.setItem($key, $val);
+}
+
+function saveCache() {
+	setCacheKey('lastMethodCheck', methodCheck);
+	setCacheKey('lastNounce'+ methodCheck, getNounce());
+	setCacheKey('lastDifc' + methodCheck, difc);
+	setCacheKey('lastFoundNounce' + methodCheck, lastFoundNounce);
+}
+
+function loadLastCache(init) {
+	if (init) {		
+		var lastMethodCheck = getCacheKey('lastMethodCheck');
+		if (lastMethodCheck) {	
+			methodCheck = lastMethodCheck;
+			$('#method').text('#' + methodCheck);
+		}
+	}
+	
+	var lastNounce = getCacheKey('lastNounce'+ methodCheck);
+	if (lastNounce) {
+		setNounce(lastNounce);
+	}
+	var lastDifc = getCacheKey('lastDifc'+ methodCheck);
+	if (lastDifc) {
+		difc = lastDifc;
+		setDifc(difc);
+	}
+	
+	var oldLastFoundNounce = getCacheKey('lastFoundNounce'+ methodCheck);
+	if (oldLastFoundNounce) {
+		lastFoundNounce = oldLastFoundNounce;
+		addToText2(lastFoundNounce);
+	}
+}
+
 methodCheck = 1;
+setNounce(100000);
+setDifc(4);
+
+loadLastCache(1);
+
 //1368 for 2
 //1588
 //2692
@@ -330,8 +386,6 @@ methodCheck = 1;
 //2742
 //3339
 //3796
-setNounce(100000);
-setDifc(4);
 //12380 for 3
 //14963
 //20977
