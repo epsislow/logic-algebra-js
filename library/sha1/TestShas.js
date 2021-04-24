@@ -282,7 +282,7 @@ var over = false;
 var needsSave = false;
 function showSha(nounce) {
   var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
-  var content = "\n"+'Nounce ' + nounce +":\n" + sha + "\n";
+  var content = 'Nounce ' + nounce +":\n" + sha + "\n";
   $('#text').text(content);
   return sha;
 }
