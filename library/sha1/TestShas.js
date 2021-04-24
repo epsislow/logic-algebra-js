@@ -196,10 +196,10 @@ class Sha256 {
 ///////////// sha256 ///////
 
 
-//var text = 'abc';
-//var description = 'Sha256 for text `'+text + '` is: '+ Sha256.hash(text, {'outFormat':'hex-w'});
+var text = 'abc';
+var description = 'Sha256 for text `'+text + '` is: '+ Sha256.hash(text, {'outFormat':'hex-w'});
 
-//console.log(description);
+console.log(description);
 
 /*
 var testCase = "Sha256texttshdhfh GG hsahhchvdjjjfjkr";
