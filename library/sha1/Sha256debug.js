@@ -18,7 +18,61 @@
  * See csrc.nist.gov/groups/ST/toolkit/secure_hashing.html
  *     csrc.nist.gov/groups/ST/toolkit/examples.html
  */
-class Sha256 {
+dg = {
+  'add': function(text) {
+    Sha256.debug = text + "\n" + Sha256.debug;
+  },
+  'dta': function(num,s) {
+    return (num >>> 0).toString(2).padStart(32,s) +"\n";
+  },
+  'dtb': function(num,s) {
+    return (num >>> 0).toString(2).padStart(32,s).match(/.{1,8}/g).join(' ')+"\n";
+  },
+  'intx': function(array1, array2) {
+    return array1.filter(value => array2.includes(value)).length > 0;
+  },
+  'look': {
+    'm': {},
+    'add': function(k, v) {
+      this.m[k] = v;
+    },
+    'get': function(k) {
+      return this.m[k];
+    },
+    'w2b': function(w) {
+      return w.split('');
+    },
+    'b2w': function(b) {
+      return b.join('');
+    },
+    'addWs': function(k,w) {
+      this.add(k, this.w2b(w));
+    },
+    'getWs': function(k) {
+      this.b2w(get(k));
+    },
+    'getSubBs': function(k, start, len) {
+      var v =[];
+      var vs = this.get(k);
+      for(var i in vs) {
+        if(i>=start && i<=start+len) {
+          v.push(vs[i]);
+        }
+      }
+      return v;
+    },
+    'chgSubBs': function(k, start, nvs) {
+      var vs = this.get(k);
+      for(var i in vs) {
+        if (i>=start && i<=start+len) {
+          
+        }
+      }
+    }
+  }
+};
+ 
+class Sha256debug {
 
     /**
      * Generates SHA-256 hash of string.
@@ -36,7 +90,7 @@ class Sha256 {
      *   const hash = Sha256.hash('abc'); // 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
      */
     static hash(msg, options) {
-        const defaults = { msgFormat: 'string', outFormat: 'hex' };
+        const defaults = { msgFormat: 'string', outFormat: 'hex'};
         const opt = Object.assign(defaults, options);
 
         // note use throughout this routine of 'n >>> 0' to coerce Number 'n' to unsigned 32-bit integer
@@ -69,6 +123,8 @@ class Sha256 {
         // convert string msg into 512-bit blocks (array of 16 32-bit integers) [§5.2.1]
         const l = msg.length/4 + 2; // length (in 32-bit integers) of msg + ‘1’ + appended length
         const N = Math.ceil(l/16);  // number of 16-integer (512-bit) blocks required to hold 'l' ints
+        dg.add(N + ' blocks');
+        
         const M = new Array(N);     // message M is N×16 array of 32-bit integers
 
         for (let i=0; i<N; i++) {
@@ -85,6 +141,11 @@ class Sha256 {
         const lenLo = ((msg.length-1)*8) >>> 0;
         M[N-1][14] = Math.floor(lenHi);
         M[N-1][15] = lenLo;
+        
+        var lenH = Math.floor(lenHi);
+        
+        dg.add('Msg len: '+ (msg.length -1) + "\n" + dg.dtb(lenH,'-') + dg.dtb(lenLo,'-'));
+
 
         // HASH COMPUTATION [§6.2.2]
 
@@ -94,11 +155,27 @@ class Sha256 {
             // 1 - prepare message schedule 'W'
             for (let t=0;  t<16; t++) {
 				W[t] = M[i][t];
-				//console.log('W['+t+']=' + W[t].toString(16));
+				var bn=(W[t] >>> 0)
+				   .toString(2)
+				   .padStart(32,'0');
+				   
+				var j = bn.match(/.{1,8}/g);
+				bn = j.join(' ');
+				dg.add('W['+(t+'').padStart(2)+']= ' + bn);
 			}
+			dg.ts = [11,12];
+			
             for (let t=16; t<64; t++) {
-                W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
-				
+              dg.tslist = [t-2, t-7, t-15, t-16];
+              
+              if(dg.intx(dg.tslist, dg.ts)) {
+                dg.add('new t('+t+') usedNow:' + dg.tslist + ' list:'+dg.ts);
+                dg.ts[dg.ts.length] = t;
+              }
+              
+              W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
+              
+              
 				/*
 				if (t == 33) {
 					console.log(' Sha256.σ1(W['+ (t-2) + ']) ' +  (Sha256.σ1(W[t-2]) >>> 0).toString(16));
@@ -109,6 +186,8 @@ class Sha256 {
 				console.log('W['+t+']=' + W[t].toString(16));
 				*/
             }
+            
+            dg.add('t='+ dg.ts.join(','));
 
             // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
             let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
@@ -195,7 +274,7 @@ class Sha256 {
         }
     }
 
-
+    static debug='';
 
     /**
      * Rotates right (circular right shift) value x by n positions [§3.2.4].

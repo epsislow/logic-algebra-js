@@ -5,14 +5,20 @@
 
 ///////////// sha256 test ///////
 
+var testn = 12390;
 
-var text = 'abc';
-var description = 'Sha256 for text `'+text + '` is: '+ Sha256.hash(text, {'outFormat':'hex-w'});
+var text = "abcdef01234567890ABCDEF+×÷=/_!@#$%^&*():;.,";
+
+var description = 'Sha256 for text `'+text + '` is: '+ Sha256debug.hash(text+ testn, {'outFormat':'hex-w'});
 
 console.log(description);
 
-var test = "ahdhhrjdjvudjjsjrjrjfjcjjrjejrjfjvj28848584iwjcjgjt8383838hd4&÷&÷&&=€4)'kcm@€$€€%£/¥2₩₩÷(~}|}}~}838485910KWIRJFNDNRKQL3LFKbskfldjfjtj3j48";
+addToText3(Sha256.debug);
 
+
+//var test = "ahdhhrjdjvudjjsjrjrjfjcjjrjejrjfjvj28848584iwjcjgjt8383838hd4&÷&÷&&=€4)'kcm@€$€€%£/¥2₩₩÷(~}|}}~}838485910KWIRJFNDNRKQL3LFKbskfldjfjtj3j48";
+
+var test = text;
 
 function addNounce(num) {
   $('#nounce').val(parseInt(getNounce() ,10) + num);
@@ -85,6 +91,10 @@ function clearNeedsToSave() {
 
 function addToText2(con) {
 	$('#text2').prepend(con);
+}
+
+function addToText3(con) {
+  $('#text3').prepend(con);
 }
 
 var needsSave = false;
