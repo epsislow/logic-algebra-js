@@ -22,19 +22,33 @@ dg = {
   'add': function(text) {
     Sha256.debug = text + "\n" + Sha256.debug;
   },
-  'dta': function(num,s) {
-    return (num >>> 0).toString(2).padStart(32,s) +"\n";
+  'dta': function(num,s ='0') {
+    return (num >>> 0).toString(2).padStart(32,s);
   },
   'dtb': function(num,s) {
     return (num >>> 0).toString(2).padStart(32,s).match(/.{1,8}/g).join(' ')+"\n";
   },
+  'arCn': function(prefix,start,len) {
+    var ar=[];
+    for(var i= start;i<start+len;i++){
+      ar.push(prefix+i);
+    }
+    return ar;
+  },
   'intx': function(array1, array2) {
     return array1.filter(value => array2.includes(value)).length > 0;
   },
-  'look': {
+  'lk': {
     'm': {},
+    'reset': function() {
+      this.m = {};
+    },
+    'del': function(k) {
+      delete this.m[k];
+    },
     'add': function(k, v) {
       this.m[k] = v;
+      return this;
     },
     'get': function(k) {
       return this.m[k];
@@ -47,9 +61,10 @@ dg = {
     },
     'addWs': function(k,w) {
       this.add(k, this.w2b(w));
+      return this;
     },
     'getWs': function(k) {
-      this.b2w(get(k));
+      return this.get(k);
     },
     'getSubBs': function(k, start, len) {
       var v =[];
@@ -63,14 +78,27 @@ dg = {
     },
     'chgSubBs': function(k, start, nvs) {
       var vs = this.get(k);
+      var vss = [];
       for(var i in vs) {
-        if (i>=start && i<=start+len) {
-          
+        if (i>=start && nvs[i - start]) {
+          vss.push(vs[i]);
+          vs[i] = nvs[i - start];
         }
       }
+      this.add(k, vs);
+      return vss;
     }
   }
 };
+
+dg.lk.addWs('a', '01011');
+var c= dg.lk.chgSubBs('a',2,['a64.30','a64.31','a64.32']);
+var a= dg.lk.getWs('a');
+
+dg.lk.chgSubBs('a',2,c);
+
+console.log('c '+c);
+console.log('a '+a.join(''));
  
 class Sha256debug {
 
@@ -162,6 +190,14 @@ class Sha256debug {
 				var j = bn.match(/.{1,8}/g);
 				bn = j.join(' ');
 				dg.add('W['+(t+'').padStart(2)+']= ' + bn);
+				dg.lk.addWs('w'+t, dg.dta(W[t]));
+				if(t==11) {
+				  dg.lk.chgSubBs('w'+ t,8, dg.arCn('w'+t+'.', 8,32));
+				} else if(t==12) {
+				  dg.lk.chgSubBs('w'+ t,0, dg.arCn('w'+t+'.',0,16));
+				  //console.log(dg.lk.getWs('w'+t));
+				}
+				//dg.add(dg.lk.getWs('w'+t));
 			}
 			dg.ts = [11,12];
 			
