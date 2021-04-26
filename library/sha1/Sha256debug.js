@@ -101,6 +101,18 @@ dg = {
     },
     'maj': function(k1,k2,k3) {
       
+    },
+    'xor': function(k1,k2) {
+      
+    },
+    'and': function(k1,k2) {
+      
+    },
+    'or': function(k1,k2) {
+      
+    },
+    'not': function(k1) {
+      
     }
   }
 };
