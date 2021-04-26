@@ -40,12 +40,23 @@ dg = {
   },
   'lk': {
     'm': {},
+    'sums':{},
     'reset': function() {
       this.m = {};
     },
 	'parent': function () {
 		return dg;
 	},
+	  'addSum': function(k,w) {
+	    if(!this.sums[k]) {
+	      this.sums[k] = [];
+	    }
+	    this.sums[k].push(w);
+	    return this;
+	  },
+	  'getSum': function(k) {
+	    return this.sums[k];
+	  },
     'del': function(k) {
       delete this.m[k];
     },
@@ -787,16 +798,18 @@ class Sha256debug {
               
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
 			  
-			  if (t <= 1) {
+			  if (t <= 64) {
 				  
-				  var r = dg.sh.sum(
-					dg.sh.sum(dg.sh.p1('w'+(t-2)), 'w'+(t-7)),
-					dg.sh.sum(dg.sh.p0('w'+(t-15)), 'w'+(t-16))
-				  );
-				  //console.log(r);
-				  
-				  dg.lk.add('w'+t, r);
-				  
+					dg.lk
+					 .addSum('w'+t, dg.sh.p1('w'+(t-2)))
+					 .addSum('w'+t, 'w'+(t-7))
+					 .addSum('w'+t, dg.sh.p0('w'+(t-15)))
+					 .addSum('w'+t, 'w'+(t-16))
+		  		;
+			  }
+			  
+			  if (t == 16) {
+			 // 	dg.add('sum:W'+t+":\n"+dg.lk.getSum('w'+t).join("\n"));
 			  }
 			  
 			  //dg.lk.addWs('w'+t, dg.dta(W[t]));
