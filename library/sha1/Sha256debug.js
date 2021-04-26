@@ -43,6 +43,9 @@ dg = {
     'reset': function() {
       this.m = {};
     },
+	'parent': function () {
+		return dg;
+	},
     'del': function(k) {
       delete this.m[k];
     },
@@ -64,7 +67,7 @@ dg = {
       return this;
     },
     'getWs': function(k) {
-      return this.get(k);
+      return this.b2w(this.get(k));
     },
     'getSubBs': function(k, start, len) {
       var v =[];
@@ -87,44 +90,298 @@ dg = {
       }
       this.add(k, vs);
       return vss;
-    }
+    },
   },
   'sh':{
-    'rr': function(k, n) {
-      
+	'parent': function () {
+		return dg;
+	},
+    'll': function(k, n) {
+      var vs;
+	  if (Array.isArray(k)) {
+        vs = k;
+	  } else {
+	    vs = this.parent().lk.get(k);
+	  }
+	  var r = [];
+	  var c = 0;
+	  
+	  for(var i in vs) {
+		  c = (parseInt(i) - n + vs.length) % vs.length;
+		  if (c > n) {
+		    r[c] = 0;
+		  } else {
+			r[c] = vs[i];
+		  }
+	  }
+	  return r;
     },
-    'rotr': function(k,n) {
-      
+	'rr': function(k, n) {
+      var vs;
+	  if (Array.isArray(k)) {
+        vs = k;
+	  } else {
+	    vs = this.parent().lk.get(k);
+	  }
+	  var r = [];
+	  var c = 0;
+	  
+	  for(var i in vs) {
+		  c = (parseInt(i) + n + vs.length) % vs.length;
+		  if (c < n) {
+		    r[c] = 0;
+		  } else {
+			r[c] = vs[i];
+		  }
+	  }
+	  return r;
     },
+    'rotl': function(k,n) {
+	  var vs;
+	  if (Array.isArray(k)) {
+        vs = k;
+	  } else {
+	    vs = this.parent().lk.get(k);
+	  }
+	  var r = [];
+	  
+	  for(var i in vs) {
+		r[(parseInt(i) - n + vs.length) % vs.length] = vs[i];
+	  }
+	  return r;
+    },
+	'rotr': function(k,n) {
+	  var vs;
+	  if (Array.isArray(k)) {
+        vs = k;
+	  } else {
+	    vs = this.parent().lk.get(k);
+	  }
+	  var r = [];
+	  
+	  for(var i in vs) {
+		r[(parseInt(i) + n + vs.length) % vs.length] = vs[i];
+	  }
+	  return r;
+    },
+	'p0': function(x) {
+	  //static σ0(x) { return Sha256.ROTR(7,  x) ^ Sha256.ROTR(18, x) ^ (x>>>3);  }
+	  var vx;
+	  
+	  if (Array.isArray(x)) {
+        vx = x;
+	  } else {
+	    vx = this.parent().lk.get(x);
+	  }
+	  
+	  return this.xor(this.xor(this.rotr(vx,7), this.rotr(vx,18)), this.rr(vx,3));
+	  
+	},
+	'p1': function(x) {
+	  //static σ1(x) { return Sha256.ROTR(17, x) ^ Sha256.ROTR(19, x) ^ (x>>>10); }
+	  var vx;
+	  
+	  if (Array.isArray(x)) {
+        vx = x;
+	  } else {
+	    vx = this.parent().lk.get(x);
+	  }
+	  
+	  return this.xor(this.xor(this.rotr(vx,17), this.rotr(vx,19)), this.rr(vx,10));
+	},
+	's0':  function(x) {
+      //static Σ0(x) { return Sha256.ROTR(2,  x) ^ Sha256.ROTR(13, x) ^ Sha256.ROTR(22, x); }
+	  var vx;
+	  
+	  if (Array.isArray(x)) {
+        vx = x;
+	  } else {
+	    vx = this.parent().lk.get(x);
+	  }
+	  
+	  return this.xor(this.xor(this.rotr(vx,2), this.rotr(vx,13)), this.rotr(vx,22));
+	},
+	's1': function(x) {
+	  //static Σ1(x) {return Sha256.ROTR(6,  x) ^ Sha256.ROTR(11, x) ^ Sha256.ROTR(25, x); }
+	  var vx;
+	  
+	  if (Array.isArray(x)) {
+        vx = x;
+	  } else {
+	    vx = this.parent().lk.get(x);
+	  }
+	  
+	  return this.xor(this.xor(this.rotr(vx, 6), this.rotr(vx,11)), this.rotr(vx,25));
+	},
     'cho': function(k1,k2,k3) {
-      
+	  //static Ch(x, y, z)  { return (x & y) ^ (~x & z); }          // 'choice'
+
+	  return this.xor( this.and(k1,k2), this.and(this.not(k1),k3));
     },
     'maj': function(k1,k2,k3) {
-      
+	  //static Maj(x, y, z) { return (x & y) ^ (x & z) ^ (y & z); } // 'majority'
+	  return this.xor(this.xor(this.and(k1,k2),this.and(k1,k3)), this.and(k2,k3));
+	  
     },
     'xor': function(k1,k2) {
-      
+      var vs1, vs2;
+	  if (Array.isArray(k1)) {
+        vs1 = k1;
+	  } else {
+	    vs1 = this.parent().lk.get(k1);
+	  }
+	  
+	  if (Array.isArray(k2)) {
+        vs2 = k2;
+	  } else {
+	    vs2 = this.parent().lk.get(k2);
+	  }
+	  var r = [];
+	  
+	  for(var i in vs1) {
+		  if (vs1[i] == '0') {
+			  r[i] = vs2[i];
+		  } else if (vs1[i] == '1') {
+			  if (['0','1'].includes(vs2[i]+'')) {
+				  r[i] = (vs2[i] == '0') ? '1': '0';
+			  } else {
+				  r[i] = '~(' + vs2[i]+ ')';
+			  }
+		  } else {
+			  if (vs2[i] == '0') {
+				  r[i] = vs1[i];
+			  } else if (vs2[i] == '1') {
+				  if (['0','1'].includes(vs1[i]+'')) {
+				  r[i] = (vs1[i] == '0') ? '1': '0';
+			  } else {
+				  r[i] = '~(' + vs1[i]+ ')';
+			  }
+			  } else {
+				  if (vs1[i] == vs2[i]) {
+					r[i] = '0';
+				  } else {
+					r[i] = '(' + vs1[i]+ '^'+ vs2[i] +')';
+				  }
+			  }
+		  }
+	  }
+	  return r;
     },
     'and': function(k1,k2) {
-      
+	  var vs1, vs2;
+	  if (Array.isArray(k1)) {
+        vs1 = k1;
+	  } else {
+	    vs1 = this.parent().lk.get(k1);
+	  }
+	  
+	  if (Array.isArray(k2)) {
+        vs2 = k2;
+	  } else {
+	    vs2 = this.parent().lk.get(k2);
+	  }
+	  var r = [];
+	  
+	  for(var i in vs1) {
+		  if (vs1[i] == '0') {
+			  r[i] = '0';
+		  } else if (vs1[i] == '1') {
+			  r[i] = vs2[i];
+		  } else {
+			  if (vs2[i] == '0') {
+				  r[i] = '0';
+			  } else if (vs2[i] == '1') {
+				  r[i] = vs1[i];
+			  } else {
+				  if (vs1[i] == vs2[i]) {
+					r[i] = vs1[i];
+				  } else {
+					r[i] = '(' + vs1[i]+ '&'+ vs2[i] +')';
+				  }
+			  }
+		  }
+	  }
+	  return r;
     },
     'or': function(k1,k2) {
-      
+      var vs1, vs2;
+	  if (Array.isArray(k1)) {
+        vs1 = k1;
+	  } else {
+	    vs1 = this.parent().lk.get(k1);
+	  }
+	  
+	  if (Array.isArray(k2)) {
+        vs2 = k2;
+	  } else {
+	    vs2 = this.parent().lk.get(k2);
+	  }
+	  var r = [];
+	  
+	  for(var i in vs1) {
+		  if (vs1[i] == '0') {
+			  r[i] = vs2[i];
+		  } else if (vs1[i] == '1') {
+			  r[i] = '1';
+		  } else {
+			  if (vs2[i] == '0') {
+				  r[i] = vs1[i];
+			  } else if (vs2[i] == '1') {
+				  r[i] = '1';
+			  } else {
+				  if (vs1[i] == vs2[i]) {
+					r[i] = vs1[i];
+				  } else {
+					r[i] = '(' + vs1[i]+ '|'+ vs2[i] +')';
+				  }
+			  }
+		  }
+	  }
+	  return r;
     },
     'not': function(k1) {
-      
-    }
+	  var vs;
+	  if (Array.isArray(k1)) {
+        vs = k1;
+	  } else {
+	    vs = this.parent().lk.get(k1);
+	  }
+	  var r = [];
+	  
+	  for(var i in vs) {
+		  if (['0','1'].includes(vs[i]+'')) {
+			  r[i] = (vs[i] == '0') ? '1': '0';
+		  } else {
+			  r[i] = '~(' + vs[i]+ ')';
+		  }
+	  }
+	  return r;
+    },
   }
 };
 
-dg.lk.addWs('a', '01011');
+dg.lk.addWs('a', dg.dta(51));
+dg.lk.addWs('b', dg.dta(87));
+dg.lk.addWs('c', dg.dta(3));
+
 var c= dg.lk.chgSubBs('a',2,['a64.30','a64.31','a64.32']);
-var a= dg.lk.getWs('a');
+var a= dg.lk.get('a');
+var b= dg.lk.get('b');
+dg.lk.chgSubBs('b',3,['b64.31','b64.32']);
+console.log('a= '+a);
+//console.log('b= '+b);
+//console.log('a^b= '+ dg.sh.xor('a','b'));
+//console.log('a&b= '+ dg.sh.and('a','b'));
+console.log('p1 = '+ dg.sh.p0('a'));
+//console.log('maj= '+ dg.sh.maj('a','b','c'));
+//console.log('cho= '+ dg.sh.cho('a','b','c'));
+//console.log('a>2= '+ dg.sh.ll('a',2));
 
-dg.lk.chgSubBs('a',2,c);
 
-console.log('c '+c);
-console.log('a '+a.join(''));
+//dg.lk.chgSubBs('a',2,c);
+
+
+//console.log('a '+a.join(''));
  
 class Sha256debug {
 
@@ -221,9 +478,9 @@ class Sha256debug {
 				  dg.lk.chgSubBs('w'+ t,8, dg.arCn('w'+t+'.', 8,32));
 				} else if(t==12) {
 				  dg.lk.chgSubBs('w'+ t,0, dg.arCn('w'+t+'.',0,16));
-				  //console.log(dg.lk.getWs('w'+t));
+				  //console.log(dg.lk.get('w'+t));
 				}
-				//dg.add(dg.lk.getWs('w'+t));
+				dg.add(dg.lk.get('w'+t));
 			}
 			dg.ts = [11,12];
 			
