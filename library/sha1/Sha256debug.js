@@ -96,7 +96,147 @@ dg = {
 	'parent': function () {
 		return dg;
 	},
-	  'sum': function(k1,k2) {
+	'repl': function (x,replacers) {
+		var vs;
+		if(Array.isArray(x)) {
+	      vs = x;
+	    } else {
+	      vs = this.parent().lk.get(x);
+	    }
+		var r=[];
+		
+	    for(var i in vs) {
+		  r[i] = this.replB(vs[i], replacers);
+		}
+		return r;
+	},
+	'replB': function (x, replacers) {
+		var r = x + '';
+	    for(var k in replacers) {
+		  r = r.replaceAll(k, replacers[k]);
+		}
+		return r;
+	},
+	'exec': function (x) {
+		var vs;
+		if(Array.isArray(x)) {
+	      vs = x;
+	    } else {
+	      vs = this.parent().lk.get(x);
+	    }
+		var r=[];
+		
+	    for(var i in vs) {
+		  r[i] = this.execc(vs[i]);
+		}
+		return r;
+	},
+	'execc': function (x) {
+	  var l;
+	  var lvl = 0;
+	  var stack = [];
+	  var not = 0;
+	  var op = '';
+	  var ops = [];
+	  var nots = [];
+	  var param = 0;
+	  var name = '';
+	  x = '('+x+')';
+	  stack[lvl] = [];
+	  ops[lvl] = '';
+	  nots[lvl] = 0;
+	  
+	  for(var i in x) {
+		l = x[i];
+		switch(l) {
+		  case '(':
+			lvl++;
+			stack[lvl] = [];
+			ops[lvl] = '';
+			name = '';
+			not = 0;
+			nots[lvl] = 0;
+			break;
+		  case ')':
+			var v;
+			var spcs = 0;
+			if (not && !name && stack[lvl].length == 1) {
+				name = stack[lvl][0];
+				spcs = 1;
+			}
+			if (not && name) {
+			  name = dg.sh.notB(name);
+			}
+			if (spcs) {
+				stack[lvl][0] = name;
+			} else {
+				stack[lvl].push(name);
+			}
+			name = '';
+			not = 0;
+			nots[lvl] = 0;
+			if (op == '') {
+				v = stack[lvl][0];
+			} else {	
+				v = dg.sh[op].apply(null, stack[lvl]);
+			}
+			stack[lvl] = [];
+			lvl--;
+			not = nots[lvl];
+			op = ops[lvl];
+			stack[lvl].push(v);
+			break;
+		  case '~':
+			not = 1;
+			nots[lvl] = not;
+			break;
+		  case '|':
+			if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				}
+				stack[lvl].push(name);
+				name = '';
+			}
+			not = 0;
+			nots[lvl] = 0;
+			op = 'orB';
+			ops[lvl] = op;
+			break;
+		  case '&':
+			if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				}
+				stack[lvl].push(name);
+				name = '';
+			}
+			not = 0;
+			nots[lvl] = 0;
+			op = 'andB';
+			ops[lvl] = op;
+			break;
+		  case '^':
+			if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				}
+				stack[lvl].push(name);
+				name = '';
+			}
+			not = 0;
+			nots[lvl] = 0;
+			op = 'xorB';
+			ops[lvl] = op;
+			break;
+		  default:
+			name += l;
+		 }
+	  }
+	  
+	  return stack[0][0];
+	},
+	'sum': function(k1,k2) {
 	    var vs1,vs2;
 	    if(Array.isArray(k1)) {
 	      vs1 = k1;
@@ -110,21 +250,25 @@ dg = {
 	    }
 	    var r=[];
 	    var len = vs1.length;
-	    var res={'sum':0, 'c':0};
+	    var res={'sum':'0', 'c':'0'};
 	    
-	    for(var i=len; i<0; i++) {
+	    for(var i=len-1; i>=0; i--) {
 	      res = this.sumB(vs1[i],vs2[i], res.c);
+		  r[i] = res.sum;
 	    }
 	    return r;
-	  },
-	  'sumB': function(a,b,c) {
-	    var res = {
-	      'sum': this.andB(a,b),
-	      'c':c
-	    };
-	    
-	    return res;
-	  },
+	},
+	'sumB': function(a,b,c) {
+		var p = this.xorB(a,b);
+		var g = this.andB(a,b);
+		
+		var res = {
+		  'sum': this.xorB(p,c),
+		  'c': this.orB(g, this.andB(p,c))
+		};
+
+		return res;
+	},
     'll': function(k, n) {
       var vs;
 	  if (Array.isArray(k)) {
@@ -138,7 +282,7 @@ dg = {
 	  for(var i in vs) {
 		  c = (parseInt(i) - n + vs.length) % vs.length;
 		  if (c > n) {
-		    r[c] = 0;
+		    r[c] = '0';
 		  } else {
 			r[c] = vs[i];
 		  }
@@ -158,7 +302,7 @@ dg = {
 	  for(var i in vs) {
 		  c = (parseInt(i) + n + vs.length) % vs.length;
 		  if (c < n) {
-		    r[c] = 0;
+		    r[c] = '0';
 		  } else {
 			r[c] = vs[i];
 		  }
@@ -281,10 +425,10 @@ dg = {
 				  r[i] = vs1[i];
 			  } else if (vs2[i] == '1') {
 				  if (['0','1'].includes(vs1[i]+'')) {
-				  r[i] = (vs1[i] == '0') ? '1': '0';
-			  } else {
-				  r[i] = '~(' + vs1[i]+ ')';
-			  }
+ 				    r[i] = (vs1[i] == '0') ? '1': '0';
+				  } else {
+					  r[i] = '~(' + vs1[i]+ ')';
+				  }
 			  } else {
 				  if (vs1[i] == vs2[i]) {
 					r[i] = '0';
@@ -297,28 +441,71 @@ dg = {
 	  return r;
     },
     'xorB': function(a,b) {
-      
+      if (a == '0') {
+		  return b;
+	  } else if (a == '1') {
+		  if (['0','1'].includes(b+'')) {
+			  return (b == '0') ? '1': '0';
+		  } else {
+			  return '~(' + b+ ')';
+		  }
+	  } else {
+		  if (b == '0') {
+			  return a;
+		  } else if (b == '1') {
+			  if (['0','1'].includes(a+'')) {
+			    return (a == '0') ? '1': '0';
+			  } else {
+				return '~(' + a+ ')';
+			  }
+		  } else {
+			  if (a == b) {
+				return '0';
+			  } else {
+				return '(' + a+ '^'+ b +')';
+			  }
+		  }
+	  }
+    },
+	'orB': function(a,b) {
+      if (a == '0') {
+		  return b;
+	  } else if (a == '1') {
+		  return '1';
+	  } else {
+		  if (b == '0') {
+			  return a;
+		  } else if (b == '1') {
+			  return '1';
+		  } else {
+			  if (a == b) {
+				return a;
+			  } else {
+				return '(' + a+ '|'+ b +')';
+			  }
+		  }
+	  }
+	  return;
     },
     'andB': function(a,b) {
-      var r;
       if (a == '0') {
-        r[i] = '0';
+        return '0';
       } else if (a == '1') {
-        r[i] = b;
+        return b;
       } else {
         if (b == '0') {
-          r[i] = '0';
+          return '0';
         } else if (b == '1') {
-          r[i] = a;
+          return a;
         } else {
           if (a == b) {
-            r[i] = a;
+            return a;
           } else {
-            r[i] = '(' + a + '&' + b + ')';
+            return '(' + a + '&' + b + ')';
           }
         }
       }
-      return r;
+      return;
     },
     'and': function(k1,k2) {
 	  var vs1, vs2;
@@ -410,6 +597,31 @@ dg = {
 	  }
 	  return r;
     },
+    'notB': function(a) {	  
+	  if (['0','1'].includes(a+'')) {
+		  return (a == '0') ? '1': '0';
+	  } else {
+		  if (a.charAt(0) == '~') {
+			  if (new RegExp('\\^|\&|\\|').test(a)) {
+				return a.substring(1);
+			  } else {
+				return this.trimPrts(a.substring(1));
+			  }
+		  } else {
+			return '~' + a+ '';
+		  }
+	  }
+    },
+	'trimPrts': function(a) {
+		if (a.charAt(0) != '(') {
+			return a;
+		}
+		var r = a.substr(1,a.length-2);
+		if (r.charAt(0) == '(') {
+			r = dg.sh.trimPrts(r);
+		}
+		return r;
+	}
   }
 };
 
@@ -425,10 +637,17 @@ console.log('a= '+a);
 //console.log('b= '+b);
 //console.log('a^b= '+ dg.sh.xor('a','b'));
 //console.log('a&b= '+ dg.sh.and('a','b'));
-console.log('p1 = '+ dg.sh.p0('a'));
+//console.log('p1 = '+ dg.sh.p0('a'));
 //console.log('maj= '+ dg.sh.maj('a','b','c'));
 //console.log('cho= '+ dg.sh.cho('a','b','c'));
+console.log('sum= '+ dg.sh.sum('a','b'));
 //console.log('a>2= '+ dg.sh.ll('a',2));
+//console.log('exB= '+ dg.sh.execc('~(((~a&~a)^(b|(1|a))))'));
+//console.log('rpl= '+ dg.sh.repl(dg.sh.sum('a','b'),{'a64.31':0}));
+//console.log('exc= '+ dg.sh.exec(dg.sh.repl(dg.sh.sum('a','b'),{'a64.31':0})));
+//var d = '(a0&((0&b1)|((0^b1)&(a2&b2))))';
+//console.log('d=     '+ d);
+//console.log('ex(d)= '+ dg.sh.execc(d));
 
 
 //dg.lk.chgSubBs('a',2,c);
@@ -529,22 +748,31 @@ class Sha256debug {
 				dg.lk.addWs('w'+t, dg.dta(W[t]));
 				if (i == 0) {
 					if(t==11) {
-					  var nouncebitsW11 = dg.lk.chgSubBs('w'+ t,8, dg.arCn('w'+t+'.', 8,32));
-					  dg.lk.add('nbW11', nouncebitsW11);
+					  var nouncebitsW11a = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.', 12,4));
+					  dg.lk.add('nbW11a', nouncebitsW11a);
+					  var nouncebitsW11b = dg.lk.chgSubBs('w'+ t,20, dg.arCn('w'+t+'.', 20,4));
+					  dg.lk.add('nbW11b', nouncebitsW11b);
+					  var nouncebitsW11c = dg.lk.chgSubBs('w'+ t,28, dg.arCn('w'+t+'.', 28,4));
+					  dg.lk.add('nbW11c', nouncebitsW11c);
 					} else if(t==12) {
-					  var nouncebitsW12 = dg.lk.chgSubBs('w'+ t,0, dg.arCn('w'+t+'.',0,16));
-					  dg.lk.add('nbW12', nouncebitsW12);
+					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('w'+t+'.',4,4));
+					  dg.lk.add('nbW12a', nouncebitsW12a);
+					  var nouncebitsW12b = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.',12,4));
+					  dg.lk.add('nbW12b', nouncebitsW12b);
 					} else if(t==15) {
-					  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,9));
-					  dg.lk.add('lbW15', lengthBitsW15);
+					  //var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
+					  //dg.lk.add('lbW15', lengthBitsW15);
 					}
 				}
 				dg.add(dg.lk.get('w'+t));
 			}
 			if (i == 0) {
-				dg.add('nbW11='+dg.lk.getWs('nbW11'));
-				dg.add('nbW12='+dg.lk.getWs('nbW12'));
-				dg.add('lbW15='+dg.lk.getWs('lbW15'));
+				dg.add('nbW11a='+dg.lk.getWs('nbW11a'));
+				dg.add('nbW11b='+dg.lk.getWs('nbW11b'));
+				dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
+				dg.add('nbW12a='+dg.lk.getWs('nbW12a'));
+				dg.add('nbW12b='+dg.lk.getWs('nbW12b'));
+				//dg.add('lbW15='+dg.lk.getWs('lbW15'));
 			}
 			//dg.ts = [11,12];
 			
@@ -558,6 +786,18 @@ class Sha256debug {
               }*/
               
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
+			  
+			  if (t <= 1) {
+				  
+				  var r = dg.sh.sum(
+					dg.sh.sum(dg.sh.p1('w'+(t-2)), 'w'+(t-7)),
+					dg.sh.sum(dg.sh.p0('w'+(t-15)), 'w'+(t-16))
+				  );
+				  //console.log(r);
+				  
+				  dg.lk.add('w'+t, r);
+				  
+			  }
 			  
 			  //dg.lk.addWs('w'+t, dg.dta(W[t]));
               
