@@ -96,6 +96,35 @@ dg = {
 	'parent': function () {
 		return dg;
 	},
+	  'sum': function(k1,k2) {
+	    var vs1,vs2;
+	    if(Array.isArray(k1)) {
+	      vs1 = k1;
+	    } else {
+	      vs1 = this.parent().lk.get(k1);
+	    }
+	    if(Array.isArray(k2)) {
+	      vs2 = k2;
+	    } else {
+	      vs2 = this.parent().lk.get(k2);
+	    }
+	    var r=[];
+	    var len = vs1.length;
+	    var res={'sum':0, 'c':0};
+	    
+	    for(var i=len; i<0; i++) {
+	      res = this.sumB(vs1[i],vs2[i], res.c);
+	    }
+	    return r;
+	  },
+	  'sumB': function(a,b,c) {
+	    var res = {
+	      'sum': this.andB(a,b),
+	      'c':c
+	    };
+	    
+	    return res;
+	  },
     'll': function(k, n) {
       var vs;
 	  if (Array.isArray(k)) {
@@ -266,6 +295,30 @@ dg = {
 		  }
 	  }
 	  return r;
+    },
+    'xorB': function(a,b) {
+      
+    },
+    'andB': function(a,b) {
+      var r;
+      if (a == '0') {
+        r[i] = '0';
+      } else if (a == '1') {
+        r[i] = b;
+      } else {
+        if (b == '0') {
+          r[i] = '0';
+        } else if (b == '1') {
+          r[i] = a;
+        } else {
+          if (a == b) {
+            r[i] = a;
+          } else {
+            r[i] = '(' + a + '&' + b + ')';
+          }
+        }
+      }
+      return r;
     },
     'and': function(k1,k2) {
 	  var vs1, vs2;
