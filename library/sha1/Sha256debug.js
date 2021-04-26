@@ -474,25 +474,39 @@ class Sha256debug {
 				bn = j.join(' ');
 				dg.add('W['+(t+'').padStart(2)+']= ' + bn);
 				dg.lk.addWs('w'+t, dg.dta(W[t]));
-				if(t==11) {
-				  dg.lk.chgSubBs('w'+ t,8, dg.arCn('w'+t+'.', 8,32));
-				} else if(t==12) {
-				  dg.lk.chgSubBs('w'+ t,0, dg.arCn('w'+t+'.',0,16));
-				  //console.log(dg.lk.get('w'+t));
+				if (i == 0) {
+					if(t==11) {
+					  var nouncebitsW11 = dg.lk.chgSubBs('w'+ t,8, dg.arCn('w'+t+'.', 8,32));
+					  dg.lk.add('nbW11', nouncebitsW11);
+					} else if(t==12) {
+					  var nouncebitsW12 = dg.lk.chgSubBs('w'+ t,0, dg.arCn('w'+t+'.',0,16));
+					  dg.lk.add('nbW12', nouncebitsW12);
+					} else if(t==15) {
+					  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,9));
+					  dg.lk.add('lbW15', lengthBitsW15);
+					}
 				}
 				dg.add(dg.lk.get('w'+t));
 			}
-			dg.ts = [11,12];
+			if (i == 0) {
+				dg.add('nbW11='+dg.lk.getWs('nbW11'));
+				dg.add('nbW12='+dg.lk.getWs('nbW12'));
+				dg.add('lbW15='+dg.lk.getWs('lbW15'));
+			}
+			//dg.ts = [11,12];
 			
             for (let t=16; t<64; t++) {
-              dg.tslist = [t-2, t-7, t-15, t-16];
+              //dg.tslist = [t-2, t-7, t-15, t-16];
               
+			  /*
               if(dg.intx(dg.tslist, dg.ts)) {
                 dg.add('new t('+t+') usedNow:' + dg.tslist + ' list:'+dg.ts);
                 dg.ts[dg.ts.length] = t;
-              }
+              }*/
               
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
+			  
+			  //dg.lk.addWs('w'+t, dg.dta(W[t]));
               
               
 				/*
@@ -506,7 +520,7 @@ class Sha256debug {
 				*/
             }
             
-            dg.add('t='+ dg.ts.join(','));
+            //dg.add('t='+ dg.ts.join(','));
 
             // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
             let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
