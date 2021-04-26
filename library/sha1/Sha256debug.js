@@ -88,6 +88,20 @@ dg = {
       this.add(k, vs);
       return vss;
     }
+  },
+  'sh':{
+    'rr': function(k, n) {
+      
+    },
+    'rotr': function(k,n) {
+      
+    },
+    'cho': function(k1,k2,k3) {
+      
+    },
+    'maj': function(k1,k2,k3) {
+      
+    }
   }
 };
 
