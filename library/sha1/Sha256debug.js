@@ -288,10 +288,10 @@ dg = {
 				sumResult = vs[ik];
 				continue;
 			}
-			if(this.hasVar(sumResult) && this.hasVar(vs[ik])) {
-				this.addSum(sumName,vs[ik]);
+			if(this.hasVar(sumResult) || this.hasVar(vs[ik])) {
+				this.parent().lk.addSum(sumName,vs[ik]);
 			} else {
-				sumResult = this.sum(sumResult,vs[ik]);
+				sumResult = this.sum(sumResult, vs[ik]);
 			}
 		}
 		this.parent().lk.addSum(sumName,sumResult);
