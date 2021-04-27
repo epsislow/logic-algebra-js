@@ -48,10 +48,16 @@ dg = {
 		return dg;
 	},
 	  'addSum': function(k,w) {
+		var vw = w;
+	  
+	    if (!Array.isArray(w)) {
+  	      vw = this.get(w);
+	    }
+	  
 	    if(!this.sums[k]) {
 	      this.sums[k] = [];
 	    }
-	    this.sums[k].push(w);
+	    this.sums[k].push(vw);
 	    return this;
 	  },
 	  'getSum': function(k) {
@@ -246,6 +252,50 @@ dg = {
 	  }
 	  
 	  return stack[0][0];
+	},
+	'hasVar': function(k1) {
+		var vs;
+	    if(Array.isArray(k1)) {
+	      vs = k1;
+	    } else {
+	      vs = this.parent().lk.get(k1);
+	    }
+		
+	    for(var i in vs) {
+			if (!['0','1'].includes(vs[i]+'')) {
+				return true;
+			}
+	    }
+	    return false;
+	},
+	'sumch': function (sumName, ks) {
+		var vslen = ks.length;
+		var vs = [];
+		
+		for (var ik in ks) {
+			if(Array.isArray(ks[ik])) {
+			  vs[ik] = ks[ik];
+			} else {
+			  vs[ik] = this.parent().lk.get(ks[ik]);
+			}
+		}
+
+		var sumResult = false;
+		var i = 0;
+		for (var ik in ks) {
+			i++;
+			if (i==1) {
+				sumResult = vs[ik];
+				continue;
+			}
+			if(this.hasVar(sumResult) && this.hasVar(vs[ik])) {
+				this.addSum(sumName,vs[ik]);
+			} else {
+				sumResult = this.sum(sumResult,vs[ik]);
+			}
+		}
+		this.parent().lk.addSum(sumName,sumResult);
+		return true;
 	},
 	'sum': function(k1,k2) {
 	    var vs1,vs2;
@@ -775,6 +825,7 @@ class Sha256debug {
 					  //dg.lk.add('lbW15', lengthBitsW15);
 					}
 				}
+				dg.lk.addSum('w'+t, dg.lk.get('w'+ t));
 				dg.add(dg.lk.get('w'+t));
 			}
 			if (i == 0) {
@@ -787,6 +838,8 @@ class Sha256debug {
 			}
 			//dg.ts = [11,12];
 			
+			var dgsum = false;
+			
             for (let t=16; t<64; t++) {
               //dg.tslist = [t-2, t-7, t-15, t-16];
               
@@ -798,19 +851,29 @@ class Sha256debug {
               
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
 			  
-			  if (t <= 64) {
-				  
-					dg.lk
-					 .addSum('w'+t, dg.sh.p1('w'+(t-2)))
-					 .addSum('w'+t, 'w'+(t-7))
-					 .addSum('w'+t, dg.sh.p0('w'+(t-15)))
-					 .addSum('w'+t, 'w'+(t-16))
+			  if (t < 0) {
+				  //dg.lk.addWs('w'+t,  );
+				  /*
+				  dg.sh.sumch('w'+t, [
+						dg.sh.p1('w'+(t-2)),
+						'w'+(t-7),
+						dg.sh.p0('w'+(t-15)),
+						'w'+(t-16)
+				  ]);
+				  */
+
+					//dg.lk
+					 //.addSum('w'+t, dg.sh.p1('w'+(t-2)) )
+					 //.addSum('w'+t, 'w'+(t-7) )
+					 //.addSum('w'+t,  )
+					 //.addSum('w'+t,  )
 		  		;
 			  }
 			  
 			  if (t == 16) {
 			 // 	dg.add('sum:W'+t+":\n"+dg.lk.getSum('w'+t).join("\n"));
 			  }
+//dg.lk.getSum('w'+20)
 			  
 			  //dg.lk.addWs('w'+t, dg.dta(W[t]));
               
