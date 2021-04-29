@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
+
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+      
+    
+
+<style>
+
+.tree li {
+    list-style-type:none;
+    margin:0;
+    padding:10px 2px 0 2px;
+    position:relative;
+    font-size:12px;
+    line-height: 15px;
+}
+.tree li::before, 
+.tree li::after {
+    content:'';
+    left:-20px;
+    position:absolute;
+    right:auto
+}
+.tree li::before {
+    border-left:2px solid #000;
+    bottom:50px;
+    height:100%;
+    top:0;
+    width:1px
+}
+.tree li::after {
+    border-top:2px solid #000;
+    height:10px;
+    top:20px;
+    width:23px
+}
+.tree li span {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border:2px solid #000;
+    border-radius:3px;
+    display:inline-block;
+    padding:4px 2px;
+    text-decoration:none;
+    cursor:pointer;
+    background-color: #ddd;
+}
+.tree>ul>li::before,
+.tree>ul>li::after {
+    border:0
+}
+.tree li:last-child::before {
+    height:20px
+}
+.tree li span:hover {
+    background: hotpink;
+    border:2px solid #94a0b4;
+    }
+
+
+[aria-expanded="false"] > .expanded,
+[aria-expanded="true"] > .collapsed {
+  display: none;
+}
+
+</style>
+</head>
+
+<body class="bg-dark">
+
+<div class="tree">
+<ul>
+
+<li><span><a style="color:#000; text-decoration:none;" data-toggle="collapse" href="#Web" aria-expanded="true" aria-controls="Web"><i class="collapsed"><i class="fas fa-folder"></i></i>
+<i class="expanded"><i class="far fa-folder-open"></i></i> Web</a></span>
+<div id="Web" class="collapse show">
+<ul>
+ <li><span><i class="far fa-file"></i><a href="#!"> Link 1</a></span></li>
+ <li><span><a style="color:#000; text-decoration:none;" data-toggle="collapse" href="#page1" aria-expanded="false" aria-controls="page1"><i class="collapsed"><i class="fas fa-folder"></i></i>
+<i class="expanded"><i class="far fa-folder-open"></i></i> Page 1</a></span>
+   <ul><div id="page1" class="collapse">
+     <li><span><i class="far fa-file"></i><a href="#!"> Link 1</a></span></li>
+     <li><span><i class="far fa-file"></i><a href="#!"> Link 2</a></span></li>
+     <li><span><i class="far fa-file"></i><a href="#!"> Link 3</a></span></li>
+     <li><span><i class="far fa-file"></i><a href="#!"> Link 4</a></span></li></div>
+   </ul>
+ </li>
+
+
+<li><span><a style="color:#000; text-decoration:none;" data-toggle="collapse" href="#Page2" aria-expanded="false" aria-controls="Page2"><i class="collapsed"><i class="fas fa-folder"></i></i>
+<i class="expanded"><i class="far fa-folder-open"></i></i> Page 2</a></span>
+  <ul><div id="Page2" class="collapse">
+    <li><span><a style="color:#000; text-decoration:none;" data-toggle="collapse" href="#folder1" aria-expanded="false" aria-controls="folder1"><i class="collapsed"><i class="fas fa-folder"></i></i>
+<i class="expanded"><i class="far fa-folder-open"></i></i> Folder 1</a></span>
+       <ul><div id="folder1" class="collapse">
+         <li><span><i class="far fa-file"></i><a href="#!"> Link 1</a></span></li>
+         <li><span><i class="far fa-file"></i><a href="#!"> Link 2</a></span></li>
+         <li><span><i class="far fa-file"></i><a href="#!"> Link 3</a></span> <a href="#!">& More Link</a></li></div>
+       </ul>
+      </li>
+
+      <li><span><a style="color:#000; text-decoration:none;" data-toggle="collapse" href="#folder2" aria-expanded="false" aria-controls="folder2"><i class="collapsed"><i class="fas fa-folder"></i></i>
+<i class="expanded"><i class="far fa-folder-open"></i></i> Folder 2</a></span>
+       <ul><div id="folder2" class="collapse">
+        <li><span><i class="far fa-file"></i><a href="#!"> Link 1</a></span></li>
+        <li><span><i class="far fa-file"></i><a href="#!"> Link 2</a></span></li>
+        <li><span><i class="far fa-file"></i><a href="#!"> Link 3</a></span> <a href="#!">& More Link</a></li></div>
+       </ul>
+      </li>
+                        
+     <li><span><a style="color:#000; text-decoration:none;" data-toggle="collapse" href="#folder3" aria-expanded="false" aria-controls="folder3"><i class="collapsed"><i class="fas fa-folder"></i></i>
+<i class="expanded"><i class="far fa-folder-open"></i></i> Folder 3</a></span>
+       <ul><div id="folder3" class="collapse">
+        <li><span><i class="far fa-file"></i><a href="#!"> Link</a></span> <a href="#!">& More Link</a></li></div>
+       </ul>
+     </li>
+     
+    <li><span><i class="far fa-file"></i><a href="#!"> Link</a></span></li>    
+     
+     </div>
+  </ul>
+</li>
+
+
+ <li><span><i class="far fa-file"></i><a href="#!"> Link 2</a></span></li>
+
+
+
+</ul>
+</div>
+</li>
+</ul>
+
+</div>
+
+</body>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+
+</html>

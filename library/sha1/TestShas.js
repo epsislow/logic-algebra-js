@@ -4,7 +4,6 @@
  */
 
 ///////////// sha256 test ///////
-
 var testn = 12390;
 
 var text = "abcdef01234567890ABCDEF+×÷=/_!@#$%^&*():;.,";
@@ -154,7 +153,37 @@ $('#startstop').click(function() {
     clearInterval(spdintv);
     $('#startstop').text('start');
   }
+});
+
+var activeNav = 'nav1-cnt';
+var activeNavBtn = 'nav1';
+
+function showNav(id, btn) {
+  if(activeNav == id ) {
+    return false;
+  }
+  
+  $('#'+ activeNav).addClass('hide');
+  $('#'+ activeNavBtn).addClass('bg-dark');
+  $('#'+ id).removeClass('hide');
+  $('#'+ btn).removeClass('bg-dark')
+    .blur();
+  activeNav = id;
+  activeNavBtn = btn;
+}
+
+$('#nav1').click(function () {
+  showNav('nav1-cnt','nav1');
+});
+
+$('#nav2').click(function() {
+  showNav('nav2-cnt','nav2');
 })
+
+$('#nav3').click(function() {
+  showNav('nav3-cnt','nav3');
+});
+
 
 $('#method').click(function () {
 	methodCheck++;
