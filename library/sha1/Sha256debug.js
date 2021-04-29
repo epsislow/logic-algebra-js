@@ -108,6 +108,14 @@ dg = {
       this.add(k, vs);
       return vss;
     },
+    'getNextCavl': function() {
+      return this.cAvl +1;
+    },
+    'genCval': function(k1) {
+      var vs;
+      
+    },
+    'cAvl': 0,
   },
   'sh':{
 	'parent': function () {
@@ -282,6 +290,7 @@ dg = {
 
 		var sumResult = false;
 		var i = 0;
+		var noSum = false;
 		for (var ik in ks) {
 			i++;
 			if (i==1) {
@@ -290,11 +299,20 @@ dg = {
 			}
 			if(this.hasVar(sumResult) || this.hasVar(vs[ik])) {
 				this.parent().lk.addSum(sumName,vs[ik]);
+				noSum = false;
 			} else {
 				sumResult = this.sum(sumResult, vs[ik]);
 			}
 		}
-		this.parent().lk.addSum(sumName,sumResult);
+		if (noSum) {
+		  var ckey = this.parent().lk.getNextCavl();
+		  this.parent().lk.addSum(ckey, sumResult);
+		  sumResult = this.parent().lk.genCval(sumResult);
+		}
+		
+    this.parent().lk.addSum(sumName,sumResult);
+		
+	
 		return true;
 	},
 	'sum': function(k1,k2) {
@@ -821,8 +839,8 @@ class Sha256debug {
 					  var nouncebitsW12b = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.',12,4));
 					  dg.lk.add('nbW12b', nouncebitsW12b);
 					} else if(t==15) {
-					  //var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
-					  //dg.lk.add('lbW15', lengthBitsW15);
+					  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
+					  dg.lk.add('lbW15', lengthBitsW15);
 					}
 				}
 				dg.lk.addSum('w'+t, dg.lk.get('w'+ t));
@@ -834,7 +852,7 @@ class Sha256debug {
 				dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
 				dg.add('nbW12a='+dg.lk.getWs('nbW12a'));
 				dg.add('nbW12b='+dg.lk.getWs('nbW12b'));
-				//dg.add('lbW15='+dg.lk.getWs('lbW15'));
+				dg.add('lbW15='+dg.lk.getWs('lbW15'));
 			}
 			//dg.ts = [11,12];
 			
@@ -851,16 +869,18 @@ class Sha256debug {
               
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
 			  
-			  if (t < 0) {
+			  if (t == 16) {
 				  //dg.lk.addWs('w'+t,  );
-				  /*
+				  
 				  dg.sh.sumch('w'+t, [
 						dg.sh.p1('w'+(t-2)),
 						'w'+(t-7),
 						dg.sh.p0('w'+(t-15)),
 						'w'+(t-16)
 				  ]);
-				  */
+				  
+				  
+				  //dg.add()
 
 					//dg.lk
 					 //.addSum('w'+t, dg.sh.p1('w'+(t-2)) )
