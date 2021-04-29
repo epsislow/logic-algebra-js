@@ -109,11 +109,23 @@ dg = {
       return vss;
     },
     'getNextCavl': function() {
-      return this.cAvl +1;
+      this.cAvl++;
+      return 'C' + this.cAvl;
     },
-    'genCval': function(k1) {
-      var vs;
+    'genCvalAll': function(ckey, vslen) {
+      //var vs;
+      //if(Array.isArray(x)) {
+     //   vs = this.get(k1);
+     // }
+      var r =[];
       
+      for(var i=0; i < vslen; i++) {
+     //   if (['0','1'].includes(vs[i]+ '')) {
+    //      r[i] = vs[i];
+    //    } else {
+          r[i] = ckey + ':' + i;
+     //   }
+      }
     },
     'cAvl': 0,
   },
@@ -290,29 +302,36 @@ dg = {
 
 		var sumResult = false;
 		var i = 0;
-		var noSum = false;
+		var moreSum = false;
+		
+		var ckey = this.parent().lk.getNextCavl();
+		
 		for (var ik in ks) {
 			i++;
 			if (i==1) {
 				sumResult = vs[ik];
 				continue;
 			}
+			
 			if(this.hasVar(sumResult) || this.hasVar(vs[ik])) {
-				this.parent().lk.addSum(sumName,vs[ik]);
-				noSum = false;
+				this.parent().lk.addSum(ckey,vs[ik]);
+				moreSum = true;
 			} else {
 				sumResult = this.sum(sumResult, vs[ik]);
 			}
 		}
-		if (noSum) {
-		  var ckey = this.parent().lk.getNextCavl();
+		
+		if (!moreSum) {
+		  this.parent().lk.addSum(sumName, sumResult);
+		  
+		} else {
 		  this.parent().lk.addSum(ckey, sumResult);
-		  sumResult = this.parent().lk.genCval(sumResult);
-		}
+		  
+		  var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
 		
-    this.parent().lk.addSum(sumName,sumResult);
-		
-	
+      dg.lk.addWs(sumName, dg.dta(cVal));
+	  }
+	  
 		return true;
 	},
 	'sum': function(k1,k2) {
@@ -732,7 +751,7 @@ console.log('sum= '+ dg.sh.sum('a','b'));
 //dg.lk.chgSubBs('a',2,c);
 
 
-//console.log('a '+a.join(''));
+//console.log('a '+a.join('')) ;
  
 class Sha256debug {
 
@@ -869,7 +888,7 @@ class Sha256debug {
               
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
 			  
-			  if (t == 16) {
+			  if (t <= 20) {
 				  //dg.lk.addWs('w'+t,  );
 				  
 				  dg.sh.sumch('w'+t, [
@@ -879,18 +898,17 @@ class Sha256debug {
 						'w'+(t-16)
 				  ]);
 				  
-				  
-				  //dg.add()
+				  dg.add('w'+ t + dg.lk.getSum('w'+ t));
 
 					//dg.lk
 					 //.addSum('w'+t, dg.sh.p1('w'+(t-2)) )
 					 //.addSum('w'+t, 'w'+(t-7) )
 					 //.addSum('w'+t,  )
 					 //.addSum('w'+t,  )
-		  		;
+		  		//;
 			  }
 			  
-			  if (t == 16) {
+			  if (t <= 20) {
 			 // 	dg.add('sum:W'+t+":\n"+dg.lk.getSum('w'+t).join("\n"));
 			  }
 //dg.lk.getSum('w'+20)
