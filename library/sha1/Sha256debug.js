@@ -60,9 +60,13 @@ dg = {
 	    this.sums[k].push(vw);
 	    return this;
 	  },
+	  'delSum': function(k) {
+        delete this.sums[k];
+      },
 	  'getSum': function(k) {
 	    return this.sums[k];
 	  },
+
     'del': function(k) {
       delete this.m[k];
     },
@@ -126,6 +130,7 @@ dg = {
           r[i] = ckey + ':' + i;
      //   }
       }
+	  return r;
     },
     'cAvl': 0,
   },
@@ -324,13 +329,15 @@ dg = {
 		if (!moreSum) {
 		  this.parent().lk.addSum(sumName, sumResult);
 		  
+		  dg.lk.add(sumName, sumResult);
 		} else {
 		  this.parent().lk.addSum(ckey, sumResult);
 		  
 		  var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
-		
-      dg.lk.addWs(sumName, dg.dta(cVal));
-	  }
+
+          dg.lk.add(sumName, cVal);
+		  
+	    }
 	  
 		return true;
 	},
@@ -722,7 +729,7 @@ dg = {
 	}
   }
 };
-
+/*
 dg.lk.addWs('a', dg.dta(51));
 dg.lk.addWs('b', dg.dta(87));
 dg.lk.addWs('c', dg.dta(3));
@@ -746,6 +753,7 @@ console.log('sum= '+ dg.sh.sum('a','b'));
 //var d = '(a0&((0&b1)|((0^b1)&(a2&b2))))';
 //console.log('d=     '+ d);
 //console.log('ex(d)= '+ dg.sh.execc(d));
+*/
 
 
 //dg.lk.chgSubBs('a',2,c);
@@ -793,10 +801,22 @@ class Sha256debug {
             0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
             0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2 ];
 
+			for (let t=0; t<64; t++) {
+				var bn=(K[t] >>> 0)
+				   .toString(2)
+				   .padStart(32,'0');
+				   
+				var j = bn.match(/.{1,8}/g);
+				bn = j.join(' ');
+				dg.add('k['+(t+'').padStart(2)+']= ' + bn);
+				dg.lk.addWs('k'+t, dg.dta(K[t]));
+			}
+			
         // initial hash value [§5.3.3]
         const H = [
             0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19 ];
 
+			
         // PREPROCESSING [§6.2.1]
 
         msg += String.fromCharCode(0x80);  // add trailing '1' bit (+ 0's padding) to string [§5.1.1]
@@ -878,17 +898,10 @@ class Sha256debug {
 			var dgsum = false;
 			
             for (let t=16; t<64; t++) {
-              //dg.tslist = [t-2, t-7, t-15, t-16];
-              
-			  /*
-              if(dg.intx(dg.tslist, dg.ts)) {
-                dg.add('new t('+t+') usedNow:' + dg.tslist + ' list:'+dg.ts);
-                dg.ts[dg.ts.length] = t;
-              }*/
-              
+				
               W[t] = (Sha256.σ1(W[t-2]) + W[t-7] + Sha256.σ0(W[t-15]) + W[t-16]) >>> 0;
 			  
-			  if (t <= 20) {
+			  if (t <= 64) {
 				  //dg.lk.addWs('w'+t,  );
 				  
 				  dg.sh.sumch('w'+t, [
@@ -898,23 +911,9 @@ class Sha256debug {
 						'w'+(t-16)
 				  ]);
 				  
-				  dg.add('w'+ t + dg.lk.getSum('w'+ t));
-
-					//dg.lk
-					 //.addSum('w'+t, dg.sh.p1('w'+(t-2)) )
-					 //.addSum('w'+t, 'w'+(t-7) )
-					 //.addSum('w'+t,  )
-					 //.addSum('w'+t,  )
-		  		//;
+				  dg.add("\n" + 'w'+ t + ' ' + dg.lk.get('w'+ t));
 			  }
 			  
-			  if (t <= 20) {
-			 // 	dg.add('sum:W'+t+":\n"+dg.lk.getSum('w'+t).join("\n"));
-			  }
-//dg.lk.getSum('w'+20)
-			  
-			  //dg.lk.addWs('w'+t, dg.dta(W[t]));
-              
               
 				/*
 				if (t == 33) {
@@ -931,11 +930,54 @@ class Sha256debug {
 
             // 2 - initialise working variables a, b, c, d, e, f, g, h with previous hash value
             let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+			
+
+			let stchar = ('a').charCodeAt(0);
+			var stch;
+			
+			for (let t=0; t<8; t++) {
+				stch = String.fromCharCode(stchar + t);
+				var bn=(H[t] >>> 0)
+				   .toString(2)
+				   .padStart(32,'0');
+				   
+				var j = bn.match(/.{1,8}/g);
+				bn = j.join(' ');
+				dg.lk.addWs('H'+t, dg.dta(H[t]));
+				
+				
+				dg.lk.addWs(stch, dg.dta(H[t]));
+				
+				dg.add('H['+t+']= ' + bn);
+				
+				dg.add("\n" + stch + '= ' + dg.lk.get(stch));
+			}
+				
 
             // 3 - main loop (note '>>> 0' for 'addition modulo 2^32')
             for (let t=0; t<64; t++) {
                 const T1 = h + Sha256.Σ1(e) + Sha256.Ch(e, f, g) + K[t] + W[t];
                 const T2 =     Sha256.Σ0(a) + Sha256.Maj(a, b, c);
+				
+				dg.lk.delSum('T1');
+				dg.lk.delSum('T2');
+				
+				dg.sh.sumch('T1', [
+					'h',
+					dg.sh.s1('e'),
+					dg.sh.cho('e','f','g'),
+					'k'+t,
+					'w'+t
+				]);
+				
+				//dg.add("\n" + 'T1('+t+') ' + dg.lk.get('T1'));
+				
+				dg.sh.sumch('T2', [
+					dg.sh.s1('a'),
+					dg.sh.maj('a','b','c'),
+				]);
+				  
+				//dg.add("\n" + 'T2('+t+') ' + dg.lk.get('T2'));
 				
                 h = g;
                 g = f;
@@ -945,6 +987,20 @@ class Sha256debug {
                 c = b;
                 b = a;
                 a = (T1 + T2) >>> 0;
+
+				
+				dg.lk.add('h', dg.lk.get('g'));
+				dg.lk.add('g', dg.lk.get('f'));
+				dg.lk.add('f', dg.lk.get('e'));
+				
+				dg.sh.sumch('e', ['d', 'T1']);
+				
+				dg.lk.add('d', dg.lk.get('c'));
+				dg.lk.add('c', dg.lk.get('b'));
+				dg.lk.add('b', dg.lk.get('a'));
+				
+				dg.sh.sumch('a', ['T1', 'T2']);
+				
 				
 				if (t == -1) {
 					//console.log(' T1=' + (T1 >>> 0).toString(16));
@@ -988,6 +1044,13 @@ class Sha256debug {
             H[5] = (H[5]+f) >>> 0;
             H[6] = (H[6]+g) >>> 0;
             H[7] = (H[7]+h) >>> 0;
+			
+			for (let t=0; t<8; t++) {
+				stch = String.fromCharCode(stchar + t);
+				dg.sh.sumch('R'+t, [stch, 'H'+t]);
+			
+				dg.add("\n" + 'R'+t+'('+stch+') = ' + dg.lk.get('R'+t));
+			}
         }
 
         // convert H0..H7 to hex strings (with leading zeros)
