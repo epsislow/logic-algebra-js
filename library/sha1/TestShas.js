@@ -346,14 +346,21 @@ function loadMemValuesOf(key, el) {
   var i = 0;
   for (var k in vs) {
     if( i % 4 ==0) {
-     tr = $('<tr>').addClass('content-of-' + key);
-     if( i %8 == 0) {
+     tr = $('<tr>').addClass('content-of-' + key).addClass('values');
+     if( i % 8 == 0) {
        tr.addClass('content-even');
      }
     }
+    
+    var cls='';
+    if(['0','1'].includes(vs[i] + '')) {
+      cls = 'bool';
+    } else {
+      cls = 'sumKey';
+    }
     td=
       $('<td>')
-      .addClass('bool')
+      .addClass(cls)
    //   .append(
   //      $('<i>')
  //       .addClass('fas')
