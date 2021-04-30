@@ -19,6 +19,14 @@
       .bg-black {
         background-color: #000;
       }
+      
+      #mem .table .title {
+        text-align: center;
+        font-size:14px
+      }
+      #inmem .table tr:nth-child(even) {
+        background-color: #000;
+      }
     </style>
 </head>
 
@@ -55,24 +63,12 @@
   </div>
          
   <div class="my-3 p-3 rounded box-shadow bg-black hide" id="nav3-cnt">
-		       <div id="mem">
-		         mem
+		       <div id="sum">
+		         sum
 		       </div>
-		       <div id="val">
+		       <div id="mem">
 		         <table class="table table-striped table-dark" style="font-size:10px">
 		           <thead>
-		             <tr>
-		              <th scope="col" colspan="4" style="text-align: center; font-size:14px">
-		  <i class="fas fa-plus-square"></i> 
-		                Values of C344
-		                </th>
-                 </tr>
-                 <tr>
-                       <th scope="col" colspan="4" style="text-align: center; font-size:14px">
-                         <i class="fas fa-minus-square"></i>
-                         Values of C344
-                       </th>
-                     </tr>
 		           </thead>
 		           <tbody>
 		             <tr>

@@ -248,6 +248,90 @@ setDifc(4);
 
 loadLastCache(1);
 
+cmp = function(a, b) {
+  var s1 = a.replaceAll(/\d+/g, '');
+  var d1 = a.replace(/^\D+/g, '');
+  var s2 = b.replaceAll(/\d+/g, '');
+  var d2 = b.replaceAll(/^\D+/g, '');
+
+ // var d = 0;
+ // if ([a, b].includes('nbW11a')) {
+   // d = 1;
+  //}
+  if (s1.localeCompare(s2) == 0) {
+  //  if (d) { console.log(a + 'a ' + b + 'b ' + s1 + '=' + s2, d1, d2) }
+    return (parseInt(d1) - parseInt(d2) < 0) ? -1 : 1;
+  } else {
+  //  if (d) {   console.log(a + 'a ' + b + 'b ' + s2 + (s2 < s1 ? '<' : '>') + s1);  }
+    return s1.localeCompare(s2);
+  }
+};
+
+function loadFromMem() {
+  var contr = $('#mem table thead');
+  var trs = [];
+  
+  var keys = Object.keys(dg.lk.m)
+    .sort(cmp);
+  
+  for (var k in keys) {
+    var tr = $('<tr>').append(
+      $('<th>')
+    .addClass('title')
+    .attr('colspan', 4)
+    .append(
+      $('<i>')
+      .addClass('fas')
+      .addClass('fa-plus-square')
+      )
+    .append(' Values of '+ keys[k])
+    );
+    
+    trs.push(tr);
+  }
+  contr.append(trs);
+}
+
+var activeMemEl= false;
+
+function initMemEvents() {
+  $('#mem .title').click(function(event) {
+    var thisMemEl = $(this);
+    var same = false;
+    if(thisMemEl.is(activeMemEl)) {
+      same = true;
+    }
+    if(activeMemEl) {
+      closeMemEl(activeMemEl);
+      activeMemEl = false;
+      if (same) {
+        return;
+      }
+    }
+    if(thisMemEl != activeMemEl) {
+      activeMemEl = $(this);
+      openMemEl(activeMemEl);
+    }
+  });
+}
+
+function closeMemEl(el) {
+  el.find('.fas')
+  .removeClass('fa-minus-square')
+  .addClass('fa-plus-square');
+}
+
+function openMemEl(el) {
+  el.find('.fas')
+  .removeClass('fa-plus-square')
+  .addClass('fa-minus-square');
+}
+
+$(document).ready(function () {
+loadFromMem();
+initMemEvents();
+});
+
 //1368 for 2
 //1588
 //2692
