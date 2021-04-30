@@ -316,7 +316,45 @@ function initMemEvents() {
   });
 }
 
+function openSumEl(el) {
+    el.addClass('active');
+    el.find('.fas')
+      .removeClass('fa-caret-right')
+      .addClass('fa-caret-down');
+}
+
+function closeSumEl(el) {
+  el.removeClass('active');
+  el.find('.fas')
+    .removeClass('fa-caret-down')
+    .addClass('fa-caret-right');
+}
+
+var activeSumEl = false;
+
+function initSumEvents() {
+  $('#mem td.sumKey').click(function() {
+        var thisSumEl = $(this);
+        var same = false;
+        if (thisSumEl.is(activeSumEl)) {
+          same = true;
+        }
+        if (activeSumEl) {
+          closeSumEl(activeSumEl);
+          activeSumEl = false;
+          if (same) {
+            return;
+          }
+        }
+        if (thisSumEl != activeSumEl) {
+          activeSumEl = $(this);
+          openSumEl(activeSumEl);
+        }
+  });
+}
+
 function closeMemEl(el) {
+  el.removeClass('active');
   el.find('.fas')
   .removeClass('fa-minus-square')
   .addClass('fa-plus-square');
@@ -325,11 +363,14 @@ function closeMemEl(el) {
 }
 
 function openMemEl(el) {
+  el.addClass('active');
   el.find('.fas')
   .removeClass('fa-plus-square')
   .addClass('fa-minus-square');
   
   loadMemValuesOf(el.find('.title').attr('data-value'),el);
+  
+  initSumEvents();
 }
 
 function unloadMemValuesOf(key, el) {
@@ -354,20 +395,30 @@ function loadMemValuesOf(key, el) {
     
     var cls='';
     if(['0','1'].includes(vs[i] + '')) {
-      cls = 'bool';
+      cls = (vs[i]+''=='1')?'one':'zero';
+      
     } else {
       cls = 'sumKey';
     }
     td=
       $('<td>')
-      .addClass(cls)
-   //   .append(
-  //      $('<i>')
- //       .addClass('fas')
- //       .addClass('fa-plus-square')
- //     )
-      .append(vs[k])
-      .attr('data-value', vs[k]);
+        .addClass(cls);
+      if(cls=='sumKey') {
+        td.append(
+           $('<i>')
+          .addClass('fas')
+          .addClass('fa-caret-right')
+        ).append(' '+ vs[i]);
+      } else {
+        td.append(
+          $('<i>')
+          .addClass('fas')
+          .addClass(vs[i]+''=='1'?'fa-dot-circle': 'fa-circle-notch')
+          )
+          .append(' '+ k);
+      }
+      
+    td.attr('data-value', vs[k]);
     
     tr.append(td);
   
