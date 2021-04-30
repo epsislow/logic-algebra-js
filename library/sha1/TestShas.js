@@ -285,6 +285,7 @@ function loadFromMem() {
       .addClass('fa-plus-square')
       )
     .append(' Values of '+ keys[k])
+    .attr('data-value', keys[k])
     );
     
     trs.push(tr);
@@ -295,7 +296,7 @@ function loadFromMem() {
 var activeMemEl= false;
 
 function initMemEvents() {
-  $('#mem .title').click(function(event) {
+  $('#mem tr').click(function(event) {
     var thisMemEl = $(this);
     var same = false;
     if(thisMemEl.is(activeMemEl)) {
@@ -319,17 +320,61 @@ function closeMemEl(el) {
   el.find('.fas')
   .removeClass('fa-minus-square')
   .addClass('fa-plus-square');
+  
+  unloadMemValuesOf(el.find('.title').attr('data-value'), el);
 }
 
 function openMemEl(el) {
   el.find('.fas')
   .removeClass('fa-plus-square')
   .addClass('fa-minus-square');
+  
+  loadMemValuesOf(el.find('.title').attr('data-value'),el);
+}
+
+function unloadMemValuesOf(key, el) {
+  el.parent()
+   .find('.content-of-' + key)
+   .remove();
+}
+
+function loadMemValuesOf(key, el) {
+  var trs = [];
+  var vs = dg.lk.get(key);
+  
+  var tr,td;
+  var i = 0;
+  for (var k in vs) {
+    if( i % 4 ==0) {
+     tr = $('<tr>').addClass('content-of-' + key);
+     if( i %8 == 0) {
+       tr.addClass('content-even');
+     }
+    }
+    td=
+      $('<td>')
+      .addClass('bool')
+   //   .append(
+  //      $('<i>')
+ //       .addClass('fas')
+ //       .addClass('fa-plus-square')
+ //     )
+      .append(vs[k])
+      .attr('data-value', vs[k]);
+    
+    tr.append(td);
+  
+    trs.push(tr);
+    i++;
+  }
+  
+  el.after(trs);
+ // console.log(key);
 }
 
 $(document).ready(function () {
-loadFromMem();
-initMemEvents();
+  loadFromMem();
+  initMemEvents();
 });
 
 //1368 for 2
