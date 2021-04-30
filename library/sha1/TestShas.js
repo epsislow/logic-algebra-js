@@ -321,19 +321,161 @@ function openSumEl(el) {
     el.find('.fas')
       .removeClass('fa-caret-right')
       .addClass('fa-caret-down');
+      
+  loadSumValuesOf(el.attr('data-sum-value'));
 }
+
+var sumKey;
+var sumKeyVss;
+
+function loadSumValuesOf(sumKeyBit) {
+  var el= $('#sum-sel tbody');
+  sumKey = sumKeyBit.substr(0, sumKeyBit.indexOf(':'));
+  
+  var elTh = $('#sum-sel thead tr');
+  
+  elTh.append( $('<td>')
+       .attr('colspan',6)
+       .addClass('sumKey')
+       .append( $('<i>')
+          .addClass('fas')
+          .addClass('fa-stream')
+       )
+       .append(' ' + sumKey)
+    );
+    
+  var trs = [];
+  var tds = [];
+  sumKeyVss = dg.lk.getSum(sumKey);
+  
+  var tr, td;
+  var len= 0;
+  if(Array.isArray(sumKeyVss)) {
+    len = sumKeyVss.length;
+  }
+  
+  if (!len) {
+    return;
+  }
+  var trindex = $('<tr>')
+    .addClass('index');
+  
+  for (var i=0; i< len; i++) {
+    trindex
+      .append($('<td>')
+      .append($('<i>')
+        .addClass('fas')
+        .addClass('fa-minus-square')
+      )
+      .append(' '+ i)
+    );
+  }
+  
+  el.append(trindex);
+  
+  openSums(0);
+}
+
+function openSums(index) {
+  var trs = [];
+  var tds = [];
+  var tr, td;
+  var el = $('#sum-sel .index');
+  var vs = sumKeyVss[index];
+  var cls;
+  var exprToShow;
+  for(var k in vs) {
+    tr = $('<tr>');
+    for(var i in sumKeyVss) {
+
+    if(['0','1'].includes(sumKeyVss[i][k] + '')) {
+      cls = (sumKeyVss[i][k]+''=='1')?'one':'zero';
+    
+      exprToShow = $('<span>')
+        .append(
+          $('<i>')
+          .addClass('fas')
+          .addClass(sumKeyVss[i][k] + '' == '1' ? 'fa-dot-circle' : 'fa-circle-notch')
+        )
+        .append(' ' + k);
+      
+    } else {
+      cls = 'expr';
+      exprToShow = processSumExpr(sumKeyVss[i][k]);
+    }
+    
+    tr.append($('<td>')
+        .addClass(cls)
+        .append(exprToShow)
+    );
+    trs.push(tr);
+    }
+  }
+  el.after(trs);
+  
+  initSumEvents();
+}
+
+function processSumExpr(expr) {
+  if (['1','0'].includes(expr)) {
+    return expr;
+  }
+  var show;
+  
+  var matches= expr.match(/(C[^\&\\|\\^\\~\\)\\(]+)/g);
+  
+  var showm=[];
+  var sKey;
+  var i=0;
+  for(var m in matches) {
+    showm[m] = matches[m].substr(0, matches[m].indexOf(':'));
+    
+    expr = expr.replaceAll(matches[m],'C');
+    i++;
+  }
+  var pos = -1;
+  var i =0;
+  show = $('<span>');
+  while((npos = expr.indexOf('C', pos+1)) > -1) {
+    var txt =
+       expr.substr(pos +1, npos-pos-1);
+    
+    show
+    .append(txt)
+    .append($('<span>')
+      .append(matches[i])
+      .addClass('inline-sum')
+      .attr('data-sum-value', matches[i])
+    );
+    
+    pos = npos;
+    i++;
+  }
+  
+  show.append(expr.substr(pos+1));
+  return show;
+}
+
+function unloadSumValuesOf(sumKey) {
+  $('#sum-sel .sumKey').remove();
+  var el= $('#sum-sel tbody');
+  el.empty();
+}
+
 
 function closeSumEl(el) {
   el.removeClass('active');
   el.find('.fas')
     .removeClass('fa-caret-down')
     .addClass('fa-caret-right');
+    
+  unloadSumValuesOf(el.attr('data-sum-value'), el);
 }
 
 var activeSumEl = false;
 
 function initSumEvents() {
-  $('#mem td.sumKey').click(function() {
+  $('#mem td.sumKey, #sum-sel .inline-sum').click(function() {
         var thisSumEl = $(this);
         var same = false;
         if (thisSumEl.is(activeSumEl)) {
@@ -348,7 +490,16 @@ function initSumEvents() {
         }
         if (thisSumEl != activeSumEl) {
           activeSumEl = $(this);
-          openSumEl(activeSumEl);
+          var sKeyBit = activeSumEl.attr('data-sum-value');
+          
+          var sKey = sKeyBit.substr(0, sKeyBit.indexOf(':'));
+          
+          if (sKeyBit.charAt(0) == 'C') {
+            openSumEl(activeSumEl);
+          } else {
+           var el = $('#mem tr [data-value="'+sKey+'"]');
+           el.click();
+          }
         }
   });
 }
@@ -408,7 +559,8 @@ function loadMemValuesOf(key, el) {
            $('<i>')
           .addClass('fas')
           .addClass('fa-caret-right')
-        ).append(' '+ vs[i]);
+        ).append(' '+ vs[i])
+        .attr('data-sum-value', vs[i]);
       } else {
         td.append(
           $('<i>')

@@ -54,14 +54,31 @@
         color: #aaf;
       }
       
-      #mem .one {
+      #mem .sumKey i{
+        width: 5px;
+      }
+      
+      #mem .one, #sum-sel .one {
         color: #9f9;
       }
       
-      #mem .zero {
+      #mem .zero, #sum-sel .zero {
         color: #f99;
       }
       
+      #sum-sel .sumKey {
+        text-align: left;
+      }
+      
+      #sum {
+        width: 100%;
+        max-height: 500px;
+        overflow-y: auto;
+      }
+      
+      #sum-sel .inline-sum {
+        color: #aaf;
+      }
     </style>
 </head>
 
@@ -106,17 +123,17 @@
 		         </table>
 		</div>
 		<div id="sum">
-		  <table class="table table-stripped table-dark" style="font-size:18px">
+		  <table class="table table-stripped table-dark" style="font-size:18px" id="sum-sel">
 	  	  <thead>
 	  	    <tr>
-	  	      <td colspan="4">
-	  	        <div class="sel-sums">
+	  	      <td class="eyeslash">
+	  	        <div class="sum-sel">
 	  	          <i class="fas fa-eye-slash"></i>
-	  	          Sums
 	  	        </div>
 	  	      </td>
 	  	    </tr>
 	  	  </thead>
+	  	  <tbody></tbody>
   		</table>
 		 </div>
 	 </div>
