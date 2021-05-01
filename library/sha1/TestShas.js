@@ -512,6 +512,7 @@ function unloadSumValuesOf() {
   $('#sum-sel .sumKey').empty();
   var el= $('#sum-sel tbody');
   el.empty();
+  sumKey = false;
 }
 
 
@@ -577,7 +578,7 @@ function initSumEvents() {
 	  
 	  unloadSumValuesOf();
   
-      loadSumValuesOf(el.attr('data-sum-value'));
+    loadSumValuesOf(el.attr('data-sum-value'));
   })
 }
 
@@ -659,9 +660,35 @@ function loadMemValuesOf(key, el) {
  // console.log(key);
 }
 
+function initActEvents() {
+  $('#act-sum').unbind('click').click(function() {
+    if(!sumKey) {
+      return false;
+    }
+    var csum = sumKey;
+    //lastSumKeyList.push('Csss');
+    dg.lk.delSum('Csss');
+    dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
+    
+    dg.lk.delSum(csum);
+    dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
+   
+    //console.log(dg.lk.getSum('Csss'));
+    
+    unloadSumValuesOf();
+    
+    sumKey = csum;
+
+    loadSumValuesOf(csum+':21');
+   
+    initSumEvents();
+   });
+}
+
 $(document).ready(function () {
   loadFromMem();
   initMemEvents();
+  initActEvents();
 });
 
 //1368 for 2
