@@ -293,7 +293,7 @@ dg = {
 	    }
 	    return false;
 	},
-	'sumch': function (sumName, ks) {
+	'sumch': function (sumName, ks, doit = false) {
 		var vslen = ks.length;
 		var vs = [];
 		
@@ -318,7 +318,7 @@ dg = {
 				continue;
 			}
 			
-			if(this.hasVar(sumResult) || this.hasVar(vs[ik])) {
+			if(!doit && (this.hasVar(sumResult) || this.hasVar(vs[ik]))) {
 				this.parent().lk.addSum(ckey,vs[ik]);
 				moreSum = true;
 			} else {
@@ -753,6 +753,7 @@ console.log('sum= '+ dg.sh.sum('a','b'));
 //var d = '(a0&((0&b1)|((0^b1)&(a2&b2))))';
 //console.log('d=     '+ d);
 //console.log('ex(d)= '+ dg.sh.execc(d));
+dg.sh.sumch('sss', dg.lk.getSum('C4'), 1)
 */
 
 
