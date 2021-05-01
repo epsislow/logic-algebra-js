@@ -172,7 +172,6 @@ dg = {
 	      } else {
 	        r = r.replaceAll(keys[k], '(' + replacers[keys[k]]+ ')');
 	      }
-		  
 		}
 		return r;
 	},

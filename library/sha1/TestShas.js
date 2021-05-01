@@ -678,16 +678,52 @@ function initActEvents() {
     unloadSumValuesOf();
     
     sumKey = csum;
+    lastActSumKey = csum;
+    $('span.actsum').text(lastActSumKey);
 
-    loadSumValuesOf(csum+':21');
+    loadSumValuesOf(csum+':1');
    
     initSumEvents();
    });
    
    $('#act-repl').unbind('click').click(function () {
      
+     replToSum();
+     
    })
 }
+
+var lastActSumKey = false;
+function replToSum() {
+  if (!lastActSumKey) {
+    return false;
+  }
+  var csum = sumKey;
+  var C = dg.lk.genCvalAll(lastActSumKey, 32);
+  var rr = dg.lk.toObj(C, dg.lk.getSum(lastActSumKey)[0]); //always 0
+  var r = [];
+  
+  var sum = dg.lk.getSum(csum);
+  console.log(sum);
+  console.log(rr)
+  
+  for(var i in sum) {
+    r[i] = dg.sh.repl(sum[i], rr, 1);
+  }
+  console.log(r);
+  
+  dg.lk.delSum(csum);
+  
+  for (var i in r) {
+    dg.lk.addSum(csum, r[i]);
+  }
+  
+  unloadSumValuesOf();
+  sumKey=csum;
+  loadSumValuesOf(csum+':1');
+  initSumEvents();
+}
+
 
 $(document).ready(function () {
   loadFromMem();
