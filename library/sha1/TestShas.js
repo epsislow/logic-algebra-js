@@ -330,7 +330,7 @@ var sumKeyVss;
 
 function getSumTitle(sumKey) {
   var current;
-  
+  /*
   curent = $('<td>')
        .attr('colspan',6)
        .addClass('sumKey')
@@ -338,8 +338,41 @@ function getSumTitle(sumKey) {
           .addClass('fas')
           .addClass('fa-stream')
        )
-       .append(' ' + sumKey);
+       .append(' ' + sumKey);*/
+	   
+  curent = $('<span>').append(
+		$('<i>')
+          .addClass('fas')
+          .addClass('fa-stream')
+       ).append(' ' + sumKey);
        
+	var cnt = 0;
+	var lastSkey;
+	var lastSkeyBit;
+	for (var i = lastSumKeyList.length -1 ; i>0; i-- ) {
+		
+		lastSkeyBit = lastSumKeyList[i];
+		
+		lastSkey = lastSkeyBit.substr(0, lastSkeyBit.indexOf(':'));
+		
+		curent
+		  .append('&nbsp;&nbsp;&nbsp;')
+		  .append(
+		   $('<i>')
+			  .addClass('fas')
+			  .addClass('fa-angle-left')
+		   ).append($('<span>')
+			  .append(' ' + lastSkey)
+			  .addClass('last-inline-sum')
+			  .attr('data-sum-value', lastSkeyBit)
+			);
+	   
+		cnt++
+		if (cnt > 4) {
+			break;
+		}
+	}
+	   
   return curent;
 }
 
@@ -347,7 +380,7 @@ function loadSumValuesOf(sumKeyBit) {
   var el= $('#sum-sel tbody');
   sumKey = sumKeyBit.substr(0, sumKeyBit.indexOf(':'));
   
-  var elTh = $('#sum-sel thead tr');
+  var elTh = $('#sum-sel thead div.sumKey');
   
   elTh.append(getSumTitle(sumKey));
   /*
@@ -475,8 +508,8 @@ function processSumExpr(expr) {
 
 var lastSumKeyList = [];
 
-function unloadSumValuesOf(sumKey) {
-  $('#sum-sel .sumKey').remove();
+function unloadSumValuesOf() {
+  $('#sum-sel .sumKey').empty();
   var el= $('#sum-sel tbody');
   el.empty();
 }
@@ -488,20 +521,30 @@ function closeSumEl(el) {
     .removeClass('fa-caret-down')
     .addClass('fa-caret-right');
     
-  unloadSumValuesOf(el.attr('data-sum-value'), el);
+  unloadSumValuesOf();
 }
 
 var activeSumEl = false;
 
 function initSumEvents() {
-  $('#mem td.sumKey, #sum-sel .inline-sum').click(function() {
+  $('#mem td.sumKey, #sum-sel .inline-sum').unbind( "click" ).click(function() {
         var thisSumEl = $(this);
         var same = false;
-        if (thisSumEl.is(activeSumEl)) {
+		
+		var thisSumVal = thisSumEl.attr('data-sum-value');
+		thisSumVal = thisSumVal.substr(0, thisSumVal.indexOf(':'));
+		var activeSumVal = false;
+		if (activeSumEl) {
+			activeSumVal = activeSumEl.attr('data-sum-value');
+			activeSumVal = activeSumVal.substr(0, activeSumVal.indexOf(':'));
+		}
+		
+        if (thisSumEl.is(activeSumEl) || activeSumVal == thisSumVal) {
           same = true;
         }
         if (activeSumEl) {
-          lastSumKeyList.push(activeSumEl.attr('data-sum-value'));
+		  var lastSkeyBit = activeSumEl.attr('data-sum-value');
+          lastSumKeyList.push(lastSkeyBit);
           closeSumEl(activeSumEl);
           activeSumEl = false;
           if (same) {
@@ -518,11 +561,24 @@ function initSumEvents() {
           if (sKeyBit.charAt(0) == 'C') {
             openSumEl(activeSumEl);
           } else {
-           var el = $('#mem tr [data-value="'+sKey+'"]');
-           el.click();
+			var el = $('#mem tr [data-value="'+sKey+'"]');
+			el.click();
           }
         }
   });
+  
+  $('#sum-sel .last-inline-sum').click(function () {
+	  var el = $(this);
+	  var indexOf = lastSumKeyList.indexOf(el.attr('data-sum-value'));
+	  
+	  lastSumKeyList.splice(indexOf,  lastSumKeyList.length - indexOf);
+	  
+	  activeSumEl = el;
+	  
+	  unloadSumValuesOf();
+  
+      loadSumValuesOf(el.attr('data-sum-value'));
+  })
 }
 
 function closeMemEl(el) {

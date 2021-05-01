@@ -76,9 +76,10 @@
         overflow-y: auto;
       }
       
-      #sum-sel .inline-sum {
+      #sum-sel .inline-sum, #sum-sel .last-inline-sum {
         color: #aaf;
       }
+	  
     </style>
 </head>
 
@@ -126,10 +127,13 @@
 		  <table class="table table-stripped table-dark" style="font-size:18px" id="sum-sel">
 	  	  <thead>
 	  	    <tr>
-	  	      <td class="eyeslash">
-	  	        <div class="sum-sel">
-	  	          <i class="fas fa-eye-slash"></i>
-	  	        </div>
+	  	      <td colspan="10">
+	  	        <div class="row">
+					<div class="sum-sel col-1">
+						<i class="fas fa-eye-slash"></i>
+					</div>
+					<div class="sumKey col-9"></div>
+				</div>
 	  	      </td>
 	  	    </tr>
 	  	  </thead>
