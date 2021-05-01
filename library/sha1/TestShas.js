@@ -683,6 +683,10 @@ function initActEvents() {
    
     initSumEvents();
    });
+   
+   $('#act-repl').unbind('click').click(function () {
+     
+   })
 }
 
 $(document).ready(function () {

@@ -133,12 +133,18 @@ dg = {
 	  return r;
     },
     'cAvl': 0,
+    'toObj': function(names, values) {
+      var res = {};
+      for (var i = 0; i < names.length; i++)
+        res[names[i]] = values[i];
+      return res;
+    }
   },
   'sh':{
 	'parent': function () {
 		return dg;
 	},
-	'repl': function (x,replacers) {
+	'repl': function (x,replacers, wExec =0) {
 		var vs;
 		if(Array.isArray(x)) {
 	      vs = x;
@@ -147,15 +153,26 @@ dg = {
 	    }
 		var r=[];
 		
-	    for(var i in vs) {
-		  r[i] = this.replB(vs[i], replacers);
+	  for(var i in vs) {
+	    if(wExec) {
+		   r[i] = this.execc(this.replB(vs[i], replacers));
+	    } else {
+	      r[i] = this.replB(vs[i], replacers);
+	    }
 		}
+		
 		return r;
 	},
 	'replB': function (x, replacers) {
 		var r = x + '';
-	    for(var k in replacers) {
-		  r = r.replaceAll(k, replacers[k]);
+		var keys = Object.keys(replacers).reverse();
+	    for(var k in keys) {
+	      if(['1','0'].includes(replacers[keys[k]] +'')) {
+		      r = r.replaceAll(keys[k], replacers[keys[k]]);
+	      } else {
+	        r = r.replaceAll(keys[k], '(' + replacers[keys[k]]+ ')');
+	      }
+		  
 		}
 		return r;
 	},
@@ -168,8 +185,8 @@ dg = {
 	    }
 		var r=[];
 		
-	    for(var i in vs) {
-		  r[i] = this.execc(vs[i]);
+	  for(var i in vs) {
+	  	  r[i] = this.execc(vs[i]);
 		}
 		return r;
 	},
