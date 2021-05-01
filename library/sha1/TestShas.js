@@ -328,12 +328,29 @@ function openSumEl(el) {
 var sumKey;
 var sumKeyVss;
 
+function getSumTitle(sumKey) {
+  var current;
+  
+  curent = $('<td>')
+       .attr('colspan',6)
+       .addClass('sumKey')
+       .append( $('<i>')
+          .addClass('fas')
+          .addClass('fa-stream')
+       )
+       .append(' ' + sumKey);
+       
+  return curent;
+}
+
 function loadSumValuesOf(sumKeyBit) {
   var el= $('#sum-sel tbody');
   sumKey = sumKeyBit.substr(0, sumKeyBit.indexOf(':'));
   
   var elTh = $('#sum-sel thead tr');
   
+  elTh.append(getSumTitle(sumKey));
+  /*
   elTh.append( $('<td>')
        .attr('colspan',6)
        .addClass('sumKey')
@@ -343,7 +360,7 @@ function loadSumValuesOf(sumKeyBit) {
        )
        .append(' ' + sumKey)
     );
-    
+    */
   var trs = [];
   var tds = [];
   sumKeyVss = dg.lk.getSum(sumKey);
@@ -456,6 +473,8 @@ function processSumExpr(expr) {
   return show;
 }
 
+var lastSumKeyList = [];
+
 function unloadSumValuesOf(sumKey) {
   $('#sum-sel .sumKey').remove();
   var el= $('#sum-sel tbody');
@@ -482,14 +501,16 @@ function initSumEvents() {
           same = true;
         }
         if (activeSumEl) {
+          lastSumKeyList.push(activeSumEl.attr('data-sum-value'));
           closeSumEl(activeSumEl);
           activeSumEl = false;
           if (same) {
+            lastSumKeyList = [];
             return;
           }
         }
         if (thisSumEl != activeSumEl) {
-          activeSumEl = $(this);
+          activeSumEl = thisSumEl;
           var sKeyBit = activeSumEl.attr('data-sum-value');
           
           var sKey = sKeyBit.substr(0, sKeyBit.indexOf(':'));

@@ -866,32 +866,32 @@ class Sha256debug {
 				dg.lk.addWs('w'+t, dg.dta(W[t]));
 				if (i == 0) {
 					if(t==11) {
-					  var nouncebitsW11a = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.', 12,4));
-					  dg.lk.add('nbW11a', nouncebitsW11a);
-					  var nouncebitsW11b = dg.lk.chgSubBs('w'+ t,20, dg.arCn('w'+t+'.', 20,4));
-					  dg.lk.add('nbW11b', nouncebitsW11b);
-					  var nouncebitsW11c = dg.lk.chgSubBs('w'+ t,28, dg.arCn('w'+t+'.', 28,4));
-					  dg.lk.add('nbW11c', nouncebitsW11c);
+		//			  var nouncebitsW11a = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.', 12,4));
+	//				  dg.lk.add('nbW11a', nouncebitsW11a);
+	//				  var nouncebitsW11b = dg.lk.chgSubBs('w'+ t,20, dg.arCn('w'+t+'.', 20,4));
+	//				  dg.lk.add('nbW11b', nouncebitsW11b);
+	//				  var nouncebitsW11c = dg.lk.chgSubBs('w'+ t,28, dg.arCn('w'+t+'.', 28,4));
+	//				  dg.lk.add('nbW11c', nouncebitsW11c);
 					} else if(t==12) {
 					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('w'+t+'.',4,4));
 					  dg.lk.add('nbW12a', nouncebitsW12a);
 					  var nouncebitsW12b = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.',12,4));
 					  dg.lk.add('nbW12b', nouncebitsW12b);
 					} else if(t==15) {
-					  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
-					  dg.lk.add('lbW15', lengthBitsW15);
+			//		  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
+		//			  dg.lk.add('lbW15', lengthBitsW15);
 					}
 				}
 				dg.lk.addSum('w'+t, dg.lk.get('w'+ t));
 				dg.add(dg.lk.get('w'+t));
 			}
 			if (i == 0) {
-				dg.add('nbW11a='+dg.lk.getWs('nbW11a'));
-				dg.add('nbW11b='+dg.lk.getWs('nbW11b'));
-				dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
+	//			dg.add('nbW11a='+dg.lk.getWs('nbW11a'));
+		//		dg.add('nbW11b='+dg.lk.getWs('nbW11b'));
+		//		dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
 				dg.add('nbW12a='+dg.lk.getWs('nbW12a'));
 				dg.add('nbW12b='+dg.lk.getWs('nbW12b'));
-				dg.add('lbW15='+dg.lk.getWs('lbW15'));
+		//		dg.add('lbW15='+dg.lk.getWs('lbW15'));
 			}
 			//dg.ts = [11,12];
 			
