@@ -708,7 +708,7 @@ function replToSum() {
   console.log(rr)
   
   for(var i in sum) {
-    r[i] = dg.sh.repl(sum[i], rr, 1);
+    r[i] = dg.sh.repl(sum[i], rr, 0);
   }
   console.log(r);
   

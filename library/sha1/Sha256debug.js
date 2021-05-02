@@ -158,6 +158,9 @@ dg = {
 		   r[i] = this.execc(this.replB(vs[i], replacers));
 	    } else {
 	      r[i] = this.replB(vs[i], replacers);
+	      if (!this.hasVarB(r[i])) {
+	        r[i] = this.execc(r[i]);
+	      }
 	    }
 		}
 		
@@ -308,6 +311,10 @@ dg = {
 			}
 	    }
 	    return false;
+	},
+	'hasVarB': function (v) {
+	  var r = v.match(/[a-z]/ig);
+	  return (r? true: false);
 	},
 	'sumch': function (sumName, ks, doit = false) {
 		var vslen = ks.length;
