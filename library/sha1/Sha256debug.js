@@ -138,6 +138,28 @@ dg = {
       for (var i = 0; i < names.length; i++)
         res[names[i]] = values[i];
       return res;
+    },
+    'pushOnce': function(arr, item) {
+      if (arr.indexOf(item)==-1) {
+        arr.push(item);
+      } 
+      return arr;
+    },
+    'unique': function (a1) {
+      var r = [];
+      for (var i in a1) {
+        this.pushOnce(r,a1[i]);
+      }
+      return r;
+    },
+    'concatUnique': function(a1, a2) {
+      var r = a1;
+      for(var i in a2) {
+        if(r.indexOf(a2[i]) ==-1) {
+          r.push(a2);
+        }
+      }
+      return r;
     }
   },
   'sh':{
@@ -192,7 +214,7 @@ dg = {
 		}
 		return r;
 	},
-	'execr': function (x, pos = 0, lvl = 0) {
+	'execr': function (x, checkVars=0, pos = 0, lvl = 0,) {
 	  var l;
 	  var params = [];
 	  var op = '';
@@ -201,6 +223,7 @@ dg = {
 	  var i;
 	  var res = [];
 	  var v;
+	  var vars = [];
 	  
 	  if (pos == 0) {  
 		x = '('+x+')';
@@ -212,19 +235,26 @@ dg = {
 		l = x[i];
 		switch(l) {
 		  case '(':
-			res = this.execr(x, i+1, lvl+1);
+			res = this.execr(x, checkVars, i+1, lvl+1);
 			if(lvl==0) {
+			  if(checkVars) {
+			    return dg.lk.concatUnique(vars,res[2]);
+			  }
 				return res[0];
 			}
 			params.push(res[0]);
 			i+= res[1];
 			icnt+= res[1];
+			vars = dg.lk.concatUnique(vars, res[2]);
 			break;
 		  case ')':
 		    if (name) {
 				if (not) {
 				  name = dg.sh.notB(name);
 				  not = 0;
+				}
+				if(checkVars) {
+				  dg.lk.pushOnce(vars, name);
 				}
 				params.push(name);
 				name = '';
@@ -233,7 +263,7 @@ dg = {
 		    if (op) {
 			   v = dg.sh[op].apply(null, params);
 			}
-			return [v, icnt];
+			return [v, icnt, vars];
 			break;
 		  case '~':
 			not = 1;
@@ -244,6 +274,9 @@ dg = {
 				if (not) {
 				  name = dg.sh.notB(name);
 				  not = 0;
+				}
+				if(checkVars) {
+				  dg.lk.pushOnce(vars, name);
 				}
 				params.push(name);
 				name = '';
@@ -257,6 +290,9 @@ dg = {
 				  name = dg.sh.notB(name);
 				  not = 0;
 				}
+				if (checkVars) {
+				  dg.lk.pushOnce(vars, name);
+				}
 				params.push(name);
 				name = '';
 			}
@@ -268,6 +304,9 @@ dg = {
 				  name = dg.sh.notB(name);
 				  not = 0;
 				}
+				if (checkVars) {
+				  dg.lk.pushOnce(vars, name);
+				}
 				params.push(name);
 				name = '';
 			}
@@ -275,6 +314,9 @@ dg = {
 		  default:
 			name += l;
 		}
+	  }
+	  if (checkVars) {
+	    return vars;
 	  }
 	  return params[0];
 	},
@@ -393,13 +435,19 @@ dg = {
 		
 	    for(var i in vs) {
 			if (!['0','1'].includes(vs[i]+'')) {
-				return true;
-			}
+			  	return true;
+		  	}
 	    }
 	    return false;
 	},
-	'hasVarB': function (v) {
+	'noOfVarsB': function(x) {
+	  return this.hasVarB(x,1);
+	},
+	'hasVarB': function (v, which = 0) {
 	  var r = v.match(/[a-z]/ig);
+	  if (which) {
+	    return r? dg.lk.unique(r):0;
+	  }
 	  return (r? true: false);
 	},
 	'sumch': function (sumName, ks, doit = false) {
@@ -985,8 +1033,8 @@ class Sha256debug {
 	//				  var nouncebitsW11c = dg.lk.chgSubBs('w'+ t,28, dg.arCn('w'+t+'.', 28,4));
 	//				  dg.lk.add('nbW11c', nouncebitsW11c);
 					} else if(t==12) {
-					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('w'+t+'.',4,4));
-					  dg.lk.add('nbW12a', nouncebitsW12a);
+//					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('w'+t+'.',4,4));
+//					  dg.lk.add('nbW12a', nouncebitsW12a);
 					  var nouncebitsW12b = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.',12,4));
 					  dg.lk.add('nbW12b', nouncebitsW12b);
 					} else if(t==15) {
@@ -1001,7 +1049,7 @@ class Sha256debug {
 	//			dg.add('nbW11a='+dg.lk.getWs('nbW11a'));
 		//		dg.add('nbW11b='+dg.lk.getWs('nbW11b'));
 		//		dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
-				dg.add('nbW12a='+dg.lk.getWs('nbW12a'));
+		//		dg.add('nbW12a='+dg.lk.getWs('nbW12a'));
 				dg.add('nbW12b='+dg.lk.getWs('nbW12b'));
 		//		dg.add('lbW15='+dg.lk.getWs('lbW15'));
 			}
