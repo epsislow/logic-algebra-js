@@ -704,13 +704,10 @@ function replToSum() {
   var r = [];
   
   var sum = dg.lk.getSum(csum);
-  console.log(sum);
-  console.log(rr)
   
   for(var i in sum) {
     r[i] = dg.sh.repl(sum[i], rr, 0);
   }
-  console.log(r);
   
   dg.lk.delSum(csum);
   
