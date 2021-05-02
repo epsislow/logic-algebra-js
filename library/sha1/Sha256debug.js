@@ -155,11 +155,11 @@ dg = {
 		
 	  for(var i in vs) {
 	    if(wExec) {
-		   r[i] = this.execc(this.replB(vs[i], replacers));
+		   r[i] = this.execr(this.execr(this.execr(this.replB(vs[i], replacers))));
 	    } else {
 	      r[i] = this.replB(vs[i], replacers);
 	      if (!this.hasVarB(r[i])) {
-	        r[i] = this.execc(r[i]);
+	        r[i] = this.execr(r[i]);
 	      }
 	    }
 		}
@@ -188,9 +188,95 @@ dg = {
 		var r=[];
 		
 	  for(var i in vs) {
-	  	  r[i] = this.execc(vs[i]);
+	  	  r[i] = this.execr(vs[i]);
 		}
 		return r;
+	},
+	'execr': function (x, pos = 0, lvl = 0) {
+	  var l;
+	  var params = [];
+	  var op = '';
+	  var not = 0;
+	  var name = '';
+	  var i;
+	  var res = [];
+	  var v;
+	  
+	  if (pos == 0) {  
+		x = '('+x+')';
+	  }
+	  var icnt = 0;
+	  
+	  for(i=pos; i < x.length; i++) {
+		icnt++;
+		l = x[i];
+		switch(l) {
+		  case '(':
+			res = this.execr(x, i+1, lvl+1);
+			if(lvl==0) {
+				return res[0];
+			}
+			params.push(res[0]);
+			i+= res[1];
+			icnt+= res[1];
+			break;
+		  case ')':
+		    if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				  not = 0;
+				}
+				params.push(name);
+				name = '';
+			}
+			v = params[0];
+		    if (op) {
+			   v = dg.sh[op].apply(null, params);
+			}
+			return [v, icnt];
+			break;
+		  case '~':
+			not = 1;
+			break;
+		  case '|':
+			op = 'orB';
+			if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				  not = 0;
+				}
+				params.push(name);
+				name = '';
+			}
+			not = 0;
+			break;
+		  case '^':
+			op = 'xorB';
+			if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				  not = 0;
+				}
+				params.push(name);
+				name = '';
+			}
+			break;
+		  case '&':
+			op = 'andB';
+			if (name) {
+				if (not) {
+				  name = dg.sh.notB(name);
+				  not = 0;
+				}
+				params.push(name);
+				name = '';
+			}
+			break;
+		  default:
+			name += l;
+		}
+	  }
+	  return params[0];
 	},
 	'execc': function (x) {
 	  var l;
@@ -345,7 +431,7 @@ dg = {
 				this.parent().lk.addSum(ckey,vs[ik]);
 				moreSum = true;
 			} else {
-				sumResult = this.sum(sumResult, vs[ik]);
+				sumResult = this.exec(this.sum(sumResult, vs[ik]));
 			}
 		}
 		
@@ -589,6 +675,8 @@ dg = {
 		  } else {
 			  if (a == b) {
 				return '0';
+			  } else if ((a == '~'+b) || ('~'+a == b)) {
+				return '1';
 			  } else {
 				return '(' + a+ '^'+ b +')';
 			  }
@@ -770,7 +858,7 @@ console.log('a= '+a);
 //console.log('cho= '+ dg.sh.cho('a','b','c'));
 console.log('sum= '+ dg.sh.sum('a','b'));
 //console.log('a>2= '+ dg.sh.ll('a',2));
-//console.log('exB= '+ dg.sh.execc('~(((~a&~a)^(b|(1|a))))'));
+//console.log('exB= '+ dg.sh.execr('~(((~a&~a)^(b|(1|a))))'));
 //console.log('rpl= '+ dg.sh.repl(dg.sh.sum('a','b'),{'a64.31':0}));
 //console.log('exc= '+ dg.sh.exec(dg.sh.repl(dg.sh.sum('a','b'),{'a64.31':0})));
 //var d = '(a0&((0&b1)|((0^b1)&(a2&b2))))';

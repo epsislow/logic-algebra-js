@@ -721,7 +721,7 @@ function replToSum() {
   var sum = dg.lk.getSum(csum);
   
   for(var i in sum) {
-    r[i] = dg.sh.repl(sum[i], rr, 0);
+    r[i] = dg.sh.repl(sum[i], rr, 1);
   }
   
   dg.lk.delSum(csum);
