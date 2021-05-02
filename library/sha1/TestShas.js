@@ -472,32 +472,45 @@ function processSumExpr(expr) {
   }
   var show;
   
-  var matches= expr.match(/(C[^\&\\|\\^\\~\\)\\(]+)/g);
+  //var matches= expr.match(/(C[^\&\\|\\^\\~\\)\\(]+)/g);
+  
+  var matches= expr.match
+    (/([a-z][^\&\\|\\^\\~\\)\\(]+)/ig);
   
   var showm=[];
   var sKey;
-  var i=0;
   for(var m in matches) {
     showm[m] = matches[m].substr(0, matches[m].indexOf(':'));
     
     expr = expr.replaceAll(matches[m],'C');
-    i++;
   }
+  
   var pos = -1;
   var i =0;
+
   show = $('<span>');
   while((npos = expr.indexOf('C', pos+1)) > -1) {
+    
     var txt =
        expr.substr(pos +1, npos-pos-1);
-    
-    show
-    .append(txt)
-    .append($('<span>')
-      .append(matches[i])
-      .addClass('inline-sum')
-      .attr('data-sum-value', matches[i])
-    );
-    
+      
+    if(matches[i].charAt(0)=='C') {
+      show
+        .append(txt)
+        .append($('<span>')
+          .append(matches[i])
+          .addClass('inline-sum')
+          .attr('data-sum-value', matches[i])
+        );
+    } else {
+      show
+        .append(txt)
+        .append($('<span>')
+          .append(matches[i])
+          .addClass('inline-mem')
+          .attr('data-mem-value', matches[i])
+        );
+    }
     pos = npos;
     i++;
   }
@@ -687,10 +700,12 @@ function initActEvents() {
    });
    
    $('#act-repl').unbind('click').click(function () {
-     
      replToSum();
-     
    })
+   
+   $('#act-repl-sum').unbind('click').click(function () {
+     replSumToSum();
+   });
 }
 
 var lastActSumKey = false;
@@ -721,6 +736,9 @@ function replToSum() {
   initSumEvents();
 }
 
+function replSumToSum() {
+  
+}
 
 $(document).ready(function () {
   loadFromMem();
