@@ -468,11 +468,16 @@ dg = {
 	  rpl0[tryVar] = 0;
 	  rpl1[tryVar] = 1;
 	  
-	  return this.exe(this.replB(x, rpl0) + '|' + this.replB(x, rpl1));
+	  console.log(this.replB(x, rpl0));
+	  console.log(this.replB(x, rpl1));
 	  
 	},
 	'exe': function (x) {
-	  
+	  var x2 = 0;
+	  while(x2 != x) {
+	    x2 = this.exerc(x);
+	  }
+	  return x2;
 	},
 	'sumch': function (sumName, ks, doit = false) {
 		var vslen = ks.length;
