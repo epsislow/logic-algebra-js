@@ -444,11 +444,35 @@ dg = {
 	  return this.hasVarB(x,1);
 	},
 	'hasVarB': function (v, which = 0) {
-	  var r = v.match(/[a-z]/ig);
+	  var r = v.match
+	    (/([a-z][^\&\\|\\^\\~\\)\\(]+)/ig);
 	  if (which) {
 	    return r? dg.lk.unique(r):0;
 	  }
 	  return (r? true: false);
+	},
+	'exeqB': function (x) {
+	  var vars = this.noOfVarsB(x);
+	  var trys;
+	  var tryVars = [];
+	  var tryVar;
+	  
+	  if (vars.length < 2) {
+	    return x;
+	  }
+	  console.log(vars);
+	  tryVar = vars.shift();
+	  
+	  var rpl0 = {};
+	  var rpl1 = {};
+	  rpl0[tryVar] = 0;
+	  rpl1[tryVar] = 1;
+	  
+	  return this.exe(this.replB(x, rpl0) + '|' + this.replB(x, rpl1));
+	  
+	},
+	'exe': function (x) {
+	  
 	},
 	'sumch': function (sumName, ks, doit = false) {
 		var vslen = ks.length;
