@@ -291,12 +291,38 @@ function loadFromMem() {
     trs.push(tr);
   }
   contr.append(trs);
+  
+  var sumtr = $('#mem table tbody');
+  trs = [];
+  
+  keys = Object.keys(dg.lk.sums).sort(cmp);
+  
+  for(var k in keys) {
+    tr = $('<tr>').append(
+      $('<td>')
+        .addClass('sum-title')
+        .attr('colspan',4)
+        .attr('data-sum-value', keys[k]+':3')
+        .append(
+          $('<i>')
+          .addClass('fas')
+          .addClass('fa-plus-square')
+        ).append(' ')
+         .append($('<span>')
+          .append(' ' + keys[k])
+          .addClass('inline-sum')
+          .attr('data-sum-value', keys[k] + ':3')
+        ));
+    trs.push(tr);
+  }
+  
+  sumtr.append(trs);
 }
 
 var activeMemEl= false;
 
 function initMemEvents() {
-  $('#mem tr').click(function(event) {
+  $('#mem thead tr').click(function(event) {
     var thisMemEl = $(this);
     var same = false;
     if(thisMemEl.is(activeMemEl)) {
@@ -541,7 +567,8 @@ function closeSumEl(el) {
 var activeSumEl = false;
 
 function initSumEvents() {
-  $('#mem td.sumKey, #sum-sel .inline-sum').unbind( "click" ).click(function() {
+  $('#mem td.sumKey,#mem tbody td, #sum-sel .inline-sum').unbind( "click" ).click(function() {
+    console.log('a');
         var thisSumEl = $(this);
         var same = false;
 		
@@ -706,6 +733,10 @@ function initActEvents() {
    $('#act-repl-sum').unbind('click').click(function () {
      replSumToSum();
    });
+   
+   $('#act-refresh').unbind('click').click(function () {
+     refreshMem();
+   });
 }
 
 var lastActSumKey = false;
@@ -740,9 +771,16 @@ function replSumToSum() {
   
 }
 
+function refreshMem() {
+  loadFromMem();
+  initMemEvents();
+  initSumEvents();
+}
+
 $(document).ready(function () {
   loadFromMem();
   initMemEvents();
+  initSumEvents();
   initActEvents();
 });
 
