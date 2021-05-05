@@ -270,25 +270,31 @@ cmp = function(a, b) {
 function loadFromMem() {
   var contr = $('#mem table thead');
   var trs = [];
+  var tr;
   
   var keys = Object.keys(dg.lk.m)
     .sort(cmp);
-  
+  var i = 0;
   for (var k in keys) {
-    var tr = $('<tr>').append(
+    if (i%4==0) {
+      tr = $('<tr>');
+      trs.push(tr);
+    }
+    
+    tr.append(
       $('<th>')
     .addClass('title')
-    .attr('colspan', 4)
+   // .attr('colspan', 4)
     .append(
       $('<i>')
       .addClass('fas')
       .addClass('fa-plus-square')
       )
-    .append(' Values of '+ keys[k])
+    .append(' '+ keys[k])
     .attr('data-value', keys[k])
     );
-    
-    trs.push(tr);
+    i++;
+   // trs.push(tr);
   }
   contr.append(trs);
   
@@ -296,12 +302,16 @@ function loadFromMem() {
   trs = [];
   
   keys = Object.keys(dg.lk.sums).sort(cmp);
-  
+  var i =0;
   for(var k in keys) {
-    tr = $('<tr>').append(
+    if(i%4 == 0) {
+     tr = $('<tr>'); 
+     trs.push(tr);
+    }
+    tr.append(
       $('<td>')
         .addClass('sum-title')
-        .attr('colspan',4)
+        //.attr('colspan',4)
         .attr('data-sum-value', keys[k]+':3')
         .append(
           $('<i>')
@@ -313,7 +323,8 @@ function loadFromMem() {
           .addClass('inline-sum')
           .attr('data-sum-value', keys[k] + ':3')
         ));
-    trs.push(tr);
+    //trs.push(tr);
+    i++;
   }
   
   sumtr.append(trs);
@@ -322,7 +333,7 @@ function loadFromMem() {
 var activeMemEl= false;
 
 function initMemEvents() {
-  $('#mem thead tr').click(function(event) {
+  $('#mem thead tr th').click(function(event) {
     var thisMemEl = $(this);
     var same = false;
     if(thisMemEl.is(activeMemEl)) {
@@ -568,7 +579,6 @@ var activeSumEl = false;
 
 function initSumEvents() {
   $('#mem td.sumKey,#mem tbody td, #sum-sel .inline-sum').unbind( "click" ).click(function() {
-    console.log('a');
         var thisSumEl = $(this);
         var same = false;
 		
@@ -628,7 +638,7 @@ function closeMemEl(el) {
   .removeClass('fa-minus-square')
   .addClass('fa-plus-square');
   
-  unloadMemValuesOf(el.find('.title').attr('data-value'), el);
+  unloadMemValuesOf(el.attr('data-value'), el);
 }
 
 function openMemEl(el) {
@@ -637,13 +647,13 @@ function openMemEl(el) {
   .removeClass('fa-plus-square')
   .addClass('fa-minus-square');
   
-  loadMemValuesOf(el.find('.title').attr('data-value'),el);
+  loadMemValuesOf(el.attr('data-value'),el);
   
   initSumEvents();
 }
 
 function unloadMemValuesOf(key, el) {
-  el.parent()
+  el.parent().parent()
    .find('.content-of-' + key)
    .remove();
 }
@@ -696,7 +706,7 @@ function loadMemValuesOf(key, el) {
     i++;
   }
   
-  el.after(trs);
+  el.parent().after(trs);
  // console.log(key);
 }
 
