@@ -275,16 +275,26 @@ function loadFromMem() {
   var keys = Object.keys(dg.lk.m)
     .sort(cmp);
   var i = 0;
+  var cls = 'x';
+  var ic = 0;
+  
   for (var k in keys) {
     if (i%4==0) {
       tr = $('<tr>');
       trs.push(tr);
+      ic++;
+    }
+    
+    cls = 'odd';
+    
+    if(ic%2==0) {
+      cls= 'even';
     }
     
     tr.append(
       $('<th>')
+    .addClass(cls)
     .addClass('title')
-   // .attr('colspan', 4)
     .append(
       $('<i>')
       .addClass('fas')
@@ -294,7 +304,22 @@ function loadFromMem() {
     .attr('data-value', keys[k])
     );
     i++;
+    ic++;
    // trs.push(tr);
+  }
+
+  if(i%4 !== 0) {
+    for(; i%4 !=0; i++) {
+      cls='odd';
+      if(ic%2==0) {
+        cls='even';
+      }
+      tr.append(
+        $('<td>').addClass(cls)
+        .append(' ')
+      );
+      ic++;
+    }
   }
   contr.append(trs);
   
@@ -302,15 +327,20 @@ function loadFromMem() {
   trs = [];
   
   keys = Object.keys(dg.lk.sums).sort(cmp);
-  var i =0;
   for(var k in keys) {
     if(i%4 == 0) {
      tr = $('<tr>'); 
      trs.push(tr);
+     ic++;
+    }
+    cls ='odd';
+    if(ic%2==0) {
+      cls='even';
     }
     tr.append(
       $('<td>')
         .addClass('sum-title')
+        .addClass(cls)
         //.attr('colspan',4)
         .attr('data-sum-value', keys[k]+':3')
         .append(
@@ -325,6 +355,20 @@ function loadFromMem() {
         ));
     //trs.push(tr);
     i++;
+    ic++;
+  }
+  if(i%4!==0) {
+    for(;i%4!=0;i++) {
+      cls = 'odd';
+      if (ic % 2 == 0) {
+        cls = 'even';
+      }
+      tr.append(
+        $('<td>').addClass(cls)
+        .append(' ')
+      );
+      ic++;
+    }
   }
   
   sumtr.append(trs);
