@@ -41,6 +41,7 @@ dg = {
   'lk': {
     'm': {},
     'sums':{},
+    'uses': {},
     'reset': function() {
       this.m = {};
     },
@@ -58,6 +59,17 @@ dg = {
 	      this.sums[k] = [];
 	    }
 	    this.sums[k].push(vw);
+	    
+	    var vars = [];
+	    vars = this.parent().sh.getVarsInVs(vw);
+	    
+	    if (vars.length) {
+	      if(k in this.uses) {
+	        this.uses[k] = this.concatUnique(this.uses[k], vars);
+	      } else {
+	        this.uses[k] = vars;
+  	    }
+	    }
 	    return this;
 	  },
 	  'delSum': function(k) {
@@ -153,10 +165,15 @@ dg = {
       return r;
     },
     'concatUnique': function(a1, a2) {
-      var r = a1;
-      for(var i in a2) {
-        if(r.indexOf(a2[i]) ==-1) {
-          r.push(a2);
+      var r = [];
+      for (var s in a1) {
+        if (!r.includes(a1[s])) {
+          r.push(a1[s]);
+        }
+      }
+      for (var s in a2) {
+        if (!r.includes(a2[s])) {
+          r.push(a2[s]);
         }
       }
       return r;
@@ -439,6 +456,32 @@ dg = {
 		  	}
 	    }
 	    return false;
+	},
+	'hasVarInSum': function(vsx, needle) {
+	  var val;
+	  for(var k in vsx) {
+	    for(var i in vsx[k]) {
+	      val = vsx[k][i];
+	      if (val.indexOf(needle+':')) {
+	        return true;
+	      }
+	    }
+	  }
+	  return false;
+	},
+	'getVarsInVs': function (vs) {
+	  var vars = [];
+	  var r;
+	  for(var v in vs) {
+	    r = vs[v].match
+	    (/[a-z][^:\&\\|\\^\\~\\)\\(]+/ig);
+	    for (var s in r) {
+	      if (!vars.includes(r[s])) {
+	        vars.push(r[s]);
+	      }
+	    }
+	  }
+	  return vars;
 	},
 	'noOfVarsB': function(x) {
 	  return this.hasVarB(x,1);

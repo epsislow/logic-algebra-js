@@ -343,6 +343,7 @@ function loadFromMem() {
         .addClass(cls)
         //.attr('colspan',4)
         .attr('data-sum-value', keys[k]+':3')
+        .attr('data-type', 'sum')
         .append(
           $('<i>')
           .addClass('fas')
@@ -352,6 +353,7 @@ function loadFromMem() {
           .append(' ' + keys[k])
           .addClass('inline-sum')
           .attr('data-sum-value', keys[k] + ':3')
+          .attr('data-type','sum')
         ));
     //trs.push(tr);
     i++;
@@ -446,6 +448,7 @@ function getSumTitle(sumKey) {
 			  .append(' ' + lastSkey)
 			  .addClass('last-inline-sum')
 			  .attr('data-sum-value', lastSkeyBit)
+			  .attr('data-type','sum')
 			);
 	   
 		cnt++
@@ -581,7 +584,8 @@ function processSumExpr(expr) {
         .append($('<span>')
           .append(matches[i])
           .addClass('inline-sum')
-          .attr('data-sum-value', matches[i])
+          .attr('data-sum-value',matches[i])
+          .attr('data-type','sum')
         );
     } else {
       show
@@ -628,6 +632,9 @@ function initSumEvents() {
 		
 		var thisSumVal = thisSumEl.attr('data-sum-value');
 		thisSumVal = thisSumVal.substr(0, thisSumVal.indexOf(':'));
+		
+		var thisType = thisSumEl.attr('data-type');
+		
 		var activeSumVal = false;
 		if (activeSumEl) {
 			activeSumVal = activeSumEl.attr('data-sum-value');
@@ -647,13 +654,14 @@ function initSumEvents() {
             return;
           }
         }
+        
         if (thisSumEl != activeSumEl) {
           activeSumEl = thisSumEl;
           var sKeyBit = activeSumEl.attr('data-sum-value');
           
           var sKey = sKeyBit.substr(0, sKeyBit.indexOf(':'));
           
-          if (sKeyBit.charAt(0) == 'C') {
+          if (thisType=='sum') {
             openSumEl(activeSumEl);
           } else {
 			var el = $('#mem tr [data-value="'+sKey+'"]');
@@ -732,6 +740,7 @@ function loadMemValuesOf(key, el) {
           .addClass('fas')
           .addClass('fa-caret-right')
         ).append(' '+ vs[i])
+        .attr('data-type', 'sum')
         .attr('data-sum-value', vs[i]);
       } else {
         td.append(
@@ -766,6 +775,8 @@ function initActEvents() {
     
     dg.lk.delSum(csum);
     dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
+    
+    dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
    
     //console.log(dg.lk.getSum('Csss'));
     
@@ -781,11 +792,13 @@ function initActEvents() {
    });
    
    $('#act-repl').unbind('click').click(function () {
-     replToSum();
+     replToSum(sumKey);
+     refreshActiveSum();
    })
    
    $('#act-repl-sum').unbind('click').click(function () {
      replSumToSum();
+     refreshActiveSum();
    });
    
    $('#act-refresh').unbind('click').click(function () {
@@ -794,11 +807,11 @@ function initActEvents() {
 }
 
 var lastActSumKey = false;
-function replToSum() {
+function replToSum(someSum) {
   if (!lastActSumKey) {
     return false;
   }
-  var csum = sumKey;
+  var csum = someSum;
   var C = dg.lk.genCvalAll(lastActSumKey, 32);
   var rr = dg.lk.toObj(C, dg.lk.getSum(lastActSumKey)[0]); //always 0
   var r = [];
@@ -814,15 +827,28 @@ function replToSum() {
   for (var i in r) {
     dg.lk.addSum(csum, r[i]);
   }
-  
+}
+
+function refreshActiveSum() {
+  var lastSumKey = sumKey;
   unloadSumValuesOf();
-  sumKey=csum;
-  loadSumValuesOf(csum+':1');
+  sumKey = lastSumKey;
+  loadSumValuesOf(sumKey + ':1');
   initSumEvents();
 }
 
 function replSumToSum() {
+  if (!lastActSumKey) {
+    return false;
+  }
   
+  for(var k in dg.lk.uses) {
+    if (dg.lk.uses[k].includes(lastActSumKey)) {
+      replToSum(k);
+      console.log(k);
+    }
+  }
+  refreshActiveSum();
 }
 
 function refreshMem() {
