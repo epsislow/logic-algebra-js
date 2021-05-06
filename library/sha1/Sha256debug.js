@@ -474,7 +474,7 @@ dg = {
 	  var r;
 	  for(var v in vs) {
 	    r = vs[v].match
-	    (/[a-z][^:\&\\|\\^\\~\\)\\(]+/ig);
+	    (/[a-z][^:.\&\\|\\^\\~\\)\\(]+/ig);
 	    for (var s in r) {
 	      if (!vars.includes(r[s])) {
 	        vars.push(r[s]);
@@ -1105,10 +1105,10 @@ class Sha256debug {
 	//				  var nouncebitsW11c = dg.lk.chgSubBs('w'+ t,28, dg.arCn('w'+t+'.', 28,4));
 	//				  dg.lk.add('nbW11c', nouncebitsW11c);
 					} else if(t==12) {
-//					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('w'+t+'.',4,4));
-//					  dg.lk.add('nbW12a', nouncebitsW12a);
-					  var nouncebitsW12b = dg.lk.chgSubBs('w'+ t,12, dg.arCn('w'+t+'.',12,4));
-					  dg.lk.add('nbW12b', nouncebitsW12b);
+					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('n2.',4,4));
+					  dg.lk.add('n2', nouncebitsW12a);
+					  var n3 = dg.lk.chgSubBs('w'+ t,12, dg.arCn('n3.',12,4));
+					  dg.lk.add('n3', n3);
 					} else if(t==15) {
 			//		  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
 		//			  dg.lk.add('lbW15', lengthBitsW15);
@@ -1121,8 +1121,8 @@ class Sha256debug {
 	//			dg.add('nbW11a='+dg.lk.getWs('nbW11a'));
 		//		dg.add('nbW11b='+dg.lk.getWs('nbW11b'));
 		//		dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
-		//		dg.add('nbW12a='+dg.lk.getWs('nbW12a'));
-				dg.add('nbW12b='+dg.lk.getWs('nbW12b'));
+				dg.add('n2='+dg.lk.getWs('n2'));
+				dg.add('n3='+dg.lk.getWs('n3'));
 		//		dg.add('lbW15='+dg.lk.getWs('lbW15'));
 			}
 			//dg.ts = [11,12];
