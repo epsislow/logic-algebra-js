@@ -71,8 +71,7 @@ dg = {
   	    }
   	    for(var k2 in vars) {
   	      if(vars[k2] in this.uses.out) {
-  	      //  this.pushOnce(this.uses.out[vars[k]], k);
-  	      this.uses.out[vars[k2]].push(k);
+  	       this.pushOnce(this.uses.out[vars[k2]], k);
   	      } else {
   	        this.uses.out[vars[k2]] = [k];
   	      }
@@ -80,13 +79,19 @@ dg = {
 	    }
 	    return this;
 	  },
+	  'getArbOfUses': function (isOut = 0) {
+	    for(v in dg.lk.uses.in) {
+	      if (!dg.lk.uses.in[k].length) {
+	        console.log(k);
+	      }
+	    }
+	  },
 	  'delSum': function(k) {
         delete this.sums[k];
       },
 	  'getSum': function(k) {
 	    return this.sums[k];
 	  },
-
     'del': function(k) {
       delete this.m[k];
     },
@@ -160,7 +165,7 @@ dg = {
       return res;
     },
     'pushOnce': function(arr, item) {
-      if (!(item in arr)){
+      if (!arr.includes(item)){
         arr.push(item);
       } 
       return arr;
@@ -191,6 +196,43 @@ dg = {
 	'parent': function () {
 		return dg;
 	},
+	'shortB': function (x) {
+	  var vars;
+	  vars = this.getVarBitsInV(x);
+	  
+	  var tsts = this.getValuesForAllKeys([[]],vars);
+	  
+	  var r = [];
+	  var onecnt = 0;
+	  for(var t in tsts) {
+	    r[t] = this.execr( this.replB(x, tsts[t]));
+	    if(r[t] == '1') {
+	      onecnt++;
+	    }
+	  }
+	  var not = 0;
+	  var s=[];
+	  if(onecnt < tsts.length) {
+	   // not = 1;
+	  }
+	  
+	  var br = [];
+	  var bb = '';
+	  for(var t in r) {
+	    br = [];
+	    if(r[t] != not +'' ) {
+	      for(var k in tsts[t]) {
+	        bb = '';
+	        if (tsts[t][k] == '0') {
+	          bb = '~';
+	        }
+	        br.push(bb + k);
+	      }
+	     s.push('(' + br.join('&') + ')');
+	    }
+	  }
+ 	  return this.execr((not? '~':'') + s.join('|'));
+	},
 	'repl': function (x,replacers, wExec =0) {
 		var vs;
 		if(Array.isArray(x)) {
@@ -215,12 +257,11 @@ dg = {
 	},
 	'replB': function (x, replacers) {
 		var r = x + '';
-		var keys = Object.keys(replacers).reverse();
-	    for(var k in keys) {
-	      if(['1','0'].includes(replacers[keys[k]] +'')) {
-		      r = r.replaceAll(keys[k], replacers[keys[k]]);
+	    for(var k in replacers) {
+	      if(['1','0'].includes(replacers[k] +'')) {
+		      r = r.replaceAll(k, replacers[k]);
 	      } else {
-	        r = r.replaceAll(keys[k], '(' + replacers[keys[k]]+ ')');
+	        r = r.replaceAll(k, '(' + replacers[k]+ ')');
 	      }
 		}
 		return r;
@@ -235,7 +276,8 @@ dg = {
 		var r=[];
 		
 	  for(var i in vs) {
-	  	  r[i] = this.execr(vs[i]);
+	   // r[i] = this.shortB(vs[i]);
+	  	r[i] = this.execr(vs[i]);
 		}
 		return r;
 	},
@@ -477,6 +519,16 @@ dg = {
 	  }
 	  return false;
 	},
+	'getVarBitsInV': function (v) {
+	  var varBits = [];
+	  var r = v.match(/[a-z0-9][^\&\\|\\^\\~\\)||(]+/ig);
+	  for(var k in r) {
+	    if(!varBits.includes(r[k])) {
+	      varBits.push(r[k]);
+	    }
+	  }
+	  return varBits;
+	},
 	'getVarsInVs': function (vs) {
 	  var vars = [];
 	  var r;
@@ -502,6 +554,32 @@ dg = {
 	  }
 	  return (r? true: false);
 	},
+	'getValuesForAllKeys': function(datas, keys) {
+	  var key = keys.shift();
+	  if (key == undefined) {
+	    return datas;
+	  }
+	
+	  var ds = [];
+	  var qq;
+	  for (var d in datas) {
+	    ds = ds.concat(this.getValuesForKey(datas[d], key));
+	  }
+	  ds = this.getValuesForAllKeys(ds, keys);
+	  return ds;
+	},
+	'getValuesForKey':function(data, key) {
+	  var newdatas = [];
+	  var newdata = data;
+	  newdata[key] = '0';
+	  newdatas[newdatas.length] = Object.assign({}, newdata);
+	 //   newdata;
+	  newdata[key] = '1';
+	  newdatas[newdatas.length] = Object.assign({}, newdata);
+	 //   newdata;
+	  return newdatas;
+	},
+	
 	'exeqB': function (x) {
 	  var vars = this.noOfVarsB(x);
 	  var trys;
