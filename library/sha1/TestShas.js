@@ -842,11 +842,11 @@ function replSumToSum() {
     return false;
   }
   
-  for(var k in dg.lk.uses) {
-    if (dg.lk.uses[k].includes(lastActSumKey)) {
-      replToSum(k);
-      console.log(k);
-    }
+  var vars = dg.lk.uses.out[lastActSumKey];
+  
+  for(var k in vars) {
+      replToSum(vars[k]);
+      console.log(vars[k]);
   }
   refreshActiveSum();
 }

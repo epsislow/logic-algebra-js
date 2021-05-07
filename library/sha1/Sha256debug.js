@@ -41,7 +41,7 @@ dg = {
   'lk': {
     'm': {},
     'sums':{},
-    'uses': {},
+    'uses': {'in':{}, 'out': {}},
     'reset': function() {
       this.m = {};
     },
@@ -64,10 +64,18 @@ dg = {
 	    vars = this.parent().sh.getVarsInVs(vw);
 	    
 	    if (vars.length) {
-	      if(k in this.uses) {
-	        this.uses[k] = this.concatUnique(this.uses[k], vars);
+	      if(k in this.uses.in) {
+	        this.uses.in[k] = this.concatUnique(this.uses.in[k], vars);
 	      } else {
-	        this.uses[k] = vars;
+	        this.uses.in[k] = vars;
+  	    }
+  	    for(var k2 in vars) {
+  	      if(vars[k2] in this.uses.out) {
+  	      //  this.pushOnce(this.uses.out[vars[k]], k);
+  	      this.uses.out[vars[k2]].push(k);
+  	      } else {
+  	        this.uses.out[vars[k2]] = [k];
+  	      }
   	    }
 	    }
 	    return this;
@@ -152,7 +160,7 @@ dg = {
       return res;
     },
     'pushOnce': function(arr, item) {
-      if (arr.indexOf(item)==-1) {
+      if (!(item in arr)){
         arr.push(item);
       } 
       return arr;
