@@ -228,11 +228,16 @@ dg = {
 	    }
 	  }
 	  
-	  if( optimize) {
+	  if(optimize) {
 	   bor = this.optimizeShortB(bor);
 	  }
 	  if(convB) {
-	    return this.convBr2B(bor,not);
+	    var x2 =this.convBr2B(bor,not);
+	    if (x2.length < x.length ) {
+	      return x2;
+	    } else {
+	      return x;
+	    }
 	  } else {
 	    return [bor,not];
 	  }
@@ -276,15 +281,16 @@ dg = {
 	    return bor.join('|');
 	  }
 	},
-	'optimizeShortB': function (table) {
+	'optimizeShortB': function (table, debug=0) {
 	var table2;
 	var otbl = [];
 	var txt = [];
 	for (var g = 0; g < 4; g++) {
 	    var used = [];
-	    //console.table(table);
-	    txt.push('g='+g);
-      txt.push(this.convBr2B(table));
+	    if(debug) {
+	      txt.push('g='+g);
+        txt.push(this.convBr2B(table));
+	    }
 	    
 	    for (var i in table) {
 	      if (used.includes(i)) {
@@ -329,7 +335,9 @@ dg = {
 	    }
 	    otbl = [];
 	  }
-	  console.log(txt.join("\n"));
+	  if(debug) {
+	    console.log(txt.join("\n"));
+	  }
 	  return table;
 	},
 	'findSameValues': function(data,datb, oneValueDiff = false) {
