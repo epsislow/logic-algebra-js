@@ -219,6 +219,7 @@ dg = {
 	  var r = [];
 	  var onecnt = 0;
 	  for(var t in tsts) {
+	    
 	    r[t] = this.execr( this.replB(x, tsts[t]));
 	    if(r[t] == '1') {
 	      onecnt++;
@@ -249,7 +250,7 @@ dg = {
 	   }
 	  }
 	  if(convB) {
-	    var x2 =this.convBr2B(bor,not);
+	    var x2 = this.convBr2B(bor, not);
 	//    if (x2.length < x.length ) {
 	      return x2;
 	//    } else {
@@ -290,13 +291,55 @@ dg = {
 	      }
 	      band.push(pf+ k);
 	    }
-	    bor.push(band.join('&'));
+	    
+	    bor.push(
+	      band.join('&')
+	      //this.convBrJoinPush(band, '&')
+	      );
 	  }
+	  
+	 var s = bor.join('|'); 
+	   //this.convBrJoinPush(bor, '|');
+	 
 	  if(not) {
-	    return this.notB(bor.join('|'));
+	    return this.notB(s);
 	  } else {
-	    return bor.join('|');
+	    return s;
 	  }
+	},
+	'convBrJoinPush': function(br, opr) {
+	  var ust;
+	  var hasv = false;
+	  var hasr = false;
+	  for(var i in br) {
+	    if(!ust) {
+	      ust = br[i];
+	    } else {
+	      if(!hasv) {
+	        hasv = this.hasOpB(ust)
+	      }
+	      if(hasv) {
+	        ust = '(' + ust + ')';
+	      } 
+	      
+	      vst = br[i];
+	      
+	      hasr = this.hasOpB(vst);
+	      if (hasr) {
+	        vst = '(' + vst + ')';
+	      }
+	      
+	      ust = ust + opr + vst;
+	    }
+	  }
+	  return ust;
+	},
+	'hasOpB': function(ust) {
+	  hasv = (ust.match(/[\\&\\|\\^]/g));
+	  if (hasv) {
+	    hasv = hasv.length > 0;
+	  };
+	  return hasv;
 	},
 	'optimizeShortB': function (table, debug=0) {
 	  var table0 = table;
@@ -394,7 +437,14 @@ dg = {
     }
     return true;
   },
-	
+	'hasVOneOf': function(v, hs) {
+	  for(var h in hs) {
+	    if(v.indexOf(h) != -1) {
+	      return true;
+	    }
+	  }
+	  return false;
+	},
 	'repl': function (x,replacers, wExec =0) {
 		var vs;
 		if(Array.isArray(x)) {
@@ -405,13 +455,17 @@ dg = {
 		var r=[];
 		
 	  for(var i in vs) {
-	    if(wExec) {
-		   r[i] = this.execr(this.execr(this.execr(this.replB(vs[i], replacers))));
+	   if(this.hasVOneOf(vs[i], replacers )) {
+	     if(wExec) {
+  		    r[i] = this.execr(this.execr(this.execr(this.replB(vs[i], replacers))));
+	     } else {
+	        r[i] = this.replB(vs[i], replacers);
+  	      if (!this.hasVarB(r[i])) {
+	          r[i] = this.execr(r[i]);
+	        }
+	     }
 	    } else {
-	      r[i] = this.replB(vs[i], replacers);
-	      if (!this.hasVarB(r[i])) {
-	        r[i] = this.execr(r[i]);
-	      }
+	      r[i] = vs[i];
 	    }
 		}
 		
