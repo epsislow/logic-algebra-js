@@ -196,7 +196,7 @@ dg = {
 	'parent': function () {
 		return dg;
 	},
-	'shortB': function (x) {
+	'shortB': function (x, optimize = 1, convB = 1) {
 	  var vars;
 	  vars = this.getVarBitsInV(x);
 	  
@@ -213,9 +213,31 @@ dg = {
 	  var not = 0;
 	  var s=[];
 	  if(onecnt < tsts.length) {
-	   // not = 1;
+	   not = 1;
 	  }
 	  
+	  var bor = [];
+	  var br;
+	  for(var t in r) {
+	    if (r[t] == !not) {
+	      br = {};
+	      for(var k in tsts[t]) {
+	        br[k] = tsts[t][k];
+	      }
+	      bor.push(br);
+	    }
+	  }
+	  
+	  if( optimize) {
+	   bor = this.optimizeShortB(bor);
+	  }
+	  if(convB) {
+	    return this.convBr2B(bor,not);
+	  } else {
+	    return [bor,not];
+	  }
+	  
+	  /*
 	  var br = [];
 	  var bb = '';
 	  for(var t in r) {
@@ -231,8 +253,120 @@ dg = {
 	     s.push('(' + br.join('&') + ')');
 	    }
 	  }
- 	  return this.execr((not? '~':'') + s.join('|'));
+ 	  return this.execr((not? '~':'') + s.join('|'));*/
+ 	  
 	},
+	'convBr2B': function(br, not) {
+	  var bor =[];
+	  var band;
+	  for(var i in br) {
+	    band = [];
+	    for(var k in br[i]) {
+	      var pf ='';
+	      if(br[i][k]==0) {
+	        pf = '~';
+	      }
+	      band.push(pf+ k);
+	    }
+	    bor.push(band.join('&'));
+	  }
+	  if(not) {
+	    return this.notB(bor.join('|'));
+	  } else {
+	    return bor.join('|');
+	  }
+	},
+	'optimizeShortB': function (table) {
+	var table2;
+	var otbl = [];
+	var txt = [];
+	for (var g = 0; g < 4; g++) {
+	    var used = [];
+	    //console.table(table);
+	    txt.push('g='+g);
+      txt.push(this.convBr2B(table));
+	    
+	    for (var i in table) {
+	      if (used.includes(i)) {
+	        continue;
+	      }
+	      for (var j in table) {
+	        if (used.includes(j)) {
+	          continue;
+	        }
+	        if (i >= j) {
+	          continue;
+	        }
+	        var obj = this.findSameValues(table[i], table[j], 1);
+	        if (!obj) {
+	          continue;
+	        }
+	        if (Object.keys(obj).length != 0) {
+	          otbl[otbl.length] = obj;
+	          //console.log(i + '+' + j + '     ',table[i],table[j], ' => ', obj);
+	        }
+	        used[used.length] = i;
+	        used[used.length] = j;
+	        break;
+	      }
+	    }
+	    
+	    table2 = [];
+	    for (var i in table) {
+	      if (used.includes(i)) {
+	        continue;
+	      }
+	      if (Object.keys(table[i]).length == 0) {
+	        continue;
+	      }
+	      table2[table2.length] = table[i];
+	    }
+	    table = table2;
+	    table = table.concat(otbl);
+	    if (table.length == 0) {
+	      table = ['1'];
+	      break;
+	    }
+	    otbl = [];
+	  }
+	  console.log(txt.join("\n"));
+	  return table;
+	},
+	'findSameValues': function(data,datb, oneValueDiff = false) {
+    if(!this.findIfSameKeys(data, datb)) {
+      return false;
+    }
+    var valueDiffs=0;
+    var same ={};
+    for(var k in data) {
+      if (data[k]==datb[k]) {
+        same[k]=data[k];
+      } else if (oneValueDiff) {
+        valueDiffs++;
+        if(valueDiffs>1) {
+          return false;
+        }
+      }
+    }
+    return same;
+  },
+  
+  'findIfSameKeys': function(data,datb) {
+    for(var k in data) {
+      if(!(k in datb)) {
+        return false;
+      }
+    }
+    
+    for(var k in datb) {
+      if (!(k in data)) {
+        return false;
+      }
+    }
+    return true;
+  },
+	
+	
 	'repl': function (x,replacers, wExec =0) {
 		var vs;
 		if(Array.isArray(x)) {
@@ -571,10 +705,10 @@ dg = {
 	'getValuesForKey':function(data, key) {
 	  var newdatas = [];
 	  var newdata = data;
-	  newdata[key] = '0';
+	  newdata[key] = 0;
 	  newdatas[newdatas.length] = Object.assign({}, newdata);
 	 //   newdata;
-	  newdata[key] = '1';
+	  newdata[key] = 1;
 	  newdatas[newdatas.length] = Object.assign({}, newdata);
 	 //   newdata;
 	  return newdatas;

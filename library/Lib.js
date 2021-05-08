@@ -777,7 +777,7 @@ class Optimizer {
    // console.log('tre');
     return true;
   }
-  
+
   findSameValues(data,datb, oneValueDiff = false) {
     if(!this.findIfSameKeys(data, datb)) {
       return false;
