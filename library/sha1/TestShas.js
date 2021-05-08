@@ -771,7 +771,7 @@ function initActEvents() {
     var csum = sumKey;
     //lastSumKeyList.push('Csss');
     dg.lk.delSum('Csss');
-    dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
+    dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 3);
     
     dg.lk.delSum(csum);
     dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
@@ -817,7 +817,7 @@ function replToSum(someSum) {
   var r = [];
   
   var sum = dg.lk.getSum(csum);
-  
+
   for(var i in sum) {
     r[i] = dg.sh.repl(sum[i], rr, 1);
   }

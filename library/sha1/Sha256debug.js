@@ -196,7 +196,21 @@ dg = {
 	'parent': function () {
 		return dg;
 	},
-	'shortB': function (x, optimize = 1, convB = 1) {
+	'short': function(x) {
+	  var vs;
+	  if (Array.isArray(x)) {
+	    vs = x;
+	  } else {
+	    vs = this.parent().lk.get(x);
+	  }
+	  var r = [];
+	
+	  for (var i in vs) {
+	    r[i] = this.shortB(this.shortB(vs[i]));
+	  }
+	  return r;
+	},
+	'shortB': function (x, optimize = 1, convB = 1, d=0) {
 	  var vars;
 	  vars = this.getVarBitsInV(x);
 	  
@@ -219,7 +233,7 @@ dg = {
 	  var bor = [];
 	  var br;
 	  for(var t in r) {
-	    if (r[t] == !not) {
+	    if (r[t] != not +'') {
 	      br = {};
 	      for(var k in tsts[t]) {
 	        br[k] = tsts[t][k];
@@ -230,14 +244,17 @@ dg = {
 	  
 	  if(optimize) {
 	   bor = this.optimizeShortB(bor);
+	   if(d) {
+	     console.table(bor);
+	   }
 	  }
 	  if(convB) {
 	    var x2 =this.convBr2B(bor,not);
-	    if (x2.length < x.length ) {
+	//    if (x2.length < x.length ) {
 	      return x2;
-	    } else {
-	      return x;
-	    }
+	//    } else {
+//	      return x;
+//	    }
 	  } else {
 	    return [bor,not];
 	  }
@@ -282,6 +299,7 @@ dg = {
 	  }
 	},
 	'optimizeShortB': function (table, debug=0) {
+	  var table0 = table;
 	var table2;
 	var otbl = [];
 	var txt = [];
@@ -334,6 +352,9 @@ dg = {
 	      break;
 	    }
 	    otbl = [];
+	    if(used.length > 0) {
+	      g = 2;
+	    }
 	  }
 	  if(debug) {
 	    console.log(txt.join("\n"));
@@ -374,7 +395,6 @@ dg = {
     return true;
   },
 	
-	
 	'repl': function (x,replacers, wExec =0) {
 		var vs;
 		if(Array.isArray(x)) {
@@ -397,14 +417,24 @@ dg = {
 		
 		return r;
 	},
-	'replB': function (x, replacers) {
+	'replB': function (x, replacers, d =0) {
 		var r = x + '';
+		r = r.replaceAll(/[a-z0-9][^\&\\|\\^\\~\\)||(]+/ig, '$&#');
+		var txt = [r];
 	    for(var k in replacers) {
+	      txt.push('k:'+ k + ' w:'+ replacers[k]);
 	      if(['1','0'].includes(replacers[k] +'')) {
-		      r = r.replaceAll(k, replacers[k]);
+		      r = r.replaceAll(k+'#', replacers[k]);
+		      txt.push('r0:' +r);
 	      } else {
-	        r = r.replaceAll(k, '(' + replacers[k]+ ')');
+	        r = r.replaceAll(k+'#', '(' + replacers[k]+ ')');
+	        txt.push('ra:'+r);
 	      }
+		}
+		if(d) {
+		  console.log('------',replacers);
+		  txt.push('r='+r);
+	  	console.log(txt.join("\n"));
 		}
 		return r;
 	},
@@ -418,7 +448,6 @@ dg = {
 		var r=[];
 		
 	  for(var i in vs) {
-	   // r[i] = this.shortB(vs[i]);
 	  	r[i] = this.execr(vs[i]);
 		}
 		return r;
@@ -713,10 +742,10 @@ dg = {
 	'getValuesForKey':function(data, key) {
 	  var newdatas = [];
 	  var newdata = data;
-	  newdata[key] = 0;
+	  newdata[key] = '0';
 	  newdatas[newdatas.length] = Object.assign({}, newdata);
 	 //   newdata;
-	  newdata[key] = 1;
+	  newdata[key] = '1';
 	  newdatas[newdatas.length] = Object.assign({}, newdata);
 	 //   newdata;
 	  return newdatas;
@@ -768,6 +797,12 @@ dg = {
 		
 		var ckey = this.parent().lk.getNextCavl();
 		
+		var debug = 0;
+		if(ckey == "zzz6") {
+		  console.log(sumName)
+		  debug = 1;
+		}
+		
 		for (var ik in ks) {
 			i++;
 			if (i==1) {
@@ -776,10 +811,23 @@ dg = {
 			}
 			
 			if(!doit && (this.hasVar(sumResult) || this.hasVar(vs[ik]))) {
+			  if(debug) {
+			    console.log('v'+ik, vs[ik]);
+			  }
 				this.parent().lk.addSum(ckey,vs[ik]);
 				moreSum = true;
 			} else {
-				sumResult = this.exec(this.sum(sumResult, vs[ik]));
+			  if(debug) {
+			    console.log('z', sumResult);
+			    console.log('s'+ ik, vs[ik]);
+			  }
+			  sumResult = this.sum(sumResult, vs[ik]);
+				if (doit&1) {
+				  sumResult = this.short(sumResult);
+			  }
+			  if(doit&2) {
+			    sumResult = this.exec(sumResult);
+			  }
 			}
 		}
 		
@@ -788,7 +836,11 @@ dg = {
 		  
 		  dg.lk.add(sumName, sumResult);
 		} else {
+		  if(debug) {
+		    console.log('Z', sumResult);
+		  }
 		  this.parent().lk.addSum(ckey, sumResult);
+		  
 		  
 		  var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
 
