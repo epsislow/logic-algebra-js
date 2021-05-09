@@ -79,10 +79,63 @@ dg = {
 	    }
 	    return this;
 	  },
-	  'getArbOfUses': function (isOut = 0) {
-	    for(v in dg.lk.uses.in) {
-	      if (!dg.lk.uses.in[k].length) {
-	        console.log(k);
+	  'createArb4Uses': function () {
+	    var map = {}, node, roots = [], i;
+  
+      var list = dg.lk.uses.out;
+  
+  for (var i in list) {
+    map[list[i]] = i; // initialize the map
+    list[i].children = []; // initialize the children
+  }
+  
+  for (var j in list) {
+    for (var k in list[i]) {
+      node = list[i][k];
+      
+    }
+  }
+  
+  for (i = 0; i < list.length; i += 1) {
+    node = list[i];
+    if (node.parentId !== "0") {
+      // if you have dangling branches check that map[node.parentId] exists
+      list[map[node.parentId]].children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+  
+	  },
+	  'reduceArb': function (list, res = {}) {
+	    for(var i in list) {
+	      if(!(i in res)) {
+	        if(!list[i].length) {
+	          res[i] = 0;
+	        } else {
+	          res[i] = {};
+	          for(var k in list[i]) {
+	            this.reduceArb(list, res[i][list[i][k]]);
+	          }
+	        }
+	      }
+	    }
+	  },
+	  'arbNodes': function (list) {
+	    var res= {}, map = {}, parent;
+	    for(var i in list) {
+	      map[i] = list[i];
+	      res[i] = [];
+	    }
+	    
+	    for(var i in list) {
+	      node = list[i];
+	      if(!node.parent) {
+	        
+	      } else {
+	        for(var k in list[i]) {
+	          parent = list[i][k];
+	        }
 	      }
 	    }
 	  },
