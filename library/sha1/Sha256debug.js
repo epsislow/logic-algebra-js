@@ -121,38 +121,73 @@ dg = {
 	      }
 	    }
 	  },
-	  'arbNodes': function (list) {
-	    var tree= {'roots': {}}, mappedArr = {}, arrElem, mappedElem, child;
-		
-	    for(var i in list) {
-			if (!mappedArr.hasOwnProperty(i)) {
-				mappedArr[i] = {'name': i, children: [], parent:[]};
-			}
-			for(var j in list[i]) {
-				child = list[i][j];
-				if (mappedArr.hasOwnProperty(child)) {
-					mappedArr[child].parent.push(i);
-				} else {
-					mappedArr[child] =  {'name': child, children: [], parent:[i]};
+	  'arbNodes': function (list,type = 0) {
+		if (type == 0) {
+			var tr= {'roots': {}}, elem, arr = {}; parents = {};
+			
+			for(var i in list) {
+				if (!arr.hasOwnProperty(i)) {
+					arr[i] = {};
+					parents[i] = [];
 				}
-			}
-	    }
-	    
-	    for(var i in mappedArr) {
-			if (mappedArr.hasOwnProperty(i)) {
-				mappedElem = mappedArr[i];
-				if (mappedElem.parent.length == 0) {
-					if (!tree.roots.hasOwnProperty(mappedElem.name)) {
-						tree.roots[mappedElem.name] = mappedElem;
-					}
-				} else {
-					for(var k in mappedElem.parent) {
-						mappedArr[mappedElem.parent[k]].children.push(mappedElem);
+				for(var j in list[i]) {
+					child = list[i][j];
+					if (arr.hasOwnProperty(child)) {
+						parents[child].push(i);
+					} else {
+						arr[child] = {};
+						parents[child] = [i];
 					}
 				}
 			}
+			
+			for(var i in arr) {
+				if (arr.hasOwnProperty(i)) {
+					elem = arr[i];
+					if (parents[i].length == 0) {
+						if (!tr.roots.hasOwnProperty(i)) {
+							tr.roots[i] = elem;
+						}
+					} else {
+						for(var k in parents[i]) {
+							arr[parents[i][k]][i] = elem;
+						}
+					}
+				}
+			}
+			return tr;
+		} else if (type == 1) {
+			var tree= {'roots': {}}, mappedArr = {}, arrElem, mappedElem, child;
+			for(var i in list) {
+				if (!mappedArr.hasOwnProperty(i)) {
+					mappedArr[i] = {'name': i, children: [], parent:[]};
+				}
+				for(var j in list[i]) {
+					child = list[i][j];
+					if (mappedArr.hasOwnProperty(child)) {
+						mappedArr[child].parent.push(i);
+					} else {
+						mappedArr[child] =  {'name': child, children: [], parent:[i]};
+					}
+				}
+			}
+
+			for(var i in mappedArr) {
+				if (mappedArr.hasOwnProperty(i)) {
+					mappedElem = mappedArr[i];
+					if (mappedElem.parent.length == 0) {
+						if (!tree.roots.hasOwnProperty(mappedElem.name)) {
+							tree.roots[mappedElem.name] = mappedElem;
+						}
+					} else {
+						for(var k in mappedElem.parent) {
+							mappedArr[mappedElem.parent[k]].children.push(mappedElem);
+						}
+					}
+				}
+			}
+			return tree;
 		}
-		return tree;
 	  },
 	  'delSum': function(k) {
         delete this.sums[k];
