@@ -122,22 +122,37 @@ dg = {
 	    }
 	  },
 	  'arbNodes': function (list) {
-	    var res= {}, map = {}, parent;
+	    var tree= {'roots': {}}, mappedArr = {}, arrElem, mappedElem, child;
+		
 	    for(var i in list) {
-	      map[i] = list[i];
-	      res[i] = [];
+			if (!mappedArr.hasOwnProperty(i)) {
+				mappedArr[i] = {'name': i, children: [], parent:[]};
+			}
+			for(var j in list[i]) {
+				child = list[i][j];
+				if (mappedArr.hasOwnProperty(child)) {
+					mappedArr[child].parent.push(i);
+				} else {
+					mappedArr[child] =  {'name': child, children: [], parent:[i]};
+				}
+			}
 	    }
 	    
-	    for(var i in list) {
-	      node = list[i];
-	      if(!node.parent) {
-	        
-	      } else {
-	        for(var k in list[i]) {
-	          parent = list[i][k];
-	        }
-	      }
-	    }
+	    for(var i in mappedArr) {
+			if (mappedArr.hasOwnProperty(i)) {
+				mappedElem = mappedArr[i];
+				if (mappedElem.parent.length == 0) {
+					if (!tree.roots.hasOwnProperty(mappedElem.name)) {
+						tree.roots[mappedElem.name] = mappedElem;
+					}
+				} else {
+					for(var k in mappedElem.parent) {
+						mappedArr[mappedElem.parent[k]].children.push(mappedElem);
+					}
+				}
+			}
+		}
+		return tree;
 	  },
 	  'delSum': function(k) {
         delete this.sums[k];
