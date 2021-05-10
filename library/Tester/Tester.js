@@ -2,6 +2,7 @@
 //https://gist.github.com/loilo/4d385d64e2b8552dcc12a0f5126b6df8
 //https://javascript.info/proxy
 
+
 var t = {
   'assertErrors': [],
   'isNot': function () {},
@@ -9,21 +10,132 @@ var t = {
   'isFalse': function () {},
   'isObject': function () {},
   'hasLength':function () {},
-  'isArray': function () {},
+  'isArray': function () { console.log('ed')},
   'isEqual': function () {},
-  'mocks': {},
+  'createHandler': function(prefix) {
+    
+    return (function (that) {
+      this.prefix = prefix;
+      this.get = function (target, prop, receiver) {
+        console.log('g:'+ prop);
+        if (typeof target[prop] == 'object' && target[prop] !== null) {
+          
+          return new Proxy(
+            target[prop],
+            that.createHandler(that.prefix+'.'+ prop)
+          );
+        }
+        if (typeof target[prop] == 'function') {
+        
+          return (function(a, b, c) {
+            return function(...args) {
+              a.addUnexpectedCall(b, args);
+        
+              return c[b].apply(c, args);
+            }
+          })(this, prop, target);
+        
+        }
+        
+        if (this.expectations['get'].hasOwnProperty(prop)) {
+          console.log('1');
+          if (('get' in this.count)) {
+            if (prop in this.count) {
+              this.expectations['set'][prop]--;
+            } else {
+              //count failed .. it had a count so => unexpected
+              this.addUnexpectedGet(prop);
+            }
+          } //count was not set, all counts are accepted
+        } else {
+          this.addUnexpectedSet(prop);
+        }
+        return obj[prop];
+      }
+      
+      this.set = function(obj, prop, val) {
+        console.log('s'); //, ...args);
+      
+        if (this.expectations['set'].hasOwnProperty(prop) && this.expectations['set'][prop] == val) {
+          if (('set' in this.count)) {
+            if (prop in this.count) {
+              this.expectations['set'][prop]--;
+            } else {
+              //count failed .. it had a count so => unexpected
+              this.addUnexpectedSet(prop, val);
+            }
+          } //count was not set, all counts are accepted
+        } else {
+          this.addUnexpectedSet(prop, val);
+        }
+        obj.setItem(sKey, vValue);
+      }
+      
+      this.addUnexpectedSet= function (prop, val) {
+      if (!('set' in this.unexpected)) {
+        this.unexpected['set'] = {};
+      }
+      this.unexpected['set'][prop] = val;
+      }
+      
+      this.addUnexpectedGet= function(prop) {
+        if (!('get' in this.unexpected)) {
+          this.unexpected['get'] = {};
+        }
+        this.unexpected['get'][prop] = true;
+      }
+      
+      this.addUnexpectedCall= function(prop, args) {
+        if (!('call' in this.unexpected)) {
+          this.unexpected['call'] = {};
+        }
+        this.unexpected['call'][prop] = [{ 'args': args }];
+      }
+      
+      this.count= {}
+      
+      this.expectations= { 'set': {}, 'call': {}, 'get': {} }
+      
+      this.unexpected= {}
+      
+      return this;
+      
+    })(this);
+  },
   'handlers': {},
   'mocks': {},
   'getMock': function (name, obj) {
     if(this.mocks.hasOwnProperty(name)) {
       return this.mocks[name];
     }
-	
+    
+	/*
 	 this.handlers[name] = {
 		'count': {},
 		'expectations': {'set': {}, 'call': {}, 'get':{}},
 		'unexpected': {},
-		'get': function(target, prop) {
+		'get': function(target, prop, receiver,s) {
+		  console.log('g', prop);
+		  
+  	  //return Reflect.get(...arguments);
+
+if (typeof target[prop] === 'object' && target[prop] !== null) {
+  
+  //return new Proxy(target[prop], t2.handlers);
+}
+
+		  if (typeof target[prop] == 'function') {
+		    
+		    return (function (a, b, c) {
+		     return function(...args) {
+		      a.addUnexpectedCall(b,args);
+		      
+		      return c[b].apply(c, args);
+		     }
+		    })(this, prop, target);
+		    
+		  }
+		  
 			if (this.expectations['get'].hasOwnProperty(prop)) {
 				console.log('1');
 				if (('get' in this.count)) {
@@ -40,6 +152,8 @@ var t = {
 			return obj[prop];
 		},
 		'set': function(obj, prop, val) {
+		  console.log('s'); //, ...args);
+		  
 			if (this.expectations['set'].hasOwnProperty(prop) && this.expectations['set'][prop] == val) {
 				if (('set' in this.count)) {
 					if (prop in this.count) {
@@ -86,13 +200,15 @@ var t = {
 				}
 			this.unexpected['get'][prop] = true;
 		},
-		'addUnexpectedCall': function (that, args) {
+		'addUnexpectedCall': function (prop, args) {
 			if (!('call' in this.unexpected)) {
 					this.unexpected['call'] = {};
 				}
-			this.unexpected['call'][prop] = true;
+			this.unexpected['call'][prop] = [{'args':args}];
 		}
-	}
+	}*/
+	  this.handlers[name] = this.createHandler('');
+	
     this.mocks[name] = new Proxy(obj, this.handlers[name]);
 	
     return this.mocks[name];

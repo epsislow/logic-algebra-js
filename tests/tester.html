@@ -54,11 +54,14 @@ Tester
 
 <script>
 console.log('[mocks]-----');
-var sh = t.getMock('dg.sh',dg.sh);
+//dg.sh = t.getMock('dg.sh', dg.sh);
+//dg.lk = t.getMock('dg.lk', dg.lk);
+dg = t.getMock('dg', dg);
 
 console.log('[tests]-----');
 
-console.log('sh.andB(1,0)='+ sh.andB(1,0));
+console.log('sh.andB(1,1)='+ dg.sh.andB(1,1));
+console.log('lk.add("a", [1,1,0,0])=', dg.lk.add('a',[1,1,0,0]));
 
 
 console.log('[results]-----');
