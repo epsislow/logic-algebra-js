@@ -102,6 +102,65 @@
       #sum-sel .inline-mem {
         color: #ffa;
       }
+      
+      .tree li {
+    list-style-type:none;
+    margin:0;
+    padding:10px 2px 0 2px;
+    position:relative;
+    font-size:12px;
+    line-height: 15px;
+}
+
+.tree li::before, 
+.tree li::after {
+    content:'';
+    left:-20px;
+    position:absolute;
+    right:auto
+}
+.tree li::before {
+    border-left:2px solid #000;
+    bottom:50px;
+    height:100%;
+    top:0;
+    width:1px
+}
+.tree li::after {
+    border-top:2px solid #000;
+    height:10px;
+    top:20px;
+    width:23px
+}
+.tree li span {
+    -moz-border-radius:5px;
+    -webkit-border-radius:5px;
+    border:2px solid #000;
+    border-radius:3px;
+    display:inline-block;
+    padding:4px 2px;
+    text-decoration:none;
+    cursor:pointer;
+    background-color: #ddd;
+}
+.tree>ul>li::before,
+.tree>ul>li::after {
+    border:0
+}
+.tree li:last-child::before {
+    height:20px
+}
+.tree li span:hover {
+    background: hotpink;
+    border:2px solid #94a0b4;
+    }
+
+
+[aria-expanded="false"] > .expanded,
+[aria-expanded="true"] > .collapsed {
+  display: none;
+}
+
     </style>
 </head>
 
