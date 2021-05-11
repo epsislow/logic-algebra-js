@@ -60,8 +60,23 @@ dg = t.getMock('dg', dg);
 
 console.log('[tests]-----');
 
+console.log('sh.andB(0,0)='+ dg.sh.andB(0,0));
+console.log('sh.andB(0,1)='+ dg.sh.andB(0,1));
+console.log('sh.andB(1,0)='+ dg.sh.andB(1,0));
 console.log('sh.andB(1,1)='+ dg.sh.andB(1,1));
-console.log('lk.add("a", [1,1,0,0])=', dg.lk.add('a',[1,1,0,0]));
+
+//console.log('lk.add("a", [1,1,0,0])=', dg.lk.add('a',[1,1,0,0]));
+
+/*
+var testn = 12390;
+
+var text = "abcdef01234567890ABCDEF+×÷=/_!@#$%^&*():;.,";
+
+var description = 'Sha256 for text `'+text + '` is: '+ Sha256debug.hash(text+ testn, {'outFormat':'hex-w'});
+
+console.log(description);
+*/
+
 
 
 console.log('[results]-----');

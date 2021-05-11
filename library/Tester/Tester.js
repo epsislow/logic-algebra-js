@@ -15,21 +15,27 @@ var t = {
   'createHandler': function(prefix) {
     
     return (function (that) {
-      this.prefix = prefix;
-      this.get = function (target, prop, receiver) {
-        console.log('g:'+ prop);
+		var o = {};
+      o.prefix = prefix;
+      o.get = function (target, prop, receiver) {
+        //console.log('g:'+ prop);
         if (typeof target[prop] == 'object' && target[prop] !== null) {
           
-          return new Proxy(
+		  var name = this.prefix+'.'+ prop;
+		  if (!(name in that.handlers)) {
+			  that.handlers[name] = that.createHandler(name);
+		  }
+		  
+		  return new Proxy(
             target[prop],
-            that.createHandler(that.prefix+'.'+ prop)
+            that.handlers[name]
           );
         }
         if (typeof target[prop] == 'function') {
         
           return (function(a, b, c) {
             return function(...args) {
-              console.log('callu'+ b);
+              //console.log('callu'+ b);
               a.addUnexpectedCall(b, args);
         
               return c[b].apply(c, args);
@@ -43,20 +49,20 @@ var t = {
             if (prop in this.count) {
               this.expectations['set'][prop]--;
             } else {
-              console.log('getu');
+              //console.log('getu');
               //count failed .. it had a count so => unexpected
               this.addUnexpectedGet(prop);
             }
           } //count was not set, all counts are accepted
         } else {
-          console.log('setu');
+          //console.log('setu');
           this.addUnexpectedSet(prop);
         }
-        return obj[prop];
+        return target[prop];
       }
       
-      this.set = function(obj, prop, val) {
-        console.log('s'); //, ...args);
+      o.set = function(obj, prop, val) {
+        //console.log('s'); //, ...args);
       
         if (this.expectations['set'].hasOwnProperty(prop) && this.expectations['set'][prop] == val) {
           if (('set' in this.count)) {
@@ -70,37 +76,41 @@ var t = {
         } else {
           this.addUnexpectedSet(prop, val);
         }
-        obj.setItem(sKey, vValue);
+        obj[prop] = val;
       }
       
-      this.addUnexpectedSet= function (prop, val) {
+      o.addUnexpectedSet= function (prop, val) {
       if (!('set' in this.unexpected)) {
         this.unexpected['set'] = {};
       }
       this.unexpected['set'][prop] = val;
       }
       
-      this.addUnexpectedGet= function(prop) {
+      o.addUnexpectedGet= function(prop) {
         if (!('get' in this.unexpected)) {
           this.unexpected['get'] = {};
         }
         this.unexpected['get'][prop] = true;
       }
       
-      this.addUnexpectedCall= function(prop, args) {
+      o.addUnexpectedCall= function(prop, args) {
         if (!('call' in this.unexpected)) {
           this.unexpected['call'] = {};
         }
-        this.unexpected['call'][prop] = [{ 'args': args }];
+		if (!(prop in this.unexpected.call)) {
+			this.unexpected['call'][prop] = [];
+		}
+		
+        this.unexpected['call'][prop].push([{ 'args': args }]);
       }
       
-      this.count= {}
+      o.count= {}
       
-      this.expectations= { 'set': {}, 'call': {}, 'get': {} }
+      o.expectations= { 'set': {}, 'call': {}, 'get': {} }
       
-      this.unexpected= {}
+      o.unexpected= {}
       
-      return this;
+      return o;
       
     })(this);
   },
@@ -111,105 +121,7 @@ var t = {
       return this.mocks[name];
     }
     
-	/*
-	 this.handlers[name] = {
-		'count': {},
-		'expectations': {'set': {}, 'call': {}, 'get':{}},
-		'unexpected': {},
-		'get': function(target, prop, receiver,s) {
-		  console.log('g', prop);
-		  
-  	  //return Reflect.get(...arguments);
-
-if (typeof target[prop] === 'object' && target[prop] !== null) {
-  
-  //return new Proxy(target[prop], t2.handlers);
-}
-
-		  if (typeof target[prop] == 'function') {
-		    
-		    return (function (a, b, c) {
-		     return function(...args) {
-		      a.addUnexpectedCall(b,args);
-		      
-		      return c[b].apply(c, args);
-		     }
-		    })(this, prop, target);
-		    
-		  }
-		  
-			if (this.expectations['get'].hasOwnProperty(prop)) {
-				console.log('1');
-				if (('get' in this.count)) {
-					if (prop in this.count) {
-						this.expectations['set'][prop]--;
-					} else {
-						//count failed .. it had a count so => unexpected
-						this.addUnexpectedGet(prop);
-					}
-				} //count was not set, all counts are accepted
-			} else {
-				this.addUnexpectedSet(prop);
-			}
-			return obj[prop];
-		},
-		'set': function(obj, prop, val) {
-		  console.log('s'); //, ...args);
-		  
-			if (this.expectations['set'].hasOwnProperty(prop) && this.expectations['set'][prop] == val) {
-				if (('set' in this.count)) {
-					if (prop in this.count) {
-						this.expectations['set'][prop]--;
-					} else {
-						//count failed .. it had a count so => unexpected
-						this.addUnexpectedSet(prop,val);
-					}
-				} //count was not set, all counts are accepted
-			} else {
-				this.addUnexpectedSet(prop,val);
-			}
-			obj.setItem(sKey, vValue);
-		},
-		'defineProperty': function (oTarget, sKey, oDesc) {
-			if (oDesc && 'value' in oDesc) { oTarget.setItem(sKey, oDesc.value); }
-			return oTarget;
-		},
-		'apply': function(target, that, args) {
-			sup.apply(that, args);
-			base.apply(that, args);
-			this.addUnexpectedCall(that, args);
-		},
-		'construct': function(target, args) {
-		    var obj = Object.create(base.prototype);
-		    this.apply(target, obj, args);
-		    return obj;
-		},
-		'expectCall': function() {
-		},
-		'expectGet': function() {
-		},
-		'expectSet': function() {
-		},
-		'addUnexpectedSet': function (prop, val) {
-			if (!('set' in this.unexpected)) {
-					this.unexpected['set'] = {};
-				}
-			this.unexpected['set'][prop] = val;
-		},
-		'addUnexpectedGet': function (prop) {
-			if (!('get' in this.unexpected)) {
-					this.unexpected['get'] = {};
-				}
-			this.unexpected['get'][prop] = true;
-		},
-		'addUnexpectedCall': function (prop, args) {
-			if (!('call' in this.unexpected)) {
-					this.unexpected['call'] = {};
-				}
-			this.unexpected['call'][prop] = [{'args':args}];
-		}
-	}*/
-	  this.handlers[name] = this.createHandler('');
+	this.handlers[name] = this.createHandler(name);
 	
     this.mocks[name] = new Proxy(obj, this.handlers[name]);
 	
