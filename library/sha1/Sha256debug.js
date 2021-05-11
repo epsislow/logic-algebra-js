@@ -1240,6 +1240,23 @@ dg = {
 		  }
 	  }
     },
+    'orM': function() {
+      var r=[],v, args= arguments;
+      for(var a in args) {
+        v = args[a];
+        if(v == '1') {
+          return v;
+        }
+        if(v == '0') {
+          continue;
+        }
+        if(this.hasOpB(v)) {
+          v = '(' + v + ')';
+        }
+        r.push(v);
+      }
+      return r.join('|');
+    },
 	'orB': function(a,b) {
       if (a == '0') {
 		  return b;
@@ -1279,6 +1296,27 @@ dg = {
         }
       }
       return;
+    },
+    'andM': function () {
+      var args = arguments;
+      var r = [],v;
+      for(var a in args) {
+        if(args[a] == '0') {
+          return '0';
+        }
+        if(args[a] == '1') {
+          continue;
+        }
+        v = args[a];
+        if(this.hasOpB(v)) {
+          v='('+v+')';
+        }
+        r.push(v);
+      }
+      if(r.length == 0) {
+        return '1';
+      }
+      return r.join('&');
     },
     'and': function(k1,k2) {
 	  var vs1, vs2;
