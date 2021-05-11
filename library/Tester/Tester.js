@@ -29,6 +29,7 @@ var t = {
         
           return (function(a, b, c) {
             return function(...args) {
+              console.log('callu'+ b);
               a.addUnexpectedCall(b, args);
         
               return c[b].apply(c, args);
@@ -38,16 +39,17 @@ var t = {
         }
         
         if (this.expectations['get'].hasOwnProperty(prop)) {
-          console.log('1');
           if (('get' in this.count)) {
             if (prop in this.count) {
               this.expectations['set'][prop]--;
             } else {
+              console.log('getu');
               //count failed .. it had a count so => unexpected
               this.addUnexpectedGet(prop);
             }
           } //count was not set, all counts are accepted
         } else {
+          console.log('setu');
           this.addUnexpectedSet(prop);
         }
         return obj[prop];
