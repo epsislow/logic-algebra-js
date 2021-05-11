@@ -101,7 +101,7 @@ var t = {
 			this.unexpected['call'][prop] = [];
 		}
 		
-        this.unexpected['call'][prop].push([{ 'args': args }]);
+        this.unexpected['call'][prop].push({ 'args': args });
       }
       
       o.count= {}
