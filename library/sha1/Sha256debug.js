@@ -437,8 +437,11 @@ dg = {
 	  }
 	  return ust;
 	},
+	'hasBrackets': function(ust) {
+	  return (ust.charAt(0)== '(' && ust.charAt(ust.length-1)) == ')';
+	},
 	'hasOpB': function(ust) {
-	  hasv = (ust.match(/[\\&\\|\\^]/g));
+	  hasv = ((ust+'').match(/[\\&\\|\\^]/g));
 	  if (hasv) {
 	    hasv = hasv.length > 0;
 	  };
@@ -1211,6 +1214,39 @@ dg = {
 	  }
 	  return r;
     },
+    'xorM': function() {
+      var args= arguments;
+      var r= [],v;
+      var lastLen;
+      
+      var res;
+      
+      var lastV = false;
+      
+    //do {
+      lastLen = r.length;
+      for(var a in args) {
+        v = args[a];
+        if (lastV === false) {
+          lastV = v;
+          continue;
+        }
+        
+     //   if (this.hasOpB(v) && !this.hasBrackets(v)) {
+    //      v = '(' + v + ')';
+   //     }
+        lastV = this.xorB(lastV, v);
+      }
+      return lastV;
+      
+  //  } while(r.length>1 && lastLen != r.length);
+        
+      //if(!r.length && lastV) {
+     //   return lastV;
+     // }
+      
+   //   return r.join('^');
+    },
     'xorB': function(a,b) {
       if (a == '0') {
 		  return b;
@@ -1408,6 +1444,13 @@ dg = {
 	  }
 	  return r;
     },
+    'notM': function() {
+      var r=[];
+      for(var a in arguments) {
+        r.push(this.notB(arguments[a]));
+      }
+      return r;
+    },
     'notB': function(a) {	  
 	  if (['0','1'].includes(a+'')) {
 		  return (a == '0') ? '1': '0';
@@ -1419,6 +1462,9 @@ dg = {
 				return this.trimPrts(a.substring(1));
 			  }
 		  } else {
+		    if(this.hasOpB(a) && !this.hasBrackets(a)) {
+		      a = '('+a+')';
+		    }
 			return '~' + a+ '';
 		  }
 	  }
