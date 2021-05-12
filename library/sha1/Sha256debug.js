@@ -331,7 +331,7 @@ dg = {
 	  var not = 0;
 	  var s=[];
 	  if(onecnt < tsts.length) {
-	   not = 1;
+	   //not = 1;
 	  }
 	 
 	  
@@ -1467,20 +1467,18 @@ dg = {
 	  if (['0','1'].includes(a+'')) {
 		  return (a == '0') ? '1': '0';
 	  } else {
-		  if (a.charAt(0) == '~') {
-		    /*
-			  if (new RegExp('\\^|\&|\\|').test(a)) {
-				return a.substring(1);
-			  } else {
+		if (a.charAt(0) == '~' ) {
+			if (!this.hasOpB(a)) {
 				return this.trimPrts(a.substring(1));
-				
-			  }*/
-		  } else {
+			} else {
+				return '~'+'('+a+')';
+			}
+		} else {
 		    if(this.hasOpB(a) && !this.hasBrackets(a)) {
 		      a = '('+a+')';
 		    }
-			return '~' + a+ '';
-		  }
+			return '~' + a;
+		}
 	  }
     },
 	'trimPrts': function(a) {
