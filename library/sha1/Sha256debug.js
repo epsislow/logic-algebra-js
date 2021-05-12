@@ -336,9 +336,8 @@ dg = {
 	 
 	  
 	  if(d) {
-	    var tstd = tsts;
+	    var tstd = JSON.parse(JSON.stringify(tsts));
 	    for(var a in tstd) {
-	      tstd[a]= Object.assign({}, tstd[a]);
 	      tstd[a]['='] = r[a];
 	    }
 	    console.table(tstd);
@@ -1469,11 +1468,13 @@ dg = {
 		  return (a == '0') ? '1': '0';
 	  } else {
 		  if (a.charAt(0) == '~') {
+		    /*
 			  if (new RegExp('\\^|\&|\\|').test(a)) {
 				return a.substring(1);
 			  } else {
 				return this.trimPrts(a.substring(1));
-			  }
+				
+			  }*/
 		  } else {
 		    if(this.hasOpB(a) && !this.hasBrackets(a)) {
 		      a = '('+a+')';
