@@ -333,6 +333,16 @@ dg = {
 	  if(onecnt < tsts.length) {
 	   not = 1;
 	  }
+	 
+	  
+	  if(d) {
+	    var tstd = tsts;
+	    for(var a in tstd) {
+	      tstd[a]= Object.assign({}, tstd[a]);
+	      tstd[a]['='] = r[a];
+	    }
+	    console.table(tstd);
+	  }
 	  
 	  var bor = [];
 	  var br;
@@ -346,13 +356,16 @@ dg = {
 	    }
 	  }
 	  
+	  
 	  if(optimize) {
-	   bor = this.optimizeShortB(bor);
-	   if(d) {
-	     console.table(bor);
-	   }
+	   bor = this.optimizeShortB(bor, d);
 	  }
 	  if(convB) {
+	    if(d) {
+	      if (not) {
+	        console.log('isNot');
+	      }
+	    }
 	    var x2 = this.convBr2B(bor, not);
 	//    if (x2.length < x.length ) {
 	      return x2;
