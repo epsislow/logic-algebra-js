@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Index</title>
+	
+	<link rel="icon" type="image/png" href="/favicon.ico"/>
+	<link rel="icon" type="image/png" href="http://logic/favicon.ico"/>
+
     <!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"-->
 </head>
@@ -104,22 +108,73 @@ $('document').ready(function() {
    // console.log('vs is');
     
     vs.page('Index')
-  .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
-  .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js")
-  .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js")
-  //.js('lib', "library/Lib.js")
-  .scriptsReady(function () {
-   vs.addSectionsToMain();
-  })
-  .addScripts();
+      .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
+      .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js")
+      .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js")
+  //    .js('lib', "library/Lib.js")
+      .scriptsReady(function () {
+        vs.addSectionsToMain();
+      })
+      .addScripts();
 
 
   var ra = vs.clearBody()
     .section('top')
+	.br()
     .addButton('Index', '/index.html')
-    .container('my-3 p-3 bg-dark rounded box-shadow text-light')
-    .br(2);
-    
+	.br()
+    .container('m-3 p-3 bg-dark rounded box-shadow text-light col-3', 'div', 'float:left')
+	.container('border-bottom border-gray pb-2 mb-0', 'h6')
+	.addText('Where to')
+	.up()
+	
+	.container('media text-muted pt-3')
+	.container('media-body ml-2 mb-0 small lh-125', 'p')
+	.container('d-block text-gray-dark', 'strong')
+	.addText('Logistic parser')
+	.up()
+	.addText('Js only. Parser with logic gates. Truth table.')
+	.br()
+	.addText('Uses console.log')
+	.br()
+	.addButton('Logistic page', '/tests/test.html', 'btn-info')
+	.up()
+	.up()
+	.up();
+	
+	ra.container('my-3 p-3 bg-dark rounded box-shadow text-light col-3', 'div', 'float:left')
+	.container('border-bottom border-gray pb-2 mb-0', 'h6')
+	.addText('Where to')
+	.up()
+	
+	.container('media text-muted pt-3')
+	.container('media-body ml-2 mb-0 small lh-125', 'p')
+	.container('d-block text-gray-dark', 'strong')
+	.addText('Logistic parser')
+	.up()
+	.addText('Js only. Parser with logic gates. Truth table.')
+	.br()
+	.addText('Uses console.log')
+	.br()
+	.addButton('Logistic page', '/tests/test.html', 'btn-info')
+	.up()
+	.up();
+	
+
+ 
+ /*
+ 
+ <div class="media text-muted pt-3">
+
+            <p class="media-body pb-3 ml-2 mb-0 small lh-125 border-bottom border-gray">
+                <strong class="d-block text-gray-dark">Logistic parser</strong>
+                Js only. Parser with logic gates. Truth table.<br/>
+                Uses console.log
+                <br/>
+                <a href="/tests/test.html" class="btn btn-sm btn-info" role="button">Logistic page</a>
+            </p>
+        </div>
+		*/
     
     
   //  vs.section('middle')

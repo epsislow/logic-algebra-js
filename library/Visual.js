@@ -151,15 +151,23 @@ window.vs = (function () {
         parent.append(content);
         return pub;
     }
-    pub.container = function (classes, element='div') {
+	
+    pub.container = function (classes, element='div', style = false) {
+		
+	  console.log(element,' = ', classes);
+		
       var content = $('<'+element+'>')
         .addClass(classes);
+		
+	  if (style) {
+		  content.attr('style', style);
+	  }
       
       parent.append(content);
       return controlsForContainer(name, content, this);
     }
     
-    pub.br = function(num) {
+    pub.br = function(num = 1) {
       for(var i=0; i<num;i++) {
         parent.append($('<br>'));
       }
