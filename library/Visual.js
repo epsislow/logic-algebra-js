@@ -153,9 +153,7 @@ window.vs = (function () {
     }
 	
     pub.container = function (classes, element='div', style = false) {
-		
-	  console.log(element,' = ', classes);
-		
+	
       var content = $('<'+element+'>')
         .addClass(classes);
 		
