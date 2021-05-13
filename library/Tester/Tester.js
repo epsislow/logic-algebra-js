@@ -106,9 +106,15 @@ var t = {
           return (function(a, b, c) {
             return function(...args) {
               //console.log('callu'+ b);
-              a.addUnexpectedCall(b, args);
-        
-              return c[b].apply(c, args);
+              if(!a.checkExpectation(prop, args)) {
+                  a.addUnexpectedCall(b, args);
+              }
+              
+              var ret = c[b].apply(c, args);
+              
+              //a.checkReturnExpectation(ret);
+              
+              return ret;
             }
           })(this, prop, target);
         
@@ -175,17 +181,31 @@ var t = {
       }
 	  
 	  o.checkExpectation= function () {
-		  
+		  if(1) {
+		    
+		  }
+	  }
+	  
+	  o.checkCount= function(hash, justChk =0) {
+	    var res = (hash in this.count);
+	    
+	    if (justChk) {
+	      return res;
+	    }
+
+	    if(res) {
+	      this.count[hash]--;
+	    }
 	  }
       
-      o.count= {}
+    o.count= {}
       
-      o.expectations= { 'set': {}, 'call': {}, 'get': {} }
+    o.expectations= { 'set': {}, 'call': {}, 'get': {} }
       
-      o.unexpected= {}
+    o.unexpected= {}
       
 	  o.expect= function (name) {
-		  var e = {form:{'name': name}};
+	  	var e = {form:{'name': name}};
 		  
 		  e.as = function (type) {
 			  this.form.type = type;
@@ -228,7 +248,8 @@ var t = {
 			  return this;
 		  }
 		  
-		  e.count = function (cnt) {
+		  e.count =
+		  e.times = function (cnt) {
 			  this.form.count = cnt;
 			  return this;
 		  }
@@ -252,7 +273,7 @@ var t = {
 			  if(typeof callback !='function') {
 				  throw "Expected a callback function";
 			  }
-			  this.form.args = callback;
+			  this.form.argsValidate = callback;
 			  return this;
 		  }
 		  
@@ -264,6 +285,10 @@ var t = {
 		  e.shouldReturn= function () {
 			  this.form.assertReturn = arguments;
 			  return this;
+		  }
+		  
+		  e.returnLike = function(callback) {
+		    this.form.returnValidate = callback;
 		  }
 		  
 		  e.add= (function (that) {
@@ -286,6 +311,26 @@ var t = {
 					if ('args' in this.form) {
 						def.args = this.form.args;
 					}
+					
+					if('anyArgs' in this.form) {
+					  def.anyArgs = this.form.anyArgs;
+					}
+					
+					if('argsValidate' in this.form) {
+					  def.argsValidate = this.form.argsValidate;
+					}
+					
+					if('returns' in this.form) {
+					  def.returns = this.returns;
+					}
+					
+					if('shouldReturn' in this.form) {
+					  def.shouldReturn = this.form;
+					}
+					
+					if('returnValidate' in this.form) {
+					  def.returnValidate = this.returnValidate;
+					}
 				}
 				  
 				if(!this.form.type in that.expectations) {
@@ -303,7 +348,8 @@ var t = {
 		  
 		  return e;
 	  }
-      return o;
+    
+    return o;
       
     })(this);
   },
