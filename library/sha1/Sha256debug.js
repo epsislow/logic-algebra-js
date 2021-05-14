@@ -324,12 +324,12 @@ dg = {
 	  var st;
 	  for(var t in tsts) {
 	    st = this.replB(x, tsts[t]);
-	    
-	    if(d) {
-	      console.log('st'+t+': ');
+		
+		r[t] = this.execr(st);
+		
+		if(d&2) {
+	      console.log('st'+t+': ' + st + ' = ' + r[t]);
 	    }
-	 
-	    r[t] = this.execr(st);
 	    if(r[t] == '1') {
 	      onecnt++;
 	    }
@@ -341,7 +341,7 @@ dg = {
 	  }
 	 
 	  
-	  if(d&2) {
+	  if(d&4) {
 	    var tstd = JSON.parse(JSON.stringify(tsts));
 	    for(var a in tstd) {
 	      tstd[a]['='] = r[a];
@@ -363,7 +363,7 @@ dg = {
 	  
 	  
 	  if(optimize) {
-	   bor = this.optimizeShortB(bor, d&4);
+	   bor = this.optimizeShortB(bor, d&8);
 	  }
 	  if(convB) {
 	    if(d) {
