@@ -20,56 +20,7 @@
 </style>
 
 <body class="bg-black">
-<main role="main" class="container">
-    <br/>
-    <br/>
-    <a href="/index.html" class="btn btn-sm btn-info" role="button">Index</a>
-
-    <div class="my-3 p-3 bg-dark rounded box-shadow text-light">
-        <h6 class="border-bottom border-gray pb-2 mb-0">Where to</h6>
-        <div class="media text-muted pt-3">
-
-            <p class="media-body pb-3 ml-2 mb-0 small lh-125 border-bottom border-gray">
-                <strong class="d-block text-gray-dark">Logistic parser</strong>
-                Js only. Parser with logic gates. Truth table.<br/>
-                Uses console.log
-                <br/>
-                <a href="/tests/test.html" class="btn btn-sm btn-info" role="button">Logistic page</a>
-            </p>
-        </div>
-
-        <div class="media text-muted pt-3 ml-2">
-            <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-                <strong class="d-block text-gray-dark">Logistic nodes</strong>
-                Js only. Logistic nodes. Events driven<br/>
-                Uses console.log
-                <br/>
-                <a href="/tests/test.html" class="btn btn-sm btn-info" role="button">Nodes page</a>
-        </div>
-
-        <div class="media text-muted pt-3 ml-2">
-            <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-                <strong class="d-block text-gray-dark">Logistic nodes</strong>
-                Js only. Sha1<br/>
-                Uses console.log
-                <br/>
-                <a href="/tests/sha256.html" class="btn btn-sm btn-info" role="button">Sha1 page</a>
-        </div>
-
-        <div class="media text-muted pt-3">
-            <img data-src="holder.js/32x32?theme=thumb&bg=6f42c1&fg=6f42c1&size=1" alt="" class="mr-2 rounded">
-            <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
-                <strong class="d-block text-gray-dark">@username</strong>
-                Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris
-                condimentum nibh, ut fermentum massa justo sit amet risus.
-            </p>
-        </div>
-        <small class="d-block text-right mt-3">
-            <a href="#">All updates</a>
-        </small>
-    </div>
-
-</main>
+<main role="main" class="container"></main>
 
 <script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
 
@@ -89,21 +40,6 @@
 <script type="text/javascript" src="library/Visual.js"></script>
 <script>
 $('document').ready(function() {
-  
-  if('v' in window){
-    v.page('Index');
-    v.section('top').addButton('index','index.html');
-    var cmid = v.section('middle')
-     .container('main');
-  
-    var cont= v.create('container');
-    for(var c in cf) {
-      cont.addText(cf.text)
-       .addButton(cf.btn, cf.href);
-       cmid.add(cont);
-    }
-  }
-  
   if('vs' in window) {
    // console.log('vs is');
     
@@ -122,43 +58,62 @@ $('document').ready(function() {
     .section('top')
 	.br()
     .addButton('Index', '/index.html')
-	.br()
-    .container('m-3 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 150px')
-	.container('border-bottom border-gray pb-2 mb-0', 'h6')
-	.addText('Where to')
-	.up()
-	
-	.container('media text-muted pt-3')
-	.container('media-body ml-2 mb-0 small lh-125', 'p')
-	.container('d-block text-gray-dark', 'strong')
-	.addText('Tester js')
-	.up()
-	.addText('Js only. Tests.')
-	.br()
-	.br()
-	.addButton('Tester', '/tests/tester.html', 'btn-success')
-	.up()
-	.up()
-	.up();
-	
-	ra.container('my-3 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left; width:170px;height:150px')
-	.container('border-bottom border-gray pb-2 mb-0', 'h6')
-	.addText('Where to')
-	.up()
-	
-	.container('media text-muted pt-3')
-	.container('media-body ml-2 mb-0 small lh-125', 'p')
-	.container('d-block text-gray-dark', 'strong')
-	.addText('Sha256 debug')
-	.up()
-	.addText('Uses console.log')
-	.br(2)
-	.addButton('Sha page', '/tests/sha256.html', 'btn-warning')
-	.up()
-	.up();
+	.br();
 	
 	
-
+  var pages = [{
+		title: 'Where to',
+		head: 'Tester js',
+		description:  'Js only. Tests.',
+		button:  {text: 'Tester', href:  '/tests/tester.html', 'class': 'btn-success'}
+	}, {
+		title: 'Where to',
+		head: 'Sha256 debug',
+		description:  'Uses console.log',
+		button:  {text: 'Sha256d', href:  '/tests/sha256.html', 'class': 'btn-warning'}
+	}, {
+		title: 'Where to',
+		head: 'Logistic',
+		description:  'See the console',
+		button:  {text: 'Logistic Nodes', href: '/index.html', 'class': 'btn-light'}
+	}, {
+		title: 'Where to',
+		head: 'Tab',
+		description:  'Tab test',
+		button:  {text: 'Tab', href:  '/Tab.html', 'class': 'btn-secondary'}
+	}, {
+		title: 'Where to',
+		head: 'Tree',
+		description:  'Tree test.',
+		button:  {text: 'Tree', href:  '/Tree.html', 'class': 'btn-danger'}
+	}, {
+		title: 'Where to',
+		head: 'Events driven',
+		description:  'Js only. ',
+		button:  {text: 'Events', href:  '/test/test.html', 'class': 'btn-warning'}
+	}];
+	
+	var page;
+	for(var p in pages) {
+	  page = pages[p];
+	  ra.container('m-3 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px')
+		.container('border-bottom border-gray pb-2 mb-0', 'h6')
+		.addText(page.title)
+		.up()
+		
+		.container('media text-muted pt-3')
+		.container('media-body ml-2 mb-0 small lh-125', 'p')
+		.container('d-block text-gray-dark', 'strong')
+		.addText(page.head)
+		.up()
+		.addText(page.description)
+		.br()
+		.br()
+		.addButton(page.button.text, page.button.href, page.button.class)
+		.up()
+		.up()
+		.up();
+	}
  
  /*
  
