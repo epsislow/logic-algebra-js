@@ -68,6 +68,19 @@ window.vs = (function () {
       page.jsCallback= callback;
       return pub;
     }
+    pub.importJs = function(name, href,jsCallback) {
+      if(name in page.js){
+        throw "Js named: " +name +' already loaded!';
+        return pub;
+      }
+      page.js[name] =href;
+      if(jsCallback=='function') {
+        $.getScript(href)
+      } else {
+        $.getScript(href, jsCallback);
+      }
+      return pub;
+    }
     pub.addScripts = function () {
       for(var c in page.css) {
         $('head').append(page.css[c]);
