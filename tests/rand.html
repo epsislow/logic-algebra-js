@@ -30,12 +30,12 @@ $('document').ready(function() {
       .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
       .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js")
       .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js")
-	  //.js('random',"library/sha1/Random.js")
-      .scriptsReady(function () {
+	  .js('rnd',"/library/sha1/Random.js")
+    .scriptsReady(function () {
         vs.addSectionsToMain();
-        /*vs.importJs('rand', "library/Rand.js", function() {
+        vs.importJs('rand', "/library/sha1/Rand.js", function() {
 			console.log('-- Load finished --')
-		});*/
+		});
       })
       .addScripts();
 	  

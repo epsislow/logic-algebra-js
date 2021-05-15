@@ -325,7 +325,14 @@ dg = {
 	  for(var t in tsts) {
 	    st = this.replB(x, tsts[t]);
 		
-		r[t] = this.execr(st);
+	//	r[t] = this.execr(st);
+	
+	  if(d&16) {
+	   // console.log(tsts[t]);
+	  //  console.log(st);
+	  }
+		
+		r[t]=Function('return '+st)();
 		
 		if(d&2) {
 	      console.log('st'+t+': ' + st + ' = ' + r[t]);
