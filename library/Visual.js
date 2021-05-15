@@ -143,19 +143,33 @@ window.vs = (function () {
     pub.main = function () {
       return controlsForMain();
     }
-    pub.addEl = function(element,attrs={},classes='') {
+    pub.append = function (jqElement, getContainerControls=false) {
+      parent.append(jqElement);
+      if(getContainerControls) {
+        return controlsForContainer(name,jqElement, this);
+      }
+      return pub;
+    }
+    pub.addEl = function(element,attrs=false, classes='') {
         var content = $('<' + element + '>')
-          .attr(attrs)
           .addClass(classes);
+          
+          if(attrs) {
+            content.attr(attrs);
+          }
       
         parent.append(content);
         return pub;
     }
 	
-    pub.container = function (classes, element='div', style = false) {
+    pub.container = function (classes, element='div', style = false, attrs = false) {
 	
       var content = $('<'+element+'>')
         .addClass(classes);
+        
+        if(attrs) {
+          content.attr(attrs);
+        }
 		
 	  if (style) {
 		  content.attr('style', style);
@@ -172,7 +186,7 @@ window.vs = (function () {
       return pub;
     }
   
-    pub.addButton = function (text, href=false, classes= false) {
+    pub.addButton = function (text, href=false, classes= false,attrs={}){
       var a = $('<a>');
       if(!classes) {
         classes = 'btn-info';
@@ -184,35 +198,55 @@ window.vs = (function () {
         a.attr('href', href);
       }
       a.addClass(classes);
+      attrs.role = 'button';
       
-      a.attr('role', 'button');
+      a.attr(attrs);
       a.text(text);
       parent.append(a);
       return pub;
     }
-    pub.addText = function (text, wSpan= false, classes) {
+    pub.addText = function (text, wSpan= false, classes=false, attrs=false) {
       var txt = text;
       if (wSpan) {
         var txt = $('<span>').append(txt);
+        if(classes) {
+          a.addClass(classes);
+        }
+        if(attrs) {
+          a.attr(attrs);
+        }
       }
       
       parent.append(txt);
       return pub;
     }
-    pub.span = function () {
+    pub.span = function (classes=false,attrs=false) {
       var s= $('<span>');
+       if (classes) {
+         a.addClass(classes);
+       }
+       if (attrs) {
+         a.attr(attrs);
+       }
       parent.append(s);
+      
       return controlsForContainer(name, s, this);
     }
     pub.clear = function () {
       parent.html('');
       return this;
     }
-    pub.addIcon = function (icon) {
+    pub.addIcon = function (icon,classes=false,attrs=false) {
       var s = $('<i>')
         .addClass('fas')
         .addClass('fa-'+icon);
-      
+       if (classes) {
+         a.addClass(classes);
+       }
+       if (attrs) {
+         a.attr(attrs);
+       }
+       
       parent.append(s);
     }
   
