@@ -1,8 +1,8 @@
 $('document').ready(function(document){
 
-console.log('Random v0.1.0 [rd]');
-
-window.rd = function() {
+//console.log('Random v0.1.0 [rd]');
+/*
+window.vs = (function () {
   this.randomBytes = function (length) {
     var result = [];
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -15,6 +15,7 @@ window.rd = function() {
   }
   
   
-}
+})();
+*/
 
 });

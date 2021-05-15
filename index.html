@@ -41,19 +41,17 @@
 <script>
 $('document').ready(function() {
   if('vs' in window) {
-   // console.log('vs is');
-    
     vs.page('Index')
       .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
       .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js")
       .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js")
-      //.js('lib', "library/Lib.js")
       .scriptsReady(function () {
         vs.addSectionsToMain();
-        vs.importJs('lib', "library/Lib.js", function() { console.log('-- Load finished --')});
+        vs.importJs('lib', "library/Lib.js", function() {
+			console.log('-- Load finished --')
+		});
       })
       .addScripts();
-
 
   var ra = vs.clearBody()
     .section('top')
@@ -77,6 +75,11 @@ $('document').ready(function() {
 		head: 'Logistic',
 		description:  'See the console',
 		button:  {text: 'Logistic Nodes', href: '/index.html', 'class': 'btn-light'}
+	}, {
+		title: 'Where to',
+		head: 'Rand',
+		description:  'See the console',
+		button:  {text: 'Rand', href: '/tests/rand.html', 'class': 'btn-success'}
 	}, {
 		title: 'Where to',
 		head: 'Tab',

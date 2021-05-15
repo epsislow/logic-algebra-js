@@ -34,14 +34,19 @@ window.vs = (function () {
       page.id = id;
       return pub;
     }
-    pub.css = function(name, href) {
+    pub.css = function(name, href, integrity=false) {
       if(name in page.css) {
         return pub;
       }
       var cont = $('<link>');
       cont.attr('rel', 'stylesheet')
          .attr('href', href);
-      page.css[name] = cont;
+		 
+	  if (integrity) {
+		  cont.attr('crossorigin', "anonymous")
+			.attr('integrity', integrity);
+	  }
+	  page.css[name] = cont;
       return pub;
     }
     pub.style = function(name, style) {
@@ -53,10 +58,14 @@ window.vs = (function () {
       
       return pub;
     }
-    pub.js = function(name, href) {
+    pub.js = function(name, href, integrity=false) {
       if(name in page.js) {
         return pub;
       }
+	  if (integrity) {
+		  cont.attr('crossorigin', "anonymous")
+			.attr('integrity', integrity);
+	  }
       page.js[name] = {href: href};
       
       return pub;
