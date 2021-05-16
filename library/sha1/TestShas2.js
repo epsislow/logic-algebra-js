@@ -14,6 +14,23 @@ console.log(description);
 
 addToText3(Sha256.debug);
 
+var hasher = null;
+
+const sha256t = async (text) => {
+  /*
+  if (hasher) {
+    hasher.init();
+  } else {
+    hasher = await hashwasm.createSHA256();
+  }
+  hasher.update(text);
+  const hash = hasher.digest();*/
+  const hash = hashwasm.sha256(text);
+  return Promise.resolve(hash);
+}
+
+//sha256t(text+testn).then(console.log);
+
 
 //var test = "ahdhhrjdjvudjjsjrjrjfjcjjrjejrjfjvj28848584iwjcjgjt8383838hd4&÷&÷&&=€4)'kcm@€$€€%£/¥2₩₩÷(~}|}}~}838485910KWIRJFNDNRKQL3LFKbskfldjfjtj3j48";
 
@@ -98,27 +115,48 @@ function addToText3(con) {
 
 var needsSave = false;
 
+async function checkAsyncSha(nounce, returnpr = 1) {
+  var sha = await sha256t(test+nounce);
+  
+ var content='Nounce '+ nounce +":\n"+ sha + "\n";
+ hashtxt = content;
+ $('#text').text(content);
+ 
+  
+  checkSha(sha);
+  if(returnpr) {
+    return Promise.resolve(sha);
+  }
+}
+
+
 function showSha(nounce) {
   var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
   
-  var content = 'Nounce ' + nounce + ":\n" + sha + "\n";
+  var content = 'Nounce ' + nounce ;
+  content+=":\n" + sha + "\n";
   $('#text').text(content);
 
   return sha;
 }
-
+/*
 $('#try').click(function () {
   checkSha(showSha(getNounce()));
 });
+*/
+$('#try').click(async => checkAsyncSha(getNounce(),0));
+
 
 $('#next').click(async function() {
   addNounce(1);
-  checkSha(showSha(getNounce()));
+  await checkAsyncSha(getNounce());
+  //checkSha(showSha(getNounce()));
 })
 
 calcSpd = function() {
   spdhashes = hashes;
   hashes =0;
+ $('#text').text(hashtxt + spdhashes +' h/s');
 
   if(needsSave) {
     saveCache();
@@ -127,14 +165,28 @@ calcSpd = function() {
 }
 
 function showSpd() {
-  $('#text').append("\n" + spdhashes + ' h/s');
+//  $('#text').append("\n" + spdhashes + ' h/s');
 }
 
 tryNextNounce = async function() {
   addNounce(1);
-  checkSha(showSha(getNounce()));
-  showSpd();
+  //checkSha(showSha(getNounce()));
+  var p = checkAsyncSha(getNounce());
+//  showSpd();
   hashes++;
+  return Promise.resolve(p);
+}
+
+loopTryNextNounce = async function () {
+  for(var i=0; i<4000; i++) {
+    await tryNextNounce();
+    
+  // infinite loop
+  /*while (start) {
+    let res = await tryNextNounce();
+  }*/
+  }
+ // $('text2').append('stopped');
 }
 
 var intv;
@@ -144,6 +196,21 @@ var spdhashes = 0;
 var hashtxt ='';
 var start=false;
 
+$('#startstop').click(async function() {
+  if (!start) {
+    spdintv = setInterval(calcSpd, 1000);
+    start = true;
+    $('#startstop').text('stop');
+    loopTryNextNounce();
+  } else {
+   // hashes = 0;
+    start = false;
+   clearInterval(spdintv);
+    $('#startstop').text('start');
+  }
+});
+
+/*
 $('#startstop').click(async function() {
   if(!start) {
     intv=setInterval(tryNextNounce,1);
@@ -157,7 +224,7 @@ $('#startstop').click(async function() {
     clearInterval(spdintv);
     $('#startstop').text('start');
   }
-});
+});*/
 
 var activeNav = 'nav1-cnt';
 var activeNavBtn = 'nav1';
