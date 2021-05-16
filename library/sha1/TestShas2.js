@@ -16,6 +16,10 @@ addToText3(Sha256.debug);
 
 var hasher = null;
 
+window.onerror = function (message, url, line, column, error) {
+  console.log(message, url, line, column, error);
+}
+
 const sha256t = async (text) => {
   /*
   if (hasher) {
@@ -28,11 +32,123 @@ const sha256t = async (text) => {
   const hash = hashwasm.sha256(text);
   return Promise.resolve(hash);
 }
-
 //sha256t(text+testn).then(console.log);
 
 
-//var test = "ahdhhrjdjvudjjsjrjrjfjcjjrjejrjfjvj28848584iwjcjgjt8383838hd4&÷&÷&&=€4)'kcm@€$€€%£/¥2₩₩÷(~}|}}~}838485910KWIRJFNDNRKQL3LFKbskfldjfjtj3j48";
+async function brutePrime(n) {
+  function work({ data }) {
+    while (true) {
+      let d = 2;
+      for (; d < data; d++) {
+        if (data % d == 0) break;
+      }
+      if (d == data) return self.postMessage(data);
+      data++;
+    }
+  }
+
+  let b = new Blob(["onmessage =" + work.toString()], { type: "text/javascript" });
+  let worker = new Worker(URL.createObjectURL(b));
+  worker.postMessage(n);
+  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
+}
+
+function testW() {
+	(async () => {
+	  let n = 100;
+	  for (let i = 0; i < 10; i++) {
+		console.log(n = await brutePrime(n + 1));
+	  }
+	})().catch(e => console.log(e));
+}
+
+async function tryWorkerHash(n) {
+   async function work(data) {
+	self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
+	var startTime = Date.now();
+	
+	var data = data.data;
+	
+	//console.log('ggg',data);
+	while ((Date.now() - startTime) < data.duration) {
+		var sha = await hashwasm.sha256(data.test + data.nounce);
+		//var sha = '20342389423984823943892489234892389428942984';
+		data.nounce++;
+		data.trys++;
+
+		var test;
+
+		if (data.methodCheck == 1) {
+			test = (sha.substr(0, data.difc) == ('').padStart(data.difc, '0'));
+			if (test) {
+				data.difc++;
+			}
+		} else {
+			var newDifc = (sha.match(/0/g) || []).length;
+			test = newDifc >= data.difc;
+			if (test) {
+			  data.difc = newDifc;
+			}
+		}
+		data.content = 'Nounce '+ data.nounce +":\n"+ sha + "\n";
+		
+		if(test) {
+			data.desc = "Difc is "+ data.difc +"\nNounce is "+data.nounce +"\nSha: "+ sha + "\nYes!\n\n";
+			data.needsToSave = 1;
+			data.intrval = (Date.now() - startTime);
+			return self.postMessage(data);
+		}
+    }
+	
+	data.intrval = (Date.now() - startTime);
+	return self.postMessage(data);
+  }
+
+  let b = new Blob(["onmessage =" + work.toString()], { type: "text/javascript" });
+  let worker = new Worker(URL.createObjectURL(b));
+  worker.postMessage(n);
+  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
+}
+
+async function loopTryNextNounce2() {
+	difc = parseInt($('#difc').val(),10);
+	var data = {
+		'needsToSave': 0,
+		'methodCheck': methodCheck,
+		'trys': 0,
+		'duration': 900,
+		'test': test,
+		'nounce': parseInt(getNounce(), 10),
+		'difc': difc,
+		'content': '',
+		'desc': '',
+	};
+	
+	/*
+	const datar = await (async (data) => {
+		return await tryWorkerHash(data);
+	})(data).catch(e => console.log('Exception: ' + e));
+	*/
+	
+	console.log('pre-try-Worker');
+	
+	data = await tryWorkerHash(data);
+	
+	console.log(data);
+
+	hashes += data.trys;
+	lastFoundNounce = data.desc;
+	addNounce(hashes);
+	setDifc(data.difc);
+	if(data.needsToSave) {
+		needsToSave();
+		addToText2(data.desc);
+	} else {
+		hashtxt = data.content;
+		$('#text').text(hashtxt + hashes +' h/s');
+	}
+	return Promise.resolve(data);
+}
 
 var test = text;
 
@@ -116,17 +232,16 @@ function addToText3(con) {
 var needsSave = false;
 
 async function checkAsyncSha(nounce, returnpr = 1) {
-  var sha = await sha256t(test+nounce);
+	var sha = await sha256t(test + nounce);
   
- var content='Nounce '+ nounce +":\n"+ sha + "\n";
- hashtxt = content;
- $('#text').text(content);
- 
+	var content='Nounce '+ nounce +":\n"+ sha + "\n";
+	hashtxt = content;
+	$('#text').text(content);
   
-  checkSha(sha);
-  if(returnpr) {
-    return Promise.resolve(sha);
-  }
+	checkSha(sha);
+	if(returnpr) {
+		return Promise.resolve(sha);
+	}
 }
 
 
@@ -139,18 +254,12 @@ function showSha(nounce) {
 
   return sha;
 }
-/*
-$('#try').click(function () {
-  checkSha(showSha(getNounce()));
-});
-*/
 $('#try').click(async => checkAsyncSha(getNounce(),0));
 
 
 $('#next').click(async function() {
   addNounce(1);
   await checkAsyncSha(getNounce());
-  //checkSha(showSha(getNounce()));
 })
 
 calcSpd = function() {
@@ -164,15 +273,9 @@ calcSpd = function() {
   }
 }
 
-function showSpd() {
-//  $('#text').append("\n" + spdhashes + ' h/s');
-}
-
 tryNextNounce = async function() {
   addNounce(1);
-  //checkSha(showSha(getNounce()));
   var p = checkAsyncSha(getNounce());
-//  showSpd();
   hashes++;
   return Promise.resolve(p);
 }
@@ -201,30 +304,17 @@ $('#startstop').click(async function() {
     spdintv = setInterval(calcSpd, 1000);
     start = true;
     $('#startstop').text('stop');
-    loopTryNextNounce();
+	while (start) {
+		await loopTryNextNounce2();
+	}
   } else {
    // hashes = 0;
     start = false;
-   clearInterval(spdintv);
-    $('#startstop').text('start');
-  }
-});
-
-/*
-$('#startstop').click(async function() {
-  if(!start) {
-    intv=setInterval(tryNextNounce,1);
-    spdintv=setInterval(calcSpd,1000);
-    start=true;
-    $('#startstop').text('stop');
-  } else {
-    hashes = 0;
-    start =false;
-    clearInterval(intv);
     clearInterval(spdintv);
     $('#startstop').text('start');
+	//worker.terminate();
   }
-});*/
+});
 
 var activeNav = 'nav1-cnt';
 var activeNavBtn = 'nav1';

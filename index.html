@@ -83,6 +83,11 @@ $('document').ready(function() {
 		button:  {text: 'Rand', href: '/tests/rand.html', 'class': 'btn-success'}
 	}, {
 		title: 'Where to',
+		head: 'Worker',
+		description:  'See the console',
+		button:  {text: 'Worker', href: '/tests/worker.html', 'class': 'btn-warning'}
+	}, {
+		title: 'Where to',
 		head: 'Tab',
 		description:  'Tab test',
 		button:  {text: 'Tab', href:  '/Tab.html', 'class': 'btn-secondary'}
@@ -120,7 +125,6 @@ $('document').ready(function() {
 		.up();
 	}
     
-    
   //  vs.section('middle')
   //    .br(3);
       
@@ -133,6 +137,15 @@ $('document').ready(function() {
     //console.log(ra);
   }
 });
+
+function bla() {
+    var startTime = Date.now();
+	var i=0;
+	while ((Date.now() - startTime) < 2000) {
+		i++;
+	};
+	console.log('ala');
+}
 </script>
 </body>
 </html>

@@ -1,3 +1,20 @@
+$('document').ready(function(document){
+
+var wrk = {w: {}};
+
+wrk.createWorker = async function (name, workFn, workerFn) {
+  let b = new Blob([workFn.toString()], { type: "text/javascript" });
+  let worker = new Worker(URL.createObjectURL(b));
+  worker.postMessage(n);
+  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
+}
+
+console.log('Worker 0.1.0 (wrk)');
+
+return wrk;
+});
+
+
 async function brutePrime(n) {
   function work({ data }) {
     while (true) {
@@ -18,7 +35,7 @@ async function brutePrime(n) {
 
 function testW() {
 (async () => {
-  let n = 100;
+  let n = 70000000;
   for (let i = 0; i < 10; i++) {
     console.log(n = await brutePrime(n + 1));
   }
