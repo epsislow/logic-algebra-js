@@ -97,11 +97,10 @@ function addToText3(con) {
 }
 
 var needsSave = false;
-
 function showSha(nounce) {
   var sha = Sha256.hash(test + nounce, {'outFormat':'hex-w'});
   
-  var content = 'Nounce ' + nounce + ":\n" + sha + "\n";
+  var content = 'Nounce ' + nounce +":\n" + sha + "\n";
   $('#text').text(content);
 
   return sha;
@@ -111,7 +110,7 @@ $('#try').click(function () {
   checkSha(showSha(getNounce()));
 });
 
-$('#next').click(async function() {
+$('#next').click(function() {
   addNounce(1);
   checkSha(showSha(getNounce()));
 })
@@ -119,7 +118,6 @@ $('#next').click(async function() {
 calcSpd = function() {
   spdhashes = hashes;
   hashes =0;
-
   if(needsSave) {
     saveCache();
     clearNeedsToSave();
@@ -130,7 +128,7 @@ function showSpd() {
   $('#text').append("\n" + spdhashes + ' h/s');
 }
 
-tryNextNounce = async function() {
+tryNextNounce = function() {
   addNounce(1);
   checkSha(showSha(getNounce()));
   showSpd();
@@ -141,12 +139,10 @@ var intv;
 var spdintv;
 var hashes=0;
 var spdhashes = 0;
-var hashtxt ='';
 var start=false;
-
-$('#startstop').click(async function() {
+$('#startstop').click(function() {
   if(!start) {
-    intv=setInterval(tryNextNounce,1);
+    intv=setInterval(tryNextNounce,5);
     spdintv=setInterval(calcSpd,1000);
     start=true;
     $('#startstop').text('stop');
