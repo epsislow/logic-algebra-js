@@ -120,7 +120,7 @@ async function loopTryNextNounce2() {
 		'needsToSave': 0,
 		'methodCheck': methodCheck,
 		'trys': 0,
-		'duration': 900,
+		'duration': 948,
 		'test': test,
 		'nounce': parseInt(getNounce(), 10),
 		'difc': difc,
@@ -144,12 +144,11 @@ async function loopTryNextNounce2() {
 	lastFoundNounce = data.desc;
 	addNounce(hashes);
 	setDifc(data.difc);
+	hashtxt = data.content;
+	$('#text').text(hashtxt + spdhashes + ' h/s');
 	if(data.needsToSave) {
 		needsToSave();
 		addToText2(data.desc);
-	} else {
-		hashtxt = data.content;
-		$('#text').text(hashtxt + spdhashes +' h/s');
 	}
 	return Promise.resolve(data);
 }
