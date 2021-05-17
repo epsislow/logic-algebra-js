@@ -26,11 +26,11 @@ function work($data) {
                 echo json_encode($data);
                 return;
             }
-            if (microtime(true) - $startTime > 2000) {
+            if ((microtime(true) - $startTime)*1000 > 3000) {
                     die('nop');
             }
         }
-        $data['intrval'] = (new \DateTime())->getTimestamp() - $startTime;
+        $data['intrval'] = floor(((new \DateTime())->getTimestamp() - $startTime)*1000);
         echo json_encode($data);
 
         return;

@@ -62,18 +62,6 @@ function testW() {
 	})().catch(e => console.log(e));
 }
 
-async function tryPhpWorker(data) {
-	return $.ajax({
-	  type: "POST",
-	  url: '/php/trySha.php',
-	  data: data,
-	  dataType: 'json',
-	  success: function(data) {
-		console.log(data);
-	  },
-	});
-}
-
 //self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
 var blob = null;
 async function tryWorkerHash(n) {
@@ -131,6 +119,51 @@ async function tryWorkerHash(n) {
   return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
 }
 
+function getNextWorkData() {
+	return {'data': {
+		'needsToSave': 0,
+		'methodCheck': methodCheck,
+		'trys': 0,
+		'duration': 948,
+		'test': test,
+		'nounce': parseInt(getNounce(), 10),
+		'difc': parseInt($('#difc').val(),10),
+		'content': '',
+		'desc': '',
+		'url': window.location.origin,
+	}};
+}
+var data;
+async function loopTryNextNouncePhp() {
+	data = getNextWorkData();
+	
+	if(!start) {
+		return;
+	}
+	
+	$.ajax({
+		type: "POST",
+		url: '/php/trySha.php',
+		data: data,
+		dataType: 'json',
+		success: function (data) {
+			hashes += data.trys;
+			lastFoundNounce = data.desc;
+			setNounce(data.nounce);
+			setDifc(data.difc);
+			hashtxt = data.content;
+			$('#text').text(hashtxt + spdhashes + ' h/s');
+			if(data.needsToSave) {
+				needsToSave();
+				addToText2(data.desc);
+			}
+			if (start) {
+				loopTryNextNouncePhp();
+			}
+		}
+	});
+}
+
 async function loopTryNextNounce2() {
 	difc = parseInt($('#difc').val(),10);
 	var data = {
@@ -182,20 +215,17 @@ function getValFromVis(x) {
 
 function getValToVis(x, extended = 0) {
 	if (extended) {
-		var unit = '.';
 		var len = x.toString().length;
 		
 		if (len> 9) {
-			unit = ' K';
+			x = Math.floor(x/Math.pow(10, 3))+ ' K';
 		} else if (len> 12) {
-			x = Math.Floor(x/(10^3));
-			unit = ' M';
+			x = Math.floor(x/Math.pow(10, 6))+ ' M';
 		} else if (len> 15) {
-			x = Math.Floor(x/(10^6));
+			x = Math.floor(x/Math.pow(10, 9))+ ' G';
 			unit = ' G';
 		} else if (len> 18) {
-			x = Math.Floor(x/(10^9));
-			unit = ' T';
+			x = Math.floor(x/Math.pow(10, 12))+ ' T';
 		}
 	}
 	
@@ -353,15 +383,20 @@ var hashes=0;
 var spdhashes = 0;
 var hashtxt ='';
 var start=false;
+var useJsWorker = true;
 
 $('#startstop').click(async function() {
   if (!start) {
     spdintv = setInterval(calcSpd, 1000);
     start = true;
     $('#startstop').text('stop');
-	  while (start) {
-  		await loopTryNextNounce2();
-  	}
+	if (useJsWorker) {
+		while (start) {
+			await loopTryNextNounce2();
+		}
+	} else {
+		await loopTryNextNouncePhp()
+	}
   } else {
    // hashes = 0;
     start = false;
