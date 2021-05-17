@@ -41,6 +41,7 @@ $data = $_REQUEST['data'] ?? [];
 
 if (empty($data)) {
     echo json_encode(['error'=> 'No data provided']);
+    die;
 }
 
 foreach($data as $k => &$dat) {
