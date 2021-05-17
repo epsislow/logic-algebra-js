@@ -170,6 +170,13 @@
   display: none;
 }
 
+#tree {
+  width:100%;
+  height: 500px;
+  overflow-y: auto;
+  }
+}
+
     </style>
 </head>
 
@@ -211,14 +218,23 @@
       <table class="table table-striped table-dark">
         <tr>
           <th>
-            <a href="javascript:void(0)" id="act-show-mem">
-            <i class="fas fa-align-justify"></i>
+            <div class="dropdown open">
+  <button class="btn btn-secondary dropdown-toggle btn-sm"
+          type="button" id="dropdownMenu5" data-toggle="dropdown"
+          aria-haspopup="true" aria-expanded="false">
+    <i class="fas fa-align-justify"></i>
+  </button>
+		      <div class="dropdown-menu">
+		        <a class="dropdown-item" href="javascript:void(0)" id="act-ref-tree">Refresh</a>
+		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-mem">Show Memory</a>
+		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-in-out">Show in/out</a>
+		        </div>
             </a> Tree
           </th>
         </tr>
         <tr>
           <td class="content">
-            a
+            <div id="tree" class="tree"></div>
           </td>
         </tr>
       </table>
@@ -236,7 +252,7 @@
   </button>
 		      <div class="dropdown-menu">
 		        <a class="dropdown-item" href="javascript:void(0)" id="act-ref">Refresh</a>
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-tree">Show tree</a>
+		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-arb">Show tree</a>
 		        <div class="dropdown-divider"></div>
 		        <a class="dropdown-item" href="javascript:void(0)" id="act-add-mem">Add mem</a>
 		        <a class="dropdown-item" href="javascript:void(0)" id="act-add-sum">Add sum</a>

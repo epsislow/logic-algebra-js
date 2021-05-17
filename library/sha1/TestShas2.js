@@ -531,6 +531,31 @@ cmp = function(a, b) {
   }
 };
 
+function addToTree(ob, treeob, visible=0) {
+  var ul= $('<ul>');
+  var cls = (visible==0)?'plus':'minus';
+  var clsvis= (visible==0)?'visible':'hide';
+  for(var name in treeob) {
+    var li = $('<li>')
+      .addClass('a-sum')
+      .append($('<i>')
+        .addClass('fas')
+        .addClass('fa-'+cls+'-square')
+      )
+      .append(name)
+      .addClass(clsvis);
+    
+    ul.append(li);
+    
+    addToTree(li, treeob[name]);
+  }
+}
+function loadArb() {
+  var tree = dg.lk.arbNodes(dg.lk.uses.out,0);
+  var root = $('#tree');
+  addToTree(root, tree, 1);
+}
+
 function loadFromMem() {
   var contr = $('#mem table thead');
   var trs = [];
@@ -1083,6 +1108,18 @@ function initActEvents() {
    $('#act-refresh').unbind('click').click(function () {
      refreshMem();
    });
+   
+   $('#act-show-arb').unbind('click').click(function() {
+     $('#mem').addClass('hide');
+     loadArb();
+     $('#arb').removeClass('hide');
+   })
+   $('#act-show-mem').unbind('click').click(function() {
+     $('#arb').addClass('hide');
+     $('#mem').removeClass('hide');
+   })
+   
+   
 }
 
 var lastActSumKey = false;
