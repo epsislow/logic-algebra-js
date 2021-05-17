@@ -142,7 +142,7 @@ async function loopTryNextNounce2() {
 
 	hashes += data.trys;
 	lastFoundNounce = data.desc;
-	addNounce(hashes);
+	setNounce(data.nounce);
 	setDifc(data.difc);
 	hashtxt = data.content;
 	$('#text').text(hashtxt + spdhashes + ' h/s');
@@ -155,12 +155,41 @@ async function loopTryNextNounce2() {
 
 var test = text;
 
+function getValFromVis(x) {
+	return x.toString().replace(/\s/g, '');
+}
+
+function getValToVis(x, extended = 0) {
+	if (extended) {
+		var unit = '.';
+		var len = x.toString().length;
+		
+		if (len> 9) {
+			unit = ' K';
+		} else if (len> 12) {
+			x = Math.Floor(x/(10^3));
+			unit = ' M';
+		} else if (len> 15) {
+			x = Math.Floor(x/(10^6));
+			unit = ' G';
+		} else if (len> 18) {
+			x = Math.Floor(x/(10^9));
+			unit = ' T';
+		}
+	}
+	
+    x = x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");		
+	return x;
+}
+
 function addNounce(num) {
   $('#nounce').val(parseInt(getNounce() ,10) + num);
+  $('#nounce').change();
 }
 
 function setNounce(num) {
   $('#nounce').val(num);
+  $('#nounce').change();
 }
 
 function setDifc(num) {
@@ -257,6 +286,8 @@ function showSha(nounce) {
 
   return sha;
 }
+
+
 $('#try').click(async => checkAsyncSha(getNounce(),0));
 
 
@@ -406,11 +437,24 @@ function loadLastCache(init) {
 	}
 }
 
+$('#nounceVis').change(function () {
+	$('#nounce').val(getValFromVis($('#nounceVis').val()));
+});
+$('#nounce').change(function () {
+	$('#nounceVis').val(getValToVis($('#nounce').val(),1));
+});
+$('#nounceVis').focus(function () {
+	$('#nounceVis').val(getValToVis($('#nounce').val()));
+});
+
+
 methodCheck = 1;
 setNounce(100000);
 setDifc(4);
 
 loadLastCache(1);
+
+
 
 cmp = function(a, b) {
   var s1 = a.replaceAll(/\d+/g, '');
