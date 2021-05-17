@@ -863,6 +863,23 @@ dg = {
 	    }
 	    return false;
 	},
+	'hasVarsInMem': function(k) {
+	  var vs;
+	  if(Array.isArray(k)) {
+	    vs = k;
+	  } else {
+	    vs = dg.lk.get(k);
+	  }
+	  
+	  for(var k in vs) {
+	    if(['0','1'].includes(vs[k])) {
+	      continue;
+	    } else {
+	      return true;
+	    }
+	  }
+	  return false;
+	},
 	'hasVarInSum': function(vsx, needle) {
 	  var val;
 	  for(var k in vsx) {

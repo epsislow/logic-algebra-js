@@ -555,6 +555,13 @@ function loadFromMem() {
       cls= 'even';
     }
     
+    
+    
+    //if(['w12','a','b','c','d','e','f','g','h'].includes(keys[k])) {
+    if(dg.sh.hasVarsInMem(keys[k])) {
+      cls += ' red';
+    }
+    
     tr.append(
       $('<th>')
     .addClass(cls)
@@ -949,7 +956,11 @@ function initSumEvents() {
 }
 
 function closeMemEl(el) {
-  el.removeClass('active');
+  if(el.hasClass('active-red')) {
+    el.removeClass('active-red');
+  } else {
+    el.removeClass('active');
+  }
   el.find('.fas')
   .removeClass('fa-minus-square')
   .addClass('fa-plus-square');
@@ -958,7 +969,11 @@ function closeMemEl(el) {
 }
 
 function openMemEl(el) {
-  el.addClass('active');
+  if(el.hasClass('red')) {
+    el.addClass('active-red');
+  } else {
+    el.addClass('active');
+  }
   el.find('.fas')
   .removeClass('fa-plus-square')
   .addClass('fa-minus-square');
