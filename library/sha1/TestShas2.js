@@ -62,15 +62,12 @@ function testW() {
 	})().catch(e => console.log(e));
 }
 
-async function tryPhpWorker(n) {
+async function tryPhpWorker(data) {
 	return $.ajax({
 	  type: "POST",
 	  url: '/php/trySha.php',
-	  data: {
-		nounce: '11',
-		test: 'abc'
-	  },
-	  dataType: 'jsonp',
+	  data: data,
+	  dataType: 'json',
 	  success: function(data) {
 		console.log(data);
 	  },
@@ -151,7 +148,7 @@ async function loopTryNextNounce2() {
 	
 //	console.log('pre-try-Worker');
 	
-	data = await tryWorkerHash(data);
+	//data = await tryWorkerHash(data);
 	
 	data = await tryPhpWorker(data);
 	
