@@ -62,6 +62,21 @@ function testW() {
 	})().catch(e => console.log(e));
 }
 
+async function tryPhpWorker(n) {
+	return $.ajax({
+	  type: "POST",
+	  url: '/php/trySha.php',
+	  data: {
+		nounce: '11',
+		test: 'abc'
+	  },
+	  dataType: 'jsonp',
+	  success: function(data) {
+		console.log(data);
+	  },
+	});
+}
+
 async function tryWorkerHash(n) {
    async function work(data) {
 	self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
@@ -137,6 +152,8 @@ async function loopTryNextNounce2() {
 //	console.log('pre-try-Worker');
 	
 	data = await tryWorkerHash(data);
+	
+	data = await tryPhpWorker(data);
 	
 //	console.log(data);
 
