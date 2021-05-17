@@ -147,10 +147,11 @@ async function loopTryNextNounce2() {
 	*/
 	
 //	console.log('pre-try-Worker');
-	
-	//data = await tryWorkerHash(data);
-	
-	data = await tryPhpWorker(data);
+//   console.log(JSON.stringify(data));
+
+        data = await tryWorkerHash(data);
+
+//	tryPhpWorker(data);
 	
 //	console.log(data);
 
