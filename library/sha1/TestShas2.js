@@ -96,12 +96,16 @@ async function tryWorkerHash(n) {
 			data.desc = "Difc is "+ data.difc +"\nNounce is "+data.nounce +"\nSha: "+ sha + "\nYes!\n\n";
 			data.needsToSave = 1;
 			data.intrval = (Date.now() - startTime);
-			return self.postMessage(data);
+			self.postMessage(data);
+			self.close();
+			return;
 		}
     }
 	
 	data.intrval = (Date.now() - startTime);
-	return self.postMessage(data);
+	self.postMessage(data);
+	self.close();
+	return;
   }
 
   let b = new Blob(["onmessage =" + work.toString()], { type: "text/javascript" });
@@ -130,11 +134,11 @@ async function loopTryNextNounce2() {
 	})(data).catch(e => console.log('Exception: ' + e));
 	*/
 	
-	console.log('pre-try-Worker');
+//	console.log('pre-try-Worker');
 	
 	data = await tryWorkerHash(data);
 	
-	console.log(data);
+//	console.log(data);
 
 	hashes += data.trys;
 	lastFoundNounce = data.desc;
@@ -145,7 +149,7 @@ async function loopTryNextNounce2() {
 		addToText2(data.desc);
 	} else {
 		hashtxt = data.content;
-		$('#text').text(hashtxt + hashes +' h/s');
+		$('#text').text(hashtxt + spdhashes +' h/s');
 	}
 	return Promise.resolve(data);
 }
@@ -304,9 +308,9 @@ $('#startstop').click(async function() {
     spdintv = setInterval(calcSpd, 1000);
     start = true;
     $('#startstop').text('stop');
-	while (start) {
-		await loopTryNextNounce2();
-	}
+	  while (start) {
+  		await loopTryNextNounce2();
+  	}
   } else {
    // hashes = 0;
     start = false;
