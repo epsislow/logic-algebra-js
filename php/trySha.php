@@ -45,7 +45,7 @@ if (empty($data)) {
 }
 
 foreach($data as $k => &$dat) {
-    if (!in_array($k, ['test','content','desc'])) {
+    if (!in_array($k, ['url','test','content','desc'])) {
         $dat = (int)$dat;
     }
 }

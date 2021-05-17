@@ -74,12 +74,15 @@ async function tryPhpWorker(data) {
 	});
 }
 
+//self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
+var blob = null;
 async function tryWorkerHash(n) {
+  if (blob == null)  {
    async function work(data) {
-	self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
+	var data = data.data;
+	self.importScripts(data.url+'/ext/hash-wasm.js');
 	var startTime = Date.now();
 	
-	var data = data.data;
 	
 	//console.log('ggg',data);
 	while ((Date.now() - startTime) < data.duration) {
@@ -120,8 +123,10 @@ async function tryWorkerHash(n) {
 	return;
   }
 
-  let b = new Blob(["onmessage =" + work.toString()], { type: "text/javascript" });
-  let worker = new Worker(URL.createObjectURL(b));
+  blob = new Blob(["onmessage =" + work.toString()], { type: "text/javascript" });
+ }
+  
+  let worker = new Worker(URL.createObjectURL(blob));
   worker.postMessage(n);
   return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
 }
@@ -138,6 +143,7 @@ async function loopTryNextNounce2() {
 		'difc': difc,
 		'content': '',
 		'desc': '',
+		'url': window.location.origin,
 	};
 	
 	/*
