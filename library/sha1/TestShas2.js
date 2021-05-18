@@ -531,29 +531,41 @@ cmp = function(a, b) {
   }
 };
 
-function addToTree(ob, treeob, visible=0) {
+function addToTree(ob, treeob, visible=0, depth= 2) {
   var ul= $('<ul>');
-  var cls = (visible==0)?'plus':'minus';
-  var clsvis= (visible==0)?'visible':'hide';
+  
+  var cls = (depth == 0)?'caret-right':'caret-down';
+  var clsd = (depth ==0)? 'closed':'open';
+  var clsvis= (visible==1)?'visible':'hide';
+  var vis;
   for(var name in treeob) {
     var li = $('<li>')
-      .addClass('a-sum')
-      .append($('<i>')
-        .addClass('fas')
-        .addClass('fa-'+cls+'-square')
+      .addClass('a-sum-'+clsd)
+      .append(
+        $('<span>')
+        .append($('<i>')
+          .addClass('fas')
+          .addClass('fa-'+cls)
+        )
+      .append(' '+ name)
       )
-      .append(name)
       .addClass(clsvis);
     
     ul.append(li);
     
-    addToTree(li, treeob[name]);
+    if(depth>0){
+      addToTree(li, treeob[name], 1, depth-1);
+    }
   }
+  
+  ob.append(ul);
 }
+
+var arbTree;
 function loadArb() {
-  var tree = dg.lk.arbNodes(dg.lk.uses.out,0);
+  arbTree = dg.lk.arbNodes(dg.lk.uses.out,0);
   var root = $('#tree');
-  addToTree(root, tree, 1);
+  addToTree(root, arbTree.roots, 1);
 }
 
 function loadFromMem() {
