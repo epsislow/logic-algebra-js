@@ -1112,7 +1112,32 @@ function loadMemValuesOf(key, el) {
  // console.log(key);
 }
 
+var tggData={};
+function toggleCall(tggBtnClr, tggClasses, tggKey) {
+  return function (e) {
+    e.stopImmediatePropagation();
+    var el= $(this);
+    var eli= el.find('i:first');
+    for(var k in tggBtnClr) {
+      if(el.hasClass(tggBtnClr[k])) {
+        el.removeClass(tggBtnClr[k]);
+        el.addClass(tggBtnClr[(parseInt(k)+1)% tggBtnClr.length]);
+        tggData[tggKey]= (parseInt(k)+1)% (tggBtnClr.length);
+    
+        if(eli) {
+    
+          eli.removeClass(tggClasses[k])
+             .addClass(tggClasses[(parseInt(k)+1)% tggClasses.length]);
+            
+        }
+        return;
+      }
+    }
+  }
+}
+
 function initActEvents() {
+  $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary','btn-light'],['fa-arrow-down','fa-arrow-circle-down'],'sum-see'));
   $('#act-sum').unbind('click').click(function() {
     if(!sumKey) {
       return false;
