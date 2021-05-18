@@ -578,7 +578,7 @@ var mapArbLi={};
 var arbTreeIsIn=false;
 function loadArb(isIn = true) {
   mapArbLi= {};
-  arbTree = dg.lk.arbNodes(isIn?dg.lk.uses.out:dg.lk.uses.in,0);
+  arbTree = dg.lk.arbNodes(isIn?dg.lk.uses.in:dg.lk.uses.out,0);
   var root = $('#tree');
   addToTree(root, arbTree, 1);
   $('#tree li').click(arbLiEvent);
@@ -1156,6 +1156,7 @@ function initActEvents() {
    
    $('#act-show-arb').unbind('click').click(function() {
      $('#mem').addClass('hide');
+	 $('#tree').empty();
      loadArb(arbTreeIsIn);
      $('#arb').removeClass('hide');
    })
@@ -1166,6 +1167,11 @@ function initActEvents() {
    $('#act-show-in-out').unbind('click').click(function() {
        $('#tree').empty();
        arbTreeIsIn = !arbTreeIsIn;
+	   if (arbTreeIsIn) {
+			$('#act-show-in-out').text('Show in');
+	   } else {
+			$('#act-show-in-out').text('Show out');
+	   }
        loadArb(arbTreeIsIn);
    });
 }
