@@ -530,15 +530,26 @@ cmp = function(a, b) {
     return s1.localeCompare(s2);
   }
 };
-
-function addToTree(ob, treeob, visible=0, depth= 2) {
+function rand(min,max) {
+  return Math.floor(Math.random()*(max-min))+min;
+}
+function getUniqueInObj(name, obj, i=0) {
+  if(name+i in obj) {
+    return getUniqueInObj(name,obj, rand(1,1000));
+  }
+  return name+i;
+}
+function addToTree(ob, treeob, depth= 2) {
   var ul= $('<ul>');
   
   var cls = (depth == 0)?'caret-right':'caret-down';
   var clsd = (depth ==0)? 'closed':'open';
-  var clsvis= (visible==1)?'visible':'hide';
+  //var clsvis= (visible==1)?'visible':'hide';
   var vis;
+  var unique;
   for(var name in treeob) {
+    unique = getUniqueInObj(name, mapArbLi);
+    mapArbLi[unique] = treeob[name];
     var li = $('<li>')
       .addClass('a-sum-'+clsd)
       .append(
@@ -549,12 +560,13 @@ function addToTree(ob, treeob, visible=0, depth= 2) {
         )
       .append(' '+ name)
       )
-      .addClass(clsvis);
+      .attr('data-arb-key', unique);
+     // .addClass(clsvis);
     
     ul.append(li);
     
     if(depth>0){
-      addToTree(li, treeob[name], 1, depth-1);
+      addToTree(li, treeob[name], depth-1);
     }
   }
   
@@ -562,10 +574,31 @@ function addToTree(ob, treeob, visible=0, depth= 2) {
 }
 
 var arbTree;
-function loadArb() {
-  arbTree = dg.lk.arbNodes(dg.lk.uses.out,0);
+var mapArbLi={};
+var arbTreeIsIn=false;
+function loadArb(isIn = true) {
+  mapArbLi= {};
+  arbTree = dg.lk.arbNodes(isIn?dg.lk.uses.out:dg.lk.uses.in,0);
   var root = $('#tree');
-  addToTree(root, arbTree.roots, 1);
+  addToTree(root, arbTree, 1);
+  $('#tree li').click(arbLiEvent);
+}
+
+function arbLiEvent(event) {
+  event.stopImmediatePropagation();
+  var el = $(this);
+  var i = el.find('i:first');
+  if (i.hasClass('fa-caret-down')) {
+    i.removeClass('fa-caret-down')
+      .addClass('fa-caret-right');
+    el.find('ul:first').remove();
+  } else {
+    i.removeClass('fa-caret-right')
+      .addClass('fa-caret-down');
+   // console.log(mapArbLi[el.attr('data-arb-key')]);
+    addToTree(el, mapArbLi[el.attr('data-arb-key')], 0);
+    $('#tree li').unbind('click').click(arbLiEvent);
+  }
 }
 
 function loadFromMem() {
@@ -1123,16 +1156,20 @@ function initActEvents() {
    
    $('#act-show-arb').unbind('click').click(function() {
      $('#mem').addClass('hide');
-     loadArb();
+     loadArb(arbTreeIsIn);
      $('#arb').removeClass('hide');
    })
    $('#act-show-mem').unbind('click').click(function() {
      $('#arb').addClass('hide');
      $('#mem').removeClass('hide');
    })
-   
-   
+   $('#act-show-in-out').unbind('click').click(function() {
+       $('#tree').empty();
+       arbTreeIsIn = !arbTreeIsIn;
+       loadArb(arbTreeIsIn);
+   });
 }
+
 
 var lastActSumKey = false;
 function replToSum(someSum) {
