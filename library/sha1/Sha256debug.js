@@ -920,6 +920,33 @@ dg = {
 	'noOfVarsB': function(x) {
 	  return this.hasVarB(x,1);
 	},
+	'simplifyVarsName': function (v) {
+		var r =	v.replaceAll
+		  (/([a-z][^\,\[\]\{\}\+\&\\|\\^\\~\\)\\(]+)/ig, '$&#');
+		  
+		var m = r.match(/([a-z][^#]+)/ig);
+		
+		let stchar = ('a').charCodeAt(0);
+		
+		var vp = [];
+		var d2 = [-1,-1,-1];
+		for(var d in m) {
+			for(dd2 in d2) {
+			  //vp[dd2] = String.fromCharCode(stchar + (d%Math.pow(25, dd2+1)));
+			  d2[dd2] = Math.floor(d/Math.pow(26, dd2))%26 + ((dd2==0)?1:0);
+			  
+			  if(d2[dd2] == 0) {
+				  vp[dd2.length - dd2 + 1] = ''
+			  } else {
+				vp[dd2.length - dd2 + 1] = String.fromCharCode(stchar + d2[dd2]-1);
+			  }
+			}
+			r = r.replaceAll(m[d]+'#', vp.join(''));
+		}
+		console.log(r);
+		
+		return {'r':r, 'm': m}
+	},
 	'hasVarB': function (v, which = 0) {
 	  var r = v.match
 	    (/([a-z][^\&\\|\\^\\~\\)\\(]+)/ig);
@@ -953,7 +980,6 @@ dg = {
 	 //   newdata;
 	  return newdatas;
 	},
-	
 	'exeqB': function (x) {
 	  var vars = this.noOfVarsB(x);
 	  var trys;
