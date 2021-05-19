@@ -42,6 +42,7 @@ dg = {
     'm': {},
     'sums':{},
     'uses': {'in':{}, 'out': {}},
+    'forms': {},
     'reset': function() {
       this.m = {};
     },
@@ -981,6 +982,39 @@ dg = {
 	  }
 	  return x2;
 	},
+	'sumForm': function (sum) {
+	  var vss = dg.lk.getSum(sum);
+	  var ks=[];
+	  var i=0;
+	  for(var s in vss) {
+	    i++;
+	    if(!ks.length) {
+	      for(var k in vss[s]) {
+	        ks.push(k);
+	      }
+	    }
+	  }
+	  
+	  var sumform = [];
+	  var sumb = [];
+	  if(i > 0) {
+ 	   for(var k in ks) {
+      for(var s in vss) {
+  	    sumb.push(vss[s][k]);
+      }
+      var c = parseInt(k)+1;
+  	  if(c != ks.length) {
+  	    sumform[k] = '['+sumb.join('+')+',c'+c+']';
+  	  } else {
+  	    sumform[k] = sumb.join('+'); 
+  	  }
+      sumb=[];
+     }
+     dg.lk.forms[sum] = sumform;
+     return sumform;
+	  }
+	  return false;
+	},
 	'sumch': function (sumName, ks, doit = false) {
 		var vslen = ks.length;
 		var vs = [];
@@ -1042,7 +1076,7 @@ dg = {
 		    console.log('Z', sumResult);
 		  }
 		  this.parent().lk.addSum(ckey, sumResult);
-		  
+		  this.sumForm(ckey);
 		  
 		  var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
 
