@@ -560,6 +560,7 @@ function addToTree(ob, treeob, depth= 2) {
         )
       .append(' '+ name)
       )
+      .attr('data-arb-sum',name)
       .attr('data-arb-key', unique);
      // .addClass(clsvis);
     
@@ -588,6 +589,9 @@ function arbLiEvent(event) {
   event.stopImmediatePropagation();
   var el = $(this);
   var i = el.find('i:first');
+  if(tggIsOn()){
+    return tggDo(el, i);
+  }
   if (i.hasClass('fa-caret-down')) {
     i.removeClass('fa-caret-down')
       .addClass('fa-caret-right');
@@ -802,6 +806,7 @@ function getSumTitle(sumKey) {
 }
 
 function loadSumValuesOf(sumKeyBit) {
+  //console.log('herr');
   var el= $('#sum-sel tbody');
   sumKey = sumKeyBit.substr(0, sumKeyBit.indexOf(':'));
   
@@ -1113,6 +1118,29 @@ function loadMemValuesOf(key, el) {
 }
 
 var tggData={};
+function tggIsOn() {
+  for(var t in tggData) {
+    if(tggData[t]!=0) {
+      return true;
+    }
+  }
+  return false;
+}
+function tggDo(el, eli=0) {
+  var csum= el.attr('data-arb-sum');
+ // console.log( csum,tggData);
+  if(tggData.see) {
+    unloadSumValuesOf();
+    
+    sumKey = csum;
+    lastActSumKey = csum;
+    $('span.actsum').text(lastActSumKey);
+    
+    loadSumValuesOf(csum + ':1');
+    
+    initSumEvents();
+  }
+}
 function toggleCall(tggBtnClr, tggClasses, tggKey) {
   return function (e) {
     e.stopImmediatePropagation();
@@ -1123,13 +1151,13 @@ function toggleCall(tggBtnClr, tggClasses, tggKey) {
         el.removeClass(tggBtnClr[k]);
         el.addClass(tggBtnClr[(parseInt(k)+1)% tggBtnClr.length]);
         tggData[tggKey]= (parseInt(k)+1)% (tggBtnClr.length);
-    
+   // console.log(tggData, tggKey);
         if(eli) {
-    
           eli.removeClass(tggClasses[k])
              .addClass(tggClasses[(parseInt(k)+1)% tggClasses.length]);
             
         }
+        el.blur();
         return;
       }
     }
@@ -1137,7 +1165,10 @@ function toggleCall(tggBtnClr, tggClasses, tggKey) {
 }
 
 function initActEvents() {
-  $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary','btn-light'],['fa-arrow-down','fa-arrow-circle-down'],'sum-see'));
+  $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary','btn-light'],['fa-arrow-down','fa-arrow-circle-down'],'see'));
+  
+  $('#tgg-2-sum').unbind('click').click(toggleCall(['btn-secondary','btn-light'],['fa-asterix','fa-asterix'],'sum'));
+  
   $('#act-sum').unbind('click').click(function() {
     if(!sumKey) {
       return false;
