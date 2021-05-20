@@ -1008,6 +1008,9 @@ dg = {
 	  }
 	  return x2;
 	},
+	'carryForm':function(sum) {
+	  
+	},
 	'sumForm': function (sum) {
 	  var vss = dg.lk.getSum(sum);
 	  var ks=[];
@@ -1041,7 +1044,7 @@ dg = {
 	  }
 	  return false;
 	},
-	'sumch': function (sumName, ks, doit = false) {
+	'sumch': function (sumName, ks, doit = false, debug= 0) {
 		var vslen = ks.length;
 		var vs = [];
 		
@@ -1058,12 +1061,6 @@ dg = {
 		var moreSum = false;
 		
 		var ckey = this.parent().lk.getNextCavl();
-		
-		var debug = 0;
-		if(ckey == "zzz6") {
-		  console.log(sumName)
-		  debug = 1;
-		}
 		
 		for (var ik in ks) {
 			i++;
@@ -1112,7 +1109,7 @@ dg = {
 	  
 		return true;
 	},
-	'sum': function(k1,k2) {
+	'sum': function(k1,k2, short=0) {
 	    var vs1,vs2;
 	    if(Array.isArray(k1)) {
 	      vs1 = k1;
@@ -1130,7 +1127,11 @@ dg = {
 	    
 	    for(var i=len-1; i>=0; i--) {
 	      res = this.sumB(vs1[i],vs2[i], res.c);
-		  r[i] = res.sum;
+	      if(short) {
+	        r[i] = this.shortB(res.sum);
+	      } else {
+	    	  r[i] = res.sum; //this.xorB(res.sum, res.c);
+	      }
 	    }
 	    return r;
 	},
