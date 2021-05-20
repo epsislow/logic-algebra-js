@@ -294,7 +294,16 @@ dg = {
         }
       }
       return r;
-    }
+    },
+	'objEmpty': function (a, useJq = 1) {
+		if(useJq) {
+			return $.isEmptyObject(a);
+		}
+		if (JSON.stringify(a) == JSON.stringify({})) {
+			return true;
+		}
+		return false;
+	}
   },
   'sh':{
 	'parent': function () {
@@ -310,30 +319,65 @@ dg = {
 	  var r = [];
 	
 	  for (var i in vs) {
-	    r[i] = this.shortB(this.shortB(vs[i]));
+	    r[i] = this.shortB(vs[i]);
 	  }
 	  return r;
 	},
 	'shortB': function (x, optimize = 1, convB = 1, d=0) {
 	  var vars;
-	  vars = this.getVarBitsInV(x);
+	  
+	  vars = this.getVarBitsInV(x + '');
+	  
+	  if (d) {
+		//console.log('vars=',vars,'x=',x);
+	  }
+	  
+	  if (!vars.length) {
+		if (x == '') {
+			throw 'Got an empty string to shorten!?';
+		}
+		try {
+			var f = Function('return (('+ x + ') >>> 0) & 1')();
+			if (f === '') {
+				throw 'hopa';
+			}
+			return f+'';
+		} catch (e) {
+			console.log('Tried: ' + 'return (('+ x + ') >>> 0) & 1');
+			throw e;
+		}
+		  
+		return x;
+	  }
 	  
 	  var tsts = this.getValuesForAllKeys([[]],vars);
+	  
+	  //console.log('tsts',tsts);
 	  
 	  var r = [];
 	  var onecnt = 0;
 	  var st;
 	  for(var t in tsts) {
-	    st = this.replB(x, tsts[t]);
+	    st = this.replB(x, tsts[t]); 
 		
 	//	r[t] = this.execr(st);
 	
 	  if(d&16) {
-	   // console.log(tsts[t]);
-	  //  console.log(st);
+	     //console.log(tsts[t]);
+	     //console.log('return '+st);
 	  }
-		
-		r[t]=Function('return '+st)();
+	  
+	  if (this.parent().lk.objEmpty(tsts[t])) {
+		  continue;
+	  }
+	  
+	  try {
+		r[t]=Function('return (('+st + ') >>> 0) & 1')() + '';
+	  } catch (e) {
+		  console.log('x',x, 'tsts[t]', tsts[t]);
+		  console.log('Tried: ' + 'return (('+st + ') >>> 0) & 1');
+		  throw e;
+	  }
 		
 		if(d&2) {
 	      console.log('st'+t+': ' + st + ' = ' + r[t]);
@@ -496,6 +540,11 @@ dg = {
 	        if (i >= j) {
 	          continue;
 	        }
+			if(debug) {
+				txt.push(table[i]);
+				txt.push(' vs ');
+				txt.push(table[j])
+			}
 	        var obj = this.findSameValues(table[i], table[j], 1);
 	        if (!obj) {
 	          continue;
@@ -527,31 +576,54 @@ dg = {
 	      break;
 	    }
 	    otbl = [];
-	    if(used.length > 0) {
+	    if(used.length && g== 3 > 0) {
 	      g = 2;
 	    }
 	  }
 	  if(debug) {
-	    console.log(txt.join("\n"));
+		for(var t in txt) {
+			console.log(txt[t]);
+		}
 	  }
 	  return table;
 	},
-	'findSameValues': function(data,datb, oneValueDiff = false) {
-    if(!this.findIfSameKeys(data, datb)) {
+	'findSameValues': function(data,datb, oneValueDiff = false, allowNotSameKeys = true) {
+    if(!allowNotSameKeys && !this.findIfSameKeys(data, datb)) {
       return false;
     }
     var valueDiffs=0;
     var same ={};
-    for(var k in data) {
+	var dataKeys =  this.parent().lk.concatUnique(Object.keys(data),Object.keys(datb));
+	var k;
+    for(var ka in dataKeys) {
+	  k = dataKeys[ka];
+	  addeda = 0;
+	  addedb = 0;
+	  if (!(k in data)) {
+		  data[k] = datb[k];
+		  addeda = 1;
+	  }
+	  if (!(k in datb)) {
+		  datb[k] = data[k];
+		  addedb = 1;
+	  }
       if (data[k]==datb[k]) {
         same[k]=data[k];
       } else if (oneValueDiff) {
         valueDiffs++;
-        if(valueDiffs>1) {
-          return false;
-        }
       }
+	  if (addeda) {
+		  delete data[k];
+	  }
+	  if (addedb) {
+		  delete datb[k];
+	  }
     }
+	
+	if(valueDiffs>1) {
+	  return false;
+	}
+	
     return same;
   },
   
@@ -589,11 +661,11 @@ dg = {
 	  for(var i in vs) {
 	   if(this.hasVOneOf(vs[i], replacers )) {
 	     if(wExec) {
-  		    r[i] = this.execr(this.execr(this.execr(this.replB(vs[i], replacers))));
+  		    r[i] = this.shortB(this.replB(vs[i], replacers));
 	     } else {
 	        r[i] = this.replB(vs[i], replacers);
   	      if (!this.hasVarB(r[i])) {
-	          r[i] = this.execr(r[i]);
+	          r[i] = this.shortB(r[i]);
 	        }
 	     }
 	    } else {
@@ -605,7 +677,7 @@ dg = {
 	},
 	'replB': function (x, replacers, d =0) {
 		var r = x + '';
-		r = r.replaceAll(/[a-z0-9][^\&\\|\\^\\~\\)||(]+/ig, '$&#');
+		r = r.replaceAll(/[a-z]+[^\&\\|\\^\\~\\)||(]*/ig, '$&#');
 		var txt = [r];
 	    for(var k in replacers) {
 	      txt.push('k:'+ k + ' w:'+ replacers[k]);
@@ -895,7 +967,7 @@ dg = {
 	},
 	'getVarBitsInV': function (v) {
 	  var varBits = [];
-	  var r = v.match(/[a-z0-9][^\&\\|\\^\\~\\)||(]+/ig);
+	  var r = v.match(/[a-z][^\&\\|\\^\\~\\)||(]*/ig);
 	  for(var k in r) {
 	    if(!varBits.includes(r[k])) {
 	      varBits.push(r[k]);
@@ -908,7 +980,7 @@ dg = {
 	  var r;
 	  for(var v in vs) {
 	    r = vs[v].match
-	    (/[a-z][^:.\&\\|\\^\\~\\)\\(]+/ig);
+	    (/[a-z][^:.\&\\|\\^\\~\\)\\(]*/ig);
 	    for (var s in r) {
 	      if (!vars.includes(r[s])) {
 	        vars.push(r[s]);
@@ -922,7 +994,7 @@ dg = {
 	},
 	'simplifyVarsName': function (v) {
 		var r =	v.replaceAll
-		  (/([a-z][^\,\[\]\{\}\+\&\\|\\^\\~\\)\\(]+)/ig, '$&#');
+		  (/([a-z][^\,\[\]\{\}\+\&\\|\\^\\~\\)\\(]*)/ig, '$&#');
 		  
 		var m = r.match(/([a-z][^#]+)/ig);
 		
@@ -949,7 +1021,7 @@ dg = {
 	},
 	'hasVarB': function (v, which = 0) {
 	  var r = v.match
-	    (/([a-z][^\&\\|\\^\\~\\)\\(]+)/ig);
+	    (/([a-z][^\&\\|\\^\\~\\)\\(]*)/ig);
 	  if (which) {
 	    return r? dg.lk.unique(r):0;
 	  }
@@ -1104,12 +1176,11 @@ dg = {
 		  var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
 
           dg.lk.add(sumName, cVal);
-		  
 	    }
 	  
 		return true;
 	},
-	'sum': function(k1,k2, short=0) {
+	'sum': function(k1,k2, short=0, debug = 0) {
 	    var vs1,vs2;
 	    if(Array.isArray(k1)) {
 	      vs1 = k1;
@@ -1124,18 +1195,22 @@ dg = {
 	    var r=[];
 	    var len = vs1.length;
 	    var res={'sum':'0', 'c':'0'};
-	    
+	    var dresc;
 	    for(var i=len-1; i>=0; i--) {
+			dresc = res.c;
 	      res = this.sumB(vs1[i],vs2[i], res.c);
 	      if(short) {
-	        r[i] = this.shortB(res.sum);
+			  if(res.sum == '') {
+				  throw 'Bad result from this.sumB('+vs1[i]+', '+vs2[i]+', '+dresc+')';
+			  }
+	        r[i] = this.shortB(res.sum,1,1,debug);
 	      } else {
 	    	  r[i] = res.sum; //this.xorB(res.sum, res.c);
 	      }
 	    }
 	    return r;
 	},
-	'sumB': function(a,b,c) {
+	'sumB': function(a,b,c=0) {
 		var p = this.xorB(a,b);
 		var g = this.andB(a,b);
 		
@@ -1609,6 +1684,7 @@ console.log('sum= '+ dg.sh.sum('a','b'));
 //console.log('d=     '+ d);
 //console.log('ex(d)= '+ dg.sh.execc(d));
 dg.sh.sumch('sss', dg.lk.getSum('C4'), 1)
+dg.sh.sum('aba'.split(''),'111'.split(''),1,31,31)
 */
 
 
