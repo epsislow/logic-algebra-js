@@ -11,6 +11,34 @@ window.vs = (function () {
     js:{},
   };
   
+  var lib = {
+	  'spinner': {
+		  'silent': function () {},
+		  'show': function () {},
+		  'hide': function () {},
+		  'remove': function () {}
+	  },
+	  'blockUi': { function () {},
+		  'freeze': function () {},
+		  'unfreeze': function () {}
+	  },
+	  'progressBar': {
+		  'silent': function () {},
+		  'show': function () {},
+		  'update': function () {},
+		  'reset': function () {},
+		  'finish': function () {},
+		  'hide': function () {},
+		  'remove': function () {}
+	  },
+	  'modal': {
+		  'silent': function () {},
+		  'show': function () {},
+		  'hide': function () {},
+		  'remove': function () {}
+	  }
+  };
+  
   function getControlsFor(type) {
     if (type in controls) {
       return controls[type];
@@ -29,6 +57,8 @@ window.vs = (function () {
   
   function controlsForMain() {
     var pub = {};
+	
+	pub.lib = lib;
   
     pub.page = function(id) {
       page.id = id;
@@ -152,7 +182,9 @@ window.vs = (function () {
     }
     var section= page.section[name];
     var pub= {};
-    
+	
+    pub.lib = lib;
+	
     pub.up =
     pub.back =
     pub.parent = function () {
