@@ -1268,7 +1268,7 @@ var progress = (function () {
 						}
 					}
 				}
-				console.log(proc);
+				//console.log(proc);
 				var procCalc = 0;
 				for(var k in proc) {
 					//console.log('a:'+proc[k].ratio/rootRatio);
@@ -1423,10 +1423,12 @@ function replSumToSum() {
   var vars = dg.lk.uses.out[lastActSumKey];
   
   for(var k in vars) {
-	  setTimeout(function () {
-		  replToSum(vars[k]); 
-		  console.log(vars[k]);
-	  }, 10);
+	  setTimeout((function (varsum) {
+		  return function() {
+			replToSum(varsum); 
+			console.log(varsum);
+		  }
+	  })(vars[k]), 10);
   }
   refreshActiveSum();
 }

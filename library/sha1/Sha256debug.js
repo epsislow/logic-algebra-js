@@ -394,7 +394,7 @@ dg = {
 			s('shortTest',tsts.length,tsts.length);
 	  }
 	  var not = 0;
-	  var s=[];
+	  var ss=[];
 	  if(onecnt < tsts.length) {
 	   //not = 1;
 	  }
@@ -453,10 +453,10 @@ dg = {
 	        }
 	        br.push(bb + k);
 	      }
-	     s.push('(' + br.join('&') + ')');
+	     ss.push('(' + br.join('&') + ')');
 	    }
 	  }
- 	  return this.execr((not? '~':'') + s.join('|'));*/
+ 	  return this.execr((not? '~':'') + ss.join('|'));*/
  	  
 	},
 	'convBr2B': function(br, not) {
