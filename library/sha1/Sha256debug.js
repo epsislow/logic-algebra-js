@@ -323,9 +323,10 @@ dg = {
 	  }
 	  return r;
 	},
-	'shortB': function (x, optimize = 1, convB = 1, d=0) {
+	'shortB': function (x, optimize = 1, convB = 1, d=0, sendUpdatesCallback = 0) {
 	  var vars;
-	  
+	  var s = sendUpdatesCallback;
+		
 	  vars = this.getVarBitsInV(x + '');
 	  
 	  if (d) {
@@ -358,6 +359,9 @@ dg = {
 	  var onecnt = 0;
 	  var st;
 	  for(var t in tsts) {
+		if(s) {
+			s('shortTest',t,tsts.length);
+		}
 	    st = this.replB(x, tsts[t]); 
 		
 	//	r[t] = this.execr(st);
@@ -385,6 +389,9 @@ dg = {
 	    if(r[t] == '1') {
 	      onecnt++;
 	    }
+	  }
+	  if(s) {
+			s('shortTest',tsts.length,tsts.length);
 	  }
 	  var not = 0;
 	  var s=[];
@@ -415,7 +422,7 @@ dg = {
 	  
 	  
 	  if(optimize) {
-	   bor = this.optimizeShortB(bor, d&8);
+	   bor = this.optimizeShortB(bor, d&8, s);
 	  }
 	  if(convB) {
 	    if(d) {
@@ -517,12 +524,18 @@ dg = {
 	  };
 	  return hasv;
 	},
-	'optimizeShortB': function (table, debug=0) {
+	'optimizeShortB': function (table, debug=0, sendUpdatesCallback = 0) {
 	  var table0 = table;
 	var table2;
 	var otbl = [];
 	var txt = [];
+	var s = sendUpdatesCallback;
+	
 	for (var g = 0; g < 4; g++) {
+		if(s) {
+			s('optimizer',g,4);
+		}
+
 	    var used = [];
 	    if(debug) {
 	      txt.push('g='+g);
@@ -1116,9 +1129,14 @@ dg = {
 	  }
 	  return false;
 	},
-	'sumch': function (sumName, ks, doit = false, debug= 0) {
+	'sumch': function (sumName, ks, doit = false, debug= 0, sendUpdatesCallback = 0, parentSKey = 0) {
 		var vslen = ks.length;
 		var vs = [];
+		
+		var s = sendUpdatesCallback;
+		if (s) {
+			var sKey = s.getKey('eachSumPr');
+		}
 		
 		for (var ik in ks) {
 			if(Array.isArray(ks[ik])) {
@@ -1136,6 +1154,9 @@ dg = {
 		
 		for (var ik in ks) {
 			i++;
+			if (s) {
+				s.update(parentSKey,sKey,i, ks.length, 'each-sum-proc');
+			}
 			if (i==1) {
 				sumResult = vs[ik];
 				continue;
@@ -1152,7 +1173,7 @@ dg = {
 			    console.log('z', sumResult);
 			    console.log('s'+ ik, vs[ik]);
 			  }
-			  sumResult = this.sum(sumResult, vs[ik]);
+			  sumResult = this.sum(sumResult, vs[ik], 0);
 				if (doit&1) {
 				  sumResult = this.short(sumResult);
 			  }
@@ -1160,6 +1181,10 @@ dg = {
 			    sumResult = this.exec(sumResult);
 			  }
 			}
+		}
+		if (s) {
+			s.update(sKey,'*',0,1)
+			 .update(parentSKey,sKey, ks.length, ks.length, 'last sum-proc');
 		}
 		
 		if (!moreSum) {
@@ -1180,7 +1205,7 @@ dg = {
 	  
 		return true;
 	},
-	'sum': function(k1,k2, short=0, debug = 0) {
+	'sum': function(k1,k2, short=0, debug = 0, sendUpdatesCallback = 0) {
 	    var vs1,vs2;
 	    if(Array.isArray(k1)) {
 	      vs1 = k1;
@@ -1196,6 +1221,8 @@ dg = {
 	    var len = vs1.length;
 	    var res={'sum':'0', 'c':'0'};
 	    var dresc;
+		var s = sendUpdatesCallback;
+
 	    for(var i=len-1; i>=0; i--) {
 			dresc = res.c;
 	      res = this.sumB(vs1[i],vs2[i], res.c);
@@ -1203,10 +1230,13 @@ dg = {
 			  if(res.sum == '') {
 				  throw 'Bad result from this.sumB('+vs1[i]+', '+vs2[i]+', '+dresc+')';
 			  }
-	        r[i] = this.shortB(res.sum,1,1,debug);
+	        r[i] = this.shortB(res.sum,1,1,debug, s);
 	      } else {
 	    	  r[i] = res.sum; //this.xorB(res.sum, res.c);
 	      }
+		  if(s) {
+			s('sumBof',len-i,len);
+		  }
 	    }
 	    return r;
 	},

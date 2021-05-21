@@ -1164,6 +1164,147 @@ function toggleCall(tggBtnClr, tggClasses, tggKey) {
   }
 }
 
+function hashCode(str, seed = 0, b=32) {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+	
+	return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(b);
+  }
+
+var progress = (function () {
+	var handler = {};
+	var pub = {};
+	
+	pub.create = function (elSel, key) {
+		if (key in handler) {
+			return handler[key];
+		}
+		
+		const rootRatio = 100000;
+		
+		handler[key] = (function () {
+			var el, eltxt;
+			var proc = {};
+			var hdl = {}
+			$(elSel+ ':first')
+				.append(
+					el = $('<div>')
+					.addClass('freeze-ui')
+					.addClass('hide')
+					.append( $('<div>')
+						.addClass('progress-box')
+						.append( $('<div>')
+							.addClass('spinner-border')
+							.addClass('spinner-border-sm')
+							.addClass('text-light')
+							.attr('role','status')
+							.append( $('<span>')
+								.addClass('sr-only')
+								.text('Loading..')
+							)	
+						).append(
+							eltxt = $('<div>')
+								.addClass('progress-txt')
+								.addClass('text-light')
+								.text('spinning 0 %')
+						)
+					)
+				);
+				
+			hdl.show = function () {
+				el.removeClass('hide')
+				.addClass('show');
+				
+				el.parent()
+				.scrollTop(0).scrollLeft(0)
+				.addClass('overflow-hidden');
+				
+				return hdl;
+			}
+			
+			hdl.hide = function () {
+				el.removeClass('show')
+				.addClass('hide')
+				
+				el.parent().removeClass('overflow-hidden');
+				
+				return hdl;
+			}
+			
+			hdl.remove = function () {
+				el.remove();
+				delete handler[key];
+			}
+			
+			hdl.update = function (parentkey = 0, key, current, max, desc = '') {
+				if (!parentkey) {
+					proc[key] = {
+						'current': current,
+						'max': max,
+						'ratio': Math.round(rootRatio/max)
+					};
+				} else {
+					if (key == '*') {
+						for(var v in proc) {
+							if (v.indexOf(parentkey + '.') === 0 ) {
+								proc[v] = {
+									'current': current,
+									'max': max,
+									'ratio': Math.round(proc[parentkey].ratio * 1/max)
+								}
+							}
+						}
+					} else {
+						proc[parentkey +'.' + key] = {
+							'current': current,
+							'max': max,
+							'ratio': Math.round(proc[parentkey].ratio * 1/max)
+						}
+					}
+				}
+				console.log(proc);
+				var procCalc = 0;
+				for(var k in proc) {
+					//console.log('a:'+proc[k].ratio/rootRatio);
+					//console.log('c:'+proc[k].current);
+					//console.log('d:'+(proc[k].current*proc[k].ratio)/rootRatio);
+					procCalc += Math.floor(((proc[k].current*proc[k].ratio)/rootRatio)*100);
+				}
+				eltxt.text(desc + ' ' + procCalc + '%');
+				
+				if (procCalc >= 100) {
+					hdl.hide();
+				}
+				return hdl;
+			}
+			
+			hdl.getKey = function (name) {
+				return key+hashCode(name + Date.now());
+			}
+			
+			return hdl;
+		})();
+		
+		return handler[key]
+	}
+	return pub;
+})();
+
+/**
+t = progress.create('#sum','sum-test').show();
+t.update(0,'test',1,10, 'step1')
+t.update('test','child1',2,5, 'step2')
+t.update('test','child1',4,5, 'step3')
+t.update('test','child1',5,5, 'step4')
+t.update('test','*',0,1).update(0,'test',2,10, 'step4')
+*/
+
 function initActEvents() {
   $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary','btn-light'],['fa-arrow-down','fa-arrow-circle-down'],'see'));
   
@@ -1173,27 +1314,37 @@ function initActEvents() {
     if(!sumKey) {
       return false;
     }
-    var csum = sumKey;
-    //lastSumKeyList.push('Csss');
-    dg.lk.delSum('Csss');
-    dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 3);
-    
-    dg.lk.delSum(csum);
-    dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
-    
-    dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
-   
-    //console.log(dg.lk.getSum('Csss'));
-    
-    unloadSumValuesOf();
-    
-    sumKey = csum;
-    lastActSumKey = csum;
-    $('span.actsum').text(lastActSumKey);
+	
+	var t = progress.create('#sum','sum-test');
+	t.show();
+	
+	setTimeout( function () {
+		var csum = sumKey;
+		//lastSumKeyList.push('Csss');
+		dg.lk.delSum('Csss');
+			
+		dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 3, 0, t );
+		
+		dg.lk.delSum(csum);
+		dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
+		
+		dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
+	   
+		//console.log(dg.lk.getSum('Csss'));
+		
+		unloadSumValuesOf();
+		
+		sumKey = csum;
+		lastActSumKey = csum;
+		$('span.actsum').text(lastActSumKey);
 
-    loadSumValuesOf(csum+':1');
-   
-    initSumEvents();
+		loadSumValuesOf(csum+':1');
+	   
+		initSumEvents();
+		t.remove();
+	}, 10);
+	
+	
    });
    
    $('#act-repl').unbind('click').click(function () {
@@ -1272,8 +1423,10 @@ function replSumToSum() {
   var vars = dg.lk.uses.out[lastActSumKey];
   
   for(var k in vars) {
-      replToSum(vars[k]);
-      console.log(vars[k]);
+	  setTimeout(function () {
+		  replToSum(vars[k]); 
+		  console.log(vars[k]);
+	  }, 10);
   }
   refreshActiveSum();
 }
