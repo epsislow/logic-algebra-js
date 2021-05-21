@@ -1192,11 +1192,20 @@ var progress = (function () {
 			var el, eltxt;
 			var proc = {};
 			var hdl = {}
+			var id;
+			
+			hdl.getKey = function (name) {
+				return key+hashCode(name + Date.now());
+			}
+			
+			classId = hdl.getKey('classId');
+			
 			$(elSel+ ':first')
 				.append(
 					el = $('<div>')
 					.addClass('freeze-ui')
 					.addClass('hide')
+					.addClass(classId)
 					.append( $('<div>')
 						.addClass('progress-box')
 						.append( $('<div>')
@@ -1233,6 +1242,9 @@ var progress = (function () {
 				.addClass('hide')
 				
 				el.parent().removeClass('overflow-hidden');
+				
+				proc = {};
+				$('.'+classId+ ' .progress-txt').text('spinning 0 %');
 				
 				return hdl;
 			}
@@ -1276,17 +1288,19 @@ var progress = (function () {
 					//console.log('d:'+(proc[k].current*proc[k].ratio)/rootRatio);
 					procCalc += Math.floor(((proc[k].current*proc[k].ratio)/rootRatio)*100);
 				}
-				eltxt.text(desc + ' ' + procCalc + '%');
+				//console.log(desc + ' ' + procCalc + '%' + '  >>>  ' + eltxt.text());
+				console.log(desc + ' ' + procCalc + '%');
+				$('.'+classId+ ' .progress-txt').text(desc + ' ' + procCalc + '%');
+				//eltxt.text(desc + ' ' + procCalc + '%');
 				
 				if (procCalc >= 100) {
 					hdl.hide();
+					proc = {};
+					$('.'+classId+ ' .progress-txt').text('spinning 0 %');
 				}
 				return hdl;
 			}
 			
-			hdl.getKey = function (name) {
-				return key+hashCode(name + Date.now());
-			}
 			
 			return hdl;
 		})();
@@ -1305,6 +1319,8 @@ t.update('test','child1',5,5, 'step4')
 t.update('test','*',0,1).update(0,'test',2,10, 'step4')
 */
 
+var t = progress.create('#sum','sum-test');
+	
 function initActEvents() {
   $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary','btn-light'],['fa-arrow-down','fa-arrow-circle-down'],'see'));
   
@@ -1315,23 +1331,28 @@ function initActEvents() {
       return false;
     }
 	
-	var t = progress.create('#sum','sum-test');
 	t.show();
+	
+	t.update(0,'act', 1,10, 'loading');
 	
 	setTimeout( function () {
 		var csum = sumKey;
+		
+		t.update(0,'act', 2,10, 'loading');
 		//lastSumKeyList.push('Csss');
 		dg.lk.delSum('Csss');
 			
-		dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 3, 0, t );
+		dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
+		t.update(0,'act', 3,10, 'loading');
 		
 		dg.lk.delSum(csum);
 		dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
 		
 		dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
+		t.update(0,'act', 4,10, 'loading');
 	   
 		//console.log(dg.lk.getSum('Csss'));
-		
+		t.update(0,'act', 6,10, 'loading');
 		unloadSumValuesOf();
 		
 		sumKey = csum;
@@ -1339,11 +1360,11 @@ function initActEvents() {
 		$('span.actsum').text(lastActSumKey);
 
 		loadSumValuesOf(csum+':1');
-	   
+		t.update(0,'act', 9,10, 'loading');
 		initSumEvents();
-		t.remove();
-	}, 10);
-	
+		
+		t.hide();
+	}, 20);
 	
    });
    

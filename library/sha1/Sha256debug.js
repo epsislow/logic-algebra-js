@@ -1154,9 +1154,6 @@ dg = {
 		
 		for (var ik in ks) {
 			i++;
-			if (s) {
-				s.update(parentSKey,sKey,i, ks.length, 'each-sum-proc');
-			}
 			if (i==1) {
 				sumResult = vs[ik];
 				continue;
@@ -1181,10 +1178,15 @@ dg = {
 			    sumResult = this.exec(sumResult);
 			  }
 			}
+			if (s) {
+			    //console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+i+','+ks.length);
+				s.update(parentSKey, sKey, i, ks.length, 'each-sum-proc');
+			}
 		}
 		if (s) {
-			s.update(sKey,'*',0,1)
-			 .update(parentSKey,sKey, ks.length, ks.length, 'last sum-proc');
+			//console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+ks.length+','+ks.length + ' last');
+			//s.update(sKey,'*',0,1)
+			 //.update(parentSKey,sKey, ks.length, ks.length, 'last sum-proc');
 		}
 		
 		if (!moreSum) {
