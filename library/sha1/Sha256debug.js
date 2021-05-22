@@ -553,7 +553,7 @@ dg = {
 	        if (i >= j) {
 	          continue;
 	        }
-			if(debug) {
+			if(debug&2) {
 				txt.push(table[i]);
 				txt.push(' vs ');
 				txt.push(table[j])
@@ -589,7 +589,7 @@ dg = {
 	      break;
 	    }
 	    otbl = [];
-	    if(used.length && g== 3 > 0) {
+	    if(used.length && g== 3) {
 	      g = 2;
 	    }
 	  }
