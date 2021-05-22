@@ -201,7 +201,7 @@ async function loopTryNextNounce2() {
 //	console.log('pre-try-Worker');
 //   console.log(JSON.stringify(data));
 
-        data = await tryWorkerHash(data);
+    data = await tryWorkerHash(data);
 
 //	tryPhpWorker(data);
 	
@@ -381,7 +381,6 @@ tryNextNounce = async function() {
 loopTryNextNounce = async function () {
   for(var i=0; i<4000; i++) {
     await tryNextNounce();
-    
   // infinite loop
   /*while (start) {
     let res = await tryNextNounce();
@@ -1346,27 +1345,26 @@ function initActEvents() {
 	
 	t.show();
 	
-	t.update(0,'act', 1,10, 'loading');
+	//t.update(0,'act', 1,10, 'loading');
 	
-	
-	setTimeout( function () {
+	var work = function () {
 		var csum = sumKey;
 		
-		t.update(0,'act', 2,10, 'loading');
+		//t.update(0,'act', 2,10, 'loading');
 		//lastSumKeyList.push('Csss');
 		dg.lk.delSum('Csss');
 			
 		dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
-		t.update(0,'act', 3,10, 'loading');
+		//t.update(0,'act', 3,10, 'loading');
 		
 		dg.lk.delSum(csum);
 		dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
 		
 		dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
-		t.update(0,'act', 4,10, 'loading');
+		//t.update(0,'act', 4,10, 'loading');
 	   
 		//console.log(dg.lk.getSum('Csss'));
-		t.update(0,'act', 6,10, 'loading');
+		//t.update(0,'act', 6,10, 'loading');
 		unloadSumValuesOf();
 		
 		sumKey = csum;
@@ -1374,11 +1372,16 @@ function initActEvents() {
 		$('span.actsum').text(lastActSumKey);
 
 		loadSumValuesOf(csum+':1');
-		t.update(0,'act', 9,10, 'loading');
+		//t.update(0,'act', 9,10, 'loading');
 		initSumEvents();
 		
 		t.hide();
-	}, 20);
+	 }
+	 
+	 setTimeout(work, 100);
+	/* var fin = tryWork([dg, t], 0, function(dg, sumKey) {
+	   var 
+	 });*/
 	
    });
    
