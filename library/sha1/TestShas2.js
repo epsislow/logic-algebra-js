@@ -64,16 +64,24 @@ function testW() {
 
 //self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
 var blob = null;
-var blobWork = null;
-async function tryWork(n, reuseBlob=1, f) {
-  if(!reuseBlob || !blobWork) {
-     blobWork = new Blob(["onmessage =" + f.toString()], { type: "text/javascript" });
+var workerNamed = [];
+function customWorker(name, fwork, hdl, ehdl) {
+  if(name in workerNamed) {
+    return workerNamed[name];
   }
   
-  let worker = new Worker(URL.createObjectURL(blobWork));
+  var blobWork = new Blob(["onmessage =" + fwork.toString()], { type: "text/javascript" });
+     
+  workerNamed[name] = new Worker(URL.createObjectURL(blobWork));
   
-  worker.postMessage(n);
-  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
+  workerNamed[name].onmessage = hdl;
+  
+  if(typeof ehdl == 'function') {
+    workerNamed[name].onerror = ehdl;
+  }
+  
+  return workerNamed[name];
+  //return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
 }
 
 async function tryWorkerHash(n) {
@@ -1378,11 +1386,53 @@ function initActEvents() {
 		t.hide();
 	 }
 	 
-	 setTimeout(work, 100);
-	/* var fin = tryWork([dg, t], 0, function(dg, sumKey) {
-	   var 
-	 });*/
-	
+	 //setTimeout(work, 100);
+	 var data = {
+	   'url': window.location.origin,
+	   'sumss': dg.lk.getSum(sumKey)
+	 };
+	 
+	 var work1 = customWorker('sumchw', function(data) {
+	   var data = data.data;
+	   self.importScripts(
+	    // data.url+'/ext/jQuery.3.2.1.js',
+	     data.url+'/library/sha1/DbgSha256.js'
+	   );
+	   
+	   partial = { 
+	     'update': function (parent, key, current, max, desc) {
+	     data.update = [parent,key,current, max, desc];
+	     data.hide = 0;
+	     self.postMessage(data);
+	   }
+	   }
+try{
+	  dg.sh.sumch('Csss', data.sumss, 1, partial);
+	  data.sumRes = dg.lk.getSum('Csss');
+} catch (e) {
+  data.error=e;
+}
+     data.hide = 1;
+	   self.postMessage(data);
+	 }, function (event) {
+	   var data = event.data;
+	   if(data.hide) {
+	     t.hide();
+	   } else {
+	     t.update(data.update[0],
+	       data.update[1],
+	       data.update[2],
+	       data.update[3],
+	      'Loading '+ data.update[4]
+	     )
+	   }
+	   console.log('d=',  data);
+	 }, function (event) {
+	   console.log('errror');
+	   t.hide();
+	 });
+	 
+	 work1.postMessage(data);
    });
    
    $('#act-repl').unbind('click').click(function () {
