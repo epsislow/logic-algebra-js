@@ -64,6 +64,18 @@ function testW() {
 
 //self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
 var blob = null;
+var blobWork = null;
+async function tryWork(n, reuseBlob=1, f) {
+  if(!reuseBlob || !blobWork) {
+     blobWork = new Blob(["onmessage =" + f.toString()], { type: "text/javascript" });
+  }
+  
+  let worker = new Worker(URL.createObjectURL(blobWork));
+  
+  worker.postMessage(n);
+  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
+}
+
 async function tryWorkerHash(n) {
   if (blob == null)  {
    async function work(data) {
@@ -112,10 +124,11 @@ async function tryWorkerHash(n) {
   }
 
   blob = new Blob(["onmessage =" + work.toString()], { type: "text/javascript" });
- }
+  }
   
   let worker = new Worker(URL.createObjectURL(blob));
   worker.postMessage(n);
+  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));worker.postMessage(n);
   return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
 }
 
@@ -1334,6 +1347,7 @@ function initActEvents() {
 	t.show();
 	
 	t.update(0,'act', 1,10, 'loading');
+	
 	
 	setTimeout( function () {
 		var csum = sumKey;
