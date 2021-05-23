@@ -1303,6 +1303,9 @@ var progress = (function () {
 							}
 						}
 					} else {*/
+					if(!proc[parentkey]) {
+					  throw ({'z':arguments});
+					}
 					proc[parentkey +'.' + key] = {
 						'current': current,
 						'max': max,
@@ -1480,7 +1483,7 @@ try{
 	   } else {
 	 
 	     if(data.update) {
-	      //console.log(data.update);
+	      //console.log('update:'+data.update);
 	      t.update(data.update[0],
 	        data.update[1],
 	        data.update[2],
