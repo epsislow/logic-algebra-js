@@ -289,23 +289,35 @@ dg = {
 	'parent': function () {
 		return dg;
 	},
-	'short': function(x) {
+	'short': function(x, sendUpdatesCallback = 0, parentSKey = 0) {
 	  var vs;
 	  if (Array.isArray(x)) {
 	    vs = x;
 	  } else {
 	    vs = this.parent().lk.get(x);
 	  }
-	  var r = [];
+	  var r = [];	
+	  var s = sendUpdatesCallback;
+	  if(s) {
+	    var sKey = s.getKey('each-short-proc');
+		s.update(parentSKey, sKey, 0, vs.length, 'each-short-proc');
+	  }
 	
 	  for (var i in vs) {
-	    r[i] = this.shortB(vs[i]);
+	    r[i] = this.shortB(vs[i], 1, 1, 0, s, sKey);
+		if(s) {
+			s.update(parentSKey, sKey, i, vs.length, 'each-short-proc');
+		}
 	  }
 	  return r;
 	},
-	'shortB': function (x, optimize = 1, convB = 1, d=0, sendUpdatesCallback = 0) {
+	'shortB': function (x, optimize = 1, convB = 1, d=0, sendUpdatesCallback = 0, parentSKey) {
 	  var vars;
 	  var s = sendUpdatesCallback;
+	  if(s) {
+	    var sKey = s.getKey('shortB-proc');
+	    s.update(parentSKey, sKey, 0, 5, 'shortB/vars');
+	  }
 		
 	  vars = this.getVarBitsInV(x + '');
 	//  throw ({'b': [x, vars]});
@@ -313,6 +325,7 @@ dg = {
 		//console.log('vars=',vars,'x=',x);
 	  }
 	  
+	  s.update(parentSKey, sKey, 1, 5, 'shortB/vars');
 	  if (!vars.length) {
 		if (x == '') {
 			throw 'Got an empty string to shorten!?';
@@ -335,14 +348,23 @@ dg = {
 	  }
 	  var tsts = this.getValuesForAllKeys([[]],vars);
 	  
+      if(s) {
+		s.update(parentSKey, sKey, 2, 5, 'shortB/tsts');
+	  }
+	  
 	  //console.log('tsts',tsts);
 	  
 	  var r = [];
 	  var onecnt = 0;
 	  var st;
+	  if(s) {
+		  
+	    //var sKey = s.getKey('shortB-proc');
+		//s.update(parentSKey, sKey, 3, 5, 'shortB/vars');
+	  }
 	  for(var t in tsts) {
 		if(s) {
-			s('shortTest',t,tsts.length);
+			//s.update(parentSKey, sKey, 3, 5, 'shortB/vars');
 		}
 	    st = this.replB(x, tsts[t]); 
 		
@@ -357,14 +379,14 @@ dg = {
 		  continue;
 	  }
 	  
-	  try {
-		r[t]=Function('return (('+st + ') >>> 0) & 1')() + '';
-	  } catch (e) {
-		  console.log('x',x, 'tsts[t]', tsts[t]);
-		  console.log('Tried: ' + 'return (('+st + ') >>> 0) & 1');
-		  throw e;
-	  }
-		
+		  try {
+			r[t]=Function('return (('+st + ') >>> 0) & 1')() + '';
+		  } catch (e) {
+			  console.log('x',x, 'tsts[t]', tsts[t]);
+			  console.log('Tried: ' + 'return (('+st + ') >>> 0) & 1');
+			  throw e;
+		  }
+			
 		if(d&2) {
 	      console.log('st'+t+': ' + st + ' = ' + r[t]);
 	    }
@@ -373,8 +395,9 @@ dg = {
 	    }
 	  }
 	  if(s) {
-			s('shortTest',tsts.length,tsts.length);
+		s.update(parentSKey, sKey, 3, 5, 'shortB/tst-check');
 	  }
+	  
 	  var not = 0;
 	  var ss=[];
 	  if(onecnt < tsts.length) {
@@ -402,9 +425,12 @@ dg = {
 	    }
 	  }
 	  
+	  if(s) {
+		s.update(parentSKey, sKey, 4, 5, 'shortB/tst-check');
+	  }
 	  
 	  if(optimize) {
-	   bor = this.optimizeShortB(bor, d&8, s);
+	   bor = this.optimizeShortB(bor, d&8);
 	  }
 	  if(convB) {
 	    if(d) {
@@ -422,6 +448,9 @@ dg = {
 	    return [bor,not];
 	  }
 	  
+	  if(s) {
+		s.update(parentSKey, sKey, 5, 5, 'shortB/aft-optimize');
+	  }
 	  /*
 	  var br = [];
 	  var bb = '';
@@ -1156,21 +1185,15 @@ dg = {
 			  }
 			  sumResult = this.sum(sumResult, vs[ik], 0, 0 , s, sKey);
 				if (doit&1) {
-				  sumResult = this.short(sumResult);
+				  sumResult = this.short(sumResult , s, sKey);
 			  }
 			  if(doit&2) {
 			    sumResult = this.exec(sumResult);
 			  }
 			}
 			if (s) {
-			    //console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+i+','+ks.length);
 			    s.update(parentSKey, sKey, i, ks.length, 'each-sum-proc');
 			}
-		}
-		if (s) {
-			//console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+ks.length+','+ks.length + ' last');
-			//s.update(sKey,'*',0,1)
-			// .update(parentSKey,sKey, ks.length, ks.length, 'last sum-proc');
 		}
 		
 		if (!moreSum) {
@@ -1181,12 +1204,18 @@ dg = {
 		  if(debug) {
 		    console.log('Z', sumResult);
 		  }
+		  sKeyC = s.getKey('ckey+vals');
+		  s.update(parentSKey, sKeyC, 1, 4, 'ckey+vals');
 		  this.parent().lk.addSum(ckey, sumResult);
-		  this.sumForm(ckey);
+		  //this.sumForm(ckey);
+		  s.update(parentSKey, sKeyC, 2, 4, 'ckey+vals');
 		  
 		  var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
-
+		  s.update(parentSKey, sKeyC, 3, 4, 'ckey+vals');
+		  
           dg.lk.add(sumName, cVal);
+		  s.update(parentSKey, sKeyC, 4, 4, 'ckey+vals');
+		  
 	    }
 	  
 		return true;

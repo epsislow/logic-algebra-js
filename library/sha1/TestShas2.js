@@ -1365,9 +1365,13 @@ function initActEvents() {
 	
 	//t.update(0,'act', 1,10, 'loading');
 	
-	var work = function (sumResult) {
+	var work = function (sumResult, sKey = 0) {
 		var csum = sumKey;
 		
+	    t.update(0, sKey, 1, 4, 'cleanup');
+		
+		//s.update(parentSKey, sKeyC, 0, 4, 'work');
+		  
 		//t.update(0,'act', 2,10, 'loading');
 		//lastSumKeyList.push('Csss');
 	//	dg.lk.delSum('Csss');
@@ -1385,7 +1389,10 @@ function initActEvents() {
 	   
 		//console.log(dg.lk.getSum('Csss'));
 		//t.update(0,'act', 6,10, 'loading');
+		
+	    t.update(0, sKey, 2, 4, 'cl-addSum');
 		unloadSumValuesOf();
+		t.update(0, sKey, 3, 4, 'cl-unload');
 		
 		sumKey = csum;
 		lastActSumKey = csum;
@@ -1394,6 +1401,7 @@ function initActEvents() {
 		loadSumValuesOf(csum+':1');
 		//t.update(0,'act', 9,10, 'loading');
 		initSumEvents();
+		t.update(0, sKey, 4, 4, 'cl-loadSum');
 		
 		requestAnimationFrame(function () {
 		  requestAnimationFrame( function () {
@@ -1412,7 +1420,6 @@ function initActEvents() {
 	 var work1 = customWorker('sumchw', function(data) {
 	   var data = data.data;
 	   self.importScripts(
-	    // data.url+'/ext/jQuery.3.2.1.js',
 	     data.url+'/library/sha1/DbgSha256.js'
 	   );
 	   
@@ -1430,28 +1437,31 @@ const hashCode = function (str, seed = 0, b=32) {
 	return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(b);
   }
 
-	   partial = { 
+	var partial = { 
 	     'update': function (parent, key, current, max, desc) {
-	     data.update = [parent,key,current, max, desc];
-	     data.hide = 0;
-	     self.postMessage(data);
+	       data.update = [parent,key,current, max, desc];
+	       data.hide = 0;
+	       self.postMessage(data);
 	   },'alert': function (msg,isStop =0) {
-	     delete data.update;
-	     data.hide = isStop;
-	     data.alert = msg;
-	     self.postMessage(data);
+	       delete data.update;
+	       data.hide = isStop;
+	       data.alert = msg;
+	       self.postMessage(data);
 	     },
 	     'getKey': function (name, key='') {
-	       //return key+name;
-	       return key+hashCode(name + Date.now())
+	         return key+hashCode(name + Date.now())
 	     }
 	   }
-	   
+	
+var sKey = partial.getKey('work1');	
+data.sKey = sKey;
+partial.update(0, sKey, 0, 4, 'pre-proc');
+
 try{
     dg.lk.delSum('Csss');
-	  dg.sh.sumch('Csss', data.sumss, 1, 0, partial);
-	  delete data.update;
-	  data.sumRes = dg.lk.getSum('Csss');
+	dg.sh.sumch('Csss', data.sumss, 1, 0, partial, sKey);
+	delete data.update;
+	data.sumRes = dg.lk.getSum('Csss');
 } catch (e) {
   data.error=e;
 }
@@ -1464,9 +1474,9 @@ try{
 	       console.log('nice alert:'+data.alert);
 	     }
 	     if(data.sumRes) {
-	       work(data.sumRes);
+		   t.update(0, data.sKey, 1, 4, 'pre-work1');
+	       work(data.sumRes, data.sKey);
 	     }
-	    // t.hide();
 	   } else {
 	 
 	     if(data.update) {
