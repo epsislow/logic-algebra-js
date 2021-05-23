@@ -1240,7 +1240,7 @@ var progress = (function () {
 							eltxt = $('<div>')
 								.addClass('progress-txt')
 								.addClass('text-light')
-								.text('spinning 0 %')
+								.text('0% spinning')
 						)
 					)
 				);
@@ -1263,7 +1263,7 @@ var progress = (function () {
 				el.parent().removeClass('overflow-hidden');
 				
 				proc = {};
-				$('.'+classId+ ' .progress-txt').text('spinning 0 %');
+				$('.'+classId+ ' .progress-txt').text('0% spinning');
 				
 				return hdl;
 			}
@@ -1274,23 +1274,21 @@ var progress = (function () {
 			}
 			
 			hdl.update = function (parentkey = 0, key, current, max, desc = '') {
+				//console.log('update::' + parentkey, key, current, max, desc);
 				if (!parentkey) {
 					proc[key] = {
 						'current': current,
 						'max': max,
-						'ratio': Math.round(rootRatio/max)
+						'ratio': Math.round(rootRatio/max),
+						'parent': 0
 					};
 					
 					for(var v in proc) {
-						if (v.indexOf(key + '.') === 0 ) {
-							delete proc[v]; /*= {
-								'current': 0,
-								'max': 1,
-								'ratio': Math.round(proc[key].ratio * 1/max)
-							}*/
+						if (proc[v].parent == key ) {
+							delete proc[v];
 						}
 					}
-					
+					//console.log('proc::',proc);
 				} else {
 /*					if (key == '*') {
 						for(var v in proc) {
@@ -1304,13 +1302,18 @@ var progress = (function () {
 						}
 					} else {*/
 					if(!proc[parentkey]) {
-					  throw ({'z':arguments});
+					  throw ({'z':arguments,'proc': proc,'parentkey': parentkey});
 					}
-					proc[parentkey +'.' + key] = {
+					proc[key] = {
 						'current': current,
 						'max': max,
-						'ratio': Math.round(proc[parentkey].ratio * 1/max)
+						'ratio': Math.round(proc[parentkey].ratio * 1/max),
+						'parent': parentkey
 					}
+					
+					
+
+					//console.log('proc::',proc);
 					//}
 				}
 				//console.log(proc);
@@ -1321,15 +1324,14 @@ var progress = (function () {
 					//console.log('d:'+(proc[k].current*proc[k].ratio)/rootRatio);
 					procCalc += Math.floor(((proc[k].current*proc[k].ratio)/rootRatio)*100);
 				}
-				//console.log(desc + ' ' + procCalc + '%' + '  >>>  ' + eltxt.text());
-				console.log(desc + ' ' + procCalc + '%');
-				$('.'+classId+ ' .progress-txt').text(desc + ' ' + procCalc + '%');
+				console.log((desc + ' ' + current + '/' + max).padStart(30,'\xa0') + ' ' + procCalc + '%');
+				$('.'+classId+ ' .progress-txt').text((desc + ' ' + current + '/' + max).padStart(30,'\xa0') + ' ' + procCalc + '%' );
 				//eltxt.text(desc + ' ' + procCalc + '%');
 				
 				if (procCalc >= 100) {
 			//		hdl.hide();
 				//	proc = {};
-			//		$('.'+classId+ ' .progress-txt').text('spinning 0 %');
+			//		$('.'+classId+ ' .progress-txt').text('0% spinning');
 				}
 				return hdl;
 			}
@@ -1366,55 +1368,30 @@ function initActEvents() {
 	
 	t.show();
 	
-	//t.update(0,'act', 1,10, 'loading');
-	
 	var work = function (sumResult, sKey = 0) {
+		t.show();
+
 		var csum = sumKey;
 		
-	    t.update(0, sKey, 1, 4, 'cleanup');
-		
-		//s.update(parentSKey, sKeyC, 0, 4, 'work');
-		  
-		//t.update(0,'act', 2,10, 'loading');
-		//lastSumKeyList.push('Csss');
-	//	dg.lk.delSum('Csss');
-			
-	//	dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
-		//t.update(0,'act', 3,10, 'loading');
-		
 		dg.lk.delSum(csum);
-		//dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
-		//console.log(sumResult);
 		dg.lk.addSum(csum, sumResult[0]);
 		dg.lk.add(csum, sumResult[0]);
-		//dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
-		//t.update(0,'act', 4,10, 'loading');
-	   
-		//console.log(dg.lk.getSum('Csss'));
-		//t.update(0,'act', 6,10, 'loading');
 		
-	    t.update(0, sKey, 2, 4, 'cl-addSum');
+	    t.update(0, sKey, 1, 4, 'cl-addSum');
 		unloadSumValuesOf();
-		t.update(0, sKey, 3, 4, 'cl-unload');
+		t.update(0, sKey, 2, 4, 'cl-unload');
 		
 		sumKey = csum;
 		lastActSumKey = csum;
 		$('span.actsum').text(lastActSumKey);
-
-		loadSumValuesOf(csum+':1');
-		//t.update(0,'act', 9,10, 'loading');
-		initSumEvents();
-		t.update(0, sKey, 4, 4, 'cl-loadSum');
 		
-		requestAnimationFrame(function () {
-		  requestAnimationFrame( function () {
-		    t.hide()
-		  })
-		}
-		)
+		loadSumValuesOf(csum+':1');
+		t.update(0, sKey, 3, 4, 'cl-loadSum');
+		initSumEvents();
+		t.update(0, sKey, 4, 4, 'cl-initSumEvents');
+		t.hide();
 	 }
 	 
-	 //setTimeout(work, 100);
 	 var data = {
 	   'url': window.location.origin,
 	   'sumss': dg.lk.getSum(sumKey)
@@ -1427,7 +1404,7 @@ function initActEvents() {
 	   );
 	   
 	   
-const hashCode = function (str, seed = 0, b=32) {
+   const hashCode = function (str, seed = 0, b=32) {
     let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
     for (let i = 0, ch; i < str.length; i++) {
         ch = str.charCodeAt(i);
@@ -1456,13 +1433,9 @@ const hashCode = function (str, seed = 0, b=32) {
 	     }
 	   }
 	
-var sKey = partial.getKey('work1');	
-data.sKey = sKey;
-partial.update(0, sKey, 0, 4, 'pre-proc');
-
 try{
     dg.lk.delSum('Csss');
-	dg.sh.sumch('Csss', data.sumss, 1, 0, partial, sKey);
+	dg.sh.sumch('Csss', data.sumss, 1, 0, partial);
 	delete data.update;
 	data.sumRes = dg.lk.getSum('Csss');
 } catch (e) {
@@ -1477,13 +1450,12 @@ try{
 	       console.log('nice alert:'+data.alert);
 	     }
 	     if(data.sumRes) {
-		   t.update(0, data.sKey, 1, 4, 'pre-work1');
-	       work(data.sumRes, data.sKey);
+		   t.hide();
+	       work(data.sumRes);
 	     }
 	   } else {
 	 
 	     if(data.update) {
-	      //console.log('update:'+data.update);
 	      t.update(data.update[0],
 	        data.update[1],
 	        data.update[2],
@@ -1493,7 +1465,6 @@ try{
 	     }
 	     
 	   }
-	   //console.log('d=',  data);
 	 }, function (event) {
 	   console.log('errror');
 	   t.hide();
