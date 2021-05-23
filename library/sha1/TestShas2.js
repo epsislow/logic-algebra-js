@@ -1184,7 +1184,7 @@ function toggleCall(tggBtnClr, tggClasses, tggKey) {
   }
 }
 
-function hashCode(str, seed = 0, b=32) {
+const hashCode = function (str, seed = 0, b=32) {
     let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
     for (let i = 0, ch; i < str.length; i++) {
         ch = str.charCodeAt(i);
@@ -1314,9 +1314,9 @@ var progress = (function () {
 				//eltxt.text(desc + ' ' + procCalc + '%');
 				
 				if (procCalc >= 100) {
-					hdl.hide();
+			//		hdl.hide();
 					proc = {};
-					$('.'+classId+ ' .progress-txt').text('spinning 0 %');
+			//		$('.'+classId+ ' .progress-txt').text('spinning 0 %');
 				}
 				return hdl;
 			}
@@ -1355,20 +1355,21 @@ function initActEvents() {
 	
 	//t.update(0,'act', 1,10, 'loading');
 	
-	var work = function () {
+	var work = function (sumResult) {
 		var csum = sumKey;
 		
 		//t.update(0,'act', 2,10, 'loading');
 		//lastSumKeyList.push('Csss');
-		dg.lk.delSum('Csss');
+	//	dg.lk.delSum('Csss');
 			
-		dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
+	//	dg.sh.sumch('Csss', dg.lk.getSum(sumKey), 1);
 		//t.update(0,'act', 3,10, 'loading');
 		
 		dg.lk.delSum(csum);
-		dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
-		
-		dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
+		//dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
+		dg.lk.addSum(csum, sumResult[0]);
+		dg.lk.add(csum, sumResult[0]);
+		//dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
 		//t.update(0,'act', 4,10, 'loading');
 	   
 		//console.log(dg.lk.getSum('Csss'));
@@ -1383,7 +1384,12 @@ function initActEvents() {
 		//t.update(0,'act', 9,10, 'loading');
 		initSumEvents();
 		
-		t.hide();
+		requestAnimationFrame(function () {
+		  requestAnimationFrame( function () {
+		    t.hide()
+		  })
+		}
+		)
 	 }
 	 
 	 //setTimeout(work, 100);
@@ -1404,10 +1410,22 @@ function initActEvents() {
 	     data.update = [parent,key,current, max, desc];
 	     data.hide = 0;
 	     self.postMessage(data);
+	   },'alert': function (msg,isStop =0) {
+	     delete data.update;
+	     data.hide = isStop;
+	     data.alert = msg;
+	     self.postMessage(data);
+	     },
+	     'getKey': function (name, key='') {
+	       return key+name;
+	       //return key+hashCode(name + Date.now())
+	     }
 	   }
-	   }
+	   
 try{
-	  dg.sh.sumch('Csss', data.sumss, 1, partial);
+    dg.lk.delSum('Csss');
+	  dg.sh.sumch('Csss', data.sumss, 1, 0, partial);
+	  delete data.update;
 	  data.sumRes = dg.lk.getSum('Csss');
 } catch (e) {
   data.error=e;
@@ -1417,14 +1435,23 @@ try{
 	 }, function (event) {
 	   var data = event.data;
 	   if(data.hide) {
-	     t.hide();
+	     if(data.alert) {
+	       console.log('nice alert:'+data.alert);
+	     }
+	     work(data.sumRes);
+	    // t.hide();
 	   } else {
-	     t.update(data.update[0],
-	       data.update[1],
-	       data.update[2],
-	       data.update[3],
-	      'Loading '+ data.update[4]
-	     )
+	 
+	     if(data.update) {
+	      console.log(data.update);
+	      t.update(data.update[0],
+	        data.update[1],
+	        data.update[2],
+	        data.update[3],
+	        'Loading '+ data.update[4]
+	      )
+	     }
+	     
 	   }
 	   console.log('d=',  data);
 	 }, function (event) {
@@ -1433,7 +1460,7 @@ try{
 	 });
 	 
 	 work1.postMessage(data);
-   });
+ });
    
    $('#act-repl').unbind('click').click(function () {
      replToSum(sumKey);
