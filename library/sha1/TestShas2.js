@@ -136,7 +136,6 @@ async function tryWorkerHash(n) {
   
   let worker = new Worker(URL.createObjectURL(blob));
   worker.postMessage(n);
-  return await new Promise(resolve => worker.onmessage = e => resolve(e.data));worker.postMessage(n);
   return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
 }
 
@@ -1281,8 +1280,19 @@ var progress = (function () {
 						'max': max,
 						'ratio': Math.round(rootRatio/max)
 					};
+					
+					for(var v in proc) {
+						if (v.indexOf(key + '.') === 0 ) {
+							delete proc[v]; /*= {
+								'current': 0,
+								'max': 1,
+								'ratio': Math.round(proc[key].ratio * 1/max)
+							}*/
+						}
+					}
+					
 				} else {
-					if (key == '*') {
+/*					if (key == '*') {
 						for(var v in proc) {
 							if (v.indexOf(parentkey + '.') === 0 ) {
 								proc[v] = {
@@ -1292,13 +1302,13 @@ var progress = (function () {
 								}
 							}
 						}
-					} else {
-						proc[parentkey +'.' + key] = {
-							'current': current,
-							'max': max,
-							'ratio': Math.round(proc[parentkey].ratio * 1/max)
-						}
+					} else {*/
+					proc[parentkey +'.' + key] = {
+						'current': current,
+						'max': max,
+						'ratio': Math.round(proc[parentkey].ratio * 1/max)
 					}
+					//}
 				}
 				//console.log(proc);
 				var procCalc = 0;
@@ -1315,7 +1325,7 @@ var progress = (function () {
 				
 				if (procCalc >= 100) {
 			//		hdl.hide();
-					proc = {};
+				//	proc = {};
 			//		$('.'+classId+ ' .progress-txt').text('spinning 0 %');
 				}
 				return hdl;
@@ -1460,7 +1470,7 @@ try{
 	   } else {
 	 
 	     if(data.update) {
-	      console.log(data.update);
+	      //console.log(data.update);
 	      t.update(data.update[0],
 	        data.update[1],
 	        data.update[2],
@@ -1470,7 +1480,7 @@ try{
 	     }
 	     
 	   }
-	   console.log('d=',  data);
+	   //console.log('d=',  data);
 	 }, function (event) {
 	   console.log('errror');
 	   t.hide();

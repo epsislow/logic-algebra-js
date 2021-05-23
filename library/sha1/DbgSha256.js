@@ -1135,6 +1135,7 @@ dg = {
 		var ckey = this.parent().lk.getNextCavl();
 		
 		
+		s.update(parentSKey, sKey, 0, ks.length, 'each-sum-proc');
 		for (var ik in ks) {
 			i++;
 			if (i==1) {
@@ -1153,7 +1154,7 @@ dg = {
 			    console.log('z', sumResult);
 			    console.log('s'+ ik, vs[ik]);
 			  }
-			  sumResult = this.sum(sumResult, vs[ik], 0, 0);//, s, sKey);
+			  sumResult = this.sum(sumResult, vs[ik], 0, 0 , s, sKey);
 				if (doit&1) {
 				  sumResult = this.short(sumResult);
 			  }
@@ -1163,10 +1164,7 @@ dg = {
 			}
 			if (s) {
 			    //console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+i+','+ks.length);
-			//    if(i >= ks.length) {
-			//      s.update(sKey,'*',0,1);
-			//    }
-				s.update(parentSKey, sKey, i, ks.length, 'each-sum-proc');
+			    s.update(parentSKey, sKey, i, ks.length, 'each-sum-proc');
 			}
 		}
 		if (s) {
@@ -1214,6 +1212,7 @@ dg = {
 		  var sKey = s.getKey('in-sum');
 		}
 
+		s.update(parentSKey, sKey,0,len, 'in-sum');
 	    for(var i=len-1; i>=0; i--) {
 			dresc = res.c;
 	      res = this.sumB(vs1[i],vs2[i], res.c);
@@ -1226,7 +1225,7 @@ dg = {
 	    	  r[i] = res.sum; //this.xorB(res.sum, res.c);
 	      }
 		    if(s) {
-		    	s.update(parentSKey,'in-sum',len-i,len);
+		    	s.update(parentSKey, sKey, len-i, len, 'in-sum');
 		    }
 	    }
 	    return r;
