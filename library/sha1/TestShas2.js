@@ -1367,6 +1367,7 @@ function initActEvents() {
 		
 		dg.lk.delSum(csum);
 		//dg.lk.addSum(csum, dg.lk.getSum('Csss')[0]);
+		//console.log(sumResult);
 		dg.lk.addSum(csum, sumResult[0]);
 		dg.lk.add(csum, sumResult[0]);
 		//dg.lk.add(csum, dg.lk.getSum('Csss')[0]);
@@ -1405,6 +1406,20 @@ function initActEvents() {
 	     data.url+'/library/sha1/DbgSha256.js'
 	   );
 	   
+	   
+const hashCode = function (str, seed = 0, b=32) {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+	
+	return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(b);
+  }
+
 	   partial = { 
 	     'update': function (parent, key, current, max, desc) {
 	     data.update = [parent,key,current, max, desc];
@@ -1417,8 +1432,8 @@ function initActEvents() {
 	     self.postMessage(data);
 	     },
 	     'getKey': function (name, key='') {
-	       return key+name;
-	       //return key+hashCode(name + Date.now())
+	       //return key+name;
+	       return key+hashCode(name + Date.now())
 	     }
 	   }
 	   
@@ -1438,7 +1453,9 @@ try{
 	     if(data.alert) {
 	       console.log('nice alert:'+data.alert);
 	     }
-	     work(data.sumRes);
+	     if(data.sumRes) {
+	       work(data.sumRes);
+	     }
 	    // t.hide();
 	   } else {
 	 

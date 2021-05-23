@@ -1153,7 +1153,7 @@ dg = {
 			    console.log('z', sumResult);
 			    console.log('s'+ ik, vs[ik]);
 			  }
-			  sumResult = this.sum(sumResult, vs[ik], 0);
+			  sumResult = this.sum(sumResult, vs[ik], 0, 0);//, s, sKey);
 				if (doit&1) {
 				  sumResult = this.short(sumResult);
 			  }
@@ -1163,13 +1163,16 @@ dg = {
 			}
 			if (s) {
 			    //console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+i+','+ks.length);
+			//    if(i >= ks.length) {
+			//      s.update(sKey,'*',0,1);
+			//    }
 				s.update(parentSKey, sKey, i, ks.length, 'each-sum-proc');
 			}
 		}
 		if (s) {
 			//console.log('sumch_s '+parentSKey+ 'p | '+sKey+' '+ks.length+','+ks.length + ' last');
 			//s.update(sKey,'*',0,1)
-			 //.update(parentSKey,sKey, ks.length, ks.length, 'last sum-proc');
+			// .update(parentSKey,sKey, ks.length, ks.length, 'last sum-proc');
 		}
 		
 		if (!moreSum) {
@@ -1190,7 +1193,7 @@ dg = {
 	  
 		return true;
 	},
-	'sum': function(k1,k2, short=0, debug = 0, sendUpdatesCallback = 0) {
+	'sum': function(k1,k2, short=0, debug = 0, sendUpdatesCallback = 0, parentSKey=0) {
 	    var vs1,vs2;
 	    if(Array.isArray(k1)) {
 	      vs1 = k1;
@@ -1207,6 +1210,9 @@ dg = {
 	    var res={'sum':'0', 'c':'0'};
 	    var dresc;
 		var s = sendUpdatesCallback;
+		if(s) {
+		  var sKey = s.getKey('in-sum');
+		}
 
 	    for(var i=len-1; i>=0; i--) {
 			dresc = res.c;
@@ -1215,13 +1221,13 @@ dg = {
 			  if(res.sum == '') {
 				  throw 'Bad result from this.sumB('+vs1[i]+', '+vs2[i]+', '+dresc+')';
 			  }
-	        r[i] = this.shortB(res.sum,1,1,debug, s);
+	        r[i] = this.shortB(res.sum,1,1,debug);
 	      } else {
 	    	  r[i] = res.sum; //this.xorB(res.sum, res.c);
 	      }
-		  if(s) {
-			s('sumBof',len-i,len);
-		  }
+		    if(s) {
+		    	s.update(parentSKey,'in-sum',len-i,len);
+		    }
 	    }
 	    return r;
 	},
