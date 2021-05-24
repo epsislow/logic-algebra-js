@@ -902,12 +902,12 @@ function openSums(index) {
       cls = (sumKeyVss[i][k]+''=='1')?'one':'zero';
     
       exprToShow = $('<span>')
+        //.append(k + ' ')
         .append(
           $('<i>')
           .addClass('fas')
           .addClass(sumKeyVss[i][k] + '' == '1' ? 'fa-dot-circle' : 'fa-circle-notch')
-        )
-        .append(' ' + k);
+        );
       
     } else {
       cls = 'expr';
@@ -916,6 +916,7 @@ function openSums(index) {
     
     tr.append($('<td>')
         .addClass(cls)
+        .append(k + ' ')
         .append(exprToShow)
     );
     trs.push(tr);
