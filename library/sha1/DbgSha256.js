@@ -320,12 +320,14 @@ dg = {
 	  }
 		
 	  vars = this.getVarBitsInV(x + '');
-	//  throw ({'b': [x, vars]});
+
 	  if (d) {
-		//console.log('vars=',vars,'x=',x);
+		console.log('vars=',vars,'x=',x);
 	  }
 	  
-	  s.update(parentSKey, sKey, 1, 5, 'shortB/vars');
+	  if(s) {
+		s.update(parentSKey, sKey, 1, 5, 'shortB/vars');
+	  }
 	  if (!vars.length) {
 		if (x == '') {
 			throw 'Got an empty string to shorten!?';

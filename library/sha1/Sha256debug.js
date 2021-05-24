@@ -62,7 +62,7 @@ dg = {
 	    this.sums[k].push(vw);
 	    
 	    var vars = [];
-	    vars = this.parent().sh.getVarsInVs(vw);
+	    vars = this.parent().sh.getVarsInVs(vw, [k,w]);
 	    
 	    if (vars.length) {
 	      if(k in this.uses.in) {
@@ -988,7 +988,7 @@ dg = {
 	  }
 	  return varBits;
 	},
-	'getVarsInVs': function (vs) {
+	'getVarsInVs': function (vs, d) {
 	  var vars = [];
 	  var r;
 	  for(var v in vs) {
@@ -1005,11 +1005,20 @@ dg = {
 	'noOfVarsB': function(x) {
 	  return this.hasVarB(x,1);
 	},
+	'translateToBoolAlgSimp': function (v) {
+		//\overline{ }
+		//or is +
+		// (a)AND(b) is (a)(b)
+		//v.replace(
+		//https://www.boolean-algebra.com/
+	}
 	'simplifyVarsName': function (v) {
 		var r =	v.replaceAll
 		  (/([a-z][^\,\[\]\{\}\+\&\\|\\^\\~\\)\\(]*)/ig, '$&#');
 		  
 		var m = r.match(/([a-z][^#]+)/ig);
+		
+		var m = dg.lk.unique(m);
 		
 		let stchar = ('a').charCodeAt(0);
 		

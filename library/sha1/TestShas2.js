@@ -65,11 +65,14 @@ function testW() {
 //self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
 var blob = null;
 var workerNamed = [];
-function customWorker(name, fwork, hdl, ehdl) {
+function customWorker(name, fwork, hdl, ehdl, d) {
   if(name in workerNamed) {
     return workerNamed[name];
   }
   
+  if (d) {
+    console.log("onmessage =" + fwork.toString());
+  }
   var blobWork = new Blob(["onmessage =" + fwork.toString()], { type: "text/javascript" });
      
   workerNamed[name] = new Worker(URL.createObjectURL(blobWork));
@@ -82,6 +85,14 @@ function customWorker(name, fwork, hdl, ehdl) {
   
   return workerNamed[name];
   //return await new Promise(resolve => worker.onmessage = e => resolve(e.data));
+}
+
+function terminateWorker(name) {
+  if(!(name in workerNamed)) {
+    return false;
+  }
+  workerNamed[name].terminate();
+  delete workerNamed[name];
 }
 
 async function tryWorkerHash(n) {
@@ -1273,9 +1284,14 @@ var progress = (function () {
 				delete handler[key];
 			}
 			
-			hdl.update = function (parentkey = 0, key, current, max, desc = '') {
-				//console.log('update::' + parentkey, key, current, max, desc);
+			hdl.update = function (parentkey = 0, key, current, max, desc = '', d) {
+				if(d) {
+					console.log('update::' + parentkey, key, current, max, desc);
+				}
 				if (!parentkey) {
+					if(d) {
+						console.log('pre-proc::', proc);
+					}
 					proc[key] = {
 						'current': current,
 						'max': max,
@@ -1288,21 +1304,16 @@ var progress = (function () {
 							delete proc[v];
 						}
 					}
-					//console.log('proc::',proc);
+					if(d) {
+						console.log('proc::',proc);
+					}
 				} else {
-/*					if (key == '*') {
-						for(var v in proc) {
-							if (v.indexOf(parentkey + '.') === 0 ) {
-								proc[v] = {
-									'current': current,
-									'max': max,
-									'ratio': Math.round(proc[parentkey].ratio * 1/max)
-								}
-							}
-						}
-					} else {*/
+					if(d) {
+						console.log('pre-proc::', proc);
+					}
+					
 					if(!proc[parentkey]) {
-					  throw ({'z':arguments,'proc': proc,'parentkey': parentkey});
+					  throw ({'z-no-parentkey':arguments,'proc': proc,'parentkey': parentkey});
 					}
 					proc[key] = {
 						'current': current,
@@ -1311,9 +1322,15 @@ var progress = (function () {
 						'parent': parentkey
 					}
 					
+					for(var v in proc) {
+						if (proc[v].parent == key ) {
+							delete proc[v];
+						}
+					}
 					
-
-					//console.log('proc::',proc);
+					if(d) {
+						console.log('proc::',proc);
+					}
 					//}
 				}
 				//console.log(proc);
@@ -1324,7 +1341,9 @@ var progress = (function () {
 					//console.log('d:'+(proc[k].current*proc[k].ratio)/rootRatio);
 					procCalc += Math.floor(((proc[k].current*proc[k].ratio)/rootRatio)*100);
 				}
-				console.log((desc + ' ' + current + '/' + max).padStart(30,'\xa0') + ' ' + procCalc + '%');
+				if(d) {
+					console.log((desc + ' ' + current + '/' + max).padStart(30,'\xa0') + ' ' + procCalc + '%');
+				}
 				$('.'+classId+ ' .progress-txt').text((desc + ' ' + current + '/' + max).padStart(30,'\xa0') + ' ' + procCalc + '%' );
 				//eltxt.text(desc + ' ' + procCalc + '%');
 				
@@ -1368,7 +1387,7 @@ function initActEvents() {
 	
 	t.show();
 	
-	var work = function (sumResult, sKey = 0) {
+	var work = function (sumResult) {
 		t.show();
 
 		var csum = sumKey;
@@ -1376,6 +1395,8 @@ function initActEvents() {
 		dg.lk.delSum(csum);
 		dg.lk.addSum(csum, sumResult[0]);
 		dg.lk.add(csum, sumResult[0]);
+		
+		var sKey = t.getKey('cleanup');
 		
 	    t.update(0, sKey, 1, 4, 'cl-addSum');
 		unloadSumValuesOf();
@@ -1398,9 +1419,13 @@ function initActEvents() {
 	 };
 	 
 	 var work1 = customWorker('sumchw', function(data) {
+function rand(min,max) {
+  return Math.floor(Math.random()*(max-min))+min;
+}
 	   var data = data.data;
+	   
 	   self.importScripts(
-	     data.url+'/library/sha1/DbgSha256.js'
+	     data.url+'/library/sha1/DbgSha256.js?r='+rand(1,1000)
 	   );
 	   
 	   
@@ -1452,6 +1477,7 @@ try{
 	     if(data.sumRes) {
 		   t.hide();
 	       work(data.sumRes);
+	       terminateWorker('repls2sw');
 	     }
 	   } else {
 	 
@@ -1465,12 +1491,15 @@ try{
 	     }
 	     
 	   }
-	 }, function (event) {
+	 }, function (e) {
 	   console.log('errror');
 	   t.hide();
+	   terminateWorker('repls2sw');
+	   throw e;
 	 });
 	 
 	 work1.postMessage(data);
+	 return;
  });
    
    $('#act-repl').unbind('click').click(function () {
@@ -1483,12 +1512,12 @@ try{
        return false;
      }
      t.show();
-     var work = function(replRes, actSKey) {
-       //replSumToSum();
-       dg.lk.delSum(actSKey);
-       
-       for (var i in r) {
-         dg.lk.addSum(actSKey, r[i]);
+     var work = function(replRes) {
+       for (var i in replRes) {
+	     dg.lk.delSum(i);
+		 for(var j in replRes[i]) {
+			dg.lk.addSum(i, replRes[i][j]);
+		 }
        }
        
        refreshActiveSum();
@@ -1496,23 +1525,24 @@ try{
      
      var vars = dg.lk.uses.out[lastActSumKey];
   
-     var stacks=[];
-     for(var k in vars) {
-       stacks[k] = dg.lk.getSum(vars[k]);
-     }
-     var needle = dg.lk.getSum(lastActSumKey);
-     
      var data = {
-	     'url': window.location.origin,
-  	   'stacks': stacks,
-  	   'neddle': needle,
+	   'url': window.location.origin,
+  	   'stacks': [],
+  	   'needle': dg.lk.getSum(lastActSumKey),
   	   'actSKey': lastActSumKey
   	 };
-  	 
+	 
+     for(var k in vars) {
+       data.stacks[vars[k]] = dg.lk.getSum(vars[k]);
+     }
+
   var work1 = customWorker('repls2sw', function(data) {
 	     var data = data.data;
+function rand(min,max) {
+  return Math.floor(Math.random()*(max-min))+min;
+}
 	     self.importScripts(
-	       data.url+'/library/sha1/DbgSha256.js'
+	       data.url+'/library/sha1/DbgSha256.js?r='+rand(1,1000)
 	     );
 	   
 	   
@@ -1534,57 +1564,75 @@ try{
 	       data.update = [parent,key,current, max, desc];
 	       data.hide = 0;
 	       self.postMessage(data);
-	   },'alert': function (msg,isStop =0) {
+	   },
+	   
+		'alert': function (msg,isStop =0) {
 	       delete data.update;
 	       data.hide = isStop;
 	       data.alert = msg;
 	       self.postMessage(data);
 	     },
+		 
 	     'getKey': function (name, key='') {
 	         return key+hashCode(name + Date.now())
 	     }
 	   }
-var sKey = pt.getKey('replw');
-pt.update(0,sKey, 0, data.stacks.length, 'pre-work');
-try{
-    //dg.lk.delSum('Csss');
-	//dg.sh.sumch('Csss', data.sumss, 1, 0, partial);
-	for(var k in data.stacks) {
-	  var ssKey= pt.getKey('rpstk'+k);
-	  var C = dg.lk.genCvalAll(data.needle, 32);
-	  var rr = dg.lk.toObj(C, data.needle[0]); //always 0
-	  var r = [];
-	  
-	  //var sum = dg.lk.getSum(csum);
-	  var sum = data.stacks[k];
-	  
-	  pt.update(sKey, ssKey, 0, sum.length, 'stack'+k + ' sum')
-	  for (var i in sum) {
-	    r[i] = dg.sh.repl(sum[i], rr, 1);
-	    p.update(sKey, ssKey,i, sum.length,'stack'+k+' sum '+i)
-	  }
-	  
-	  data.replRes= r;
-	  pt.update(0, sKey,k, data.stacks.length,'stack'+ k)
+	
+	var ssKey;
+	var sKey;
+	try{
+		var len = Object.keys(data.stacks).length;
+		
+		sKey = pt.getKey('replw');
+		
+		
+	    var C = dg.lk.genCvalAll(data.actSKey, 32);
+	    var rr = dg.lk.toObj(C, data.needle[0]); //always 0
+	    var r;
+		
+		pt.update(0,sKey, 0, len, 'repl-pre');
+		
+		data.replRes = {};
+  
+		var ii = 0;
+		for(var k in data.stacks) {
+		  pt.update(0, sKey, ii, len, 'repl '+ k)
+		  ssKey= pt.getKey('rpstk' + k);
+		  r = []
+		  
+		  var sum = data.stacks[k];
+		  
+		  pt.update(sKey, ssKey, 0, sum.length - 1, 'repl ' + k + ' sum -')
+		  for (var i in sum) {
+			r[i] = dg.sh.repl(sum[i], rr, 1);
+			pt.update(sKey, ssKey, i, sum.length - 1,'repl ' + k +' sum '+i)
+		  }
+		  
+		  data.replRes[k]= r;
+		  ii++;
+		}
+		pt.update(0, sKey, len, len, 'repl '+ k+ ' sum done');
+		delete data.update;
+	} catch (e) {
+	  data.error=1;
+	  throw e;
 	}
-	delete data.update;
-} catch (e) {
-  data.error=e;
-}
      data.hide = 1;
-	   self.postMessage(data);
-	 }, function (event) {
+	 self.postMessage(data);
+	 return;
+}, function (event) {
 	   var data = event.data;
+	   //console.log(data);
 	   if(data.hide) {
 	     if(data.alert) {
 	       console.log('nice alert:'+data.alert);
 	     }
 	     if(data.replRes) {
 		     t.hide();
-	       work(data.replRes, data.actSKey);
+	       work(data.replRes); 
+		   terminateWorker('repls2sw');
 	     }
 	   } else {
-	 
 	     if(data.update) {
 	      t.update(data.update[0],
 	        data.update[1],
@@ -1593,13 +1641,16 @@ try{
 	        'Loading '+ data.update[4]
 	      )
 	     }
-	     
 	   }
 	 }, function (event) {
 	   console.log('errror');
+	   console.log(event.data);
 	   t.hide();
+	   terminateWorker('repls2sw');
+	   throw event;
 	 });
 	 
+	 //console.log(data);
 	 work1.postMessage(data);
 	   
      
