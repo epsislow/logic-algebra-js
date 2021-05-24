@@ -1005,13 +1005,18 @@ dg = {
 	'noOfVarsB': function(x) {
 	  return this.hasVarB(x,1);
 	},
-	'translateToBoolAlgSimp': function (v) {
+	'transBoolAlgSimp': function (v)
+	{
+	  return v.replaceAll('|','+')
+	   .replaceAll('&','')
+	   .replaceAll(/~([a-z])/ig,'\\overline{$1}');
+	
 		//\overline{ }
 		//or is +
 		// (a)AND(b) is (a)(b)
 		//v.replace(
 		//https://www.boolean-algebra.com/
-	}
+	},
 	'simplifyVarsName': function (v) {
 		var r =	v.replaceAll
 		  (/([a-z][^\,\[\]\{\}\+\&\\|\\^\\~\\)\\(]*)/ig, '$&#');
