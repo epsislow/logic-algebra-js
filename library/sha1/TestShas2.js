@@ -1479,8 +1479,130 @@ try{
    })
    
    $('#act-repl-sum').unbind('click').click(function () {
-     replSumToSum();
-     refreshActiveSum();
+     if (!lastActSumKey) {
+       return false;
+     }
+     t.show();
+     var work = function(replRes, actSKey) {
+       //replSumToSum();
+       dg.lk.delSum(actSKey);
+       
+       for (var i in r) {
+         dg.lk.addSum(actSKey, r[i]);
+       }
+       
+       refreshActiveSum();
+     }
+     
+     var vars = dg.lk.uses.out[lastActSumKey];
+  
+     var stacks=[];
+     for(var k in vars) {
+       stacks[k] = dg.lk.getSum(vars[k]);
+     }
+     var needle = dg.lk.getSum(lastActSumKey);
+     
+     var data = {
+	     'url': window.location.origin,
+  	   'stacks': stacks,
+  	   'neddle': needle,
+  	   'actSKey': lastActSumKey
+  	 };
+  	 
+  var work1 = customWorker('repls2sw', function(data) {
+	     var data = data.data;
+	     self.importScripts(
+	       data.url+'/library/sha1/DbgSha256.js'
+	     );
+	   
+	   
+   const hashCode = function (str, seed = 0, b=32) {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+	
+	return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(b);
+  }
+
+	var pt = { 
+	     'update': function (parent, key, current, max, desc) {
+	       data.update = [parent,key,current, max, desc];
+	       data.hide = 0;
+	       self.postMessage(data);
+	   },'alert': function (msg,isStop =0) {
+	       delete data.update;
+	       data.hide = isStop;
+	       data.alert = msg;
+	       self.postMessage(data);
+	     },
+	     'getKey': function (name, key='') {
+	         return key+hashCode(name + Date.now())
+	     }
+	   }
+var sKey = pt.getKey('replw');
+pt.update(0,sKey, 0, data.stacks.length, 'pre-work');
+try{
+    //dg.lk.delSum('Csss');
+	//dg.sh.sumch('Csss', data.sumss, 1, 0, partial);
+	for(var k in data.stacks) {
+	  var ssKey= pt.getKey('rpstk'+k);
+	  var C = dg.lk.genCvalAll(data.needle, 32);
+	  var rr = dg.lk.toObj(C, data.needle[0]); //always 0
+	  var r = [];
+	  
+	  //var sum = dg.lk.getSum(csum);
+	  var sum = data.stacks[k];
+	  
+	  pt.update(sKey, ssKey, 0, sum.length, 'stack'+k + ' sum')
+	  for (var i in sum) {
+	    r[i] = dg.sh.repl(sum[i], rr, 1);
+	    p.update(sKey, ssKey,i, sum.length,'stack'+k+' sum '+i)
+	  }
+	  
+	  data.replRes= r;
+	  pt.update(0, sKey,k, data.stacks.length,'stack'+ k)
+	}
+	delete data.update;
+} catch (e) {
+  data.error=e;
+}
+     data.hide = 1;
+	   self.postMessage(data);
+	 }, function (event) {
+	   var data = event.data;
+	   if(data.hide) {
+	     if(data.alert) {
+	       console.log('nice alert:'+data.alert);
+	     }
+	     if(data.replRes) {
+		     t.hide();
+	       work(data.replRes, data.actSKey);
+	     }
+	   } else {
+	 
+	     if(data.update) {
+	      t.update(data.update[0],
+	        data.update[1],
+	        data.update[2],
+	        data.update[3],
+	        'Loading '+ data.update[4]
+	      )
+	     }
+	     
+	   }
+	 }, function (event) {
+	   console.log('errror');
+	   t.hide();
+	 });
+	 
+	 work1.postMessage(data);
+	   
+     
    });
    
    $('#act-refresh').unbind('click').click(function () {
@@ -1549,12 +1671,12 @@ function replSumToSum() {
   var vars = dg.lk.uses.out[lastActSumKey];
   
   for(var k in vars) {
-	  setTimeout((function (varsum) {
-		  return function() {
-			replToSum(varsum); 
-			console.log(varsum);
-		  }
-	  })(vars[k]), 10);
+	  //setTimeout((function (varsum) {
+		  //return function() {
+			replToSum(vars[k]); 
+			console.log(vars[k]);
+		 // }
+	  //})(vars[k]), 10);
   }
   refreshActiveSum();
 }
