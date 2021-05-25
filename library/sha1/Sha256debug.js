@@ -133,8 +133,8 @@ class Sha256debug {
 					} else if(t==12) {
 					  var nouncebitsW12a = dg.lk.chgSubBs('w'+ t,4, dg.arCn('n2.',4,4));
 					  dg.lk.add('n2', nouncebitsW12a);
-					  var n3 = dg.lk.chgSubBs('w'+ t,12, dg.arCn('n3.',12,4));
-					  dg.lk.add('n3', n3);
+//					  var n3 = dg.lk.chgSubBs('w'+ t,12, dg.arCn('n3.',12,4));
+//					  dg.lk.add('n3', n3);
 					} else if(t==15) {
 			//		  var lengthBitsW15 = dg.lk.chgSubBs('w'+ t,23, dg.arCn('w'+t+'.',23,6));
 		//			  dg.lk.add('lbW15', lengthBitsW15);
@@ -148,7 +148,7 @@ class Sha256debug {
 		//		dg.add('nbW11b='+dg.lk.getWs('nbW11b'));
 		//		dg.add('nbW11c='+dg.lk.getWs('nbW11c'));
 				dg.add('n2='+dg.lk.getWs('n2'));
-				dg.add('n3='+dg.lk.getWs('n3'));
+//				dg.add('n3='+dg.lk.getWs('n3'));
 		//		dg.add('lbW15='+dg.lk.getWs('lbW15'));
 			}
 			//dg.ts = [11,12];

@@ -1414,16 +1414,12 @@ var progress = (function () {
 
 var t = progress.create('#sum', 'sum-test');
 
-function initActEvents() {
-    $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-arrow-down', 'fa-arrow-circle-down'], 'see'));
 
-    $('#tgg-2-sum').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-asterix', 'fa-asterix'], 'sum'));
-
-    $('#act-sum').unbind('click').click(function () {
+var tryWorkSumThisKey = function (sumKey) {
         if (!sumKey) {
             return false;
         }
-
+		
         t.show();
 
         var work = function (sumResult) {
@@ -1517,7 +1513,7 @@ function initActEvents() {
                 if (data.sumRes) {
                     t.hide();
                     work(data.sumRes);
-                    terminateWorker('repls2sw');
+                    terminateWorker('sumchw');
                 }
             } else {
 
@@ -1534,20 +1530,16 @@ function initActEvents() {
         }, function (e) {
             console.log('errror');
             t.hide();
-            terminateWorker('repls2sw');
+            terminateWorker('sumchw');
             throw e;
         });
 
         work1.postMessage(data);
         return;
-    });
+    };
 
-    $('#act-repl').unbind('click').click(function () {
-        replToSum(sumKey);
-        refreshActiveSum();
-    })
 
-    $('#act-repl-sum').unbind('click').click(function () {
+var tryWorkReplSumToSum = function (lastActSumKey) {
         if (!lastActSumKey) {
             return false;
         }
@@ -1696,8 +1688,27 @@ function initActEvents() {
         work1.postMessage(data);
 
 
-    });
+    };
 
+
+function initActEvents() {
+    $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-arrow-down', 'fa-arrow-circle-down'], 'see'));
+
+    $('#tgg-2-sum').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-asterix', 'fa-asterix'], 'sum'));
+
+    $('#act-sum').unbind('click').click(function () {
+		tryWorkSumThisKey(sumKey);
+	});
+	
+    $('#act-repl').unbind('click').click(function () {
+        replToSum(sumKey);
+        refreshActiveSum();
+    })
+
+    $('#act-repl-sum').unbind('click').click(function () {
+		tryWorkReplSumToSum(lastActSumKey);
+	});
+	
     $('#act-refresh').unbind('click').click(function () {
         refreshMem();
     });
