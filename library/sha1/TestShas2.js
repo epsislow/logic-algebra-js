@@ -1646,7 +1646,7 @@ function initActEvents() {
 
                     pt.update(sKey, ssKey, 0, sum.length - 1, 'repl ' + k + ' sum -')
                     for (var i in sum) {
-                        r[i] = dg.sh.repl(sum[i], rr, 1);
+                        r[i] = dg.sh.repl(sum[i], rr, 0);
                         pt.update(sKey, ssKey, i, sum.length - 1, 'repl ' + k + ' sum ' + i)
                     }
 

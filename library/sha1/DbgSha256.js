@@ -677,7 +677,7 @@ var dg = {
             }
             return false;
         },
-        'repl': function (x, replacers, wExec = 0) {
+        'repl': function (x, replacers, short = 0) {
             var vs;
             if (Array.isArray(x)) {
                 vs = x;
@@ -688,7 +688,7 @@ var dg = {
 
             for (var i in vs) {
                 if (this.hasVOneOf(vs[i], replacers)) {
-                    if (wExec) {
+                    if (short) {
                         r[i] = this.shortB(this.replB(vs[i], replacers));
                     } else {
                         r[i] = this.replB(vs[i], replacers);
@@ -1202,6 +1202,7 @@ var dg = {
                         console.log('s' + ik, vs[ik]);
                     }
                     sumResult = this.sum(sumResult, vs[ik], 0, 0, s, sKey);
+					
                     if (doit & 1) {
                         sumResult = this.short(sumResult, s, sKey);
                     }
