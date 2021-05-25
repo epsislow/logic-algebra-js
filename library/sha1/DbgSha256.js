@@ -694,12 +694,12 @@ dg = {
 	          r[i] = this.shortB(r[i]);
 	        }
 	     }
-	    } else {
+	   } else {
 	      r[i] = vs[i];
-	    }
-		}
+	   }
+	  }
 		
-		return r;
+	  return r;
 	},
 	'replB': function (x, replacers, d =0) {
 		var r = x + '';

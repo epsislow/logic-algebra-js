@@ -1418,7 +1418,7 @@ function initActEvents() {
 		
 		dg.lk.delSum(csum);
 		dg.lk.addSum(csum, sumResult[0]);
-		dg.lk.add(csum, sumResult[0]);
+		//dg.lk.add(csum, sumResult[0]);
 		
 		var sKey = t.getKey('cleanup');
 		
