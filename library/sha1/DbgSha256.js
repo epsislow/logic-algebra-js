@@ -22,6 +22,7 @@ var dg = {
         'm': {},
         'sums': {},
         'uses': {'in': {}, 'out': {}},
+		'usez': {},
         'forms': {},
         'reset': function () {
             this.m = {};
@@ -60,6 +61,18 @@ var dg = {
             }
             return this;
         },
+		'addFlagAtUsez': function (name, flag = 0) {
+			if (!(name in this.usez)) {
+				this.usez[name] = 0;
+			}
+			this.usez[name] |= flag;
+		},
+		'hasFlagAtUsez': function (name, flagMask) {
+			if (!(name in this.usez)) {
+				return false;
+			}
+			return (this.usez[name] & flagMask);
+		},
         'createArb4Uses': function () {
             var map = {}, node, roots = [], i;
 

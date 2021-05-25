@@ -1514,6 +1514,7 @@ var tryWorkSumThisKey = function (sumKey) {
                     t.hide();
                     work(data.sumRes);
                     terminateWorker('sumchw');
+					dg.lk.addFlagAtUsez(sumKey,1);
                 }
             } else {
 
@@ -1665,6 +1666,7 @@ var tryWorkReplSumToSum = function (lastActSumKey) {
                     t.hide();
                     work(data.replRes);
                     terminateWorker('repls2sw');
+					dg.lk.addFlagAtUsez(sumKey,2);
                 }
             } else {
                 if (data.update) {
@@ -1690,6 +1692,28 @@ var tryWorkReplSumToSum = function (lastActSumKey) {
 
     };
 
+
+function tryWorkAllDepth(sumKey) {
+	var vars = dg.lk.uses.in[sumKey];
+	var done = {};
+	
+	for(var k in vars) {
+		if ((!(vars[k] in done))  && (vars[k] in dg.lk.uses.in)) {
+			tryWorkAllDepth(vars[k]);
+			done[vars[k]] = 1;
+		} 
+		if (vars[k] in dg.lk.sums) {
+			if( !dg.lk.hasFlagAtUsez(vars[k], 1)) {
+				tryWorkSumThisKey(vars[k])
+			}
+			if( !dg.lk.hasFlagAtUsez(vars[k], 2)) {
+				tryWorkReplSumToSum(vars[k])
+			}
+		}
+		
+		done[vars[k]] = 1;
+	}
+}
 
 function initActEvents() {
     $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-arrow-down', 'fa-arrow-circle-down'], 'see'));
