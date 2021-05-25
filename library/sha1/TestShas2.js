@@ -1773,7 +1773,7 @@ function refreshMem() {
 }
 
 $(document).ready(function () {
-   cacheLoadMem();
+  cacheLoadMem();
   loadFromMem();
   initMemEvents();
   initSumEvents();
