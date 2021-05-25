@@ -1715,11 +1715,13 @@ function createTaskList() {
 		return tasks.length;
 	}
 	
-	pub.nextTask = function () {
+	pub.nextTask = function (d = 0) {
 		var task = tasks.shift();
 		hdl = task.hdl;
-		console.log('pop requested for '+task.name+'!');
-		console.log(tasks);
+		if (d) {
+			console.log('pop requested for '+task.name+'!');
+			console.log(tasks);
+		}
 		if (typeof hdl =='undefined') {
 			throw 'No tasks left in the taskList!';
 		}
@@ -1730,7 +1732,7 @@ function createTaskList() {
 }
 
 var taskListG;
-function tryWorkAllDepth(sumKey, taskList = 0) {
+function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 	var vars = dg.lk.uses.in[sumKey];
 	var done = {}, root = 0;
 	if (!taskList) {
@@ -1748,13 +1750,13 @@ function tryWorkAllDepth(sumKey, taskList = 0) {
 			if( !dg.lk.hasFlagAtUsez(vars[k], 1)) {
 				taskList.addTask('sum ' + vars[k], function (sumKey) {
 					console.log(sumKey);
-					tryWorkSumThisKey(vars[k], taskList.nextTask())
+					tryWorkSumThisKey(vars[k], taskList.nextTask(d))
 				});
 			}
 			if( !dg.lk.hasFlagAtUsez(vars[k], 2)) {
 				taskList.addTask('repl ' + vars[k], function (sumKey) {
 					console.log(sumKey);
-					tryWorkReplSumToSum(vars[k], taskList.nextTask())
+					tryWorkReplSumToSum(vars[k], taskList.nextTask(d))
 				});
 			}
 		}
@@ -1762,18 +1764,21 @@ function tryWorkAllDepth(sumKey, taskList = 0) {
 	}
 	
 	if (root) {
+		console.log(sumKey);
 		if( !dg.lk.hasFlagAtUsez(sumKey, 1)) {
-			taskList.addTask('sum ' + sumKey, function (sumKey) {
-				console.log(sumKey);
-				tryWorkSumThisKey(vars[k], taskList.nextTask())
+			taskList.addTask('sum ' + sumKey, function (sumKeya) {
+				console.log(sumKeya);
+				tryWorkSumThisKey(sumKey, taskList.nextTask(d))
 			});
 		}
 		
 		taskList.addTask('all done ', function (sumKey) {
-			console.log('all tasks done');
+			console.log('all tasks done for '+ sumKey);
 		});
 		
+
 		console.log('count tasks:'+ taskList.count());
+		
 		var first = taskList.nextTask();
 		first('first');
 	}
