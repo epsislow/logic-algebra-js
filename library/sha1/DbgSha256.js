@@ -1,4 +1,4 @@
-dg = {
+var dg = {
     'add': function (text) {
         Sha256.debug = text + "\n" + Sha256.debug;
     },
@@ -1020,11 +1020,24 @@ dg = {
         'noOfVarsB': function (x) {
             return this.hasVarB(x, 1);
         },
+        'transBoolAlgSimp': function (v) {
+            return v.replaceAll('|', '+')
+                .replaceAll('&', '')
+                .replaceAll(/~([a-z])/ig, '\\overline{$1}');
+
+            //\overline{ }
+            //or is +
+            // (a)AND(b) is (a)(b)
+            //v.replace(
+            //https://www.boolean-algebra.com/
+        },
         'simplifyVarsName': function (v) {
             var r = v.replaceAll
             (/([a-z][^\,\[\]\{\}\+\&\\|\\^\\~\\)\\(]*)/ig, '$&#');
 
             var m = r.match(/([a-z][^#]+)/ig);
+
+            var m = dg.lk.unique(m);
 
             let stchar = ('a').charCodeAt(0);
 
@@ -1167,8 +1180,9 @@ dg = {
 
             var ckey = this.parent().lk.getNextCavl();
 
-
-            s.update(parentSKey, sKey, 0, ks.length, 'each-sum-proc');
+            if (s) {
+				s.update(parentSKey, sKey, 0, ks.length, 'each-sum-proc');
+			}
             for (var ik in ks) {
                 i++;
                 if (i == 1) {
@@ -1208,17 +1222,26 @@ dg = {
                 if (debug) {
                     console.log('Z', sumResult);
                 }
-                sKeyC = s.getKey('ckey+vals');
-                s.update(parentSKey, sKeyC, 1, 4, 'ckey+vals');
+				
+				if (s) {
+					sKeyC = s.getKey('ckey+vals');
+					s.update(parentSKey, sKeyC, 1, 4, 'ckey+vals');
+				}
                 this.parent().lk.addSum(ckey, sumResult);
                 //this.sumForm(ckey);
-                s.update(parentSKey, sKeyC, 2, 4, 'ckey+vals');
+				if (s) {
+					s.update(parentSKey, sKeyC, 2, 4, 'ckey+vals');
+				}
 
                 var cVal = this.parent().lk.genCvalAll(ckey, sumResult.length);
-                s.update(parentSKey, sKeyC, 3, 4, 'ckey+vals');
+				if (s) {
+					s.update(parentSKey, sKeyC, 3, 4, 'ckey+vals');
+				}
 
                 dg.lk.add(sumName, cVal);
-                s.update(parentSKey, sKeyC, 4, 4, 'ckey+vals');
+				if (s) {
+					s.update(parentSKey, sKeyC, 4, 4, 'ckey+vals');
+				}
 
             }
 
@@ -1243,6 +1266,7 @@ dg = {
             var s = sendUpdatesCallback;
             if (s) {
                 var sKey = s.getKey('in-sum');
+				s.update(parentSKey, sKey, 0, len, 'in-sum');
             }
 
             s.update(parentSKey, sKey, 0, len, 'in-sum');
@@ -1712,3 +1736,40 @@ dg = {
         }
     }
 };
+
+if (typeof window != 'undefined') {
+	window.dg = dg;
+}
+/*
+dg.lk.addWs('a', dg.dta(51));
+dg.lk.addWs('b', dg.dta(87));
+dg.lk.addWs('c', dg.dta(3));
+
+var c= dg.lk.chgSubBs('a',2,['a64.30','a64.31','a64.32']);
+var a= dg.lk.get('a');
+var b= dg.lk.get('b');
+dg.lk.chgSubBs('b',3,['b64.31','b64.32']);
+console.log('a= '+a);
+//console.log('b= '+b);
+//console.log('a^b= '+ dg.sh.xor('a','b'));
+//console.log('a&b= '+ dg.sh.and('a','b'));
+//console.log('p1 = '+ dg.sh.p0('a'));
+//console.log('maj= '+ dg.sh.maj('a','b','c'));
+//console.log('cho= '+ dg.sh.cho('a','b','c'));
+console.log('sum= '+ dg.sh.sum('a','b'));
+//console.log('a>2= '+ dg.sh.ll('a',2));
+//console.log('exB= '+ dg.sh.execr('~(((~a&~a)^(b|(1|a))))'));
+//console.log('rpl= '+ dg.sh.repl(dg.sh.sum('a','b'),{'a64.31':0}));
+//console.log('exc= '+ dg.sh.exec(dg.sh.repl(dg.sh.sum('a','b'),{'a64.31':0})));
+//var d = '(a0&((0&b1)|((0^b1)&(a2&b2))))';
+//console.log('d=     '+ d);
+//console.log('ex(d)= '+ dg.sh.execc(d));
+dg.sh.sumch('sss', dg.lk.getSum('C4'), 1)
+dg.sh.sum('aba'.split(''),'111'.split(''),1,31,31)
+*/
+
+
+//dg.lk.chgSubBs('a',2,c);
+
+
+//console.log('a '+a.join('')) ;
