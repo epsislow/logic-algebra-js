@@ -494,16 +494,24 @@ function delCacheKey($key) {
   return localStorage.removeItem($key);
 }
 function cacheSaveMem() {
-  setCacheKey('dg.lks', [dg.lk.m, dg.lk.sums, dg.lk.uses, dg.lk.forms]);
+  setCacheKey('dg.lkm', JSON.stringify(dg.lk.m));
+  setCacheKey('dg.lks', JSON.stringify(dg.lk.sums));
+  setCacheKey('dg.lku', JSON.stringify(dg.lk.uses));
+  //dg.lk.forms]);
 }
 function cacheLoadMem() {
-  var lastLks=getCacheKey('dg.lks');
+ var lastLks=JSON.parse(getCacheKey('dg.lks'));
   if(lastLks) {
-    [dg.lk.m, dg.lk.sums, dg.lk.forms] = lastLks;
+    //console.log(lastLks);
+   dg.lk.m = JSON.parse(getCacheKey('dg.lkm'));
+   dg.lk.sums = lastLks;
+    dg.lk.uses = JSON.parse(getCacheKey('dg.lku'));
   }
 }
 function cacheResetMem() {
+  delCacheKey('dg.lkm');
   delCacheKey('dg.lks');
+  delCacheKey('dg.lku');
 }
 function saveCache() {
 	setCacheKey('lastMethodCheck', methodCheck);
@@ -1765,7 +1773,7 @@ function refreshMem() {
 }
 
 $(document).ready(function () {
-  cacheLoadMem();
+   cacheLoadMem();
   loadFromMem();
   initMemEvents();
   initSumEvents();
