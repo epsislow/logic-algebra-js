@@ -490,6 +490,21 @@ function setCacheKey($key, $val) {
 	return localStorage.setItem($key, $val);
 }
 
+function delCacheKey($key) {
+  return localStorage.removeItem($key);
+}
+function cacheSaveMem() {
+  setCacheKey('dg.lks', [dg.lk.m, dg.lk.sums, dg.lk.uses, dg.lk.forms]);
+}
+function cacheLoadMem() {
+  var lastLks=getCacheKey('dg.lks');
+  if(lastLks) {
+    [dg.lk.m, dg.lk.sums, dg.lk.forms] = lastLks;
+  }
+}
+function cacheResetMem() {
+  delCacheKey('dg.lks');
+}
 function saveCache() {
 	setCacheKey('lastMethodCheck', methodCheck);
 	setCacheKey('lastNounce'+ methodCheck, getNounce());
@@ -1661,6 +1676,16 @@ function rand(min,max) {
      refreshMem();
    });
    
+   $('#act-save-mem').unbind('click').click(function() {
+     cacheSaveMem()
+   })
+   
+   $('#act-reset-mem').unbind('click').click(function() {
+     cacheResetMem()
+   })
+   
+   
+   
    $('#act-show-arb').unbind('click').click(function() {
      $('#mem').addClass('hide');
 	 $('#tree').empty();
@@ -1740,6 +1765,7 @@ function refreshMem() {
 }
 
 $(document).ready(function () {
+  cacheLoadMem();
   loadFromMem();
   initMemEvents();
   initSumEvents();
