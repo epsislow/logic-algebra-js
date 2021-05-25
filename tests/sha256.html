@@ -3,390 +3,410 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>TestShas</title>
     <!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous"-->
-		  
-     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
 
-      
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
-      
-      <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
-      
-      <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
-    
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+          integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" rel="stylesheet">
+
+
+    <link href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" rel="stylesheet"/>
+
+    <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
+
+    <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
+
     <style>
-      
-      .hide {
-        display: none !important;
-      }
-      .bg-black {
-        background-color: #000;
-      }
-	  
-	  #arb { 
-		position:relative;
-	  }
-      
-      #mem .table .title {
-        text-align: center;
-        font-size:16px;
-      }
-      
-      #mem .table {
-        text-align: center;
-        font-size: 16px;
-      }
-      
-      #mem {
-        height: 500px;
-        overflow-y: auto;
-        margin-bottom: 10px;
-		position:relative;
-      }
-      #mem td {
-        padding-left:0;
-        padding-right:0;
-      }
-      
-      #mem .table thead tr.content-even
-        /*:nth-child(even)*/
-      {
-        background-color: #30303a;
-      }
-      
-      #mem .table tr.active {
-        background-color: #10101a;
-      }
-      
-      #mem .table td.active {
-        background-color: #446;
-      }
-      
-      #mem .sumKey, #mem .sum-title {
-        color: #aaf;
-      }
-      
-      #mem .sumKey i{
-        width: 5px;
-      }
-      
-      #mem .one, #sum-sel .one {
-        color: #9f9;
-      }
-      
-      #mem .zero, #sum-sel .zero {
-        color: #f99;
-      }
-      
-      #mem .even {
-        background-color: #363636;
-      }
-      
-      #mem .odd {
-        background-color: #303030;
-      }
-      
-      #mem .red {
-        color: #f77;
-      }
-      
-      #mem .active {
-        background-color: #557;
-      }
-      
-      #mem .active-red {
-        background-color: #855;
-      }
-      
-      #sum-sel .sumKey {
-        text-align: left;
-      }
-      
-      #sum {
-        width: 100%;
-        max-height: 500px;
-        overflow-y: auto;
-		position:relative;
-      }
-      
-      #sum-sel .inline-sum, #sum-sel .last-inline-sum {
-        color: #aaf;
-      }
-      
-      #sum-sel .inline-mem {
-        color: #ffa;
-      }
-      
-	  .overflow-hidden {
-		overflow:hidden!important;
-	  }
-	  
- .tree li {
-    list-style-type:none;
-    margin:0;
-    padding:10px 2px 0 2px;
-    position:relative;
-    font-size:14px;
-    line-height: 15px;
-}
 
-.tree i{
-	width: 10px;
-}
+        .hide {
+            display: none !important;
+        }
 
-.tree li::before, 
-.tree li::after {
-    content:'';
-    left:-20px;
-    position:absolute;
-    right:auto
-}
-.tree li::before {
-    border-left:2px solid #333;
-    bottom:50px;
-    height:100%;
-    top:0;
-    width:1px
-}
-.tree li::after {
-    border-top:2px solid #333;
-    height:10px;
-    top:20px;
-    width:22px
-}
-.tree li span {
-    -moz-border-radius:5px;
-    -webkit-border-radius:5px;
-    border:2px solid #445;
-    border-radius:3px;
-    display:inline-block;
-    padding:4px 2px;
-    text-decoration:none;
-    cursor:pointer;
-    background-color: #445;
-    white-space: nowrap;
-    margin: 0 200px 0 0;
-}
-.tree>ul>li::before,
-.tree>ul>li::after {
-    border:0;
-}
+        .bg-black {
+            background-color: #000;
+        }
 
-.tree li:last-child::before {
-    height:20px
-}
-.tree li span:hover {
-    background: #9ab;
-    border:2px solid #94a0b4;
-}
+        #arb {
+            position: relative;
+        }
 
-/*.tree li:hover::after {
-    border-top:2px solid #9ab;
-}
+        #mem .table .title {
+            text-align: center;
+            font-size: 16px;
+        }
 
-.tree li.a-sum-open::after {
-    border-top:2px solid #9ab;
-}
+        #mem .table {
+            text-align: center;
+            font-size: 16px;
+        }
 
-.tree li.a-sum-open::before {
-    border-top:2px solid #9ab;
-}*/
+        #mem {
+            height: 500px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            position: relative;
+        }
 
+        #mem td {
+            padding-left: 0;
+            padding-right: 0;
+        }
 
-[aria-expanded="false"] > .expanded,
-[aria-expanded="true"] > .collapsed {
-  display: none;
-}
+        #mem .table thead tr.content-even
+            /*:nth-child(even)*/
+        {
+            background-color: #30303a;
+        }
 
-#tree {
-  background-color:#000;
-  width:100%;
-  overflow:auto;
-  height: 500px;
-  
-  
-  color:#ddd;
-  font-family: freemono, monospace;
-}
+        #mem .table tr.active {
+            background-color: #10101a;
+        }
+
+        #mem .table td.active {
+            background-color: #446;
+        }
+
+        #mem .sumKey, #mem .sum-title {
+            color: #aaf;
+        }
+
+        #mem .sumKey i {
+            width: 5px;
+        }
+
+        #mem .one, #sum-sel .one {
+            color: #9f9;
+        }
+
+        #mem .zero, #sum-sel .zero {
+            color: #f99;
+        }
+
+        #mem .even {
+            background-color: #363636;
+        }
+
+        #mem .odd {
+            background-color: #303030;
+        }
+
+        #mem .red {
+            color: #f77;
+        }
+
+        #mem .active {
+            background-color: #557;
+        }
+
+        #mem .active-red {
+            background-color: #855;
+        }
+
+        #sum-sel .sumKey {
+            text-align: left;
+        }
+
+        #sum {
+            width: 100%;
+            max-height: 500px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        #sum-sel .inline-sum, #sum-sel .last-inline-sum {
+            color: #aaf;
+        }
+
+        #sum-sel .inline-mem {
+            color: #ffa;
+        }
+
+        .overflow-hidden {
+            overflow: hidden !important;
+        }
+
+        .tree li {
+            list-style-type: none;
+            margin: 0;
+            padding: 10px 2px 0 2px;
+            position: relative;
+            font-size: 14px;
+            line-height: 15px;
+        }
+
+        .tree i {
+            width: 10px;
+        }
+
+        .tree li::before,
+        .tree li::after {
+            content: '';
+            left: -20px;
+            position: absolute;
+            right: auto
+        }
+
+        .tree li::before {
+            border-left: 2px solid #333;
+            bottom: 50px;
+            height: 100%;
+            top: 0;
+            width: 1px
+        }
+
+        .tree li::after {
+            border-top: 2px solid #333;
+            height: 10px;
+            top: 20px;
+            width: 22px
+        }
+
+        .tree li span {
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border: 2px solid #445;
+            border-radius: 3px;
+            display: inline-block;
+            padding: 4px 2px;
+            text-decoration: none;
+            cursor: pointer;
+            background-color: #445;
+            white-space: nowrap;
+            margin: 0 200px 0 0;
+        }
+
+        .tree > ul > li::before,
+        .tree > ul > li::after {
+            border: 0;
+        }
+
+        .tree li:last-child::before {
+            height: 20px
+        }
+
+        .tree li span:hover {
+            background: #9ab;
+            border: 2px solid #94a0b4;
+        }
+
+        /*.tree li:hover::after {
+            border-top:2px solid #9ab;
+        }
+        
+        .tree li.a-sum-open::after {
+            border-top:2px solid #9ab;
+        }
+        
+        .tree li.a-sum-open::before {
+            border-top:2px solid #9ab;
+        }*/
 
 
-.freeze-ui {
-	display: block;
-	padding-right: 17px;
-	overflow-x: hidden;
-	overflow-y: auto;
-	position: absolute;
-	top: 0;
-	left: 0;
-	z-index: 1050;
-	width: 100%;
-	height: 100%;
-	outline: 0;
-	background-color: #000;
-	opacity: 0.8;
-	
-}
-.progress-box {
-	position: absolute;
-	margin-left: auto;
-	margin-right: auto;
-	left: 0;
-	right: 0;
-	text-align: center;
-	z-index: 1051;
-    font-family: freemono, monospace;
-}
+        [aria-expanded="false"] > .expanded,
+        [aria-expanded="true"] > .collapsed {
+            display: none;
+        }
+
+        #tree {
+            background-color: #000;
+            width: 100%;
+            overflow: auto;
+            height: 500px;
+
+
+            color: #ddd;
+            font-family: freemono, monospace;
+        }
+
+
+        .freeze-ui {
+            display: block;
+            padding-right: 17px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1050;
+            width: 100%;
+            height: 100%;
+            outline: 0;
+            background-color: #000;
+            opacity: 0.8;
+
+        }
+
+        .progress-box {
+            position: absolute;
+            margin-left: auto;
+            margin-right: auto;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 1051;
+            font-family: freemono, monospace;
+        }
 
     </style>
 </head>
 
 <body class="bg-dark">
-<main role="main" class="container">
+<main class="container" role="main">
     <!--a href="/index.html" class="btn btn-sm btn-info" role="button">Index</a-->
-    
-   <a href="javascript:void(0)" class="my-tab btn btn-sm btn-success" role="button" id="nav1">ShaTrys</a>
-  
-   <a href="javascript:void(0)" class="my-tab btn btn-sm btn-success bg-dark" role="button" id="nav2">DbgInfo</a>
-   
-   <a href="javascript:void(0)" class="my-tab btn btn-sm btn-success bg-dark" role="button" id="nav3">MemInfo</a>
-   
-   <!--a href="javascript:void" class="my-tab btn btn-sm btn-info bg-dark" role="button" id="nav4">Changer</a-->
-    
-    <div class="my-3 p-3 rounded box-shadow bg-black" id="nav1-cnt">
-      
-         <a id="try" href="javascript:void(0)" class="btn btn-sm btn-info" role="button">Try Nounce</a>
-         
-         <input name="nounce" id="nounce" value="1300" type="hidden"/>
-		 <input name="nounceVis" id="nounceVis" value="1300" style="width:120px;border:0px; background-color:#444; color:#fff" />
-         <a id="next" href="javascript:void(0)" class="btn btn-sm btn-info" role="button">+</a>
-         
-         <input name="difc" id="difc" value="2" style="width:20px;" />
-         
-         <a id="startstop" href="javascript:void(0)" class="btn btn-sm btn-info" role="button">start</a>
-		 <a id="method" href="javascript:void(0)" class="btn btn-sm btn-info mx-1" role="button">#1</a>
-         <div class="content">
-           <textarea id="text" readonly class="bg-dark my-3 p-2 rounded" style="border:1px solid #000; width:100%; height:150px; color:#ddd; overflow-y: scroll; font-family: freemono, monospace;margin-bottom: 0px;"></textarea>
-		       <textarea id="text2" readonly class="bg-dark p-2 rounded box-shadow" style="border:1px solid #000; width:100%; height:300px; color:#ddd; overflow-y: scroll;font-size: 12px; font-family: freemono, monospace;"></textarea>
-		       
-		<a href="javascript:void(0)" id="save" class="btn btn-sm btn-success" role="button">save</a>
-		             </div>
-		       
-  </div>
-         
-  <div class="my-3 p-3 rounded box-shadow bg-black hide" id="nav3-cnt">
-    <div id="arb" class="hide">
-      <table class="table table-striped table-dark"  style="table-layout: fixed">
-	  <thead>
-        <tr>
-          <th>
-            <div class="dropdown open">
-  <button class="btn btn-secondary dropdown-toggle btn-sm"
-          type="button" id="dropdownMenu5" data-toggle="dropdown"
-          aria-haspopup="true" aria-expanded="false">
-    <i class="fas fa-sitemap"></i>
-  </button>
-		      <div class="dropdown-menu">
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-ref-tree">Refresh</a>
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-mem">Show Memory</a>
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-in-out">Show out</a>
-		        </div>
-            </a> Sum(s) tree
-          </th>
-		  <th>
-			<div class="sum-see col-12">
-				<!--i class="fas fa-eye-slash"></i>
-				<i class="fas fa-arrow-circle-down"></i>
-				<i class="fas fa-asterisk"></i>
-				<i class="fas fa-cogs"></i>
-				<i class="fas fa-database"></i>
-				<i class="fas fa-eraser"></i>
-				<i class="fas fa-edit"></i>
-				<i class="fas fa-industry"></i>
-				<i class="fas fa-lightbulb"></i>
-				<i class="fas fa-warehouse"></i>
-				<i class="fas fa-tasks"></i-->
-				<a href="javascript:void(0)" class="btn btn-sm btn-secondary" id="tgg-2-see" role="button">
-				  <i class="fas fa-arrow-circle-down"></i>
-				</a>
-				<a href="javascript:void(0)" class="btn btn-sm btn-secondary" id="tgg-2-sum" role="button">
-				  <i class="fas fa-asterisk"></i>
-				</a>
-				
-			</div>
-		  </th>
-        </tr>
-        <tr>
-          <td class="content" colspan="2">
-            <div id="tree" class="tree"></div>
-          </td>
-        </tr>
-		<thead>
-      </table>
-    </div>
-		<div id="mem">
-		         <table class="table table-striped table-dark">
-		           <thead>
-		             <tr><td colspan="4">
-		               
-		       <div class="dropdown open">
-  <button class="btn btn-secondary dropdown-toggle btn-sm"
-          type="button" id="dropdownMenu4" data-toggle="dropdown"
-          aria-haspopup="true" aria-expanded="false">
-    +
-  </button>
-		      <div class="dropdown-menu">
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-ref">Refresh</a>
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-show-arb">Show tree</a>
-		        <div class="dropdown-divider"></div>
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-save-mem">Save mem</a>
-		        <a class="dropdown-item" href="javascript:void(0)" id="act-reset-mem">Reset mem</a>
-		        </div>          
-		               Memory</td></tr>
-		           </thead>
-		           <tbody></tbody>
-		         </table>
-		</div>
-		<div id="sum">
-		  <table class="table table-stripped table-dark" style="font-size:18px" id="sum-sel">
-	  	  <thead>
-	  	    <tr>
-	  	      <td colspan="10">
-	  	        <div class="row">
-					<!--div class="sum-sel col-1">
-						<i class="fas fa-eye-slash"></i>
-					</div-->
-					<div class="sumKey col-12"></div>
-				</div>
-	  	      </td>
-	  	    </tr>
-	  	  </thead>
-	  	  <tbody></tbody>
-  		</table>
-		 </div>
 
-		 <div class="dropdown open">
-			  <button class="btn btn-secondary dropdown-toggle"
-					  type="button" id="dropdownMenu5" data-toggle="dropdown"
-					  aria-haspopup="true" aria-expanded="false">
-				+
-			  </button>
-			  <div class="dropdown-menu">
-				<a class="dropdown-item" href="javascript:void(0)" id="act-sum">Sum this</a>
-				<div class="dropdown-divider"></div>
-				<a class="dropdown-item" href="javascript:void(0)" id="act-repl">Replace <span class="actsum">-</span> vals</a>
-				<a class="dropdown-item" href="javascript:void(0)" id="act-repl-sum">Replace in all sums: <span class="actsum">-</span></a>
-			  </div>
-			</div>
-	 </div>
-	 
-	 <div class="my-3 p-3 rounded box-shadow bg-black hide" id="nav2-cnt">
-		  
-		         <textarea id="text3" class="bg-dark my-3 p-2 rounded box-shadow" readonly style="border:1px solid #000; width:100%; height:500px; color:#ddd; font-size:10px; font-family:freemono, monospace;"></textarea>
-		       
-   </div>
+    <a class="my-tab btn btn-sm btn-success" href="javascript:void(0)" id="nav1" role="button">ShaTrys</a>
+
+    <a class="my-tab btn btn-sm btn-success bg-dark" href="javascript:void(0)" id="nav2" role="button">DbgInfo</a>
+
+    <a class="my-tab btn btn-sm btn-success bg-dark" href="javascript:void(0)" id="nav3" role="button">MemInfo</a>
+
+    <!--a href="javascript:void" class="my-tab btn btn-sm btn-info bg-dark" role="button" id="nav4">Changer</a-->
+
+    <div class="my-3 p-3 rounded box-shadow bg-black" id="nav1-cnt">
+
+        <a class="btn btn-sm btn-info" href="javascript:void(0)" id="try" role="button">Try Nounce</a>
+
+        <input id="nounce" name="nounce" type="hidden" value="1300"/>
+        <input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
+               value="1300"/>
+        <a class="btn btn-sm btn-info" href="javascript:void(0)" id="next" role="button">+</a>
+
+        <input id="difc" name="difc" style="width:20px;" value="2"/>
+
+        <a class="btn btn-sm btn-info" href="javascript:void(0)" id="startstop" role="button">start</a>
+        <a class="btn btn-sm btn-info mx-1" href="javascript:void(0)" id="method" role="button">#1</a>
+        <div class="content">
+            <textarea class="bg-dark my-3 p-2 rounded" id="text" readonly
+                      style="border:1px solid #000; width:100%; height:150px; color:#ddd; overflow-y: scroll; font-family: freemono, monospace;margin-bottom: 0px;"></textarea>
+            <textarea class="bg-dark p-2 rounded box-shadow" id="text2" readonly
+                      style="border:1px solid #000; width:100%; height:300px; color:#ddd; overflow-y: scroll;font-size: 12px; font-family: freemono, monospace;"></textarea>
+
+            <a class="btn btn-sm btn-success" href="javascript:void(0)" id="save" role="button">save</a>
+        </div>
+
+    </div>
+
+    <div class="my-3 p-3 rounded box-shadow bg-black hide" id="nav3-cnt">
+        <div class="hide" id="arb">
+            <table class="table table-striped table-dark" style="table-layout: fixed">
+                <thead>
+                <tr>
+                    <th>
+                        <div class="dropdown open">
+                            <button aria-expanded="false"
+                                    aria-haspopup="true" class="btn btn-secondary dropdown-toggle btn-sm"
+                                    data-toggle="dropdown"
+                                    id="dropdownMenu5" type="button">
+                                <i class="fas fa-sitemap"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-ref-tree">Refresh</a>
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-show-mem">Show Memory</a>
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-show-in-out">Show out</a>
+                            </div>
+                            </a> Sum(s) tree
+                    </th>
+                    <th>
+                        <div class="sum-see col-12">
+                            <!--i class="fas fa-eye-slash"></i>
+                            <i class="fas fa-arrow-circle-down"></i>
+                            <i class="fas fa-asterisk"></i>
+                            <i class="fas fa-cogs"></i>
+                            <i class="fas fa-database"></i>
+                            <i class="fas fa-eraser"></i>
+                            <i class="fas fa-edit"></i>
+                            <i class="fas fa-industry"></i>
+                            <i class="fas fa-lightbulb"></i>
+                            <i class="fas fa-warehouse"></i>
+                            <i class="fas fa-tasks"></i-->
+                            <a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-see" role="button">
+                                <i class="fas fa-arrow-circle-down"></i>
+                            </a>
+                            <a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-sum" role="button">
+                                <i class="fas fa-asterisk"></i>
+                            </a>
+
+                        </div>
+                    </th>
+                </tr>
+                <tr>
+                    <td class="content" colspan="2">
+                        <div class="tree" id="tree"></div>
+                    </td>
+                </tr>
+                <thead>
+            </table>
+        </div>
+        <div id="mem">
+            <table class="table table-striped table-dark">
+                <thead>
+                <tr>
+                    <td colspan="4">
+
+                        <div class="dropdown open">
+                            <button aria-expanded="false"
+                                    aria-haspopup="true" class="btn btn-secondary dropdown-toggle btn-sm"
+                                    data-toggle="dropdown"
+                                    id="dropdownMenu4" type="button">
+                                +
+                            </button>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-ref">Refresh</a>
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-show-arb">Show tree</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-save-mem">Save mem</a>
+                                <a class="dropdown-item" href="javascript:void(0)" id="act-reset-mem">Reset mem</a>
+                            </div>
+                            Memory
+                    </td>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div id="sum">
+            <table class="table table-stripped table-dark" id="sum-sel" style="font-size:18px">
+                <thead>
+                <tr>
+                    <td colspan="10">
+                        <div class="row">
+                            <!--div class="sum-sel col-1">
+                                <i class="fas fa-eye-slash"></i>
+                            </div-->
+                            <div class="sumKey col-12"></div>
+                        </div>
+                    </td>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div class="dropdown open">
+            <button aria-expanded="false"
+                    aria-haspopup="true" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
+                    id="dropdownMenu5" type="button">
+                +
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="javascript:void(0)" id="act-sum">Sum this</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="javascript:void(0)" id="act-repl">Replace <span class="actsum">-</span>
+                    vals</a>
+                <a class="dropdown-item" href="javascript:void(0)" id="act-repl-sum">Replace in all sums: <span
+                        class="actsum">-</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="my-3 p-3 rounded box-shadow bg-black hide" id="nav2-cnt">
+
+        <textarea class="bg-dark my-3 p-2 rounded box-shadow" id="text3" readonly
+                  style="border:1px solid #000; width:100%; height:500px; color:#ddd; font-size:10px; font-family:freemono, monospace;"></textarea>
+
+    </div>
 
 </main><!-- /.container -->
 
@@ -396,12 +416,14 @@
 <!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
         crossorigin="anonymous"></script-->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+<script crossorigin="anonymous"
+        integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f"
+        src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+<script crossorigin="anonymous"
         integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"></script>
+        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
 
 <!--script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script-->
 
@@ -409,15 +431,15 @@
 
 <!--script src="/ext/bootstrap.4.0.0.js" type="text/javascript"></script-->
 
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+<script crossorigin="anonymous"
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-        crossorigin="anonymous"></script>
+        src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
 
-<script type="text/javascript" src="../library/sha1/DbgSha256.js"></script>
-<script type="text/javascript" src="../library/sha1/Sha256debug.js"></script>
-<script type="text/javascript" src="../library/sha1/Sha256.js"></script>
+<script src="../library/sha1/DbgSha256.js" type="text/javascript"></script>
+<script src="../library/sha1/Sha256debug.js" type="text/javascript"></script>
+<script src="../library/sha1/Sha256.js" type="text/javascript"></script>
 <script src="https://cdn.jsdelivr.net/npm/hash-wasm"></script>
-<script type="text/javascript" src="../library/sha1/TestShas2.js"></script>
+<script src="../library/sha1/TestShas2.js" type="text/javascript"></script>
 </body>
 </html>

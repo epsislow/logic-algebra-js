@@ -1268,8 +1268,7 @@ var dg = {
                 var sKey = s.getKey('in-sum');
 				s.update(parentSKey, sKey, 0, len, 'in-sum');
             }
-
-            s.update(parentSKey, sKey, 0, len, 'in-sum');
+			
             for (var i = len - 1; i >= 0; i--) {
                 dresc = res.c;
                 res = this.sumB(vs1[i], vs2[i], res.c);
