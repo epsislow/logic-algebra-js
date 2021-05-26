@@ -657,6 +657,9 @@ var arbTreeIsIn = false;
 function loadArb(isIn = true) {
 	$('#tree').empty();
     mapArbLi = {};
+	dg.lk.reduceListFromUsez(dg.lk.uses.in);
+	dg.lk.reduceListFromUsez(dg.lk.uses.out);
+	
     arbTree = dg.lk.arbNodes(isIn ? dg.lk.uses.in : dg.lk.uses.out, 0);
     var root = $('#tree');
     addToTree(root, arbTree, 1);
@@ -1611,7 +1614,8 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
 
             }
         }, function (e) {
-            console.log('errror');
+            console.log('errror sumch '+ sumKey);
+            console.log(e.data);
             t.hide();
             terminateWorker('sumchw');			
 			if (errorHdl) {
@@ -1771,7 +1775,7 @@ var tryWorkReplSumToSum = function (lastActSumKey, successHdl = 0, errorHdl = 0)
                 }
             }
         }, function (event) {
-            console.log('errror');
+            console.log('errror repl '+ sumKey);
             console.log(event.data);
             t.hide();
             terminateWorker('repls2sw');
@@ -1897,7 +1901,11 @@ function initActEvents() {
     $('#act-reset-mem').unbind('click').click(function () {
         cacheResetMem()
     })
-
+	
+	$('#act-ref-tree').unbind('click').click(function () {
+		loadArb(arbTreeIsIn);
+		reloadArbFlags();
+	});
 
     $('#act-show-arb').unbind('click').click(function () {
         $('#mem').addClass('hide');

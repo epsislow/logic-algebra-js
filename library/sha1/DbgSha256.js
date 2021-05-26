@@ -133,15 +133,48 @@ var dg = {
                 }
             }
         },
+		'removeNullVals': function (list) {
+			for(var i in list) {
+				/*for(var k in list[i]) {
+					if(list[i][k] == null) {
+						list[i].splice(k, 1);
+					}
+				}*/
+				list[i] = list[i].filter(function (el) {
+					return el != null;
+				});
+				
+				if (!list[i].length) {
+					delete list[i];
+				}
+			}
+		},
+		'reduceListFromUsez': function (list) {
+			var newlist;
+			for(var i in list) {
+				newlist = [];
+				if(this.hasFlagAtUsez(i,3)) {
+					delete list[i];
+				}
+				for(var k in list[i]) {
+					if(!this.hasFlagAtUsez(list[i][k],3)) {
+						newlist[k] = list[i][k];
+					}
+				}
+				
+				if (!newlist.length) {
+					delete list[i];
+				} else {
+					list[i] = newlist;
+				}
+			}
+		},
         'arbNodes': function (list, type = 0) {
             if (type == 0) {
                 var tr = {'roots': {}}, elem, arr = {};
                 parents = {};
 
                 for (var i in list) {
-		  	if(this.sumIsNotSum(i)) {
-						continue;
-				}
                     if (!arr.hasOwnProperty(i)) {
                         arr[i] = {};
                         parents[i] = [];
@@ -149,9 +182,6 @@ var dg = {
                     for (var j in list[i]) {
                         child = list[i][j];
                         if (arr.hasOwnProperty(child)) {
-     if(this.sumIsNotSum(child)) {
-        continue;             
-     }
                             parents[child].push(i);
                         } else {
                             arr[child] = {};
