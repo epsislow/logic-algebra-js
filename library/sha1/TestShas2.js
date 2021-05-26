@@ -631,7 +631,10 @@ function addToTree(ob, treeob, depth = 2) {
             .append(
                $('<div>').append(
                  getSumFlagsTitle(name)
-              ).addClass('tiny')
+              )
+			  .addClass('flags')
+			  .addClass('tiny')
+			  .attr('data-arb-sum', name)
             )
             .attr('data-arb-sum', name)
             .attr('data-arb-key', unique);
@@ -652,11 +655,25 @@ var mapArbLi = {};
 var arbTreeIsIn = false;
 
 function loadArb(isIn = true) {
+	$('#tree').empty();
     mapArbLi = {};
     arbTree = dg.lk.arbNodes(isIn ? dg.lk.uses.in : dg.lk.uses.out, 0);
     var root = $('#tree');
     addToTree(root, arbTree, 1);
-    $('#tree li').click(arbLiEvent);
+    $('#tree li').unbind('click').click(arbLiEvent);
+}
+
+function reloadArbFlags() {
+	$('#tree .flags').each(function(index) {
+		var arbSum;
+		if (arbSum = $(this).attr('data-arb-sum')) {
+			$(this).empty()
+				.append(
+				 getSumFlagsTitle(arbSum)
+				);
+				
+		}
+	});
 }
 
 function arbLiEvent(event) {
@@ -691,6 +708,9 @@ function loadFromMem() {
     var ic = 0;
 
     for (var k in keys) {
+		if (!dg.lk.memHasANotSum(keys[k])) {
+			continue;
+		}
         if (i % 4 == 0) {
             tr = $('<tr>');
             trs.push(tr);
@@ -746,6 +766,9 @@ function loadFromMem() {
 
     keys = Object.keys(dg.lk.sums).sort(cmp);
     for (var k in keys) {
+		if (dg.lk.sumIsNotSum(keys[k])) {
+			continue;
+		}
         if (i % 4 == 0) {
             tr = $('<tr>');
             trs.push(tr);
@@ -1118,6 +1141,7 @@ function initSumEvents() {
                 return;
             }
         }
+        unloadSumValuesOf();
 
         if (thisSumEl != activeSumEl) {
             activeSumEl = thisSumEl;
@@ -1251,13 +1275,12 @@ function tggDo(el, eli = 0) {
     // console.log( csum,tggData);
     if (tggData.see) {
         unloadSumValuesOf();
-
+		
         sumKey = csum;
         lastActSumKey = csum;
         $('span.actsum').text(lastActSumKey);
-
         loadSumValuesOf(csum + ':1');
-
+		
         initSumEvents();
     }
 }
@@ -1567,6 +1590,10 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
                     work(data.sumRes);
                     terminateWorker('sumchw');
 					dg.lk.addFlagAtUsez(sumKey,1);
+					
+					if (!$('#act-show-arb').hasClass('hide')) {
+						reloadArbFlags();
+					}
 					if (successHdl) {
 						successHdl(sumKey);
 					}
@@ -1725,6 +1752,10 @@ var tryWorkReplSumToSum = function (lastActSumKey, successHdl = 0, errorHdl = 0)
                     work(data.replRes);
                     terminateWorker('repls2sw');
 					dg.lk.addFlagAtUsez(sumKey,2);
+					
+					if (!$('#act-show-arb').hasClass('hide')) {
+						reloadArbFlags();
+					}
 					if (successHdl) {
 						successHdl(sumKey);
 					}
@@ -1870,7 +1901,6 @@ function initActEvents() {
 
     $('#act-show-arb').unbind('click').click(function () {
         $('#mem').addClass('hide');
-        $('#tree').empty();
         loadArb(arbTreeIsIn);
         $('#arb').removeClass('hide');
     })
@@ -1879,7 +1909,6 @@ function initActEvents() {
         $('#mem').removeClass('hide');
     })
     $('#act-show-in-out').unbind('click').click(function () {
-        $('#tree').empty();
         arbTreeIsIn = !arbTreeIsIn;
         if (arbTreeIsIn) {
             $('#act-show-in-out').text('Show in');

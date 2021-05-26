@@ -371,6 +371,22 @@
                 <tbody></tbody>
             </table>
         </div>
+		<div class="dropdown open">
+            <button aria-expanded="false"
+                    aria-haspopup="true" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
+                    id="dropdownMenu5" type="button">
+                +
+            </button>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="javascript:void(0)" id="act-sum">Sum this</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="javascript:void(0)" id="act-repl">Replace <span class="actsum">-</span>
+                    vals</a>
+                <a class="dropdown-item" href="javascript:void(0)" id="act-repl-sum">Replace in all sums: <span
+                        class="actsum">-</span></a>
+            </div>
+        </div>
+		
         <div id="sum">
             <table class="table table-stripped table-dark" id="sum-sel" style="font-size:18px">
                 <thead>
@@ -388,22 +404,7 @@
                 <tbody></tbody>
             </table>
         </div>
-
-        <div class="dropdown open">
-            <button aria-expanded="false"
-                    aria-haspopup="true" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
-                    id="dropdownMenu5" type="button">
-                +
-            </button>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="javascript:void(0)" id="act-sum">Sum this</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="javascript:void(0)" id="act-repl">Replace <span class="actsum">-</span>
-                    vals</a>
-                <a class="dropdown-item" href="javascript:void(0)" id="act-repl-sum">Replace in all sums: <span
-                        class="actsum">-</span></a>
-            </div>
-        </div>
+		
     </div>
 
     <div class="my-3 p-3 rounded box-shadow bg-black hide" id="nav2-cnt">

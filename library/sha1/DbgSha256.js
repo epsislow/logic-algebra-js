@@ -73,6 +73,24 @@ var dg = {
 			}
 			return (this.usez[name] & flagMask);
 		},
+		'memHasANotSum': function (name) {
+			if (name in this.m) {
+				var sname = this.m[name][0].substr(0, this.m[name][0].indexOf(':'));
+				//console.log(sname);
+				if ((sname in this.sums) && this.getSum(sname).length == 1) {
+					//console.log(sname);
+					return false;
+				}
+				//console.log('is not false');
+			}
+			return true;
+		},
+		'sumIsNotSum': function (name) {
+			if ((name in this.sums) && this.getSum(name).length == 1) {
+				return false;
+			}
+			return true;
+		},
         'createArb4Uses': function () {
             var map = {}, node, roots = [], i;
 
@@ -121,6 +139,9 @@ var dg = {
                 parents = {};
 
                 for (var i in list) {
+					if(this.sumIsNotSum(i)) {
+						continue;
+					}
                     if (!arr.hasOwnProperty(i)) {
                         arr[i] = {};
                         parents[i] = [];
