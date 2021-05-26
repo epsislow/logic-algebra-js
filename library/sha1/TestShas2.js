@@ -65,7 +65,7 @@ function testW() {
 
 //self.importScripts('https://cdn.jsdelivr.net/npm/hash-wasm');
 var blob = null;
-var workerNamed = [];
+var workerNamed = {};
 
 function customWorker(name, fwork, hdl, ehdl, d) {
     if (name in workerNamed) {
@@ -504,6 +504,7 @@ function cacheSaveMem() {
     setCacheKey('dg.lkm', JSON.stringify(dg.lk.m));
     setCacheKey('dg.lks', JSON.stringify(dg.lk.sums));
     setCacheKey('dg.lku', JSON.stringify(dg.lk.uses));
+    setCacheKey('dg.lkz', JSON.stringify(dg.lk.usez));
     //dg.lk.forms]);
 }
 
@@ -514,6 +515,7 @@ function cacheLoadMem() {
         dg.lk.m = JSON.parse(getCacheKey('dg.lkm'));
         dg.lk.sums = lastLks;
         dg.lk.uses = JSON.parse(getCacheKey('dg.lku'));
+        dg.lk.usez = JSON.parse(getCacheKey('dg.lkz'));
     }
 }
 
@@ -821,8 +823,50 @@ function openSumEl(el) {
 var sumKey;
 var sumKeyVss;
 
+function getSumFlagsTitle(sumKey) {
+  var vars = dg.lk.uses.in[sumKey];
+  var sumRdy = 0;
+  if (!vars) {
+    sumRdy = 1;
+  } else {
+    sumRdy = 1;
+    for(var k in vars) {
+      if((vars[k] in dg.lk.uses.in) && !dg.lk.hasFlagAtUsez(vars[k],1)) {
+        sumRdy = 0;
+      }
+    }
+  }
+  
+  var curent = $('<span>');
+  
+  if(sumRdy) {
+    curent.append($('<i>')
+      .addClass('fas')
+      .addClass('fa-times')
+      .attr('style', 'text-color:#9ab')
+    );
+  }
+  
+  if(dg.lk.hasFlagAtUsez(sumKey, 1)) {
+    curent.append($('<i>')
+       .addClass('fas')
+       .addClass('fa-plus')
+    ).append(' ');
+   // console.log(sumKey+' 1');
+  }
+  if (dg.lk.hasFlagAtUsez(sumKey, 2)) {
+    curent.append($('<i>')
+      .addClass('fas')
+      .addClass('fa-expand-arrows-alt')
+    ).append(' ');
+   // console.log(sumKey+' 2');
+  }
+  
+  return curent;
+}
+
 function getSumTitle(sumKey) {
-    var current;
+    var curent;
     /*
     curent = $('<td>')
          .attr('colspan',6)
@@ -876,6 +920,8 @@ function loadSumValuesOf(sumKeyBit) {
     sumKey = sumKeyBit.substr(0, sumKeyBit.indexOf(':'));
 
     var elTh = $('#sum-sel thead div.sumKey');
+    
+    elTh.prepend(getSumFlagsTitle(sumKey));
 
     elTh.append(getSumTitle(sumKey));
     /*
@@ -912,7 +958,7 @@ function loadSumValuesOf(sumKeyBit) {
                     .addClass('fas')
                     .addClass('fa-minus-square')
                 )
-                .append(' ' + i)
+                .append(' ' + i+'/'+(len-1))
             );
     }
 
