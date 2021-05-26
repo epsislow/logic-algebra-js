@@ -139,9 +139,9 @@ var dg = {
                 parents = {};
 
                 for (var i in list) {
-				//	if(this.sumIsNotSum(i)) {
-				//		continue;
-				//	}
+		  	if(this.sumIsNotSum(i)) {
+						continue;
+				}
                     if (!arr.hasOwnProperty(i)) {
                         arr[i] = {};
                         parents[i] = [];
@@ -149,9 +149,9 @@ var dg = {
                     for (var j in list[i]) {
                         child = list[i][j];
                         if (arr.hasOwnProperty(child)) {
-     //if(this.sumIsNotSum(child)) {
-   //     continue;             
-  //   }
+     if(this.sumIsNotSum(child)) {
+        continue;             
+     }
                             parents[child].push(i);
                         } else {
                             arr[child] = {};
