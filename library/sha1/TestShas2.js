@@ -625,12 +625,13 @@ function addToTree(ob, treeob, depth = 2) {
                         .addClass('fas')
                         .addClass('fa-' + cls)
                     )
+                    .addClass('item')
                     .append(' ' + name)
             )
             .append(
                $('<div>').append(
                  getSumFlagsTitle(name)
-              ).addClass('tiny-flags')
+              ).addClass('tiny')
             )
             .attr('data-arb-sum', name)
             .attr('data-arb-key', unique);
