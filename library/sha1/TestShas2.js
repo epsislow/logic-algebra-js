@@ -1290,6 +1290,10 @@ function tggIsOn() {
     return false;
 }
 
+function setActionKey(sel, callback) {
+  
+}
+
 var workAll;
 function tggDo(el, eli = 0) {
     var csum = el.attr('data-arb-sum');
@@ -1309,7 +1313,16 @@ function tggDo(el, eli = 0) {
 		unloadSumValuesOf();
 		
 		workAll = tryWorkAllDepth(csum);
-		console.log('if alright write: workall.run()', workAll.list);
+		//console.log('if alright write: workall.run()', workAll.list);
+		
+		setActionKey('#act-wrk-run',(function() {
+		return function() {
+		  const [first] = workAll.list;
+		  workAll.run('start with:' + first);
+		}
+		})(workAll));
+		
+		
 		/*
 		var modal;
 		modal = createModalWithTable({
