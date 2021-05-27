@@ -153,11 +153,11 @@ var dg = {
 			var newlist;
 			for(var i in list) {
 				newlist = [];
-				if(this.hasFlagAtUsez(i,3)) {
+				if(this.hasFlagAtUsez(i,3)==3) {
 					delete list[i];
 				}
 				for(var k in list[i]) {
-					if(!this.hasFlagAtUsez(list[i][k],3)) {
+					if(this.hasFlagAtUsez(list[i][k],3)!=3) {
 						newlist[k] = list[i][k];
 					}
 				}
@@ -789,6 +789,9 @@ var dg = {
                 txt.push('r=' + r);
                 console.log(txt.join("\n"));
             }
+            if(r.includes('#')) {
+    throw new Error("Horror: ReplB #found in "+ r + "\n x:"+x+"\nrepl:"+JSON.stringify(replacers));
+              }
             return r;
         },
         'exec': function (x) {
@@ -1124,7 +1127,9 @@ var dg = {
                 r = r.replaceAll(m[d] + '#', vp.join(''));
             }
             console.log(r);
-
+if (r.includes('#')) {
+  throw new Error("Horror: simplifyVarsName #found in " + r + "\n v:" + v + "\nreplm:" + JSON.stringify(m));
+}
             return {'r': r, 'm': m}
         },
         'hasVarB': function (v, which = 0) {

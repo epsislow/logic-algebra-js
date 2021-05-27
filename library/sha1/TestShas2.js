@@ -769,7 +769,7 @@ function loadFromMem() {
 
     keys = Object.keys(dg.lk.sums).sort(cmp);
     for (var k in keys) {
-		if (dg.lk.sumIsNotSum(keys[k])) {
+		if (dg.lk.hasFlagAtUsez(keys[k],3)==3) {
 			continue;
 		}
         if (i % 4 == 0) {
