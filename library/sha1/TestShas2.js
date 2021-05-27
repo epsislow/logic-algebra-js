@@ -73,7 +73,7 @@ function customWorker(name, fwork, hdl, ehdl, d=0) {
         return workerNamed[name];
     }
 
-    if (d) {
+    if (d&8) {
         console.log("onmessage =" + fwork.toString());
     }
     var blobWork = new Blob(["onmessage =" + fwork.toString()], {type: "text/javascript"});
@@ -1879,23 +1879,30 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 				if (d & 1) {
 					console.log('1 '+t);
 				}
-				taskList.addTask('sum ' + t, function (sumKey) {
-					if (d & 1) {
-						console.log(sumKey);
-					}
-					tryWorkSumThisKey(t, taskList.nextTask(d & 2),0, d&4)
-				});
+				taskList.addTask('sum ' + t, (function(t,d) {
+					return function (sumKey) {
+						if (d & 1) {
+							console.log(sumKey);
+							console.log('next is '+ t);
+						}
+						tryWorkSumThisKey(t, taskList.nextTask(d & 2),0, d&4)
+				    }
+				})(t,d));
 			}
 			if( !dg.lk.hasFlagAtUsez(t, 2)) {
 				if (d & 1) {
 					console.log('2 '+t);
 				}
-				taskList.addTask('repl ' + t, function (sumKey) {
-					if (d & 1) {
-						console.log(sumKey);
-					}
-					tryWorkReplSumToSum(t, taskList.nextTask(d & 2),0,d&4)
-				});
+				
+				taskList.addTask('repl ' + t, (function(t,d) {
+					return function (sumKey) {
+						if (d & 1) {
+							console.log(sumKey);
+							console.log('next is '+ t);
+						}
+						tryWorkReplSumToSum(t, taskList.nextTask(d & 2),0, d&4)
+				    }
+				})(t,d));
 			}
 		}
 		done[t] = 1;
