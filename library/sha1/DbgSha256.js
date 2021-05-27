@@ -773,7 +773,7 @@ var dg = {
         'replB': function (x, replacers, sumKey=0, d = 0) {
             var r = x + '';
             if(sumKey){
-            var re= new RegExp('/'+sumKey+'[^\&\\|\\^\\~\\)||(]*/','ig');
+            var re= new RegExp('/'+sumKey+':[^\&\\|\\^\\~\\)||(]*/','ig');
             r = r.replaceAll(re, '$&#');
             } else {
       r=r.replaceAll(
