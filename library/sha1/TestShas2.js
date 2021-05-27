@@ -1533,18 +1533,16 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
 
         var data = {
             'url': window.location.origin,
-            'sumss': dg.lk.getSum(sumKey)
+            'sumss': dg.lk.getSum(sumKey),
+			'rand': rand(1,1000),
         };
 
         var work1 = customWorker('sumchw', function (data) {
-            function rand(min, max) {
-                return Math.floor(Math.random() * (max - min)) + min;
-            }
 
             var data = data.data;
 
             self.importScripts(
-                data.url + '/library/sha1/DbgSha256.js?r=' + rand(1, 1000)
+                data.url + '/library/sha1/DbgSha256.js?r=' + data.rand
             );
 
 
@@ -1656,7 +1654,8 @@ var tryWorkReplSumToSum = function (lastActSumKey, successHdl = 0, errorHdl = 0)
             'url': window.location.origin,
             'stacks': [],
             'needle': dg.lk.getSum(lastActSumKey),
-            'actSKey': lastActSumKey
+            'actSKey': lastActSumKey,
+			'rand': rand(1,1000)
         };
 
         for (var k in vars) {
@@ -1666,12 +1665,8 @@ var tryWorkReplSumToSum = function (lastActSumKey, successHdl = 0, errorHdl = 0)
         var work1 = customWorker('repls2sw', function (data) {
             var data = data.data;
 
-            function rand(min, max) {
-                return Math.floor(Math.random() * (max - min)) + min;
-            }
-
             self.importScripts(
-                data.url + '/library/sha1/DbgSha256.js?r=' + rand(1, 1000)
+                data.url + '/library/sha1/DbgSha256.js?r=' + data.rand
             );
 
 
@@ -1826,35 +1821,45 @@ function createTaskList() {
 		return hdl;
 	}
 	
+	pub.getNamesInList = function () {
+		var r= [];
+		for(var t in tasks) {
+			r.push(tasks[t].name);
+		}
+		return r;
+	}
+	
 	return pub;
 }
 
-var taskListG;
 function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 	var vars = dg.lk.uses.in[sumKey];
 	var done = {}, root = 0;
 	if (!taskList) {
 		root = 1;
 		taskList = createTaskList();
-		taskListG = taskList;
 	}
 	
 	for(var k in vars) {
 		if ((!(vars[k] in done))  && (vars[k] in dg.lk.uses.in)) {
-			tryWorkAllDepth(vars[k], taskList);
+			tryWorkAllDepth(vars[k], taskList, d);
 			done[vars[k]] = 1;
 		} 
 		if (vars[k] in dg.lk.sums) {
 			if( !dg.lk.hasFlagAtUsez(vars[k], 1)) {
 				taskList.addTask('sum ' + vars[k], function (sumKey) {
-					console.log(sumKey);
-					tryWorkSumThisKey(vars[k], taskList.nextTask(d))
+					if (d & 1) {
+						console.log(sumKey);
+					}
+					tryWorkSumThisKey(vars[k], taskList.nextTask(d & 2))
 				});
 			}
 			if( !dg.lk.hasFlagAtUsez(vars[k], 2)) {
 				taskList.addTask('repl ' + vars[k], function (sumKey) {
-					console.log(sumKey);
-					tryWorkReplSumToSum(vars[k], taskList.nextTask(d))
+					if (d & 1) {
+						console.log(sumKey);
+					}
+					tryWorkReplSumToSum(vars[k], taskList.nextTask(d & 2))
 				});
 			}
 		}
@@ -1865,8 +1870,10 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 		console.log(sumKey);
 		if( !dg.lk.hasFlagAtUsez(sumKey, 1)) {
 			taskList.addTask('sum ' + sumKey, function (sumKeya) {
-				console.log(sumKeya);
-				tryWorkSumThisKey(sumKey, taskList.nextTask(d))
+				if (d & 1) {
+					console.log(sumKeya);
+				}
+				tryWorkSumThisKey(sumKey, taskList.nextTask(d & 2))
 			});
 		}
 		
@@ -1874,11 +1881,25 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 			console.log('all tasks done for '+ sumKey);
 		});
 		
-
+	if (d & 1) {
 		console.log('count tasks:'+ taskList.count());
+	}
 		
-		var first = taskList.nextTask();
-		first('first');
+		return {
+			'list': taskList.getNamesInList(),
+			'count': taskList.count(),
+			'run': function () {
+				var first = taskList.nextTask(d & 2);
+				if (typeof first !== 'function') {
+					if (d & 1) {
+						console.log('start first task');
+					}
+					throw new Error('First task in taskList is not a function');
+				}
+				first(arguments);
+			},
+			'zList': taskList,
+		}
 	}
 	
 }
