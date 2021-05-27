@@ -1618,7 +1618,7 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
             }
         }, function (e) {
             console.log('errror sumch '+ sumKey);
-            console.log(e.data);
+            console.log(e);
             t.hide();
             terminateWorker('sumchw');			
 			if (errorHdl) {
