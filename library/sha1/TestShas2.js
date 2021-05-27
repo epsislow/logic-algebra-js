@@ -615,7 +615,11 @@ function addToTree(ob, treeob, depth = 2) {
     //var clsvis= (visible==1)?'visible':'hide';
     var vis;
     var unique;
-    for (var name in treeob) {
+	var name;
+	var keys = Object.keys(treeob).sort(cmp);
+	
+    for (var k in keys) {
+		name = keys[k];
         unique = getUniqueInObj(name, mapArbLi);
         mapArbLi[unique] = treeob[name];
         var li = $('<li>')
@@ -1888,10 +1892,10 @@ function initActEvents() {
 		tryWorkSumThisKey(sumKey);
 	});
 	
-    $('#act-repl').unbind('click').click(function () {
+    /*$('#act-repl').unbind('click').click(function () {
         replToSum(sumKey);
         refreshActiveSum();
-    })
+    })*/
 
     $('#act-repl-sum').unbind('click').click(function () {
 		tryWorkReplSumToSum(lastActSumKey);
@@ -1986,6 +1990,7 @@ function replSumToSum() {
 }
 
 function refreshMem() {
+    cacheLoadMem();
     loadFromMem();
     initMemEvents();
     initSumEvents();

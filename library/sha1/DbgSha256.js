@@ -61,14 +61,18 @@ var dg = {
             }
             return this;
         },
-		'addFlagAtUsez': function (name, flag = 0) {
+		'addFlagAtUsez': function (name, flag = 0, except = 'n[0-9]+') {
+			if (name.match(new RegExp(except,'ig'))) {
+				return false;
+			}
 			if (!(name in this.usez)) {
 				this.usez[name] = 0;
 			}
 			this.usez[name] |= flag;
+			return true;
 		},
-		'hasFlagAtUsez': function (name, flagMask) {
-			if (!(name in this.usez)) {
+		'hasFlagAtUsez': function (name, flagMask, except = 'n[0-9]+') {
+			if (!(name in this.usez) || name.match(new RegExp(except,'ig'))) {
 				return false;
 			}
 			return (this.usez[name] & flagMask);
@@ -150,7 +154,7 @@ var dg = {
 			}
 		},
 		'reduceListFromUsez': function (list) {
-			var newlist;
+			var newlist = [];
 			for(var i in list) {
 				newlist = [];
 				if(this.hasFlagAtUsez(i,3)==3) {
@@ -158,7 +162,7 @@ var dg = {
 				}
 				for(var k in list[i]) {
 					if(this.hasFlagAtUsez(list[i][k],3)!=3) {
-						newlist[k] = list[i][k];
+						newlist.push(list[i][k]);
 					}
 				}
 				
@@ -752,7 +756,7 @@ var dg = {
                 vs = this.parent().lk.get(x);
             }
             var r = [];
-
+ 
             for (var i in vs) {
                 if (this.hasVOneOf(vs[i], replacers)) {
                     if (short) {
@@ -773,7 +777,7 @@ var dg = {
         'replB': function (x, replacers, sumKey=0, d = 0) {
             var r = x + '';
             if(sumKey){
-            var re= new RegExp('/'+sumKey+':[^\&\\|\\^\\~\\)||(]*/','ig');
+            var re= new RegExp(sumKey+':[^\&\\|\\^\\~\\)||(]*','ig');
             r = r.replaceAll(re, '$&#');
             } else {
       r=r.replaceAll(
