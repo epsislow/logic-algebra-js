@@ -18,6 +18,7 @@ var hasher = null;
 
 window.onerror = function (message, url, line, column, error) {
     console.log(message, url, line, column, error);
+    alert(message);
 }
 
 const sha256t = async (text) => {
@@ -1728,7 +1729,13 @@ var tryWorkReplSumToSum = function (lastActSumKey, successHdl = 0, errorHdl = 0)
 
                     pt.update(sKey, ssKey, 0, sum.length - 1, 'repl ' + k + ' sum -')
                     for (var i in sum) {
-                        r[i] = dg.sh.repl(sum[i], rr, 0);
+try{
+    r[i] = dg.sh.repl(sum[i], rr, data.actSKey, 0);
+} catch(e){
+  if(e.message.includes('#found')) {
+    throw new Error(e.message+"\n>>"+'sum:'+k+'['+i+'] sumkey: '+ data.actSKey +"\nrr:"+JSON.stringify(rr) );
+  }
+}
                         pt.update(sKey, ssKey, i, sum.length - 1, 'repl ' + k + ' sum ' + i)
                     }
 
@@ -1942,7 +1949,7 @@ function replToSum(someSum) {
     var sum = dg.lk.getSum(csum);
 
     for (var i in sum) {
-        r[i] = dg.sh.repl(sum[i], rr, 1);
+        r[i] = dg.sh.repl(sum[i], rr,csum, 1);
     }
 
     dg.lk.delSum(csum);

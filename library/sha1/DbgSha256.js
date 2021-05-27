@@ -744,7 +744,7 @@ var dg = {
             }
             return false;
         },
-        'repl': function (x, replacers, short = 0) {
+        'repl': function (x, replacers, sumKey, short = 0) {
             var vs;
             if (Array.isArray(x)) {
                 vs = x;
@@ -756,9 +756,9 @@ var dg = {
             for (var i in vs) {
                 if (this.hasVOneOf(vs[i], replacers)) {
                     if (short) {
-                        r[i] = this.shortB(this.replB(vs[i], replacers));
+                        r[i] = this.shortB(this.replB(vs[i], replacers, sumKey));
                     } else {
-                        r[i] = this.replB(vs[i], replacers);
+                        r[i] = this.replB(vs[i], replacers, sumKey);
                         if (!this.hasVarB(r[i])) {
                             r[i] = this.shortB(r[i]);
                         }
@@ -770,9 +770,15 @@ var dg = {
 
             return r;
         },
-        'replB': function (x, replacers, d = 0) {
+        'replB': function (x, replacers, sumKey=0, d = 0) {
             var r = x + '';
-            r = r.replaceAll(/[a-z]+[^\&\\|\\^\\~\\)||(]*/ig, '$&#');
+            if(sumKey){
+            var re= new RegExp('/'+sumKey+'[^\&\\|\\^\\~\\)||(]*/','ig');
+            r = r.replaceAll(re, '$&#');
+            } else {
+      r=r.replaceAll(
+        /[a-z]+[^\&\\|\\^\\~\\)||(]*/ig,'$&#');
+            }
             var txt = [r];
             for (var k in replacers) {
                 txt.push('k:' + k + ' w:' + replacers[k]);
