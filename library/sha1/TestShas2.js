@@ -1858,9 +1858,9 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 		}
 		return false;
 	}
-	
+	var t;
 	for(var k in vars) {
-		var t = vars[k];
+		t = vars[k];
 		if (t == 'n2') {
 			if(d) {
 				console.log('n2 child not accepted');
