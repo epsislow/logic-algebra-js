@@ -1503,7 +1503,13 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
             return false;
         }
 		
+		if (typeof dg.lk.getSum(sumKey) == 'undefined') {
+			throw Error('tried to sum '+ sumKey +' and its undefined');
+			return false;
+		}
+		
         t.show();
+		
 
         var work = function (sumResult) {
             t.show();
@@ -1575,15 +1581,16 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
                 }
             }
 
-            try {
+  //          try {
                 dg.lk.delSum('Csss');
                 dg.sh.sumch('Csss', data.sumss, 1, 0, partial);
                 delete data.update;
                 data.sumRes = dg.lk.getSum('Csss');
-            } catch (e) {
-                data.error = e;
-            }
+            //} catch (e) {
+//                data.error = e;
+            //}
             data.hide = 1;
+	//		throw new Error(JSON.stringify(data));
             self.postMessage(data);
         }, function (event) {
             var data = event.data;
@@ -1620,12 +1627,12 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0) {
             console.log('errror sumch '+ sumKey);
             console.log(e);
             t.hide();
-            terminateWorker('sumchw');			
+            //terminateWorker('sumchw');
 			if (errorHdl) {
 				errorHdl(sumKey, e);
 			}
             throw e;
-        });
+        }, 1);
 
         work1.postMessage(data);
         return;
@@ -1704,7 +1711,7 @@ var tryWorkReplSumToSum = function (lastActSumKey, successHdl = 0, errorHdl = 0)
 
             var ssKey;
             var sKey;
-            try {
+            //try {
                 var len = Object.keys(data.stacks).length;
 
                 sKey = pt.getKey('replw');
@@ -1743,10 +1750,10 @@ try{
                 }
                 pt.update(0, sKey, len, len, 'repl ' + k + ' sum done');
                 delete data.update;
-            } catch (e) {
+            //} catch (e) {
                 data.error = 1;
                 throw e;
-            }
+            //}
             data.hide = 1;
             self.postMessage(data);
             return;
@@ -1795,10 +1802,14 @@ try{
         work1.postMessage(data);
     };
 
-function createTaskList() {
+function createTaskList(d = 0) {
 	var tasks = [];
 	
 	var pub = {};
+	
+	if (d) {
+		pub.tasks = tasks;
+	}
 	
 	pub.addTask = function (name, hdl) {
 		tasks.push({'name': name, 'hdl': hdl});
@@ -1837,38 +1848,65 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 	var done = {}, root = 0;
 	if (!taskList) {
 		root = 1;
-		taskList = createTaskList();
+		taskList = createTaskList(d);
+	}
+	
+	
+	if (sumKey == 'n2') {
+		if(d) {
+			console.log('n2 not accepted');
+		}
+		return false;
 	}
 	
 	for(var k in vars) {
-		if ((!(vars[k] in done))  && (vars[k] in dg.lk.uses.in)) {
-			tryWorkAllDepth(vars[k], taskList, d);
-			done[vars[k]] = 1;
+		var t = vars[k];
+		if (t == 'n2') {
+			if(d) {
+				console.log('n2 child not accepted');
+			}
+			continue;
+		}
+		if ((!(t in done))  && (t in dg.lk.uses.in) && (t in dg.lk.sums)) {
+			if(d) {
+				console.log(t+' has childs');
+			}
+			tryWorkAllDepth(t, taskList, d);
+			done[t] = 1;
 		} 
 		if (vars[k] in dg.lk.sums) {
-			if( !dg.lk.hasFlagAtUsez(vars[k], 1)) {
-				taskList.addTask('sum ' + vars[k], function (sumKey) {
+			if( !dg.lk.hasFlagAtUsez(t, 1)) {
+				if (d & 1) {
+					console.log('1 '+t);
+				}
+				taskList.addTask('sum ' + t, function (sumKey) {
 					if (d & 1) {
 						console.log(sumKey);
 					}
-					tryWorkSumThisKey(vars[k], taskList.nextTask(d & 2))
+					tryWorkSumThisKey(t, taskList.nextTask(d & 2))
 				});
 			}
-			if( !dg.lk.hasFlagAtUsez(vars[k], 2)) {
-				taskList.addTask('repl ' + vars[k], function (sumKey) {
+			if( !dg.lk.hasFlagAtUsez(t, 2)) {
+				if (d & 1) {
+					console.log('2 '+t);
+				}
+				taskList.addTask('repl ' + t, function (sumKey) {
 					if (d & 1) {
 						console.log(sumKey);
 					}
-					tryWorkReplSumToSum(vars[k], taskList.nextTask(d & 2))
+					tryWorkReplSumToSum(t, taskList.nextTask(d & 2))
 				});
 			}
 		}
-		done[vars[k]] = 1;
+		done[t] = 1;
 	}
 	
 	if (root) {
 		console.log(sumKey);
 		if( !dg.lk.hasFlagAtUsez(sumKey, 1)) {
+			if (d & 1) {
+				console.log('root '+sumKey);
+			}
 			taskList.addTask('sum ' + sumKey, function (sumKeya) {
 				if (d & 1) {
 					console.log(sumKeya);
@@ -1881,9 +1919,9 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 			console.log('all tasks done for '+ sumKey);
 		});
 		
-	if (d & 1) {
-		console.log('count tasks:'+ taskList.count());
-	}
+		if (d & 1) {
+			console.log('count tasks:'+ taskList.count());
+		}
 		
 		return {
 			'list': taskList.getNamesInList(),
