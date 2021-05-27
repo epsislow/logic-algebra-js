@@ -1267,6 +1267,18 @@ function loadMemValuesOf(key, el) {
     // console.log(key);
 }
 
+function createModalWithTable(tableDesc, tableButtons = 0) {
+	var pub = {};
+	
+	pub.show = function () {
+	}
+	pub.hide = function () {
+	}
+	pub.close = function () {
+	}
+	return pub;
+}
+
 var tggData = {};
 
 function tggIsOn() {
@@ -1278,6 +1290,7 @@ function tggIsOn() {
     return false;
 }
 
+var workAll;
 function tggDo(el, eli = 0) {
     var csum = el.attr('data-arb-sum');
     // console.log( csum,tggData);
@@ -1291,6 +1304,44 @@ function tggDo(el, eli = 0) {
 		
         initSumEvents();
     }
+	
+	if(tggData.sum) {
+		unloadSumValuesOf();
+		
+		workAll = tryWorkAllDepth(csum);
+		console.log('if alright write: workall.run()', workAll.list);
+		/*
+		var modal;
+		modal = createModalWithTable({
+				'options':['withFreeze','withCloseBtn'],
+				'title': 'Tasks',
+				'freezeObj': '#arb',
+				'colnames': [{'text':'name'}, {'text': 'actions'}],
+				'values': [{'text':modal.list}, {'text': '-'}]
+			}, [
+			{
+				'text':'Run',
+				'class':'btn-light',
+				'callback':(function () {
+					return function () {
+						const [first] = workAll.list;
+						modal.close();
+						workAll.run('start with:' + first);
+					}
+				})(workAll, modal)
+			},
+			{
+				'text':'Run',
+				'class':'btn-danger',
+				'callback':(function () {
+					return function () {
+						workAll = null;
+						modal.close()
+					}
+				})(modal)
+			},
+		])*/
+	}
 }
 
 function toggleCall(tggBtnClr, tggClasses, tggKey) {
@@ -1880,7 +1931,7 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 					console.log('1 '+t);
 				}
 				taskList.addTask('sum ' + t, (function(t,d) {
-					return function (sumKey) {
+					return function (sumKey ='-') {
 						if (d & 1) {
 							console.log(sumKey);
 							console.log('next is '+ t);
@@ -1895,7 +1946,7 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 				}
 				
 				taskList.addTask('repl ' + t, (function(t,d) {
-					return function (sumKey) {
+					return function (sumKey ='-') {
 						if (d & 1) {
 							console.log(sumKey);
 							console.log('next is '+ t);
@@ -1915,7 +1966,7 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 			if (d & 1) {
 				console.log('root '+sumKey);
 			}
-			taskList.addTask('sum ' + sumKey, function (sumKeya) {
+			taskList.addTask('sum ' + sumKey, function (sumKeya ='-') {
 				if (d & 1) {
 					console.log(sumKeya);
 				}
