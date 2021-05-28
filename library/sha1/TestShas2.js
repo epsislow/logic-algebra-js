@@ -716,11 +716,11 @@ function loadFromMem() {
     var ic = 0;
 
     for (var k in keys) {
-		if (!dg.lk.memHasANotSum(keys[k])) {
+		if (!tggData['notSums'] && !dg.lk.memHasANotSum(keys[k])) {
 			continue;
 		}
         if (i % 4 == 0) {
-            tr = $('<tr>');
+            tr = $('<tr>').addClass('row-item');
             trs.push(tr);
             ic++;
         }
@@ -774,7 +774,7 @@ function loadFromMem() {
 
     keys = Object.keys(dg.lk.sums).sort(cmp);
     for (var k in keys) {
-		if (dg.lk.hasFlagAtUsez(keys[k],3)==3) {
+		if (!tggData['notSums'] && dg.lk.hasFlagAtUsez(keys[k],3)==3) {
 			continue;
 		}
         if (i % 4 == 0) {
@@ -1280,6 +1280,7 @@ function createModalWithTable(tableDesc, tableButtons = 0) {
 }
 
 var tggData = {};
+var tggEls = {};
 
 function tggIsOn() {
     for (var t in tggData) {
@@ -1365,7 +1366,44 @@ function tggDo(el, eli = 0) {
 	}
 }
 
-function toggleCall(tggBtnClr, tggClasses, tggKey) {
+function tggRegister(tggKey, tggSel) {
+	if (!(tggKey in tggEls)) {
+		tggEls[tggKey] = [];
+	}
+	tggEls[tggKey].push(tggSel);
+}
+
+function tggActionForKey(tggKey, exceptSel = 0) {
+	if (!tggKey in tggEls) {
+		return false;
+	}
+	var truek = tggData[tggKey];
+	for(var k in tggEls) {
+		if (exceptSel && exceptSel == tggEls[k]) {
+			continue;
+		}
+		var el = $(tggEls[k]);
+        var eli = el.find('i:first');
+		
+		for (var k in tggBtnClr) {
+			if (el.hasClass(tggBtnClr[k])) {
+                el.removeClass(tggBtnClr[k]);
+            }
+			if (eli) {
+				eli.removeClass(tggClasses[k]);
+			}
+        }
+		el.addClass(tggBtnClr[truek]);
+		if(eli) {
+			eli.addClass(tggClasses[k])
+		}
+	}
+}
+
+function toggleCall(tggBtnClr, tggClasses, tggKey, tggSel = 0) {
+	if (tggSel) {
+		tggRegister(tggKey, tggSel, tggBtnClr);
+	}
     return function (e) {
         e.stopImmediatePropagation();
         var el = $(this);
@@ -1375,13 +1413,13 @@ function toggleCall(tggBtnClr, tggClasses, tggKey) {
                 el.removeClass(tggBtnClr[k]);
                 el.addClass(tggBtnClr[(parseInt(k) + 1) % tggBtnClr.length]);
                 tggData[tggKey] = (parseInt(k) + 1) % (tggBtnClr.length);
-                // console.log(tggData, tggKey);
                 if (eli) {
                     eli.removeClass(tggClasses[k])
                         .addClass(tggClasses[(parseInt(k) + 1) % tggClasses.length]);
 
                 }
                 el.blur();
+				tggActionForKey(tggKey, tggSel);
                 return;
             }
         }
@@ -1915,9 +1953,9 @@ function createTaskList(d = 0) {
 	return pub;
 }
 
-function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
+function tryWorkAllDepth(sumKey, taskList = 0, d = 0, done = {}) {
 	var vars = dg.lk.uses.in[sumKey];
-	var done = {}, root = 0;
+	var root = 0;
 	if (!taskList) {
 		root = 1;
 		taskList = createTaskList(d);
@@ -1943,42 +1981,41 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 			if(d) {
 				console.log(t+' has childs');
 			}
-			tryWorkAllDepth(t, taskList, d);
+			tryWorkAllDepth(t, taskList, d, done);
+			
+			if (t in dg.lk.sums) {
+				if( !dg.lk.hasFlagAtUsez(t, 1)) {
+					if (d & 1) {
+						console.log('1 '+t);
+					}
+					taskList.addTask('sum ' + t, (function(t,d) {
+						return function (sumKey ='-') {
+							if (d & 1) {
+								console.log(sumKey);
+								console.log('next is '+ t);
+							}
+							tryWorkSumThisKey(t, taskList.nextTask(d & 2),0, d&4)
+						}
+					})(t,d));
+				}
+				if( !dg.lk.hasFlagAtUsez(t, 2)) {
+					if (d & 1) {
+						console.log('2 '+t);
+					}
+					
+					taskList.addTask('repl ' + t, (function(t,d) {
+						return function (sumKey ='-') {
+							if (d & 1) {
+								console.log(sumKey);
+								console.log('next is '+ t);
+							}
+							tryWorkReplSumToSum(t, taskList.nextTask(d & 2),0, d&4)
+						}
+					})(t,d));
+				}
+			}
 			done[t] = 1;
-		} 
-		if (vars[k] in dg.lk.sums) {
-			if( !dg.lk.hasFlagAtUsez(t, 1)) {
-				if (d & 1) {
-					console.log('1 '+t);
-				}
-				taskList.addTask('sum ' + t, (function(t,d) {
-					return function (sumKey ='-') {
-						if (d & 1) {
-							console.log(sumKey);
-							console.log('next is '+ t);
-						}
-						tryWorkSumThisKey(t, taskList.nextTask(d & 2),0, d&4)
-				    }
-				})(t,d));
-			}
-			if( !dg.lk.hasFlagAtUsez(t, 2)) {
-				if (d & 1) {
-					console.log('2 '+t);
-				}
-				
-				taskList.addTask('repl ' + t, (function(t,d) {
-					return function (sumKey ='-') {
-						if (d & 1) {
-							console.log(sumKey);
-							console.log('next is '+ t);
-						}
-						tryWorkReplSumToSum(t, taskList.nextTask(d & 2),0, d&4)
-				    }
-				})(t,d));
-			}
 		}
-		done[t] = 1;
-		t='m22';
 	}
 	
 	if (root) {
@@ -1992,6 +2029,17 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 					console.log(sumKeya);
 				}
 				tryWorkSumThisKey(sumKey, taskList.nextTask(d & 2), 0, d&4)
+			});
+		}
+		if( !dg.lk.hasFlagAtUsez(sumKey, 1)) {
+			if (d & 1) {
+				console.log('root '+sumKey);
+			}
+			taskList.addTask('repl ' + sumKey, function (sumKeya ='-') {
+				if (d & 1) {
+					console.log(sumKeya);
+				}
+				tryWorkReplSumToSum(sumKey, taskList.nextTask(d & 2), 0, d&4)
 			});
 		}
 		
@@ -2023,6 +2071,10 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0) {
 }
 
 function initActEvents() {
+	$('#tgg-2-not-sums').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums'));
+	
+	$('#tgg-2-not-sums2').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums2'));
+	
     $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-arrow-down', 'fa-arrow-circle-down'], 'see'));
 
     $('#tgg-2-sum').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-asterix', 'fa-asterix'], 'sum'));
@@ -2040,7 +2092,7 @@ function initActEvents() {
 		tryWorkReplSumToSum(lastActSumKey);
 	});
 	
-    $('#act-refresh').unbind('click').click(function () {
+    $('#act-ref').unbind('click').click(function () {
         refreshMem();
     });
 
@@ -2129,6 +2181,8 @@ function replSumToSum() {
 }
 
 function refreshMem() {
+	$('#mem table thead tr.row-item').remove();
+	$('#mem table tbody').empty();
     cacheLoadMem();
     loadFromMem();
     initMemEvents();
