@@ -699,7 +699,7 @@ function arbLiEvent(event) {
     event.stopImmediatePropagation();
     var el = $(this);
     var i = el.find('i:first');
-    if (tggIsOn(['notSums'])) {
+    if (tggIsOn(['notSums','note','map'])) {
         return tggDo(el, i);
     }
     if (i.hasClass('fa-caret-down')) {
@@ -2151,6 +2151,15 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0, done = {}) {
 }
 
 function initActEvents() {
+  $('#tgg-2-note').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-sticky-note'], 'note', '#tgg-2-note', function () {
+    
+  }));
+  
+  $('#tgg-2-map').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-sticky-note'], 'map', '#tgg-2-map', function() {
+      
+  }));
+  
+  
 	$('#tgg-2-not-sums').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums', function () {
 		loadArb(arbTreeIsIn);
 		reloadArbFlags();

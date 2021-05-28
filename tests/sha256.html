@@ -103,7 +103,9 @@
         #mem .active-red {
             background-color: #855;
         }
-		
+		.popover{
+		  
+		}
 		.task-list-popover {
 			width:150px;
             max-height: 300px;
@@ -393,7 +395,9 @@
                 <tbody></tbody>
             </table>
         </div>
-		<div class="dropdown open">
+        <div class="row" style="padding:0; margin: 0">
+          <div class="col-5" style="margin:0; padding:0">
+		     <div class="dropdown open" style="margin-bottom:10px">
             <button aria-expanded="false"
                     aria-haspopup="true" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown"
                     id="dropdownMenu5" type="button">
@@ -407,6 +411,19 @@
                 <a class="dropdown-item" href="javascript:void(0)" id="act-repl-sum">Replace in all sums: <span
                         class="actsum">-</span></a>
             </div>
+        </div>
+        </div>
+        
+        <div class="col-5">
+        	<div class="btn-group btn-group" role="group" aria-label="Toggle buttons2">
+        	  <a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-note" role="button">
+        	    <i class="far fa-sticky-note"></i>
+        	  </a>
+        	  <a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-map" role="button">
+        	    <i class="far fa-map"></i>
+        	  </a>
+        	</div>
+        </div>
         </div>
 		
         <div id="sum">
