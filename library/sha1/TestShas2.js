@@ -1379,9 +1379,9 @@ function tggDo(el, eli = 0) {
 			}
 		})(workAll));
 		
-			var btnCancel = $('<a>').addClass('btn btn-sm btn-danger color-light').text('Cancel').unbind('click').click((function(workAll) {
+			var btnCancel = $('<a>').addClass('btn btn-sm btn-danger color-light').text('Hide').unbind('click').click((function(workAll) {
 			return function() {
-				workAll = null;
+			//	workAll = null;
 				$('#tgg-2-sum').popover('hide');
 			}
 		})(workAll));
