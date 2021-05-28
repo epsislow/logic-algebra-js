@@ -686,6 +686,46 @@ var dg = {
             }
             return table;
         },
+		'getValuesForExpected': function (sumKey, not = 0) {
+			var sums = dg.lk.getSum(sumKey);
+			var x = (dg.sh.andM(sums[0][0],sums[0][2],sums[0][8],sums[0][15]))
+			if (not) {
+				x = dg.sh.notB(x);
+			}
+			console.log('x', x);
+			var vars = dg.sh.getVarBitsInV(x);
+			var tsts = dg.sh.getValuesForAllKeys([[]],vars)
+
+			var r = [];
+			var onecnt = 0;
+			var st;
+			for (var t in tsts) {
+			  st = dg.sh.replB(x, tsts[t]);
+			  if (dg.lk.objEmpty(tsts[t])) {
+				continue;
+			  }
+			  try {
+				r[t] = Function('return ((' + st + ') >>> 0) & 1')() + '';
+			  } catch (e) {
+				console.log('x', x, 'tsts[t]', tsts[t]);
+				console.log('Tried: ' + 'return ((' + st + ') >>> 0) & 1');
+				throw e;
+			  }
+
+			  console.log('st' + t + ': ' + st + ' = ' + r[t]);
+			  if (r[t] == '1') {
+				onecnt++;
+			  }
+			}
+
+
+			var tstd = JSON.parse(JSON.stringify(tsts));
+			for (var a in tstd) {
+			  tstd[a]['='] = r[a];
+			}
+			console.table(tstd);
+			return this.shortB(x);
+		},
         'findSameValues': function (data, datb, oneValueDiff = false, allowNotSameKeys = true) {
             if (!allowNotSameKeys && !this.findIfSameKeys(data, datb)) {
                 return false;
@@ -1799,7 +1839,7 @@ if (r.includes('#')) {
                         return '~' + '(' + a + ')';
                     }
                 } else {
-                    if (this.hasOpB(a) && !this.hasBrackets(a)) {
+                    if (this.hasOpB(a) || this.hasBrackets(a)) {
                         a = '(' + a + ')';
                     }
                     return '~' + a;

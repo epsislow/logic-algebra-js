@@ -103,6 +103,13 @@
         #mem .active-red {
             background-color: #855;
         }
+		
+		.task-list-popover {
+			width:200px;
+            max-height: 300px;
+            overflow-y: auto;
+            position: relative;
+		}
 
         #sum-sel .sumKey {
             text-align: left;
@@ -127,6 +134,11 @@
             overflow: hidden !important;
         }
 
+		
+		#arb .btn i {
+			width:14px;
+		}
+		
         .tree li {
             list-style-type: none;
             margin: 0;
@@ -328,16 +340,17 @@
                             <i class="fas fa-warehouse"></i>
                             <i class="fas fa-tasks"></i-->
 							
-                            <a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-see" role="button">
-                                <i class="fas fa-arrow-circle-down"></i>
-                            </a>
-                            <a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-sum" role="button">
-                                <i class="fas fa-asterisk"></i>
-                            </a>
-							
-							<a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-not-sums" role="button">
-                                <i class="fas fa-eye-slash"></i>
-                            </a>
+							<div class="btn-group btn-group" role="group" aria-label="Toggle buttons">
+								<a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-see" role="button">
+									<i class="fas fa-arrow-circle-down"></i>
+								</a>
+								<a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-sum" role="button">
+									<i class="fas fa-asterisk"></i>
+								</a>
+								<a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-not-sums" role="button">
+									<i class="far fa-eye-slash"></i>
+								</a>
+							</div>
                         </div>
                     </th>
                 </tr>
@@ -371,7 +384,7 @@
                             </div>
                             Memory
 							<a class="btn btn-sm btn-secondary" href="javascript:void(0)" id="tgg-2-not-sums2" role="button">
-                                <i class="fas fa-eye-slash"></i>
+                                <i class="far fa-eye-slash"></i>
                             </a>
                     </td>
                 </tr>

@@ -607,6 +607,8 @@ function getUniqueInObj(name, obj, i = 0) {
     return name + i;
 }
 
+
+var usesList = JSON.parse(JSON.stringify(dg.lk.uses));
 function addToTree(ob, treeob, depth = 2) {
     var ul = $('<ul>');
 
@@ -662,10 +664,19 @@ var arbTreeIsIn = false;
 function loadArb(isIn = true) {
 	$('#tree').empty();
     mapArbLi = {};
-	dg.lk.reduceListFromUsez(dg.lk.uses.in);
-	dg.lk.reduceListFromUsez(dg.lk.uses.out);
+
+	if (tggData['notSums']) {
+		//reload list
+		console.log('from uses');
+		usesList = JSON.parse(JSON.stringify(dg.lk.uses));
+	} else {
+		dg.lk.reduceListFromUsez(usesList.in);
+		dg.lk.reduceListFromUsez(usesList.out);
+	}
 	
-    arbTree = dg.lk.arbNodes(isIn ? dg.lk.uses.in : dg.lk.uses.out, 0);
+	
+	
+    arbTree = dg.lk.arbNodes(isIn ? usesList.in : usesList.out, 0);
     var root = $('#tree');
     addToTree(root, arbTree, 1);
     $('#tree li').unbind('click').click(arbLiEvent);
@@ -688,7 +699,7 @@ function arbLiEvent(event) {
     event.stopImmediatePropagation();
     var el = $(this);
     var i = el.find('i:first');
-    if (tggIsOn()) {
+    if (tggIsOn(['notSums'])) {
         return tggDo(el, i);
     }
     if (i.hasClass('fa-caret-down')) {
@@ -1284,8 +1295,11 @@ function createModalWithTable(tableDesc, tableButtons = 0) {
 var tggData = {};
 var tggEls = {};
 
-function tggIsOn() {
+function tggIsOn(except = []) {
     for (var t in tggData) {
+		if (except.includes(t)) {
+			continue;
+		}
         if (tggData[t] != 0) {
             return true;
         }
@@ -1329,10 +1343,63 @@ function tggDo(el, eli = 0) {
 		if(act.hasClass('hide')) {
 		  act.removeClass('hide');
 		}
+		
+		
+		$('#tgg-2-sum').popover({
+		trigger:'manual',
+        placement:'bottom',
+        container: 'body',
+        html: true,
+        content: function () {
+            //var clone = $($(this).data('popover-content')).clone(true).removeClass('hide');
+            //return clone;
+			
+			var tbl = $('<table>')
+				.addClass('table table-sm')
+				.append(
+					$('<tr>')
+						.append($('<th>').text('#('+workAll.list.length+')'))
+						.append($('<th>').text('Tasks'))
+				);
+				
+			for(var k in workAll.list) {
+				tbl.append(
+					$('<tr>')
+						.append($('<th>').attr('scope','row').text(k))
+						.append($('<td>').text(workAll.list[k]))
+				);
+			}
+			
+			var btnRun = $('<a>').addClass('btn btn-sm btn-dark color-light').text('Run')
+				.unbind('click').click((function(workAll) {
+			return function() {
+				$('#tgg-2-sum').popover('hide');
+				const [first] = workAll.list;
+				workAll.run('start with:' + first);
+			}
+		})(workAll));
+		
+			var btnCancel = $('<a>').addClass('btn btn-sm btn-danger color-light').text('Cancel').unbind('click').click((function(workAll) {
+			return function() {
+				workAll = null;
+				$('#tgg-2-sum').popover('hide');
+			}
+		})(workAll));
+			
+			return $('<div>').addClass('task-list-popover').append(tbl).append(btnRun).append(' ').append(btnCancel);
+        }
+    });
+		
+    $('#tgg-2-sum').popover('show');
+	$('#tgg-2-sum').focus(function () {
+		$('#tgg-2-sum').popover('hide');
+	});
+	
+		
 //	} else {
 	//	  if (!act.hasClass('hide')) {
 	//	    act.addClass('hide');
-	///	  }
+	//	  }
 	
 		/*
 		var modal;
@@ -1368,11 +1435,15 @@ function tggDo(el, eli = 0) {
 	}
 }
 
-function tggRegister(tggKey, tggSel) {
+function tggRegister(tggKey, tggSel, tggBtn, tggCls) {
 	if (!(tggKey in tggEls)) {
 		tggEls[tggKey] = [];
 	}
-	tggEls[tggKey].push(tggSel);
+	tggEls[tggKey].push({
+		'sel': tggSel,
+		'btn': tggBtn,
+		'cls': tggCls
+	});
 }
 
 function tggActionForKey(tggKey, exceptSel = 0) {
@@ -1380,31 +1451,34 @@ function tggActionForKey(tggKey, exceptSel = 0) {
 		return false;
 	}
 	var truek = tggData[tggKey];
-	for(var k in tggEls) {
-		if (exceptSel && exceptSel == tggEls[k]) {
+	var info = tggEls[tggKey];
+	for(var k in info) {
+		if (exceptSel && exceptSel == info[k]) {
 			continue;
 		}
-		var el = $(tggEls[k]);
+		var el = $(info[k].sel);
         var eli = el.find('i:first');
+		var btn = info[k].btn;
+		var cls = info[k].cls;
 		
-		for (var k in tggBtnClr) {
-			if (el.hasClass(tggBtnClr[k])) {
-                el.removeClass(tggBtnClr[k]);
+		for (var k2 in btn) {
+			if (el.hasClass(btn[k2])) {
+                el.removeClass(btn[k2]);
             }
-			if (eli) {
-				eli.removeClass(tggClasses[k]);
+			if (eli.hasClass(cls[k2])) {
+				eli.removeClass(cls[k2]);
 			}
         }
-		el.addClass(tggBtnClr[truek]);
+		el.addClass(btn[truek]);
 		if(eli) {
-			eli.addClass(tggClasses[k])
+			eli.addClass(cls[truek])
 		}
 	}
 }
 
-function toggleCall(tggBtnClr, tggClasses, tggKey, tggSel = 0) {
+function toggleCall(tggBtnClr, tggClasses, tggKey, tggSel = 0, clickHdl = 0) {
 	if (tggSel) {
-		tggRegister(tggKey, tggSel, tggBtnClr);
+		tggRegister(tggKey, tggSel, tggBtnClr, tggClasses);
 	}
     return function (e) {
         e.stopImmediatePropagation();
@@ -1415,13 +1489,16 @@ function toggleCall(tggBtnClr, tggClasses, tggKey, tggSel = 0) {
                 el.removeClass(tggBtnClr[k]);
                 el.addClass(tggBtnClr[(parseInt(k) + 1) % tggBtnClr.length]);
                 tggData[tggKey] = (parseInt(k) + 1) % (tggBtnClr.length);
-                if (eli) {
-                    eli.removeClass(tggClasses[k])
+                if (eli.hasClass(tggClasses[k])) {
+					eli.removeClass(tggClasses[k])
                         .addClass(tggClasses[(parseInt(k) + 1) % tggClasses.length]);
 
                 }
                 el.blur();
 				tggActionForKey(tggKey, tggSel);
+				if (clickHdl) {
+					clickHdl(tggKey, tggSel);
+				}
                 return;
             }
         }
@@ -1746,6 +1823,7 @@ var tryWorkSumThisKey = function (sumKey, successHdl = 0, errorHdl = 0, d=0) {
             throw e;
         }, d);
 
+		console.log(data);
         work1.postMessage(data);
         return;
     };
@@ -2073,16 +2151,32 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0, done = {}) {
 }
 
 function initActEvents() {
-	$('#tgg-2-not-sums').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums'));
+	$('#tgg-2-not-sums').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums', function () {
+		loadArb(arbTreeIsIn);
+		reloadArbFlags();
+		$('#mem table thead tr.row-item').remove();
+		$('#mem table tbody').empty();
+		loadFromMem();
+		initMemEvents();
+		initSumEvents();
+	}));
 	
-	$('#tgg-2-not-sums2').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums2'));
+	$('#tgg-2-not-sums2').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-slash', 'fa-eye'], 'notSums', '#tgg-2-not-sums2', function () { 
+		loadArb(arbTreeIsIn);
+		reloadArbFlags();
+		$('#mem table thead tr.row-item').remove();
+		$('#mem table tbody').empty();
+		loadFromMem();
+		initMemEvents();
+		initSumEvents();
+	}));
 	
-    $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-arrow-down', 'fa-arrow-circle-down'], 'see'));
+    $('#tgg-2-see').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-arrow-circle-down', 'fa-arrow-down'], 'see'));
 
     $('#tgg-2-sum').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-asterix', 'fa-asterix'], 'sum'));
 
     $('#act-sum').unbind('click').click(function () {
-		tryWorkSumThisKey(sumKey);
+		tryWorkSumThisKey(sumKey,0,0,31);
 	});
 	
     /*$('#act-repl').unbind('click').click(function () {
