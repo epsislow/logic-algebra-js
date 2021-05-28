@@ -699,7 +699,7 @@ function arbLiEvent(event) {
     event.stopImmediatePropagation();
     var el = $(this);
     var i = el.find('i:first');
-    if (tggIsOn(['notSums','note','map'])) {
+    if (tggIsOn(['see','sum'])) {
         return tggDo(el, i);
     }
     if (i.hasClass('fa-caret-down')) {
@@ -1189,6 +1189,16 @@ function initSumEvents() {
 
         loadSumValuesOf(el.attr('data-sum-value'));
     })
+    
+    $('#sum-sel tbody td').unbind('click').click(function() {
+        var el = $(this);
+        var i = el.find('i:first');
+//    alert('ss');
+        if (tggIsOn(['note', 'map'])) {
+          alert('test');
+          //return tggDo(el, i);
+        }
+    });
 }
 
 function closeMemEl(el) {
@@ -1295,11 +1305,11 @@ function createModalWithTable(tableDesc, tableButtons = 0) {
 var tggData = {};
 var tggEls = {};
 
-function tggIsOn(except = []) {
+function tggIsOn(only = []) {
     for (var t in tggData) {
-		if (except.includes(t)) {
-			continue;
-		}
+		if (only.length && !only.includes(t))  {
+	    		continue;
+		   }
         if (tggData[t] != 0) {
             return true;
         }
