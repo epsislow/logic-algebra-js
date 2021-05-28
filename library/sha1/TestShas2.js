@@ -1022,9 +1022,9 @@ function openSums(index) {
                 exprToShow = $('<span>')
                 //.append(k + ' ')
                     .append(
-                        $('<i>')
-                            .addClass('fas')
-                            .addClass(sumKeyVss[i][k] + '' == '1' ? 'fa-dot-circle' : 'fa-circle-notch')
+ $('<i>')
+     .addClass(sumKeyVss[i][k] + '' == '1'? 'fas':'far')
+     .addClass(sumKeyVss[i][k] + '' == '1' ? 'fa-dot-circle' : 'fa-circle')
                     );
 
             } else {
@@ -1248,9 +1248,11 @@ function loadMemValuesOf(key, el) {
                 .attr('data-sum-value', vs[i]);
         } else {
             td.append(
-                $('<i>')
-                    .addClass('fas')
-                    .addClass(vs[i] + '' == '1' ? 'fa-dot-circle' : 'fa-circle-notch')
+              
+    $('<i>')
+     .addClass(vs[i] + '' == '1'? 'fas':'far')
+     .addClass(vs[i] + '' == '1' ? 'fa-dot-circle' : 'fa-circle')
+ 
             )
                 .append(' ' + k);
         }
