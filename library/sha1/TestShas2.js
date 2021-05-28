@@ -1290,9 +1290,6 @@ function tggIsOn() {
     return false;
 }
 
-function setActionKey(sel, callback) {
-  
-}
 
 var workAll;
 function tggDo(el, eli = 0) {
@@ -1315,14 +1312,25 @@ function tggDo(el, eli = 0) {
 		workAll = tryWorkAllDepth(csum);
 		//console.log('if alright write: workall.run()', workAll.list);
 		
-		setActionKey('#act-wrk-run',(function() {
+		console.log('count: '+workAll.count, workAll.list);
+		
+		var act =	$('#act-wrk-run');
+		act.unbind('click').click((function(workAll,act) {
 		return function() {
 		  const [first] = workAll.list;
 		  workAll.run('start with:' + first);
+		  act.addClass('hide');
 		}
-		})(workAll));
+		})(workAll,act));
 		
-		
+		if(act.hasClass('hide')) {
+		  act.removeClass('hide');
+		}
+//	} else {
+	//	  if (!act.hasClass('hide')) {
+	//	    act.addClass('hide');
+	///	  }
+	
 		/*
 		var modal;
 		modal = createModalWithTable({
