@@ -1213,7 +1213,7 @@ function showSumBitChks(sumkey) {
 
   sumKey = sumkey;
   lastActSumKey = sumkey;
-  $('span.actsum').text(lastActSumKey);
+  //$('span.actsum').text(lastActSumKey);
   loadSumValuesOf(sumkey+ ':1');
 
   initSumEvents();
