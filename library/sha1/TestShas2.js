@@ -1225,15 +1225,50 @@ function turnSumBitChks(el, eli) {
     'off': 'fa-toggle-off',
     'elOn':'check-on'
   }
+  var s;
 //  console.log(el.attr('class'));
   if(eli.hasClass(cls.off)) {
     eli.removeClass(cls.off)
       .addClass(cls.on);
       el.addClass(cls.elOn);
+      s=1
   } else {
     eli.removeClass(cls.on)
       .addClass(cls.off);
       el.removeClass(cls.elOn)
+      s=0;
+  }
+  
+  noteBitChanged(eli.attr('id'), s);
+  console.log(noteBits);
+}
+
+var noteBits = {};
+function noteBitChanged(id, val) {
+ /* <!--a class="dropdown-item" href="javascript:void(0)" id="act-repl">Replace <span class="actsum">-</span>
+                    vals</a-->
+                */
+                
+               console.log(id);
+             //   return ;
+  var chk,sumk,i,k;  
+  if(id) {
+    [chk,sumk,i,k]= id.split('-');
+    console.log(i+'-'+k);
+    i=i+'';
+    if(!(i in noteBits)) {
+      noteBits[i] = [];
+    }
+    if(val) {
+      console.log('g');
+      noteBits[i].push(k);
+    } else {
+      console.log('k');
+      var pos;
+      if(-1 !==(pos = noteBits[i].indexOf(k))) {
+        noteBits[i].splice(pos,1);
+      }
+    }
   }
 }
 
