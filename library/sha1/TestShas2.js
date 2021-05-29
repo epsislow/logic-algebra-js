@@ -1213,7 +1213,7 @@ function showSumBitChks(sumkey) {
 
   sumKey = sumkey;
   lastActSumKey = sumkey;
-  //$('span.actsum').text(lastActSumKey);
+  $('span.actsum').text(lastActSumKey);
   loadSumValuesOf(sumkey+ ':1');
 
   initSumEvents();
@@ -1249,26 +1249,34 @@ function noteBitChanged(id, val) {
                     vals</a-->
                 */
                 
-               console.log(id);
+            //   console.log(id);
              //   return ;
   var chk,sumk,i,k;  
   if(id) {
     [chk,sumk,i,k]= id.split('-');
-    console.log(i+'-'+k);
-    i=i+'';
+   // console.log(i+'-'+k);
+   // i=i+'';
     if(!(i in noteBits)) {
       noteBits[i] = [];
     }
     if(val) {
-      console.log('g');
       noteBits[i].push(k);
     } else {
-      console.log('k');
       var pos;
       if(-1 !==(pos = noteBits[i].indexOf(k))) {
         noteBits[i].splice(pos,1);
       }
     }
+      if(!noteBits[i].length) {
+        delete noteBits[i];
+      }
+  }
+  if(dg.lk.objEmpty(noteBits)) {
+    $('#dvd1').addClass('hide');
+    $('#act-bit-notes').addClass('hide');
+  } else {
+    $('#dvd1').removeClass('hide');
+    $('#act-bit-notes').removeClass('hide');
   }
 }
 
