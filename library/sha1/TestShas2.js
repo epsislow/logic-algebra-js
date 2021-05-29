@@ -727,7 +727,7 @@ function loadFromMem() {
     var ic = 0;
 
     for (var k in keys) {
-		if (!tggData['notSums'] && !dg.lk.memHasANotSum(keys[k])) {
+		if (!tggData['notSums'] && (!dg.lk.memHasANotSum(keys[k]) || (!dg.sh.hasVarsInMem(keys[k])))) {
 			continue;
 		}
         if (i % 4 == 0) {
@@ -1208,8 +1208,15 @@ function initSumEvents() {
     });
 }
 
-function showSumBitChks() {
-  
+function showSumBitChks(sumkey) {
+  unloadSumValuesOf();
+
+  sumKey = sumkey;
+  lastActSumKey = sumkey;
+  $('span.actsum').text(lastActSumKey);
+  loadSumValuesOf(sumkey+ ':1');
+
+  initSumEvents();
 }
 
 function turnSumBitChks(el, eli) {
