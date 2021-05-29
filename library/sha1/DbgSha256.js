@@ -688,7 +688,8 @@ var dg = {
         },
 		'getValuesForExpected': function (sumKey, not = 0) {
 			var sums = dg.lk.getSum(sumKey);
-			var x = (dg.sh.andM(sums[0][0],sums[0][2],sums[0][8],sums[0][15]))
+			
+			var x = dg.sh.orM.apply(dg.sh, sums[0]);
 			if (not) {
 				x = dg.sh.notB(x);
 			}
