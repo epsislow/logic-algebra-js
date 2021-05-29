@@ -1023,10 +1023,10 @@ function openSums(index) {
     var vs = sumKeyVss[index];
     var cls;
     var exprToShow;
+    var sumbChk='';
     for (var k in vs) {
         tr = $('<tr>');
         for (var i in sumKeyVss) {
-
             if (['0', '1'].includes(sumKeyVss[i][k] + '')) {
                 cls = (sumKeyVss[i][k] + '' == '1') ? 'one' : 'zero';
 
@@ -1041,11 +1041,20 @@ function openSums(index) {
             } else {
                 cls = 'expr';
                 exprToShow = processSumExpr(sumKeyVss[i][k]);
+                
+            }
+            
+            if(cls=='expr' && tggIsOn(['note'])) {
+              sumbChk = getChkWVal(0, sumKey+'-'+i+'-'+k);
+            } else {
+              sumbChk ='';
             }
 
             tr.append($('<td>')
                 .addClass(cls)
                 .append(k + ' ')
+                .append(sumbChk)
+                .append(' ')
                 .append(exprToShow)
             );
             trs.push(tr);
@@ -1191,14 +1200,42 @@ function initSumEvents() {
     })
     
     $('#sum-sel tbody td').unbind('click').click(function() {
-        var el = $(this);
-        var i = el.find('i:first');
-//    alert('ss');
-        if (tggIsOn(['note', 'map'])) {
-          alert('test');
-          //return tggDo(el, i);
+        if (tggIsOn(['note'])) {
+          var el = $(this);
+          var eli = el.find('i:first');
+          turnSumBitChks(el, eli);
         }
     });
+}
+
+function showSumBitChks() {
+  
+}
+
+function turnSumBitChks(el, eli) {
+  var cls = {
+    'on':'fa-toggle-on',
+    'off': 'fa-toggle-off',
+    'elOn':'check-on'
+  }
+//  console.log(el.attr('class'));
+  if(eli.hasClass(cls.off)) {
+    eli.removeClass(cls.off)
+      .addClass(cls.on);
+      el.addClass(cls.elOn);
+  } else {
+    eli.removeClass(cls.on)
+      .addClass(cls.off);
+      el.removeClass(cls.elOn)
+  }
+}
+
+function getChkWVal(val=0, name) {
+  return $('<i>')
+     .attr('id','chk-'+name)
+     .addClass('chk-bit')
+     .addClass('fas')
+     .addClass(val?'fa-toggle-on':'fa-toggle-off');
 }
 
 function closeMemEl(el) {
@@ -2161,8 +2198,8 @@ function tryWorkAllDepth(sumKey, taskList = 0, d = 0, done = {}) {
 }
 
 function initActEvents() {
-  $('#tgg-2-note').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-sticky-note'], 'note', '#tgg-2-note', function () {
-    
+  $('#tgg-2-note').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-sticky-note'], 'note', 0, function () {
+      showSumBitChks(sumKey);
   }));
   
   $('#tgg-2-map').unbind('click').click(toggleCall(['btn-secondary', 'btn-light'], ['fa-eye-sticky-note'], 'map', '#tgg-2-map', function() {
