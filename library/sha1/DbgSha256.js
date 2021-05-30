@@ -24,6 +24,12 @@ var dg = {
         'uses': {'in': {}, 'out': {}},
 		'usez': {},
         'forms': {},
+        'const': {
+          's4':{'2x':[], '3x':[],'4x':[],'5x':[],'6x':[]},
+          's8': {},
+          's16': {},
+          's32': {'2x':[], '3x':[],'4x':[],'5x':[],'6x':[]},
+        },
         'reset': function () {
             this.m = {};
         },
@@ -361,8 +367,6 @@ var dg = {
         'parent': function () {
             return dg;
         },
-        's4':{'2x':[], '3x':[],'4x':[],'5x':[],'6x':[]},
-        's32': {'2x':[], '3x':[],'4x':[],'5x':[],'6x':[]},
         'short': function (x, sendUpdatesCallback = 0, parentSKey = 0) {
             var vs;
             if (Array.isArray(x)) {
@@ -1298,11 +1302,11 @@ if (r.includes('#')) {
           var btsb= bts;
           xno +='x';
           bts = 's'+bts;
-          if(!(bts in this)){
-            return false;
+          if(!(bts in this.parent().lk.const)){
+            return 0;
           }
           
-          var sc= this[bts][xno];
+          var sc= this.parent().lk.const[bts][xno];
           if(!this.parent().lk.objEmpty(sc)) {
             return sc;
           }
@@ -1324,7 +1328,7 @@ if (r.includes('#')) {
           if(short) {
             sum= this.short(sum);
           }
-          return this[bts][xno] = sum;
+          return this.parent().lk.const[bts][xno] = sum;
         },
         'sumch': function (sumName, ks, doit = false, debug = 0, sendUpdatesCallback = 0, parentSKey = 0) {
             var vslen = ks.length;

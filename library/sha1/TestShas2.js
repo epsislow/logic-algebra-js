@@ -506,6 +506,7 @@ function cacheSaveMem() {
     setCacheKey('dg.lks', JSON.stringify(dg.lk.sums));
     setCacheKey('dg.lku', JSON.stringify(dg.lk.uses));
     setCacheKey('dg.lkz', JSON.stringify(dg.lk.usez));
+    setCacheKey('dg.lkconst', JSON.stringify(dg.lk.const));
     //dg.lk.forms]);
 }
 
@@ -513,10 +514,16 @@ function cacheLoadMem() {
     var lastLks = JSON.parse(getCacheKey('dg.lks'));
     if (lastLks) {
         //console.log(lastLks);
-        dg.lk.m = JSON.parse(getCacheKey('dg.lkm'));
-        dg.lk.sums = lastLks;
-        dg.lk.uses = JSON.parse(getCacheKey('dg.lku'));
-        dg.lk.usez = JSON.parse(getCacheKey('dg.lkz'));
+        dg.lk.sums= lastLks;
+        try {
+          dg.lk.m = JSON.parse(getCacheKey('dg.lkm'));
+          dg.lk.uses = JSON.parse(getCacheKey('dg.lku'));
+          dg.lk.usez = JSON.parse(getCacheKey('dg.lkz'));
+          dg.lk.const = JSON.parse(getCacheKey('dg.lkconst'));
+        } catch (e) {
+          console.log(e.message);
+          throw e;
+        }
     }
 }
 
