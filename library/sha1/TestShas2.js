@@ -508,6 +508,30 @@ function cacheSaveMem() {
     setCacheKey('dg.lkz', JSON.stringify(dg.lk.usez));
     setCacheKey('dg.lkconst', JSON.stringify(dg.lk.const));
     //dg.lk.forms]);
+    var data = {
+      'reg': {
+        'dg':{
+          'lk.m': JSON.stringify(dg.lk.m),
+          'lk.sums': JSON.stringify(dg.lk.sums),
+          'lk.uses': JSON.stringify(dg.lk.uses),
+          'lk.usez': JSON.stringify(dg.lk.usez),
+          'lk.const': JSON.stringify(dg.lk.const)
+        }
+      }
+    };
+    $.ajax({
+        type: "POST",
+        url: 'http://localhost:9000/store.php',
+        data: {'data':data},
+        dataType: 'jsonp',
+        success: function (data) {
+          console.log(data);
+        },
+        error: function(data) {
+          console.log(data);
+        },
+    });
+    
 }
 
 function cacheLoadMem() {
