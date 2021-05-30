@@ -97,6 +97,36 @@ function regData($reg,$conn) {
   return $res;
 }
 
+function selData($sel,$conn) {
+    $ret = [];
+    $stmt = $conn->prepare('Select * from dg where name in (?)');
+    if(false === $stmt) {
+        throw new \Exception('Bad stmt error: '. $conn->error);
+    }
+   $stmt->bind_param(str_repeat('s',count($sel)), ...$sel);
+   //$a='s1';
+    
+   //$stmt->bind_param('s', ...$sel);
+   // array_unshift($sel, str_repeat('s',count($sel)));
+    
+   // call_user_func_array([$stmt,'bind_param'], $sel);
+    
+   // die(var_export($sel));
+    $stmt->execute();
+    $res = $stmt->get_result();
+    
+    //die(var_export($res));
+      
+    if($res->num_rows >0) {
+      while($r = $res->fetch_assoc()) {
+        //die(var_export($r));
+        $ret[$r['name']] = $r['data'];
+      }
+    }
+    
+    return $ret;
+}
+
 function delData($del,$conn) {
   $stmt = 0;
   foreach ($del as $tbl => $val) {
@@ -120,6 +150,7 @@ try {
   $conn = getConn();
 
   $data = $_REQUEST['data'];
+  
   if(is_string($data)){
     $data = json_decode($data,1);
   }
@@ -127,11 +158,14 @@ try {
     throw new \Exception( 'Data not provided!');
   }
 
+  if(!empty($data['sel'])) {
+    $res['data']['sel'] = selData($data['sel'], $conn);
+  }
   if(!empty($data['reg'])) {
-    $res['data']['reg'] = regData($data['reg'],$conn);
+    $res['data']['reg'] = regData($data['reg'], $conn);
   }
   if(!empty($data['del'])) {
-    //$res['data']['del'] = delData($data['del'],$conn);
+    //$res['data']['del'] = delData($data['del'], $conn);
   }
   $conn->close();
 } catch (\Throwable $e) {

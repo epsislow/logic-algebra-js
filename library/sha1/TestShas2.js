@@ -518,19 +518,19 @@ function cacheSaveMem() {
           'lk.const': JSON.stringify(dg.lk.const)
         }
       }
-    };
+    };/*
     $.ajax({
         type: "POST",
         url: 'http://localhost:9000/store.php',
         data: {'data':data},
         dataType: 'jsonp',
         success: function (data) {
-          console.log(data);
+          console.log('s', data);
         },
-        error: function(data) {
-          console.log(data);
+        error: function(e,ex) {
+          console.log('e', e.status, ex);
         },
-    });
+    });*/
     
 }
 
