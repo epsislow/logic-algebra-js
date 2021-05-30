@@ -361,6 +361,8 @@ var dg = {
         'parent': function () {
             return dg;
         },
+        's4':{'2x':[], '3x':[],'4x':[],'5x':[],'6x':[]},
+        's32': {'2x':[], '3x':[],'4x':[],'5x':[],'6x':[]},
         'short': function (x, sendUpdatesCallback = 0, parentSKey = 0) {
             var vs;
             if (Array.isArray(x)) {
@@ -1279,6 +1281,50 @@ if (r.includes('#')) {
                 return sumform;
             }
             return false;
+        },
+        'sumch32': function(xno,sum,short=0,d=0) {
+          
+        },
+        'genS': function(bts,xno, short=0,d=0) {
+          //dg.sh.genS(4,2,1)
+          if(xno<2||xno>6) {
+            return false;
+          }
+          
+          if(![32,16,8,4].includes(bts)) {
+            return false;
+          }
+          var xnob=xno;
+          var btsb= bts;
+          xno +='x';
+          bts = 's'+bts;
+          if(!(bts in this)){
+            return false;
+          }
+          
+          var sc= this[bts][xno];
+          if(!this.parent().lk.objEmpty(sc)) {
+            return sc;
+          }
+          
+          var sum=0;
+          
+          var cVals=[];
+          for(var i=0;i<xnob;i++) {
+             var cVal = this.parent().lk.genCvalAll('x'+i, btsb);
+          
+             if(sum==0) {
+               sum=cVal;
+               continue;
+             } else {
+               sum=this.sum(sum, cVal);
+             }
+          }
+          
+          if(short) {
+            sum= this.short(sum);
+          }
+          return this[bts][xno] = sum;
         },
         'sumch': function (sumName, ks, doit = false, debug = 0, sendUpdatesCallback = 0, parentSKey = 0) {
             var vslen = ks.length;
