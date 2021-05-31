@@ -20,7 +20,7 @@ $cfg = [
 	]
 ];
 
-$mysql = $cfg['dsk'];
+$mysql = $cfg['mob'];
 
 $profiler = ['queries' => [],
 'sel'=>0,'ins'=>0,'upd'=>0,'del'=>0];
@@ -66,7 +66,7 @@ function cExec($stmt, $query, $params = []) {
 	}
 }
 
-function checkDbIntegrity($conn, $force = 0) {
+function checkDbIntegrity($conn, $force = 1) {
 	$tablesCfg = [ 'dg'=> 'CREATE TABLE `dg` (\n`id` int(10) NOT NULL AUTO_INCREMENT,\n`name` varchar(64) NOT NULL DEFAULT \'\',\n`data` mediumtext,\nPRIMARY KEY (`id`),\nUNIQUE KEY `name` (`name`)\n) ENGINE=InnoDB AUTO_INCREMENT DEFAULT CHARSET=latin1'];
 
 	$autoIncrTest = 'AUTO_INCREMENT=';

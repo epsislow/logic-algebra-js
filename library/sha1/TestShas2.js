@@ -562,7 +562,7 @@ function cacheLoadMem() {
 		$.ajax({
 			type: "POST",
 			data: {'data':data},
-			//url: 'http://localhost:9000/php/store.php',
+		//	url: 'http://localhost:9000/php/store.php',
 			url: '/php/store.php',
 			dataType: 'json',
 			success: function (data) {
@@ -577,7 +577,7 @@ function cacheLoadMem() {
 			  dg.lk.const = JSON.parse(data.data.sel['lk.const'])
 			},
 			error: function(e,ex) {
-			  console.log('l e', e.status, ex);
+			  console.log('l e', e.status, ex, e.responseText);
 			},
 		});
 	}
