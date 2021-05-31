@@ -502,6 +502,7 @@ function delCacheKey($key) {
     return localStorage.removeItem($key);
 }
 
+serverSave = 1;
 function cacheSaveMem() {
     setCacheKey('dg.lkm', JSON.stringify(dg.lk.m));
     setCacheKey('dg.lks', JSON.stringify(dg.lk.sums));
@@ -509,29 +510,33 @@ function cacheSaveMem() {
     setCacheKey('dg.lkz', JSON.stringify(dg.lk.usez));
     setCacheKey('dg.lkconst', JSON.stringify(dg.lk.const));
     //dg.lk.forms]);
-    var data = {
-      'reg': {
-        'dg':{
-          'lk.m': JSON.stringify(dg.lk.m),
-          'lk.sums': JSON.stringify(dg.lk.sums),
-          'lk.uses': JSON.stringify(dg.lk.uses),
-          'lk.usez': JSON.stringify(dg.lk.usez),
-          'lk.const': JSON.stringify(dg.lk.const)
-        }
-      }
-    };/*
-    $.ajax({
-        type: "POST",
-        url: 'http://localhost:9000/store.php',
-        data: {'data':data},
-        dataType: 'jsonp',
-        success: function (data) {
-          console.log('s', data);
-        },
-        error: function(e,ex) {
-          console.log('e', e.status, ex);
-        },
-    });*/
+	
+	if (serverSave) {
+		var data = {
+		  'reg': {
+			'dg':{
+			  'lk.m': JSON.stringify(dg.lk.m),
+			  'lk.sums': JSON.stringify(dg.lk.sums),
+			  'lk.uses': JSON.stringify(dg.lk.uses),
+			  'lk.usez': JSON.stringify(dg.lk.usez),
+			  'lk.const': JSON.stringify(dg.lk.const)
+			}
+		  }
+		};
+		$.ajax({
+			type: "POST",
+			data: {'data':data},
+			//url: 'http://localhost:9000/php/store.php',
+			url: '/php/store.php',
+			dataType: 'json',
+			success: function (data) {
+			  console.log('s', data);
+			},
+			error: function(e,ex) {
+			  console.log('s e', e.status, ex);
+			},
+		});
+	}
     
 }
 
@@ -550,6 +555,32 @@ function cacheLoadMem() {
           throw e;
         }
     }
+	if(serverSave) {
+		var data = {
+		  'sel': ['lk.m','lk.sums','lk.uses','lk.usez','lk.const']
+		};
+		$.ajax({
+			type: "POST",
+			data: {'data':data},
+			//url: 'http://localhost:9000/php/store.php',
+			url: '/php/store.php',
+			dataType: 'json',
+			success: function (data) {
+				if (data.error) {
+					throw Error(data.error);
+				}
+			  console.log('l', data);
+			  dg.lk.m = JSON.parse(data.data.sel['lk.m']);
+			  dg.lk.sums = JSON.parse(data.data.sel['lk.sums']);
+			  dg.lk.uses = JSON.parse(data.data.sel['lk.uses']);
+			  dg.lk.usez = JSON.parse(data.data.sel['lk.usez']);
+			  dg.lk.const = JSON.parse(data.data.sel['lk.const'])
+			},
+			error: function(e,ex) {
+			  console.log('l e', e.status, ex);
+			},
+		});
+	}
 }
 
 function cacheResetMem() {
