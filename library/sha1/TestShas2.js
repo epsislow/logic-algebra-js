@@ -502,7 +502,7 @@ function delCacheKey($key) {
     return localStorage.removeItem($key);
 }
 
-serverSave = 1;
+serverSave = 0;
 function cacheSaveMem() {
     setCacheKey('dg.lkm', JSON.stringify(dg.lk.m));
     setCacheKey('dg.lks', JSON.stringify(dg.lk.sums));
