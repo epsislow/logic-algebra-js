@@ -30,23 +30,26 @@ var r = {
             var win = {
                 'res': {
                     t: 'Resources',
-                    p: a.paint.res
+                    p: a.paint.res.bind(a)
                 },
                 'map': {
                     t: 'Map',
-                    p: a.paint.map
+                    p: a.paint.map.bind(a)
                 }
             }
 
             for (var w in win) {
                 r.win.add(w, win[w].t, win[w].p);
             }
+            
+            r.win.show('res');
 
             r.tick
               .add('calc', a.calcTicker.bind(a))
               .add('winMgr', r.win.mgrTicker.bind(r.win));
         },
-        painters: function () {},
+        painters: function () {
+        },
         research: function () {},
         player: function () {}
     },
@@ -72,7 +75,29 @@ var r = {
             add: function () {},
             gen: function () {}
         },
-        paint: {},
+        paint: {
+          res: function(rr) {
+            if(rr.repaint) {
+              if(!rr.el) {
+         rr.el = $('<div>')
+          .addClass('res')
+          .addClass('bg-black')
+          .addClass('color-light')
+          .attr('style','border:1px solid #77a;width:100%;height:200px')
+          .text(rr.title);
+          
+        $('#main').append(rr.el);
+ // console.log('ss')
+              } 
+              rr.repaint=0;
+              return;
+            }
+            rr.el.append(' tick');
+          },
+          map: function(rr) {
+            
+          }
+        },
     },
     win: {
         reg: {},
@@ -83,23 +108,29 @@ var r = {
 
             this.reg[key] = {
                 visible: 0,
+                repaint: 0,
                 title: title,
                 paint: paint,
             }
+            
             return this;
         },
         show: function (key) {
             this.reg[key].visible = 1;
+            this.reg[key].repaint = 1;
             return this;
         },
         hide: function (key) {
             this.reg[key].visible = 0;
+            this.reg[key].repaint = 1;
             return this;
         },
         mgrTicker: function () {
+          var rr;
             for (var key in this.reg) {
-                if (this.reg[key].visible) {
-                    this.reg[key].paint();
+              rr = this.reg[key];
+              if (rr.visible||rr.repaint) {
+             rr.paint(rr);
                 }
             }
         }
