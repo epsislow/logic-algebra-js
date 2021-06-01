@@ -18,11 +18,10 @@ var r = {
             var a = r.app;
             
             var ids = [];
-            ids.push(a.planet.add(1, 'moon'));
-            ids.push(a.planet.add(2, 'mars'));
-            ids.push(a.planet.add(3, 'pluto'));
-
-            a.resource.add(0, 'Energy', 'e');
+            ids.push(a.planet.add('moon'));
+            ids.push(a.planet.add('mars'));
+            ids.push(a.planet.add('pluto'));
+            a.resource.add(0, 'Energy', 'bolt');
             a.resource.gen(5, ids[0]);
             a.resource.gen(2, ids[1]);
             a.resource.gen(5, ids[2]);
@@ -64,7 +63,12 @@ var r = {
             console.log('calc '+this.i);
         },
         planet: {
-            add: function () {},
+            reg:[],
+            add: function (name) {
+              var id=this.reg.length;
+              this.reg[id]= {name:name};
+              return id;
+            },
             gen: function () {}
         },
         research: {
@@ -72,8 +76,24 @@ var r = {
             gen: function () {}
         },
         resource: {
-            add: function () {},
-            gen: function () {}
+            reg:[],
+            add: function (planetId, name, ico=0) {
+              var id=this.reg.length;
+              this.reg[id] = {
+                name: name,
+                planetId: 0,
+                ico: ico
+            }
+            return id;
+            },
+            gen: function (num, planetId=0) {
+              var i, name,ico;
+              for(i=0;i<num;i++) {
+                name = rd.rand(1,100);
+                ico = rd.rand(1,100);
+                this.add(planetId, name, ico);
+              }
+            }
         },
         paint: {
           res: function(rr) {
