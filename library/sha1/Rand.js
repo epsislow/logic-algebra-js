@@ -120,7 +120,7 @@ function init() {
   }
   
   r.addTicker('calc', r.calcTicker)
-   .addTicker('winMgr', r.win.mgrTicker);
+   //.addTicker('winMgr', r.win.mgrTicker);
 
   
 }
