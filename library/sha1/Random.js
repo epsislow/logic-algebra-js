@@ -3,13 +3,14 @@ console.log('Random v0.1.0 [rd]');
 var rd = (function () {
     var pub = {};
 
-    pub.randomBytes = function (length, letters = 3, num = 0, symbols = 0) {
+    pub.randomBytes = function (length, letters = 3, num = 0, symbols = 0, pick=0) {
         var result = [];
 
         var characters =
             ((letters & 1) ? 'bcdfghjklmnpqrstvwxyz' : '') +
         ((letters & 2) ? 'aeiouaeiouaeiouaeiou' : '') +
         (num ? '0123456789' : '') +
+        + (pick? pick: '') +
         (symbols ? ':/,-_=|<>[].' : '');
         var charactersLength = characters.length;
         for (var i = 0; i < length; i++) {
@@ -23,6 +24,42 @@ var rd = (function () {
         return Math.floor(Math.random() * (max - min)) + min;
     }
 
+    pub.pickOneFrom = function(list, withPop=0) {
+      var pick = this.rand(0,list.length);
+      if(withPop) {
+        return list.slice(pick,1).pop();
+      } else {
+        return list[pick];
+      }
+    }
+    
+    pub.addEveryNcharsFromBuffer = function(str,buffer,n) {
+      var ret = [];
+      var buf=buffer;
+      if(Array.isArray(n)) {
+        var j=0;
+        for(var i=0;i<str.length;i+=n[j])
+        {
+          if(Array.isArray(buffer)) {
+            buf= buffer[j];
+          }
+          ret.push(str.substr(i,n[j])+buf);
+          
+          j++;
+        }
+      }
+      return ret.join('');
+    }
+    
+    pub.randomName= function (length,pre=0,suf=0) {
+      var nam = this.randomBytes(length, 1);
+      
+      this.addEveryNcharsFromBuffer(nam,
+        this.randomBytes(length, 2),
+        this.randomBytes(length,0,0,0,'123').split('')
+        );
+      return (pre?pre:'')+ nam + (suf?suf:'');
+    }
     pub.hashCode = function (str, seed = 0, b = 32) {
         let h1 = 0xdeadbeef ^ seed,
         h2 = 0x41c6ce57 ^ seed;

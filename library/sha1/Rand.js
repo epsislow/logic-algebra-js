@@ -76,22 +76,27 @@ var r = {
             gen: function () {}
         },
         resource: {
+            icoList:['adjust','bars','circle-notch','clone','database','dice','dot-circle','egg','eject','ethetnet','equals','fire','fire-alt','flask','hockey-puck','icicles','mountain','qr-code','radiation-alt','record-vinyl','ring','shapes','share-alt-square','square','stop-circle','sun','th-large','th','water','wave-square','window-restore'],
+            colorList:['light','white','pink','light-green','light-blue','light-purple','grey','light-red','light-pink','light-cyan'],
             reg:[],
-            add: function (planetId, name, ico=0) {
+            add: function (planetId, name, ico=0, color='light') {
               var id=this.reg.length;
               this.reg[id] = {
                 name: name,
-                planetId: 0,
-                ico: ico
+                planetId: planetId,
+                ico: ico,
+                color: color
             }
             return id;
             },
             gen: function (num, planetId=0) {
               var i, name,ico;
               for(i=0;i<num;i++) {
-                name = rd.rand(1,100);
-                ico = rd.rand(1,100);
-                this.add(planetId, name, ico);
+        ico = rd.pickOneFrom(this.icoList,1);
+        suf = rd.pickOneFrom(['um','nd','ux','us','ad'],0);
+        name = rd.randomName(rd.rand(4,8),0,suf);
+        color=rd.pickOneFrom(this.colorList,0);
+                this.add(planetId, name, ico,color);
               }
             }
         },
