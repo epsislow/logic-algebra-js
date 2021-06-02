@@ -11,11 +11,13 @@ var m = {
 var r = {
     init: {
         all: function () {
+            var a = r.app;
+            a.cacheLoad(r);
+            
             this.painters();
             this.research();
             this.player();
             
-            var a = r.app;
             
             var ids = [];
             ids.push(a.planet.add('moon'));
@@ -24,7 +26,8 @@ var r = {
 			
 			a.planet.get(ids[0]).current = 1;
 			a.planet.get(ids[0]).visible = 1;
-			
+			a.planet.get(ids[1]).visible = 1;
+			a.planet.get(ids[2]).visible = 1;
 			var moneyId = a.resource.add(0, '$$$', 'coins', 'yellow');
             var energyId = a.resource.add(0, 'Energy', 'bolt', 'yellow');
 			
@@ -54,7 +57,7 @@ var r = {
             r.win.show('res');
 
             r.tick
-              .add('calc', a.calcTicker.bind(a))
+              .add('calc', a.calcTicker.bind(r))
               .add('winMgr', r.win.mgrTicker.bind(r.win));
         },
         painters: function () {
@@ -62,15 +65,41 @@ var r = {
         research: function () {},
         player: function () {}
     },
+    startTime: Date.now(),
     app: {
 		ticks: 0,
-        cacheSave: function () {},
-        cacheLoad: function () {},
+		deltaTicks:1,
+        cacheSave: function (r) {
+          r.cache.set('lastTick', Date.now());
+          r.cache.set('r.seed',rd.seed);
+        },
+        
+        cacheLoad: function (r) {
+          var lastTick = r.cache.get('lastTick');
+          
+          rd.setSeed(r.cache.get('r.seed'));
+          
+          if(lastTick) {
+          this.deltaTicks = Math.floor((Date.now() - lastTick)/1000);
+          
+           console.log(this.deltaTicks);
+          
+          }
+          
+          return false;
+        },
         calcTicker: function () {
-            this.ticks++;
-			for(var id in this.resource.reg) {
-				this.resource.reg[id].value += this.resource.reg[id].ratePerTick;
-				this.resource.reg[id].repaint = 1;
+          var a= this.app;
+          
+          a.ticks+=a.deltaTicks;
+			for(var id in a.resource.reg) {
+				a.resource.reg[id].value += a.resource.reg[id].ratePerTick* a.deltaTicks;
+				a.resource.reg[id].repaint = 1;
+			}
+			a.deltaTicks=1;
+			if(a.ticks%5) {
+			  a.cacheSave(this);
+			 // console.log(Date.now()-this.startTime);
 			}
         },
         planet: {
@@ -163,7 +192,7 @@ var r = {
 						.addClass('fa-'+resPerPlanet[p][r].ico)
 						.attr('style', 'color:'+resPerPlanet[p][r].color);
 						var tr = $('<tr>')
-							.addClass('item' + (!planet.current ?' hide':''))
+							.addClass('item' + (!planet.visible ?' hide':''))
 							.append(
 								$('<td>')
 								.append(' > ')
@@ -290,8 +319,7 @@ var r = {
         }
         return this;
     }
-}
-//.setParent();
+}//.setParent();
 
 $('document').ready(function (document) {
     if (!('rd' in window)) {
