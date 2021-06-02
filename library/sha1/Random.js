@@ -19,9 +19,18 @@ var rd = (function () {
         }
         return result.join('');
     }
+	
+	pub.randFunc = {};
 
-    pub.rand = function (min, max) {
-        return Math.floor(Math.random() * (max - min)) + min;
+    pub.rand = function (min, max, alg = 0, seed ='random.js') {
+		if (alg == 1) {
+			return Math.floor(Math.random() * (max - min)) + min;
+		} else {
+			if (!(seed in this.randFunc)) {
+				this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed));
+			}
+			return Math.floor(this.randFunc[seed]() * (max - min)) + min;
+		}
     }
 
     pub.pickOneFrom = function(list, withPop=0) {
@@ -67,7 +76,7 @@ var rd = (function () {
         );
       nam = (pre?pre:'')+ nam.substr(0,len) + (suf?suf:'');
 	  
-	  return nam.charAt(0).toUpperCase() + nam.slice(1)
+	  return nam.charAt(0).toUpperCase() + nam.slice(1);
     }
     pub.hashCode = function (str, seed = 0, b = 32) {
         let h1 = 0xdeadbeef ^ seed,

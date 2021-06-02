@@ -21,10 +21,20 @@ var r = {
             ids.push(a.planet.add('moon'));
             ids.push(a.planet.add('mars'));
             ids.push(a.planet.add('pluto'));
-            a.resource.add(0, 'Energy', 'bolt');
+			
+			a.planet.get(ids[0]).current = 1;
+			a.planet.get(ids[0]).visible = 1;
+			
+			var moneyId = a.resource.add(0, '$$$', 'coins', 'yellow');
+            var energyId = a.resource.add(0, 'Energy', 'bolt', 'yellow');
+			
+			a.resource.get(energyId).value = 50;
+			a.resource.get(moneyId).value = 1500;
             a.resource.gen(5, ids[0]);
             a.resource.gen(2, ids[1]);
             a.resource.gen(5, ids[2]);
+			a.resource.get(moneyId).ratePerTick = 1;
+			a.resource.get(energyId+1).ratePerTick = 1.27;
 
             var win = {
                 'res': {
@@ -53,39 +63,50 @@ var r = {
         player: function () {}
     },
     app: {
+		ticks: 0,
         cacheSave: function () {},
         cacheLoad: function () {},
         calcTicker: function () {
-            if (!('i' in this)) {
-              this.i=0;
-            }
-            this.i++;
-            console.log('calc '+this.i);
+            this.ticks++;
+			for(var id in this.resource.reg) {
+				this.resource.reg[id].value += this.resource.reg[id].ratePerTick;
+				this.resource.reg[id].repaint = 1;
+			}
         },
         planet: {
             reg:[],
-            add: function (name) {
+            add: function (name, visible) {
               var id=this.reg.length;
-              this.reg[id]= {name: name.charAt(0).toUpperCase() + name.slice(1)};
+              this.reg[id]= {
+				  name: name.charAt(0).toUpperCase() + name.slice(1),
+				  current: 0,
+				  visible: 0,
+			  };
               return id;
             },
+			get: function (id) {
+				return this.reg[id];
+			},
             gen: function () {}
         },
         research: {
             add: function () {},
             gen: function () {}
         },
-        resource: {
-            icoList:['adjust','bars','circle-notch','clone','database','dice','dot-circle','egg','eject','ethetnet','equals','fire','fire-alt','flask','hockey-puck','icicles','mountain','qr-code','radiation-alt','record-vinyl','ring','shapes','share-alt-square','square','stop-circle','sun','th-large','th','water','wave-square','window-restore'],
-            colorList:['light','white','pink','light-green','light-blue','light-purple','grey','light-red','light-pink','light-cyan'],
+        resource: { //'fish'//box//book-open/city/coins/cogs/cog/compass/globe-europe/globe/microchip/network-wired
+            icoList:['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','ethetnet','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore'],
+            colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
             reg:[],
             add: function (planetId, name, ico=0, color='light') {
               var id=this.reg.length;
               this.reg[id] = {
                 name: name,
+				value: 0,
                 planetId: planetId,
                 ico: ico,
-                color: color
+                color: color,
+			    ratePerTick: 0,
+				repaint: 0,
             }
             return id;
             },
@@ -93,32 +114,45 @@ var r = {
               var i, name,ico;
               for(i=0;i<num;i++) {
         ico = rd.pickOneFrom(this.icoList,1);
-        suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ux','us','ad'],0);
+        suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
         name = rd.randomName(rd.rand(3,8),0,suf);
         color=rd.pickOneFrom(this.colorList,0);
                 this.add(planetId, name, ico,color);
               }
-            }
+            },
+			get: function(id) {
+				return this.reg[id];
+			}
         },
         paint: {
           res: function(rr) {
             if(rr.repaint) {
               if(!rr.el) {
 				  
-				  var resTable = $('<table>');
+				  var resTable = $('<table>')
+					.addClass('table table-sm table-dark');
 				  var trs = [];
 				  var resPerPlanet = [];
 				  var ress = this.resource.reg;
+				  var planetCtr = this.planet;
 			  for(var r in ress) {
 				  if (!(ress[r].planetId in resPerPlanet)) {
 					  resPerPlanet[ress[r].planetId] = [];
 				  }
 				  resPerPlanet[ress[r].planetId].push(ress[r]);
 			  }
+			  var planet;	
+			  var currentIcon = $('<i>').addClass('fas fa-arrow-down');
 			  for(var p in resPerPlanet) {
-				  var tr = $('<tr>').append(
+				  planet = planetCtr.get(p);
+				  var tr = $('<tr>')
+					.addClass('planet' + (!planet.visible? ' hide':'') + (planet.current? ' here':'') )
+					.attr('data-planetId', p)
+					.append(
 						$('<td>')
 						.append('Planet: ' + this.planet.reg[resPerPlanet[p][0].planetId].name)
+						.append(' ')
+						.append(planet.current? currentIcon:' ')
 						//.attr('rowspan',resPerPlanet[p].length)
 					);
 					
@@ -126,15 +160,27 @@ var r = {
 					
 					for(var r in resPerPlanet[p]) {
 						var icon = $('<i>').addClass('fas')
-						.addClass(resPerPlanet[p][r].color)
-						.addClass('fa-'+resPerPlanet[p][r].ico);
+						.addClass('fa-'+resPerPlanet[p][r].ico)
+						.attr('style', 'color:'+resPerPlanet[p][r].color);
 						var tr = $('<tr>')
-						.append(
-							$('<td>')
-							.append(' > ')
-							.append(resPerPlanet[p][r].name+ ' ')
-							.append(icon)
-						);
+							.addClass('item' + (!planet.current ?' hide':''))
+							.append(
+								$('<td>')
+								.append(' > ')
+								//.append(resPerPlanet[p][r].name+ ': '+ resPerPlanet[p][r].value + ' ')
+								.append(
+									$('<span>')
+										.addClass('res-value')
+										.attr('data-resource-id', r)
+										.append(
+											Math.floor(ress[r].value)//.toFixed(2)
+										)
+								)
+								.append(' ')
+								.append(icon)
+								.append(' ')
+								.append(resPerPlanet[p][r].name)
+							);
 						trs.push(tr);
 					}
 			  }
@@ -155,7 +201,19 @@ var r = {
               return;
             }
 			
-            rr.el.append(' tick');
+		    var ress = this.resource.reg;
+			for(var r in ress) {
+				if (!ress[r].repaint) {
+					continue;
+				}
+				$('.res-value[data-resource-id='+r+']').text(
+					Math.floor(ress[r].value)//.toFixed(2)
+				);
+				ress[r].repaint = 0;
+			}
+			
+			
+            //rr.el.append(' tick');
           },
           map: function(rr) {
             
