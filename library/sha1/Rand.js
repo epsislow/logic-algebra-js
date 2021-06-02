@@ -66,7 +66,7 @@ var r = {
             reg:[],
             add: function (name) {
               var id=this.reg.length;
-              this.reg[id]= {name:name};
+              this.reg[id]= {name: name.charAt(0).toUpperCase() + name.slice(1)};
               return id;
             },
             gen: function () {}
@@ -93,8 +93,8 @@ var r = {
               var i, name,ico;
               for(i=0;i<num;i++) {
         ico = rd.pickOneFrom(this.icoList,1);
-        suf = rd.pickOneFrom(['um','nd','ux','us','ad'],0);
-        name = rd.randomName(rd.rand(4,8),0,suf);
+        suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ux','us','ad'],0);
+        name = rd.randomName(rd.rand(3,8),0,suf);
         color=rd.pickOneFrom(this.colorList,0);
                 this.add(planetId, name, ico,color);
               }
@@ -104,19 +104,57 @@ var r = {
           res: function(rr) {
             if(rr.repaint) {
               if(!rr.el) {
+				  
+				  var resTable = $('<table>');
+				  var trs = [];
+				  var resPerPlanet = [];
+				  var ress = this.resource.reg;
+			  for(var r in ress) {
+				  if (!(ress[r].planetId in resPerPlanet)) {
+					  resPerPlanet[ress[r].planetId] = [];
+				  }
+				  resPerPlanet[ress[r].planetId].push(ress[r]);
+			  }
+			  for(var p in resPerPlanet) {
+				  var tr = $('<tr>').append(
+						$('<td>')
+						.append('Planet: ' + this.planet.reg[resPerPlanet[p][0].planetId].name)
+						//.attr('rowspan',resPerPlanet[p].length)
+					);
+					
+					trs.push(tr);
+					
+					for(var r in resPerPlanet[p]) {
+						var icon = $('<i>').addClass('fas')
+						.addClass(resPerPlanet[p][r].color)
+						.addClass('fa-'+resPerPlanet[p][r].ico);
+						var tr = $('<tr>')
+						.append(
+							$('<td>')
+							.append(' > ')
+							.append(resPerPlanet[p][r].name+ ' ')
+							.append(icon)
+						);
+						trs.push(tr);
+					}
+			  }
+			  resTable.append(trs);
+
          rr.el = $('<div>')
           .addClass('res')
           .addClass('bg-black')
           .addClass('color-light')
-          .attr('style','border:1px solid #77a;width:100%;height:200px')
-          .text(rr.title);
+          .attr('style','border:1px solid #77a;width:100%;height:500px')
+          .text(rr.title)
+		  .append(resTable);
           
         $('#main').append(rr.el);
- // console.log('ss')
+ 
               } 
               rr.repaint=0;
               return;
             }
+			
             rr.el.append(' tick');
           },
           map: function(rr) {

@@ -3,15 +3,15 @@ console.log('Random v0.1.0 [rd]');
 var rd = (function () {
     var pub = {};
 
-    pub.randomBytes = function (length, letters = 3, num = 0, symbols = 0, pick=0) {
+    pub.randomBytes = function (length, letters = 3, num = false, symbols = false, pick='') {
         var result = [];
 
         var characters =
-            ((letters & 1) ? 'bcdfghjklmnpqrstvwxyz' : '') +
-        ((letters & 2) ? 'aeiouaeiouaeiouaeiou' : '') +
-        (num ? '0123456789' : '') +
-        + (pick? pick: '') +
-        (symbols ? ':/,-_=|<>[].' : '');
+            ((letters & 1) ? 'bcdfghjklmnpqrstvwxyz' : '') 
+		+((letters & 2) ? 'aeiouaeiouaeiouaeiou' : '') 
+		+(num ? '0123456789' : '') 
+		+(pick) 
+		+(symbols ? ':/,-_=|<>[].' : '');
         var charactersLength = characters.length;
         for (var i = 0; i < length; i++) {
             result.push(characters.charAt(Math.floor(Math.random() *
@@ -27,7 +27,7 @@ var rd = (function () {
     pub.pickOneFrom = function(list, withPop=0) {
       var pick = this.rand(0,list.length);
       if(withPop) {
-        return list.slice(pick,1).pop();
+        return list.splice(pick,1).pop();
       } else {
         return list[pick];
       }
@@ -38,12 +38,12 @@ var rd = (function () {
       var buf=buffer;
       if(Array.isArray(n)) {
         var j=0;
-        for(var i=0;i<str.length;i+=n[j])
+        for(var i=0;i<str.length;i+=parseInt(n[j],10))
         {
           if(Array.isArray(buffer)) {
             buf= buffer[j];
           }
-          ret.push(str.substr(i,n[j])+buf);
+          ret.push(str.substr(i, parseInt(n[j],10))+buf);
           
           j++;
         }
@@ -51,14 +51,23 @@ var rd = (function () {
       return ret.join('');
     }
     
-    pub.randomName= function (length,pre=0,suf=0) {
-      var nam = this.randomBytes(length, 1);
+    pub.randomName= function (len,pre=0,suf=0, allowNearVocals = 0) {
+      var nam = this.randomBytes(len, 1);
       
-      this.addEveryNcharsFromBuffer(nam,
-        this.randomBytes(length, 2),
-        this.randomBytes(length,0,0,0,'123').split('')
+      nam = this.addEveryNcharsFromBuffer(nam,
+        this.randomBytes(len*2, 2).split(''),
+		
+		(allowNearVocals ? 
+			this.randomBytes(len*2,0,0,0,'12') :
+			this.addEveryNcharsFromBuffer(
+				this.randomBytes(len*2,0,0,0,'12'),
+				'0', this.randomBytes(len*2,0,0,0,'1234').split('')
+			)
+		).split('')
         );
-      return (pre?pre:'')+ nam + (suf?suf:'');
+      nam = (pre?pre:'')+ nam.substr(0,len) + (suf?suf:'');
+	  
+	  return nam.charAt(0).toUpperCase() + nam.slice(1)
     }
     pub.hashCode = function (str, seed = 0, b = 32) {
         let h1 = 0xdeadbeef ^ seed,
