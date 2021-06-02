@@ -33,8 +33,8 @@ var r = {
             a.resource.gen(5, ids[0]);
             a.resource.gen(2, ids[1]);
             a.resource.gen(5, ids[2]);
-			a.resource.get(moneyId).ratePerTick = 1;
-			a.resource.get(energyId+1).ratePerTick = 1.27;
+			a.resource.get(moneyId).ratePerTick = 0.07;
+			a.resource.get(energyId+1).ratePerTick = 0.17;
 
             var win = {
                 'res': {
