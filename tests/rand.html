@@ -18,6 +18,9 @@
   .res {
 	font-family: arial;
 	font-size:13px;
+	width: 100%;
+	overflow: auto;
+	height: 500px;
   }
   .mono {
 	font-family: freemono, monospace;
@@ -26,9 +29,20 @@
 	color:#ccc;
 	font-weight:bold;
   }
+  .res .table tr:nth-child(even) {
+	background-color: #202225;
+  }
   
   .res .item {
 	color:#ccc;
+  }
+  
+  .res .res-ctrl {
+	color: #fff;
+  }
+  
+  .res .res-value {
+    margin-left: 15px;
   }
   
   .hide {
@@ -37,6 +51,16 @@
   .here {
 	color:#fff;
   }
+
+  
+  body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
 </style>
 
 <body class="bg-black">

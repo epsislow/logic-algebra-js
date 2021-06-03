@@ -10,35 +10,43 @@ var m = {
 
 var r = {
     init: {
+		reset: 0,
         all: function () {
             var a = r.app;
-            a.cacheLoad(r);
-            
-            this.painters();
-            this.research();
-            this.player();
-            
-            
-            var ids = [];
-            ids.push(a.planet.add('moon'));
-            ids.push(a.planet.add('mars'));
-            ids.push(a.planet.add('pluto'));
 			
-			a.planet.get(ids[0]).current = 1;
-			a.planet.get(ids[0]).visible = 1;
-			a.planet.get(ids[1]).visible = 1;
-			a.planet.get(ids[2]).visible = 1;
-			var moneyId = a.resource.add(0, '$$$', 'coins', 'yellow');
-            var energyId = a.resource.add(0, 'Energy', 'bolt', 'yellow');
+            var initDone = false;
 			
-			a.resource.get(energyId).value = 50;
-			a.resource.get(moneyId).value = 1500;
-            a.resource.gen(5, ids[0]);
-            a.resource.gen(2, ids[1]);
-            a.resource.gen(5, ids[2]);
-			a.resource.get(moneyId).ratePerTick = 0.07;
-			a.resource.get(energyId+1).ratePerTick = 0.17;
+			if (!this.reset) {
+				initDone = a.cacheLoad(r);
+				console.log(initDone);
+			}
+            
+            if (!initDone) {
+				var ids = [];
+				ids.push(a.planet.add('moon'));
+				ids.push(a.planet.add('mars'));
+				ids.push(a.planet.add('pluto'));
+			
+				a.planet.get(ids[0]).current = 1;
+				a.planet.get(ids[0]).visible = 1;
+				a.planet.get(ids[1]).visible = 1;
+				
+				var moneyId = a.resource.add(0, '$$$', 'coins', 'yellow');
+				var energyId = a.resource.add(0, 'Energy', 'bolt', 'yellow');
+				
+				a.resource.get(energyId).value = 50;
+				a.resource.get(moneyId).value = 1500;
+				a.resource.gen(5, ids[0]);
+				a.resource.gen(2, ids[1]);
+				a.resource.gen(5, ids[2]);
+				a.resource.get(moneyId).ratePerTick = 0.07;
+				a.resource.get(energyId+1).ratePerTick = 0.17;
+			}
 
+            this.painters(initDone);
+            this.research(initDone);
+            this.player(initDone);
+			
             var win = {
                 'res': {
                     t: 'Resources',
@@ -62,7 +70,8 @@ var r = {
         },
         painters: function () {
         },
-        research: function () {},
+        research: function (initDone) {
+		},
         player: function () {}
     },
     startTime: Date.now(),
@@ -70,21 +79,35 @@ var r = {
 		ticks: 0,
 		deltaTicks:1,
         cacheSave: function (r) {
-          r.cache.set('lastTick', Date.now());
-          r.cache.set('r.seed',rd.seed);
+			var local = {
+				'lastTick': Date.now(),
+				'seed': rd.seed,
+				'app': {
+					'ticks': r.app.ticks,
+					'planet': r.app.planet.reg,
+					'resource': r.app.resource.reg,
+				}
+			};
+          r.cache.set('r.local', JSON.stringify(local));
         },
         
         cacheLoad: function (r) {
-          var lastTick = r.cache.get('lastTick');
+          var local = JSON.parse(r.cache.get('r.local'));
           
-          rd.setSeed(r.cache.get('r.seed'));
+		  if (local) {
+			rd.setSeed(local.seed);
+			
+			r.app.ticks = local.app.ticks;
+			r.app.planet.reg = local.app.planet;
+			r.app.resource.reg = local.app.resource;
+			
+			this.deltaTicks = Math.floor((Date.now() - local.lastTick)/1000);
           
-          if(lastTick) {
-          this.deltaTicks = Math.floor((Date.now() - lastTick)/1000);
-          
-           console.log(this.deltaTicks);
-          
-          }
+			console.log(this.deltaTicks);
+		   
+			return true;
+		  }
+
           
           return false;
         },
@@ -97,9 +120,10 @@ var r = {
 				a.resource.reg[id].repaint = 1;
 			}
 			a.deltaTicks=1;
-			if(a.ticks%5) {
+			if(a.ticks%30 == 0) {
+			  //console.log(Date.now()-this.startTime);
 			  a.cacheSave(this);
-			 // console.log(Date.now()-this.startTime);
+			  
 			}
         },
         planet: {
@@ -156,7 +180,11 @@ var r = {
         paint: {
           res: function(rr) {
             if(rr.repaint) {
-              if(!rr.el) {
+				
+				if(rr.el) {
+					rr.el.remove();
+				}
+				
 				  
 				  var resTable = $('<table>')
 					.addClass('table table-sm table-dark');
@@ -172,16 +200,21 @@ var r = {
 			  }
 			  var planet;	
 			  var currentIcon = $('<i>').addClass('fas fa-arrow-down');
-			  console.log(resPerPlanet);
+			  //console.log(resPerPlanet);
+			  
+			  var clsOpened = 'res-ctrl fas fa-minus-square';
+			  var clsClosed = 'res-ctrl fas fa-plus-square';
 			  
 			  for(var p in resPerPlanet) {
+				  
 				  planet = planetCtr.get(p);
 				  var tr = $('<tr>')
 					.addClass('planet' + (!planet.visible? ' hide':'') + (planet.current? ' here':'') )
 					.attr('data-planetId', p)
 					.append(
 						$('<td>')
-						.append('Planet: ' + this.planet.reg[resPerPlanet[p][0].r.planetId].name)
+						.append( $('<i>').addClass(planet.current? clsOpened:clsClosed))
+						.append(' Planet: ' + this.planet.reg[resPerPlanet[p][0].r.planetId].name)
 						.append(' ')
 						.append(planet.current? currentIcon:' ')
 						//.attr('rowspan',resPerPlanet[p].length)
@@ -194,15 +227,15 @@ var r = {
 						.addClass('fa-'+resPerPlanet[p][r].r.ico)
 						.attr('style', 'color:'+resPerPlanet[p][r].r.color);
 						var tr = $('<tr>')
-							.addClass('item' + (!planet.visible ?' hide':''))
+							.addClass('item' + (!planet.current ?' hide':''))
+							.attr('data-planetId', p)
 							.append(
 								$('<td>')
-								.append(' > ')
 								//.append(resPerPlanet[p][r].name+ ': '+ resPerPlanet[p][r].value + ' ')
 								.append(
 									$('<span>')
 										.addClass('res-value')
-										.attr('data-resource-id', resPerPlanet[p][r].r)
+										.attr('data-resource-id', resPerPlanet[p][r].id)
 										.append(
 											Math.floor(resPerPlanet[p][r].r.value)//.toFixed(2)
 										)
@@ -221,14 +254,38 @@ var r = {
           .addClass('res')
           .addClass('bg-black')
           .addClass('color-light')
-          .attr('style','border:1px solid #77a;width:100%;height:500px')
           .text(rr.title)
 		  .append(resTable);
           
-        $('#main').append(rr.el);
- 
-              } 
-              rr.repaint=0;
+				$('#main').append(rr.el);
+				
+				
+			$('.res-ctrl').parent().click(function () {
+				var el = $(this); 
+				var eli = el.find('i:first');
+				
+				var show;
+				if (eli.hasClass('fa-minus-square')) {
+					eli.removeClass('fa-minus-square')
+					  .addClass('fa-plus-square');
+					  show = 0;
+				} else { 
+					eli.removeClass('fa-plus-square')
+					  .addClass('fa-minus-square');
+					  show = 1;
+				}
+				
+				
+				var planetId = el.parent().attr('data-planetId');
+				var q = $('.res tr.item[data-planetId='+planetId+']');
+				if (show) {
+					q.removeClass('hide')
+				} else {
+					q.addClass('hide');
+				}
+			})
+				
+			  rr.repaint=0;
               return;
             }
 			
@@ -237,6 +294,7 @@ var r = {
 				if (!ress[r].repaint) {
 					continue;
 				}
+				//console.log(r + ' ' +'.res-value[data-resource-id='+r+']')
 				$('.res-value[data-resource-id='+r+']').text(
 					Math.floor(ress[r].value)//.toFixed(2)
 				);
@@ -282,8 +340,9 @@ var r = {
             for (var key in this.reg) {
               rr = this.reg[key];
               if (rr.visible||rr.repaint) {
-             rr.paint(rr);
-                }
+				rr.paint(rr);
+				rr.repaint = 0;
+              }
             }
         }
     },

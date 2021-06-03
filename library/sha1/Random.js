@@ -31,15 +31,15 @@ var rd = (function () {
     pub.rand = function (min, max, alg = 0, seed = 0) {
 		if (alg == 1) {
 			return Math.floor(Math.random() * (max - min)) + min;
-		} else {
-		  if(!seed) {
-		    seed = this.seed;
-		  }
-			if (!(seed in this.randFunc)) {
-				this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed));
-			}
-			return Math.floor(this.randFunc[seed]() * (max - min)) + min;
 		}
+		if(!seed) {
+			seed = this.seed;
+		}
+		
+		if (!(seed in this.randFunc)) {
+			this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed));
+		}
+		return Math.floor(this.randFunc[seed]() * (max - min)) + min;
     }
 
     pub.pickOneFrom = function(list, withPop=0) {
