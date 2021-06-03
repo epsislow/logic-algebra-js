@@ -32,10 +32,11 @@ var r = {
 				
 				var moneyId = a.resource.add(0, '$$$', 'coins', 'yellow', -1, 0);
 				
+				a.buildings.add();
 				var energyBuildingList = a.buildings.add();
-				a.buildings.addBuilding(energyBuildingList, 'battery', 1);
-				a.buildings.addBuilding(energyBuildingList, 'battery-charge', 1);
-				var energyId = a.resource.add(0, 'Energy', 'bolt', 'yellow'-1, energyBuildingList);
+				a.buildings.addBuilding(energyBuildingList, 'battery', 1,1);
+				a.buildings.addBuilding(energyBuildingList, 'battery-charge', 2,2);
+				var energyId = a.resource.add(0, 'Energy', 'bolt', 'yellow',-1,energyBuildingList);
 				
 				a.resource.get(moneyId).value = 1500;
 				a.resource.get(energyId).value = 50;
@@ -185,7 +186,7 @@ var r = {
         },
 		buildings: {
 			//icoList: ["building", "cloud-upload-alt", "cogs", "cog", "code-branch", "city", "dolly", "dolly-flatbed", "donate", "draw-polygon", "fill-drip", "home", "industry", "landmark", "layer-group", "paper-plane", "parachute-box", "network-wired ", "robot", "signal", "snowplow", "solar-panel", "space-shuttle", "store", "truck-moving", "university", "vihara", "school", "plus-circle", "memory", "microchip", "inbox", "hotel", "hdd", "gopuram", "glass-whiskey", "fax", "fan", "ethernet", "dharmachakra", "dollar-sign", "clone", "chalkboard", "car-battery", "boxes", "cubes", "database", "coins", "code-branch", "atom", "atlas", "book", "box-tissue", "briefcase"],
-			icoList: {'battery': 'car-battery', 'battery-charge': 'charging-station'},
+			icoList: {'battery': 'car-battery', 'battery-charge': 'charging-station','industry':'industry'},
 			reg: [],
 			add: function () {
 				var listId = this.reg.length;
@@ -210,7 +211,7 @@ var r = {
 				this.reg[listId][buildingType].rateValue = rateValue;
 				return true;
 			},
-			addBuilding: function (listId, buildingType, count=1, value=1, rateValue=0) {
+			addBuilding: function (listId, buildingType, count=1, level=1, value=1, rateValue=0) {
 				if (!(listId in this.reg)) {
 					throw new Error('No buildListId'+listId+' found');
 				}
@@ -220,22 +221,34 @@ var r = {
 						value: value,
 						rateValue: rateValue,
 						count: 0,
-						level: 1
+						level: 0
 					}
 					this.reg[listId][buildingType] = buildingObj;
 				}
 				this.reg[listId][buildingType].count+=count;
+				this.reg[listId][buildingType].level+=level;
+				
 				return true;
 			},
 			getBuildingsEl: function(listId) {
-				var el;
+				var el=$('<span>');
 				list = this.get(listId);
 				if (!list) {
-					return;
+					return el;
+				}
+				if(listId==1) {
+				  console.log('22', list);
 				}
 				for(var k in list) {
-					
+				  console.log(k);
+					el
+					.append(' '+list[k].count+'×')
+					.append($('<i>')
+					  .addClass('building-'+list[k].level)
+					  .addClass('fas fa-'+this.icoList[list[k].buildingType])
+					  )
 				}
+				return el;
 			}
 		},
         research: {
@@ -343,7 +356,8 @@ var r = {
 						
 						var resBuildingsEl = '';
 						if (resPerPlanet[p][r].r.buildingListId) {
-							resBuildingsEl = this.buildings.getBuildingsEl(resPerPlanet[p][r].r.buildingListId);
+							resBuildingsEl = this.buildings.getBuildingsEl(resPerPlanet[p][r].r.buildingListId)
+							  .addClass('buildings');
 						}
 						
 						var tr = $('<tr>')
@@ -380,11 +394,7 @@ var r = {
 							.append(
 								$('<td>')
 								.addClass('build-col')
-								.append(
-									$('<span>')
-										.addClass('buildings')
-										.append(resBuildingsEl)
-								)
+								.append(resBuildingsEl)
 								.append(
 									$('<span>')
 										.addClass('build-menu')
