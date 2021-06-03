@@ -168,10 +168,12 @@ var r = {
 				  if (!(ress[r].planetId in resPerPlanet)) {
 					  resPerPlanet[ress[r].planetId] = [];
 				  }
-				  resPerPlanet[ress[r].planetId].push(ress[r]);
+				  resPerPlanet[ress[r].planetId].push({id:r,r:ress[r]});
 			  }
 			  var planet;	
 			  var currentIcon = $('<i>').addClass('fas fa-arrow-down');
+			  console.log(resPerPlanet);
+			  
 			  for(var p in resPerPlanet) {
 				  planet = planetCtr.get(p);
 				  var tr = $('<tr>')
@@ -179,7 +181,7 @@ var r = {
 					.attr('data-planetId', p)
 					.append(
 						$('<td>')
-						.append('Planet: ' + this.planet.reg[resPerPlanet[p][0].planetId].name)
+						.append('Planet: ' + this.planet.reg[resPerPlanet[p][0].r.planetId].name)
 						.append(' ')
 						.append(planet.current? currentIcon:' ')
 						//.attr('rowspan',resPerPlanet[p].length)
@@ -189,8 +191,8 @@ var r = {
 					
 					for(var r in resPerPlanet[p]) {
 						var icon = $('<i>').addClass('fas')
-						.addClass('fa-'+resPerPlanet[p][r].ico)
-						.attr('style', 'color:'+resPerPlanet[p][r].color);
+						.addClass('fa-'+resPerPlanet[p][r].r.ico)
+						.attr('style', 'color:'+resPerPlanet[p][r].r.color);
 						var tr = $('<tr>')
 							.addClass('item' + (!planet.visible ?' hide':''))
 							.append(
@@ -200,15 +202,15 @@ var r = {
 								.append(
 									$('<span>')
 										.addClass('res-value')
-										.attr('data-resource-id', r)
+										.attr('data-resource-id', resPerPlanet[p][r].r)
 										.append(
-											Math.floor(ress[r].value)//.toFixed(2)
+											Math.floor(resPerPlanet[p][r].r.value)//.toFixed(2)
 										)
 								)
 								.append(' ')
 								.append(icon)
 								.append(' ')
-								.append(resPerPlanet[p][r].name)
+								.append(resPerPlanet[p][r].r.name)
 							);
 						trs.push(tr);
 					}
