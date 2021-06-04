@@ -504,11 +504,19 @@ var r = {
 			var mapTable = $('<table>').addClass('table table-sm table-dark');
 			var trs = [];
 			var pl = this.place;
+      
+			var clsOpened = 'place-ctrl fas fa-angle-down';
+			var clsClosed = 'place-ctrl fas fa-angle-right';
+      
+      var parentIds = [pl.currentId];
 
-			var clsOpened = 'res-ctrl fas fa-minus-square';
-			var clsClosed = 'res-ctrl fas fa-plus-square';
+      var parent = pl.get(pl.currentId);
 
-			trs = pl.getCurrentPlacesEl(pl.currentId, 2, clsOpened, clsClosed);
+      while(parent = pl.get(parent.parentId)) {
+        parentIds.push(parent.id);
+      }
+      
+			trs = pl.getCurrentPlacesEl(pl.currentId, 2, parentIds, clsOpened, clsClosed);
 
 			mapTable.append(trs);
 
@@ -527,24 +535,24 @@ var r = {
 				var eli = el.find('i:first');
 				
 				var show;
-				if (eli.hasClass('fa-minus-square')) {
-					eli.removeClass('fa-minus-square')
-					  .addClass('fa-plus-square');
+				if (eli.hasClass(clsOpened)) {
+					eli.removeClass(clsOpened)
+					  .addClass(clsClosed);
 					  show = 0;
 				} else { 
-					eli.removeClass('fa-plus-square')
-					  .addClass('fa-minus-square');
+					eli.removeClass(clsClosed)
+					  .addClass(clsOpened);
 					  show = 1;
 				}
 				
-				
+				/*
 				var placeId = el.parent().attr('data-placeId');
 				var q = $('.map tr[data-placeId='+placeId+']');
 				if (show) {
 					q.removeClass('hide')
 				} else {
 					q.addClass('hide');
-				}
+				}*/
 			})
 				
 			  rr.repaint=0;
@@ -727,7 +735,7 @@ var r = {
 				//rd2.deleteRand(seed);
 				//rd2 = null;
 			},
-			getCurrentPlacesEl: function (id, lvl= 0, clsOpened, clsClosed, root = 1, isPrev = 1, reallvl=0) {
+			getCurrentPlacesEl: function (id, lvl= 0, parentIds=[], clsOpened, clsClosed, root = 1, isPrev = 1, reallvl=0) {
 				var pl = this;
 				var place;
 				if (!id) {
@@ -748,7 +756,7 @@ var r = {
 				if (lvl > 0) {
 					currentIcon = $('<i>').addClass('fas fa-map-marker-alt');
 				} else {
-					var trs = this.getCurrentPlacesEl(current.parentId, 0, clsOpened, clsClosed, 0, 1, reallvl+1);
+					var trs = this.getCurrentPlacesEl(current.parentId, 0, parentIds, clsOpened, clsClosed, 0, 1, reallvl+1);
           
 					place = current;
 //trs.push(place);
@@ -768,7 +776,7 @@ var r = {
 						//.attr('colspan', 2)
 						.addClass('info-col')
             .addClass('ident-'+reallvl)
-						.append( $('<i>').addClass(clsOpened))
+						.append( $('<i>').addClass(parentIds.includes(place.id) ?clsOpened:clsClosed))
 						.append(' '+ place.type+': ' + place.name)
 						.append(' ')
 						.append(placeIcon)
@@ -779,21 +787,10 @@ var r = {
 					trs.push(tr);
 					return trs;
 				}
-				
-			/*
-				var parents = [];
-
-				var parent = current;
-
-				while(parent = pl.get(parent.parentId)) {
-				  parents.push(parent);
-				}
-				var topNearbys = pl.expand(pl.get(current.parentId).parentId);
-			*/
 				var trs = [];
         
         if (isPrev == 1 || root == 1) {
-            trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 1, reallvl+1));
+            trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), parentIds, clsOpened, clsClosed, 0, 1, reallvl+1));
         }
 				
 				var placeIcon;
@@ -826,7 +823,7 @@ var r = {
 						//.attr('colspan', 2)
 						.addClass('info-col')
             .addClass('ident-'+reallvl)
-						.append( $('<i>').addClass(clsOpened))
+						.append( $('<i>').addClass(parentIds.includes(place.id) ?clsOpened:clsClosed))
 						.append(' '+ place.type+': ' + place.name)
 						.append(' ')
 						.append(placeIcon)
@@ -837,7 +834,7 @@ var r = {
 				 trs.push(tr);
 				}
 				
-				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 0, reallvl+1));
+				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), parentIds, clsOpened, clsClosed, 0, 0, reallvl+1));
 				
 				return trs;
 				
