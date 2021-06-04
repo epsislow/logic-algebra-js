@@ -88,7 +88,7 @@ window.vs = (function () {
       
       return pub;
     }
-    pub.js = function(name, href, integrity=false) {
+    pub.js = function(name, href, cached = 1, integrity=false) {
       if(name in page.js) {
         return pub;
       }
@@ -96,7 +96,7 @@ window.vs = (function () {
 		  cont.attr('crossorigin', "anonymous")
 			.attr('integrity', integrity);
 	  }
-      page.js[name] = {href: href};
+      page.js[name] = {href: href, cached: cached};
       
       return pub;
     }
@@ -107,17 +107,30 @@ window.vs = (function () {
       page.jsCallback= callback;
       return pub;
     }
-    pub.importJs = function(name, href,jsCallback) {
+    pub.importJs = function(name, href, jsCallback, cached = 1) {
       if(name in page.js){
         throw "Js named: " +name +' already loaded!';
         return pub;
       }
       page.js[name] =href;
-      if(jsCallback=='function') {
-        $.getScript(href)
-      } else {
-        $.getScript(href, jsCallback);
-      }
+	  if (cached) {
+		  var opt = {
+			  url: href,
+			  dataType: 'script',
+			  cache: true
+		  };
+		  
+		  if(jsCallback=='function') {
+			  opt.success = jsCallback;
+		  }
+		  jQuery.ajax(opt);
+	  } else {		  
+		  if(jsCallback=='function') {
+			$.getScript(href)
+		  } else {
+			$.getScript(href, jsCallback);
+		  }
+	  }
       return pub;
     }
     pub.addScripts = function () {
@@ -127,14 +140,33 @@ window.vs = (function () {
       
       page.jsCount = Object.keys(page.js).length;
       for(var j in page.js) {
-         $.getScript(page.js[j].href, (function (p) {
-           return function () {
-             p.jsCount--;
-             if(p.jsCount <=0) {
-               p.jsCallback();
-             }
-           }
-         })(page));
+			  
+		  if (page.js[j].cached) {
+			  jQuery.ajax({
+				  url: page.js[j].href,
+				  dataType: 'script',
+				  cache: true,
+				  success: (function (p) {
+				   return function () {
+					 p.jsCount--;
+					 if(p.jsCount <=0) {
+						p.jsCallback();
+					 }
+				   }
+				 })(page)
+			  });
+		  } else {
+			 $.getScript(page.js[j].href, (function (p) {
+			   return function () {
+				 p.jsCount--;
+				 if(p.jsCount <=0) {
+					p.jsCallback();
+				 }
+			   }
+			 })(page));
+		  }
+	  
+	  
       }
       return pub;
     }

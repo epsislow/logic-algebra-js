@@ -1,13 +1,5 @@
 console.log('Rand 0.0.1');
 
-var m = {
-    research: {},
-    resource: {},
-	place: {},
-    quest: {},
-    player: {}
-};
-
 var r = {
     init: {
 		reset: 1,
@@ -56,6 +48,8 @@ var r = {
 			a.buildings.addBuilding(firstResBuildList, 'industry', 4);
 
 			}
+			
+			r.app.place.add('road', 'road', 0, 0, 0, 0, 0, 0, 0);
 
             this.painters(initDone);
             this.research(initDone);
@@ -392,7 +386,6 @@ var r = {
 										.addClass('trade-value')
 								//		.addClass('hide')
 						.attr('data-resource-id', resPerPlanet[p][r].id)
-					//	.attr('id','data-trade-'+resPerPlanet[p][r].id)
 										.append(
 											resPerPlanet[p][r].r.tradeValue.toFixed(2)
 										)
@@ -482,10 +475,9 @@ var r = {
 				);
 				
 				if(ress[r].tradeValuePos!=0) {
-	//	trd.css({color: (ress[r].tradeValuePos>0?'#5f5':'#f55')})
-		
-	//	$('#data-trade-'+r).animate({color:"#f00"}, 1000);
-	//	console.log(trd.length);
+			trd.css({color: (ress[r].tradeValuePos>0?'#5f5':'#f55')})
+				.animate({color:"#ddd"}, 500);
+					ress[r].tradeValuePos=0;
 				}
 				ress[r].repaint = 0;
 				
@@ -498,7 +490,153 @@ var r = {
             
           }
         },
-    },
+		place: {
+			icoList: {
+				'road': ['road'],
+				'docker': ['expand'],
+				'City': ['city','fax'],
+				'Space station': ['asterisk','vector-square','gopuram','cube', 'genderless'], 
+				'Space dock': ['ruler-horizontal','poll-h','solar-panel','industry', 'memory'],
+				'Space city':['teeth','ethernet','city','fax'],
+				'Space colony':['tablet','spa','hotel','hdd'],
+				'Planet':['planet'],
+				'Solar system':['bullseye'],
+				'Cluster':['braille'],
+				'Galaxy':['border-none'],
+				'Sunport Gateway': ['route'],
+				'Warp Gateway': ['circle-notch']
+			},
+			config: {
+				'type': {
+					'road': [],
+					'Galaxy': ['Cluster'],
+					'Cluster': ['Solar system'],
+					'Solar system': ['Planet','Warp Gateway','Sunport Gateway', 'Space city'],
+					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City'],
+					'Space colony': ['docker'],
+					'Space city': ['docker'],
+					'Space dock': ['docker'],
+					'Space station': ['docker'],
+					'City': ['docker'],
+					'Warp Gateway': [],
+					'Sunport Gateway': [],
+					'docker': []
+				},
+				'limit': {
+					'road': [1,1],
+					'docker': [1,1],
+					'Galaxy': [1,1],
+					'Cluster': [2,4],
+					'Solar system': [3,5],
+					'Planet': [2,5],
+					'Space colony': [0,1],
+					'Space city': [0,1],
+					'Space dock': [0,2],
+					'Space station': [0,2],
+					'City': [0,3],
+					'Warp Gateway': [1,1],
+					'Sunport Gateway': [1,1]
+				}
+			},
+			reg:[],
+			add: function (name, type, icon, distanceIndex, visible, buildingListId = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0) {
+              var id=this.reg.length;
+			  
+			  
+			  if(firstChildId) {
+				  if (this.get(firstChildId).parentId) {
+					  throw new Error(firstChildId + ' id already has a parentId. Check yourself: place.get()')
+				  }
+				  this.get(firstChildId).parentId = id;
+			  }
+			  
+			  if(parentId) {
+				  if (!this.get(parentId).firstChildId) {
+					  this.get(parentId).firstChildId = id;
+					  this.get(parentId).lastChildId = id;
+				  } else {
+					  this.get(this.get(parentId).lastChildId).nextId = id;
+					  prevId = this.get(parentId).lastChildId;
+					  this.get(parentId).lastChildId = id;
+				  }
+			  }
+			  
+			  if(nextId) {
+				  if (!this.get(nextId).prevId) {
+					  this.get(nextId).prevId = id;
+				  }
+			  }
+			  
+			  if(prevId) {
+				  if (!this.get(prevId).nextId) {
+					  this.get(prevId).nextId = id;
+				  }
+			  }
+			  
+              this.reg[id]= {
+				  id: id,
+				  icon: icon,
+				  name: name.charAt(0).toUpperCase() + name.slice(1),
+				  type: type, 
+				  buildingListId: buildingListId,
+				  current: 0,
+				  visible: visible,
+				  parentId : parentId,
+				  parentIdVisible: 0,
+				  nextId : nextId,
+				  prevId : prevId,
+				  firstChildId: firstChildId,
+				  firstChildIdVisible: 0,
+				  lastChildId: firstChildId,
+				  distanceIndex: (distanceIndex? distanceIndex: rd.rand(2,100)/10),
+			  };
+              return id;
+            },
+			get: function (id) {
+				if (id == 0) {
+					return false;
+				}
+				return this.reg[id];
+			},
+            gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1) {
+				var name,suf,id,ico,cfg = 0, limit = 1;
+				if (type in this.config.type && this.config.type[type].length) {
+					cfg = this.config.type[type];
+				}
+				
+				if (!root && (type in this.config.limit) && this.config.limit[type].length) {
+					limit = rd.rand(this.config.limit[type][0], this.config.limit[type][1]);
+				}
+				
+				var lastId = 0;
+				for(var i=0;i<limit;i++){
+					ico = '';
+					if (this.icoList[type].length) {
+						ico = rd.pickOneFrom(this.icoList[type],0);
+					}
+					
+					if (!['road','docker'].includes(type)) {
+						suf = rd.randomBytes(1,2) + rd.pickOneFrom(['m','s','x','c','t','d','n','r','y','j','k','v'],0);
+						name = rd.randomName(rd.rand(3,8),0,suf);
+					} else {
+						name = type;
+					}
+					
+					if (root) {
+						id = this.add(name, type, ico, 0, 0, 0, parentId, nextId, prevId, firstChildId);
+					} else {
+						id = this.add(name, type, ico, 0, 0, 0, parentId, 0, lastId, 0);
+					}
+					if(depth > 0 && cfg) {
+						for(var t in this.config.type[type]) {
+							this.gen(this.config.type[type][t], depth -1, id, 0, 0, 0, 0);
+						}
+					}
+					lastId = id;
+				}
+			}
+		}
+	},
     win: {
         reg: {},
         add: function (key, title, paint) {
@@ -568,43 +706,36 @@ var r = {
             return localStorage.removeItem($key);
         }
     },
-    setParent: function (o = false) {
+	setParent: function (o = false) {
 		if (!o) {
 			o = this;
 		}
 		
         for (var n in o) {
-			if (typeof o[n] == 'object' && !Array.isArray(o[n]) && !['parent','reg', 'icoList', 'ticker'].includes(n) && 1) {
+			if (typeof o[n] == 'object' && !Array.isArray(o[n]) && !['parent','reg', 'icoList', 'config', 'ticker'].includes(n) && 1) {
 				console.log(n+ '.parent');
 				o[n].parent = o;
 				this.setParent(o[n]);
 			}
         }
         return this;
-    }
+    },
+	start: function () {
+		if (!('rd' in window)) {
+        console.log('no rd');
+        return;
+		}
+		
+		$(window).bind('unload', function(){
+			 r.app.cacheSave(r);
+		});
+
+		r.init.all();
+
+		var iv = setInterval(r.tick.run.bind(r.tick),1000);
+	}
 }.setParent();
 
 $('document').ready(function (document) {
-    if (!('rd' in window)) {
-        console.log('no rd');
-        return;
-    }
-    /*
-    var str = rd.randomBytes(5);
-    str= str.charAt(0).toUpperCase() + str.slice(1);
-     */
-    //console.log(str);
-
-
-    //var r = Function('return 0^1^1^1')();
-    //console.log('r='+r);
-    // init();
 	
-	$(window).bind('unload', function(){
-         r.app.cacheSave(r);
-    });
-
-    r.init.all();
-
-    var iv = setInterval(r.tick.run.bind(r.tick),1000);
 });

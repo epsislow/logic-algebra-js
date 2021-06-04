@@ -90,8 +90,10 @@
 </main>
 
 <script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 <script type="text/javascript" src="/library/Visual.js"></script>
 <script type="text/javascript" src="/library/sha1/Random.js"></script>
+<script type="text/javascript" src="/library/sha1/Rand.js"></script>
 
 <script type="text/javascript">
 $('document').ready(function() {
@@ -100,16 +102,19 @@ $('document').ready(function() {
     
     vs.page('Index')
       .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
-      .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js")
-      .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js")
+      .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", 1)
+      .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", 1)
 	//  .js('rnd',"/library/sha1/Random.js")
     .scriptsReady(function () {
         vs.addSectionsToMain();
-        vs.importJs('rand', "/library/sha1/Rand.js", function() {
-          console.log('-- Load finished --')
-        });
-        
-        
+        /*vs.importJs('rand', "/library/sha1/Rand.js", function() {
+          console.log('-- Load finished --');
+		  
+		  
+        }, 0);*/
+		
+        r.start.apply(window, []);
+		
       })
       .addScripts();
 	  
