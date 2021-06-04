@@ -330,6 +330,7 @@ var r = {
 					.attr('data-planetId', p)
 					.append(
 						$('<td>')
+						.attr('colspan',2)
 						.addClass('info-col')
 						.append( $('<i>').addClass(planet.current? clsOpened:clsClosed))
 						.append(' Planet: ' + this.planet.reg[resPerPlanet[p][0].r.planetId].name)
@@ -378,12 +379,16 @@ var r = {
 								.append(icon)
 								.append(' ')
 								.append(resPerPlanet[p][r].r.name)
+								)
+							.append(
+							$('<td>')
+							  .addClass('trade')
 								.append(' ')
 								.append(
 									resPerPlanet[p][r].r.tradeValuePow>0?
 									$('<span>')
 										.addClass('trade-value')
-										.addClass('hide')
+								//		.addClass('hide')
 										.attr('data-resource-id', resPerPlanet[p][r].id)
 										.append(
 											resPerPlanet[p][r].r.tradeValue.toFixed(2)
@@ -439,7 +444,7 @@ var r = {
 					q.addClass('hide');
 				}
 			})
-			
+			/*
 			$('.trade-value').parent().parent().hover(function () {
 				var el = $(this); 
 				var tr = el.find('.trade-value:first');
@@ -454,7 +459,7 @@ var r = {
 				if (!tr.hasClass('hide')) {
 					tr.addClass('hide');
 				}
-			})
+			})*/
 				
 			  rr.repaint=0;
               return;
