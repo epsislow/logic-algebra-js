@@ -42,11 +42,14 @@ var rd = (function () {
     }
 	
 	pub.deleteRand = function (seed) {
-		delete this.randFunc[seed];
+		delete pub.randFunc[seed];
+		return this;
 	}
 	
 	pub.sessionWithSeed = function (seed) {
-		return pub;
+		var newObj= jQuery.extend(true, { }, this);
+		newObj.sessionWithSeed = seed;
+		return newObj.setSeed(seed);
 	}
 
     pub.pickOneFrom = function(list, withPop=0) {

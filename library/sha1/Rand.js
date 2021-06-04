@@ -45,13 +45,17 @@ var r = {
 				a.resource.gen(1, ids[2], 6, 1);
 				a.resource.get(moneyId).ratePerTick = 0.07;
 				a.resource.get(energyId+1).ratePerTick = 0.16;
-			var firstResBuildList = a.resource.get(energyId+1).buildingListId
+				var firstResBuildList = a.resource.get(energyId+1).buildingListId
 			
-			a.buildings.addBuilding(firstResBuildList, 'industry', 4);
+				a.buildings.addBuilding(firstResBuildList, 'industry', 4);
 
+				r.app.place.add('road', 'road', 0, 0, 0, 0, 0, 0, 0);
+				
+				r.app.place.gen('Galaxy', 7);
+				
+				r.app.place.currentId = rd.pickOneFrom(r.app.place.dockers, 0);
 			}
 			
-			r.app.place.add('road', 'road', 0, 0, 0, 0, 0, 0, 0);
 
             this.painters(initDone);
             this.research(initDone);
@@ -76,6 +80,7 @@ var r = {
               .add('calc', a.calcTicker.bind(r))
               .add('winMgr', r.win.mgrTicker.bind(r.win));
 			  
+			r.win.show('map');
             r.win.show('res');
 
         },
@@ -234,10 +239,10 @@ var r = {
 					return el;
 				}
 				if(listId==1) {
-				  console.log('22', list);
+				 // console.log('22', list);
 				}
 				for(var k in list) {
-				  console.log(k);
+//				  console.log(k);
 					el
 					.append(' '+list[k].count+'×')
 					.append($('<i>')
@@ -489,7 +494,64 @@ var r = {
             //rr.el.append(' tick');
           },
           map: function(rr) {
-            
+			  
+          if(rr.repaint) {
+				
+			if(rr.el) {
+			  rr.el.remove();
+			}
+			  
+			var mapTable = $('<table>').addClass('table table-sm table-dark');
+			var trs = [];
+			var pl = this.place;
+
+			var clsOpened = 'res-ctrl fas fa-minus-square';
+			var clsClosed = 'res-ctrl fas fa-plus-square';
+
+			trs = pl.getCurrentPlacesEl(pl.currentId, 2, clsOpened, clsClosed);
+
+			mapTable.append(trs);
+
+         rr.el = $('<div>')
+          .addClass('map')
+          .addClass('bg-black')
+          .addClass('color-light')
+          .text(rr.title)
+		  .append(mapTable);
+          
+				$('#main').append(rr.el);
+				
+				
+			$('.place-ctrl').parent().click(function () {
+				var el = $(this); 
+				var eli = el.find('i:first');
+				
+				var show;
+				if (eli.hasClass('fa-minus-square')) {
+					eli.removeClass('fa-minus-square')
+					  .addClass('fa-plus-square');
+					  show = 0;
+				} else { 
+					eli.removeClass('fa-plus-square')
+					  .addClass('fa-minus-square');
+					  show = 1;
+				}
+				
+				
+				var placeId = el.parent().attr('data-placeId');
+				var q = $('.map tr[data-placeId='+placeId+']');
+				if (show) {
+					q.removeClass('hide')
+				} else {
+					q.addClass('hide');
+				}
+			})
+				
+			  rr.repaint=0;
+              return;
+            }
+			
+			
           }
         },
 		place: {
@@ -501,17 +563,19 @@ var r = {
 				'Space dock': ['ruler-horizontal','poll-h','solar-panel','industry', 'memory'],
 				'Space city':['teeth','ethernet','city','fax'],
 				'Space colony':['tablet','spa','hotel','hdd'],
-				'Planet':['planet'],
+				'Planet':['globe-asia'],
 				'Solar system':['bullseye'],
 				'Cluster':['braille'],
 				'Asteroid belt': ['spinner'],
 				'Asteroid': ['dice-d20'],
-				'Galaxy':['border-none'],
+				'Galaxy':['star-of-life'],
 				'Sunport Gateway': ['route'],
 				'Warp Gateway': ['circle-notch']
 			},
+			colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
 			config: {
 				'seed': rd.randomBytes(5),
+				'noDistanceFor': ['Sunport Gateway', 'Warp Gateway', 'road'],
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
@@ -545,10 +609,16 @@ var r = {
 					'City': [0,3],
 					'Warp Gateway': [1,1],
 					'Sunport Gateway': [1,1]
+				},
+				'factions': {
+					'icoList': ['adn', 'artstation', 'black-tie', 'blackberry', 'buffer', 'centos', 'centercode', 'confluence', 'codepen', 'creative-commons', 'css3' , 'cuttlefish' , 'css3-alt', 'delicious', 'digital-ocean', 'dyalog', 'first-order', 'fort-awesome', 'gg', 'hive', 'ioxhost', 'jira', 'mandalorian', 'mendeley', 'mix']
 				}
 			},
 			reg:[],
-			add: function (name, type, icon, distanceIndex, visible, buildingListId = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0) {
+			dockers: [],
+			road: 0,
+			currentId: 0,
+			add: function (name, type, icon, color, distanceIndex, visible, buildingListId = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0) {
               var id=this.reg.length;
 			  
 			  
@@ -582,10 +652,15 @@ var r = {
 				  }
 			  }
 			  
+			  if (type == 'docker') {
+				  this.dockers.push(id);
+			  }
+			  
               this.reg[id]= {
 				  id: id,
 				  type: type, 
 				  icon: icon,
+				  color: color,
 				  name: name.charAt(0).toUpperCase() + name.slice(1),
 				  buildingListId: buildingListId,
 				  current: 0,
@@ -597,7 +672,7 @@ var r = {
 				  firstChildId: firstChildId,
 				  firstChildIdVisible: 0,
 				  lastChildId: firstChildId,
-				  distanceIndex: (distanceIndex? distanceIndex: rd.rand(2,100)/10),
+				  distanceIndex: (this.config.noDistanceFor.includes(type)? 0: (distanceIndex? distanceIndex: rd.rand(2,100)/10))
 			  };
               return id;
             },
@@ -609,36 +684,37 @@ var r = {
 			},
             gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1) {
 				var seed = this.config.seed + type + parentId;
-				var rdext = rd;
-				var rd = rdext.sessionWithSeed(seed);
+				var rd2 = rd.sessionWithSeed(seed);
 				
-				var name,suf,id,ico,cfg = 0, limit = 1;
+				var name,suf,id,ico,color, cfg = 0, limit = 1;
 				if (type in this.config.type && this.config.type[type].length) {
 					cfg = this.config.type[type];
 				}
 				
 				if (!root && (type in this.config.limit) && this.config.limit[type].length) {
-					limit = rd.rand(this.config.limit[type][0], this.config.limit[type][1]);
+					limit = rd2.rand(this.config.limit[type][0], this.config.limit[type][1]);
 				}
 				
 				var lastId = 0;
-				for(var i=0;i<limit;i++){
+				for(var i=0;i<limit;i++) {
 					ico = '';
 					if (this.icoList[type].length) {
-						ico = rd.pickOneFrom(this.icoList[type],0);
+						ico = rd2.pickOneFrom(this.icoList[type],0);
 					}
 					
-					if (!['road','docker'].includes(type)) {
-						suf = rd.randomBytes(1,2) + rd.pickOneFrom(['m','s','x','c','t','d','n','r','y','j','k','v'],0);
-						name = rd.randomName(rd.rand(3,8),0,suf);
+					color = rd2.pickOneFrom(this.colorList,0)
+					
+					if (!['road', 'docker'].includes(type)) {
+						suf = rd2.randomBytes(1,2) + rd2.pickOneFrom(['m','s','x','c','t','d','n','r','y','j','k','v'], 0);
+						name = rd2.randomName(rd2.rand(3,8),0,suf);
 					} else {
 						name = type;
 					}
 					
 					if (root) {
-						id = this.add(name, type, ico, 0, 0, 0, parentId, nextId, prevId, firstChildId);
+						id = this.add(name, type, ico, color, 0, 0, 0, parentId, nextId, prevId, firstChildId);
 					} else {
-						id = this.add(name, type, ico, 0, 0, 0, parentId, 0, lastId, 0);
+						id = this.add(name, type, ico, color, 0, 0, 0, parentId, 0, lastId, 0);
 					}
 					if(depth > 0 && cfg) {
 						for(var t in this.config.type[type]) {
@@ -647,6 +723,137 @@ var r = {
 					}
 					lastId = id;
 				}
+				
+				//rd2.deleteRand(seed);
+				//rd2 = null;
+			},
+			getCurrentPlacesEl: function (id, lvl= 0, clsOpened, clsClosed, isPrev = 0) {
+				var pl = this;
+				var place;
+				if (!id) {
+					return [];
+				}
+				
+				if (isPrev == 0 && lvl == 0) {
+					return [];
+				}
+				var current = pl.get(id);
+				
+				if (!current) {
+					return [];
+				}
+
+				var currentIcon = '';
+				if (lvl > 0) {
+					currentIcon = $('<i>').addClass('fas fa-map-marker-alt');
+				} else {
+					var trs = [];
+
+					place = current;
+					placeIcon =  $('<i>').addClass('fas')
+					.addClass('fa-'+place.icon)
+					.attr('style', 'color:'+place.color);
+
+					var tr = $('<tr>')
+					.addClass('place')
+					.attr('data-placeId', id)
+					.append(
+						$('<td>')
+						//.attr('colspan', 2)
+						.addClass('info-col')
+						.append( $('<i>').addClass(clsOpened))
+						.append(' '+ place.type+': ' + place.name)
+						.append(' ')
+						.append(placeIcon)
+						.append(' ')
+						.append((place.id == this.currentId) ? currentIcon: '')
+					);
+				 
+					trs = trs.concat(this.getCurrentPlacesEl(place.parentId, 0, clsOpened, clsClosed));
+					trs.push(tr);
+					return trs;
+				}
+				
+				
+				//console.log(nearbys);
+				
+			/*
+				var parents = [];
+
+				var parent = current;
+
+				while(parent = pl.get(parent.parentId)) {
+				  parents.push(parent);
+				}
+
+				
+
+				var topNearbys = pl.expand(pl.get(current.parentId).parentId);
+			*/
+				var trs = [];
+
+				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 1));
+				
+				var placeIcon;
+				
+				var place = current;
+				
+				var placeList = (isPrev? [place]:[]);
+				
+				while(place = pl.get(isPrev? place.prevId: place.nextId)) {
+					placeList.push(place);
+				}
+				
+				
+				for(var n = placeList.length - 1; n>=0; n--) {
+				  place = placeList[n];
+				  placeIcon =  $('<i>').addClass('fas')
+					.addClass('fa-'+place.icon)
+					.attr('style', 'color:'+place.color);
+
+				  var tr = $('<tr>')
+				  .addClass('place')
+				  .attr('data-placeId', n)
+				  .append(
+						$('<td>')
+						//.attr('colspan', 2)
+						.addClass('info-col')
+						.append( $('<i>').addClass(clsOpened))
+						.append(' '+ place.type+': ' + place.name)
+						.append(' ')
+						.append(placeIcon)
+						.append(' ')
+						.append((place.id == this.currentId) ? currentIcon: '')
+				 );
+				 
+				 trs.push(tr);
+				}
+				
+				trs = trs.concat(this.getCurrentPlacesEl(pl.get(current.parentId).parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0));
+				
+				return trs;
+				
+			},
+			expand: function (thisId) {
+				if (!this.get(thisId)) {
+					return false;
+				}
+				var reg = this.get(thisId);
+				var current = this.get(reg.firstChildId);
+				if (!current) {
+					return false;
+				}
+				
+				var children = [current];
+				while(current = this.get(current.nextId)) {
+					children.push(current);
+				}
+				
+				children.sort(function(a, b) {
+					return a.distanceIndex > b.distanceIndex;
+				});
+				
+				return children;
 			}
 		}
 	},
@@ -726,7 +933,7 @@ var r = {
 		
         for (var n in o) {
 			if (typeof o[n] == 'object' && !Array.isArray(o[n]) && !['parent','reg', 'icoList', 'config', 'ticker'].includes(n) && 1) {
-				console.log(n+ '.parent');
+				//console.log(n+ '.parent');
 				o[n].parent = o;
 				this.setParent(o[n]);
 			}
