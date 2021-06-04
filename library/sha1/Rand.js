@@ -145,6 +145,7 @@ var r = {
 					//if((a.ticks - ress.tradeValueChangelastTick) %ress.nextTradeValueChange == 0) {
 					if(a.ticks%10 == 0) {
 						ress.tradeValueChange = (rd.rand(1,64)/64 * Math.pow(10,rd.rand(ress.tradeValuePow-2,ress.tradeValuePow)) * (1 - 2*rd.rand(0,2)));
+						ress.tradeValuePos= ress.tradeValueChange>0?1:(ress.tradeValueChange==0?0:-1);
 						ress.tradeValue += ress.tradeValueChange;
 						ress.tradeValue = parseInt(ress.tradeValue.toFixed(2),10);
 						ress.lastTick = a.ticks;
@@ -266,6 +267,7 @@ var r = {
 				value: 0,
 				tradeValue: Math.floor(rd.rand(10,99) * Math.pow(10, tradeValuePow)),
 				tradeValueChange: 0,
+				tradeValuePos:0,
 				tradeValuePow: tradeValuePow,
 				nextTradeValueChange: rd.rand(2,5),
 				tradeValueChangelastTick: 0,
@@ -389,7 +391,8 @@ var r = {
 									$('<span>')
 										.addClass('trade-value')
 								//		.addClass('hide')
-										.attr('data-resource-id', resPerPlanet[p][r].id)
+						.attr('data-resource-id', resPerPlanet[p][r].id)
+					//	.attr('id','data-trade-'+resPerPlanet[p][r].id)
 										.append(
 											resPerPlanet[p][r].r.tradeValue.toFixed(2)
 										)
@@ -474,10 +477,18 @@ var r = {
 				$('.res-value[data-resource-id='+r+']').text(
 					Math.floor(ress[r].value)//.toFixed(2)
 				);
-				$('.trade-value[data-resource-id='+r+']').text(
+				var trd= $('.trade-value[data-resource-id='+r+']').text(
 					(ress[r].tradeValue).toFixed(2)
 				);
+				
+				if(ress[r].tradeValuePos!=0) {
+	//	trd.css({color: (ress[r].tradeValuePos>0?'#5f5':'#f55')})
+		
+	//	$('#data-trade-'+r).animate({color:"#f00"}, 1000);
+	//	console.log(trd.length);
+				}
 				ress[r].repaint = 0;
+				
 			}
 			
 			
