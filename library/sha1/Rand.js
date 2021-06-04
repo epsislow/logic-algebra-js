@@ -727,7 +727,7 @@ var r = {
 				//rd2.deleteRand(seed);
 				//rd2 = null;
 			},
-			getCurrentPlacesEl: function (id, lvl= 0, clsOpened, clsClosed, root = 1, isPrev = 1) {
+			getCurrentPlacesEl: function (id, lvl= 0, clsOpened, clsClosed, root = 1, isPrev = 1, reallvl=0) {
 				var pl = this;
 				var place;
 				if (!id) {
@@ -748,7 +748,7 @@ var r = {
 				if (lvl > 0) {
 					currentIcon = $('<i>').addClass('fas fa-map-marker-alt');
 				} else {
-					var trs = this.getCurrentPlacesEl(current.parentId, 0, clsOpened, clsClosed, 0, 1);
+					var trs = this.getCurrentPlacesEl(current.parentId, 0, clsOpened, clsClosed, 0, 1, reallvl+1);
           
 					place = current;
 //trs.push(place);
@@ -756,14 +756,18 @@ var r = {
 					placeIcon =  $('<i>').addClass('fas')
 					.addClass('fa-'+place.icon)
 					.attr('style', 'color:'+place.color);
+          
+          var typeClass = place.type;
 
 					var tr = $('<tr>')
 					.addClass('place')
+          .addClass(typeClass.replace(' ','-').toLowerCase())
 					.attr('data-placeId', id)
 					.append(
 						$('<td>')
 						//.attr('colspan', 2)
 						.addClass('info-col')
+            .addClass('ident-'+reallvl)
 						.append( $('<i>').addClass(clsOpened))
 						.append(' '+ place.type+': ' + place.name)
 						.append(' ')
@@ -789,7 +793,7 @@ var r = {
 				var trs = [];
         
         if (isPrev == 1 || root == 1) {
-            trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 1));
+            trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 1, reallvl+1));
         }
 				
 				var placeIcon;
@@ -806,6 +810,7 @@ var r = {
 				for(var n = placeList.length - 1; n>=0; n--) {
 				  place = placeList[n];
           
+          var typeClass = place.type;
  //trs.push(place);
  //continue;
 				  placeIcon =  $('<i>').addClass('fas')
@@ -814,11 +819,13 @@ var r = {
 
 				  var tr = $('<tr>')
 				  .addClass('place')
+          .addClass(typeClass.replace(' ','-').toLowerCase())
 				  .attr('data-placeId', n)
 				  .append(
 						$('<td>')
 						//.attr('colspan', 2)
 						.addClass('info-col')
+            .addClass('ident-'+reallvl)
 						.append( $('<i>').addClass(clsOpened))
 						.append(' '+ place.type+': ' + place.name)
 						.append(' ')
@@ -830,8 +837,7 @@ var r = {
 				 trs.push(tr);
 				}
 				
-				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 0));
-				
+				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 0, reallvl+1));
 				
 				return trs;
 				
