@@ -14,8 +14,7 @@ var rd = (function () {
 		+(symbols ? ':/,-_=|<>[].' : '');
         var charactersLength = characters.length;
         for (var i = 0; i < length; i++) {
-            result.push(characters.charAt(Math.floor(Math.random() *
-                        charactersLength)));
+            result.push(characters.charAt(pub.rand(0,charactersLength)));
         }
         return result.join('');
     }
@@ -28,7 +27,7 @@ var rd = (function () {
 	    return this;
 	  }
 
-    pub.rand = function (min, max, alg = 0, seed = 0) {
+    pub.rand = function (min, max,seed = 0, alg = 0) {
 		if (alg == 1) {
 			return Math.floor(Math.random() * (max - min)) + min;
 		}
@@ -41,6 +40,14 @@ var rd = (function () {
 		}
 		return Math.floor(this.randFunc[seed]() * (max - min)) + min;
     }
+	
+	pub.deleteRand = function (seed) {
+		delete this.randFunc[seed];
+	}
+	
+	pub.sessionWithSeed = function (seed) {
+		return pub;
+	}
 
     pub.pickOneFrom = function(list, withPop=0) {
       var pick = this.rand(0,list.length);

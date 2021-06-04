@@ -17,6 +17,8 @@ var r = {
 				ids.push(a.planet.add('moon'));
 				ids.push(a.planet.add('mars'));
 				ids.push(a.planet.add('pluto'));
+				
+				a.place.config.seed = rd.randomBytes(5);
 			
 				a.planet.get(ids[0]).current = 1;
 				a.planet.get(ids[0]).visible = 1;
@@ -502,16 +504,21 @@ var r = {
 				'Planet':['planet'],
 				'Solar system':['bullseye'],
 				'Cluster':['braille'],
+				'Asteroid belt': ['spinner'],
+				'Asteroid': ['dice-d20'],
 				'Galaxy':['border-none'],
 				'Sunport Gateway': ['route'],
 				'Warp Gateway': ['circle-notch']
 			},
 			config: {
+				'seed': rd.randomBytes(5),
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
 					'Cluster': ['Solar system'],
-					'Solar system': ['Planet','Warp Gateway','Sunport Gateway', 'Space city'],
+					'Solar system': ['Planet','Warp Gateway','Sunport Gateway', 'Space city', 'Asteroid belt'],
+					'Asteroid belt': ['Asteroid', 'Sunport Gateway'],
+					'Asteroid': ['Space dock', 'Space colony'],
 					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City'],
 					'Space colony': ['docker'],
 					'Space city': ['docker'],
@@ -528,6 +535,8 @@ var r = {
 					'Galaxy': [1,1],
 					'Cluster': [2,4],
 					'Solar system': [3,5],
+					'Asteroid belt': [0,3],
+					'Asteroid': [1,3],
 					'Planet': [2,5],
 					'Space colony': [0,1],
 					'Space city': [0,1],
@@ -575,9 +584,9 @@ var r = {
 			  
               this.reg[id]= {
 				  id: id,
+				  type: type, 
 				  icon: icon,
 				  name: name.charAt(0).toUpperCase() + name.slice(1),
-				  type: type, 
 				  buildingListId: buildingListId,
 				  current: 0,
 				  visible: visible,
@@ -599,6 +608,10 @@ var r = {
 				return this.reg[id];
 			},
             gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1) {
+				var seed = this.config.seed + type + parentId;
+				var rdext = rd;
+				var rd = rdext.sessionWithSeed(seed);
+				
 				var name,suf,id,ico,cfg = 0, limit = 1;
 				if (type in this.config.type && this.config.type[type].length) {
 					cfg = this.config.type[type];
