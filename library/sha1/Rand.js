@@ -727,7 +727,7 @@ var r = {
 				//rd2.deleteRand(seed);
 				//rd2 = null;
 			},
-			getCurrentPlacesEl: function (id, lvl= 0, clsOpened, clsClosed, isPrev = 0) {
+			getCurrentPlacesEl: function (id, lvl= 0, clsOpened, clsClosed, root = 1, isPrev = 1) {
 				var pl = this;
 				var place;
 				if (!id) {
@@ -737,6 +737,7 @@ var r = {
 				if (isPrev == 0 && lvl == 0) {
 					return [];
 				}
+
 				var current = pl.get(id);
 				
 				if (!current) {
@@ -747,9 +748,11 @@ var r = {
 				if (lvl > 0) {
 					currentIcon = $('<i>').addClass('fas fa-map-marker-alt');
 				} else {
-					var trs = [];
-
+					var trs = this.getCurrentPlacesEl(current.parentId, 0, clsOpened, clsClosed, 0, 1);
+          
 					place = current;
+//trs.push(place);
+//return trs;
 					placeIcon =  $('<i>').addClass('fas')
 					.addClass('fa-'+place.icon)
 					.attr('style', 'color:'+place.color);
@@ -769,13 +772,9 @@ var r = {
 						.append((place.id == this.currentId) ? currentIcon: '')
 					);
 				 
-					trs = trs.concat(this.getCurrentPlacesEl(place.parentId, 0, clsOpened, clsClosed));
 					trs.push(tr);
 					return trs;
 				}
-				
-				
-				//console.log(nearbys);
 				
 			/*
 				var parents = [];
@@ -785,14 +784,13 @@ var r = {
 				while(parent = pl.get(parent.parentId)) {
 				  parents.push(parent);
 				}
-
-				
-
 				var topNearbys = pl.expand(pl.get(current.parentId).parentId);
 			*/
 				var trs = [];
-
-				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 1));
+        
+        if (isPrev == 1 || root == 1) {
+            trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 1));
+        }
 				
 				var placeIcon;
 				
@@ -807,6 +805,9 @@ var r = {
 				
 				for(var n = placeList.length - 1; n>=0; n--) {
 				  place = placeList[n];
+          
+ //trs.push(place);
+ //continue;
 				  placeIcon =  $('<i>').addClass('fas')
 					.addClass('fa-'+place.icon)
 					.attr('style', 'color:'+place.color);
@@ -829,7 +830,8 @@ var r = {
 				 trs.push(tr);
 				}
 				
-				trs = trs.concat(this.getCurrentPlacesEl(pl.get(current.parentId).parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0));
+				trs = trs.concat(this.getCurrentPlacesEl(current.parentId, (lvl > 0 ? (lvl - 1) : 0), clsOpened, clsClosed, 0, 0));
+				
 				
 				return trs;
 				
