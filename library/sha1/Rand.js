@@ -695,7 +695,9 @@ var r = {
 			},
 			dlim:4,
       gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1, seedpr='') {
-				var seed = rd.hashCode(seedpr+ this.config.seed + type+'_'+ parentId +nextId+prevId+'-'+firstChildId+root);
+       // var idd = this.reg.length;
+        
+				var seed = rd.hashCode(seedpr+ this.config.seed + type+'_'+ parentId +nextId+prevId+'-'+firstChildId+root );//+idd;
 				var d=0;
 			if(type == 'docker' && this.dlim) {
 				  console.log(type+' '+seed);
@@ -704,6 +706,7 @@ var r = {
 				}
 				
 				var rd2 = rd.sessionWithSeed(seed);
+				//var rd2 = rd;
 				
 				rd2.seed = seed;
 				
@@ -771,7 +774,7 @@ var r = {
           var typeClass = place.type;
 
 					var tr = $('<tr>')
-					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ?'':' hide') )
+					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ? '':' hide') )
           .addClass(typeClass.replace(' ','-').toLowerCase())
 					.attr('data-placeId', place.id)
 					.attr('data-parentId', place.parentId)

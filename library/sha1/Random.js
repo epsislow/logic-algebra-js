@@ -36,7 +36,10 @@ var rd = (function () {
 		}
 		
 		if (!(seed in this.randFunc)) {
-			this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed));
+			this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed)());
+			if(d) {
+			  console.log('seed func added');
+			}
 		}
 		if(d) {
 	  	console.log('rd: ' +seed)
@@ -140,9 +143,11 @@ var rd = (function () {
 
     pub.xmur = function (str) {
       
-		for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
-			h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
+		for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++) {
+			h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
 			h = h << 13 | h >>> 19;
+		}
+		
 		return function () {
 			h = Math.imul(h ^ h >>> 16, 2246822507);
 			h = Math.imul(h ^ h >>> 13, 3266489909);
