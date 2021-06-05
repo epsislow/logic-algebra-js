@@ -492,8 +492,8 @@ var r = {
 			
 			
             //rr.el.append(' tick');
-          },
-          map: function(rr) {
+  },
+  map: function(rr) {
 			  
           if(rr.repaint) {
 				
@@ -548,13 +548,26 @@ var r = {
 				
 				
 				var placeId = el.parent().attr('data-placeId');
-			//	console.log(placeId);
+				
+				var ident = el.parent().attr('data-ident');
+				
+				console.log(ident);
 				
 				var q = $('.map tr[data-parentId='+placeId+']');
 				if (show) {
 					q.removeClass('hide')
+					 .addClass('show');
+					
 				} else {
-					q.addClass('hide');
+					q.addClass('hide')
+				 	 .removeClass('show');
+				 	 
+				 	$('.show[data-ident]')
+				 	.filter(function() {
+				 	  return $(this).attr("data-ident") > ident;
+				 	 })
+				 	 .addClass('hide')
+				 	 .removeClass('show');
 				}
 			})
 				
@@ -774,7 +787,7 @@ var r = {
           var typeClass = place.type;
 
 					var tr = $('<tr>')
-					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ? '':' hide') )
+					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ? ' show':' hide') )
           .addClass(typeClass.replace(' ','-').toLowerCase())
 					.attr('data-placeId', place.id)
 					.attr('data-parentId', place.parentId)
