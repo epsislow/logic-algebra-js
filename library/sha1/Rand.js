@@ -756,7 +756,7 @@ var r = {
           var typeClass = place.type;
 
 					var tr = $('<tr>')
-					.addClass('place' + (currentParentIds.includes(place.parentId) ?'':' hide') )
+					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ?'':' hide') )
           .addClass(typeClass.replace(' ','-').toLowerCase())
 					.attr('data-placeId', place.id)
 					.append(
