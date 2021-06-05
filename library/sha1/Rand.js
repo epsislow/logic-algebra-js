@@ -516,7 +516,8 @@ var r = {
         parentIds.push(parent.id);
       }
       
-			trs = pl.getCurrentPlacesEl(pl.currentId, 2, parentIds, clsOpened, clsClosed);
+		//	trs = pl.getCurrentPlacesEl(pl.currentId, 2, parentIds, clsOpened, clsClosed);
+			trs = pl.getAllPlacesEl();
 
 			mapTable.append(trs);
 
@@ -734,6 +735,66 @@ var r = {
 				
 				//rd2.deleteRand(seed);
 				//rd2 = null;
+			},
+			getPlaceEl: function(place, currentParentIds, clsOpened, clsClosed ) {
+			  var pl = this;
+			
+      var parentIds = [place.id];
+
+      var parent = pl.get(place.id);
+
+      while(parent = pl.get(parent.parentId)) {
+        parentIds.push(parent.id);
+      }
+      var ident = parentIds.length-1;
+      
+			 var currentIcon = $('<i>').addClass('fas fa-map-marker-alt');
+			var	placeIcon =  $('<i>').addClass('fas')
+					.addClass('fa-'+place.icon)
+					.attr('style', 'color:'+place.color);
+          
+          var typeClass = place.type;
+
+					var tr = $('<tr>')
+					.addClass('place' + (currentParentIds.includes(place.id) ?'':' hide') )
+          .addClass(typeClass.replace(' ','-').toLowerCase())
+					.attr('data-placeId', place.id)
+					.append(
+						$('<td>')
+						//.attr('colspan', 2)
+						.addClass('info-col')
+            .addClass('ident-'+ident)
+						.append( $('<i>').addClass(currentParentIds.includes(place.id) ?clsOpened:clsClosed))
+						.append(' '+ place.type+': ' + place.name)
+						.append(' ')
+						.append(placeIcon)
+						.append(' ')
+						.append((place.id == this.currentId) ? currentIcon: '')
+					);
+return tr;
+			},
+			getAllPlacesEl: function() {
+			  var trs = [];
+			  var pl = this;
+			  
+			var clsOpened = 'place-ctrl fas fa-angle-down';
+			var clsClosed = 'place-ctrl fas fa-angle-right';
+			
+			var currentParentIds = [pl.currentId];
+			
+			var parent = pl.get(pl.currentId);
+			
+			while (parent = pl.get(parent.parentId)) {
+			  currentParentIds.push(parent.id);
+			}
+			
+			  for(var i in pl.reg) {
+			    if(i>0) {
+			       trs.push(this.getPlaceEl(pl.reg[i], currentParentIds, clsOpened, clsClosed));
+			    }
+			  }
+			  
+			  return trs;
 			},
 			getCurrentPlacesEl: function (id, lvl= 0, parentIds=[], clsOpened, clsClosed, root = 1, isPrev = 1, reallvl=0) {
 				var pl = this;
