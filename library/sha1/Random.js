@@ -27,7 +27,7 @@ var rd = (function () {
 	    return this;
 	  }
 
-    pub.rand = function (min, max,seed = 0, alg = 0) {
+    pub.rand = function (min, max,seed = 0, alg = 0, d=0) {
 		if (alg == 1) {
 			return Math.floor(Math.random() * (max - min)) + min;
 		}
@@ -37,6 +37,9 @@ var rd = (function () {
 		
 		if (!(seed in this.randFunc)) {
 			this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed));
+		}
+		if(d) {
+	  	console.log('rd: ' +seed)
 		}
 		return Math.floor(this.randFunc[seed]() * (max - min)) + min;
     }
@@ -136,6 +139,7 @@ var rd = (function () {
 	}
 
     pub.xmur = function (str) {
+      
 		for (var i = 0, h = 1779033703 ^ str.length; i < str.length; i++)
 			h = Math.imul(h ^ str.charCodeAt(i), 3432918353),
 			h = h << 13 | h >>> 19;

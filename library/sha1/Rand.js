@@ -693,11 +693,15 @@ var r = {
 				}
 				return this.reg[id];
 			},
-            gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1, seedpr='') {
+			dlim:4,
+      gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1, seedpr='') {
 				var seed = rd.hashCode(seedpr+ this.config.seed + type+'_'+ parentId +nextId+prevId+'-'+firstChildId+root);
-			//	if(type == 'docker') {
-			//	  console.log(type+' '+seed)
-		//		}
+				var d=0;
+			if(type == 'docker' && this.dlim) {
+				  console.log(type+' '+seed);
+				  d=1;
+				  this.dlim--;
+				}
 				
 				var rd2 = rd.sessionWithSeed(seed);
 				
@@ -709,7 +713,10 @@ var r = {
 				}
 				
 				if (!root && (type in this.config.limit) && this.config.limit[type].length) {
-					limit = rd2.rand(this.config.limit[type][0], this.config.limit[type][1]);
+					limit = rd2.rand(this.config.limit[type][0], this.config.limit[type][1],0,0,15*d);
+					if(d) {
+					  console.log(limit);
+					}
 				}
 				
 				var lastId = 0;
