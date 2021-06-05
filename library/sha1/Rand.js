@@ -18,7 +18,7 @@ var r = {
 				ids.push(a.planet.add('mars'));
 				ids.push(a.planet.add('pluto'));
 				
-				a.place.config.seed = rd.randomBytes(5);
+				a.place.config.seed = rd.randomBytes(5)+Date.now();
 			
 				a.planet.get(ids[0]).current = 1;
 				a.planet.get(ids[0]).visible = 1;
@@ -543,7 +543,7 @@ var r = {
 					
 					if(pl.config.type[place.type].length) {
 					  eli.addClass(clsClosed);
-					} else{
+					} else {
 					  eli.addClass('fas place-ctrl');
 					}
 					  show = 0;
@@ -558,7 +558,7 @@ var r = {
 				
 				var ident = el.parent().attr('data-ident');
 				
-				//console.log(ident);
+				console.log(placeId);
 				
 				var q = $('.map tr[data-parentId='+placeId+']');
 				if (show) {
@@ -575,6 +575,13 @@ var r = {
 				 	 })
 				 	 .addClass('hide')
 				 	 .removeClass('show');
+				}
+				
+				pl.removeCtrl();
+			//	console.log(pl.config.noDistanceFor);
+				if(pl.config.noDistanceFor.includes( place.type ) && show) {
+    pl.addCtrlFor(place, el.parent(), ident);
+    
 				}
 			})
 				
@@ -606,7 +613,7 @@ var r = {
 			colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
 			config: {
 				'seed': rd.randomBytes(5),
-				'noDistanceFor': ['Sunport Gateway', 'Warp Gateway', 'road'],
+				'noDistanceFor': ['Sunport Gateway', 'Warp Gateway', 'road','docker'],
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
@@ -763,6 +770,57 @@ var r = {
 				
 				//rd2.deleteRand(seed);
 				//rd2 = null;
+			},
+			calcTimeTo: function(place) {
+			  return Math.abs(3*(this.get(place.parentId).distanceIndex - this.get(this.get(this.currentId).parentId).distanceIndex));
+			},
+			addCtrlFor: function(place, el, ident) {
+			  
+			  var trs = [];
+			  if(place.id == this.currentId)
+			  {
+			    console.log('ydoi')
+			    var tr = $('<tr>')
+			    .addClass('place-ctrl-menu')
+			    .append($('<td>')
+           .addClass('ident-'+ident)
+           .addClass('act-move')
+           .attr('data-placeId', place.id)
+			     .append($('<i>')
+			       .addClass('fas fa-arrows-alt menu-ctrl')
+			     ).append(' Move'))
+			    trs.push(tr);
+			  } else {
+			 //   if(place.parentId == this.get(currentId).parentId) {
+			    var tr = $('<tr>')
+			      .addClass('place-ctrl-menu')
+			      .append($('<td>')
+			        .addClass('ident-' + ident)
+			        .addClass('act-here')
+			        .attr('data-placeId', place.id)
+			      .append($('<i>')
+			          .addClass('fas fa-arrow-down menu-ctrl')
+			        ).append(' Here in ' + this.calcTimeTo(place).toFixed(2) +'s'))
+			    trs.push(tr);
+			  //  }
+			  }
+			  el.after(trs);
+			  
+			  			
+				$('.place-ctrl-menu .act-move').click(function () {
+				  this.removeCtrl();
+				})
+				
+				
+				$('.place-ctrl-menu .act-here').click(function () {
+				  r.app.place.currentId = $(this).attr('data-placeId');
+				  //console.log('new '+this.currentId)
+				  r.win.reg.map.repaint=1;
+				})
+	
+			},
+			removeCtrl: function() {
+			  $('.place-ctrl-menu').remove();
 			},
 			getPlaceEl: function(place, currentParentIds, clsOpened, clsClosed ) {
 			  var pl = this;
