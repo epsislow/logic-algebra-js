@@ -536,9 +536,16 @@ var r = {
 				var eli = el.find('i:first');
 				
 				var show;
+				var place = pl.get(el.parent().attr('data-placeId'));
+				
 				if (eli.hasClass(clsOpened)) {
-					eli.removeClass(clsOpened)
-					  .addClass(clsClosed);
+					eli.removeClass(clsOpened);
+					
+					if(pl.config.type[place.type].length) {
+					  eli.addClass(clsClosed);
+					} else{
+					  eli.addClass('fas place-ctrl');
+					}
 					  show = 0;
 				} else { 
 					eli.removeClass(clsClosed)
@@ -551,7 +558,7 @@ var r = {
 				
 				var ident = el.parent().attr('data-ident');
 				
-				console.log(ident);
+				//console.log(ident);
 				
 				var q = $('.map tr[data-parentId='+placeId+']');
 				if (show) {
@@ -706,17 +713,10 @@ var r = {
 				}
 				return this.reg[id];
 			},
-			dlim:4,
       gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1, seedpr='') {
        // var idd = this.reg.length;
         
-				var seed = rd.hashCode(seedpr+ this.config.seed + type+'_'+ parentId +nextId+prevId+'-'+firstChildId+root );//+idd;
-				var d=0;
-			if(type == 'docker' && this.dlim) {
-				  console.log(type+' '+seed);
-				  d=1;
-				  this.dlim--;
-				}
+				var seed = rd.hashCode(this.config.seed + type+'_'+ parentId +nextId+prevId+'-'+firstChildId+root );//+idd;
 				
 				var rd2 = rd.sessionWithSeed(seed);
 				//var rd2 = rd;
@@ -729,10 +729,7 @@ var r = {
 				}
 				
 				if (!root && (type in this.config.limit) && this.config.limit[type].length) {
-					limit = rd2.rand(this.config.limit[type][0], this.config.limit[type][1],0,0,15*d);
-					if(d) {
-					  console.log(limit);
-					}
+					limit = rd2.rand(this.config.limit[type][0], this.config.limit[type][1],0,0);
 				}
 				
 				var lastId = 0;
@@ -797,7 +794,7 @@ var r = {
 						//.attr('colspan', 2)
 						.addClass('info-col')
             .addClass('ident-'+ident)
-						.append( $('<i>').addClass(currentParentIds.includes(place.id) ?clsOpened:clsClosed))
+						.append($('<i>').addClass(this.config.type[place.type].length?(currentParentIds.includes(place.id) ?clsOpened:clsClosed):'fas place-ctrl'))
 						.append(' '+ place.type+': ' + place.name)
 						.append(' ')
 						.append(placeIcon)
