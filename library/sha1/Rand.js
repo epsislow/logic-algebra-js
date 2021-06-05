@@ -606,7 +606,7 @@ var r = {
 				},
 				'limit': {
 					'road': [1,1],
-					'docker': [1,1],
+					'docker': [1,4],
 					'Galaxy': [1,1],
 					'Cluster': [2,4],
 					'Solar system': [3,5],
@@ -693,9 +693,15 @@ var r = {
 				}
 				return this.reg[id];
 			},
-            gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1) {
-				var seed = this.config.seed + type + parentId;
+            gen: function (type, depth = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0, root = 1, seedpr='') {
+				var seed = rd.hashCode(seedpr+ this.config.seed + type+'_'+ parentId +nextId+prevId+'-'+firstChildId+root);
+			//	if(type == 'docker') {
+			//	  console.log(type+' '+seed)
+		//		}
+				
 				var rd2 = rd.sessionWithSeed(seed);
+				
+				rd2.seed = seed;
 				
 				var name,suf,id,ico,color, cfg = 0, limit = 1;
 				if (type in this.config.type && this.config.type[type].length) {
@@ -729,7 +735,7 @@ var r = {
 					}
 					if(depth > 0 && cfg) {
 						for(var t in this.config.type[type]) {
-							this.gen(this.config.type[type][t], depth -1, id, 0, 0, 0, 0);
+							this.gen(this.config.type[type][t], depth -1, id, 0, 0, 0, 0, seed+id);
 						}
 					}
 					lastId = id;
