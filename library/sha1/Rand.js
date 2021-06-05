@@ -81,7 +81,7 @@ var r = {
               .add('winMgr', r.win.mgrTicker.bind(r.win));
 			  
 			r.win.show('map');
-            r.win.show('res');
+      //      r.win.show('res');
 
         },
         painters: function () {
@@ -546,14 +546,16 @@ var r = {
 					  show = 1;
 				}
 				
-				/*
+				
 				var placeId = el.parent().attr('data-placeId');
-				var q = $('.map tr[data-placeId='+placeId+']');
+			//	console.log(placeId);
+				
+				var q = $('.map tr[data-parentId='+placeId+']');
 				if (show) {
 					q.removeClass('hide')
 				} else {
 					q.addClass('hide');
-				}*/
+				}
 			})
 				
 			  rr.repaint=0;
@@ -759,6 +761,8 @@ var r = {
 					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ?'':' hide') )
           .addClass(typeClass.replace(' ','-').toLowerCase())
 					.attr('data-placeId', place.id)
+					.attr('data-parentId', place.parentId)
+					.attr('data-ident',ident)
 					.append(
 						$('<td>')
 						//.attr('colspan', 2)
