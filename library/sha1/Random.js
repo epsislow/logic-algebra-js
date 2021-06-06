@@ -44,7 +44,7 @@ var rd = (function () {
 		if(d) {
 	  	console.log('rd: ' +seed)
 		}
-		return Math.floor(this.randFunc[seed]() * (max - min)) + min;
+		return Math.round(this.randFunc[seed]() * (max - min)) + min;
     }
 	
 	pub.deleteRand = function (seed) {
