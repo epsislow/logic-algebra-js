@@ -776,14 +776,14 @@ var r = {
 			  
 			  var placeParent = this.get(place.parentId);
 			  
-			  if(place.parentId == currentParentId || (placeParent && placeParent.parentId != currentParentId)) {
+			 // if(place.parentId == currentParentId || (placeParent && placeParent.parentId != currentParentId)) {
 			    
 			  return Math.abs(3*(this.get(place.parentId).distanceIndex - this.get(currentParentId).distanceIndex));
-			  } else {
+		/*	  } else {
 			    
 			   console.log(currentParentId, place.parentId, placeParent.parentId)
 			    return false;
-			  }
+			  }*/
 			  
 
 			},
@@ -806,7 +806,7 @@ var r = {
 			    trs.push(tr);
 			  } else {
 			    var time = this.calcTimeTo(place);
-			 if(time) {
+			 if(time!==false) {
 			 //   if(place.parentId == this.get(currentId).parentId) {
 			    var tr = $('<tr>')
 			      .addClass('place-ctrl-menu')
@@ -852,7 +852,6 @@ var r = {
 			},
 			getPlaceEl: function(place, currentParentIds, clsOpened, clsClosed ) {
 			  var pl = this;
-			
       var parentIds = [place.id];
 
       var parent = pl.get(place.id);
@@ -897,13 +896,15 @@ return tr;
 			var clsOpened = 'place-ctrl fas fa-angle-down';
 			var clsClosed = 'place-ctrl fas fa-angle-right';
 			
-			var currentParentIds = [pl.currentId];
+			var currentParentIds = [parseInt(pl.currentId)];
 			
 			var parent = pl.get(pl.currentId);
 			
 			while (parent = pl.get(parent.parentId)) {
 			  currentParentIds.push(parent.id);
 			}
+			
+		//	console.log(currentParentIds);
 			
 			  for(var i in pl.reg) {
 			    if(i>0) {
