@@ -612,16 +612,17 @@ var r = {
 				'Asteroid': ['dice-d20'],
 				'Galaxy':['star-of-life'],
 				'Sunport Gateway': ['route'],
+				'Hyperspace Gate': ['road'],
 				'Warp Gateway': ['circle-notch']
 			},
 			colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
 			config: {
 				'seed': rd.randomBytes(5),
-				'noDistanceFor': ['Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
+				'noDistanceFor': ['Hyperspace Gate','Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
-					'Cluster': ['Solar system'],
+					'Cluster': ['Solar system','Hyperspace Gate'],
 					'Solar system': ['Planet','Warp Gateway','Sunport Gateway', 'Space city', 'Asteroid belt'],
 					'Asteroid belt': ['Asteroid', 'Sunport Gateway'],
 					'Asteroid': ['Space dock', 'Space colony'],
@@ -633,6 +634,7 @@ var r = {
 					'City': ['docker','trade','quester'],
 					'Warp Gateway': [],
 					'Sunport Gateway': [],
+					'Hyperspace Gate': [],
 					'docker': [],
 					'trade':[],
 					'rafinery':[],
@@ -657,7 +659,8 @@ var r = {
 					'Space station': [0,2],
 					'City': [0,3],
 					'Warp Gateway': [1,1],
-					'Sunport Gateway': [1,1]
+					'Sunport Gateway': [1,1],
+					'Hyperspace Gate':[1,1]
 				},
 				'factions': {
 					'icoList': ['adn', 'artstation', 'black-tie', 'blackberry', 'buffer', 'centos', 'centercode', 'confluence', 'codepen', 'creative-commons', 'css3' , 'cuttlefish' , 'css3-alt', 'delicious', 'digital-ocean', 'dyalog', 'first-order', 'fort-awesome', 'gg', 'hive', 'ioxhost', 'jira', 'mandalorian', 'mendeley', 'mix']
@@ -784,6 +787,19 @@ var r = {
 			},
 			calcTimeTo: function(place) {
 			  var currentParentId = this.get(this.currentId).parentId;
+			  
+			  if('Sunport Gateway' == place.type) {
+			    // intra sunports
+			    // intra local planet/asteroid space non gate
+			  } else if('Warp Gateway' == place.type) {
+			    
+			    // intra galaxy space
+			    // intra local sunports
+			  } else {
+			    // intra local planet/asteroid space
+			  }
+			  
+			  
 			  
 			  var placeParent = this.get(place.parentId);
 			  
