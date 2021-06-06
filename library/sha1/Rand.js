@@ -633,7 +633,7 @@ var r = {
 				},
 				'limit': {
 					'road': [1,1],
-					'docker': [1,4],
+					'docker': [1,1],
 					'Galaxy': [1,1],
 					'Cluster': [2,4],
 					'Solar system': [3,5],
@@ -772,7 +772,20 @@ var r = {
 				//rd2 = null;
 			},
 			calcTimeTo: function(place) {
-			  return Math.abs(3*(this.get(place.parentId).distanceIndex - this.get(this.get(this.currentId).parentId).distanceIndex));
+			  var currentParentId = this.get(this.currentId).parentId;
+			  
+			  var placeParent = this.get(place.parentId);
+			  
+			  if(place.parentId == currentParentId || (placeParent && placeParent.parentId != currentParentId)) {
+			    
+			  return Math.abs(3*(this.get(place.parentId).distanceIndex - this.get(currentParentId).distanceIndex));
+			  } else {
+			    
+			   console.log(currentParentId, place.parentId, placeParent.parentId)
+			    return false;
+			  }
+			  
+
 			},
 			addCtrlFor: function(place, el, ident) {
 			  
@@ -782,6 +795,7 @@ var r = {
 			    console.log('ydoi')
 			    var tr = $('<tr>')
 			    .addClass('place-ctrl-menu')
+			    .attr('data-placeId', place.id)
 			    .append($('<td>')
            .addClass('ident-'+ident)
            .addClass('act-move')
@@ -791,17 +805,21 @@ var r = {
 			     ).append(' Move'))
 			    trs.push(tr);
 			  } else {
+			    var time = this.calcTimeTo(place);
+			 if(time) {
 			 //   if(place.parentId == this.get(currentId).parentId) {
 			    var tr = $('<tr>')
 			      .addClass('place-ctrl-menu')
+			        .attr('data-placeId', place.id)
 			      .append($('<td>')
 			        .addClass('ident-' + ident)
 			        .addClass('act-here')
 			        .attr('data-placeId', place.id)
 			      .append($('<i>')
 			          .addClass('fas fa-arrow-down menu-ctrl')
-			        ).append(' Here in ' + this.calcTimeTo(place).toFixed(2) +'s'))
-			    trs.push(tr);
+			        ).append(' Here in ' + time.toFixed(2) +'s'))
+			     trs.push(tr);
+			    }
 			  //  }
 			  }
 			  el.after(trs);
@@ -820,7 +838,17 @@ var r = {
 	
 			},
 			removeCtrl: function() {
-			  $('.place-ctrl-menu').remove();
+			  
+			 var menu=  $('.place-ctrl-menu');
+			 if(menu.length) {
+			   var placeId = menu.attr('data-placeId');
+			   console.log(placeId+'÷');
+			   eli = $('.place[data-placeId='+placeId+'] i.place-ctrl');
+			   console.log(eli.length+'z');
+			   
+			   eli.removeClass().addClass('fas place-ctrl');
+			 }
+			 menu.remove();
 			},
 			getPlaceEl: function(place, currentParentIds, clsOpened, clsClosed ) {
 			  var pl = this;
