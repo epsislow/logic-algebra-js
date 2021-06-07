@@ -785,17 +785,26 @@ var r = {
 				//rd2.deleteRand(seed);
 				//rd2 = null;
 			},
-			calcTimeTo: function(place) {
-			  var currentParentId = this.get(this.currentId).parentId;
+			hasSameParent: function (place,place2, patentType) {
 			  
-			  if('Sunport Gateway' == place.type) {
+			},
+			calcTimeTo: function(place) {
+			  var current = this.get(this.currentId);
+			  var currentParentId = current.parentId;
+			  
+			   if('Hyperspace Gate'== place.type) {
+			     // intra clusters hyperspace
+			     // intra warpgates
+			     
+			   } else if('Sunport Gateway' == place.type) {
 			    // intra sunports
 			    // intra local planet/asteroid space non gate
 			  } else if('Warp Gateway' == place.type) {
-			    
+			    this.hasSameParent(place,current,['Solar system'])
 			    // intra galaxy space
 			    // intra local sunports
 			  } else {
+			    this.hasSameParent(place,current,['Planet','Asteroid'])
 			    // intra local planet/asteroid space
 			  }
 			  
