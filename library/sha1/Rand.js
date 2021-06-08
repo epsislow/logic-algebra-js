@@ -516,7 +516,7 @@ var r = {
         parentIds.push(parent.id);
       }
       
-		//	trs = pl.getCurrentPlacesEl(pl.currentId, 2, parentIds, clsOpened, clsClosed);
+		//trs = pl.getCurrentPlacesEl(pl.currentId, 2, parentIds, clsOpened, clsClosed);
 			trs = pl.getAllPlacesEl();
 
 			mapTable.append(trs);
@@ -829,7 +829,7 @@ var r = {
 			  var tocont = false;
 
 	if('Hyperspace Gate'== place.type) {
-	  console.log('ccH');
+	  //console.log('ccH');
 			     // intra clusters hyperspace
 			     // intra warpgates
 			if(current.type== place.type) {
@@ -857,7 +857,7 @@ var r = {
 			    // intra galaxy space
 			    // intra local sunports
 			  } else {
-			    console.log('ccE');
+		//	    console.log('ccE');
 			    tocont= this.hasSameParent(place,current, this.config.type['Solar system']);
 			    // intra local planet/asteroid space
 			  }
