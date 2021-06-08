@@ -560,6 +560,8 @@ var r = {
 				
 				console.log(placeId);
 				
+				var childs = pl.getPlacesWithParent(placeId,1);
+		
 				var q = $('.map tr[data-parentId='+placeId+']');
 				if (show) {
 					q.removeClass('hide')
@@ -569,12 +571,12 @@ var r = {
 					q.addClass('hide')
 				 	 .removeClass('show');
 				 	 
-				 	$('.show[data-ident]')
-				 	.filter(function() {
-				 	  return $(this).attr("data-ident") > ident;
-				 	 })
-				 	 .addClass('hide')
+			 	for(var c in childs) {
+				 	$('.map tr[data-placeId='+childs[c]+']')
+			 	 	 .removeClass('hide')
+					 .addClass('hide')
 				 	 .removeClass('show');
+				 }
 				}
 				
 				pl.removeCtrl();
@@ -784,6 +786,18 @@ var r = {
 				
 				//rd2.deleteRand(seed);
 				//rd2 = null;
+			},
+			getPlacesWithParent: function (parentId, onlyId = 1, results = []) {
+			  var place= this.get(parentId);
+			  if(!place) return results;
+			  var child = this.get(place.firstChildId);
+			  if(!child) return results;
+			  results.push(onlyId?child.id:child);
+			  while(child = this.get(child.nextId)) {
+			    results.push(onlyId?child.id:child);
+			    results = results.concat(this.getPlacesWithParent(child.id, onlyId));
+			  }
+			  return results;
 			},
 			getPlaceParentWithType: function(place, parentType) {
 	
