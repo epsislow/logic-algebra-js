@@ -18,7 +18,7 @@ var r = {
 				ids.push(a.planet.add('mars'));
 				ids.push(a.planet.add('pluto'));
 				
-				a.place.config.seed = rd.randomBytes(5)+Date.now();
+				a.place.config.seed = rd.randomBytes(5)//+Date.now();
 			
 				a.planet.get(ids[0]).current = 1;
 				a.planet.get(ids[0]).visible = 1;
@@ -623,7 +623,7 @@ var r = {
 					'road': [],
 					'Galaxy': ['Cluster'],
 					'Cluster': ['Solar system','Hyperspace Gate'],
-					'Solar system': ['Planet','Warp Gateway','Sunport Gateway', 'Space city', 'Asteroid belt'],
+					'Solar system': ['Planet','Warp Gateway', 'Asteroid belt'],
 					'Asteroid belt': ['Asteroid', 'Sunport Gateway'],
 					'Asteroid': ['Space dock', 'Space colony'],
 					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City'],
@@ -785,30 +785,72 @@ var r = {
 				//rd2.deleteRand(seed);
 				//rd2 = null;
 			},
-			hasSameParent: function (place,place2, patentType) {
+			getPlaceParentWithType: function(place, parentType) {
+	
+	  if(parentType.includes(place.type)) {
+			  return place;
+		 }
 			  
+	   while (place = this.get(place.parentId)) {
+	      if(parentType.includes(place.type)) {
+	  		  return place;
+	  	 }
+	   }
+		 return false;
+		  },
+			hasSameParent: function (place,place2, parentType) {
+	var placeParent = this.getPlaceParentWithType(place,parentType);
+	var place2Parent = this.getPlaceParentWithType(place2, parentType);
+	console.log(placeParent,'--', place2Parent);
+	//return false;
+			  if(!placeParent || !place2Parent ) {
+			    return false;
+			  }
+			  return placeParent.id== place2Parent.id;
+
 			},
 			calcTimeTo: function(place) {
 			  var current = this.get(this.currentId);
 			  var currentParentId = current.parentId;
-			  
-			   if('Hyperspace Gate'== place.type) {
+			  var tocont = false;
+
+	if('Hyperspace Gate'== place.type) {
+	  console.log('ccH');
 			     // intra clusters hyperspace
 			     // intra warpgates
-			     
-			   } else if('Sunport Gateway' == place.type) {
+			if(current.type== place.type) {
+			   tocont = true;
+			}
+			if(current.type=='Warp Gateway') {
+			  tocont= this.hasSameParent(place, current, ['Cluster']);
+	   }
+ } else if('Sunport Gateway' == place.type) {
 			    // intra sunports
+			    if(current.type==place.type) {
+			      tocont = true;
+			    }
 			    // intra local planet/asteroid space non gate
-			  } else if('Warp Gateway' == place.type) {
-			    this.hasSameParent(place,current,['Solar system'])
+			    tocont = this.hasSameParent(place,current, ['Solar system']);
+			    
+  } else if ('Warp Gateway' == place.type) {
+			    if(current.type =='Sunport Gateway') {
+			      tocont = this.hasSameParent(place,current, ['Solar system']);
+			    }
+			    if(current.type == 'Warp Gateway') {
+			      tocont = this.hasSameParent(place, current, ['Cluster'])
+			    }
+	//tocont = this.hasSameParent(place,current, ['Solar system'])
 			    // intra galaxy space
 			    // intra local sunports
 			  } else {
-			    this.hasSameParent(place,current,['Planet','Asteroid'])
+			    console.log('ccE');
+			    tocont= this.hasSameParent(place,current, this.config.type['Solar system']);
 			    // intra local planet/asteroid space
 			  }
 			  
-			  
+			  if(!tocont) {
+			    return false;
+			  }
 			  
 			  var placeParent = this.get(place.parentId);
 			  

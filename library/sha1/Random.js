@@ -59,7 +59,7 @@ var rd = (function () {
 	}
 
     pub.pickOneFrom = function(list, withPop=0) {
-      var pick = this.rand(0,list.length);
+      var pick = this.rand(0,list.length-1);
       if(withPop) {
         return list.splice(pick,1).pop();
       } else {
