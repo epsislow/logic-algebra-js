@@ -652,7 +652,7 @@ var r = {
 					'Asteroid': ['Space dock', 'Space colony'],
 					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City','Ring'],
 					'Ring':['Resource Asteroid', 'Resource Asteroid2'],
-					'Resource Asteroid': ['Mining place'],
+					'Resource Asteroid': ['Mining place','Some place'],
 					'Resource Asteroid2': ['Some place'],
 					'Mining place':[],
 					'Some place':[],
@@ -672,8 +672,8 @@ var r = {
 				'limit': {
 					'road': [1,1],
 					'docker': [1,1],
-					'Mining place':[1,1],
-					'Some place': [1,1],
+					'Mining place':[1,3],
+					'Some place': [1,2],
 					'rafinery':[0,1],
 					'shop':[0,1],
 					'trade':[0,1],
@@ -961,6 +961,7 @@ var r = {
 				  //console.log('new '+this.currentId)
 			//	  r.win.reg.map.repaint=1;
 			   r.app.place.currentChanged=1;
+			 r.win.now();
 				})
 	
 			},
