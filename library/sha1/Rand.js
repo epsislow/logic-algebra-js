@@ -612,7 +612,10 @@ var r = {
 				'Cluster':['braille'],
 				'Asteroid belt': ['spinner'],
 				'Asteroid': ['dice-d20'],
+				'Resource Asteroid': ['meteor'],
+				'Ring': ['record-vinyl'],
 				'Galaxy':['star-of-life'],
+				'Mining place': ['expand'],
 				'Sunport Gateway': ['route'],
 				'Hyperspace Gate': ['road'],
 				'Warp Gateway': ['circle-notch']
@@ -620,7 +623,7 @@ var r = {
 			colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
 			config: {
 				'seed': rd.randomBytes(5),
-				'noDistanceFor': ['Hyperspace Gate','Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
+				'noDistanceFor': ['Mining place','Hyperspace Gate','Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
@@ -628,7 +631,10 @@ var r = {
 					'Solar system': ['Planet','Warp Gateway', 'Asteroid belt'],
 					'Asteroid belt': ['Asteroid', 'Sunport Gateway'],
 					'Asteroid': ['Space dock', 'Space colony'],
-					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City'],
+					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City','Ring'],
+					'Ring':['Resource Asteroid'],
+					'Resource Asteroid': ['Mining place'],
+					'Mining place':[],
 					'Space colony': ['docker','trade','rafinery'],
 					'Space city': ['docker','rafinery','quester'],
 					'Space dock': ['docker','quester','rafinery'],
@@ -654,6 +660,8 @@ var r = {
 					'Solar system': [3,5],
 					'Asteroid belt': [0,3],
 					'Asteroid': [1,3],
+					'Ring': [0,2],
+					'Resource Asteroid': [0,4],
 					'Planet': [2,5],
 					'Space colony': [0,1],
 					'Space city': [0,1],
@@ -764,11 +772,11 @@ var r = {
 					
 					color = rd2.pickOneFrom(this.colorList,0)
 					
-					if (!['road', 'docker'].includes(type)) {
+					if (!['road', 'docker', 'Mining place','Ring','Resource Asteroid'].includes(type)) {
 						suf = rd2.randomBytes(1,2) + rd2.pickOneFrom(['m','s','x','c','t','d','n','r','y','j','k','v'], 0);
-						name = rd2.randomName(rd2.rand(3,8),0,suf);
+						name = rd2.randomName(rd2.rand(2,5),0,suf);
 					} else {
-						name = type;
+						name ='0'+ i;
 					}
 					
 					if (root) {
@@ -884,7 +892,7 @@ var r = {
 			  var trs = [];
 			  if(place.id == this.currentId)
 			  {
-			    console.log('ydoi')
+			//    console.log('ydoi')
 			    var tr = $('<tr>')
 			    .addClass('place-ctrl-menu')
 			    .attr('data-placeId', place.id)
@@ -894,7 +902,8 @@ var r = {
            .attr('data-placeId', place.id)
 			     .append($('<i>')
 			       .addClass('fas fa-arrows-alt menu-ctrl')
-			     ).append(' Move'))
+			     ).append(' Move'));
+			     
 			    trs.push(tr);
 			  } else {
 			    var time = this.calcTimeTo(place);
