@@ -494,7 +494,7 @@ var r = {
             //rr.el.append(' tick');
   },
   map: function(rr) {
-			  
+			 var pl = this.place; 
           if(rr.repaint) {
 				
 			if(rr.el) {
@@ -503,7 +503,7 @@ var r = {
 			  
 			var mapTable = $('<table>').addClass('table table-sm table-dark');
 			var trs = [];
-			var pl = this.place;
+
       
 			var clsOpened = 'place-ctrl fas fa-angle-down';
 			var clsClosed = 'place-ctrl fas fa-angle-right';
@@ -591,7 +591,24 @@ var r = {
               return;
             }
 			
-			
+			if(pl.currentChanged) {
+			  $('.crr').removeClass('crr')
+			    .addClass('no-crr');
+			    pl.currentChanged=0;
+			    
+			    var currentParentIds = [parseInt(pl.currentId)];
+			    
+			    var parent = pl.get(pl.currentId);
+			    
+			    while (parent = pl.get(parent.parentId)) {
+			      currentParentIds.push(parent.id);
+			    }
+			 	for(var c in currentParentIds) {
+				 	$('.map tr[data-placeId='+currentParentIds[c]+']')
+			 	 	 .removeClass('no-crr')
+					 .addClass('crr')
+			 	}
+			}
           }
         },
 		place: {
@@ -612,10 +629,12 @@ var r = {
 				'Cluster':['braille'],
 				'Asteroid belt': ['spinner'],
 				'Asteroid': ['dice-d20'],
+				'Resource Asteroid2': ['meteor'],
 				'Resource Asteroid': ['meteor'],
 				'Ring': ['record-vinyl'],
 				'Galaxy':['star-of-life'],
 				'Mining place': ['expand'],
+				'Some place': ['expand'],
 				'Sunport Gateway': ['route'],
 				'Hyperspace Gate': ['road'],
 				'Warp Gateway': ['circle-notch']
@@ -623,18 +642,20 @@ var r = {
 			colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
 			config: {
 				'seed': rd.randomBytes(5),
-				'noDistanceFor': ['Mining place','Hyperspace Gate','Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
+				'noDistanceFor': ['Mining place','Some place','Hyperspace Gate','Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
 					'Cluster': ['Solar system','Hyperspace Gate'],
 					'Solar system': ['Planet','Warp Gateway', 'Asteroid belt'],
-					'Asteroid belt': ['Asteroid', 'Sunport Gateway'],
+					'Asteroid belt': ['Asteroid', 'Sunport Gateway','Resource Asteroid2'],
 					'Asteroid': ['Space dock', 'Space colony'],
 					'Planet': ['Sunport Gateway', 'Space colony', 'Space city', 'Space dock','Space station', 'City','Ring'],
-					'Ring':['Resource Asteroid'],
+					'Ring':['Resource Asteroid', 'Resource Asteroid2'],
 					'Resource Asteroid': ['Mining place'],
+					'Resource Asteroid2': ['Some place'],
 					'Mining place':[],
+					'Some place':[],
 					'Space colony': ['docker','trade','rafinery'],
 					'Space city': ['docker','rafinery','quester'],
 					'Space dock': ['docker','quester','rafinery'],
@@ -651,6 +672,8 @@ var r = {
 				'limit': {
 					'road': [1,1],
 					'docker': [1,1],
+					'Mining place':[1,1],
+					'Some place': [1,1],
 					'rafinery':[0,1],
 					'shop':[0,1],
 					'trade':[0,1],
@@ -659,9 +682,10 @@ var r = {
 					'Cluster': [2,4],
 					'Solar system': [3,5],
 					'Asteroid belt': [0,3],
-					'Asteroid': [1,3],
+					'Asteroid': [0,2],
 					'Ring': [0,2],
-					'Resource Asteroid': [0,4],
+					'Resource Asteroid': [0,2],
+					'Resource Asteroid2': [0,4],
 					'Planet': [2,5],
 					'Space colony': [0,1],
 					'Space city': [0,1],
@@ -680,6 +704,7 @@ var r = {
 			dockers: [],
 			road: 0,
 			currentId: 0,
+			currentChanged:0,
 			add: function (name, type, icon, color, distanceIndex, visible, buildingListId = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0) {
               var id=this.reg.length;
 			  
@@ -772,7 +797,7 @@ var r = {
 					
 					color = rd2.pickOneFrom(this.colorList,0)
 					
-					if (!['road', 'docker', 'Mining place','Ring','Resource Asteroid'].includes(type)) {
+					if (!['road','rafinery', 'trade', 'docker', 'Mining place','Some place', 'Ring', 'Resource Asteroid', 'Resource Asteroid2', 'Asteroid'].includes(type)) {
 						suf = rd2.randomBytes(1,2) + rd2.pickOneFrom(['m','s','x','c','t','d','n','r','y','j','k','v'], 0);
 						name = rd2.randomName(rd2.rand(2,5),0,suf);
 					} else {
@@ -934,7 +959,8 @@ var r = {
 				$('.place-ctrl-menu .act-here').click(function () {
 				  r.app.place.currentId = $(this).attr('data-placeId');
 				  //console.log('new '+this.currentId)
-				  r.win.reg.map.repaint=1;
+			//	  r.win.reg.map.repaint=1;
+			   r.app.place.currentChanged=1;
 				})
 	
 			},
@@ -968,7 +994,10 @@ var r = {
 					.attr('style', 'color:'+place.color);
           
           var typeClass = place.type;
-
+          
+if(place.type && !(place.type in this.config.type)) {
+  throw new Error('no config type for '+place.type);
+}
 					var tr = $('<tr>')
 					.addClass('place' + (currentParentIds.includes(place.parentId) || currentParentIds.includes(place.id) ? ' show':' hide') )
 					.addClass(currentParentIds.includes(place.id)?'crr':'no-crr')
@@ -982,7 +1011,7 @@ var r = {
 						.addClass('info-col')
             .addClass('ident-'+ident)
 						.append($('<i>').addClass(this.config.type[place.type].length?(currentParentIds.includes(place.id) ?clsOpened:clsClosed):'fas place-ctrl'))
-						.append(' '+ place.type+': ' + place.name)
+						.append(' '+ place.type.replaceAll(/[0-9]+/g,'')+': ' + place.name)
 						.append(' ')
 						.append(placeIcon)
 						.append(' ')
