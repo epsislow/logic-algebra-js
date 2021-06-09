@@ -552,8 +552,14 @@ var r = {
 					  .addClass(clsOpened);
 					  show = 1;
 				}
-				
-				
+				if(pl.lastPlaceActOpen && pl.get(pl.lastPlaceActOpen).firstChildId) {
+				  var q = $('.map tr[data-placeId=' + pl.lastPlaceActOpen + ']');
+				  
+				  q.removeClass('hide')
+				      .addClass('show');
+
+				  pl.lastPlaceActOpen = 0;
+				}
 				var placeId = el.parent().attr('data-placeId');
 				
 				var ident = el.parent().attr('data-ident');
@@ -582,7 +588,7 @@ var r = {
 				pl.removeCtrl();
 			//	console.log(pl.config.noDistanceFor);
 				if(pl.config.noDistanceFor.includes( place.type ) && show) {
-    pl.addCtrlFor(place, el.parent(), ident);
+       pl.addCtrlFor(place, el.parent(), ident);
     
 				}
 			})
@@ -611,6 +617,11 @@ var r = {
 			}
           }
         },
+    quest: {
+      getNextQuest: function() {
+        return false;
+      }
+    },
 		place: {
 			icoList: {
 				'road': ['road'],
@@ -643,6 +654,14 @@ var r = {
 			config: {
 				'seed': rd.randomBytes(5),
 				'noDistanceFor': ['Mining place','Some place','Hyperspace Gate','Sunport Gateway', 'Warp Gateway', 'road','docker','rafinery','trade','quester'],
+				'typeName': {
+				  'Mining place': 'area',
+				  'Some place': 'area',
+				  'Resource Asteroid': 'Asteroid',
+				  'Resource Asteroid2': 'Asteroid',
+				  'Space dock': 'Space dock',
+				  'Space station': 'Space station'
+				},
 				'type': {
 					'road': [],
 					'Galaxy': ['Cluster'],
@@ -705,6 +724,7 @@ var r = {
 			road: 0,
 			currentId: 0,
 			currentChanged:0,
+			lastPlaceActOpen:0,
 			add: function (name, type, icon, color, distanceIndex, visible, buildingListId = 0, parentId = 0,nextId = 0,prevId = 0, firstChildId= 0) {
               var id=this.reg.length;
 			  
@@ -912,6 +932,11 @@ var r = {
 			  
 
 			},
+			getActForQuester: function() {
+			  var trs = [];
+			  quest = this.parent.quest.getNextQuest();
+			  return trs;
+			},
 			addCtrlFor: function(place, el, ident) {
 			  
 			  var trs = [];
@@ -928,10 +953,13 @@ var r = {
 			     .append($('<i>')
 			       .addClass('fas fa-arrows-alt menu-ctrl')
 			     ).append(' Move'));
-			     
-			    trs.push(tr);
+			   trs.push(tr);
+			     if(place.type =='quester') {
+			       trs.push(this.getActForQuester());
+			     }
 			  } else {
 			    var time = this.calcTimeTo(place);
+			    
 			 if(time!==false) {
 			 //   if(place.parentId == this.get(currentId).parentId) {
 			    var tr = $('<tr>')
@@ -945,6 +973,8 @@ var r = {
 			          .addClass('fas fa-arrow-down menu-ctrl')
 			        ).append(' Here in ' + time.toFixed(2) +'s'))
 			     trs.push(tr);
+			    } else {
+			      this.lastPlaceActOpen= place.id;
 			    }
 			  //  }
 			  }
@@ -1012,7 +1042,7 @@ if(place.type && !(place.type in this.config.type)) {
 						.addClass('info-col')
             .addClass('ident-'+ident)
 						.append($('<i>').addClass(this.config.type[place.type].length?(currentParentIds.includes(place.id) ?clsOpened:clsClosed):'fas place-ctrl'))
-						.append(' '+ place.type.replaceAll(/[0-9]+/g,'')+': ' + place.name)
+						.append(' '+ ((place.type in this.config.typeName)? this.config.typeName[place.type]:place.type.replaceAll(/[0-9]+/g,''))+': ' + place.name)
 						.append(' ')
 						.append(placeIcon)
 						.append(' ')
