@@ -626,17 +626,17 @@ var r = {
             'mine':1,
             'find':['planet','planet-asteroid','space-dock','space-colony','space-station'],
             'refine':1,
-            'money':['limit-pass','buy-ship','shop']
+            'money':['limit-pass','buy-ship','shop','repair','buy-ship-elements'],
           },
           'midd': {
             'find':['resource','quester','shop','asteroid-belt-place'],
             'mine':1,
             'kill':1,
-            'money':['trade-limit-pass','sell-ship','help-w-no-return']
+            'money':['trade-limit-pass','sell-ship','help-w-no-return','use-drone']
           },
           'end': {
             'find':['ship','faction','cluster'],
-            'faction':['space-control'],
+            'faction':['space-control','center-control','planet-control'],
             'money':['place-limit-pass']
           }
           
