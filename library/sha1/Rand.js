@@ -617,6 +617,36 @@ var r = {
 			}
           }
         },
+    player: {
+      config: {
+        xprate: 12,
+        minlvl: {
+          'hyperspace':10,
+          'warpgates':2,
+          'sunports':0,
+          'profession':4,
+          'extContainers':3,
+          'factionPick': 6,
+          'mining':5
+        }
+      },
+      values: {
+        name:'Player',
+        health: 1000,
+        maxhp: 10,
+        experience: 10,
+        level:1,
+        maxlvlexp: 1010,
+        factions: {},
+        professions: {},
+        originPlaceId:0,
+        currentPlaceId: 0,
+        questsNow:{},
+        containers: {},
+        ownedExtContainers: {},
+        spaceBankAccounts: {},
+      }
+    },
     quest: {
       reg:{},
       config: {
@@ -628,7 +658,7 @@ var r = {
             'refine':1,
             'money':['limit-pass','buy-ship','shop','repair','buy-ship-elements'],
           },
-          'midd': {
+          'middle': {
             'find':['resource','quester','shop','asteroid-belt-place'],
             'mine':1,
             'kill':1,
@@ -639,10 +669,10 @@ var r = {
             'faction':['space-control','center-control','planet-control'],
             'money':['place-limit-pass']
           }
-          
-        }
+        },
+        
       },
-      getNextQuest: function() {
+      getNextQuest: function(placeId, ) {
         return false;
       }
     },
