@@ -618,6 +618,30 @@ var r = {
           }
         },
     quest: {
+      reg:{},
+      config: {
+        'type':{
+          'start':{
+            'gather':1,
+            'mine':1,
+            'find':['planet','planet-asteroid','space-dock','space-colony','space-station'],
+            'refine':1,
+            'money':['limit-pass','buy-ship','shop']
+          },
+          'midd': {
+            'find':['resource','quester','shop','asteroid-belt-place'],
+            'mine':1,
+            'kill':1,
+            'money':['trade-limit-pass','sell-ship','help-w-no-return']
+          },
+          'end': {
+            'find':['ship','faction','cluster'],
+            'faction':['space-control'],
+            'money':['place-limit-pass']
+          }
+          
+        }
+      },
       getNextQuest: function() {
         return false;
       }
