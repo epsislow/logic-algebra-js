@@ -670,10 +670,89 @@ var r = {
             'money':['place-limit-pass']
           }
         },
-        
+
       },
-      getNextQuest: function(placeId, ) {
-        return false;
+      getQuestEl: function(quest,ident=0) {
+        var el= 
+          $('<tr>')
+            .addClass('place-ctrl-menu quest')
+            .attr('data-placeId', quest.placeId)
+            .attr('data-questId', quest.id)
+            .append($('<td>')
+              .addClass('ident-' + ident)
+              
+              .addClass('act-move')
+              .attr('data-placeId', quest.placeId)
+              .attr('data-questId', quest.id)
+              .append($('<i>')
+                .addClass('fas fa-right-arrow act-quest-start-ctrl')
+ ).append(' Quest '+quest.id+': '+quest.type1+'/'+quest.type2+'/'+quest.type3));
+              
+        return el;
+      },
+      getAllQuestsEl: function(quests=[],ident=0) {
+        var els=[];
+        for(var q in quests) {
+          els.push(this.getQuestEl(quests[q],ident));
+        }
+        return els;
+      },
+      genQuest: function(lvl=0) {
+        var qlif = Math.floor(lvl/25);
+        var type1 = qlif==0?'start':(qlif==1 || qlif==2?'middle':(qlif==3?'end':'end'));
+        var type2=rd.pickOneFrom(Object.keys(this.config.type[type1]));
+        
+        var type3=Array.isArray(type2)?rd.pickOneFrom(this.config.type[type1][type2]):type2 ;
+        var q = {
+          id: lvl,
+          completed:0,
+          placeId:0,
+          lvl:qlif,
+          type1:type1,
+          type2:type2,
+          type3:type3
+        };
+        return q;
+      },
+      genQuests: function(placeId, num) {
+        var qs= [];
+        var q;
+     //   console.log('ssg',this.reg);
+        
+        for(var i=0;i<num;i++) {
+           q=this.genQuest(this.reg[placeId].length);
+           q.placeId=placeId;
+           qs.push(q);
+           this.reg[placeId].push(q)
+        }
+        return qs;
+      },
+      getNextQuests: function(placeId, limit) {
+        if(!(placeId in this.reg)) {
+          this.reg[placeId]= [];
+    //      console.log('ccc',this.reg);
+          
+          var quests = this.genQuests(placeId, limit);
+          if(!quests) {
+            return false;
+          }
+          this.reg[placeId] = quests;
+        }
+   //     console.log('aa_£a',this.reg[placeId])
+        var quests = [];
+        for(var q in this.reg[placeId]) {
+          if(quests.length >= limit) {
+            return quests;
+          }
+          if(!this.reg[placeId][q].completed) {
+            quests.push(this.reg[placeId][q]);
+          }
+        }
+        var req = limit - quests.length;
+        if(req > 0) {
+          quests = quests.concat(this.genQuests(placeId, req));
+        }
+        return quests;
       }
     },
 		place: {
@@ -986,9 +1065,12 @@ var r = {
 			  
 
 			},
-			getActForQuester: function() {
-			  var trs = [];
-			  quest = this.parent.quest.getNextQuest();
+			getActForQuester: function(place, ident) {
+			  var trs;
+			  quests = this.parent.quest.getNextQuests(place.id,5);
+			  console.log(quests);
+			  trs = this.parent.quest.getAllQuestsEl(quests, ident);
+			  console.log(trs)
 			  return trs;
 			},
 			addCtrlFor: function(place, el, ident) {
@@ -1009,7 +1091,7 @@ var r = {
 			     ).append(' Move'));
 			   trs.push(tr);
 			     if(place.type =='quester') {
-			       trs.push(this.getActForQuester());
+			       trs.push(this.getActForQuester(place, ident));
 			     }
 			  } else {
 			    var time = this.calcTimeTo(place);

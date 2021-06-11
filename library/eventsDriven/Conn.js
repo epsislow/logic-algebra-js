@@ -1,0 +1,52 @@
+
+
+var conn = function (
+      name, 
+      opfn= (v) => v&1 
+  ) {
+  var inputs = {};
+  var outputs = [[]]
+  var pub = {name:name, val: false};
+  
+  function op(opfn) {
+    return opfn;
+  }
+  
+  function run(value) {
+    if(pub.val == value) {
+      console.log('no-pass');
+      return false;
+    }
+    
+    pub.val = value;
+    var outs= [];
+    for(var o in outputs) {
+      outs.push(
+        outputs[o].run(value)
+      );
+    }
+    return outs;
+  }
+  
+  pub.to = function (conn, not=0) {
+    outputs.push(function(value) {
+      return 
+        conn.run(not? ~value&1:value&1);
+    });
+    
+  }
+  
+  pub.run = function(value) {
+    return run(op(value));
+  }
+  
+  return pub;
+}
+
+var a = conn('a');
+var b = conn('b');
+a.to(b);
+
+console.log(a);
+console.log(b);
+a.run(1);
