@@ -698,11 +698,12 @@ var r = {
         return els;
       },
       genQuest: function(lvl=0) {
-        var qlif = Math.floor(lvl/25);
+        var qlif = Math.floor(lvl/10);
         var type1 = qlif==0?'start':(qlif==1 || qlif==2?'middle':(qlif==3?'end':'end'));
         var type2=rd.pickOneFrom(Object.keys(this.config.type[type1]));
         
-        var type3=Array.isArray(type2)?rd.pickOneFrom(this.config.type[type1][type2]):type2 ;
+        var type3=Array.isArray(this
+        .config.type[type1][type2])?rd.pickOneFrom(this.config.type[type1][type2]):type2;
         var q = {
           id: lvl,
           completed:0,
@@ -1066,11 +1067,20 @@ var r = {
 
 			},
 			getActForQuester: function(place, ident) {
-			  var trs;
-			  quests = this.parent.quest.getNextQuests(place.id,5);
-			  console.log(quests);
-			  trs = this.parent.quest.getAllQuestsEl(quests, ident);
-			  console.log(trs)
+			  var trs=[];
+			  quests = this.parent.quest.getNextQuests(place.id,35);
+			 // console.log(quests);
+			 trs = this.parent.quest.getAllQuestsEl(quests, ident);
+			 //trs.push($('<tr>')
+			//   .append('<td>')
+		//	   .append('test')
+	//		  );
+			//  trs.push($('<tr>')
+		//	   .append('<td>')
+			//   .append('test2')
+		//	  );
+			  
+			  //console.log(trs)
 			  return trs;
 			},
 			addCtrlFor: function(place, el, ident) {
@@ -1091,7 +1101,7 @@ var r = {
 			     ).append(' Move'));
 			   trs.push(tr);
 			     if(place.type =='quester') {
-			       trs.push(this.getActForQuester(place, ident));
+			       trs = trs.concat(this.getActForQuester(place, ident));
 			     }
 			  } else {
 			    var time = this.calcTimeTo(place);
