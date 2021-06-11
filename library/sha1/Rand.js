@@ -652,16 +652,16 @@ var r = {
       config: {
         'type':{
           'start':{
-            'gather':1,
-            'mine':1,
+            'gather':['resource','trade-element'],
+            'mine':['resource'],
             'find':['planet','planet-asteroid','space-dock','space-colony','space-station'],
-            'refine':1,
+            'refine':['resource'],
             'money':['limit-pass','buy-ship','shop','repair','buy-ship-elements'],
           },
           'middle': {
-            'find':['resource','quester','shop','asteroid-belt-place'],
-            'mine':1,
-            'kill':1,
+            'find':['resource','quester','trade','asteroid-belt-place'],
+            'mine':['resources'],
+            'kill':['outlaw','faction-outlaw'],
             'money':['trade-limit-pass','sell-ship','help-w-no-return','use-drone']
           },
           'end': {
@@ -711,7 +711,9 @@ var r = {
           lvl:qlif,
           type1:type1,
           type2:type2,
-          type3:type3
+          type3:type3,
+          placeReqId:0,
+          
         };
         return q;
       },
