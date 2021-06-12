@@ -649,24 +649,68 @@ var r = {
     },
     quest: {
       reg:{},
+      picked: {},
       config: {
+        seed: 'quest',
+        'typeLimit': {
+          'find.quester': [1,1],
+          'get-licence':[1,1],
+          'build':[1,1],
+          'money':[2,4],
+        },
         'type':{
+          'q0':{
+            'find':['ore','planet','asteroid','station','trade','refinary'],
+            'money':['pass-limit'],
+            'refine':['ore'],
+            'get-licence': ['build2planet','build-space-dock','build2asteroid'],
+            'build':['refinary','assambler'],
+            'craft':['resource'],
+            'sell':['ore'],
+          },
+          'q1':{
+            'find':['solar-system-same-cluster','quester'],
+            'build':['shipyard'],
+            'craft':['goods','alloys'],
+          },
+          'q2':{
+            'find':['cluster-same-galaxy','quester'],
+            'build':['ship'],
+            'money':['pass-limit','buy-limit','sell-limit'],
+            'sell':['ship','craftable']
+          },
+          'q3':{
+            'build':['faction-center'],
+            'faction':['trade-contracts'],
+            'sell':['craftable']
+          },
+          'q4':{
+            'find':['galaxy','quester'],
+            'money':['buy-limit','sell-limit','trade-contracts-l imit'],
+            'faction':['mercenaries','trade-blocades']
+          }
+        },
+        
+        'type2':{
           'start':{
             'gather':['resource','trade-element'],
             'mine':['resource'],
             'find':['planet','planet-asteroid','space-dock','space-colony','space-station'],
             'refine':['resource'],
             'money':['limit-pass','buy-ship','shop','repair','buy-ship-elements'],
+            'build':['planetaty-miner','refinary']
           },
           'middle': {
             'find':['resource','quester','trade','asteroid-belt-place'],
             'mine':['resources'],
             'kill':['outlaw','faction-outlaw'],
-            'money':['trade-limit-pass','sell-ship','help-w-no-return','use-drone']
+            'money':['trade-limit-pass','sell-ship','help-w-no-return','use-drone'],
+            'build':['industry-assambler','money-limit']
           },
           'end': {
             'find':['ship','faction','cluster'],
             'faction':['space-control','center-control','planet-control'],
+            'build':['asteroid-station','planetary-station','money-limit','space-elevator'],
             'money':['place-limit-pass']
           }
         },
@@ -697,13 +741,43 @@ var r = {
         }
         return els;
       },
-      genQuest: function(lvl=0) {
+      validPick: function(pick, picks={},q) {
+       if(!pick) return false;
+       if(!(pick in picks)) return true;
+       return true;
+       /*var limits=0;
+       if(q.type2+'.*' in this.config.typeLimit) {
+         limits = this.config.type[q.type2+'.*'];
+         
+       } */
+      //  if(pick in picks) return false;
+      },
+      genQuest: function(lvl=0,seedpr='', picks={}) {
         var qlif = Math.floor(lvl/10);
-        var type1 = qlif==0?'start':(qlif==1 || qlif==2?'middle':(qlif==3?'end':'end'));
-        var type2=rd.pickOneFrom(Object.keys(this.config.type[type1]));
+       // var type1 = qlif==0?'start':(qlif==1 || qlif==2?'middle':(qlif==3?'end':'end'));
+       qlif=Math.floor(lvl/10);
         
-        var type3=Array.isArray(this
-        .config.type[type1][type2])?rd.pickOneFrom(this.config.type[type1][type2]):type2;
+        var seed = rd.hashCode(this.config.seed + lvl +seedpr);
+        
+        var rd2 = rd.sessionWithSeed(seed);
+        var type1, type2, type3;
+        type1='q'+qlif;
+      
+      var trys=0;
+  var pick=0;
+       while(!this.validPick(pick,picks,{type1:type1,type2:type2,type3:type3})) {
+        if(trys==100) {
+          return false;
+        }
+        type2=rd2.pickOneFrom(Object.keys(this.config.type[type1]));
+        
+        type3=Array.isArray(this
+        .config.type[type1][type2])?rd2.pickOneFrom(this.config.type[type1][type2]):type2;
+        
+           pick=type2+'.'+type3;
+           trys++;
+       }
+        
         var q = {
           id: lvl,
           completed:0,
@@ -720,19 +794,30 @@ var r = {
       genQuests: function(placeId, num) {
         var qs= [];
         var q;
+
      //   console.log('ssg',this.reg);
         
         for(var i=0;i<num;i++) {
-           q=this.genQuest(this.reg[placeId].length);
+           q=this.genQuest(this.reg[placeId].length, placeId+'_'+num, this.picked[placeId]);
+        if(!q) {return qs;
+        }
            q.placeId=placeId;
            qs.push(q);
-           this.reg[placeId].push(q)
+           this.reg[placeId].push(q);
+           pick=q.type2+'.'+q.type3;
+        
+           
+    if(!(pick in this.picked[placeId])) {
+        this.picked[placeId][pick]=0;
+    }
+    this.picked[placeId][pick]++;
         }
         return qs;
       },
       getNextQuests: function(placeId, limit) {
         if(!(placeId in this.reg)) {
           this.reg[placeId]= [];
+          this.picked[placeId] = {};
     //      console.log('ccc',this.reg);
           
           var quests = this.genQuests(placeId, limit);
