@@ -1131,7 +1131,7 @@ var r = {
 			  			
 				$('.place-ctrl-menu .act-move').click(function () {
 				  this.removeCtrl();
-				})
+				}.bind(this))
 				
 				
 				$('.place-ctrl-menu .act-here').click(function () {
@@ -1139,8 +1139,10 @@ var r = {
 				  //console.log('new '+this.currentId)
 			//	  r.win.reg.map.repaint=1;
 			   r.app.place.currentChanged=1;
+	    	 r.app.place.removeCtrl();
+	    	 r.app.place.addCtrlFor(place,el,ident);
 			 r.win.now();
-				})
+				});
 	
 			},
 			removeCtrl: function() {

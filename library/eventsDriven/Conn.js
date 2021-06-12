@@ -50,3 +50,9 @@ a.to(b);
 console.log(a);
 console.log(b);
 a.run(1);
+// should run all per connection layers..
+// once a layer is done the next and so on
+// ripples may occur if an element is included on two layers, will run 2 times for each layer..
+// flip flows have infinite no of layers
+// we should run until we get a stable state. if more then 20 reruns of an element then the state is unstable
+
