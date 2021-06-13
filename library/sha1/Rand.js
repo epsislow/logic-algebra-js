@@ -295,6 +295,12 @@ var r = {
                 this.add(planetId, name, ico,color, tradeValuePow, buildingList);
               }
             },
+            getAllEls: function(resources) {
+              
+            },
+            getResourcesForPlace: function() {
+              
+            },
 			get: function(id) {
 				return this.reg[id];
 			}
@@ -1153,9 +1159,17 @@ var r = {
 			  
 
 			},
+			getActForTrader: function(place, ident) {
+			  var trs=[];
+			  var resources= this.parent.resource.getResourcesForPlace(place);
+			  
+			  this.parent.resource.getAllEls(resources, ident);
+
+			  return trs;
+			},
 			getActForQuester: function(place, ident) {
 			  var trs=[];
-			  quests = this.parent.quest.getNextQuests(place.id,35);
+			  var quests = this.parent.quest.getNextQuests(place.id, 35);
 			 // console.log(quests);
 			 trs = this.parent.quest.getAllQuestsEl(quests, ident);
 			 //trs.push($('<tr>')
@@ -1189,6 +1203,8 @@ var r = {
 			   trs.push(tr);
 			     if(place.type =='quester') {
 			       trs = trs.concat(this.getActForQuester(place, ident));
+			     } else if( place.type=='trade') {
+			       trs = trs.concat(this.gerActForTrader(place,ident));
 			     }
 			  } else {
 			    var time = this.calcTimeTo(place);
