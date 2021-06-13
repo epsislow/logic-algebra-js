@@ -298,7 +298,7 @@ var r = {
             getAllEls: function(resources) {
               
             },
-            getResourcesForPlace: function() {
+            getResourcesForPlace: function(place) {
               
             },
 			get: function(id) {
@@ -1161,7 +1161,7 @@ var r = {
 			},
 			getActForTrader: function(place, ident) {
 			  var trs=[];
-			  var resources= this.parent.resource.getResourcesForPlace(place);
+			  var resources = this.parent.resource.getResourcesForPlace(place);
 			  
 			  this.parent.resource.getAllEls(resources, ident);
 
@@ -1204,7 +1204,7 @@ var r = {
 			     if(place.type =='quester') {
 			       trs = trs.concat(this.getActForQuester(place, ident));
 			     } else if( place.type=='trade') {
-			       trs = trs.concat(this.gerActForTrader(place,ident));
+			       trs = trs.concat(this.getActForTrader(place,ident));
 			     }
 			  } else {
 			    var time = this.calcTimeTo(place);

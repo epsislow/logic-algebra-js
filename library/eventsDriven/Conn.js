@@ -108,7 +108,7 @@ var gate= function() {
 
 var lib = {
   'f&': function() {
-    val=0;
+    val=1;
     for(a in arguments) {
       val = val & arguments[a];
     }
