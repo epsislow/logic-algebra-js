@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rand</title>
+	
+	<link rel="icon" type="image/png" href="/favicon.ico"/>
+	<link rel="icon" type="image/png" href="http://logic/favicon.ico"/>
+	<link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" rel="stylesheet"/>
+</head>
+
+<style>
+  .bg-black {
+    background-color: #000;
+  }
+  .map, .res {
+    color:#999;
+  	font-family: arial;
+	  font-size:20px;
+  	width: 100%;
+	  overflow: auto;
+  	height: 400px;
+  }
+  .map {
+    height: 550px;
+  }
+  .mono {
+	font-family: freemono, monospace;
+  }
+  .res .planet {
+	  color:#ccc;
+	  font-weight:bold;
+  }
+  .res .table tr:nth-child(even) {
+	  background-color: #202225;
+  }
+  
+  .res .item {
+	  color:#ccc;
+  }
+  
+  .res .res-ctrl {
+	  color: #fff;
+  }
+  
+  .res .res-value {
+    margin-left: 15px;
+  }
+  .res i.building-1{
+    color:yellow;
+  }
+  
+  .res i.building-2{
+    color:yellowgreen;
+  }
+  
+  .res i.building-3 {
+    color: limegreen;
+  }
+  .res i.building-4 {
+    color: cyan;
+  }
+  .res i.building-5 {
+    color: lightskyblue;
+  }
+  .hide {
+	  display:none;
+  }
+  
+  .here {
+	  color:#ddd;
+  }
+
+  .info-col {
+
+  }
+  .build-col {
+  }
+  
+  .map i.place-ctrl{
+    width: 0px;
+    padding-right: 8px;
+  }
+  .map .ident-0 .place-ctrl{
+    padding-left: 0px;
+  }
+  .map .ident-1 .place-ctrl{
+    padding-left: 20px;
+  }
+  .map .ident-2 .place-ctrl{
+    padding-left: 40px;
+  }
+  .map .ident-3 .place-ctrl{
+    padding-left: 60px;
+  }
+  .map .ident-4 .place-ctrl{
+    padding-left: 80px;
+  }
+  .map .ident-5 .place-ctrl{
+    padding-left: 100px;
+  }
+  .map .ident-6 .place-ctrl{
+    padding-left: 120px;
+  }
+  .map .ident-7 .place-ctrl{
+    padding-left: 140px;
+  }
+  .map .ident-8 .place-ctrl{
+    padding-left: 160px;
+  }
+  .map .ident-9 .place-ctrl{
+    padding-left: 180px;
+  }
+  .map .ident-10 .place-ctrl{
+    padding-left: 200px;
+  }
+  .map .ident-11 .place-ctrl{
+    padding-left: 220px;
+  }
+  .map .ident-0 .menu-ctrl{
+    padding-left: 0px;
+  }
+  .map .ident-1 .menu-ctrl{
+    padding-left: 20px;
+  }
+  .map .ident-2 .menu-ctrl{
+    padding-left: 40px;
+  }
+  .map .ident-3 .menu-ctrl{
+    padding-left: 60px;
+  }
+  .map .ident-4 .menu-ctrl{
+    padding-left: 80px;
+  }
+  .map .ident-5 .menu-ctrl{
+    padding-left: 100px;
+  }
+  .map .ident-6 .menu-ctrl{
+    padding-left: 120px;
+  }
+  .map .ident-7 .menu-ctrl{
+    padding-left: 140px;
+  }
+  .map .ident-8 .menu-ctrl{
+    padding-left: 160px;
+  }
+  .map .ident-9 .menu-ctrl{
+    padding-left: 180px;
+  }
+  .map .ident-10 .menu-ctrl{
+    padding-left: 200px;
+  }
+  .map .ident-11 .menu-ctrl{
+    padding-left: 220px;
+  }
+  
+  .map tr.crr {
+    color:#fff;
+  }
+  .map tr.no-crr {
+    color:#999;
+  }
+  
+  .map tr.sunport-gateway {
+    color:#bb5;
+  }
+  .map tr.warp-gateway {
+    color:#bb5;
+  }
+  .map tr.sunport-gateway.crr {
+    color:#ff5!important;
+  }
+  .map tr.warp-gateway.crr {
+    color:#ff5!important;
+  }
+  
+  body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+</style>
+
+<body class="bg-black">
+<main role="main" class="container">
+  
+</main>
+
+<script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
+<!--script src="https://requirejs.org/docs/release/2.3.5/minified/require.js" type="text/javascript"></script-->
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/library/Visual.js"></script>
+<script type="text/javascript" src="/library/eventsDriven/trace.js"></script>
+<script type="text/javascript" src="/library/eventsDriven/DgLog.js"></script>
+
+<script type="text/javascript">
+$('document').ready(function() {
+
+  if('vs' in window) {
+    
+    vs.page('Index')
+      .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
+      .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", 1)
+      .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", 1)
+	//  .js('rnd',"/library/sha1/Random.js")
+    .scriptsReady(function () {
+        vs.addSectionsToMain();
+        /*vs.importJs('rand', "/library/sha1/Rand.js", function() {
+          console.log('-- Load finished --');
+		  
+		  
+        }, 0);*/
+		console.log('-- Load finished --');
+        dgl.start();
+		
+      })
+      .addScripts();
+	  
+	  
+    var ra = vs.clearBody()
+    .section('top')
+    .addButton('Index', '/index.html', 'btn-dark')
+	  .br()
+	  .container('m-2 p-1 bg-dark rounded box-shadow text-light', 'textarea', 'width:100%; height: 400px;max-height:500px;overflow:auto;font-family: freemono, monospace;font-size:7px',{id:'txt'})
+		
+  }
+});
+</script>
