@@ -82,6 +82,20 @@ const components = [
     state: 0,
   },
   ...createDFFE('DFF', 'clock', 'A', 'E')
+,{
+    id: 'B',
+    type: 'not',
+    inputs: ['clock'],
+    state: 1,
+  },
+  {
+    id: 'Eb',
+    type: 'controlled',
+    inputs: [],
+    state: 1,
+  },
+  ...createDFFE('DFFb', 'clock', 'E', 'DFF.q_'),
+  
 ];
 
 const componentLookup = indexBy(components, 'id');
@@ -151,7 +165,10 @@ trace.getTraces([
   'clock',
   'A',
   'E',
-  'DFF.q'
+  'DFF.q',
+  'E',
+  'DFF.q_',
+  'DFFb.q'
 ]).forEach(trace => $('#txt').append(trace));
 
 
