@@ -47,6 +47,9 @@ const createDFF = (name, clk, dIn) => {
     },
   ];
 }
+const createMem4b = (name,dIns=[],dEnable,clk) => {
+  
+}
 
 const createDFFE = (name, clk, dIn, dEnable) => {
   const gatedClock = {
@@ -82,7 +85,7 @@ const components = [
     state: 0,
   },
   ...createDFFE('DFF', 'clock', 'A', 'E')
-,{
+ /*,{
     id: 'B',
     type: 'not',
     inputs: ['clock'],
@@ -95,7 +98,7 @@ const components = [
     state: 1,
   },
   ...createDFFE('DFFb', 'clock', 'E', 'DFF.q_'),
-  
+  */
 ];
 
 const componentLookup = indexBy(components, 'id');
@@ -105,9 +108,12 @@ const evaluate = (components, componentLookup) => {
     const aOut = componentLookup[component.inputs[0]];
     const bOut = componentLookup[component.inputs[1]];
 
-    component.state = (aOut === 'x' || bOut === 'x')
+    const newState = (aOut === 'x' || bOut === 'x')
       ? 'x'
       : logicFn(aOut.state, bOut.state);
+    
+    
+    component.state = newState;
     return;
   }
 
@@ -140,17 +146,22 @@ for (let iteration = 0; iteration < runFor; iteration++) {
 
   if (iteration === 0) {
     componentLookup.E.state = 1;
+    componentLookup.A.start = 0;
   }
-  if (iteration === 1) {
-    componentLookup.E.state = 0;
+  if (iteration === 2) {
+  //  componentLookup.E.state = 0;
     componentLookup.A.state = 1;
   }
-  if (iteration === 7) {
-    componentLookup.E.state = 1;
-  }
-  if (iteration === 9) {
+  if (iteration === 4) {
     componentLookup.E.state = 0;
     componentLookup.A.state = 0;
+  }
+  if (iteration === 6) {
+    componentLookup.E.state = 1;
+    
+  }
+  if(iteration===7) {
+    componentLookup.A.state = 1;
   }
 
   for (let i = 0; i < EVALS_PER_STEP; i++) {
@@ -166,9 +177,9 @@ trace.getTraces([
   'A',
   'E',
   'DFF.q',
-  'E',
-  'DFF.q_',
-  'DFFb.q'
+ // 'E',
+ // 'DFF.q_',
+ // 'DFFb.q'
 ]).forEach(trace => $('#txt').append(trace));
 
 
