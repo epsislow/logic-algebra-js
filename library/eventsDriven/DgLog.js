@@ -126,23 +126,36 @@ const createMux = (name, aIns=[], sLineIns=[]) => {
     }
     
     var ins= [];
+    var orins=[];
     for(var i=0; i<sLen; i++) {
-      ins= [];
+      ins= [sLineIns[i]];
       for(var j=0;j<aLen; j++) {
         if(i&Math.pow(2,j)) {
           ins.push(aIns[j]);
         } else {
-          ins.push(name+'.mux.not.a'+ a);
+          ins.push(name+'.mux.not.a'+ j);
         }
-        mem.push({
-          id: name + '.mux.s0.and' + j,
-          type: 'and',
-          inputs: ins,
-          state: 0
-        });
       }
+      mem.push({
+        id: name + '.mux.s0.and' + i,
+        type: 'andm',
+        inputs: ins,
+        state: 0
+      });
+      orins.push(name + '.mux.s0.and' + i);
     }
+      mem.push({
+        id: name + '.mux.out',
+        type:'orm',
+        inputs: orins,
+        state:0
+      })
+  
+  
+    return mem;
 }
+
+console.log(createMux('t',['a1','a2'],['z1','z2','z3','z4']));
 
 const createDeMux = (name, aIns=[], sOuts=[]) => {
     
