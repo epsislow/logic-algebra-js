@@ -136,7 +136,7 @@ const evaluate = (components, componentLookup) => {
 var dgl= {
   start:function() {
 
-const EVALS_PER_STEP = 5;
+const EVALS_PER_STEP = 2;
 
 const runFor = 25;
 const trace = new Trace();
@@ -166,13 +166,14 @@ for (let iteration = 0; iteration < runFor; iteration++) {
 
   for (let i = 0; i < EVALS_PER_STEP; i++) {
     evaluate(components, componentLookup);
+    
   }
 
   trace.sample(components);
 }
 
-
-trace.getTraces([
+//console.log(
+trace.getSimpleTraces([
   'clock',
   'A',
   'E',
@@ -180,7 +181,9 @@ trace.getTraces([
  // 'E',
  // 'DFF.q_',
  // 'DFFb.q'
-]).forEach(trace => $('#txt').append(trace));
+])
+//)
+.forEach(trace => $('#txt').append(trace).append("\n"));
 
 
 

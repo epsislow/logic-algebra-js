@@ -14,6 +14,35 @@ class Trace {
       currentSample[s.id] = s.state;
     });
   }
+  
+  getSimpleTraces(names) {
+    let data = [], head= [],headdiv=[];
+    let lens = [];
+    for(let name of names) {
+      head.push(name);
+      lens.push(name.length+(name.length%2==1?1:0))
+      headdiv.push(`${'_'.repeat(name.length)}`)
+    }
+    
+    data.push(head.join(' | '));
+    data.push(headdiv.join('_|_'))
+    var row=[];
+    for (let i = 0; i < this.samples.length; i++) {
+      const trace = this.samples[i];
+row= [];
+      Object.entries(trace).forEach(([signal, value]) => {
+        if (!names.includes(signal)) {
+          return;
+        }
+        const prevStr = `${' '.repeat((signal.length + (signal.length%2==1?1:0))/2-1)}`;
+        const strVal= prevStr+ (value=='x'?'*':(value==1?'@':' '))+prevStr;
+        row.push(strVal);
+      });
+      data.push(row.join(' | '));
+    }
+   // return data.join('\n');
+   return data;
+  }
 
   getTraces(names) {
     let longestName = '';
