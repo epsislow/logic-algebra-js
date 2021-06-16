@@ -5,13 +5,41 @@ const indexBy = (array, prop) => array.reduce((output, item) => {
   return output;
 }, {});
 
-const not = a => ~a & 1;
-const and = (a, b) => a && b;
-const nand = (a, b) => not(a && b);
-const or = (a, b) => a || b;
-const nor = (a, b) => not(a || b);
-const xor = (a, b) => a ^ b;
-const xnor = (a, b) => not(a ^ b);
+const libFn = {
+  not: a => ~a & 1,
+  and: (a, b) => a && b,
+  andm: () => {
+  var n=1;
+  for(var a in arguments) 
+  {
+    n &= arguments[a];
+  }
+  return n;
+  },
+  nand: function (a, b) {
+    return ~(a && b)&1;
+  },
+  or: (a, b) => a || b,
+  orm: () => {
+  var n = 0;
+  for (var a in arguments)
+  {
+    n |= arguments[a];
+  }
+  return n;
+  },
+  nor:(a, b) => ~(a || b)&1,
+  xor: (a, b) => a ^ b,
+  xorm: () => {
+  var n = 0;
+  for (var a in arguments)
+  {
+    n ^= arguments[a];
+  }
+  return n;
+ },
+ xnor:(a, b) => ~(a ^ b)&1,
+};
 
 const createDFF = (name, clk, dIn) => {
   return [
@@ -82,12 +110,7 @@ const createTriState=(name,dIn, En) => {
 }
 
 const createMux = (name, aIns=[], sLineIns=[]) => {
-    /*const out= {
-      id: name+'.mux.out',
-      type:'pin',
-      state:-1,
-    }
-    */
+
     var sLen = sLineIns.length;
     var aLen = aIns.length;
     var mem = [];
@@ -102,17 +125,21 @@ const createMux = (name, aIns=[], sLineIns=[]) => {
       })
     }
     
+    var ins= [];
     for(var i=0; i<sLen; i++) {
+      ins= [];
       for(var j=0;j<aLen; j++) {
-        if(i&Math.pow(2,j) == 0) {
-          mem.push({
-            id: name+'.mux.s0.and'+j
-          });
+        if(i&Math.pow(2,j)) {
+          ins.push(aIns[j]);
         } else {
-          mem.push({
-            id: name+j
-          })
+          ins.push(name+'.mux.not.a'+ a);
         }
+        mem.push({
+          id: name + '.mux.s0.and' + j,
+          type: 'and',
+          inputs: ins,
+          state: 0
+        });
       }
     }
 }
@@ -196,17 +223,32 @@ const evaluate = (components, componentLookup) => {
   }
 
   components.forEach(component => {
-    if (component.type === 'controlled') return;
-    if (component.type === 'and') return binaryOp(and, component);
+    //console.log('aaa',libFn);
+    if (component.type === 'controlled') {
+      return;
+    
+   /* if (component.type === 'and') 
+    return binaryOp(and, component);
+ //   if (component.type === 'andm') {
+      //console.log('aa', component);
+  //    return binaryOp(andm, component);
+   // }
     if (component.type === 'nand') return binaryOp(nand, component);
     if (component.type === 'or') return binaryOp(or, component);
+  //  if (component.type === 'orm') return
+  //    binaryOp(orm, component);
     if (component.type === 'nor') return binaryOp(nor, component);
     if (component.type === 'xor') return binaryOp(xor, component);
+   // if (component.type === 'xorm') return
+  //   binaryOp(xorm, component);
     if (component.type === 'xnor') return binaryOp(xnor, component);
-    if (component.type === 'not') {
+    */
+   } else if (component.type === 'not') {
       const aOut = componentLookup[component.inputs[0]];
-      component.state = (aOut === 'x') ? 'x' : not(aOut.state);
+      component.state = (aOut === 'x') ? 'x' : libFn.not(aOut.state);
       return;
+    } else if (component.type in libFn) {
+      return binaryOp(libFn[component.type], component);
     }
   });
 };
@@ -220,11 +262,11 @@ const runFor = 25;
 const trace = new Trace();
 
 for (let iteration = 0; iteration < runFor; iteration++) {
-  componentLookup.clock.state = not(componentLookup.clock.state);
+  componentLookup.clock.state = libFn.not(componentLookup.clock.state);
 
   if (iteration === 0) {
     componentLookup.E.state = 1;
-    componentLookup.A.start = 0;
+    componentLookup.A.state = 0;
   }
   if (iteration === 2) {
     componentLookup.B.state = 0;
@@ -242,7 +284,7 @@ for (let iteration = 0; iteration < runFor; iteration++) {
   }
   if(iteration===7) {
     componentLookup.A.state = 1;
-    componentLookup.B.start=0;
+    componentLookup.B.state=0;
   }
 
   for (let i = 0; i < EVALS_PER_STEP; i++) {
