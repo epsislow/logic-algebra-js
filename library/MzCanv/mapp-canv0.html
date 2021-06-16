@@ -1,0 +1,517 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <style type="text/css">
+	html,body {
+		height:100%;
+		width:100%;
+		margin:0;
+		padding:0;
+	}
+	body {
+		
+	}
+  </style>
+  
+
+  <script type="text/javascript" src="jquery.js"></script>
+  
+
+
+  <script type="text/javascript">
+	function paint_btn(c,x,y, w,h ,text, styles){
+		c.lineWidth = styles[0];
+		c.strokeStyle = styles[1];
+		c.fillStyle = styles[2];
+
+		c.beginPath(); 
+		c.moveTo(x, y);
+		c.lineTo(x+w, y);
+		c.lineTo(x+w, y+h);
+		c.lineTo(x, y+h);
+		c.closePath();
+		c.stroke();
+		c.fill();
+
+		c.stroke();
+
+		c.font = styles[3] +'px '+ styles[4];
+		c.fillStyle = styles[5];
+//		c.textAlign = 'center';
+//		c.textBaseline = 'middle';
+
+		c.fillText(text, x+fontsize, y+fontsize );
+	}
+
+	function circle(c,x1,y1,rad){
+		c.beginPath(); 
+		c.arc(x1,y1,rad,0,6.3,true);
+		c.closePath(); 
+	}
+
+	function paint_vx(c, x, y, ch, styles, rad){
+		c.lineWidth = .4;
+		c.strokeStyle = styles[0];
+		c.fillStyle = styles[1];
+		circle(c, x,y,10);
+		c.fill();
+		c.stroke();
+
+		if (typeof(c.fillText)!= 'undefined')
+		{
+			fontsize =  Math.floor(2*rad*.7);
+			c.font = fontsize+"px Fixedsys";
+//			c.textAlign = 'start';
+//			c.textBaseline = 'alphabetic';
+			c.fillStyle = styles[2];
+			c.fillText(ch, x-fontsize/4, y+fontsize/4);
+		}
+
+	}
+
+	function paint_lx(c, x, y, x2, y2, styles) {
+			c.lineWidth = styles[0];
+			c.strokeStyle = styles[1];
+
+			c.beginPath(); 
+			c.moveTo(x, y);
+			c.lineTo(x2, y2);
+			c.closePath();
+			c.stroke();
+
+	}
+///////////////
+function draw(c){
+
+	for (var i=0; i<mx.length ;i++ ) {
+		for (var j=0; j<mx[i].length ;j++ ) {
+			if (mx[i][j]==1)
+			{
+				styles =  [ 0.4, '#C07000' ]
+				if (isDragged>0 && ((isDragged-1 == i) || (isDragged-1 == j)))
+				{
+					styles =  [ 1, '#70C0C0' ];
+				}
+				paint_lx(c, vex[i][2], vex[i][3],  vex[j][2], vex[j][3], styles);
+				
+			}
+		}
+	}
+		
+	for (var i=0; i<vex.length ;i++ )
+	{
+		styles =  vex[i][1];
+		if (isDragged>0 && (isDragged-1 == i))
+		{
+			styles = [ '#00ffff', '#ccffff', "#777700" ];
+		}
+		paint_vx(c, vex[i][2], vex[i][3], vex[i][0], styles, 10);
+	}
+
+	
+	drawBar(c);
+
+}
+function drawBar(c){
+	btn_style = [.3,'#550055', '#9999ff', 12, 'Arial', '#ffffff'];
+	paint_btn(c,10,395, 55,20 ,'Save', btn_style);
+	paint_btn(c,70,395, 55,20 ,'Load', btn_style);
+}
+
+
+var vex = new Array();
+var mx =  new Array();
+var isDragged = false;
+
+///init function
+function init(fps){
+	var centerx = 200;
+	var centery = 200;
+
+	var vx = 'A B C e f g h i';
+	vx = vx.split(' ');
+	var grades = 360 / vx.length;
+	var radius = vx.length * 15;
+
+	
+	for (var i=0; i<vx.length ;i++ )
+	{
+		mx[i] = [];
+		x = Math.sin((grades*(vx.length-i-1)+45)/360*Math.PI*2)*radius + centerx;
+		y = Math.cos((grades*(vx.length-i-1)+45)/360*Math.PI*2)*radius + centerx;
+
+
+		isC1 = '#ff0000';
+		isC2 = '#ffcccc';
+
+		if (vx[i] == vx[i].toUpperCase() )
+		{
+				isC1 = '#ff8800';
+				isC2 = '#ffee88';
+		}
+
+		vex[i] = 
+		[
+			vx[i] ,
+			[ isC1, isC2, "#777700" ] ,
+			x ,	y 
+		]
+	}
+
+	step = 0;
+
+	steps = Math.round(rand(vx.length*1.5, vx.length*3));
+	while(step < steps){
+		vx1 = Math.round(rand(0,vx.length-1));
+		vy = Math.round(rand(0,vx.length-1));
+		if (mx[vx1][vy] != 1 || mx[vy][vx1] != 1  && vy != vy )
+		{
+			mx[vx1][vy] = 1;
+			mx[vy][vx1] = 1;
+			step++;
+		}
+
+	}
+}
+
+
+function rand(min,max){ return (Math.random()*(max-min) + min); }
+///////////////
+
+$(function (){ 
+
+	function mainloop(){
+	
+
+	   var ctx =canvas.getContext('2d')
+	
+	   $('#my_canvas').css({'border':'1px solid #bbb'});
+
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = '#efefef';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+		draw(ctx);
+
+		
+		
+
+	}
+
+
+	function initCanvas(callback,fps){
+		if (typeof(callback)!= 'function')
+		{	
+			alert('OAC: No init() function registered. '); //open ani canvas
+			return false;
+		}
+		callback();
+		///testing img drawing 
+
+		framesps = fps;
+		mspf = Math.round(1000/fps);
+
+
+		setInterval(mainloop,mspf); //58 fps
+	}
+	
+function checkForDrag() {
+	if (mouseisdown)
+	{
+		for (var i=0; i<vex.length ;i++ )
+		{
+			if ((mousedown_x>=(vex[i][2]-10) && mousedown_x<=(vex[i][2]+10) ) && (mousedown_y>=(vex[i][3]-10) && mousedown_y<=(vex[i][3]+10) ))
+			{
+				isDragged = i+1;
+			}
+		}
+	}
+}
+
+
+var mouseisdown = false;
+var mousedown_x = mousedown_y = 0;
+var mouse_x = mouse_y = vex_old_x = vex_old_y = 0;
+
+
+	$('#my_canvas').mousedown(function(e) {
+		mouseisdown = true;
+
+		mousedown_x = e.pageX - this.offsetLeft;
+		mousedown_y = e.pageY - this.offsetTop;	
+
+		checkForDrag();
+		if (isDragged)
+		{
+			vex_old_x = vex[isDragged-1][2];
+			vex_old_y = vex[isDragged-1][3];
+		}
+	});
+	$('body').mousemove(function(e) {
+		if (mouseisdown)
+		{
+			mouse_x = e.pageX - this.offsetLeft;
+			mouse_y = e.pageY - this.offsetTop;	
+
+			if (isDragged)
+			{
+				var vexx = vex_old_x + mouse_x - mousedown_x -40;
+				var vexy = vex_old_y + mouse_y - mousedown_y -40;
+
+				vex[isDragged-1][2] = vexx;
+				vex[isDragged-1][3] = vexy;
+
+				if (vexx< 20) vex[isDragged-1][2] = 20 ;
+				if (vexy< 20) vex[isDragged-1][3] = 20 ;
+				if (vexx> 380) vex[isDragged-1][2] = 380 ;
+				if (vexy> 380) vex[isDragged-1][3] = 380 ;
+			}
+			
+//			console.log (mouseisdown,mouse_x , mouse_y);
+		}
+	});
+
+	$('body').mouseup(function(e) {
+		if (mouseisdown)
+		{
+			mouseisdown = false;
+			mouse_x = e.pageX - this.offsetLeft;
+			mouse_y = e.pageY - this.offsetTop;	
+			isDragged = false;
+			vex_old_x = vex_old_y = 0;
+		}
+	});
+
+
+
+//////HTML EVENTS ::
+	//mouse
+/*
+	mouseisdown = false;
+	mousemoved = false;
+	$('body').mousedown(function(e) {
+		mouseisdown = true;
+
+		mousedown_x = e.pageX - this.offsetLeft;
+		mousedown_y = e.pageY - this.offsetTop;	
+	});
+
+	
+
+	$('body').mouseup(function(e) {
+		mouseisdown = false;
+
+		//save the angle created by using the mouse
+		ax += mouse_x;
+		ay += mouse_y;
+
+		//and delete the mouse values for no conflict with the above ax & ay
+		mouse_x =0;
+		mouse_y =0;
+
+	});
+
+	$('body').mousemove(function(e) {
+		if (mouseisdown)
+		{
+			mouse_x = ((e.pageX - this.offsetLeft) -mousedown_x)   ;
+			mouse_y = ((e.pageY - this.offsetTop) -mousedown_y)   ;
+
+		}
+	});
+*/
+
+//////</END HTML EVENTS>
+
+
+	canvas = document.getElementById("my_canvas");
+	
+	if (canvas.getContext){
+		initCanvas(init,60);  // set for 60 fps
+	}else{
+		alert('Canvas fallback content.\nYou need Safari or Firefox to see this demo.');
+	}
+ });
+
+
+
+
+
+var actionNewMessage = '';
+var actionMessage = '';
+//var msgAlphaMessage = 0;
+
+/*
+var eCodeAccel= new Array();
+var eCodeMax = 30;
+function keyaccel(eCode){
+	
+	if (typeof(eCodeAccel[eCode]) == 'undefined')
+	{
+		eCodeAccel[eCode] = 0;
+	}
+
+	if (eCodeAccel[eCode]==0)
+	{
+		eCodeAccel= new Array();
+		eCodeAccel[eCode] = 0;
+	}
+	if (eCodeAccel[eCode]<eCodeMax)
+	{
+		eCodeAccel[eCode]++;
+	}
+
+	return eCodeAccel[eCode];
+}
+
+
+function handleKeyDown(evt) {
+       var e = evt ? evt : event;
+	   switch (e.keyCode)
+	   {
+		   case "A".charCodeAt(0):
+			   movelightoldx = movelightx;
+			   movetolightx -=50;
+		   break;
+		   case "D".charCodeAt(0):
+			   movelightoldx = movelightx;
+			   movetolightx +=50;
+		   break;
+		   case 'Q'.charCodeAt(0):
+			   movelightoldy = movelighty;
+			   movetolighty -=50;
+		   break;
+		   case 'E'.charCodeAt(0):
+			   movelightoldy = movelighty;
+			   movetolighty +=50;
+		   break;
+		   case 'L'.charCodeAt(0):
+				setParam('lightCullFace',!LIGHTCULLFACE);
+		   break;
+		   case 'N'.charCodeAt(0):
+				setParam('neonWire',(NEONWIRE?'false':'true'));
+		   break;
+		   case 'W'.charCodeAt(0):
+			   movelightoldz = movelightz;
+			   movetolightz -=50;
+		   break;
+		   case 'S'.charCodeAt(0):
+			   movelightoldz = movelightz;
+			   movetolightz +=50;
+		   break;
+		   case 107: //+
+			   zoom += 1;
+		   break;
+		   case 109: //-
+			   zoom -= 1;
+		   break;
+		   case 37: //LEFT
+			   mouse_x -= 1 * keyaccel(e.keyCode);
+		   break;
+		   case 39: //RIGHT
+			   mouse_x += 1 * keyaccel(e.keyCode);
+		   break;
+		   case 38: //UP
+			   mouse_y -= 1 * keyaccel(e.keyCode);
+		   break;
+		   case 40: //DOWN
+			   mouse_y += 1 * keyaccel(e.keyCode);
+		   break;
+		   case 13: //Enter
+			   // make a ddV
+				ddV[ddV.length] = [movetolightx,movetolighty,movetolightz];
+				if (polygonMode)
+				{
+					if (typeof(ddVpl[currentddVpoly]) == 'undefined')
+					{
+						ddVpl[currentddVpoly]= new Array();
+					}
+					ddVpl[currentddVpoly].push(ddV.length-1);
+					actionNewMessage = "{ Added point to Poli}";
+				}else{
+					actionNewMessage = "{ Added point on Scene}";
+				}
+				add_ddV = true;
+		   break;
+		   case 46: //Delete
+				var ddVN = new Array();
+				for(var i=0;i<ddV.length;i++){	
+					if (ddV[i][0]!=movetolightx || ddV[i][1]!=movetolighty || ddV[i][2]!=movetolightz  )
+					{
+						ddVN[ddVN.length] = [ddV[i][0],ddV[i][1],ddV[i][2]];
+					}
+				}
+				ddV = ddVN;
+		   break;
+		   case 45: //Insert
+				polygonMode=!polygonMode;
+				if (typeof(ddVpl[currentddVpoly]) != 'undefined')
+				{
+					currentddVpoly++;
+					actionNewMessage = "{ New Poligon }";
+				}else {
+					actionNewMessage = "{ Poligon Mode "+(polygonMode?"Activated":"Desactivated") +"}";
+				}
+		   break;
+		   case 119: //'F4' = save ddV and ddVpl
+				doSaveAjax('sv_side.php?act=save',currentSlot);
+				actionNewMessage = '{ saved to slot '+currentSlot+' }';
+		   break;
+		   case 120: //'F5' = load ddV and ddVpl
+				doLoadAjax('sv_side.php?act=load',currentSlot);
+				actionNewMessage = '{ loadded from slot '+currentSlot+' }';
+		   break;
+		   case 'R'.charCodeAt(0): //RESET all the points
+				ddV = [];
+				ddVpl = [];
+				actionNewMessage = "{ Scene restarted }";
+		   break;
+	   }
+
+	   switch (true)
+	   {
+		   case ((e.keyCode >= '0'.charCodeAt(0)) && (e.keyCode <= '9'.charCodeAt(0)) ):
+				currentSlot = e.keyCode - 48;
+				actionNewMessage = "{ Current Save Slot changed to "+ currentSlot +"}";
+		   break;
+		   
+	   }
+
+	   console.log(e.keyCode);
+}
+*/
+function doSaveAjax(file,name){
+	jsonData = [ddV, ddVpl];
+	$.get(file, { act: "save", named: name, json: JSON.stringify(jsonData) });
+}
+function doLoadAjax(file,name){
+	$.get(file, { act: "load", named: name }, function(data){
+		if (data && data.length>0)
+		{
+		datt = JSON.parse(data);
+		ddV = datt[0];
+		ddVpl = datt[1];
+		currentddVpoly = ddVpl.length;
+		}else{
+			alert('load unsucessfull');
+		}
+  });
+}
+/*
+function handleKeyUp(evt) {
+		ax += mouse_x;
+		ay += mouse_y;
+		mouse_x = 0;
+		mouse_y = 0;
+		keyaccel(0);
+}
+
+onkeydown="handleKeyDown(event);" onkeyup="handleKeyUp(event);"
+*/
+  </script>
+  </head><body>
+    <canvas id="my_canvas" width="400" height="420" style="margin:40px; border:1px solid #eaeaea;">
+    </canvas>
+  </body></html>
