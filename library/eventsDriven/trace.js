@@ -44,7 +44,7 @@ row= [];
    return data;
   }
 
-  getTraces(names) {
+  getTraces(names, start=0, len=17) {
     let longestName = '';
     let waves = {};
 
@@ -55,7 +55,7 @@ row= [];
       }
     }
 
-    for (let i = 0; i < this.samples.length; i++) {
+    for (let i = start; i < Math.min(this.samples.length, start+len); i++) {
       const trace = this.samples[i];
       const prevTrace = this.samples[i - 1];
 
