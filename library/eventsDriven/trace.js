@@ -24,8 +24,8 @@ class Trace {
       headdiv.push(`${'_'.repeat(name.length)}`)
     }
     
-    data.push(head.join(' | '));
-    data.push(headdiv.join('_|_'))
+    data.push('|'+head.join(' | ')+'|');
+    data.push('|'+headdiv.join('_|_')+'|')
     var row=[];
     for (let i = 0; i < this.samples.length; i++) {
       const trace = this.samples[i];
@@ -38,7 +38,7 @@ row= [];
         const strVal= prevStr+ (value=='x'?'*':(value==1?'@':' '))+prevStr;
         row.push(strVal);
       });
-      data.push(row.join(' | '));
+      data.push('|'+row.join(' | ')+'|');
     }
    // return data.join('\n');
    return data;
