@@ -272,7 +272,7 @@ window.vs = (function () {
       return pub;
     }
   
-    pub.addButton = function (text, href=false, classes= false,attrs={}){
+    pub.addButton = function (text, href=false, classes= false,attrs={},style=false){
       var a = $('<a>');
       if(!classes) {
         classes = 'btn-info';
@@ -284,6 +284,7 @@ window.vs = (function () {
         a.attr('href', href);
       }
       a.addClass(classes);
+
       attrs.role = 'button';
       
       a.attr(attrs);

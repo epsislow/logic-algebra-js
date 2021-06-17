@@ -109,6 +109,24 @@ const createTriState=(name,dIn, En) => {
   ]
 }
 
+const createOpMx=(type,dIns=[],aIns=[],dOuts=[]) => {
+  var mem= [],ins = [];
+  for(var d in dIns) {
+    ins= [dIns[d]]
+    //if(Array.isArray(aIns[d])) {
+     // ins.push(...aIns[d])
+   // } else {
+      ins.push(aIns[d]);
+  //  }
+    mem.push({
+      id:dOuts[i],
+      type:type,
+      inputs:ins,
+      state:0,
+    })
+  }
+}
+
 const createMux = (name, aIns=[], sLineIns=[],dOut) => {
 
     var sLen = sLineIns.length;
@@ -248,6 +266,7 @@ console.log(components);
 const componentLookup = indexBy(components, 'id');
 
 const evaluate = (components, componentLookup) => {
+  //const componentLookup= indexBy(components,'id');
   const binaryOp = (logicFn, component) => {
     const aOut = componentLookup[component.inputs[0]];
     const bOut = componentLookup[component.inputs[1]];
