@@ -109,7 +109,7 @@ const createTriState=(name,dIn, En) => {
   ]
 }
 
-const createMux = (name, aIns=[], sLineIns=[]) => {
+const createMux = (name, aIns=[], sLineIns=[],dOut) => {
 
     var sLen = sLineIns.length;
     var aLen = aIns.length;
@@ -145,21 +145,47 @@ const createMux = (name, aIns=[], sLineIns=[]) => {
       orins.push(name + '.mux.s0.and' + i);
     }
       mem.push({
-        id: name + '.mux.out',
+        id: dOut,
         type:'orm',
         inputs: orins,
         state:0
       })
   
-  
     return mem;
 }
 
-console.log(createMux('t',['a1','a2'],['z1','z2','z3','z4']));
+console.log(createMux('t',['a0','a1','a2'],['z0','z1','z2','z3','z4','z5','z6','z7'],'d'));
 
-const createDeMux = (name, aIns=[], sOuts=[]) => {
-    
+const createDeMux = (name, dIn, aIns=[], sOuts=[]) => {
+  var mem=[];
+    for(var a in aIns) {
+      mem.push({
+        id: name + '.dmux.not.a' + a,
+        type: 'not',
+        inputs: [aIns[a]],
+        state: 0
+      })
+    }
+    var ins= [];
+    for(var i=0; i<sOuts.length; i++) {
+      ins= [dIn];
+      for(var j=0;j<aIns.length; j++) {
+        if(i&Math.pow(2,j)) {
+          ins.push(aIns[j]);
+        } else {
+          ins.push(name+'.dmux.not.a'+ j);
+        }
+      }
+      mem.push({
+        id: sOuts[i],
+        type: 'andm',
+        inputs: ins,
+        state: 0
+      });
+    }
+    return mem;
 }
+console.log(createDeMux('t','d', ['a0','a1','a2'],['z0','z1','z2','z3','z4','z5','z6','z7']));
 
 const createDFFE = (name, clk, dIn, dEnable) => {
   const gatedClock = {
