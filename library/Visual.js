@@ -236,14 +236,16 @@ window.vs = (function () {
       }
       return pub;
     }
-    pub.addEl = function(element, attrs=false, classes='') {
+    pub.addEl = function(element, attrs=false, classes='', value=false) {
         var content = $('<' + element + '>')
           .addClass(classes);
           
           if(attrs) {
             content.attr(attrs);
           }
-      
+      if(value!==false) {
+        content.val(value);
+      }
         parent.append(content);
         return pub;
     }

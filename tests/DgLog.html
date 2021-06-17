@@ -116,7 +116,13 @@ $('document').ready(function() {
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
 	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:400px;width:360px',width:360,height:400},'m-2')
+	  
+	  
+	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
+               value="1300"/>*/
+	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
 	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
+
 	  .up()
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-save-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
@@ -200,7 +206,7 @@ $('document').ready(function() {
 	  
 	  $('#diag-next').click(function() {
 	    var itr= dgl.drawNext();
-	    $('#itr').value(itr);
+	    $('#itr').val(itr);
 	    $(this).blur();
 	  })
 	
