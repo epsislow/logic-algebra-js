@@ -2,7 +2,10 @@ console.log('Canvas 0.1.0[cvs]')
 
 var cvs= (function() {
   var lib={
-    btn: function (c, x, y, w, h, text, styles) {
+    btn: function (c, x, y, w, h, text, fontsize=7, styles=false) {
+      if(!styles) {
+        styles = [1,'#99f', '#aaf', 6, 'Arial', '#ffffff'];
+      }
       c.lineWidth = styles[0];
       c.strokeStyle = styles[1];
       c.fillStyle = styles[2];
@@ -23,7 +26,7 @@ var cvs= (function() {
 
       //		c.textAlign = 'center';
       //		c.textBaseline = 'middle';
-    fontsize= 7;
+    
       c.fillText(text, x + fontsize, y + fontsize);
     },
     
@@ -41,12 +44,12 @@ bar: function (c, menu_stack){
     if (menu_stack[i].status==0) style=btn_style;
     if (menu_stack[i].status==1) style=btn_style_gray;
     if (menu_stack[i].mdown==1) style=btn_style_blue;
-    this.btn(c,5+30*i,4, 28,10 , menu_stack[i].txt, style);
+    this.btn(c,5+30*i,4, 28,10 , menu_stack[i].txt,7, style);
   }
 
 }
   }
-  var ctx,redraw=0,update=0;
+  var ctx, calls= [];
   var canvas= {};
   var pub={};
   pub.obj= [];
@@ -62,7 +65,7 @@ bar: function (c, menu_stack){
   }
   
   function initCvs(elId) {
-    
+    calls = [];
     var canvas = $('#'+elId).get(0);
     console.log(elId, canvas.width,canvas.height)
     if(typeof canvas.getContext =='undefined') {
@@ -98,17 +101,21 @@ canvas.style.height = rect.height + 'px';
     return ctx;
   }
   
+  pub.addDrawCall= function(call) {
+    calls.push(call);
+  }
+  
   function startCvs(elId) {
-    c=canvas[elId];
-    redraw=1;
-    update=1;
-    
+    ctx=canvas[elId];
+    pub.redraw=1;
+    pub.update=1;
+    /*
     menu_stack = [
       { 'txt': 'AND', 'status': 0, 'mdown': 0, 'js': 'doSave();' },
       { 'txt': 'XOR', 'status': 0, 'mdown': 0, 'js': 'doLoad();' },
       { 'txt': ' OR', 'status': 0, 'mdown': 0, 'js': '' },
             ];
-    lib.bar(c, menu_stack);
+    lib.bar(c, menu_stack);*/
   }
   
   pub.start= function(elId) {
@@ -126,19 +133,34 @@ canvas.style.height = rect.height + 'px';
 
 //var startTime = -1;
 
+pub.redraw=0;
+pub.update=0;
 
-function redraw() {
-  drawPending = false;
-  
-  // Do drawing ...
+pub.draw= function(update=0) {
+  pub.redraw=1;
+  pub.update=update;
+  requestRedraw();
+}
+
+function redrawFn() {
+  if(pub.update==0) {
+   // ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+  }
+ // console.log('redraw')
+  for(var c of calls) {
+    c(ctx,pub.update,lib);
+  }
+  pub.update=0;
+  drawPending=false;
 }
 
 var drawPending = false;
 function requestRedraw() {
-  if (!drawPending) {
+  if (!drawPending && pub.redraw) {
     drawPending = true;
     
-    var progress = 0;
+  //  var progress = 0;
     
     /*if (startTime < 0) {
       startTime = timestamp;
@@ -146,9 +168,10 @@ function requestRedraw() {
       progress = timestamp - startTime;
     }*/
     
-    if (progress < animationLength) {
-      requestAnimationFrame(redraw);
-    }
+ //   if (progress < animationLength) {
+      requestAnimationFrame(redrawFn);
+      pub.redraw=0;
+   // }
   }
 }
 

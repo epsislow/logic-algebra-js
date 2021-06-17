@@ -379,7 +379,39 @@ trace.getTraces([
 .forEach(trace => $('#txt').append(trace)//.append("\n")
 );
 
+ function componentsPos(comps) {
+   var compos=[];
+   for(var comp of comps) {
+     var cm= $.extend({},comp);
+     
+     cm.lvl=0;
+     compos.push(cm);
+   }
+   
+   return compos;
+ }
 
+ if(window.cvs) {
+   //console.log(componentsPos(components))
+   var cvsDraw=function(c, upd=0, lib) {
+     console.log('draw');
+    // lib.bar(c);
+    var i=0,j=0;
+    
+    for(var component of componentsPos(components))
+    {
+      lib.btn(c,5+40*(i%4),4+22*(j), 38, 10, component.id,7);
+      i++;
+     // i=i%8;
+      j= Math.floor(i/4);
+    };
+   }
+   
+   var cvs = window.cvs;
+   cvs.addDrawCall(cvsDraw);
+ } else {
+   console.log('NoCvs');
+ }
 
 }
 }
