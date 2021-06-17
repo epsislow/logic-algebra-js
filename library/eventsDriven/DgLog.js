@@ -381,11 +381,14 @@ trace.getTraces([
 
  function componentsPos(comps) {
    var compos=[];
+   var i=0;
    for(var comp of comps) {
      var cm= $.extend({},comp);
      
-     cm.lvl=0;
-     compos.push(cm);
+     cm.x=i%4;
+     cm.y=Math.floor(i/4);
+     compos[cm.id]=cm;
+     i++;
    }
    
    return compos;
@@ -396,15 +399,29 @@ trace.getTraces([
    var cvsDraw=function(c, upd=0, lib) {
      console.log('draw');
     // lib.bar(c);
-    var i=0,j=0;
     
-    for(var component of componentsPos(components))
+    styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
+    var comps=componentsPos(components);
+    var comp;
+    for(var cid in comps)
     {
-      lib.btn(c,5+40*(i%4),4+22*(j), 38, 10, component.id,7);
-      i++;
-     // i=i%8;
-      j= Math.floor(i/4);
-    };
+      comp=comps[cid]
+      lib.btn(c,5+40*comp.x,4+22*comp.y, 38, 10, comp.type=='controlled'?comp.id:comp.type,7, styles);
+      
+    }
+    for(var cid in comps)
+    {
+      comp=comps[cid]
+      var i = 0;
+      var il= comp.inputs.length;
+      for (var cinid of comp.inputs) {
+      
+        var compin = comps[cinid];
+        lib.line(c, 5 + 40 * comp.x+(40*i/il+20/il), 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10, compin.state == 'x' ? '#f00' : (compin.state ? '#4f4' : '#44f'))
+      
+        i++;
+      }
+    }
    }
    
    var cvs = window.cvs;

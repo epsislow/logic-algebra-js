@@ -29,6 +29,17 @@ var cvs= (function() {
     
       c.fillText(text, x + fontsize, y + fontsize);
     },
+    line: function(c,x1,y1,x2,y2,clr='#777',width=1) {
+    c.lineWidth = width;
+		c.strokeStyle = clr;
+
+		c.beginPath(); 
+		c.moveTo(x1, y1);
+		c.lineTo(x2, y2);
+		c.closePath();
+  	c.stroke();
+
+    },
     
 bar: function (c, menu_stack){
 	btn_style = [1,'#99f', '#aaf', 6, 'Arial', '#ffffff'];
@@ -93,8 +104,8 @@ canvas.style.height = rect.height + 'px';
 
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		ctx.fillStyle = '#eee';
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
+	//	ctx.fillStyle = '#eee';
+	//	ctx.fillRect(0, 0, canvas.width, canvas.height);
 		
 	//	ctx.clearRect(10,10,1,1)
 
