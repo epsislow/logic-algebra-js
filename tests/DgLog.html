@@ -115,16 +115,19 @@ $('document').ready(function() {
 	  .up()
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
-	  .addEl('canvas',{'id':'cv','style':'width:100%;background-color:#888;height:400px;'},'m-2 p-2')
+	  .addEl('canvas',{'id':'cvs','style':'background-color:#888;height:400px;width:360px',width:360,height:400},'m-2')
 	  .up()
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-save-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
 	  .up()
+	  
+//	  console.log(window.cvs);
   }
   
   var doc= {
     start: function() {
-      
+ //  console.log(window.cvs)
+   var cvs = window.cvs;
    $('#tab-diagram').click(function() {
 	    $('.tab-cnt.show')
 	      .removeClass('show')
@@ -145,7 +148,7 @@ $('document').ready(function() {
 	       .removeClass('btn-secondary')
 	       .addClass('active btn-light');
 	       
-	    if(cvs in window) {
+	    if(cvs) {
 	      cvs.start('cvs')
 	   } else {
 	     console.log('noCvs');

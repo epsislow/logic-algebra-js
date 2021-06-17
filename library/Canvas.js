@@ -1,7 +1,53 @@
 console.log('Canvas 0.1.0[cvs]')
 
 var cvs= (function() {
+  var lib={
+    btn: function (c, x, y, w, h, text, styles) {
+      c.lineWidth = styles[0];
+      c.strokeStyle = styles[1];
+      c.fillStyle = styles[2];
+    
+      c.beginPath();
+      c.moveTo(x, y);
+      c.lineTo(x + w, y);
+      c.lineTo(x + w, y + h);
+      c.lineTo(x, y + h);
+      c.closePath();
+      c.stroke();
+      c.fill();
+    
+      c.stroke();
+    
+      c.font = styles[3] + 'px ' + styles[4];
+      c.fillStyle = styles[5];
+
+      //		c.textAlign = 'center';
+      //		c.textBaseline = 'middle';
+    fontsize= 7;
+      c.fillText(text, x + fontsize, y + fontsize);
+    },
+    
+bar: function (c, menu_stack){
+	btn_style = [1,'#99f', '#aaf', 6, 'Arial', '#ffffff'];
+    btn_style_gray = [.3,'#550055', '#e1e1ff', 6, 'Arial', '#ffffff'];
+    btn_style_blue = [.3,'#550055', '#9191f1', 6, 'Arial', '#ffffff'];
+	//paint_btn(c,10,395, 55,20 ,'Save', btn_style);
+	//paint_btn(c,70,395, 55,20 ,'Load', btn_style);
+    //paint_btn(c,130,395, 55,20 ,'+Vtx', btn_style);
+
+  var style;
+  for(i=0;i<menu_stack.length;i++){
+    style = btn_style_gray;
+    if (menu_stack[i].status==0) style=btn_style;
+    if (menu_stack[i].status==1) style=btn_style_gray;
+    if (menu_stack[i].mdown==1) style=btn_style_blue;
+    this.btn(c,5+30*i,4, 28,10 , menu_stack[i].txt, style);
+  }
+
+}
+  }
   var ctx,redraw=0,update=0;
+  var canvas= {};
   var pub={};
   pub.obj= [];
   pub.addObj= function(name) {
@@ -16,26 +62,53 @@ var cvs= (function() {
   }
   
   function initCvs(elId) {
+    
     var canvas = $('#'+elId).get(0);
+    console.log(elId, canvas.width,canvas.height)
     if(typeof canvas.getContext =='undefined') {
       return false;
     }
     var ctx =canvas.getContext('2d')
 	
-	   canvas.css({'border':'1px solid #21b'});
+//	ctx.translate(0.5, 0.5);
+
+	  // canvas.css({'border':'1px solid #21b'});
+
+// get current size of the canvas
+let rect = canvas.getBoundingClientRect();
+
+// increase the actual size of our canvas
+canvas.width = rect.width * devicePixelRatio;
+canvas.height = rect.height * devicePixelRatio;
+
+// ensure all drawing operations are scaled
+ctx.scale(devicePixelRatio*2, devicePixelRatio*2);
+
+// scale everything down using CSS
+canvas.style.width = rect.width + 'px';
+canvas.style.height = rect.height + 'px';
 
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		ctx.fillStyle = '#ef0';
+		ctx.fillStyle = '#eee';
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
+		
+	//	ctx.clearRect(10,10,1,1)
 
     return ctx;
   }
   
   function startCvs(elId) {
-    ctx=canvas[elId];
+    c=canvas[elId];
     redraw=1;
     update=1;
+    
+    menu_stack = [
+      { 'txt': 'AND', 'status': 0, 'mdown': 0, 'js': 'doSave();' },
+      { 'txt': 'XOR', 'status': 0, 'mdown': 0, 'js': 'doLoad();' },
+      { 'txt': ' OR', 'status': 0, 'mdown': 0, 'js': '' },
+            ];
+    lib.bar(c, menu_stack);
   }
   
   pub.start= function(elId) {
