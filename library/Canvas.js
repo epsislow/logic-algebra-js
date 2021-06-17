@@ -6,12 +6,13 @@ var cvs= (function() {
   pub.obj= [];
   pub.addObj= function(name) {
     pub.obj[name] = {name:name};
-  }
-  pub.obj[name].update=function(x,y) {
+  
+    pub.obj[name].update=function(x,y) {
     
-  }
-  pub.obj[name].hide= function() {
+    }
+    pub.obj[name].hide= function() {
     
+    }
   }
   
   function initCvs(elId) {
