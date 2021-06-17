@@ -68,15 +68,15 @@
 <script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
 <!--script src="https://requirejs.org/docs/release/2.3.5/minified/require.js" type="text/javascript"></script-->
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/library/Canvas.js"></script>
 <script type="text/javascript" src="/library/Visual.js"></script>
 <script type="text/javascript" src="/library/eventsDriven/trace.js"></script>
 <script type="text/javascript" src="/library/eventsDriven/DgLog.js"></script>
-<script type="text/javascript" src="/library/Canvas.js"></script>
 
 
 <script type="text/javascript">
 $('document').ready(function() {
-
+  
   if('vs' in window) {
     
     vs.page('Index')
@@ -146,8 +146,10 @@ $('document').ready(function() {
 	       .addClass('active btn-light');
 	       
 	    if(cvs in window) {
-	      cvs.start('#cvs')
-	    }
+	      cvs.start('cvs')
+	   } else {
+	     console.log('noCvs');
+	   }
 	  })
 	  
 	   $('#tab-ta').click(function() {

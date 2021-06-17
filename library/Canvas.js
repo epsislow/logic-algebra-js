@@ -16,7 +16,20 @@ var cvs= (function() {
   }
   
   function initCvs(elId) {
-    return $('#'+elId);
+    var canvas = $('#'+elId).get(0);
+    if(typeof canvas.getContext =='undefined') {
+      return false;
+    }
+    var ctx =canvas.getContext('2d')
+	
+	   canvas.css({'border':'1px solid #21b'});
+
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = '#ef0';
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    return ctx;
   }
   
   function startCvs(elId) {
@@ -27,7 +40,12 @@ var cvs= (function() {
   
   pub.start= function(elId) {
     if(!(elId in canvas)) {
-      canvas[elId]= initCvs(elId);
+      var test= initCvs(elId);
+      if(!test) {
+        console.log('Canvas context not found!');
+        return false;
+      }
+      canvas[elId]=test;
     }
     startCvs(elId);
   }
