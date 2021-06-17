@@ -236,7 +236,7 @@ window.vs = (function () {
       }
       return pub;
     }
-    pub.addEl = function(element,attrs=false, classes='') {
+    pub.addEl = function(element, attrs=false, classes='') {
         var content = $('<' + element + '>')
           .addClass(classes);
           

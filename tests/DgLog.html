@@ -90,6 +90,7 @@ $('document').ready(function() {
 		  
         }, 0);*/
 		console.log('-- Load finished --');
+        doc.start();
         dgl.start();
 		
       })
@@ -100,18 +101,92 @@ $('document').ready(function() {
     .section('top')
     .addButton('Index', '/index.html', 'btn-dark')
     .addText(' ')
-	  .addButton('TA-info',0,'btn-light btn-tab btn-tab-left',{'id':'tab-ta'})
+	  .addButton('TA-info',0,'active btn-light btn-tab btn-tab-left',{'id':'tab-ta'})
 	  //.addText(' ')
 	  .addButton('Diagram',0,'btn-secondary btn-tab btn-tab-middle',{'id':'tab-diagram'})
 	  //.addText(' ')
 	  .addButton('Save',0,'btn-secondary btn-tab btn-tab-right',{'id':'tab-save'})
-	  .container('bg-light boxsizingBorder','div',0,{'id':'tab-ta-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  
+	  .container('tab-cnt bg-light boxsizingBorder show','div',0,{'id':'tab-ta-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
 	  .container('m-2 p-1 bg-dark rounded box-shadow text-light', 'textarea', 'width:100%; height: 400px;max-height:500px;overflow:auto;font-family: freemono, monospace;font-size:10px;line-height:10px',{id:'txt'})
 	  .up()
 	  .up()
 	  
-	  .container('bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .addEl('canvas',{'id':'cv','style':'width:100%;background-color:#888;height:400px;'},'m-2 p-2')
+	  .up()
 	  
+	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-save-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .up()
+  }
+  
+  var doc= {
+    start: function() {
+      
+   $('#tab-diagram').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-diagram-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-diagram')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light')
+	  })
+	  
+	   $('#tab-ta').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-ta-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-ta')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light')
+	  })
+	  
+	 $('#tab-save').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-save-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-save')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light')
+	  })
+	
+    }
   }
 });
 </script>
