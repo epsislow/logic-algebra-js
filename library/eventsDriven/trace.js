@@ -15,6 +15,10 @@ class Trace {
     });
   }
   
+  getSamples() {
+    return this.samples;
+  }
+  
   getSimpleTraces(names) {
     let data = [], head= [],headdiv=[];
     let lens = [];

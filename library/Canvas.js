@@ -40,7 +40,6 @@ var cvs= (function() {
   	c.stroke();
 
     },
-    
 bar: function (c, menu_stack){
 	btn_style = [1,'#99f', '#aaf', 6, 'Arial', '#ffffff'];
     btn_style_gray = [.3,'#550055', '#e1e1ff', 6, 'Arial', '#ffffff'];
@@ -83,6 +82,10 @@ bar: function (c, menu_stack){
       return false;
     }
     var ctx =canvas.getContext('2d')
+    
+	lib.clear = function(c) {
+	  c.clearRect(0,0,canvas.width,canvas.height);
+	}
 	
 //	ctx.translate(0.5, 0.5);
 

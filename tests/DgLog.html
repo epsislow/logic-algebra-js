@@ -116,6 +116,7 @@ $('document').ready(function() {
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
 	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:400px;width:360px',width:360,height:400},'m-2')
+	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
 	  .up()
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-save-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
@@ -196,8 +197,14 @@ $('document').ready(function() {
 	       .removeClass('btn-secondary')
 	       .addClass('active btn-light')
 	  })
+	  
+	  $('#diag-next').click(function() {
+	    var itr= dgl.drawNext();
+	    $('#itr').value(itr);
+	    $(this).blur();
+	  })
 	
-	$('#tab-diagram').click();
+    	$('#tab-diagram').click();
 	    cvs.draw();
     }
   }
