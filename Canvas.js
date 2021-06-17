@@ -1,4 +1,7 @@
-var cvs= function() {
+console.log('Canvas 0.1.0[cvs]')
+
+var cvs= (function() {
+  var ctx,redraw=0,update=0;
   var pub={};
   pub.obj= [];
   pub.addObj= function(name) {
@@ -10,10 +13,24 @@ var cvs= function() {
   pub.obj[name].hide= function() {
     
   }
-
   
-  return pub;
-}
+  function initCvs(elId) {
+    return $('#'+elId);
+  }
+  
+  function startCvs(elId) {
+    ctx=canvas[elId];
+    redraw=1;
+    update=1;
+  }
+  
+  pub.start= function(elId) {
+    if(!(elId in canvas)) {
+      canvas[elId]= initCvs(elId);
+    }
+    startCvs(elId);
+  }
+
 
 //var startTime = -1;
 
@@ -42,3 +59,14 @@ function requestRedraw() {
     }
   }
 }
+
+return pub;
+  
+})();
+
+
+$('document').ready(function (document) {
+    if (typeof window != 'undefined') {
+        window.cvs = cvs;
+    }
+});

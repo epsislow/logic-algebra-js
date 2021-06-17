@@ -71,6 +71,8 @@
 <script type="text/javascript" src="/library/Visual.js"></script>
 <script type="text/javascript" src="/library/eventsDriven/trace.js"></script>
 <script type="text/javascript" src="/library/eventsDriven/DgLog.js"></script>
+<script type="text/javascript" src="/library/Canvas.js"></script>
+
 
 <script type="text/javascript">
 $('document').ready(function() {
@@ -81,7 +83,7 @@ $('document').ready(function() {
       .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
       .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", 1)
       .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", 1)
-	//  .js('rnd',"/library/sha1/Random.js")
+	 // .js('rnd',"/library/sha1/Random.js")
     .scriptsReady(function () {
         vs.addSectionsToMain();
         /*vs.importJs('rand', "/library/sha1/Rand.js", function() {
@@ -141,7 +143,11 @@ $('document').ready(function() {
 	    
 	    $('#tab-diagram')
 	       .removeClass('btn-secondary')
-	       .addClass('active btn-light')
+	       .addClass('active btn-light');
+	       
+	    if(cvs in window) {
+	      cvs.start('#cvs')
+	    }
 	  })
 	  
 	   $('#tab-ta').click(function() {
