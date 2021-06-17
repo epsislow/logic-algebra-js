@@ -189,6 +189,20 @@ function requestRedraw() {
   }
 }
 
+
+function initEvents(canvas) {
+  var touchAvailable = ('createTouch' in document) || ('onstarttouch' in window);
+  
+  if (touchAvailable) {
+    canvas.addEventListener('touchstart', pub.draw, false);
+    canvas.addEventListener('touchmove', pub.draw, false);
+    canvas.addEventListener('touchend', pub.draw, false);
+  } else {
+    canvas.addEventListener('mousedown', pub.draw, false);
+    canvas.addEventListener('mousemove', pub.draw, false);
+    canvas.addEventListener('mouseup', pub.draw, false);
+  }
+}
 return pub;
   
 })();

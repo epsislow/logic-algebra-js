@@ -17,6 +17,8 @@
   <!--script type="text/javascript" src="jquery.js"></script-->
   
   <script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
+  <!--script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script-->
+  <script type="text/javascript" src="https://gist.githubusercontent.com/HansHammel/c30d46348e8425a78d8b/raw/8d3417e64795a994f4d8b94847821b5d4740204f/jquery.mobile.vmouse.js"></script>
 
   
 
@@ -46,7 +48,7 @@
 
 		c.fillText(text, x+fontsize, y+fontsize );
 	}
-btn
+
 	function circle(c,x1,y1,rad){
 		c.beginPath(); 
 		c.arc(x1,y1,rad,0,6.3,true);
@@ -256,7 +258,11 @@ var mousedown_x = mousedown_y = 0;
 var mouse_x = mouse_y = vex_old_x = vex_old_y = 0;
 
 
-	$('#my_canvas').mousedown(function(e) {
+var touchAvailable = ('createTouch' in document) || ('onstarttouch' in window);
+
+console.log(touchAvailable);
+
+	$('#my_canvas').on('touchstart vmousedown', function(e) {
 		mouseisdown = true;
 
 		mousedown_x = e.pageX - this.offsetLeft;
@@ -269,7 +275,7 @@ var mouse_x = mouse_y = vex_old_x = vex_old_y = 0;
 			vex_old_y = vex[isDragged-1][3];
 		}
 	});
-	$('body').mousemove(function(e) {
+	$('body').on('touchmove vmousemove', function(e) {
 		if (mouseisdown)
 		{
 			mouse_x = e.pageX - this.offsetLeft;
@@ -293,7 +299,7 @@ var mouse_x = mouse_y = vex_old_x = vex_old_y = 0;
 		}
 	});
 
-	$('body').mouseup(function(e) {
+	$('body').on('touchend vmouseup', function(e) {
 		if (mouseisdown)
 		{
 			mouseisdown = false;
