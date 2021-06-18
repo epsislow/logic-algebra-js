@@ -338,10 +338,13 @@ var cvsDraw=function(c, upd=0, lib) {
     styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
     var comps=componentsPos(components);
     var comp;
+    var txt;
     for(var cid in comps)
     {
       comp=comps[cid]
-      lib.btn(c,5+40*comp.x,4+22*comp.y, 38, 10, comp.type=='controlled'?comp.id:comp.type,7, styles);
+      txt= (comp.type=='controlled'?comp.id:comp.type);
+      txt= 
+      lib.btn(c,5+50*comp.x,4+22*comp.y, 38, 10, txt,7, styles);
       
     }
     for(var cid in comps)
@@ -352,7 +355,7 @@ var cvsDraw=function(c, upd=0, lib) {
       for (var cinid of comp.inputs) {
       
         var compin = comps[cinid];
-        lib.line(c, 5 + 40 * comp.x+(40*i/il+20/il), 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10, smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#44f'))
+        lib.line(c, 5 + 50 * comp.x+(40*i/il+20/il), 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10, smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#44f'))
       
         i++;
       }
