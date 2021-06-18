@@ -87,7 +87,7 @@
 
 	}
 ///////////////
-function draw(c, pX, pY){
+function draw(c, pX, pY, zoom){
 
 	for (var i=0; i<mx.length ;i++ ) {
 		for (var j=0; j<mx[i].length ;j++ ) {
@@ -98,7 +98,12 @@ function draw(c, pX, pY){
 				{
 					styles =  [ 1, '#70C0C0' ];
 				}
-				paint_lx(c, vex[i][2]+ pX, vex[i][3] + pY,  vex[j][2] + pX, vex[j][3] + pY, styles);
+				paint_lx(c,
+				zoom*(vex[i][2]+ pX),
+				zoom*(vex[i][3] + pY), 
+				zoom*(vex[j][2] + pX), 
+				zoom*(vex[j][3] + pY), 
+				styles);
 				
 			}
 		}
@@ -112,7 +117,11 @@ function draw(c, pX, pY){
 			styles = [ '#00ffff', '#ccffff', "#777700" ];
 		}
 		
-		paint_vx(c, vex[i][2] + pX, vex[i][3]+ pY, vex[i][0], styles, 10);
+		paint_vx(c, 
+		zoom*(vex[i][2] + pX), 
+  	zoom*(vex[i][3]+ pY), 
+		vex[i][0],
+		styles, 10*zoom);
 	}
 
 	
@@ -214,6 +223,8 @@ $(function () {
 var fpsnow=0;
 var fpslast=60;
 var ofsPanX=0,ofsPanY=0;
+var ofsZoom=1, zoom=1, zoomX=1,zoomY=1, lastZoomDiffX=0,
+lastZoomDiffY=0;
 var panX=0, panY=0, panOfsX=0,panOfsY=0;
 	function mainloop() {
 	   fpsnow++;
@@ -233,7 +244,7 @@ var panX=0, panY=0, panOfsX=0,panOfsY=0;
           {'txt':'+Vtx','status':0,'mdown':0,'js':''},
         ];
 
-		draw(ctx, Math.floor(ofsPanX+panOfsX),  Math.floor(ofsPanY+panOfsY));
+		draw(ctx, Math.floor(ofsPanX+panOfsX),  Math.floor(ofsPanY+panOfsY), ofsZoom* zoom);
 		ctx.fillStyle='#000'
     ctx.fillText(fpslast+' '+Math.floor(ofsPanX+panOfsX)+','+Math.floor(ofsPanY+panOfsY),10,10)
 	}
@@ -258,13 +269,13 @@ var panX=0, panY=0, panOfsX=0,panOfsY=0;
 		setInterval(mainloop,mspf); //58 fps
 	}
 	
-function checkForDrag(pX, pY) {
+function checkForDrag(pX, pY,zoom) {
   var sens=40;
 	if (mouseisdown)
 	{
 		for (var i=0; i<vex.length ;i++ )
 		{
-			if ((mousedown_x>=(vex[i][2]-sens+pX) && mousedown_x<=(vex[i][2]+sens+pX) ) && (mousedown_y>=(vex[i][3]-sens+pY) && mousedown_y<=(vex[i][3]+sens+pY) ))
+			if ((mousedown_x>=zoom*(vex[i][2]-sens+pX) && mousedown_x<=zoom*(vex[i][2]+sens+pX) ) && (mousedown_y>=zoom*(vex[i][3]-sens+pY) && mousedown_y<=zoom*(vex[i][3]+sens+pY) ))
 			{
 				isDragged = i+1;
 			}
@@ -293,19 +304,24 @@ var event = window.event;
 $('#status').html('x='+event.touches[0].pageX + ' y= ' + event.touches[0].pageY);
 });*/
 function showMouse(e, prefix='S') {
-  var x,y;
+  var x,y,x2=0,y2=0;
   if('x' in e) {
     x= e.x;
     y= e.y;
   }else {
     x= e.touches[0].pageX;
     y= e.touches[0].pageY;
+    if(e.touches[1]) {
+      x2= e.touches[1].pageX;
+      y2= e.touches[1].pageY;
+    }
   }
-  $('#status').html(prefix+ ' x='+Math.floor(x) + ' y= ' + Math.floor(y));
+  $('#status').html(prefix+ ' x='+Math.floor(x) + ' y= ' + Math.floor(y)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2) + ' zX='+zoomX+' zy='+zoomY);
 }
 
 function showPan() {
-  $('#pan').html((isPan?'Y':'N')+' px'+Math.floor(panX) + ' py= ' + Math.floor(panY)+ ' pox'+Math.floor(panOfsX) + ' poy= ' + Math.floor(panOfsY));
+  return;
+ // $('#pan').html((isPan?'Y':'N')+' px'+Math.floor(panX) + ' py= ' + Math.floor(panY)+ ' pox'+Math.floor(panOfsX) + ' poy= ' + Math.floor(panOfsY));
 }
 
 	$('#my_canvas').on('touchstart', function(e) {
@@ -313,18 +329,25 @@ function showPan() {
 		showMouse(e);
 		mouseisdown = true;
 
-var er= e.touches[0]
+var er= e.touches[0];
+var er2= e.touches[1];
+
 //var pageX= event.touches[0].x;
    //   var pageY= event.touches[0].y;
 
 		mousedown_x = er.pageX - this.offsetLeft;
-		mousedown_y = er.pageY - this.offsetTop;	
+		mousedown_y = er.pageY - this.offsetTop;
+		
 
-		checkForDrag(Math.floor(ofsPanX+panOfsX),Math.floor(ofsPanY+panOfsY));
+		checkForDrag(Math.floor(ofsPanX+panOfsX),Math.floor(ofsPanY+panOfsY),zoomX*zoomY);
 		if (isDragged)
 		{
 			vex_old_x = vex[isDragged-1][2];
 			vex_old_y = vex[isDragged-1][3];
+		}
+		if(er2 && isPan) {
+		  lastZoomDiffX= (mousedown_x - er2.pageX + this.offsetLeft);
+		  lastZoomDiffY= (mousedown_y - er2.pageY + this.offsetTop);
 		}
 	});
 	var lastMove=false;
@@ -335,6 +358,7 @@ var er= e.touches[0]
 	  
 	  showMouse(e, 'M');
 	  var er=e.touches[0];
+	  var er2=e.touches[1];
 
 		if (mouseisdown)
 		{
@@ -360,6 +384,12 @@ var er= e.touches[0]
 			if(isPan) {
 			  panOfsX= mouse_x- panX- 40;
 			  panOfsY= mouse_y - panY- 40;
+	if(er2) {
+		//zoomX= (mouse_x - er2.pageX + this.offsetLeft)/lastZoomDiffX;
+	 // zoomY= (mouse_y - er2.pageY + this.offsetTop)/lastZoomDiffY;
+	  
+	  //zoom= Math.sqrt(zoomX*zoomY);
+	}
 			  showPan();
 			}
 			
@@ -388,6 +418,7 @@ var er= e.touches[0]
 			  isPan=false;
 			  panOfsX=0;
 			  panOfsY=0;
+			  ofsZoom *=zoom;
 			}
 		}
 	});
