@@ -343,7 +343,6 @@ var cvsDraw=function(c, upd=0, lib) {
     {
       comp=comps[cid]
       txt= (comp.type=='controlled'?comp.id:comp.type);
-      txt= 
       lib.btn(c,5+50*comp.x,4+22*comp.y, 38, 10, txt,7, styles);
       
     }
@@ -364,6 +363,69 @@ var cvsDraw=function(c, upd=0, lib) {
 
 const trace= new Trace();
 var dgl= {
+  m: {
+    lastMove: {x:0,y:0}
+  },
+  showMouse: function(e, pre='S') {
+    var x,y,x2=0,y2=0;
+  if('x' in e) {
+    x= e.x;
+    y= e.y;
+  }else {
+   // console.log(e.touches[0].pageX)
+    x= e.touches[0].pageX;
+    y= e.touches[0].pageY;
+    if(e.touches[1]) {
+      x2= e.touches[1].pageX;
+      y2= e.touches[1].pageY;
+    }
+  }
+  $('#status').html(pre+ ' x='+Math.floor(x) + ' y= ' + Math.floor(y)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2) );
+  },
+  callTouchStart: function(e) {
+    //console.log(e.touches)
+    e.preventDefault();
+		this.showMouse(e);
+		this.m.mouseisdown = true;
+
+var er= e.touches[0];
+var er2= e.touches[1];
+
+//var pageX= event.touches[0].x;
+   //   var pageY= event.touches[0].y;
+
+		this.m.mousedown_x = er.pageX - this.offsetLeft;
+		this.m.mousedown_y = er.pageY - this.offsetTop;
+		cvs.draw(1)
+  },
+  callTouchMove: function(e) {
+    e.preventDefault()
+	  this.m.lastMove={x:e.touches[0].pageX,y:e.touches[0].pageY};
+	  
+	  this.showMouse(e, 'M');
+	  var er=e.touches[0];
+	  var er2=e.touches[1];
+
+		if (this.m.mouseisdown)
+		{
+		  
+		}
+		cvs.draw(1)
+  },
+  callTouchEnd: function(e) {
+    e.preventDefault();
+    
+    this.showMouse(this.m.lastMove, 'E');
+    
+    if (this.m.mouseisdown)
+    {
+      //  var pageX= event.touches[0].x;
+      //   var pageY= event.touches[0].y;
+    
+      this.m.mouseisdown = false;
+    }
+    cvs.draw(1)
+  },
   drawNext: function() {
     cvsIteration++;
     cvsIteration%=trace.getSamples().length;

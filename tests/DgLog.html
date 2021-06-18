@@ -122,6 +122,8 @@ $('document').ready(function() {
                value="1300"/>*/
 	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
 	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
+	  .addEl('div',{id:'status',style:'color:#fff'})
+	  .addEl('div',{id:'pan','style':'color: #fff'})
 	  .up()
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-save-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
@@ -131,9 +133,24 @@ $('document').ready(function() {
   }
   
   var doc= {
+    diagEvents: function(start=1, events={}) {
+      var b= $('#cvs');
+      if(!start) {
+ b.unbind(Object.keys(events).join(' '));
+        return;
+      }
+      for (var e in events) {
+        b.on(e, events[e]);
+      }
+    },
     start: function() {
  //  console.log(window.cvs)
    var cvs = window.cvs;
+   var events= {
+     'touchstart': dgl.callTouchStart.bind(dgl),
+     'touchmove': dgl.callTouchMove.bind(dgl),
+     'touchend': dgl.callTouchEnd.bind(dgl)
+   }
    $('#tab-diagram').click(function() {
 	    $('.tab-cnt.show')
 	      .removeClass('show')
@@ -155,7 +172,9 @@ $('document').ready(function() {
 	       .addClass('active btn-light');
 	       
 	    if(cvs) {
-	      cvs.start('cvs')
+	      cvs.start('cvs');
+	      
+	      doc.diagEvents(1, events);
 	   } else {
 	     console.log('noCvs');
 	   }
@@ -180,6 +199,7 @@ $('document').ready(function() {
 	    $('#tab-ta')
 	       .removeClass('btn-secondary')
 	       .addClass('active btn-light')
+	       doc.diagEvents(0, events);
 	  })
 	  
 	 $('#tab-save').click(function() {
@@ -200,7 +220,8 @@ $('document').ready(function() {
 	    
 	    $('#tab-save')
 	       .removeClass('btn-secondary')
-	       .addClass('active btn-light')
+	       .addClass('active btn-light');
+	    doc.diagEvents(0, events)
 	  })
 	  
 	  $('#diag-next').click(function() {
