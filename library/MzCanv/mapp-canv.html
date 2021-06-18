@@ -18,7 +18,7 @@
   
   <script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
   <!--script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script-->
-  <script type="text/javascript" src="https://gist.githubusercontent.com/HansHammel/c30d46348e8425a78d8b/raw/8d3417e64795a994f4d8b94847821b5d4740204f/jquery.mobile.vmouse.js"></script>
+  <!--script type="text/javascript" src="https://gist.githubusercontent.com/HansHammel/c30d46348e8425a78d8b/raw/8d3417e64795a994f4d8b94847821b5d4740204f/jquery.mobile.vmouse.js"></script-->
 
   
 
@@ -147,7 +147,7 @@ function init(fps){
 	var centerx = 200;
 	var centery = 200;
 
-	var vx = 'A B C e f g h i';
+	var vx = 'A B c D e F G h i J K';
 	vx = vx.split(' ');
 	var grades = 360 / vx.length;
 	var radius = vx.length * 15;
@@ -179,20 +179,31 @@ function init(fps){
 
 	step = 0;
 
-	steps = Math.round(rand(vx.length*1.5, vx.length*3));
+	steps = Math.round(rand(vx.length*1.5, vx.length*3))*3;
+	var stepsUsed=0;
 	while(step < steps){
 		vx1 = Math.round(rand(0,vx.length-1));
 		vy = Math.round(rand(0,vx.length-1));
-		if (mx[vx1][vy] != 1 || mx[vy][vx1] != 1  && vy != vy )
+	//	console.log(vx1+'_'+vy)
+		if ((mx[vx1][vy] != 1 || mx[vy][vx1] != 1)  && vy != vx1 && getLen(mx[vx1])<3 && getLen(mx[vy])<3)
 		{
+		
 			mx[vx1][vy] = 1;
 			mx[vy][vx1] = 1;
 			step++;
+			stepsUsed++;
 		}
-
+		step++;
 	}
+	console.log('Steps used:'+stepsUsed)
 }
 
+function getLen(arr) {
+  if(!arr.length) {
+    return 0;
+  }
+  return Object.keys(arr).length;
+}
 
 function rand(min,max){ return (Math.random()*(max-min) + min); }
 ///////////////
