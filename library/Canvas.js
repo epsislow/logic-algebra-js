@@ -59,6 +59,22 @@ var cvs= (function() {
   	c.stroke();
 
     },
+    circle: function (c, x1, y1, rad,width=1, clr='#fff', fill=false) {
+      c.lineWidth=width;
+      c.strokeStyle=clr;
+      c.fillStyle=fill;
+     
+      c.beginPath();
+      c.arc(x1, y1, rad, 0, 6.3, true);
+      c.closePath();
+      
+      if (clr) {
+         c.stroke();
+      }
+      if (fill) {
+         c.fill();
+      }
+    },
 bar: function (c, menu_stack){
 	btn_style = [1,'#99f', '#aaf', 6, 'Arial', '#ffffff'];
     btn_style_gray = [.3,'#550055', '#e1e1ff', 6, 'Arial', '#ffffff'];
@@ -75,7 +91,6 @@ bar: function (c, menu_stack){
     if (menu_stack[i].mdown==1) style=btn_style_blue;
     this.btn(c,5+30*i,4, 28,10 , menu_stack[i].txt,7, style);
   }
-
 }
   }
   var ctx, calls= [];
@@ -136,6 +151,15 @@ canvas.style.height = rect.height + 'px';
   
   pub.addDrawCall= function(call) {
     calls.push(call);
+  }
+  
+  pub.getLib= function() {
+    return lib;
+  }
+  
+  pub.getFirstCvs= function() {
+    return ctx;
+   // return canvas[Object.keys(canvas)[0]];
   }
   
   function startCvs(elId) {

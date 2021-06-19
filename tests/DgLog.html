@@ -147,7 +147,13 @@ $('document').ready(function() {
  //  console.log(window.cvs)
    var cvs = window.cvs;
    var events= {
-     'touchstart': dgl.callTouchStart.bind(dgl),
+     'touchstart': function(e){
+      dgl.m.offsetLeft= this.offsetLeft;
+      dgl.m.offsetTop = this.offsetTop;
+     //  return 
+       dgl.callTouchStart.apply(dgl,[e])
+     }
+     ,
      'touchmove': dgl.callTouchMove.bind(dgl),
      'touchend': dgl.callTouchEnd.bind(dgl)
    }

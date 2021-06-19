@@ -249,7 +249,7 @@ const components = [
 ];
 */
 
-const components = [
+var components = [
   {
     id: 'clock',
     type: 'controlled',
@@ -284,23 +284,6 @@ const evaluate = (components, componentLookup) => {
     //console.log('aaa',libFn);
     if (component.type === 'controlled') {
       return;
-    
-   /* if (component.type === 'and') 
-    return binaryOp(and, component);
- //   if (component.type === 'andm') {
-      //console.log('aa', component);
-  //    return binaryOp(andm, component);
-   // }
-    if (component.type === 'nand') return binaryOp(nand, component);
-    if (component.type === 'or') return binaryOp(or, component);
-  //  if (component.type === 'orm') return
-  //    binaryOp(orm, component);
-    if (component.type === 'nor') return binaryOp(nor, component);
-    if (component.type === 'xor') return binaryOp(xor, component);
-   // if (component.type === 'xorm') return
-  //   binaryOp(xorm, component);
-    if (component.type === 'xnor') return binaryOp(xnor, component);
-    */
    } else if (component.type === 'not') {
       const aOut = componentLookup[component.inputs[0]];
       component.state = (aOut === 'x') ? 'x' : libFn.not(aOut.state);
@@ -312,10 +295,10 @@ const evaluate = (components, componentLookup) => {
 };
 
 function componentsPos(comps) {
-   var compos=[];
+   var compos={};
    var i=0;
-   for(var comp of comps) {
-     var cm= $.extend({},comp);
+   for(var cid in comps) {
+     var cm= $.extend({},comps[cid]);
      
      cm.x=i%4;
      cm.y=Math.floor(i/4);
@@ -404,6 +387,7 @@ var dglcvs={
 
 var cvsIteration=0;
 var cvsDraw=function(c, upd=0, lib) {
+  console.log('ff');
   dglcvs.lib= lib;
   if(upd){
     lib.clear(c);
@@ -411,7 +395,7 @@ var cvsDraw=function(c, upd=0, lib) {
     const smp= trace.getSamples()[cvsIteration];
     
     styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
-    var comps=componentsPos(components);
+    var comps=components//Pos(components);
     var comp;
     var txt;
     /*
@@ -437,7 +421,7 @@ var cvsDraw=function(c, upd=0, lib) {
       }
     }*/
     var ins,outs;
-    console.log(comps)
+  //  console.log(comps)
     for(var cid in comps) {
       comp= comps[cid]
       txt= (comp.type=='controlled'?comp.id:comp.type);
@@ -503,19 +487,61 @@ var dgl= {
     }
   },
   checkForDrag: function(pX, pY, sens=0, zoom=1) {
-    if (mouseisdown)
+    if (this.m.mouseisdown)
     {
-      for (var i = 0; i < vex.length; i++)
+      var comps= components;
+    //  console.log(comps);
+    //  return;
+      
+      var i=0;
+      for (var cid in comps)
       {
-        if ((mousedown_x >= zoom * (vex[i][2] - sens + pX) && mousedown_x <= zoom * (vex[i][2] + sens + pX)) && (mousedown_y >= zoom * (vex[i][3] - sens + pY) && mousedown_y <= zoom * (vex[i][3] + sens + pY)))
+        var comp= comps[cid];
+        //5+50*comp.x,5+25*comp.y, 40, 10
+      // console.log(this.m.mousedown_x);
+       //console.log(comp.id, Math.floor(this.m.mousedown_x), 5+50*comp.x, 5+50*comp.x+40);
+       //console.log(Math.floor(this.m.mousedown_y), 5+25*comp.y, 5+25*comp.x+10);
+       
+       
+        if (
+  (this.m.mousedown_x >= ( 5+50*comp.x - sens + pX) && this.m.mousedown_x <=  (5+50*comp.x + + 40+ sens + pX)) &&
+  (this.m.mousedown_y >=  (5+ 25*comp.y - sens + pY) && this.m.mousedown_y <=  (5+25* comp.y + 10 + sens + pY))
+)w
         {
-          isDragged = i + 1;
+          this.m.isDragged = cid;
+          
+          /*
+          console.log(
+    this.m.isDragged +' '+ Math.floor(this.m.mousedown_x)+' in '+ (5+50*comp.x) +', '+(5+50*comp.x+40)
+          );*/
+          var c = (cvs.getFirstCvs());
+          
+        /*  cvs.getLib().circle(c,
+          this.m.mousedown_x, 
+          this.m.mousedown_y,
+          10,2,'#373','#0f0'
+          );*/
+          
+          cvs.getLib().rectm(
+            c,5+50*comp.x,
+            5+25*comp.y, 
+            40,
+            10,
+            2,'#f00','#733'
+          );
+          cvs.getLib().textm(c,
+            5 + 50 * comp.x+20,
+            5 + 25 * comp.y+5,
+            this.m.isDragged,7,'#fff');
+          
         }
+        i++;
+       // break;
       }
-      if (!isDragged) {
-        isPan = 1;
-        panX = mousedown_x;
-        panY = mousedown_y;
+      if (!this.m.isDragged) {
+    this.m.isPan = 1;
+    this.m.pan.x = this.m.mousedown_x;
+    this.m.pan.y = this.m.mousedown_y;
       }
     }
   },
@@ -526,14 +552,14 @@ var dgl= {
     y= e.y;
   }else {
    // console.log(e.touches[0].pageX)
-    x= e.touches[0].pageX;
-    y= e.touches[0].pageY;
+    x= e.touches[0].clientX;
+    y= e.touches[0].clientY;
     if(e.touches[1]) {
-      x2= e.touches[1].pageX;
-      y2= e.touches[1].pageY;
+      x2= e.touches[1].clientX;
+      y2= e.touches[1].clientY;
     }
   }
-  $('#status').html(pre+ ' x='+Math.floor(x) + ' y= ' + Math.floor(y)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2) );
+  $('#status').html(pre+ ' x='+Math.floor(x/devicePixelRatio) + ' y= ' + Math.floor(y/devicePixelRatio)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2)+' '+devicePixelRatio );
   },
   callTouchStart: function(e) {
     //console.log(e.touches)
@@ -547,13 +573,29 @@ var er2= e.touches[1];
 //var pageX= event.touches[0].x;
    //   var pageY= event.touches[0].y;
 
-		this.m.mousedown_x = er.pageX - this.offsetLeft;
-		this.m.mousedown_y = er.pageY - this.offsetTop;
-		cvs.draw(1)
+		this.m.mousedown_x = er.clientX/2//- this.offsetLeft;
+		this.m.mousedown_y = er.clientY/2-20//- this.offsetTop;
+		
+		var er = e.touches[0];
+		var er2 = e.touches[1];
+		
+		//var pageX= event.touches[0].x;
+		//   var pageY= event.touches[0].y;
+		
+		this.checkForDrag(Math.floor(this.m.pan.ofsX + this.m.pan.xOfs), Math.floor(this.m.pan.ofsX + this.m.pan.xOfs));
+		
+	/* if (isDragged)
+		{
+		  vex_old_x = vex[isDragged - 1][2];
+		  vex_old_y = vex[isDragged - 1][3];
+		}
+		*/
+		//cvs.draw(1)
   },
   callTouchMove: function(e) {
     e.preventDefault()
-	  this.m.lastMove={x:e.touches[0].pageX,y:e.touches[0].pageY};
+	  this.m.lastMove={x:Math.floor(e.touches[0].pageX/devicePixelRatio), y:Math.floor(e.touches[0].pageY/devicePixelRatio-20)
+	  };
 	  
 	  this.showMouse(e, 'M');
 	  var er=e.touches[0];
@@ -563,7 +605,7 @@ var er2= e.touches[1];
 		{
 		  
 		}
-		cvs.draw(1)
+		//cvs.draw(1)
   },
   callTouchEnd: function(e) {
     e.preventDefault();
@@ -577,7 +619,7 @@ var er2= e.touches[1];
     
       this.m.mouseisdown = false;
     }
-    cvs.draw(1)
+    //cvs.draw(1)
   },
   drawNext: function() {
     cvsIteration++;
@@ -654,7 +696,7 @@ trace.getTraces([
 
  
  if(window.cvs) {
-   //console.log(componentsPos(components))
+   components = componentsPos(components);
    
    var cvs = window.cvs;
    cvs.addDrawCall(cvsDraw);
