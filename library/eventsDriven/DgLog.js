@@ -414,6 +414,7 @@ var cvsDraw=function(c, upd=0, lib) {
     var comps=componentsPos(components);
     var comp;
     var txt;
+    /*
     for(var cid in comps)
     {
       comp=comps[cid]
@@ -421,6 +422,7 @@ var cvsDraw=function(c, upd=0, lib) {
       lib.btn(c,5+50*comp.x,4+22*comp.y, 38, 10, txt,7, styles);
       
     }
+    
     for(var cid in comps)
     {
       comp=comps[cid]
@@ -433,8 +435,56 @@ var cvsDraw=function(c, upd=0, lib) {
       
         i++;
       }
+    }*/
+    var ins,outs;
+    console.log(comps)
+    for(var cid in comps) {
+      comp= comps[cid]
+      txt= (comp.type=='controlled'?comp.id:comp.type);
+      
+      ins=[];
+      for (var cinid of comp.inputs) {
+      //  var cin = comps[cinid];
+        ins.push({pos:'top',id:cinid})
+      }
+      comp.ins=indexBy(ins,'id');
+      outs=[{pos:'bottom',id:cid}];
+      comp.outs=indexBy(outs,'id');
+      
+     // console.log(comp)
+      dglcvs.drawInt(
+        c,txt, comp.type=='controlled'?'ctrl':'gate', 
+        5+50*comp.x,5+25*comp.y, 40, 10,
+        ins, outs
+      )
     }
-    dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
+    
+    
+    for(var cid in comps) {
+      comp= comps[cid];
+      var i=0;
+      var il= comp.inputs.length;
+      for(var cinid of comp.inputs) {
+        var cin= comps[cinid];
+        //line
+        var compin = comps[cinid];
+       // console.log(compin);
+     //   return;
+        lib.line(c,
+        compin.outs[cinid].pinx+1,
+        compin.outs[cinid].piny+1,
+        comp.ins[cinid].pinx+1,
+        comp.ins[cinid].piny+1,
+  //  5 + 50 *comp.x+(40* i/il + 20 / il),
+   // 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10,
+    smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
+        
+        i++;
+      }
+    }
+    
+    
+    //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
    
   
