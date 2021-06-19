@@ -471,11 +471,27 @@ var cvsDraw=function(c, upd=0, lib) {
       }
     }
     
+    if(debug.is) {
+      for(var d in debug.drawQueue) {
+        debug.drawQueue[d][0].apply(this, debug.drawQueue[d][1]);
+        
+     if(!debug.drawQueueDel) {
+       debug.drawQueueDel=1;
+        setTimeout(function() {
+          debug.drawQueue= [];
+          cvs.draw(1);
+        }, 3000);
+        
+     }
+      
+      }
+      
+    }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
    
-  
+var debug= {is:true,drawQueue:[]};  
 
 const trace= new Trace();
 var dgl= {
@@ -514,11 +530,42 @@ var dgl= {
         {
           this.m.isDragged = cid;
           
-          /*
-          console.log(
-    this.m.isDragged +' '+ Math.floor(this.m.mousedown_x)+' in '+ (5+50*comp.x) +', '+(5+50*comp.x+40)
+          
+          /*console.log(
+    this.m.isDragged +' '+pX+' '+ Math.floor(this.m.mousedown_x)+' in '+ (5+50*comp.x+ pX) +', '+(5+50*comp.x+40 +pX)
           );*/
           var c = (cvs.getFirstCvs());
+          debug.drawQueue= [];
+          
+          debug.drawQueue.push([
+            cvs.getLib().circle,
+            [c,
+          this.m.mousedown_x, 
+          this.m.mousedown_y,
+          10,2,'#373','#0f0'
+           ]
+          ])
+          
+          debug.drawQueue.push([
+            cvs.getLib().rectm,
+            [
+            c, 5+50*comp.x - sens + pX,
+             5+ 25*comp.y - sens -5 + pY,
+             40,20,
+             2, '#f00', '#733']
+            ])
+          
+            
+          debug.drawQueue.push([
+            cvs.getLib().textm,[
+            c, 5+50*comp.x - sens + pX +20,
+            5+ 25*comp.y - sens -5 + pY + 10,
+          this.m.isDragged, 7, '#fff'
+            ]
+          ]);
+          
+          debug.drawQueueDel=0;
+          
           /*
           cvs.getLib().circle(c,
           this.m.mousedown_x, 
@@ -586,14 +633,14 @@ var er2= e.touches[1];
 		//var pageX= event.touches[0].x;
 		//   var pageY= event.touches[0].y;
 		
-		this.checkForDrag(Math.floor(this.m.pan.ofsX + this.m.pan.xOfs), Math.floor(this.m.pan.ofsX + this.m.pan.xOfs));
+		this.checkForDrag(Math.floor(this.m.pan.ofsX + this.m.pan.xOfs), Math.floor(this.m.pan.ofsY + this.m.pan.yOfs));
 		
-	/* if (isDragged)
+	if (isDragged)
 		{
-		  vex_old_x = vex[isDragged - 1][2];
-		  vex_old_y = vex[isDragged - 1][3];
+		  this.m.comp_old_x = components[isDragged].x;
+		  this.m.comp_old_y = components[isDragged].y;
 		}
-		*/
+		
 		cvs.draw(1)
   },
   callTouchMove: function(e) {
@@ -611,7 +658,13 @@ var er2= e.touches[1];
 		if (this.m.mouseisdown)
 		{
 		  if(this.m.isDragged) {
-		    
+		    /*
+		    var vexx = this.m.comp_old_x + mouse_x - mousedown_x;
+				var vexy = this.m.comp_old_y + mouse_y - mousedown_y -40;
+
+				components[isDragged].x = vexx;
+				components[isDragged].y = vexy;
+*/
 		  }
 		  if(this.m.isPan) {
 	 this.m.pan.ofsX= mouse_x-this.m.pan.x;
@@ -634,7 +687,8 @@ var er2= e.touches[1];
     	 // mouse_x = lastMove.x - this.offsetLeft;
     	//  mouse_y = lastMove.y - this.offsetTop;
     	  this.m.isDragged = false;
-    	//  vex_old_x = vex_old_y = 0;
+    	  this.m.comp_old_x = 0;
+    	  this.m.comp_old_y = 0;
     	  if (this.m.isPan) {
     	    this.m.pan.xOfs += Math.floor(this.m.pan.ofsX);
     	    this.m.pan.yOfs += Math.floor(this.m.pan.ofsY);
