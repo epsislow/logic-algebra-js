@@ -502,6 +502,23 @@ var dgl= {
       xOfs:0,yOfs:0
     }
   },
+  checkForDrag: function(pX, pY, sens=0, zoom=1) {
+    if (mouseisdown)
+    {
+      for (var i = 0; i < vex.length; i++)
+      {
+        if ((mousedown_x >= zoom * (vex[i][2] - sens + pX) && mousedown_x <= zoom * (vex[i][2] + sens + pX)) && (mousedown_y >= zoom * (vex[i][3] - sens + pY) && mousedown_y <= zoom * (vex[i][3] + sens + pY)))
+        {
+          isDragged = i + 1;
+        }
+      }
+      if (!isDragged) {
+        isPan = 1;
+        panX = mousedown_x;
+        panY = mousedown_y;
+      }
+    }
+  },
   showMouse: function(e, pre='S') {
     var x,y,x2=0,y2=0;
   if('x' in e) {
