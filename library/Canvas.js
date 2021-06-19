@@ -29,6 +29,18 @@ var cvs= (function() {
     
       c.fillText(text, x + fontsize, y + fontsize);
     },
+    rect: function(c,x,y,w,h,width=1,clr=false,fill=false) {
+     c.lineWidth= width;
+     c.strokeStyle=clr;
+     c.beginPath();
+     c.rect(x,y,w,h);
+     if(clr) {
+       c.stroke();
+     }
+     if(fill) {
+       c.fill();
+     }
+    },
     line: function(c,x1,y1,x2,y2,clr='#777',width=1) {
     c.lineWidth = width;
 		c.strokeStyle = clr;

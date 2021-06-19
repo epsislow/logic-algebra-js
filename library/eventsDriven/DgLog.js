@@ -172,7 +172,7 @@ const createMux = (name, aIns=[], sLineIns=[],dOut) => {
     return mem;
 }
 
-console.log(createMux('t',['a0','a1','a2'],['z0','z1','z2','z3','z4','z5','z6','z7'],'d'));
+//console.log(createMux('t',['a0','a1','a2'],['z0','z1','z2','z3','z4','z5','z6','z7'],'d'));
 
 const createDeMux = (name, dIn, aIns=[], sOuts=[]) => {
   var mem=[];
@@ -203,7 +203,7 @@ const createDeMux = (name, dIn, aIns=[], sOuts=[]) => {
     }
     return mem;
 }
-console.log(createDeMux('t','d', ['a0','a1','a2'],['z0','z1','z2','z3','z4','z5','z6','z7']));
+//console.log(createDeMux('t','d', ['a0','a1','a2'],['z0','z1','z2','z3','z4','z5','z6','z7']));
 
 const createDFFE = (name, clk, dIn, dEnable) => {
   const gatedClock = {
@@ -326,6 +326,12 @@ function componentsPos(comps) {
    return compos;
  }
 
+var dglcvs={
+  'drawInt': function(c,name,x,y,w,h,ins,outs, styles) {
+    
+  }
+}
+
 var cvsIteration=0;
 var cvsDraw=function(c, upd=0, lib) {
   if(upd){
@@ -360,6 +366,8 @@ var cvsDraw=function(c, upd=0, lib) {
       }
     }
    }
+   
+  
 
 const trace= new Trace();
 var dgl= {
