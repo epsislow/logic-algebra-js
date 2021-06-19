@@ -29,9 +29,16 @@ var cvs= (function() {
     
       c.fillText(text, x + fontsize, y + fontsize);
     },
-    rect: function(c,x,y,w,h,width=1,clr=false,fill=false) {
+    textm: function(c,x,y,text,size=6,clr='#777',font='Arial')
+    {
+      c.font= size+'px '+font;
+      c.fillStyle= clr;
+      c.fillText(text,x,y);
+    },
+      rectm: function(c,x,y,w,h,width=1,clr=false,fill=false) {
      c.lineWidth= width;
      c.strokeStyle=clr;
+     c.fillStyle=fill;
      c.beginPath();
      c.rect(x,y,w,h);
      if(clr) {

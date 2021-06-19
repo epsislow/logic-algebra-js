@@ -327,18 +327,87 @@ function componentsPos(comps) {
  }
 
 var dglcvs={
-  'drawInt': function(c,name,x,y,w,h,ins,outs, styles) {
+  'lib': {},
+  'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[]) {
+    var styles= {
+      'int':['#dd4','#b44','#ff9'],
+      'gate':['#779','#44a','#fff'],
+      'ctrl':['#474','#232','#9f9'],
+      
+      'pinin':['#cc7','#444'],
+      'pinout':['#7c7','#444']
+    };
     
+    this.lib.rectm(c,x,y,w,h,2, styles[type][0], styles[type][1]);
+    
+    var pos={'top':[],'bottom':[],'left':[],'right':[]};
+    
+    for(var i in ins) {
+   //   ins[i].pin='in';
+      pos[ins[i].pos].push(ins[i]);
+    }
+    for(var k in outs) {
+  //    ins[i].pin='out';
+      pos[outs[k].pos].push(outs[k]);
+    }
+   // console.log(pos)
+    var k=0;
+    const pinh=2, pinw=2;
+    for(var i=0;i<pos.top.length;i++){
+      k=i*(w/pos.top.length)
+        +w/(2*pos.top.length)-pinw/2;
+      pos.top[i].pinx= x+k;
+      pos.top[i].piny= y-pinh-1;
+      
+    //  this.lib.rectm(c,x+k,y-pinh-0.5,pinw,pinh,1,'#ff9','#444')
+    }
+    
+    for(var i=0;i<pos.bottom.length;i++){
+      k=i*(w/pos.bottom.length)
+        +w/(2*pos.bottom.length)-pinw/2
+      pos.bottom[i].pinx= x+k;
+      pos.bottom[i].piny= y+h+1;
+      
+    //  this.lib.rectm(c,x+k,y+h+0.5,pinw,pinh,1,'#9f9','#444')
+    }
+    
+    for(var i=0;i<pos.left.length;i++){
+      k=i*(h/pos.left.length)
+        +h/(2*pos.left.length)-pinh/2
+      pos.left[i].pinx= x-pinw-1;
+      pos.left[i].piny= y+k;
+      
+    //  this.lib.rectm(c,x-pinw-0.5,y+k,pinw,pinh,1,'#ff9','#444')
+    }
+    
+    for (var i=0; i < pos.right.length; i++) {
+      k=i*(h/pos.right.length) +
+        h/(2*pos.right.length) - pinh/2
+      pos.right[i].pinx= x+w+1
+      pos.right[i].piny= y+k
+      
+    //  this.lib.rectm(c, x+w+0.5, y+k, pinw,pinh,1, '#9f9', '#444')
+    }
+    
+    for(var i in ins) {
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, 2,styles['pinin'][0], styles['pinin'][1])
+    }
+    for(var i in outs) {
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh,2, styles['pinout'][0], styles['pinout'][1])
+    }
+  	c.textAlign = 'center';
+  	c.textBaseline = 'middle';
+    
+    this.lib.textm(c,x+w/2,y+h/2,name,7,styles[type][2]);
   }
 }
 
 var cvsIteration=0;
 var cvsDraw=function(c, upd=0, lib) {
+  dglcvs.lib= lib;
   if(upd){
     lib.clear(c);
   }
-     //console.log('draw');
-    // lib.bar(c);
     const smp= trace.getSamples()[cvsIteration];
     
     styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
@@ -360,11 +429,12 @@ var cvsDraw=function(c, upd=0, lib) {
       for (var cinid of comp.inputs) {
       
         var compin = comps[cinid];
-        lib.line(c, 5 + 50 * comp.x+(40*i/il+20/il), 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10, smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#44f'))
+        lib.line(c, 5 + 50 * comp.x+(40*i/il+20/il), 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10, smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
       
         i++;
       }
     }
+    dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
    
   
