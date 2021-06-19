@@ -504,9 +504,9 @@ var dgl= {
        
        
         if (
-  (this.m.mousedown_x >= ( 5+50*comp.x - sens + pX) && this.m.mousedown_x <=  (5+50*comp.x + + 40+ sens + pX)) &&
-  (this.m.mousedown_y >=  (5+ 25*comp.y - sens + pY) && this.m.mousedown_y <=  (5+25* comp.y + 10 + sens + pY))
-)w
+  (this.m.mousedown_x >= ( 5+50*comp.x - sens + pX) && this.m.mousedown_x <=  (5+50*comp.x + 40+ sens + pX)) &&
+  (this.m.mousedown_y >=  (5+ 25*comp.y - sens -5 + pY) && this.m.mousedown_y <=  (5+25* comp.y + 15 + sens + pY))
+)
         {
           this.m.isDragged = cid;
           
@@ -516,11 +516,11 @@ var dgl= {
           );*/
           var c = (cvs.getFirstCvs());
           
-        /*  cvs.getLib().circle(c,
+          cvs.getLib().circle(c,
           this.m.mousedown_x, 
           this.m.mousedown_y,
           10,2,'#373','#0f0'
-          );*/
+          );
           
           cvs.getLib().rectm(
             c,5+50*comp.x,
