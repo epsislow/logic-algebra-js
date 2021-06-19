@@ -309,6 +309,7 @@ function componentsPos(comps) {
    return compos;
  }
 
+
 var dglcvs={
   'lib': {},
   'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[]) {
@@ -387,7 +388,7 @@ var dglcvs={
 
 var cvsIteration=0;
 var cvsDraw=function(c, upd=0, lib) {
-  console.log('ff');
+ // console.log('ff');
   dglcvs.lib= lib;
   if(upd){
     lib.clear(c);
@@ -420,6 +421,9 @@ var cvsDraw=function(c, upd=0, lib) {
         i++;
       }
     }*/
+    var pX= Math.floor(dgl.m.pan.xOfs+this.m.pan.ofsX)
+    var pY= Math.floor(dgl.m.pan.yOfs+this.m.pan.ofsY)
+    
     var ins,outs;
   //  console.log(comps)
     for(var cid in comps) {
@@ -438,7 +442,7 @@ var cvsDraw=function(c, upd=0, lib) {
      // console.log(comp)
       dglcvs.drawInt(
         c,txt, comp.type=='controlled'?'ctrl':'gate', 
-        5+50*comp.x,5+25*comp.y, 40, 10,
+        5+50*comp.x+pX,5+25*comp.y+pY, 40, 10,
         ins, outs
       )
     }
@@ -515,7 +519,7 @@ var dgl= {
     this.m.isDragged +' '+ Math.floor(this.m.mousedown_x)+' in '+ (5+50*comp.x) +', '+(5+50*comp.x+40)
           );*/
           var c = (cvs.getFirstCvs());
-          
+          /*
           cvs.getLib().circle(c,
           this.m.mousedown_x, 
           this.m.mousedown_y,
@@ -533,7 +537,7 @@ var dgl= {
             5 + 50 * comp.x+20,
             5 + 25 * comp.y+5,
             this.m.isDragged,7,'#fff');
-          
+          */
         }
         i++;
        // break;
@@ -590,7 +594,7 @@ var er2= e.touches[1];
 		  vex_old_y = vex[isDragged - 1][3];
 		}
 		*/
-		//cvs.draw(1)
+		cvs.draw(1)
   },
   callTouchMove: function(e) {
     e.preventDefault()
@@ -601,11 +605,20 @@ var er2= e.touches[1];
 	  var er=e.touches[0];
 	  var er2=e.touches[1];
 
+	  var mouse_x = er.clientX/2//- this.offsetLeft;
+		var mouse_y = er.clientY/2-20//- this.offsetTop;
+	
 		if (this.m.mouseisdown)
 		{
-		  
+		  if(this.m.isDragged) {
+		    
+		  }
+		  if(this.m.isPan) {
+	 this.m.pan.ofsX= mouse_x-this.m.pan.x;
+	 this.m.pan.ofsY= mouse_y-this.m.pan.y;
+		  }
 		}
-		//cvs.draw(1)
+		cvs.draw(1)
   },
   callTouchEnd: function(e) {
     e.preventDefault();
@@ -618,8 +631,19 @@ var er2= e.touches[1];
       //   var pageY= event.touches[0].y;
     
       this.m.mouseisdown = false;
-    }
-    //cvs.draw(1)
+    	 // mouse_x = lastMove.x - this.offsetLeft;
+    	//  mouse_y = lastMove.y - this.offsetTop;
+    	  this.m.isDragged = false;
+    	//  vex_old_x = vex_old_y = 0;
+    	  if (this.m.isPan) {
+    	    this.m.pan.xOfs += Math.floor(this.m.pan.ofsX);
+    	    this.m.pan.yOfs += Math.floor(this.m.pan.ofsY);
+    	    this.m.isPan = false;
+    	    this.m.pan.ofsX = 0;
+    	    this.m.pan.ofsY = 0;
+    	  }
+    	}
+    cvs.draw(1)
   },
   drawNext: function() {
     cvsIteration++;
@@ -699,7 +723,7 @@ trace.getTraces([
    components = componentsPos(components);
    
    var cvs = window.cvs;
-   cvs.addDrawCall(cvsDraw);
+   cvs.addDrawCall(cvsDraw.bind(dgl));
    
  } else {
    console.log('NoCvs');
