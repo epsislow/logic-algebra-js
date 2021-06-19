@@ -492,7 +492,15 @@ var cvsDraw=function(c, upd=0, lib) {
 const trace= new Trace();
 var dgl= {
   m: {
-    lastMove: {x:0,y:0}
+    lastMove: {x:0,y:0},
+    mouseisdown: false,
+    mousedown_x:0,
+    mousedown_y:0,
+    isDragged:false,
+    pan:{
+      x:0,y:0,ofsX:0,ofsY:0,
+      xOfs:0,yOfs:0
+    }
   },
   showMouse: function(e, pre='S') {
     var x,y,x2=0,y2=0;
