@@ -403,6 +403,7 @@ var dglcvs={
   	c.textBaseline = 'middle';
     
     this.lib.textm(c,x+w/2,y+h/2,name,7,styles[type][2]);
+   // this.lib.textm(c,x+w/2,y+h*3/2,)
   }
 }
 
