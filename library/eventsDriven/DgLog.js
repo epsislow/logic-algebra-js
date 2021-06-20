@@ -305,6 +305,7 @@ function componentsPos(comps) {
      cm.xOfs=0;
      cm.yOfs=0;
      cm.revIns=0;
+   //  cm.selected=0;
      compos[cm.id]=cm;
      i++;
    }
@@ -461,7 +462,8 @@ var cvsDraw=function(c, upd=0, lib) {
       
      // console.log(comp)
      var ty= comp.type=='controlled'?'ctrl':'gate';
-     if(cid== this.m.isDragged) {
+     if(cid== this.m.isDragged|| this
+     .m.nodeSel.includes(cid)) {
        ty='drag';
      }
       dglcvs.drawInt(
@@ -488,8 +490,7 @@ var cvsDraw=function(c, upd=0, lib) {
         compin.outs[cinid].piny+1,
         comp.ins[cinid].pinx+1,
         comp.ins[cinid].piny+1,
-  //  5 + 50 *comp.x+(40* i/il + 20 / il),
-   // 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10,
+  
     smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
         
         i++;
@@ -529,10 +530,26 @@ var dgl= {
       x:0,y:0,ofsX:0,ofsY:0,
       xOfs:0,yOfs:0
     },
+    nodeSel:[],
     chgIns:0,
+    addNode:0
   },
-  node:{},
-  checkForDrag: function(pX, pY, sens=0, zoom=1) {
+  node:[],
+  nodeConn:{},
+  addNodeC: function(cids) {
+    if (!(cids[1] in components[cids[0]].ins) && !(cids[0] in components[cids[1]].ins)) {
+      
+      return;
+    }
+    var next =this.node.length;
+    this.node[next] = {
+      xOfs:5,yOfs:5
+    }
+    this.nodeConn[cids[0]]=next;
+    this.nodeConn[cids[1]]=next;
+  },
+  checkForDrag: function(pX,pY,sens=0, zoom=1) {
+  
     if (this.m.mouseisdown)
     {
       var comps= components;
@@ -558,6 +575,22 @@ var dgl= {
             components[cid].revIns=(components[cid].revIns==1)?0:1
           // var st= components[cid].ins[0];
             return;
+          }
+          if(this.m.addNode) {
+           // components[cid].selected=(components[cid].selected==1)?0:1;
+     if(this.m.nodeSel.includes(cid)) {
+        continue;
+     }
+     this.m.nodeSel.push(cid);
+            
+    if(this.m.nodeSel.length>=2) {
+      this.addNodeC(this.m.nodeSel);
+      this.m.nodeSel=[]
+    /*  for(var i in this.m.nodeSel) {
+        components[this.m.nodeSel[i]].selected=0;
+        console.log(i+' '+this.m.nodeSel[i])
+      }*/
+    }
           }
           this.m.isDragged = cid;
           
