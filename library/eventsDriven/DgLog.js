@@ -554,6 +554,7 @@ var dgl= {
     mousedown_x:0,
     mousedown_y:0,
     isDragged:false,
+    nodeDragged:false,
     pan:{
       x:0,y:0,ofsX:0,ofsY:0,
       xOfs:0,yOfs:0
@@ -592,19 +593,26 @@ var dgl= {
   
     if (this.m.mouseisdown)
     {
+      
+      var nd=this.node;
+      for(var n in nd) {
+        if(
+  (this.m.mousedown_x >= nd[n].x+pX-5) &&
+  (this.m.mousedown_x <= nd[n].x+pX+5) &&
+  (this.m.mousedown_y >= nd[n].y+pY-5) &&
+  (this.m.mousedown_y <= nd[n].y+pY+5) 
+  ){
+          this.m.nodeDragged=n
+          return;
+        }
+      }
+      
       var comps= components;
     //  console.log(comps);
-    //  return;
       
-      var i=0;
       for (var cid in comps)
       {
         var comp= comps[cid];
-        //5+50*comp.x,5+25*comp.y, 40, 10
-      // console.log(this.m.mousedown_x);
-       //console.log(comp.id, Math.floor(this.m.mousedown_x), 5+50*comp.x, 5+50*comp.x+40);
-       //console.log(Math.floor(this.m.mousedown_y), 5+25*comp.y, 5+25*comp.x+10);
-       
        
         if (
   (this.m.mousedown_x >= ( 5+50*comp.x - sens + pX) && this.m.mousedown_x <=  (5+50*comp.x + 40+ sens + pX)) &&
@@ -691,7 +699,6 @@ var dgl= {
             this.m.isDragged,7,'#fff');
           */
         }
-        i++;
        // break;
       }
       if (!this.m.isDragged) {
@@ -745,7 +752,11 @@ var er2= e.touches[1];
 		  this.m.comp_old_x = components[this.m.isDragged].xOfs;
 		  this.m.comp_old_y = components[this.m.isDragged].yOfs;
 		}
-		
+		if(this.m.nodeDragged) {
+		  this.m.node_old_x= this.node[this.m.nodeDragged].x;
+		  this.m.node_old_y= this.node[this.m.nodeDragged].y;
+		  
+		}
 		cvs.draw(1)
   },
   callTouchMove: function(e) {
@@ -762,6 +773,7 @@ var er2= e.touches[1];
 	
 		if (this.m.mouseisdown)
 		{
+		  
 		  if(this.m.isDragged) {
 		    
 		    var vexx = this.m.comp_old_x + mouse_x - this.m.mousedown_x;
@@ -769,8 +781,15 @@ var er2= e.touches[1];
 
 			components[this.m.isDragged].xOfs = vexx;
 			components[this.m.isDragged].yOfs = vexy;
-      
 		  }
+		  if(this.m.nodeDragged) {
+		    var vexx = this.m.node_old_x + mouse_x - this.m.mousedown_x;
+		    var vexy = this.m.node_old_y + mouse_y - this.m.mousedown_y;
+		    
+		    this.node[this.m.nodeDragged].x=vexx;
+		    this.node[this.m.nodeDragged].y=vexy;
+		  }
+		  
 		  if(this.m.isPan) {
 	 this.m.pan.ofsX= mouse_x-this.m.pan.x;
 	 this.m.pan.ofsY= mouse_y-this.m.pan.y;
@@ -799,10 +818,19 @@ var er2= e.touches[1];
     	 Math.round(components[this.m.isDragged].yOfs/25);
    	 components[this.m.isDragged].xOfs=0
    	 components[this.m.isDragged].yOfs=0
-    	}
+    	
     	  this.m.isDragged = false;
     	  this.m.comp_old_x = 0;
     	  this.m.comp_old_y = 0;
+    }
+    if(this.m.nodeDragged) {
+      this.node[this.m.nodeDragged].x= this.m.node_old_x;
+      this.node[this.m.nodeDragged].y= this.m.node_old_y;
+      this.m.nodeDragged=false;
+      this.m.node_old_x = 0;
+      this.m.node_old_y = 0;
+    }
+
     	  if (this.m.isPan) {
     	    this.m.pan.xOfs += Math.floor(this.m.pan.ofsX);
     	    this.m.pan.yOfs += Math.floor(this.m.pan.ofsY);
