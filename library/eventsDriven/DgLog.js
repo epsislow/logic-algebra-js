@@ -485,12 +485,12 @@ var cvsDraw=function(c, upd=0, lib) {
         var compin = comps[cinid];
        // console.log(compin);
      //   return;
+     
         lib.line(c,
         compin.outs[cinid].pinx+1,
         compin.outs[cinid].piny+1,
         comp.ins[cinid].pinx+1,
         comp.ins[cinid].piny+1,
-  
     smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
         
         i++;
@@ -543,10 +543,19 @@ var dgl= {
     }
     var next =this.node.length;
     this.node[next] = {
-      xOfs:5,yOfs:5
+      from:cids[0],
+      to:cids[1],
+      xOfs:5,
+      yOfs:5
     }
-    this.nodeConn[cids[0]]=next;
-    this.nodeConn[cids[1]]=next;
+    if(!cids[0] in this.nodeConn) {
+      this.nodeConn[cids[0]]=[];
+    }
+    if(!cids[0] in this.nodeConn) {
+      this.nodeConn[cids[1]]=[];
+    }
+    this.nodeConn[cids[0]].push(next);
+    this.nodeConn[cids[1]].push(next);
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
   
