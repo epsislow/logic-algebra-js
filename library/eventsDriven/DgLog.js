@@ -770,8 +770,8 @@ var er2= e.touches[1];
 		  this.m.comp_old_y = components[this.m.isDragged].yOfs;
 		}
 		if(this.m.nodeDragged) {
-		  this.m.node_old_x= this.node[this.m.nodeDragged].x;
-		  this.m.node_old_y= this.node[this.m.nodeDragged].y;
+		  this.m.node_old_x= Math.floor(this.node[this.m.nodeDragged].x);
+		  this.m.node_old_y= Math.floor(this.node[this.m.nodeDragged].y);
 		  
 		}
 		cvs.draw(1)
@@ -800,8 +800,8 @@ var er2= e.touches[1];
 			components[this.m.isDragged].yOfs = vexy;
 		  }
 		  if(this.m.nodeDragged) {
-		    var vexx = this.m.node_old_x + mouse_x - this.m.mousedown_x;
-		    var vexy = this.m.node_old_y + mouse_y - this.m.mousedown_y;
+		    var vexx = Math.floor(this.m.node_old_x + mouse_x - this.m.mousedown_x);
+		    var vexy = Math.floor(this.m.node_old_y + mouse_y - this.m.mousedown_y);
 		    
 		    this.node[this.m.nodeDragged].x=vexx;
 		    this.node[this.m.nodeDragged].y=vexy;
