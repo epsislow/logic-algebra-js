@@ -466,6 +466,7 @@ var cvsDraw=function(c, upd=0, lib) {
      .m.nodeSel.includes(cid)) {
        ty='drag';
      }
+     
       dglcvs.drawInt(
         c,txt, 
         ty, 
@@ -473,7 +474,6 @@ var cvsDraw=function(c, upd=0, lib) {
         ins, outs,comp.revIns
       )
     }
-    
     
     for(var cid in comps) {
       comp= comps[cid];
@@ -493,8 +493,8 @@ if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
  
  for(var n in nodes) {
-   lineNodes.push(['node', dgl.node[n].x, dgl.node[n].y]);
-   dglcvs.drawNode(c,n,'node', dgl.node[n].x,dgl.node[n].y)
+ lineNodes.push(['node', dgl.node[n].x +pX, dgl.node[n].y+pY]);
+   dglcvs.drawNode(c,n,'node', dgl.node[n].x+pX,dgl.node[n].y+pY)
  }
 }
     
@@ -631,6 +631,7 @@ var dgl= {
         console.log(i+' '+this.m.nodeSel[i])
       }*/
     }
+    return;
           }
           this.m.isDragged = cid;
           
