@@ -661,20 +661,33 @@ var dgl= {
        [c,
       this.m.mousedown_x,
      this.m.mousedown_y,
-     10, 2, '#373', '#0f0'
+     4, 2, '#373', '#0f0'
        ]
      ])
     }
     
       
-      
+     //debug.drawQueue= [];
       var nd=this.node;
       for(var n in nd) {
+        if(0) {
+      var c = (cvs.getFirstCvs());
+  
+      debug.drawQueue.push([
+            cvs.getLib().rectm,
+            [
+            c, nd[n].x + pX-10,
+             nd[n].y +pY-10,
+             30,30,
+             2, '#f00']
+            ])
+         
+        }
         if(
   (this.m.mousedown_x >= nd[n].x+pX-10) &&
-  (this.m.mousedown_x <= nd[n].x+pX+10) &&
+  (this.m.mousedown_x <= nd[n].x+pX+20) &&
   (this.m.mousedown_y >= nd[n].y+pY-10) &&
-  (this.m.mousedown_y <= nd[n].y+pY+10) 
+  (this.m.mousedown_y <= nd[n].y+pY+20) 
   ){
     if(this.m.delNode) {
      // this.node.splice(n,1);
@@ -906,6 +919,13 @@ var er2= e.touches[1];
       this.m.mouseisdown = false;
     	 // mouse_x = lastMove.x - this.offsetLeft;
     	//  mouse_y = lastMove.y - this.offsetTop;
+    	if(this.m.nodeDragged) {
+    	 /*this.node[this.m.nodeDragged].x=
+    	   Math.round(this.node[this.m.nodeDragged].x/10)/2
+    	 this.node[this.m.nodeDragged].y=
+    	   Math.round(this.node[this.m.nodeDragged].y/10)/2
+    	   */
+    	}
     	if(this.m.isDragged) {
     components[this.m.isDragged].x+= 
     	 Math.round(components[this.m.isDragged].xOfs/12.5)/4;
