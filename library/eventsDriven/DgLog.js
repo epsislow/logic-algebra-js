@@ -354,7 +354,7 @@ var dglcvs={
   //    ins[i].pin='out';
       pos[outs[k].pos].push(outs[k]);
     }
-   // console.log(pos)
+  
     var k=0;
     const pinh=2, pinw=2;
     for(var i=0;i<pos.top.length;i++){
@@ -565,26 +565,37 @@ var dgl= {
   node:[],
   nodeConn:{},
   addNodeC: function(cids) {
-    if (!(cids[1] in components[cids[0]].ins) && !(cids[0] in components[cids[1]].ins)) {
-      
+    var which=0;
+    if(cids[1] in components[cids[0]].ins) {
+      console.log('y1')
+      which=[cids[1],cids[0]];
+    }
+    if(cids[0] in components[cids[1]].ins) {
+      console.log('y2')
+      which=[cids[0],cids[1]];
+    }
+    if(!which) {
+      console.log('n');
       return;
     }
     var next =this.node.length;
     this.node[next] = {
-      from:cids[0],
-      to:cids[1],
-      x:components[cids[0]].x*50+25,
-      y:components[cids[1]].y*25+35
+      from:which[0],
+      to:which[1],
+      x:components[which[0]].x*50+25,
+      y:components[which[1]].y*25+35
     }
-    const idx1=cids[0]+'_'+cids[1];
-    const idx2=cids[1]+'_'+cids[0];
+    
+   // const idx1=cids[0]+'_'+cids[1];
+  //  const idx2=cids[1]+'_'+cids[0];
+  const idx1=which.join('_');
     if(!(idx1 in this.nodeConn)) {
       this.nodeConn[idx1]=[];
-      this.nodeConn[idx2]=[];
+    //  this.nodeConn[idx2]=[];
     }
     this.nodeConn[idx1].push(next);
-    this.nodeConn[idx2].push(next);
-    var len=Object.keys(this.nodeConn[idx2]).length
+   // this.nodeConn[idx2].push(next);
+    var len=Object.keys(this.nodeConn[idx1]).length
     this.node[next][Math.round(Math.random())==1?'x':'y']+=5*len;
     
   },
