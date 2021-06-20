@@ -570,14 +570,22 @@ var dgl= {
   nodeConn:{},
   cache:{
     save: function() {
-      var string = "This is my compression test.";
-      alert("Size of sample is: " + string.length);
+      const data= {
+        comp:components,
+        mpan: dgl.m.pan,
+        node: dgl.m.node,
+        nodeconn: dgl.m.nodeconn
+      };
+      
+      var string = JSON.stringify(data);
+      console.log("Size: " + string.length);
+      
       var compressed = LZString.compressToUTF16(string);
-      alert("Size of compressed sample is: " + compressed.length);
-      localStorage.setItem("myData", compressed);
+      console.log("Compressed: " + compressed.length);
+      localStorage.setItem("dgl.data", compressed);
   
-      string = LZString.decompressFromUTF16(localStorage.getItem("myData"));
-      alert("Sample is: " + string);
+     //string = LZString.decompressFromUTF16(localStorage.getItem("myData"));
+    //  alert("Sample is: " + string);
     },
     load: function() {
       
@@ -859,10 +867,10 @@ var er2= e.touches[1];
     	//  mouse_y = lastMove.y - this.offsetTop;
     	if(this.m.isDragged) {
     components[this.m.isDragged].x+= 
-    	 Math.round(components[this.m.isDragged].xOfs/50);
+    	 Math.round(components[this.m.isDragged].xOfs/12.5)/4;
     	 
      components[this.m.isDragged].y+= 
-    	 Math.round(components[this.m.isDragged].yOfs/25);
+    	 Math.round(components[this.m.isDragged].yOfs/12.5)/2;
    	 components[this.m.isDragged].xOfs=0
    	 components[this.m.isDragged].yOfs=0
     	
