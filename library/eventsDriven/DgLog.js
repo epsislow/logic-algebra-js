@@ -888,15 +888,15 @@ var er2= e.touches[1];
 		    var vexx = this.m.comp_old_x + mouse_x - this.m.mousedown_x;
 				var vexy = this.m.comp_old_y + mouse_y - this.m.mousedown_y;
 
-			components[this.m.isDragged].xOfs = vexx;
-			components[this.m.isDragged].yOfs = vexy;
+			components[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5;
+			components[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5;
 		  }
 		  if(this.m.nodeDragged) {
 		    var vexx = Math.floor(this.m.node_old_x + mouse_x - this.m.mousedown_x);
 		    var vexy = Math.floor(this.m.node_old_y + mouse_y - this.m.mousedown_y);
 		    
-		    this.node[this.m.nodeDragged].x=vexx;
-		    this.node[this.m.nodeDragged].y=vexy;
+		    this.node[this.m.nodeDragged].x=Math.round(vexx/5)*5;
+		    this.node[this.m.nodeDragged].y=Math.round(vexy/5)*5;
 		  }
 		  
 		  if(this.m.isPan) {
