@@ -324,7 +324,7 @@ var dglcvs={
     }
     var pinw=2,pinh=2;
     if(1) {
-      this.lib.rectm(c,x-pinw-0.5,y+k,pinw,pinh,1, styles[type][0], styles[type][1])
+      this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
     }
   },
   'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[],revIns=0) {
@@ -483,15 +483,43 @@ var cvsDraw=function(c, upd=0, lib) {
         var cin= comps[cinid];
         //line
         var compin = comps[cinid];
-       // console.log(compin);
-     //   return;
      
+    var lineNodes= [];
+    
+lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
+    
+var idx=cinid+'_'+cid;
+if(idx in dgl.nodeConn) {
+ var nodes = dgl.nodeConn[idx];
+ 
+ for(var n in nodes) {
+   lineNodes.push(['node', dgl.node[n].x, dgl.node[n].y]);
+   dglcvs.drawNode(c,n,'node', dgl.node[n].x,dgl.node[n].y)
+ }
+}
+    
+lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
+//console.log(lineNodes);
+
+var lastPoint=0;
+for(var l in lineNodes) {
+  if(!lastPoint) {
+    lastPoint= lineNodes[l];
+    continue;
+  }
+  lib.line(c,lastPoint[1], lastPoint[2], 
+    lineNodes[l][1], lineNodes[l][2],
+  smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
+   lastPoint=lineNodes[l]
+}
+    /*
         lib.line(c,
         compin.outs[cinid].pinx+1,
         compin.outs[cinid].piny+1,
         comp.ins[cinid].pinx+1,
         comp.ins[cinid].piny+1,
     smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
+      */  
         
         i++;
       }
@@ -545,17 +573,20 @@ var dgl= {
     this.node[next] = {
       from:cids[0],
       to:cids[1],
-      xOfs:5,
-      yOfs:5
+      x:components[cids[0]].x*50+25,
+      y:components[cids[1]].y*25+35
     }
-    if(!cids[0] in this.nodeConn) {
-      this.nodeConn[cids[0]]=[];
+    const idx1=cids[0]+'_'+cids[1];
+    const idx2=cids[1]+'_'+cids[0];
+    if(!(idx1 in this.nodeConn)) {
+      this.nodeConn[idx1]=[];
+      this.nodeConn[idx2]=[];
     }
-    if(!cids[0] in this.nodeConn) {
-      this.nodeConn[cids[1]]=[];
-    }
-    this.nodeConn[cids[0]].push(next);
-    this.nodeConn[cids[1]].push(next);
+    this.nodeConn[idx1].push(next);
+    this.nodeConn[idx2].push(next);
+    var len=Object.keys(this.nodeConn[idx2]).length
+    this.node[next][Math.round(Math.random())==1?'x':'y']+=5*len;
+    
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
   
