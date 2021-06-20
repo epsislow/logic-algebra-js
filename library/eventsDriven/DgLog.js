@@ -570,7 +570,14 @@ var dgl= {
   nodeConn:{},
   cache:{
     save: function() {
-      
+      var string = "This is my compression test.";
+      alert("Size of sample is: " + string.length);
+      var compressed = LZString.compressToUTF16(string);
+      alert("Size of compressed sample is: " + compressed.length);
+      localStorage.setItem("myData", compressed);
+  
+      string = LZString.decompressFromUTF16(localStorage.getItem("myData"));
+      alert("Sample is: " + string);
     },
     load: function() {
       
