@@ -920,11 +920,12 @@ var er2= e.touches[1];
     	 // mouse_x = lastMove.x - this.offsetLeft;
     	//  mouse_y = lastMove.y - this.offsetTop;
     	if(this.m.nodeDragged) {
-    	 /*this.node[this.m.nodeDragged].x=
-    	   Math.round(this.node[this.m.nodeDragged].x/10)/2
+    	 //*
+    	 this.node[this.m.nodeDragged].x=
+    	   Math.round(this.node[this.m.nodeDragged].x/5)*5
     	 this.node[this.m.nodeDragged].y=
-    	   Math.round(this.node[this.m.nodeDragged].y/10)/2
-    	   */
+    	   Math.round(this.node[this.m.nodeDragged].y/5)*5
+    	   //*/
     	}
     	if(this.m.isDragged) {
     components[this.m.isDragged].x+= 
