@@ -320,6 +320,8 @@ var dglcvs={
       'gate':['#779','#44a','#fff'],
       'ctrl':['#474','#232','#9f9'],
       
+      'drag':['#4aa','#499','#9ff'],
+      
       'pinin':['#cc7','#444'],
       'pinout':['#7c7','#444']
     };
@@ -442,8 +444,13 @@ var cvsDraw=function(c, upd=0, lib) {
       comp.outs=indexBy(outs,'id');
       
      // console.log(comp)
+     var ty= comp.type=='controlled'?'ctrl':'gate';
+     if(cid== this.m.isDragged) {
+       ty='drag';
+     }
       dglcvs.drawInt(
-        c,txt, comp.type=='controlled'?'ctrl':'gate', 
+        c,txt, 
+        ty, 
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs
       )
@@ -487,7 +494,6 @@ var cvsDraw=function(c, upd=0, lib) {
      }
       
       }
-      
     }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
