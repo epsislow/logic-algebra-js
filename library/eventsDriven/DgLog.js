@@ -326,7 +326,7 @@ var dglcvs={
     
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
-  'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[],revIns=0) {
+  'drawInt': function(c, name, id, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
       'int':['#dd4','#b44','#ff9'],
       'gate':['#779','#44a','#fff'],
@@ -403,7 +403,9 @@ var dglcvs={
   	c.textBaseline = 'middle';
     
     this.lib.textm(c,x+w/2,y+h/2,name,7,styles[type][2]);
-   // this.lib.textm(c,x+w/2,y+h*3/2,)
+    if(type!='ctrl') {
+      this.lib.textm(c,x+w/2,y+h*3/2, id, 7, styles[type][2])
+    }
   }
 }
 
@@ -469,6 +471,7 @@ var cvsDraw=function(c, upd=0, lib) {
      
       dglcvs.drawInt(
         c,txt, 
+        comp.id,
         ty, 
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
@@ -565,6 +568,14 @@ var dgl= {
   },
   node:[],
   nodeConn:{},
+  cache:{
+    save: function() {
+      
+    },
+    load: function() {
+      
+    }
+  },
   addNodeC: function(cids) {
     var which=0;
     if(cids[1] in components[cids[0]].ins) {
