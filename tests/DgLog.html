@@ -108,7 +108,7 @@ $('document').ready(function() {
 	  //.addText(' ')
 	  .addButton('Diagram',0,'btn-secondary btn-tab btn-tab-middle',{'id':'tab-diagram'})
 	  //.addText(' ')
-	  .addButton('Save',0,'btn-secondary btn-tab btn-tab-right',{'id':'tab-save'})
+	  .addButton('Iterations',0,'btn-secondary btn-tab btn-tab-right',{'id':'tab-save'})
 	  
 	  .container('tab-cnt bg-light boxsizingBorder hide','div',0,{'id':'tab-ta-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
 	  .container('m-2 p-1 bg-dark rounded box-shadow text-light', 'textarea', 'width:100%; height: 400px;max-height:500px;overflow:auto;font-family: freemono, monospace;font-size:10px;line-height:10px',{id:'txt'})
@@ -125,6 +125,9 @@ $('document').ready(function() {
 	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
 	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
   .addButton('AddNode',0,'btn-secondary mx-2',{'id':'diag-addnode'})
+  .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
+  .addButton('Save',0,'btn-secondary mx-2',{'id':'diag-save'})
+  .addButton('Load',0,'btn-secondary mx-2',{'id':'diag-load'})
 	  .addEl('div',{id:'status',style:'color:#fff'})
 	  .addEl('div',{id:'pan','style':'color: #fff'})
 	  .up()
@@ -269,7 +272,16 @@ $('document').ready(function() {
 	      cvs.draw(1);
 	    }
 	  })
-	  
+	  $('#diag-delnode').click(function() {
+	    var en=toggleBtn($(this));
+	    dgl.m.delNode=en;
+	  })
+	  $('#diag-save').click(function() {
+	    dgl.cache.save(1);
+	  })
+	  $('#diag-load').click(function() {
+	    dgl.cache.load(1);
+	  })
 	  
     	$('#tab-diagram').click();
 	    cvs.draw();

@@ -496,6 +496,9 @@ if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
  
  for(var n in nodes) {
+   if(typeof dgl.node[nodes[n]]=='undefined') {
+     continue;
+   }
  lineNodes.push(['node', dgl.node[nodes[n]].x +pX, dgl.node[nodes[n]].y+pY]);
    dglcvs.drawNode(c,n,'node', dgl.node[nodes[n]].x+pX,dgl.node[nodes[n]].y+pY)
  }
@@ -564,7 +567,8 @@ var dgl= {
     },
     nodeSel:[],
     chgIns:0,
-    addNode:0
+    addNode:0,
+    delNode:0,
   },
   node:[],
   nodeConn:{},
@@ -672,6 +676,26 @@ var dgl= {
   (this.m.mousedown_y >= nd[n].y+pY-10) &&
   (this.m.mousedown_y <= nd[n].y+pY+10) 
   ){
+    if(this.m.delNode) {
+     // this.node.splice(n,1);
+     delete this.node[n];
+     
+      for(var k in this.nodeConn) {
+        if(this.nodeConn[k].includes(n)) {
+          var ne=[];
+  /*  for(var j in this.nodeConn[k]) {
+      if(this.nodeConn[k][j]!==n) {
+        ne.push(this.nodeConn[k][j]);
+      }
+    }*/
+  //  this.nodeConn[k]=ne;
+  console.log(this.nodeConn[k]);
+  
+          }
+      }
+      cvs.draw(1);
+      return;
+    }
           this.m.nodeDragged=n;
           
           return;
