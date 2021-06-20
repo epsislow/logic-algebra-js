@@ -569,26 +569,43 @@ var dgl= {
   node:[],
   nodeConn:{},
   cache:{
-    save: function() {
+    save: function(zip=1) {
       const data= {
         comp:components,
         mpan: dgl.m.pan,
-        node: dgl.m.node,
-        nodeconn: dgl.m.nodeconn
+        node: dgl.node,
+        nodeConn: dgl.nodeConn
       };
       
       var string = JSON.stringify(data);
-      console.log("Size: " + string.length);
+    //  console.log(string);
+     // return;
+       
+  //    console.log("Size: " + string.length);
+      if(zip) {
+        string = LZString
+        .compressToUTF16(string);
+      } 
+      console.log("Compressed: " + string.length);
+      localStorage.setItem("dgl.data", string);
       
-      var compressed = LZString.compressToUTF16(string);
-      console.log("Compressed: " + compressed.length);
-      localStorage.setItem("dgl.data", compressed);
-  
-     //string = LZString.decompressFromUTF16(localStorage.getItem("myData"));
-    //  alert("Sample is: " + string);
+       console.log('Saved');
     },
-    load: function() {
-      
+    load: function(zip=1) {
+      var string= localStorage.getItem("dgl.data");
+    //  console.log(string);
+      if(zip) {
+        string=LZString
+          .decompressFromUTF16(string);
+      }
+      const data= JSON.parse(string);
+    //  console.log(data);
+      components= data.comp;
+      dgl.m.pan= data.mpan;
+      dgl.node= data.node;
+      dgl.nodeConn= data.nodeConn;
+      console.log('Loaded');
+      cvs.draw(1);
     }
   },
   addNodeC: function(cids) {
