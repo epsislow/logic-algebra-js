@@ -302,6 +302,8 @@ function componentsPos(comps) {
      
      cm.x=i%4;
      cm.y=Math.floor(i/4);
+     cm.xOfs=0;
+     cm.yOfs=0;
      compos[cm.id]=cm;
      i++;
    }
@@ -442,7 +444,7 @@ var cvsDraw=function(c, upd=0, lib) {
      // console.log(comp)
       dglcvs.drawInt(
         c,txt, comp.type=='controlled'?'ctrl':'gate', 
-        5+50*comp.x+pX,5+25*comp.y+pY, 40, 10,
+        5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs
       )
     }
@@ -491,7 +493,7 @@ var cvsDraw=function(c, upd=0, lib) {
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
    
-var debug= {is:true,drawQueue:[]};  
+var debug= {is:false,drawQueue:[]};  
 
 const trace= new Trace();
 var dgl= {
@@ -635,10 +637,10 @@ var er2= e.touches[1];
 		
 		this.checkForDrag(Math.floor(this.m.pan.ofsX + this.m.pan.xOfs), Math.floor(this.m.pan.ofsY + this.m.pan.yOfs));
 		
-	if (isDragged)
+	if (this.m.isDragged)
 		{
-		  this.m.comp_old_x = components[isDragged].x;
-		  this.m.comp_old_y = components[isDragged].y;
+		  this.m.comp_old_x = components[this.m.isDragged].xOfs;
+		  this.m.comp_old_y = components[this.m.isDragged].yOfs;
 		}
 		
 		cvs.draw(1)
@@ -658,13 +660,13 @@ var er2= e.touches[1];
 		if (this.m.mouseisdown)
 		{
 		  if(this.m.isDragged) {
-		    /*
-		    var vexx = this.m.comp_old_x + mouse_x - mousedown_x;
-				var vexy = this.m.comp_old_y + mouse_y - mousedown_y -40;
+		    
+		    var vexx = this.m.comp_old_x + mouse_x - this.m.mousedown_x;
+				var vexy = this.m.comp_old_y + mouse_y - this.m.mousedown_y;
 
-				components[isDragged].x = vexx;
-				components[isDragged].y = vexy;
-*/
+			components[this.m.isDragged].xOfs = vexx;
+			components[this.m.isDragged].yOfs = vexy;
+      
 		  }
 		  if(this.m.isPan) {
 	 this.m.pan.ofsX= mouse_x-this.m.pan.x;
@@ -686,6 +688,15 @@ var er2= e.touches[1];
       this.m.mouseisdown = false;
     	 // mouse_x = lastMove.x - this.offsetLeft;
     	//  mouse_y = lastMove.y - this.offsetTop;
+    	if(this.m.isDragged) {
+    components[this.m.isDragged].x+= 
+    	 Math.round(components[this.m.isDragged].xOfs/50);
+    	 
+     components[this.m.isDragged].y+= 
+    	 Math.round(components[this.m.isDragged].yOfs/25);
+   	 components[this.m.isDragged].xOfs=0
+   	 components[this.m.isDragged].yOfs=0
+    	}
     	  this.m.isDragged = false;
     	  this.m.comp_old_x = 0;
     	  this.m.comp_old_y = 0;
