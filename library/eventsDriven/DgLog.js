@@ -304,6 +304,7 @@ function componentsPos(comps) {
      cm.y=Math.floor(i/4);
      cm.xOfs=0;
      cm.yOfs=0;
+     cm.revIns=0;
      compos[cm.id]=cm;
      i++;
    }
@@ -314,7 +315,18 @@ function componentsPos(comps) {
 
 var dglcvs={
   'lib': {},
-  'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[]) {
+  drawNode: function(c,id,type,x,y) {
+    var styles={
+      'pinin': ['#cc7', '#444'],
+      'pinout': ['#7c7', '#444'],
+      'node':['#c77','#c77'],
+    }
+    var pinw=2,pinh=2;
+    if(1) {
+      this.lib.rectm(c,x-pinw-0.5,y+k,pinw,pinh,1, styles[type][0], styles[type][1])
+    }
+  },
+  'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
       'int':['#dd4','#b44','#ff9'],
       'gate':['#779','#44a','#fff'],
@@ -329,11 +341,15 @@ var dglcvs={
     this.lib.rectm(c,x,y,w,h,2, styles[type][0], styles[type][1]);
     
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
-    
-    for(var i in ins) {
-   //   ins[i].pin='in';
-      pos[ins[i].pos].push(ins[i]);
+    var iid= Object.keys(ins);
+    if(revIns) {
+      iid.reverse();
     }
+    for(var i in iid) {
+   //   ins[i].pin='in';
+      pos[ins[i].pos].push(ins[iid[i]]);
+    }
+    
     for(var k in outs) {
   //    ins[i].pin='out';
       pos[outs[k].pos].push(outs[k]);
@@ -452,7 +468,7 @@ var cvsDraw=function(c, upd=0, lib) {
         c,txt, 
         ty, 
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
-        ins, outs
+        ins, outs,comp.revIns
       )
     }
     
@@ -512,8 +528,10 @@ var dgl= {
     pan:{
       x:0,y:0,ofsX:0,ofsY:0,
       xOfs:0,yOfs:0
-    }
+    },
+    chgIns:0,
   },
+  node:{},
   checkForDrag: function(pX, pY, sens=0, zoom=1) {
     if (this.m.mouseisdown)
     {
@@ -536,6 +554,11 @@ var dgl= {
   (this.m.mousedown_y >=  (5+ 25*comp.y - sens -5 + pY) && this.m.mousedown_y <=  (5+25* comp.y + 15 + sens + pY))
 )
         {
+          if(this.m.chgIns) {
+            components[cid].revIns=(components[cid].revIns==1)?0:1
+          // var st= components[cid].ins[0];
+            return;
+          }
           this.m.isDragged = cid;
           
           
@@ -640,7 +663,7 @@ var er2= e.touches[1];
 		
 		//var pageX= event.touches[0].x;
 		//   var pageY= event.touches[0].y;
-		
+	
 		this.checkForDrag(Math.floor(this.m.pan.ofsX + this.m.pan.xOfs), Math.floor(this.m.pan.ofsY + this.m.pan.yOfs));
 		
 	if (this.m.isDragged)

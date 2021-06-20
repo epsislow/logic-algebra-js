@@ -122,6 +122,7 @@ $('document').ready(function() {
                value="1300"/>*/
 	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
 	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
+	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
 	  .addEl('div',{id:'status',style:'color:#fff'})
 	  .addEl('div',{id:'pan','style':'color: #fff'})
 	  .up()
@@ -235,7 +236,23 @@ $('document').ready(function() {
 	    $('#itr').val(itr);
 	    $(this).blur();
 	  })
-	
+	  $('#diag-chg-ins').click(function() {
+	   
+	   var b= $(this);
+	   var en;
+	   if(b.hasClass('btn-secondary')) {
+	    b.removeClass('btn-secondary').addClass('btn-light')
+	    en=1;
+	   } else {
+	     b.removeClass('btn-light')
+	     .addClass('btn-secondary')
+	     en=0;
+	   }
+	   b.blur();
+	   dgl.m.chgIns=en;
+	    
+	  });
+	  
     	$('#tab-diagram').click();
 	    cvs.draw();
     }
