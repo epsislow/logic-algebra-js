@@ -323,9 +323,8 @@ var dglcvs={
       'node':['#c77','#c77'],
     }
     var pinw=2,pinh=2;
-    if(1) {
-      this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
-    }
+    
+    this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
   'drawInt': function(c, name, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
@@ -493,8 +492,8 @@ if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
  
  for(var n in nodes) {
- lineNodes.push(['node', dgl.node[n].x +pX, dgl.node[n].y+pY]);
-   dglcvs.drawNode(c,n,'node', dgl.node[n].x+pX,dgl.node[n].y+pY)
+ lineNodes.push(['node', dgl.node[nodes[n]].x +pX, dgl.node[nodes[n]].y+pY]);
+   dglcvs.drawNode(c,n,'node', dgl.node[nodes[n]].x+pX,dgl.node[nodes[n]].y+pY)
  }
 }
     
@@ -544,7 +543,7 @@ for(var l in lineNodes) {
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
    
-var debug= {is:false,drawQueue:[]};  
+var debug= {is:true,drawQueue:[],drawQueueDel:0};  
 
 const trace= new Trace();
 var dgl= {
@@ -590,19 +589,36 @@ var dgl= {
     
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
-  
+    
     if (this.m.mouseisdown)
     {
+      
+      if(0) {
+     var c = (cvs.getFirstCvs());
+      debug.drawQueue = [];
+          
+     debug.drawQueue.push([
+       cvs.getLib().circle,
+       [c,
+      this.m.mousedown_x,
+     this.m.mousedown_y,
+     10, 2, '#373', '#0f0'
+       ]
+     ])
+    }
+    
+      
       
       var nd=this.node;
       for(var n in nd) {
         if(
-  (this.m.mousedown_x >= nd[n].x+pX-5) &&
-  (this.m.mousedown_x <= nd[n].x+pX+5) &&
-  (this.m.mousedown_y >= nd[n].y+pY-5) &&
-  (this.m.mousedown_y <= nd[n].y+pY+5) 
+  (this.m.mousedown_x >= nd[n].x+pX-10) &&
+  (this.m.mousedown_x <= nd[n].x+pX+10) &&
+  (this.m.mousedown_y >= nd[n].y+pY-10) &&
+  (this.m.mousedown_y <= nd[n].y+pY+10) 
   ){
-          this.m.nodeDragged=n
+          this.m.nodeDragged=n;
+          
           return;
         }
       }
@@ -647,6 +663,7 @@ var dgl= {
           /*console.log(
     this.m.isDragged +' '+pX+' '+ Math.floor(this.m.mousedown_x)+' in '+ (5+50*comp.x+ pX) +', '+(5+50*comp.x+40 +pX)
           );*/
+          if(0){
           var c = (cvs.getFirstCvs());
           debug.drawQueue= [];
           
@@ -678,7 +695,7 @@ var dgl= {
           ]);
           
           debug.drawQueueDel=0;
-          
+     }
           /*
           cvs.getLib().circle(c,
           this.m.mousedown_x, 
@@ -824,8 +841,8 @@ var er2= e.touches[1];
     	  this.m.comp_old_y = 0;
     }
     if(this.m.nodeDragged) {
-      this.node[this.m.nodeDragged].x= this.m.node_old_x;
-      this.node[this.m.nodeDragged].y= this.m.node_old_y;
+   //   this.node[this.m.nodeDragged].x+= vexx;
+    //  this.node[this.m.nodeDragged].y+= vexy;
       this.m.nodeDragged=false;
       this.m.node_old_x = 0;
       this.m.node_old_y = 0;
