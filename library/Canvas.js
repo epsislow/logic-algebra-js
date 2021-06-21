@@ -121,6 +121,9 @@ bar: function (c, menu_stack){
 	  c.clearRect(0,0,canvas.width,canvas.height);
 	}
 	
+	lib.maxWidth= canvas.width;
+	lib.maxHeight= canvas.height;
+	
 //	ctx.translate(0.5, 0.5);
 
 	  // canvas.css({'border':'1px solid #21b'});

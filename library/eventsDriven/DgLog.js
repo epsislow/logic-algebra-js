@@ -448,6 +448,16 @@ var cvsDraw=function(c, upd=0, lib) {
     var pX= Math.floor(dgl.m.pan.xOfs+this.m.pan.ofsX)
     var pY= Math.floor(dgl.m.pan.yOfs+this.m.pan.ofsY)
     
+    if(this.m.drawGrid) {
+      var step=150;
+     for(var jx=pX%step;jx<lib.maxWidth;jx+=step) {
+       lib.line(c, jx,0,jx, lib.maxHeight,'#444',1);
+     }
+     for (var jy = pY % step; jy < lib.maxHeight; jy += step) {
+       lib.line(c, 0, jy,lib.maxWidth, jy, '#444', 1);
+     }
+    }
+    
     var ins,outs;
   //  console.log(comps)
     for(var cid in comps) {
@@ -601,6 +611,7 @@ var dgl= {
     addNode:0,
     delNode:0,
     drawNodes:0,
+    drawGrid:1,
   },
   node:[],
   nodeConn:{},
