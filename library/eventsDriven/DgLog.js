@@ -452,8 +452,6 @@ var cvsDraw=function(c, upd=0, lib) {
   //  console.log(comps)
     for(var cid in comps) {
       comp= comps[cid]
-      txt= (comp.type=='controlled'?comp.id:comp.type);
-      
       ins=[];
       for (var cinid of comp.inputs) {
       //  var cin = comps[cinid];
@@ -462,6 +460,8 @@ var cvsDraw=function(c, upd=0, lib) {
       comp.ins=indexBy(ins,'id');
       outs=[{pos:'bottom',id:cid}];
       comp.outs=indexBy(outs,'id');
+      
+      txt= (comp.type=='controlled'?comp.id:comp.type);
       
      // console.log(comp)
      var ty= comp.type=='controlled'?'ctrl':'gate';
@@ -501,7 +501,9 @@ if(idx in dgl.nodeConn) {
      continue;
    }
  lineNodes.push(['node', dgl.node[nodes[n]].x +pX, dgl.node[nodes[n]].y+pY]);
+ if(this.m.drawNodes) {
    dglcvs.drawNode(c,n,'node', dgl.node[nodes[n]].x+pX,dgl.node[nodes[n]].y+pY)
+ }
  }
 }
     
@@ -536,6 +538,29 @@ for(var l in lineNodes) {
         i++;
       }
     }
+    
+    
+    /*
+    for(var cid in comps) {
+      comp= comps[cid]
+      
+      txt= (comp.type=='controlled'?comp.id:comp.type);
+      
+     // console.log(comp)
+     var ty= comp.type=='controlled'?'ctrl':'gate';
+     if(cid== this.m.isDragged|| this
+     .m.nodeSel.includes(cid)) {
+       ty='drag';
+     }
+     
+      dglcvs.drawInt(
+        c,txt, 
+        comp.id,
+        ty, 
+        5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
+        ins, outs,comp.revIns
+      )
+    }*/
     
     if(debug.is) {
       for(var d in debug.drawQueue) {
@@ -575,6 +600,7 @@ var dgl= {
     chgIns:0,
     addNode:0,
     delNode:0,
+    drawNodes:0,
   },
   node:[],
   nodeConn:{},
@@ -687,7 +713,7 @@ var dgl= {
     // debug.drawQueue= [];
       var nd=this.node;
       for(var n in nd) {
-        if(!nd[n]) {
+        if(!nd[n] || !this.m.drawNodes) {
           continue;
         }
         if(0) {

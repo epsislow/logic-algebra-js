@@ -126,8 +126,11 @@ $('document').ready(function() {
 	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
   .addButton('AddNode',0,'btn-secondary mx-2',{'id':'diag-addnode'})
   .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
-  .addButton('Save',0,'btn-secondary mx-2',{'id':'diag-save'})
-  .addButton('Load',0,'btn-secondary mx-2',{'id':'diag-load'})
+  .addButton('DrawNodes',0,'btn-secondary mx-2',{'id':'diag-drawnodes'})
+  .br()
+  .br()
+  .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
+  .addButton('Load',0,'btn-warning mx-2',{'id':'diag-load'})
 	  .addEl('div',{id:'status',style:'color:#fff'})
 	  .addEl('div',{id:'pan','style':'color: #fff'})
 	  .up()
@@ -276,6 +279,11 @@ $('document').ready(function() {
 	    var en=toggleBtn($(this));
 	    dgl.m.delNode=en;
 	  })
+	  $('#diag-drawnodes').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.drawNodes=en;
+	  	  cvs.draw(1)
+	  	  })
 	  $('#diag-save').click(function() {
 	    dgl.cache.save(1);
 	  })
