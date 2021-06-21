@@ -29,6 +29,17 @@ var cvs= (function() {
     
       c.fillText(text, x + fontsize, y + fontsize);
     },
+    readFa:function(){
+      r=document.styleSheets[0].rules || document.styleSheets[0].cssRules;r[0]
+    },
+    texti:function(c,x,y,text,size=6,clr) {
+     // var cls={
+     //   'pie':'\uf007'
+     // }
+      c.font = "900 "+size + 'px "Font Awesome 5 Free"';
+      c.fillStyle = clr;
+      c.fillText(text, x, y);
+    },
     textm: function(c,x,y,text,size=6,clr='#777',font='Arial')
     {
       c.font= size+'px '+font;
@@ -187,8 +198,11 @@ canvas.style.height = rect.height + 'px';
       }
       canvas[elId]=test;
     }
+
     startCvs(elId);
   }
+  
+
 
 
 //var startTime = -1;

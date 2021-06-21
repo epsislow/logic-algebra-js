@@ -319,13 +319,16 @@ var dglcvs={
   drawChipMenu: function(c,chips) {
     console.log(this.lib);
     this.lib.rectm(c, 0.5, 0.5, 100, this.lib.maxHeight - 201, 1, '#669', '#222');
-    c.font = '48px fontawesome';
-    c.fillStyle='#f00'
-    c.fillText('\uF064\uF065 \uF0a5', 20, 75);
-    
-    for (var cp in chips) {
-      this.lib.textm(c,5,10, "\uf042", 7, '#f99','fontawesome');
-      this.lib.textm(c, 17, 10, cp, 7, '#fff');
+    /* */
+    var i=1
+    c.textAlign= 'left'
+    var chip
+    for (var p in chips) {
+      cp=chips[p];
+      
+      this.lib.texti(c,5,10*i, p=='main'?"\uf815":"\uf2db", 7, p=='main'?'#0f0':'#f90');
+      this.lib.textm(c, 15, 10*i, p, 7, '#fff');
+      i++;
     }
   },
   drawNode: function(c,id,type,x,y) {
@@ -631,7 +634,12 @@ var dgl= {
   },
   node:[],
   nodeConn:{},
-  chip: {main:{ins:{},outs:{}}},
+  chip: {
+    main:{ins:{},outs:{},comp:{},active:1},
+    mem:{ins:{},outs:{},comp:{},active:0},
+    myclock:{ins:{},outs:{},comp:{},active:0},
+    
+  },
   cache:{
     save: function(zip=1) {
       const data= {

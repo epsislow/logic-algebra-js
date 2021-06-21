@@ -9,6 +9,8 @@
 	<link rel="icon" type="image/png" href="/favicon.ico"/>
 	<link rel="icon" type="image/png" href="http://logic/favicon.ico"/>
 	<link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" rel="stylesheet"/>
+	
+<!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"-->
 </head>
 
 <style>
@@ -19,6 +21,10 @@
 	  display:none;
   }
   
+  #cvs{
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  }
   
    a.btn-tab{
     border-bottom-left-radius:0!important;
@@ -116,7 +122,7 @@ $('document').ready(function() {
 	  .up()
 	  
 	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
-	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:400px;width:360px;font-family:fontawesome',width:360,height:400},'m-2')
+	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:400px;width:360px',width:360,height:400},'m-2')
 	  
 	  
 	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"

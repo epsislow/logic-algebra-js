@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+<style>
+    body{ background-color: ivory; }
+    #canvas{border:1px solid red; margin:0 auto; }
+</style>
+<script>
+$(function(){
+
+    var canvas=document.getElementById("canvas");
+    var ctx=canvas.getContext("2d");
+    var cw,ch;
+
+    AwesomeFontOnload(start,3000);
+
+    function start(){
+        ctx.font='48px fontawesome';
+        ctx.fillText('\uF064\uF065 \uF0a5',20,75);
+    }
+
+    function AwesomeFontOnload(callback,failAfterMS){
+        var c=document.createElement("canvas");
+        var cctx=c.getContext("2d");
+        var ccw,cch;
+        var fontsize=36;
+        var testCharacter='\uF047';
+        ccw=c.width=fontsize*1.5;
+        cch=c.height=fontsize*1.5;
+        cctx.font=fontsize+'px fontawesome';
+        cctx.textAlign='center';
+        cctx.textBaseline='middle';
+        var startCount=pixcount();
+        var t1=performance.now();
+        var failtime=t1+failAfterMS;
+        //
+        requestAnimationFrame(fontOnload);
+        //
+        function fontOnload(time){
+            var currentCount=pixcount();
+            console.log(currentCount);
+            if(time>failtime){
+                alert('Font Awsome failed to load after '+failAfterMS+'ms.');
+            }else if(currentCount==startCount){
+                requestAnimationFrame(fontOnload);
+            }else{
+                callback();
+            }
+        }
+        //
+        function pixcount(){
+            cctx.clearRect(0,0,ccw,cch);
+            cctx.fillText(testCharacter,ccw/2,cch/2);
+            var data=cctx.getImageData(0,0,ccw,cch).data;
+            var count=0;
+            for(var i=3;i<data.length;i+=4){
+                if(data[i]>10){count++;}
+            }
+            return(count);
+        }
+    }
+
+}); // end $(function(){});
+</script>
+</head>
+<body>
+    <h4>Font Awesome glyphs drawn onto html5 canvas</h4>
+    <canvas id="canvas" width=300 height=300></canvas>
+</body>
+</html>
