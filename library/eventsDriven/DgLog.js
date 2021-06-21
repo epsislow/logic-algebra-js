@@ -326,8 +326,8 @@ var dglcvs={
     for (var p in chips) {
       cp=chips[p];
       
-      this.lib.texti(c,5,10*i, p=='main'?"\uf815":"\uf2db", 7, p=='main'?'#0f0':'#f90');
-      this.lib.textm(c, 15, 10*i, p, 7, '#fff');
+      this.lib.texti(c,5,10*i, p=='main'?"\uf815":"\uf2db", 7, cp.active?'#0f0':'#f90');
+      this.lib.textm(c, 15, 10*i, p, 7, cp.active?'#4f4':'#fff');
       i++;
     }
   },
