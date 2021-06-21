@@ -451,10 +451,10 @@ var cvsDraw=function(c, upd=0, lib) {
     if(this.m.drawGrid) {
       var step=150;
      for(var jx=pX%step;jx<lib.maxWidth;jx+=step) {
-       lib.line(c, jx,0,jx, lib.maxHeight,'#444',1);
+       lib.line(c, jx,0,jx, lib.maxHeight,'#444',0.5);
      }
      for (var jy = pY % step; jy < lib.maxHeight; jy += step) {
-       lib.line(c, 0, jy,lib.maxWidth, jy, '#444', 1);
+       lib.line(c, 0, jy,lib.maxWidth, jy, '#444', 0.5);
      }
     }
     
