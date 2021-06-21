@@ -706,20 +706,31 @@ var dgl= {
     if(this.m.delNode) {
      // this.node.splice(n,1);
      delete this.node[n];
-     
-      for(var k in this.nodeConn) {
+        var buf;
+        for (var j in this.nodeConn) {
+          buf = [];
+          for (var k in this.nodeConn[j]) {
+            if (!dgl.node[this.nodeConn[j][k]]) {
+              continue
+            }
+            buf.push(this.nodeConn[j][k]);
+          }
+          this.nodeConn[j] = buf;
+        }
+        
+    /*  for(var k in this.nodeConn) {
         if(this.nodeConn[k].includes(n)) {
           var ne=[];
-  /*  for(var j in this.nodeConn[k]) {
+    for(var j in this.nodeConn[k]) {
       if(this.nodeConn[k][j]!==n) {
         ne.push(this.nodeConn[k][j]);
       }
-    }*/
+    }
   //  this.nodeConn[k]=ne;
   console.log(this.nodeConn[k]);
   
           }
-      }
+      }*/
       cvs.draw(1);
       return;
     }
