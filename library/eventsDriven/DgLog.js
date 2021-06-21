@@ -316,6 +316,18 @@ function componentsPos(comps) {
 
 var dglcvs={
   'lib': {},
+  drawChipMenu: function(c,chips) {
+    console.log(this.lib);
+    this.lib.rectm(c, 0.5, 0.5, 100, this.lib.maxHeight - 201, 1, '#669', '#222');
+    c.font = '48px fontawesome';
+    c.fillStyle='#f00'
+    c.fillText('\uF064\uF065 \uF0a5', 20, 75);
+    
+    for (var cp in chips) {
+      this.lib.textm(c,5,10, "\uf042", 7, '#f99','fontawesome');
+      this.lib.textm(c, 17, 10, cp, 7, '#fff');
+    }
+  },
   drawNode: function(c,id,type,x,y) {
     var styles={
       'pinin': ['#cc7', '#444'],
@@ -571,6 +583,9 @@ for(var l in lineNodes) {
         ins, outs,comp.revIns
       )
     }*/
+   if(this.m.drawChips) {
+     dglcvs.drawChipMenu(c,this.chip);
+   }
     
     if(debug.is) {
       for(var d in debug.drawQueue) {
@@ -612,9 +627,11 @@ var dgl= {
     delNode:0,
     drawNodes:0,
     drawGrid:1,
+    drawChips:0
   },
   node:[],
   nodeConn:{},
+  chip: {main:{ins:{},outs:{}}},
   cache:{
     save: function(zip=1) {
       const data= {
