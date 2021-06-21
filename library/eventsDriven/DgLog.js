@@ -329,6 +329,7 @@ var dglcvs={
   'drawInt': function(c, name, id, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
       'int':['#dd4','#b44','#ff9'],
+      'intb':['#a44','#400','#ff9'],
       'gate':['#779','#44a','#fff'],
       'ctrl':['#474','#232','#9f9'],
       
@@ -513,9 +514,14 @@ for(var l in lineNodes) {
     lastPoint= lineNodes[l];
     continue;
   }
+  var s=
+  smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
+  if(cid== this.m.isDragged) {
+    s='#4ff';
+  }
   lib.line(c,lastPoint[1], lastPoint[2], 
     lineNodes[l][1], lineNodes[l][2],
-  smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
+    s)
    lastPoint=lineNodes[l]
 }
     /*
