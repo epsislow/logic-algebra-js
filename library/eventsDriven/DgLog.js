@@ -607,7 +607,18 @@ var dgl= {
       components= data.comp;
       dgl.m.pan= data.mpan;
       dgl.node= data.node;
-      dgl.nodeConn= data.nodeConn;
+    //  dgl.nodeConn= data.nodeConn;
+    var buf;
+    for(var j in data.nodeConn) {
+        buf=[];
+      for(var k in data.nodeConn[j]) {
+        if(!dgl.node[data.nodeConn[j][k]]) {
+          continue
+        }
+        buf.push(data.nodeConn[j][k]);
+      }
+      dgl.nodeConn[j] = buf;
+    }
       console.log('Loaded');
       cvs.draw(1);
     }
@@ -667,9 +678,12 @@ var dgl= {
     }
     
       
-     //debug.drawQueue= [];
+    // debug.drawQueue= [];
       var nd=this.node;
       for(var n in nd) {
+        if(!nd[n]) {
+          continue;
+        }
         if(0) {
       var c = (cvs.getFirstCvs());
   
