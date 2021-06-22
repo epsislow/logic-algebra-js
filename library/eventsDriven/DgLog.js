@@ -323,7 +323,7 @@ var dglcvs={
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
     var i=1;
-    var chip;
+    var cp;
 
     for (var p in chips) {
       cp=chips[p];
@@ -662,6 +662,7 @@ var dgl= {
   },
   node:[],
   nodeConn:{},
+  chipActive:'main',
   chip: {
     main:{ins:{},outs:{},comp:components,active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
@@ -781,16 +782,30 @@ var dgl= {
       }
       
     if(this.m.drawChips==1) {
-      var inwin=0;
       var maxy=Object.keys(this.chip).length*10+25;
       
-      if(mdx >=0 && mdx<=100 && mdy>=0 && mdy<= maxy) {
-        inwin=1;
+    if(mdx >=0 && mdx<=100 && mdy>=0 && mdy<= maxy) {
+        
+    var cp;
+    var i=1;
+    
+    for (var p in this.chip) {
+      cp=this.chip[p];
+      if(mdy >= 10*i-10 && mdy<= 10*(i+1)+5) {
+        this.chip[this.chipActive].active=0;
+        this.chipActive=p;
+        this.chip[this.chipActive].active=1;
+        return;
       }
-      if(inwin) {
-      return;
-      }
+      i++;
+        //this.lib.rectm(c, 3+k, 10*i-5, 
+       // 95, 9, 1, 0, '#333')
     }
+    
+    return;
+    }
+      
+  }
      
      if(this.m.drawNodes) {
       var nd=this.node;
