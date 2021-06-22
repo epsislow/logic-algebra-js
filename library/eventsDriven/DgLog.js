@@ -547,7 +547,7 @@ for(var l in lineNodes) {
   }
   var s=
   smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
-  if(cid== this.m.isDragged) {
+  if(cid== this.m.isDragged || compin.id== this.m.isDragged) {
     s='#4ff';
   }
   lib.line(c,lastPoint[1], lastPoint[2], 
@@ -568,10 +568,20 @@ for(var l in lineNodes) {
       }
     }
     
+    if(this.m.linesUnder) {
     
-    /*
+    var ins,outs;
+  //  console.log(comps)
     for(var cid in comps) {
       comp= comps[cid]
+      ins=[];
+      for (var cinid of comp.inputs) {
+      //  var cin = comps[cinid];
+        ins.push({pos:'top',id:cinid})
+      }
+      comp.ins=indexBy(ins,'id');
+      outs=[{pos:'bottom',id:cid}];
+      comp.outs=indexBy(outs,'id');
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
       
@@ -589,7 +599,10 @@ for(var l in lineNodes) {
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
       )
-    }*/
+    }
+    }
+  
+    
    if(this.m.drawChips) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
   dglcvs.d.chipMenuK+= frameTimeDiff/((100-dglcvs.d.chipMenuK)/100)
@@ -650,6 +663,7 @@ var dgl= {
     addNode:0,
     delNode:0,
     drawNodes:0,
+    linesUnder:0,
     drawGrid:1,
     drawChips:0,
     chipSetup:0,

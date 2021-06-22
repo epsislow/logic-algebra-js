@@ -132,6 +132,7 @@ $('document').ready(function() {
 	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
   .addButton('AddNode',0,'btn-secondary mx-2',{'id':'diag-addnode'})
   .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
+  .addButton('LinesUnder',0,'btn-secondary mx-2',{'id':'diag-linesunder'})
   .addButton('DrawNodes',0,'btn-secondary mx-2',{'id':'diag-drawnodes'})
   .addEl('i',0,'fas fa-road text-light')
   .addButton('Chips',0,'btn-secondary mx-2',{'id':'diag-drawchips'})
@@ -293,7 +294,11 @@ $('document').ready(function() {
 	  	  dgl.m.drawNodes=en;
 	  	  cvs.draw(1)
 	  	  })
-	  	
+	  $('#diag-linesunder').click(function() {
+	    var en=toggleBtn($(this));
+	    dgl.m.linesUnder=en;
+	    cvs.draw(1)
+	  })	
 	  $('#diag-drawchips').click(function() {
 	  	  var en=toggleBtn($(this));
 	  	  dgl.m.drawChips=en;
