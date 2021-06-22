@@ -321,13 +321,18 @@ var dglcvs={
     this.lib.rectm(c, 0.5, 0.5, 100, this.lib.maxHeight - 201, 1, '#669', '#222');
     /* */
     var i=1
-    c.textAlign= 'left'
     var chip
     for (var p in chips) {
       cp=chips[p];
       
+      c.textAlign='left';
       this.lib.texti(c,5,10*i, p=='main'?"\uf815":"\uf2db", 7, cp.active?'#0f0':'#f90');
-      this.lib.textm(c, 15, 10*i, p, 7, cp.active?'#4f4':'#fff');
+      this.lib.textm(c, 15, 10*i, p, 6, cp.active?'#4f4':'#fff');
+      c.textAlign='right';
+      this.lib.textm(c,88, 10*i,
+      Object.keys(cp.comp).length+' x', 6, cp.active?'#fff':'#777')
+      this.lib.texti(c,95,10*i,"\uf24d", 5, cp.active?'#fff':'#777');
+      
       i++;
     }
   },
@@ -635,7 +640,7 @@ var dgl= {
   node:[],
   nodeConn:{},
   chip: {
-    main:{ins:{},outs:{},comp:{},active:1},
+    main:{ins:{},outs:{},comp:components,active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
     
@@ -728,6 +733,9 @@ var dgl= {
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
     
+    if(debug.drawQueue.length) {
+      debug.drawQueue=[];
+    }
     if (this.m.mouseisdown)
     {
       
@@ -743,10 +751,14 @@ var dgl= {
      4, 2, '#373', '#0f0'
        ]
      ])
-    }
-    
+      }
       
-    // debug.drawQueue= [];
+    if(this.m.drawChips==1) {
+      
+      return;
+    }
+     
+     if(this.m.drawNodes) {
       var nd=this.node;
       for(var n in nd) {
         if(!nd[n] || !this.m.drawNodes) {
@@ -807,7 +819,8 @@ var dgl= {
           return;
         }
       }
-      
+     }
+     
       var comps= components;
     //  console.log(comps);
       
