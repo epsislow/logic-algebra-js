@@ -216,23 +216,48 @@ pub.draw= function(update=0) {
   requestRedraw();
 }
 
+var next= {
+  draw:0,
+  update:0,
+  now:0
+}
+
+pub.drawNext= function(update=0) {
+  next.draw=1;
+  next.update=update;
+  next.now= performance.now()
+}
+
+var frameTimeDiff=0;
 function redrawFn() {
   if(pub.update==0) {
    // ctx.clearRect(0, 0, canvas.width, canvas.height);
-		
+  }
+  
+  if(next.draw) {
+    frameTimeDiff = performance.now() - next.now;
+   // console.log(frameTimeDiff);
+    next.draw=0;
   }
  // console.log('redraw')
   for(var c of calls) {
-    c(ctx,pub.update,lib);
+    c(ctx,pub.update,lib,frameTimeDiff);
   }
   pub.update=0;
   drawPending=false;
+  if(next.draw) {
+   // console.log('nextRedraw')
+    pub.redraw=1;
+    requestRedraw();
+    pub.update=next.update;
+  }
 }
 
 var drawPending = false;
 function requestRedraw() {
   if (!drawPending && pub.redraw) {
     drawPending = true;
+    
     
   //  var progress = 0;
     

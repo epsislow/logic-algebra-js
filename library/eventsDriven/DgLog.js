@@ -316,22 +316,27 @@ function componentsPos(comps) {
 
 var dglcvs={
   'lib': {},
-  drawChipMenu: function(c,chips) {
-    console.log(this.lib);
-    this.lib.rectm(c, 0.5, 0.5, 100, this.lib.maxHeight - 201, 1, '#669', '#222');
-    /* */
-    var i=1
-    var chip
+  d:{
+    chipMenuK:-100,
+  },
+  drawChipMenu: function(c,chips,k=-100) {
+    this.lib.rectm(c, 0.5, 0.5, 100+k, this.lib.maxHeight - 201, 1, '#669', '#222');
+
+    var i=1;
+    var chip;
     for (var p in chips) {
       cp=chips[p];
-      
+      if(cp.active) {
+        this.lib.rectm(c, 3+k, 10*i-5, 
+        95, 9, 1, 0, '#333')
+      }
       c.textAlign='left';
-      this.lib.texti(c,5,10*i, p=='main'?"\uf815":"\uf2db", 7, cp.active?'#0f0':'#f90');
-      this.lib.textm(c, 15, 10*i, p, 6, cp.active?'#4f4':'#fff');
+      this.lib.texti(c,5+k,10*i, p=='main'?"\uf815":"\uf2db", 7, cp.active?'#0f0':'#f90');
+      this.lib.textm(c, 15+k, 10*i, p, 6, cp.active?'#4f4':'#fff');
       c.textAlign='right';
-      this.lib.textm(c,88, 10*i,
+      this.lib.textm(c,88+k, 10*i,
       Object.keys(cp.comp).length+' x', 6, cp.active?'#fff':'#777')
-      this.lib.texti(c,95,10*i,"\uf24d", 5, cp.active?'#fff':'#777');
+      this.lib.texti(c,95+k,10*i,"\uf24d", 5, cp.active?'#fff':'#777');
       
       i++;
     }
@@ -431,7 +436,7 @@ var dglcvs={
 }
 
 var cvsIteration=0;
-var cvsDraw=function(c, upd=0, lib) {
+var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
  // console.log('ff');
   dglcvs.lib= lib;
   if(upd){
@@ -592,7 +597,24 @@ for(var l in lineNodes) {
       )
     }*/
    if(this.m.drawChips) {
-     dglcvs.drawChipMenu(c,this.chip);
+     if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
+  dglcvs.d.chipMenuK+= frameTimeDiff/((100-dglcvs.d.chipMenuK)/100)
+     }
+     if(dglcvs.d.chipMenuK>=0) {
+       dglcvs.d.chipMenuK=0;
+     }
+     dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
+     if(dglcvs.d.chipMenuK<0) {
+       cvs.drawNext(1);
+     }
+   }else if(dglcvs.d.chipMenuK!==-100) {
+       dglcvs.d.chipMenuK -=  frameTimeDiff / ((100 - dglcvs.d.chipMenuK) / 100)
+       dglcvs.drawChipMenu(c, this.chip, dglcvs.d.chipMenuK);
+       
+     if(dglcvs.d.chipMenuK<-100) {
+       dglcvs.d.chipMenuK=-100;
+     }
+     cvs.drawNext(1)
    }
     
     if(debug.is) {
@@ -644,6 +666,8 @@ var dgl= {
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
     
+    mem2:{ins:{},outs:{},comp:{},active:0},
+    myclock5:{ins:{},outs:{},comp:{},active:0},
   },
   cache:{
     save: function(zip=1) {
@@ -732,6 +756,8 @@ var dgl= {
     
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
+    var mdx=this.m.mousedown_x;
+    var mdy=this.m.mousedown_y;
     
     if(debug.drawQueue.length) {
       debug.drawQueue=[];
@@ -754,8 +780,13 @@ var dgl= {
       }
       
     if(this.m.drawChips==1) {
-      
+      var inwin=0
+      if(mdx >=0 && mdx<=100) {
+        inwin=1;
+      }
+      if(inwin) {
       return;
+      }
     }
      
      if(this.m.drawNodes) {
