@@ -449,28 +449,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     var comps=components//Pos(components);
     var comp;
     var txt;
-    /*
-    for(var cid in comps)
-    {
-      comp=comps[cid]
-      txt= (comp.type=='controlled'?comp.id:comp.type);
-      lib.btn(c,5+50*comp.x,4+22*comp.y, 38, 10, txt,7, styles);
-      
-    }
-    
-    for(var cid in comps)
-    {
-      comp=comps[cid]
-      var i = 0;
-      var il= comp.inputs.length;
-      for (var cinid of comp.inputs) {
-      
-        var compin = comps[cinid];
-        lib.line(c, 5 + 50 * comp.x+(40*i/il+20/il), 4 + 22 * comp.y, 5 + 40 * compin.x + 20, 4 + 22 * compin.y + 10, smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
-      
-        i++;
-      }
-    }*/
+    /**/
     var pX= Math.floor(dgl.m.pan.xOfs+this.m.pan.ofsX)
     var pY= Math.floor(dgl.m.pan.yOfs+this.m.pan.ofsY)
     
@@ -799,8 +778,6 @@ var dgl= {
         return;
       }
       i++;
-        //this.lib.rectm(c, 3+k, 10*i-5, 
-       // 95, 9, 1, 0, '#333')
     }
     
     return;
@@ -848,19 +825,7 @@ var dgl= {
           this.nodeConn[j] = buf;
         }
         
-    /*  for(var k in this.nodeConn) {
-        if(this.nodeConn[k].includes(n)) {
-          var ne=[];
-    for(var j in this.nodeConn[k]) {
-      if(this.nodeConn[k][j]!==n) {
-        ne.push(this.nodeConn[k][j]);
-      }
-    }
-  //  this.nodeConn[k]=ne;
-  console.log(this.nodeConn[k]);
-  
-          }
-      }*/
+    /**/
       cvs.draw(1);
       return;
     }
@@ -872,7 +837,6 @@ var dgl= {
      }
      
       var comps= components;
-    //  console.log(comps);
       
       for (var cid in comps)
       {
@@ -885,11 +849,9 @@ var dgl= {
         {
           if(this.m.chgIns) {
             components[cid].revIns=(components[cid].revIns==1)?0:1
-          // var st= components[cid].ins[0];
             return;
           }
           if(this.m.addNode) {
-           // components[cid].selected=(components[cid].selected==1)?0:1;
      if(this.m.nodeSel.includes(cid)) {
         continue;
      }
@@ -898,19 +860,12 @@ var dgl= {
     if(this.m.nodeSel.length>=2) {
       this.addNodeC(this.m.nodeSel);
       this.m.nodeSel=[]
-    /*  for(var i in this.m.nodeSel) {
-        components[this.m.nodeSel[i]].selected=0;
-        console.log(i+' '+this.m.nodeSel[i])
-      }*/
+    /**/
     }
     return;
           }
           this.m.isDragged = cid;
-          
-          
-          /*console.log(
-    this.m.isDragged +' '+pX+' '+ Math.floor(this.m.mousedown_x)+' in '+ (5+50*comp.x+ pX) +', '+(5+50*comp.x+40 +pX)
-          );*/
+          /**/
           if(0){
           var c = (cvs.getFirstCvs());
           debug.drawQueue= [];
@@ -944,25 +899,7 @@ var dgl= {
           
           debug.drawQueueDel=0;
      }
-          /*
-          cvs.getLib().circle(c,
-          this.m.mousedown_x, 
-          this.m.mousedown_y,
-          10,2,'#373','#0f0'
-          );
-          
-          cvs.getLib().rectm(
-            c,5+50*comp.x,
-            5+25*comp.y, 
-            40,
-            10,
-            2,'#f00','#733'
-          );
-          cvs.getLib().textm(c,
-            5 + 50 * comp.x+20,
-            5 + 25 * comp.y+5,
-            this.m.isDragged,7,'#fff');
-          */
+        
         }
        // break;
       }
