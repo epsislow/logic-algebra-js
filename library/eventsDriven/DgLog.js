@@ -319,8 +319,10 @@ var dglcvs={
   d:{
     chipMenuK:-100,
   },
-  drawChipSetup: function(c, chip) {
-  //  this.drawInt(c,100,100,80,80)
+  drawChipSetup: function(c, name, chip) {
+    
+    this.drawInt(c, name, name, 'intb', 20, 20, 100, 100, chip.ins, chip.outs);
+    
   },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
@@ -433,7 +435,7 @@ var dglcvs={
   	c.textBaseline = 'middle';
     
     this.lib.textm(c,x+w/2,y+h/2,name,7,styles[type][2]);
-    if(type!='ctrl') {
+    if(type!='ctrl' && type!='intb') {
       this.lib.textm(c,x+w/2,y+h*3/2, id, 7, styles[type][2])
     }
   }
@@ -447,7 +449,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     lib.clear(c);
   }
   if(this.m.chipSetup) {
-    return dglcvs.drawChipSetup(c, this.chip[this.chipActive]);
+    return dglcvs.drawChipSetup(c, this.chipActive, this.chip[this.chipActive]);
   }
   
     const smp= trace.getSamples()[cvsIteration];
