@@ -809,10 +809,10 @@ var dgl= {
          
         }
         if(
-  (this.m.mousedown_x >= nd[n].x+pX-10) &&
-  (this.m.mousedown_x <= nd[n].x+pX+20) &&
-  (this.m.mousedown_y >= nd[n].y+pY-10) &&
-  (this.m.mousedown_y <= nd[n].y+pY+20) 
+  (mdx >= nd[n].x+pX-10) &&
+  (mdx <= nd[n].x+pX+20) &&
+  (mdy >= nd[n].y+pY-10) &&
+  (mdy <= nd[n].y+pY+20) 
   ){
     if(this.m.delNode) {
      // this.node.splice(n,1);
@@ -860,8 +860,8 @@ var dgl= {
         var comp= comps[cid];
        
         if (
-  (this.m.mousedown_x >= ( 5+50*comp.x - sens + pX) && this.m.mousedown_x <=  (5+50*comp.x + 40+ sens + pX)) &&
-  (this.m.mousedown_y >=  (5+ 25*comp.y - sens -5 + pY) && this.m.mousedown_y <=  (5+25* comp.y + 15 + sens + pY))
+  (mdx >= ( 5+50*comp.x - sens + pX) && mdx <=  (5+50*comp.x + 40+ sens + pX)) &&
+  (mdy >=  (5+ 25*comp.y - sens -5 + pY) && mdy <=  (5+25* comp.y + 15 + sens + pY))
 )
         {
           if(this.m.chgIns) {
@@ -949,8 +949,8 @@ var dgl= {
       }
       if (!this.m.isDragged) {
     this.m.isPan = 1;
-    this.m.pan.x = this.m.mousedown_x;
-    this.m.pan.y = this.m.mousedown_y;
+    this.m.pan.x = mdx;
+    this.m.pan.y = mdy;
       }
     }
   },
