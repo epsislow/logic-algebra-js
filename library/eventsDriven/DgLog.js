@@ -320,10 +320,11 @@ var dglcvs={
     chipMenuK:-100,
   },
   drawChipMenu: function(c,chips,k=-100) {
-    this.lib.rectm(c, 0.5, 0.5, 100+k, this.lib.maxHeight - 201, 1, '#669', '#222');
+    this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
     var i=1;
     var chip;
+
     for (var p in chips) {
       cp=chips[p];
       if(cp.active) {
@@ -780,8 +781,10 @@ var dgl= {
       }
       
     if(this.m.drawChips==1) {
-      var inwin=0
-      if(mdx >=0 && mdx<=100) {
+      var inwin=0;
+      var maxy=Object.keys(this.chip).length*10+25;
+      
+      if(mdx >=0 && mdx<=100 && mdy>=0 && mdy<= maxy) {
         inwin=1;
       }
       if(inwin) {
