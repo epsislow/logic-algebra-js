@@ -319,6 +319,9 @@ var dglcvs={
   d:{
     chipMenuK:-100,
   },
+  drawChipSetup: function(c, chip) {
+  //  this.drawInt(c,100,100,80,80)
+  },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
@@ -443,6 +446,10 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
   if(upd){
     lib.clear(c);
   }
+  if(this.m.chipSetup) {
+    return dglcvs.drawChipSetup(c, this.chip[this.chipActive]);
+  }
+  
     const smp= trace.getSamples()[cvsIteration];
     
     styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
