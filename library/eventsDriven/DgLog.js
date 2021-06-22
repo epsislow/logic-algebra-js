@@ -321,7 +321,7 @@ var dglcvs={
   },
   drawChipSetup: function(c, name, chip) {
     
-    this.drawInt(c, name, name, 'intb', 20, 20, 100, 100, chip.ins, chip.outs);
+    this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
     
   },
   drawChipMenu: function(c,chips,k=-100) {
@@ -388,7 +388,12 @@ var dglcvs={
     }
   
     var k=0;
-    const pinh=2, pinw=2;
+    var pinh, pinw, pw;
+    if(type=='intb') {
+       pinh=7; pinw=7; pw=2;
+   } else {
+     pinh=2, pinw=2; pw=2;
+   }
     for(var i=0;i<pos.top.length;i++){
       k=i*(w/pos.top.length)
         +w/(2*pos.top.length)-pinw/2;
@@ -426,10 +431,10 @@ var dglcvs={
     }
     
     for(var i in ins) {
-      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, 2,styles['pinin'][0], styles['pinin'][1])
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][1])
     }
     for(var i in outs) {
-      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh,2, styles['pinout'][0], styles['pinout'][1])
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][1])
     }
   	c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -653,7 +658,7 @@ var dgl= {
   nodeConn:{},
   chipActive:'main',
   chip: {
-    main:{ins:{},outs:{},comp:components,active:1},
+    main:{ins:[{pos:'top'},{pos:'top'}],outs:[{pos:'bottom'}],comp:components,active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
     
