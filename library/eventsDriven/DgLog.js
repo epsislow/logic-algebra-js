@@ -658,7 +658,8 @@ var dgl= {
     delNode:0,
     drawNodes:0,
     drawGrid:1,
-    drawChips:0
+    drawChips:0,
+    chipSetup:0,
   },
   node:[],
   nodeConn:{},
