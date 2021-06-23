@@ -362,19 +362,25 @@ var dglcvs={
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
-    var type='led';
+    var type='fan';
     const p= Math.PI
     var fill=1;
 if(type=='and' || type=='nand') {
-     
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
   		c.lineTo(x+s, y);
   		c.lineTo(x+s,y+s/2)
-  		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
+  		c.arc(x+s/2,y+s/2,s/2,0,p,0)
   		c.lineTo(x,y);
   		c.closePath();
 		
+		  if(type=='nand') {
+		    c.stroke()
+		    c.fill();
+		    c.beginPath();
+		    c.arc(x+s/2, y+s+s/8,s/8, 0, p*2,0);
+		    c.closePath()
+		  }
     } else if (type=='or' || type=='nor') {  
       c.beginPath(); 
       c.moveTo(x, y+s/2)
@@ -387,16 +393,30 @@ if(type=='and' || type=='nand') {
   //		c.arc(x+s/2,y-H-s/4,R,p*3/4,p/4,1)
   		
   		c.lineTo(x+s,y+s/2)
-  		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
+  		c.arc(x+s/2,y+s/2,s/2,0,p,0)
   		c.lineTo(x,y);
       c.closePath();
-    } else if( type=='xor') {
+      if (type == 'nor') {
+        c.stroke()
+        c.fill();
+        c.beginPath();
+        c.arc(x + s / 2, y + s + s / 8, s / 8, 0, p * 2, 0);
+        c.closePath()
+      }
+    } else if( type=='xor' || type=='nxor') {
       c.beginPath();
       c.moveTo(x+s,y);
       c.arc(x,y,s,0,p/3,0)
       c.arc(x+s,y,s,p-p/3,p,0)
       c.arc(x+s/2,y-s-s/4,s,p/2-p/6,p/2+p/6,0)
       c.closePath();
+      if (type == 'nxor') {
+        c.stroke()
+        c.fill();
+        c.beginPath();
+        c.arc(x + s / 2, y + s, s / 8, 0, p * 2, 0);
+        c.closePath()
+      }
     } else if(type=='clock') {
       c.beginPath();
       c.rect(x,y,s,s)
@@ -404,7 +424,6 @@ if(type=='and' || type=='nand') {
       c.stroke();
       c.fill();
       c.lineWidth=1
-     // c.rect(x+s/4,y+s/4,s/2,s/2)
       if(1) {
         c.beginPath()
         c.moveTo(x+s/4-s/8, y+s/4-s/8)
@@ -426,6 +445,13 @@ if(type=='and' || type=='nand') {
       }
     } else if(type=='fan') {
       c.beginPath()
+      c.moveTo(x+s/4,y)
+      c.lineTo(x+s-s/4, y)
+      c.lineTo(x+s-s/8, y+s/4)
+      c.lineTo(x+s-s/4, y+s/2)
+      c.lineTo(x+s/4, y+s/2)
+      c.lineTo(x+s/8, y+s/4)
+      c.closePath()
     } else if(type=='led') {
       c.beginPath()
       c.arc(x+s/2,y+s/2,s/2,0,p*2,0)
@@ -437,7 +463,7 @@ if(type=='and' || type=='nand') {
       c.moveTo(x+s/2-s/4,y+s/2)
       c.lineTo(x+s/2+s/4,y+s/2)
       c.lineWidth=1;
-    } else if(type='ledmin') {
+    } else if(type=='ledmin') {
       c.beginPath()
       c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
       c.closePath()
@@ -448,6 +474,27 @@ if(type=='and' || type=='nand') {
       c.moveTo(x + s / 2 - s / 8, y + s / 2)
       c.lineTo(x + s / 2 + s / 8, y + s / 2)
       c.lineWidth = 1;
+    } else if(type=='pin') {
+      c.beginPath();
+      c.rect(x,y,s/4,s/2)
+      c.closePath();
+      c.stroke();
+      c.fill();
+      fill=0;
+      c.lineWidth=1
+      c.beginPath();
+      c.arc(x+s/8,y+s/8,s/8,0,p,0);
+      
+    } else if(type=='pout') {
+      c.beginPath();
+      c.rect(x,y,s/4,s/2)
+      c.closePath();
+      c.stroke();
+      c.fill();
+      fill=0;
+      c.lineWidth=1
+      c.beginPath();
+      c.arc(x+s/8,y+s/4+s/8,s/8,0,p,1);
     }
       
     	c.stroke();
