@@ -361,8 +361,10 @@ var dglcvs={
     var sty=['#779','#44a','#fff']
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
-
-    /*if(type=='nand') {
+    c.fillStyle= sty[1];
+    var type='any';
+    const p= Math.PI
+if(type=='and' || type=='nand') {
      
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
@@ -372,18 +374,12 @@ var dglcvs={
   		c.lineTo(x,y);
   		c.closePath();
 		
-    	c.stroke();
-    	c.fillStyle= sty[1];
-    	c.fill();
-    }*/
+    } else if (type=='or' || type=='nor') {  
       c.beginPath(); 
-     // c.moveTo(x,y)
-    //  c.lineTo(x, y+s/2);
-    c.moveTo(x, y+s/2)
-   var p= Math.PI
+      c.moveTo(x, y+s/2)
    
-  var R=s/(Math.sqrt(2));
-  var H=R*(1-Math.sqrt(2)/2)
+      var R=s/(Math.sqrt(2));
+      var H=R*(1-Math.sqrt(2)/2)
       c.lineTo(x,y)
       c.arc(x+s/2+0.5,y-H-s/4,R-0.5,p*3/4,p/4,1)
   //		c.arc(x+s/2,y-H-s/4,R,p/4,p*3/4,0)
@@ -392,10 +388,18 @@ var dglcvs={
   		c.lineTo(x+s,y+s/2)
   		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
   		c.lineTo(x,y);
-    c.closePath();
-    c.stroke();
-    c.fillStyle = sty[1];
-    c.fill();
+      c.closePath();
+    } else if( type=='any') {
+      c.beginPath();
+      c.moveTo(x,y);
+      c.arc(x,y,s,0,p/3,0)
+      c.arc(x+s,y,s,p-p/3,p,0)
+      c.closePath();
+    }
+    
+    	c.stroke();
+    	c.fillStyle= sty[1];
+    	c.fill();
   },
   'drawInt': function(c, name, id, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
