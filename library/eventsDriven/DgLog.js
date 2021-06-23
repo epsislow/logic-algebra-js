@@ -377,20 +377,22 @@ var dglcvs={
     	c.fill();
     }*/
       c.beginPath(); 
-      c.moveTo(x, y+s/2);
+     // c.moveTo(x,y)
+    //  c.lineTo(x, y+s/2);
+    c.moveTo(x, y+s/2)
    var p= Math.PI
    
   var R=s/(Math.sqrt(2));
   var H=R*(1-Math.sqrt(2)/2)
       c.lineTo(x,y)
-      c.arc(x+s/2,y-H-s/4,R,p*3/4,p/4,1)
+      c.arc(x+s/2+0.5,y-H-s/4,R-0.5,p*3/4,p/4,1)
+  //		c.arc(x+s/2,y-H-s/4,R,p/4,p*3/4,0)
+  //		c.arc(x+s/2,y-H-s/4,R,p*3/4,p/4,1)
+  		
   		c.lineTo(x+s,y+s/2)
   		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
   		c.lineTo(x,y);
-  		
-  		
     c.closePath();
-    
     c.stroke();
     c.fillStyle = sty[1];
     c.fill();
