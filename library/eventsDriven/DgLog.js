@@ -362,8 +362,9 @@ var dglcvs={
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
-    var type='any';
+    var type='clock';
     const p= Math.PI
+    var fill=1;
 if(type=='and' || type=='nand') {
      
 	  	c.beginPath(); 
@@ -389,17 +390,47 @@ if(type=='and' || type=='nand') {
   		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
   		c.lineTo(x,y);
       c.closePath();
-    } else if( type=='any') {
+    } else if( type=='xor') {
       c.beginPath();
-      c.moveTo(x,y);
+      c.moveTo(x+s,y);
       c.arc(x,y,s,0,p/3,0)
       c.arc(x+s,y,s,p-p/3,p,0)
+      c.arc(x+s/2,y-s-s/4,s,p/2-p/6,p/2+p/6,0)
       c.closePath();
+    } else if(type=='clock') {
+      c.beginPath();
+      c.rect(x,y,s,s)
+      c.closePath();
+      c.stroke();
+      c.fill();
+      c.lineWidth=1
+     // c.rect(x+s/4,y+s/4,s/2,s/2)
+      if(1) {
+        c.beginPath()
+        c.moveTo(x+s/4-s/8, y+s/4+s/4+s/4)
+        c.lineTo(x+2*s/4-s/8, y+ 2*s/4+s/4)
+        c.lineTo(x+2*s/4-s/8, y+ s/4-s/8)
+        c.lineTo(x+s/2+s/8, y+s/4-s/8)
+        c.lineTo(x+s/2+s/8, y+s/2)
+        c.lineTo(x+s/2+s/4+s/8, y+s/2)
+        fill=0
+      } else {
+        c.beginPath()
+        c.moveTo(x+s/4-s/8, y+s/4+s/4+s/4)
+        c.lineTo(x+2*s/4-s/8, y+2*s/4+s/4)
+        c.lineTo(x+2*s/4-s/8,y+s/4-s/8)
+        c.lineTo(x+s/2+s/8, y+s/4-s/8)
+        c.lineTo(x+s/2+s/8, y+s/2)
+        c.lineTo(x+s/2+s/4+s/8,y+s/2)
+        fill = 0
+      }
+    
     }
     
     	c.stroke();
-    	c.fillStyle= sty[1];
+    	if(fill) {
     	c.fill();
+    	}
   },
   'drawInt': function(c, name, id, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
