@@ -357,6 +357,44 @@ var dglcvs={
     
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
+  'drawComp': function(c, id, comp, x,y, s=30,width=2) {
+    var sty=['#779','#44a','#fff']
+    c.lineWidth = width;
+		c.strokeStyle = sty[0];
+
+    /*if(type=='nand') {
+     
+	  	c.beginPath(); 
+	  	c.moveTo(x, y);
+  		c.lineTo(x+s, y);
+  		c.lineTo(x+s,y+s/2)
+  		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
+  		c.lineTo(x,y);
+  		c.closePath();
+		
+    	c.stroke();
+    	c.fillStyle= sty[1];
+    	c.fill();
+    }*/
+      c.beginPath(); 
+      c.moveTo(x, y+s/2);
+   var p= Math.PI
+   
+  var R=s/(Math.sqrt(2));
+  var H=R*(1-Math.sqrt(2)/2)
+      c.lineTo(x,y)
+      c.arc(x+s/2,y-H-s/4,R,p*3/4,p/4,1)
+  		c.lineTo(x+s,y+s/2)
+  		c.arc(x+s/2,y+s/2,s/2,0,Math.PI,0)
+  		c.lineTo(x,y);
+  		
+  		
+    c.closePath();
+    
+    c.stroke();
+    c.fillStyle = sty[1];
+    c.fill();
+  },
   'drawInt': function(c, name, id, type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
       'int':['#dd4','#b44','#ff9'],
@@ -371,6 +409,9 @@ var dglcvs={
     };
     
     this.lib.rectm(c,x,y,w,h,2, styles[type][0], styles[type][1]);
+    
+    this.drawComp(c,id,id,x+70,y,20,2)
+    
     
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
     var iid= Object.keys(ins);
