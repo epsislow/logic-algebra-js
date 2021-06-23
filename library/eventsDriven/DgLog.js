@@ -362,7 +362,7 @@ var dglcvs={
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
-    var type='clock';
+    var type='led';
     const p= Math.PI
     var fill=1;
 if(type=='and' || type=='nand') {
@@ -407,10 +407,10 @@ if(type=='and' || type=='nand') {
      // c.rect(x+s/4,y+s/4,s/2,s/2)
       if(1) {
         c.beginPath()
-        c.moveTo(x+s/4-s/8, y+s/4+s/4+s/4)
-        c.lineTo(x+2*s/4-s/8, y+ 2*s/4+s/4)
-        c.lineTo(x+2*s/4-s/8, y+ s/4-s/8)
-        c.lineTo(x+s/2+s/8, y+s/4-s/8)
+        c.moveTo(x+s/4-s/8, y+s/4-s/8)
+        c.lineTo(x+2*s/4-s/8,y+s/4-s/8)
+        c.lineTo(x+2*s/4-s/8,y+2*s/4+s/4)
+        c.lineTo(x+s/2+s/8, y+2*s/4+s/4)
         c.lineTo(x+s/2+s/8, y+s/2)
         c.lineTo(x+s/2+s/4+s/8, y+s/2)
         fill=0
@@ -424,9 +424,32 @@ if(type=='and' || type=='nand') {
         c.lineTo(x+s/2+s/4+s/8,y+s/2)
         fill = 0
       }
-    
+    } else if(type=='fan') {
+      c.beginPath()
+    } else if(type=='led') {
+      c.beginPath()
+      c.arc(x+s/2,y+s/2,s/2,0,p*2,0)
+      c.closePath()
+      c.stroke()
+      c.fill();
+      fill=0
+      c.beginPath()
+      c.moveTo(x+s/2-s/4,y+s/2)
+      c.lineTo(x+s/2+s/4,y+s/2)
+      c.lineWidth=1;
+    } else if(type='ledmin') {
+      c.beginPath()
+      c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
+      c.closePath()
+      c.stroke()
+      c.fill();
+      fill = 0
+      c.beginPath()
+      c.moveTo(x + s / 2 - s / 8, y + s / 2)
+      c.lineTo(x + s / 2 + s / 8, y + s / 2)
+      c.lineWidth = 1;
     }
-    
+      
     	c.stroke();
     	if(fill) {
     	c.fill();
