@@ -460,7 +460,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     const smp= trace.getSamples()[cvsIteration];
     
     styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
-    var comps=components//Pos(components);
+    var comps=this.chip[this.chipActive].comp;
     var comp;
     var txt;
     /**/
@@ -672,12 +672,9 @@ var dgl= {
   nodeConn:{},
   chipActive:'main',
   chip: {
-    main:{ins:[{pos:'top'},{pos:'top'}],outs:[{pos:'bottom'}],comp:components,active:1},
+    main:{ins:[],outs:[],comp:componentsPos(components),active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
-    
-    mem2:{ins:{},outs:{},comp:{},active:0},
-    myclock5:{ins:{},outs:{},comp:{},active:0},
   },
   cache:{
     save: function(zip=1) {
@@ -803,6 +800,7 @@ var dgl= {
         this.chip[this.chipActive].active=0;
         this.chipActive=p;
         this.chip[this.chipActive].active=1;
+        cvs.drawNext();
         return;
       }
       i++;
