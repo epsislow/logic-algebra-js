@@ -464,17 +464,21 @@ var er2= e.touches[1];
 			if(isPan) {
 
 if(mouse_x- panX- 40 +ofsPanX>-maxes.xmax+5) {
-  if(mouse_x- panX- 40 +ofsPanX<maxes.xmin+5+200) {
+  if(mouse_x- panX- 40 +ofsPanX<-maxes.xmin-20+420) {
 	 panOfsX= mouse_x- panX- 40;
   } else {
-    panOfsX= -ofsPanX+maxes.xmin+4+200
+    panOfsX= -ofsPanX-maxes.xmin-19+420
   }
 } else {
   panOfsX= -ofsPanX-maxes.xmax-4
 }
 
 if(mouse_y- panY- 40 +ofsPanY>-maxes.ymax+5) {
- panOfsY= mouse_y - panY- 40;
+  if(mouse_y- panY- 40 +ofsPanY<-maxes.ymin-20+440) {
+   panOfsY= mouse_y - panY- 40;
+  } else {
+    panOfsY= -ofsPanY-maxes.ymin-19+440
+  }
 } else {
   panOfsY= -ofsPanY-maxes.ymax-4
 }
