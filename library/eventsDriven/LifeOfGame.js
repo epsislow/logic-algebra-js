@@ -5,16 +5,8 @@ var logm= {
     s:0,
   },
   rules: [
-    {state:0},
-    {state:0},
-    {state:0},
-    {state:1},
-    {state:0},
-    {state:0},
-    {state:0},
-    {state:0},
-    {state:0},
-    {state:0},
+    [0,0,0,1,0,0,0,0,0,0],
+    [0,0,1,1,0,0,0,0,0,0]
   ],
   addN: function(x,y) {
     if(this.getNat(x,y)) {
@@ -35,7 +27,7 @@ var logm= {
   },
   getNgbs: function(x,y,myc=0) {
     const ns= [[-1,-1],[0,-1],[1,-1],
-       [-1,0],[1,0],[0,0],
+       [-1,0],[1,0],//[0,0],
        [-1,1],[0,1],[1,1]];
     var ngbs;
     if(!myc) {
@@ -93,16 +85,17 @@ var logm= {
         if(vx+'_'+vy in vxy) {
           continue;
         }
-        var ln= this.getNgbs(vx, vy, mc).length
-        if(this.rules[ln].state) {
-          if(!this.getNat(vx,vy,mc)) {
-            this.addN(vx,vy);
+        var ln= this.getNgbs(vx, vy, mc).length;
+        if(this.getNat(vx,vy,mc)) {
+          if(!this.rules[1][ln]) {
+            this.delN(vx,vy);
           }
         } else {
-          this.delN(vx,vy);
+          if(this.rules[0][ln]) {
+            this.addN(vx,vy)
+          }
         }
         vxy[vx+'_'+vy]=1;
-        
         
         this.debug.queue.push([
           lib.rectm, [c, vx * 5 + 40+1,
@@ -117,7 +110,8 @@ var logm= {
     
       var cvs = window.cvs;
       cvs.addDrawCall(this.cvsDraw.bind(this));
-    
+      c= cvs.getFirstCvs();
+    //  c.scale(1/4,1/4);
     } else {
       console.log('NoCvs');
     }
@@ -125,13 +119,13 @@ var logm= {
   threeSameLen:0,
   frame:0,
   cvsNext: function() {
-    var genLen= Object.keys(this.m.c).length;
+    var genLen= Object.keys(this.m.c).join('=');
     this.nextGen();
-    var newLen= Object.keys(this.m.c).length;
+    var newLen= Object.keys(this.m.c).join('=');
     if(newLen==genLen) {
       this.threeSameLen++;
     }
-    if(!newLen|| this.threeSameLen==3) {
+    if(!newLen||this.threeSameLen==3) {
       this.firstGen();
       this.threeSameLen=0;
       this.frame=0;
@@ -160,10 +154,10 @@ var logm= {
        this.debug.queue=[];
       }
       
-      setTimeout(this.cvsNext.bind(this),1000);
+      setTimeout(this.cvsNext.bind(this),40);
   },
   cvsLib: {},
-  debug: {is:1,queue:[]}
+  debug: {is:0,queue:[]}
 };
 
 window.logm= logm
