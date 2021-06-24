@@ -132,6 +132,14 @@ if(r==0) {
 ///////////////
 function draw(c, pX, pY, zoom){
 
+  c.beginPath()
+  c.rect(maxes.xmin+pX-20,maxes.ymin+pY-20,
+  maxes.xmax-maxes.xmin+40, maxes.ymax-maxes.ymin+40);
+  
+//  30,30)
+  c.closePath();
+  c.strokeStyle='#f00'
+  c.stroke();
 	for (var i=0; i<mx.length ;i++ ) {
 		for (var j=0; j<mx[i].length ;j++ ) {
 			
@@ -169,7 +177,7 @@ function draw(c, pX, pY, zoom){
 	}
 
 	
-	drawBar(c);
+//	drawBar(c);
 
 }
 function drawBar(c){
@@ -195,7 +203,7 @@ function drawBar(c){
 var vex = new Array();
 var mx =  new Array();
 var isDragged = false, isPan=false;
-
+var maxes = {xmin:999,xmax:-999,ymin:999,ymax:-999};
 
 ///init function
 function init(fps){
@@ -207,7 +215,6 @@ function init(fps){
 	var grades = 360 / vx.length;
 	var radius = vx.length * 10;
 
-	
 	for (var i=0; i<vx.length ;i++ )
 	{
 		mx[i] = [];
@@ -230,6 +237,13 @@ function init(fps){
 			[ isC1, isC2, "#777700" ] ,
 			x ,	y 
 		]
+
+	  maxes.xmax= maxes.xmax<x?x:maxes.xmax
+		maxes.xmin= maxes.xmin>x?x:maxes.xmin
+		maxes.ymax= maxes.ymax<y?y:maxes.ymax
+		maxes.ymin= maxes.ymin>y?y:maxes.ymin
+	  
+	  
 	}
 
 	step = 0;
@@ -290,7 +304,7 @@ var panX=0, panY=0, panOfsX=0,panOfsY=0;
 
 		draw(ctx, Math.floor(ofsPanX+panOfsX),  Math.floor(ofsPanY+panOfsY), ofsZoom* zoom);
 		ctx.fillStyle='#000'
-    ctx.fillText(fpslast+' '+Math.floor(ofsPanX+panOfsX)+','+Math.floor(ofsPanY+panOfsY),10,10)
+    ctx.fillText(fpslast+' '+Math.floor(ofsPanX+panOfsX)+','+Math.floor(ofsPanY+panOfsY),4,12)
 	}
 
 
@@ -337,10 +351,11 @@ var mouseisdown = false;
 var mousedown_x = mousedown_y = 0;
 var mouse_x = mouse_y = vex_old_x = vex_old_y = 0;
 
-
+/*
 var touchAvailable = ('createTouch' in document) || ('onstarttouch' in window);
 
-console.log(touchAvailable);
+console.log(touchAvailable);*/
+
 /*
 $(window).bind('touchmove', function(jQueryEvent) {
 jQueryEvent.preventDefault();
@@ -364,10 +379,27 @@ function showMouse(e, prefix='S') {
 }
 
 function showPan() {
-  return;
- // $('#pan').html((isPan?'Y':'N')+' px'+Math.floor(panX) + ' py= ' + Math.floor(panY)+ ' pox'+Math.floor(panOfsX) + ' poy= ' + Math.floor(panOfsY));
+ // return;
+  $('#pan').html((isPan?'Y':'N')+' px'+Math.floor(panX) + ' py= ' + Math.floor(panY)+ ' pox'+Math.floor(panOfsX) + ' poy= ' + Math.floor(panOfsY));
 }
-
+function calcMaxes() {
+  maxes = {xmin:999,xmax:-999,ymin:999,ymax:-999};
+  
+  var x,y
+	for (var i=0; i<vex.length ;i++ )
+	{
+	  x=vex[i][2]
+	  y=vex[i][3]
+	  
+	  maxes.xmax= maxes.xmax<x?x:maxes.xmax
+		maxes.xmin= maxes.xmin>x?x:maxes.xmin
+		maxes.ymax= maxes.ymax<y?y:maxes.ymax
+		maxes.ymin= maxes.ymin>y?y:maxes.ymin
+	   
+	}
+  
+  
+}
 	$('#my_canvas').on('touchstart', function(e) {
 		e.preventDefault();
 		showMouse(e);
@@ -420,6 +452,9 @@ var er2= e.touches[1];
 
 				vex[isDragged-1][2] = vexx;
 				vex[isDragged-1][3] = vexy;
+				calcMaxes()
+/**/
+
 
 				/*if (vexx< 20) vex[isDragged-1][2] = 20 ;
 				if (vexy< 20) vex[isDragged-1][3] = 20 ;
