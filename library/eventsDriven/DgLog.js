@@ -358,11 +358,15 @@ var dglcvs={
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
   'drawComp': function(c, id, comp, x,y, s=30,width=2) {
-    var sty=['#779','#44a','#fff']
+    var sty=['#779','#44a','#fff'];
+    var type='nand';
+    if(type=='pin' || type=='pout') {
+      sty= ['#a44','#400','#ff9'];
+    }
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
-    var type='fan';
+    
     const p= Math.PI
     var fill=1;
 if(type=='and' || type=='nand') {
@@ -517,9 +521,8 @@ if(type=='and' || type=='nand') {
     
     this.lib.rectm(c,x,y,w,h,2, styles[type][0], styles[type][1]);
     
-    this.drawComp(c,id,id,x+70,y,20,2)
-    
-    
+   //this.drawComp(c,id,comp,x+10,y,15,2)
+
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
     var iid= Object.keys(ins);
     if(revIns) {
@@ -876,6 +879,8 @@ var dgl= {
     }
   },
   addNodeC: function(cids) {
+    var components= this.chip[this.chipActive].comp;
+	  
     var which=0;
     if(cids[1] in components[cids[0]].ins) {
       console.log('y1')
@@ -911,6 +916,8 @@ var dgl= {
     
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
+    var components= this.chip[this.chipActive].comp;
+	  
     var mdx=this.m.mousedown_x;
     var mdy=this.m.mousedown_y;
     
@@ -1105,6 +1112,7 @@ var dgl= {
     e.preventDefault();
 		this.showMouse(e);
 		this.m.mouseisdown = true;
+var components= this.chip[this.chipActive].comp;
 
 var er= e.touches[0];
 var er2= e.touches[1];
@@ -1136,9 +1144,12 @@ var er2= e.touches[1];
 		cvs.draw(1)
   },
   callTouchMove: function(e) {
-    e.preventDefault()
+    e.preventDefault();
+
 	  this.m.lastMove={x:Math.floor(e.touches[0].pageX/devicePixelRatio), y:Math.floor(e.touches[0].pageY/devicePixelRatio-20)
 	  };
+	  
+	  var components= this.chip[this.chipActive].comp;
 	  
 	  this.showMouse(e, 'M');
 	  var er=e.touches[0];
@@ -1155,6 +1166,7 @@ var er2= e.touches[1];
 		    var vexx = this.m.comp_old_x + mouse_x - this.m.mousedown_x;
 				var vexy = this.m.comp_old_y + mouse_y - this.m.mousedown_y;
 
+      
 			components[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5;
 			components[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5;
 		  }
@@ -1177,6 +1189,8 @@ var er2= e.touches[1];
     e.preventDefault();
     
     this.showMouse(this.m.lastMove, 'E');
+    
+    var components= this.chip[this.chipActive].comp;
     
     if (this.m.mouseisdown)
     {

@@ -75,23 +75,67 @@
 
 	}
 
-	function paint_lx(c, x, y, x2, y2, styles) {
+	function paint_lx(c, x, y, x2, y2, styles,r=2) {
+	
 			c.lineWidth = styles[0];
 			c.strokeStyle = styles[1];
-
+if(r==0) {
 			c.beginPath(); 
 			c.moveTo(x, y);
 			c.lineTo(x2, y2);
 			c.closePath();
 			c.stroke();
-
+} else if (r==1) {
+      c.beginPath();
+      c.moveTo(x,y)
+      c.lineTo(x,(y2+y)/2)
+      c.lineTo(x2,(y2+y)/2)
+      c.lineTo(x2,y2)
+      c.stroke();
+} else {
+  if(y2>y) {
+    var x1=x;
+    x=x2;
+    x2=x1;
+    var y1=y;
+    y=y2;
+    y2=y1;
+  }
+  if(Math.abs(x-x2) > Math.abs(y-y2)) {
+    if(x2>x) {
+    var x1=x;
+    x=x2;
+    x2=x1;
+    var y1=y;
+    y=y2;
+    y2=y1;
+  }
+  
+    
+    
+    c.beginPath()
+    c.moveTo(x,y)
+    c.lineTo((x+x2)/2+Math.abs(y-y2)/2,y)
+    c.lineTo((x+x2)/2-Math.abs(y-y2)/2,y2)
+    c.lineTo(x2,y2)
+    c.stroke()
+  } else {
+  c.beginPath();
+  c.moveTo(x,y)
+  c.lineTo(x,(y2+y)/2+Math.abs(x-x2)/2)
+  c.lineTo(x2,(y2+y)/2-Math.abs(x-x2)/2)
+  c.lineTo(x2,y2)
+  c.stroke();
+  }
+}
 	}
 ///////////////
 function draw(c, pX, pY, zoom){
 
 	for (var i=0; i<mx.length ;i++ ) {
 		for (var j=0; j<mx[i].length ;j++ ) {
-			if (mx[i][j]==1)
+			
+			if (mx[i][j]==1 && i>j)
 			{
 				styles =  [ 0.4, '#C07000' ]
 				if (isDragged>0 && ((isDragged-1 == i) || (isDragged-1 == j)))
