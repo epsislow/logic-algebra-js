@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rand</title>
+	
+	<link rel="icon" type="image/png" href="/favicon.ico"/>
+	<link rel="icon" type="image/png" href="http://logic/favicon.ico"/>
+	<link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" rel="stylesheet"/>
+	
+<!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"-->
+</head>
+
+<style>
+  .bg-black {
+    background-color: #000;
+  }
+  .hide {
+	  display:none;
+  }
+  
+  #cvs{
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  }
+  
+   a.btn-tab{
+    border-bottom-left-radius:0!important;
+    border-bottom-right-radius:0!important;
+    padding-bottom:10px;
+    margin-bottom:0;
+    margin-top:7px;
+  }
+  
+  a.btn-tab-left{
+    border-top-right-radius:0;
+  }
+  a.btn-tab-middle {
+    border-top-left-radius:0;
+    border-top-right-radius:0;
+    border-left:1px solid #444;
+  }
+  a.btn-tab-right {
+    border-left:1px solid #444;
+    border-top-left-radius:0;
+  }
+  .boxsizingBorder {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+  
+  .hide {
+    display: none!important;
+  }
+  
+  body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+</style>
+
+<body class="bg-black">
+<main role="main" class="container">
+  
+</main>
+
+<script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
+<!--script src="https://requirejs.org/docs/release/2.3.5/minified/require.js" type="text/javascript"></script-->
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script type="text/javascript" src="/library/Canvas.js"></script>
+<script type="text/javascript" src="/library/Visual.js"></script>
+<script type="text/javascript" src="/library/eventsDriven/LifeOfGame.js"></script>
+
+
+<script type="text/javascript">
+$('document').ready(function() {
+  
+  if('vs' in window) {
+    
+    vs.page('Index')
+      .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
+      .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", 1)
+      .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", 1)
+	 // .js('rnd',"/library/sha1/Random.js")
+    .scriptsReady(function () {
+        vs.addSectionsToMain();
+        /*vs.importJs('rand', "/library/sha1/Rand.js", function() {
+          console.log('-- Load finished --');
+		  
+		  
+        }, 0);*/
+		console.log('-- Load finished --');
+        doc.start();
+        logm.start();
+		
+      })
+      .addScripts();
+	  
+	  
+    var ra = vs.clearBody()
+    .section('top')
+    .addButton('Index', '/index.html', 'btn-dark')
+    .addText(' ')
+	  .addButton('TA-info',0,'btn-secondary btn-tab btn-tab-left',{'id':'tab-ta'})
+	  //.addText(' ')
+	  .addButton('Diagram',0,'btn-secondary btn-tab btn-tab-middle',{'id':'tab-diagram'})
+
+	  .container('tab-cnt bg-light boxsizingBorder hide','div',0,{'id':'tab-ta-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .container('m-2 p-1 bg-dark rounded box-shadow text-light', 'textarea', 'width:100%; height: 400px;max-height:500px;overflow:auto;font-family: freemono, monospace;font-size:10px;line-height:10px',{id:'txt'})
+	  .up()
+	  .up()
+	  
+	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .addEl('canvas',{'id':'cvs','style':'background-color:#111;height:400px;width:360px',width:360,height:400},'m-2')
+	  
+	  
+	  
+	  
+	  
+	  
+	  var doc= {
+	    start: function () {
+	      
+	      var cvs = window.cvs;
+   
+	 $('#tab-diagram').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-diagram-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-diagram')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light');
+	       
+	    if(cvs) {
+	      cvs.start('cvs');
+	      cvs.draw(1)
+	    //  doc.diagEvents(1, events);
+	   } else {
+	     console.log('noCvs');
+	   }
+	  })
+	  
+	   $('#tab-ta').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-ta-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-ta')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light')
+	    //   doc.diagEvents(0, events);
+	  })
+	  
+	  
+      	$('#tab-diagram').click();
+	      
+	      logm.addN(0,2);
+	      logm.addN(1,0);
+	      logm.addN(1,2);
+	      logm.addN(2,1);
+	      logm.addN(2,2);
+	   /*  
+	   logm.addN(0,0)
+	   .addN(0,1).addN(0,2)
+	   */
+	   
+	      cvs.draw(1)
+	      
+	      
+	    }
+	    
+	    
+	  }
+	  
+  }
+	  
+});
+</script>
