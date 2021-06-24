@@ -74,12 +74,31 @@
 		}
 
 	}
+	
+	function isNearEdge(x,y,d=0) {
+	  if(0) {
+	  alert('x'+x+' y'+y+': '+
+	  (Math.abs(maxes.xmin-x)*100/Math.abs(maxes.xmax-maxes.xmin))+'mx '+(Math.abs(maxes.ymin-y)*100/Math.abs(maxes.ymax-maxes.ymin))+'my '
+	  )
+	  }
+	  
+	  var qxi= Math.abs(maxes.xmin-x)<25?1:0
+	  var qyi= Math.abs(maxes.ymin-y)<25?4:0
+	 var qxa= Math.abs(maxes.xmax-x)<25?2:0
+	 var qya= Math.abs(maxes.ymax-y)<25?8:0
+	 ;
+	   
+	   return qxi+qxa+qyi+qya;
+	  
+	  return (Math.abs(maxes.xmin-x)*100/Math.abs(maxes.xmax-maxes.xmin))<20 || (Math.abs(maxes.ymin-y)*100/Math.abs(maxes.ymax-maxes.ymin))<20;
+	}
 
-	function paint_lx(c, x, y, x2, y2, styles,r=2) {
+	function paint_lx(c, x, y, x2, y2, styles,r=3,q1=0,q2=0) {
 	
 			c.lineWidth = styles[0];
 			c.strokeStyle = styles[1];
-if(r==0) {
+
+if(r==4) {
 			c.beginPath(); 
 			c.moveTo(x, y);
 			c.lineTo(x2, y2);
@@ -92,6 +111,32 @@ if(r==0) {
       c.lineTo(x2,(y2+y)/2)
       c.lineTo(x2,y2)
       c.stroke();
+} else if(r==0) {
+  if(q1&8 && q2&1) {
+    c.beginPath();
+    c.moveTo(x,y);
+    c.lineTo(x2,y);
+    c.lineTo(x2,y2);
+    c.stroke()
+  } else if(q1&1 && q2&8) {
+    c.beginPath();
+    c.moveTo(x2,y2);
+    c.lineTo(x,y2);
+    c.lineTo(x,y);
+    c.stroke();
+  } else if(q1&1 && q2&4) {
+    c.beginPath();
+    c.moveTo(x,y)
+    c.lineTo(x,y2)
+    c.lineTo(x2,y2);
+    c.stroke();
+  } else if(q1&4 && q2&1) {
+     c.beginPath();
+     c.moveTo(x,y)
+     c.lineTo(x2,y)
+     c.lineTo(x2,y2);
+     c.stroke();
+  }
 } else {
   if(y2>y) {
     var x1=x;
@@ -142,23 +187,34 @@ function draw(c, pX, pY, zoom){
   c.stroke();
   c.fillStyle='#ded';
   c.fill()
-  
+  var d,r;
 	for (var i=0; i<mx.length ;i++ ) {
 		for (var j=0; j<mx[i].length ;j++ ) {
 			
 			if (mx[i][j]==1 && i>j)
 			{
+			  d=0;r=3;
 				styles =  [ 0.4, '#C07000' ]
 				if (isDragged>0 && ((isDragged-1 == i) || (isDragged-1 == j)))
 				{
+				  d=1;
 					styles =  [ 1, '#70C0C0' ];
 				}
+				
+							
+ var q1= isNearEdge(vex[i][2],vex[i][3],d);
+ var q2= isNearEdge(vex[j][2],vex[j][3],d);
+ 
+ if((q1&q2 || !(q1==2&&q2==1 || q1==4&&q2==8 || q1==1&&q2==2 || q1==8&&q2==4)) && q1 &&q2) {
+ // r=0;
+}
+
 				paint_lx(c,
 				zoom*(vex[i][2]+ pX),
 				zoom*(vex[i][3] + pY), 
 				zoom*(vex[j][2] + pX), 
 				zoom*(vex[j][3] + pY), 
-				styles);
+				styles,r,q1,q2);
 				
 			}
 		}
