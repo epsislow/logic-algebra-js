@@ -133,13 +133,16 @@ if(r==0) {
 function draw(c, pX, pY, zoom){
 
   c.beginPath()
-  c.rect(maxes.xmin+pX-20,maxes.ymin+pY-20,
-  maxes.xmax-maxes.xmin+40, maxes.ymax-maxes.ymin+40);
+  c.rect(maxes.xmin+pX-25,maxes.ymin+pY-25,
+  maxes.xmax-maxes.xmin+50, maxes.ymax-maxes.ymin+50);
   
 //  30,30)
   c.closePath();
-  c.strokeStyle='#f00'
+  c.strokeStyle='#9b9'
   c.stroke();
+  c.fillStyle='#ded';
+  c.fill()
+  
 	for (var i=0; i<mx.length ;i++ ) {
 		for (var j=0; j<mx[i].length ;j++ ) {
 			
