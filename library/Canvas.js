@@ -70,6 +70,46 @@ var cvs= (function() {
   	c.stroke();
 
     },
+	linex: function(c, x, y, x2, y2, w=1, clr='#f00') {
+	
+			c.lineWidth = w;
+			c.strokeStyle = clr;
+
+  if(y2>y) {
+    var x1=x;
+    x=x2;
+    x2=x1;
+    var y1=y;
+    y=y2;
+    y2=y1;
+  }
+  if(Math.abs(x-x2) > Math.abs(y-y2)) {
+    if(x2>x) {
+    var x1=x;
+    x=x2;
+    x2=x1;
+    var y1=y;
+    y=y2;
+    y2=y1;
+  }
+  
+    
+    
+    c.beginPath()
+    c.moveTo(x,y)
+    c.lineTo((x+x2)/2+Math.abs(y-y2)/2,y)
+    c.lineTo((x+x2)/2-Math.abs(y-y2)/2,y2)
+    c.lineTo(x2,y2)
+    c.stroke()
+  } else {
+  c.beginPath();
+  c.moveTo(x,y)
+  c.lineTo(x,(y2+y)/2+Math.abs(x-x2)/2)
+  c.lineTo(x2,(y2+y)/2-Math.abs(x-x2)/2)
+  c.lineTo(x2,y2)
+  c.stroke();
+  }
+	},
     circle: function (c, x1, y1, rad,width=1, clr='#fff', fill=false) {
       c.lineWidth=width;
       c.strokeStyle=clr;

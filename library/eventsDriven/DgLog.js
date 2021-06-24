@@ -506,7 +506,17 @@ if(type=='and' || type=='nand') {
     	c.fill();
     	}
   },
-  'drawInt': function(c, name, id, type,x,y,w,h,ins=[],outs=[],revIns=0) {
+  'addPinSafeDistance': function(comp) {
+    var x=comp.pinx+1;
+    var y=comp.piny+1;
+    if(comp.pos=='top') {
+      y=y-4;
+    } else {
+      y=y+4;
+    }
+    return['safeDist', x,y];
+  },
+  'drawInt': function(c, name, id,type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
       'int':['#dd4','#b44','#ff9'],
       'intb':['#a44','#400','#ff9'],
@@ -671,7 +681,11 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     var lineNodes= [];
     
 lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
-    
+
+lineNodes.push(
+   dglcvs.addPinSafeDistance(compin.outs[cinid])
+);
+
 var idx=cinid+'_'+cid;
 if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
@@ -687,7 +701,11 @@ if(idx in dgl.nodeConn) {
  }
 }
     
+lineNodes.push(
+  dglcvs.addPinSafeDistance(comp.ins[cinid])
+);
 lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
+
 //console.log(lineNodes);
 
 var lastPoint=0;
@@ -701,8 +719,8 @@ for(var l in lineNodes) {
   if(cid== this.m.isDragged || compin.id== this.m.isDragged) {
     s='#4ff';
   }
-  lib.line(c,lastPoint[1], lastPoint[2], 
-    lineNodes[l][1], lineNodes[l][2],
+  lib.linex(c,lastPoint[1], lastPoint[2], 
+    lineNodes[l][1], lineNodes[l][2],1,
     s)
    lastPoint=lineNodes[l]
 }
@@ -830,7 +848,8 @@ var dgl= {
   cache:{
     save: function(zip=1) {
       const data= {
-        comp:components,
+        chipActive: dgl.chipActive,
+        chip: dgl.chip,
         mpan: dgl.m.pan,
         node: dgl.node,
         nodeConn: dgl.nodeConn
@@ -859,7 +878,8 @@ var dgl= {
       }
       const data= JSON.parse(string);
     //  console.log(data);
-      components= data.comp;
+      dgl.chip= data.chip;
+      dgl.chipActive = data.chipActive;
       dgl.m.pan= data.mpan;
       dgl.node= data.node;
     //  dgl.nodeConn= data.nodeConn;
