@@ -462,9 +462,23 @@ var er2= e.touches[1];
 				if (vexy> 380) vex[isDragged-1][3] = 380 ;*/
 			}
 			if(isPan) {
-			 
-			  panOfsX= mouse_x- panX- 40;
-			  panOfsY= mouse_y - panY- 40;
+
+if(mouse_x- panX- 40 +ofsPanX>-maxes.xmax+5) {
+  if(mouse_x- panX- 40 +ofsPanX<maxes.xmin+5+200) {
+	 panOfsX= mouse_x- panX- 40;
+  } else {
+    panOfsX= -ofsPanX+maxes.xmin+4+200
+  }
+} else {
+  panOfsX= -ofsPanX-maxes.xmax-4
+}
+
+if(mouse_y- panY- 40 +ofsPanY>-maxes.ymax+5) {
+ panOfsY= mouse_y - panY- 40;
+} else {
+  panOfsY= -ofsPanY-maxes.ymax-4
+}
+
 			
 	if(er2) {
 		//zoomX= (mouse_x - er2.pageX + this.offsetLeft)/lastZoomDiffX;
