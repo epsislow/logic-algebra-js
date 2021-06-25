@@ -871,6 +871,7 @@ var dgl= {
     delComp:0,
     compConn:0,
     compSetup:0,
+    compSel:0,
     drawNodes:0,
     linesUnder:0,
     drawGrid:1,
