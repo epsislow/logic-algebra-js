@@ -154,7 +154,7 @@ var logm= {
        this.debug.queue=[];
       }
       
-      setTimeout(this.cvsNext.bind(this),40);
+      setTimeout(this.cvsNext.bind(this),10);
   },
   cvsLib: {},
   debug: {is:0,queue:[]}

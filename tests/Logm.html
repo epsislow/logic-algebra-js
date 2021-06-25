@@ -89,7 +89,7 @@ $('document').ready(function() {
       .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
       .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", 1)
       .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", 1)
-	 // .js('rnd',"/library/sha1/Random.js")
+	  .js('rnd',"/library/sha1/Random.js")
     .scriptsReady(function () {
         vs.addSectionsToMain();
         /*vs.importJs('rand', "/library/sha1/Rand.js", function() {
@@ -152,8 +152,9 @@ $('document').ready(function() {
 	       .addClass('active btn-light');
 	       
 	    if(cvs) {
-	      cvs.start('cvs');
+	      var c= cvs.start('cvs');
 	      cvs.draw(1)
+	      c.scale(1/4,1/4)
 	    //  doc.diagEvents(1, events);
 	   } else {
 	     console.log('noCvs');
@@ -184,17 +185,28 @@ $('document').ready(function() {
 	  
 	  
       	$('#tab-diagram').click();
-	      
+	     /* 
 	      logm.addN(0,2);
 	      logm.addN(1,0);
 	      logm.addN(1,2);
 	      logm.addN(2,1);
 	      logm.addN(2,2);
-	   /*  
-	   logm.addN(0,0)
-	   .addN(0,1).addN(0,2)
 	   */
 	   
+	   var iv=[9,15,16,17,21,22,23,24,25,26,34,40]
+	   for(var i=0;i<41;i++) {
+	     if(!iv.includes(i)) {
+	      logm.addN(i+20,20);
+	     }
+	   }
+	   
+	   
+	   for(var j=0;j<40;j++) {
+	     logm.addN(
+	      rd.rand(0,45)+19,
+	      rd.rand(0,2)+18
+	     );
+	   }
 	      cvs.draw(1)
 	      
 	      

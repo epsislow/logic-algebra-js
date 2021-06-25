@@ -227,6 +227,7 @@ canvas.style.height = rect.height + 'px';
       { 'txt': ' OR', 'status': 0, 'mdown': 0, 'js': '' },
             ];
     lib.bar(c, menu_stack);*/
+    return ctx;
   }
   
   pub.start= function(elId) {
@@ -239,7 +240,7 @@ canvas.style.height = rect.height + 'px';
       canvas[elId]=test;
     }
 
-    startCvs(elId);
+    return startCvs(elId);
   }
   
 

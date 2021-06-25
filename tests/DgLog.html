@@ -130,13 +130,19 @@ $('document').ready(function() {
 	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
 	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
 	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
-  .addButton('AddNode',0,'btn-secondary mx-2',{'id':'diag-addnode'})
+  .addButton('AddNode',0,'btn-secondary',{'id':'diag-addnode'})
   .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
+  .br()
   .addButton('LinesUnder',0,'btn-secondary mx-2',{'id':'diag-linesunder'})
-  .addButton('DrawNodes',0,'btn-secondary mx-2',{'id':'diag-drawnodes'})
-  .addEl('i',0,'fas fa-road text-light')
-  .addButton('Chips',0,'btn-secondary mx-2',{'id':'diag-drawchips'})
+  .addButton('DrawNodes',0,'btn-secondary ',{'id':'diag-drawnodes'})
+  .addEl('i',0,'fas fa-road text-light mx-2')
+  .addButton('Chips',0,'btn-secondary',{'id':'diag-drawchips'})
   .addButton('ChipSetup',0,'btn-secondary mx-2',{'id':'diag-chipsetup'})
+  .br()
+  .addButton('CompSetup',0,'btn-secondary mx-2',{'id':'diag-compsetup'})
+  .addButton('CompConn',0,'btn-secondary ',{'id':'diag-compconn'})
+  .addButton('AddComp',0,'btn-secondary mx-2',{'id':'diag-addcomp'})
+  .addButton('DelComp',0,'btn-secondary ',{'id':'diag-delcomp'})
   .br()
   .br()
   .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
@@ -311,12 +317,34 @@ $('document').ready(function() {
 	  	  cvs.draw(1)
 	  	  })
 	  
-	  	    
+	  $('#diag-compsetup').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.nodeSetup=en;
+	  	  cvs.draw(1)
+	  	  })
+	  $('#diag-compconn').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.compConn=en;
+	  	  })
+	  $('#diag-addcomp').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.addComp=en;
+	  	  cvs.draw(1)
+	   })
+	   
+	   $('#diag-delcomp').click(function() {
+	     var en=toggleBtn($(this));
+	     dgl.m.delComp=en
+	     cvs.draw(1);
+	   });
+	  
 	  $('#diag-save').click(function() {
 	    dgl.cache.save(1);
+	    $(this).blur();
 	  })
 	  $('#diag-load').click(function() {
 	    dgl.cache.load(1);
+	    $(this).blur();
 	  })
 	  
     	$('#tab-diagram').click();
