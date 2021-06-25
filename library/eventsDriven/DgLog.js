@@ -324,6 +324,29 @@ var dglcvs={
     this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
     
   },
+  drawConfirm: function(c, text) {
+    c.globalAlpha = 0.7;
+    c.fillStyle = '#222';
+    c.fillRect(0, 0, this.lib.maxWidth, this.lib.maxHeight)
+    c.globalAlpha = 1.0;
+    var cx=(this.lib.maxWidth-60)/devicePixelRatio/2
+    var cy=(this.lib.maxHeight-80)/devicePixelRatio/2
+    this.lib.rectm(c, cx, cy, 60, 40, 1, '#669', '#222');
+    c.textAlign='center'
+    this.lib.textm(c, cx+30, cy+10, text,5,'#fff');
+    
+    this.drawBtn(c,'Yes',cx+6,cy+28,20,8,'#9f9','#797')
+    this.drawBtn(c,'No',cx+33,cy+28,20,8,'#f99','#977')
+    
+  },
+  drawBtn: function(c,text,x,y,w,h,clr,fill) {
+    this.lib.rectm(c, x, y, w, h, 1, clr, fill);
+    c.textAlign='center'
+    this.lib.textm(c, x+w/2, y+h/2, text,5, clr);
+  },
+  checkBtnTouch: function() {
+    
+  },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
@@ -792,6 +815,10 @@ for(var l in lineNodes) {
      }
      cvs.drawNext(1)
    }
+   
+   if(this.m.needsConfirm) {
+     dglcvs.drawConfirm(c, this.m.confirmText);
+   }
     
     if(debug.is) {
       for(var d in debug.drawQueue) {
@@ -831,11 +858,18 @@ var dgl= {
     chgIns:0,
     addNode:0,
     delNode:0,
+    addComp:0,
+    delComp:0,
+    compConn:0,
+    compSetup:0,
     drawNodes:0,
     linesUnder:0,
     drawGrid:1,
     drawChips:0,
     chipSetup:0,
+    needsConfirm:0,
+    confirmText:'?',
+    confirmValue:-1,
   },
   node:[],
   nodeConn:{},
@@ -898,6 +932,19 @@ var dgl= {
       cvs.draw(1);
     }
   },
+  addCompC: function(type, name, x,y, state=0) {
+    
+    this.chip[this.chipActive]
+    .comp[name]={
+      id:name,
+      type:type,
+      x:x,
+      y:y,
+      ins:{},
+      outs:{},
+      state:state
+    };
+  },
   addNodeC: function(cids) {
     var components= this.chip[this.chipActive].comp;
 	  
@@ -935,6 +982,9 @@ var dgl= {
     this.node[next][Math.round(Math.random())==1?'x':'y']+=5*len;
     
   },
+  checkBtns: function(mdx,mdy) {
+    
+  },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
     var components= this.chip[this.chipActive].comp;
 	  
@@ -960,7 +1010,11 @@ var dgl= {
        ]
      ])
       }
-      
+     
+    if(this.m.needsConfirm) {
+      this.checkBtns(mdx,mdy);
+      return;
+    }
     if(this.m.drawChips==1) {
       var maxy=Object.keys(this.chip).length*10+25;
       
