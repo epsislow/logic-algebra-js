@@ -324,7 +324,7 @@ var dglcvs={
     this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
     
   },
-  drawConfirm: function(c, text) {
+  drawConfirm: function(c, text,yesCall, noCall) {
     c.globalAlpha = 0.7;
     c.fillStyle = '#222';
     c.fillRect(0, 0, this.lib.maxWidth, this.lib.maxHeight)
@@ -337,12 +337,17 @@ var dglcvs={
     
     this.drawBtn(c,'Yes',cx+6,cy+28,20,8,'#9f9','#797')
     this.drawBtn(c,'No',cx+33,cy+28,20,8,'#f99','#977')
-    
+    var btns= [
+      {txt:'Yes',x:cx+6,y:cy+28,w:20,h:10, call:yesCall},
+      {txt:'No',x:cx+33,y:cy+28,w:20,h:10, call:noCall}];
+
+    return btns;
   },
   drawBtn: function(c,text,x,y,w,h,clr,fill) {
     this.lib.rectm(c, x, y, w, h, 1, clr, fill);
     c.textAlign='center'
     this.lib.textm(c, x+w/2, y+h/2, text,5, clr);
+    
   },
   checkBtnTouch: function() {
     
@@ -817,7 +822,11 @@ for(var l in lineNodes) {
    }
    
    if(this.m.needsConfirm) {
-     dglcvs.drawConfirm(c, this.m.confirmText);
+    var cbtns= dglcvs.drawConfirm(c, this.m.confirmText);
+    if(!this.m.confirmShowed) {
+     this.btns.push.apply(this.btns,cbtns);
+      this.m.confirmShowed=1;
+    }
    }
     
     if(debug.is) {
@@ -870,7 +879,15 @@ var dgl= {
     needsConfirm:0,
     confirmText:'?',
     confirmValue:-1,
+    confirmShowed:0,
+    confirmYesCall: function () {
+      this.needsConfirm=0;
+    },
+    confirmNoCall: function() {
+      this.needsConfirm=0;
+    }
   },
+  btns:{},
   node:[],
   nodeConn:{},
   chipActive:'main',
@@ -980,10 +997,17 @@ var dgl= {
    // this.nodeConn[idx2].push(next);
     var len=Object.keys(this.nodeConn[idx1]).length
     this.node[next][Math.round(Math.random())==1?'x':'y']+=5*len;
-    
   },
   checkBtns: function(mdx,mdy) {
+    var bs= this.btns;
     
+    for(var b in bs) {
+      if(mdx>bs[b].x-5 && mdx< bs[b].x+bs[b].w+5 && mdy>bs[b].yOfs-5 && mdy< bs[b].y+bs[b].h+5) {
+        bs[b].call();
+        thid.btns=[];
+        break;
+      }
+    }
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
     var components= this.chip[this.chipActive].comp;
