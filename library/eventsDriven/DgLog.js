@@ -385,9 +385,13 @@ var dglcvs={
     
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
-  'drawComp': function(c, id, comp, x,y, s=30,width=2) {
+  'drawComp': function(c, comp, x,y, s=30,width=2) {
     var sty=['#779','#44a','#fff'];
-    var type='nand';
+  //  var sty=['#bb5','#885','#fff']
+    var type=comp.type
+    if(type=='controlled') {
+      sty=['#4a4','#040','#9f9'];
+    }
     if(type=='pin' || type=='pout') {
       sty= ['#a44','#400','#ff9'];
     }
@@ -397,7 +401,11 @@ var dglcvs={
     
     const p= Math.PI
     var fill=1;
-if(type=='and' || type=='nand') {
+    if(type=='controlled') {
+      c.beginPath()
+      c.rect(x,y,s,s/2)
+      
+    } else if(type=='and' || type=='nand') {
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
   		c.lineTo(x+s, y);
@@ -527,12 +535,30 @@ if(type=='and' || type=='nand') {
       c.lineWidth=1
       c.beginPath();
       c.arc(x+s/8,y+s/4+s/8,s/8,0,p,1);
+    } else if (type='not') {
+      c.beginPath();
+      c.moveTo(x,y)
+      c.lineTo(x+s,y)
+      c.lineTo(x+s/2,y+s);
+      c.closePath();
+      c.stroke()
+      c.fill()
+      c.beginPath();
+      c.arc(x + s / 2, y + s, s / 8, 0, p * 2, 0);
+      c.closePath()
+    } else {
+      throw ('unknownType '+type)
     }
       
     	c.stroke();
     	if(fill) {
-    	c.fill();
+    	  c.fill();
     	}
+    	
+    	
+    //pins and pouts
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s,s);
+    
   },
   'addPinSafeDistance': function(comp) {
     var x=comp.pinx+1;
@@ -543,6 +569,104 @@ if(type=='and' || type=='nand') {
       y=y+4;
     }
     return['safeDist', x,y];
+  },
+  'compInsOutsCreate': function(comp) {
+    if(comp.outs) {
+      return false;
+    }
+    var ins,outs;
+  //  console.log(comps)
+   // for(var cid in comps) {
+   //   comp= comps[cid]
+      cid= comp.id;
+      ins=[];
+      for (var cinid of comp.inputs) {
+      //  var cin = comps[cinid];
+        ins.push({pos:'top',id:cinid})
+      }
+      comp.ins=indexBy(ins,'id');
+      outs=[{pos:'bottom',id:cid}];
+      comp.outs=indexBy(outs,'id');
+ //   }
+  },
+  'drawPinsOfComp': function(c,type,ins,outs,revIns,x,y,w,h) {
+    var pos={'top':[],'bottom':[],'left':[],'right':[]};
+    var iid= Object.keys(ins);
+    if(revIns) {
+      iid.reverse();
+    }
+    for(var i in iid) {
+   //   ins[i].pin='in';
+      pos[ins[iid[i]].pos].push(ins[iid[i]]);
+    }
+    
+    for(var k in outs) {
+  //    ins[i].pin='out';
+      pos[outs[k].pos].push(outs[k]);
+    }
+  
+    var k=0;
+    var pinh, pinw, pw;
+    if(type=='intb') {
+       pinh=7; pinw=7; pw=2;
+   } else {
+     pinh=2, pinw=2; pw=2;
+   }
+    for(var i=0;i<pos.top.length;i++){
+      k=i*(w/pos.top.length)
+        +w/(2*pos.top.length)-pinw/2;
+      pos.top[i].pinx= x+k;
+      pos.top[i].piny= y-pinh-1;
+      
+    //  this.lib.rectm(c,x+k,y-pinh-0.5,pinw,pinh,1,'#ff9','#444')
+    }
+    
+    for(var i=0;i<pos.bottom.length;i++){
+      k=i*(w/pos.bottom.length)
+        +w/(2*pos.bottom.length)-pinw/2
+      pos.bottom[i].pinx= x+k;
+      pos.bottom[i].piny= y+h+1;
+      
+    //  this.lib.rectm(c,x+k,y+h+0.5,pinw,pinh,1,'#9f9','#444')
+    }
+    
+    for(var i=0;i<pos.left.length;i++){
+      k=i*(h/pos.left.length)
+        +h/(2*pos.left.length)-pinh/2
+      pos.left[i].pinx= x-pinw-1;
+      pos.left[i].piny= y+k;
+      
+    //  this.lib.rectm(c,x-pinw-0.5,y+k,pinw,pinh,1,'#ff9','#444')
+    }
+    
+    for (var i=0; i < pos.right.length; i++) {
+      k=i*(h/pos.right.length) +
+        h/(2*pos.right.length) - pinh/2
+      pos.right[i].pinx= x+w+1
+      pos.right[i].piny= y+k
+      
+    //  this.lib.rectm(c, x+w+0.5, y+k, pinw,pinh,1, '#9f9', '#444')
+    }
+    var styles= {
+      'pinin':['#cc7','#444'],
+      'pinout':['#7c7','#444']
+    };
+    
+    for(var i in ins) {
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][1])
+    }
+    for(var i in outs) {
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][1])
+    }
+    
+    /*
+  	c.textAlign = 'center';
+  	c.textBaseline = 'middle';
+    
+    this.lib.textm(c,x+w/2,y+h/2,name,7,styles[type][2]);
+    if(type!='ctrl' && type!='intb') {
+      this.lib.textm(c,x+w/2,y+h*3/2, id, 7, styles[type][2])
+    }*/
   },
   'drawInt': function(c, name, id,type,x,y,w,h,ins=[],outs=[],revIns=0) {
     var styles= {
@@ -682,19 +806,26 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       txt= (comp.type=='controlled'?comp.id:comp.type);
       
      // console.log(comp)
-     var ty= comp.type=='controlled'?'ctrl':'gate';
+    /* var ty= comp.type=='controlled'?'ctrl':'gate';
      if(cid== this.m.isDragged|| this
      .m.nodeSel.includes(cid)) {
        ty='drag';
      }
-     
-      dglcvs.drawInt(
+     */
+     /* dglcvs.drawInt(
         c,txt, 
         comp.id,
         ty, 
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
-      )
+      )*/
+      
+      dglcvs.drawComp(c, comp,
+       5+50*comp.x+pX+comp.xOfs,
+       5+25*comp.y+pY+comp.yOfs,
+       15,2, this.m.isDragged);
+    
+      
     }
     
     for(var cid in comps) {
