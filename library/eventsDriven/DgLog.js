@@ -385,7 +385,7 @@ var dglcvs={
     
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
-  'drawComp': function(c, comp, x,y, s=30,width=2) {
+  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0) {
     var sty=['#779','#44a','#fff'];
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
@@ -395,6 +395,10 @@ var dglcvs={
     if(type=='pin' || type=='pout') {
       sty= ['#a44','#400','#ff9'];
     }
+    if(isDrag) {
+      sty= ['#4aa','#499','#9ff']
+    }
+    var st=0
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
@@ -404,7 +408,7 @@ var dglcvs={
     if(type=='controlled') {
       c.beginPath()
       c.rect(x,y,s,s/2)
-      
+      st=-s/2
     } else if(type=='and' || type=='nand') {
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
@@ -420,6 +424,7 @@ var dglcvs={
 		    c.beginPath();
 		    c.arc(x+s/2, y+s+s/8,s/8, 0, p*2,0);
 		    c.closePath()
+		    st=s/8
 		  }
     } else if (type=='or' || type=='nor') {  
       c.beginPath(); 
@@ -442,6 +447,7 @@ var dglcvs={
         c.beginPath();
         c.arc(x + s / 2, y + s + s / 8, s / 8, 0, p * 2, 0);
         c.closePath()
+        st= s/8
       }
     } else if( type=='xor' || type=='nxor') {
       c.beginPath();
@@ -557,7 +563,7 @@ var dglcvs={
     	
     	
     //pins and pouts
-    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s,s);
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s,s+st);
     
   },
   'addPinSafeDistance': function(comp) {
@@ -823,7 +829,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, this.m.isDragged);
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)));
     
       
     }
