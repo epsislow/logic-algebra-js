@@ -40,11 +40,16 @@ var cvs= (function() {
       c.fillStyle = clr;
       c.fillText(text, x, y);
     },
-    textm: function(c,x,y,text,size=6,clr='#777',font='Arial')
+    textm: function(c,x,y,text,size=6,clr='#777',font='Arial',stroke=0)
     {
       c.font= size+'px '+font;
       c.fillStyle= clr;
+      if(stroke) {
+      c.strokeStyle=stroke
+      c.strokeText(text,x,y)
+      }
       c.fillText(text,x,y);
+      
     },
       rectm: function(c,x,y,w,h,width=1,clr=false,fill=false) {
      c.lineWidth= width;

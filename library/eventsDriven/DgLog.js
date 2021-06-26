@@ -573,6 +573,16 @@ var dglcvs={
     //pins and pouts
     this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s,s+st);
     
+    c.textAlign = 'center';
+  	c.textBaseline = 'middle';
+    
+   // this.lib.textm(c,x+s/2,y-s/2,comp.type=='controlled'?'ctrl':comp.type,7,sty[2]);
+   // if(comp.type!='ctrl' && type!='intb') {
+
+      this.lib.textm(c,x+s/2,y-s/2, comp.id, 6, sty[2],'Arial','#333')
+      
+   // }
+    
   },
   'addPinSafeDistance': function(comp) {
     var x=comp.pinx+1;
