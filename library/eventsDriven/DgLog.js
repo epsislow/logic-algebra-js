@@ -579,7 +579,7 @@ var dglcvs={
    // this.lib.textm(c,x+s/2,y-s/2,comp.type=='controlled'?'ctrl':comp.type,7,sty[2]);
    // if(comp.type!='ctrl' && type!='intb') {
 
-      this.lib.textm(c,x+s/2,y-s/2, comp.id, 6, sty[2],'Arial','#333')
+     // this.lib.textm(c,x+s/2,y-s/2, comp.id, 6, sty[2],'Arial','#333')
       
    // }
     
@@ -956,17 +956,14 @@ for(var l in lineNodes) {
        15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
     
     }
-    } else {
-       for(var cid in comps) {
+    }
+   for(var cid in comps) {
       comp= comps[cid]
    
        dglcvs.lib.textm(c,
        5+50*comp.x+pX+comp.xOfs+15/2,
-       5+25*comp.y+pY+comp.yOfs-15/2, comp.id, 6, '#fff','Arial','#333')
-       }
-     
-    }
-  
+       5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
+   }
     
    if(this.m.drawChips) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
