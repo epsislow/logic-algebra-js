@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rand</title>
+	
+	<link rel="icon" type="image/png" href="/favicon.ico"/>
+	<link rel="icon" type="image/png" href="http://logic/favicon.ico"/>
+	<link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" rel="stylesheet"/>
+	
+<!--link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css"-->
+</head>
+
+<style>
+  .bg-black {
+    background-color: #000;
+  }
+  .hide {
+	  display:none;
+  }
+  
+  #cvs{
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  }
+  
+   a.btn-tab{
+    border-bottom-left-radius:0!important;
+    border-bottom-right-radius:0!important;
+    padding-bottom:10px;
+    margin-bottom:0;
+    margin-top:7px;
+  }
+  
+  a.btn-tab-left{
+    border-top-right-radius:0;
+  }
+  a.btn-tab-middle {
+    border-top-left-radius:0;
+    border-top-right-radius:0;
+    border-left:1px solid #444;
+  }
+  a.btn-tab-right {
+    border-left:1px solid #444;
+    border-top-left-radius:0;
+  }
+  .boxsizingBorder {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+  
+  .hide {
+    display: none!important;
+  }
+  
+  body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+</style>
+
+<body class="bg-black">
+<main role="main" class="container">
+  
+</main>
+
+<script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
+<!--script src="https://requirejs.org/docs/release/2.3.5/minified/require.js" type="text/javascript"></script-->
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script type="text/javascript" src="/library/Canvas.js"></script>
+<script type="text/javascript" src="/library/Visual.js"></script>
+<script type="text/javascript" src="/library/eventsDriven/trace.js"></script>
+<script type="text/javascript" src="/library/eventsDriven/DgLog.js"></script>
+
+
+<script type="text/javascript">
+$('document').ready(function() {
+  
+  if('vs' in window) {
+    
+    vs.page('Index')
+      .css('bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css")
+      .js('bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js", 1)
+      .js('popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", 1)
+	 // .js('rnd',"/library/sha1/Random.js")
+    .scriptsReady(function () {
+        vs.addSectionsToMain();
+        /*vs.importJs('rand', "/library/sha1/Rand.js", function() {
+          console.log('-- Load finished --');
+		  
+		  
+        }, 0);*/
+		console.log('-- Load finished --');
+        doc.start();
+        dgl.start();
+		
+      })
+      .addScripts();
+	  
+	  
+    var ra = vs.clearBody()
+    .section('top')
+    .addButton('Index', '/index.html', 'btn-dark')
+    .addText(' ')
+	  .addButton('TA-info',0,'btn-secondary btn-tab btn-tab-left',{'id':'tab-ta'})
+	  //.addText(' ')
+	  .addButton('Diagram',0,'btn-secondary btn-tab btn-tab-middle',{'id':'tab-diagram'})
+	  //.addText(' ')
+	  .addButton('Iterations',0,'btn-secondary btn-tab btn-tab-right',{'id':'tab-save'})
+	  
+	  .container('tab-cnt bg-light boxsizingBorder hide','div',0,{'id':'tab-ta-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .container('m-2 p-1 bg-dark rounded box-shadow text-light', 'textarea', 'width:100%; height: 400px;max-height:500px;overflow:auto;font-family: freemono, monospace;font-size:10px;line-height:10px',{id:'txt'})
+	  .up()
+	  .up()
+	  
+	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:400px;width:360px',width:360,height:400},'m-2')
+	  
+	  
+	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
+               value="1300"/>*/
+	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
+	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
+	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
+  .addButton('AddNode',0,'btn-secondary',{'id':'diag-addnode'})
+  .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
+  .br()
+  .addButton('LinesUnder',0,'btn-secondary mx-2',{'id':'diag-linesunder'})
+  .addButton('DrawNodes',0,'btn-secondary ',{'id':'diag-drawnodes'})
+  .addEl('i',0,'fas fa-road text-light mx-2')
+  .addButton('Chips',0,'btn-secondary',{'id':'diag-drawchips'})
+  .addButton('ChipSetup',0,'btn-secondary mx-2',{'id':'diag-chipsetup'})
+  .br()
+  .addButton('CompSetup',0,'btn-secondary mx-2',{'id':'diag-compsetup'})
+  .addButton('CompSel',0,'btn-secondary ',{'id':'diag-compsel'})
+  .addButton('CompConn',0,'btn-secondary mx-2',{'id':'diag-compconn'})
+  .addButton('AddComp',0,'btn-secondary ',{'id':'diag-addcomp'})
+  .addButton('DelComp',0,'btn-secondary mx-2',{'id':'diag-delcomp'})
+  .br()
+  .br()
+  .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
+  .addButton('Load',0,'btn-warning mx-2',{'id':'diag-load'})
+	  .addEl('div',{id:'status',style:'color:#fff'})
+	  .addEl('div',{id:'pan','style':'color: #fff'})
+	  .up()
+	  
+	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-save-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
+	  .up()
+	  
+//	  console.log(window.cvs);
+  }
+  
+  var doc= {
+    diagEvents: function(start=1, events={}) {
+      var b= $('#cvs');
+      if(!start) {
+ b.unbind(Object.keys(events).join(' '));
+        return;
+      }
+      for (var e in events) {
+        b.on(e, events[e]);
+      }
+    },
+    start: function() {
+ //  console.log(window.cvs)
+   var cvs = window.cvs;
+   var events= {
+     'touchstart': function(e){
+      dgl.m.offsetLeft= this.offsetLeft;
+      dgl.m.offsetTop = this.offsetTop;
+     //  return 
+       dgl.callTouchStart.apply(dgl,[e])
+     }
+     ,
+     'touchmove': dgl.callTouchMove.bind(dgl),
+     'touchend': dgl.callTouchEnd.bind(dgl)
+   }
+   $('#tab-diagram').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-diagram-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-diagram')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light');
+	       
+	    if(cvs) {
+	      cvs.start('cvs');
+	      
+	      doc.diagEvents(1, events);
+	   } else {
+	     console.log('noCvs');
+	   }
+	  })
+	  
+	   $('#tab-ta').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-ta-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-ta')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light')
+	       doc.diagEvents(0, events);
+	  })
+	  
+	 $('#tab-save').click(function() {
+	    $('.tab-cnt.show')
+	      .removeClass('show')
+	      .addClass('hide');
+	      
+	    $('#tab-save-cnt')
+	      .removeClass('hide')
+	      .addClass('show');
+	      
+	    $('.btn-tab.active')
+	       .removeClass('active')
+	       .removeClass('btn-light')
+	       .addClass('btn-secondary');
+	       
+	    $(this).blur();
+	    
+	    $('#tab-save')
+	       .removeClass('btn-secondary')
+	       .addClass('active btn-light');
+	    doc.diagEvents(0, events)
+	  })
+	  
+	  $('#diag-next').click(function() {
+	    var itr= dgl.drawNext();
+	    $('#itr').val(itr);
+	    $(this).blur();
+	  })
+	  
+	  function toggleBtn(b) {
+	    var en;
+	   if(b.hasClass('btn-secondary')) {
+	    b.removeClass('btn-secondary').addClass('btn-light')
+	    en=1;
+	   } else {
+	     b.removeClass('btn-light')
+	     .addClass('btn-secondary')
+	     en=0;
+	   }
+	   b.blur();
+	   
+	   return en;
+	  }
+	  
+	  $('#diag-chg-ins').click(function() 
+	  {
+	    var en=toggleBtn($(this));
+	    dgl.m.chgIns=en
+	  });
+	  
+	  $('#diag-addnode').click(function()
+	  {
+	    var en=toggleBtn($(this));
+	    dgl.m.addNode=en;
+	    if(dgl.m.nodeSel.length) {
+	      dgl.m.nodeSel=[];
+	      cvs.draw(1);
+	    }
+	  })
+	  $('#diag-delnode').click(function() {
+	    var en=toggleBtn($(this));
+	    dgl.m.delNode=en;
+	  })
+	  $('#diag-drawnodes').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.drawNodes=en;
+	  	  cvs.draw(1)
+	  	  })
+	  $('#diag-linesunder').click(function() {
+	    var en=toggleBtn($(this));
+	    dgl.m.linesUnder=en;
+	    cvs.draw(1)
+	  })	
+	  $('#diag-drawchips').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.drawChips=en;
+	  	  cvs.draw(1)
+	  	  })
+	  	  
+	  $('#diag-chipsetup').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.chipSetup=en;
+	  	  cvs.draw(1)
+	  	  })
+	  
+	  $('#diag-compsetup').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.compSetup=en;
+	  	  cvs.draw(1)
+	  	  })
+	  $('#diag-compconn').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.compConn=en;
+	  	  })
+	  $('#diag-compsel').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.compSel=en;
+	  })
+	  
+	  $('#diag-addcomp').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.addComp=en;
+	  	  cvs.draw(1)
+	   })
+	   
+	   $('#diag-delcomp').click(function() {
+	     var en=toggleBtn($(this));
+	     dgl.m.delComp=en
+	     cvs.draw(1);
+	   });
+	  
+	  $('#diag-save').click(function() {
+	    dgl.cache.save(1);
+	    $(this).blur();
+	  })
+	  $('#diag-load').click(function() {
+	    dgl.cache.load(1);
+	    $(this).blur();
+	  })
+	  
+    	$('#tab-diagram').click();
+	    cvs.draw();
+    }
+  }
+});
+</script>

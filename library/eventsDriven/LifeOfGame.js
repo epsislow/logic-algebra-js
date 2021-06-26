@@ -140,8 +140,13 @@ var logm= {
         lib.clear(c);
       }
       for(var n in this.m.c) {
-        lib.rectm(c,this.m.c[n].x*5+40,
-        this.m.c[n].y*5+40, 4,4,0.5,'#9ff','#477')
+        var x=this.m.c[n].x;
+        var y=this.m.c[n].y;
+        if(!((x>0 && y>0 && x<120 && y<120))) {
+          continue;
+        }
+        lib.rectm(c,
+         x*5+40,y*5+40, 4,4,0.5,'#9ff','#477')
       }
       lib.textm(c,1,7,'Frm:'+this.frame,7,'#777');
       
