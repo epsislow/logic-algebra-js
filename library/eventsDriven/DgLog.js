@@ -252,7 +252,7 @@ const components = [
 var components = [
   {
     id: 'clock',
-    type: 'controlled',
+    type: 'clock',
     inputs: [],
     state: 0,
   },
@@ -282,6 +282,7 @@ const evaluate = (components, componentLookup) => {
 
   components.forEach(component => {
     //console.log('aaa',libFn);
+  
     if (component.type === 'controlled') {
       return;
    } else if (component.type === 'not') {
@@ -290,6 +291,8 @@ const evaluate = (components, componentLookup) => {
       return;
     } else if (component.type in libFn) {
       return binaryOp(libFn[component.type], component);
+    } else {
+      return;
     }
   });
 };
@@ -385,7 +388,7 @@ var dglcvs={
     
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
-  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0) {
+  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0) {
     var sty=['#779','#44a','#fff'];
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
@@ -469,8 +472,8 @@ var dglcvs={
       c.closePath();
       c.stroke();
       c.fill();
-      c.lineWidth=1
-      if(1) {
+      c.lineWidth=1;
+      if(state) {
         c.beginPath()
         c.moveTo(x+s/4-s/8, y+s/4-s/8)
         c.lineTo(x+2*s/4-s/8,y+s/4-s/8)
@@ -502,7 +505,10 @@ var dglcvs={
       c.beginPath()
       c.arc(x+s/2,y+s/2,s/2,0,p*2,0)
       c.closePath()
-      c.stroke()
+      c.stroke();
+      if(state) {
+        c.fillStyle='#f22';
+      }
       c.fill();
       fill=0
       c.beginPath()
@@ -829,8 +835,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)));
-    
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
       
     }
     
@@ -918,7 +923,7 @@ for(var l in lineNodes) {
       comp.outs=indexBy(outs,'id');
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
-      
+    /*  
      // console.log(comp)
      var ty= comp.type=='controlled'?'ctrl':'gate';
      if(cid== this.m.isDragged|| this
@@ -932,7 +937,12 @@ for(var l in lineNodes) {
         ty, 
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
-      )
+      )*/
+        dglcvs.drawComp(c, comp,
+       5+50*comp.x+pX+comp.xOfs,
+       5+25*comp.y+pY+comp.yOfs,
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
+    
     }
     }
   
