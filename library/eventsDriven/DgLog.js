@@ -473,7 +473,8 @@ var dglcvs={
       c.stroke();
       c.fill();
       c.lineWidth=1;
-      if(state) {
+      if(!state) {
+        c.strokeStyle='#222';
         c.beginPath()
         c.moveTo(x+s/4-s/8, y+s/4-s/8)
         c.lineTo(x+2*s/4-s/8,y+s/4-s/8)
@@ -483,6 +484,7 @@ var dglcvs={
         c.lineTo(x+s/2+s/4+s/8, y+s/2)
         fill=0
       } else {
+        c.strokeStyle='#9f9'
         c.beginPath()
         c.moveTo(x+s/4-s/8, y+s/4+s/4+s/4)
         c.lineTo(x+2*s/4-s/8, y+2*s/4+s/4)
@@ -1263,6 +1265,7 @@ var dgl= {
       }
      }
      
+     if(this.m.compSetup) {
       var comps= components;
       
       for (var cid in comps)
@@ -1326,8 +1329,9 @@ var dgl= {
           
           debug.drawQueueDel=0;
      }
-        
+    
         }
+      }
        // break;
       }
       if (!this.m.isDragged) {
