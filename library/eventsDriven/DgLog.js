@@ -389,14 +389,25 @@ var dglcvs={
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
   'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0) {
-    var sty=['#779','#44a','#fff'];
+    var sty=['#779','#44a','#fff','bb5'];
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
+    
+     if(type=='controlled') {
+      type='chip';
+    }
+   
     if(type=='controlled') {
       sty=['#4a4','#040','#9f9'];
     }
-    if(type=='pin' || type=='pout') {
-      sty= ['#a44','#400','#ff9'];
+    if(type=='pin' || type=='pout'|| type=='chip') {
+      sty= ['#a44','#422','#ff9'];
+      if(type=='chip') {
+        sty[2]='#aa4'
+        sty[3]='#722'
+        sty[4]='#f44';
+    //    sty.push()
+      }
     }
     if(isDrag) {
       sty= ['#4aa','#499','#9ff']
@@ -427,9 +438,9 @@ var dglcvs={
 		    c.beginPath();
 		    c.arc(x+s/2, y+s+s/8,s/8, 0, p*2,0);
 		    c.closePath()
-		    st=s/8
+		    st=s/4
 		  }
-    } else if (type=='or' || type=='nor') {  
+    } else if (type=='or' || type=='nor') {
       c.beginPath(); 
       c.moveTo(x, y+s/2)
    
@@ -450,7 +461,7 @@ var dglcvs={
         c.beginPath();
         c.arc(x + s / 2, y + s + s / 8, s / 8, 0, p * 2, 0);
         c.closePath()
-        st= s/8
+        st= s/4
       }
     } else if( type=='xor' || type=='nxor') {
       c.beginPath();
@@ -459,13 +470,35 @@ var dglcvs={
       c.arc(x+s,y,s,p-p/3,p,0)
       c.arc(x+s/2,y-s-s/4,s,p/2-p/6,p/2+p/6,0)
       c.closePath();
+      st=-s/4
       if (type == 'nxor') {
         c.stroke()
         c.fill();
         c.beginPath();
         c.arc(x + s / 2, y + s, s / 8, 0, p * 2, 0);
         c.closePath()
+        st=s/4-s/8
       }
+    } else if(type=='chip') {
+      c.beginPath();
+      c.rect(x,y,s,s)
+      c.closePath();
+      if(state){
+        c.strokeStyle=sty[4]
+      }
+      c.stroke();
+      c.fill();
+      c.lineWidth=1;
+      c.strokeStyle=sty[0];
+       if(state){
+        c.strokeStyle=sty[2]
+      }
+     
+      c.fillStyle=sty[3];
+      c.beginPath();
+      c.rect(x+s/4,y+s/4,s/2,s/2)
+      c.stroke()
+     
     } else if(type=='clock') {
       c.beginPath();
       c.rect(x,y,s,s)
@@ -503,14 +536,22 @@ var dglcvs={
       c.lineTo(x+s/4, y+s/2)
       c.lineTo(x+s/8, y+s/4)
       c.closePath()
+      st=-s/2
     } else if(type=='led') {
       c.beginPath()
       c.arc(x+s/2,y+s/2,s/2,0,p*2,0)
       c.closePath()
+      if(state) {
+        c.fillStyle='#f22';
+        c.strokeStyle='#fff'
+      }
+      
       c.stroke();
       if(state) {
         c.fillStyle='#f22';
-      }
+        c.strokeStyle='#fff'
+      }ppp
+   //   c.stroke()
       c.fill();
       fill=0
       c.beginPath()
@@ -521,34 +562,58 @@ var dglcvs={
       c.beginPath()
       c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
       c.closePath()
-      c.stroke()
+     // c.stroke()
+      if(state) {
+        c.fillStyle='#f22';
+        c.strokeStyle='#fff'
+      }
+     c.stroke()
+      
       c.fill();
       fill = 0
       c.beginPath()
       c.moveTo(x + s / 2 - s / 8, y + s / 2)
       c.lineTo(x + s / 2 + s / 8, y + s / 2)
       c.lineWidth = 1;
+      st=-s/4
     } else if(type=='pin') {
       c.beginPath();
-      c.rect(x,y,s/4,s/2)
+      c.rect(x+s/2-s/8,y,s/4,s/2)
       c.closePath();
       c.stroke();
       c.fill();
-      fill=0;
+      c.beginPath()
+     // c.fillStyle=(state?'#9f9':'#262');
+      c.strokeStyle=(state?'#9f9':'#262');
+      c.lineWidth=1
+      c.moveTo(x+s/2,y)
+      c.lineTo(x+s/2,y+s/4)
+      c.stroke()
+      //fill=0;
       c.lineWidth=1
       c.beginPath();
-      c.arc(x+s/8,y+s/8,s/8,0,p,0);
+      c.arc(x+s/8+s/2-s/8,y+s/8,s/8,0,p,0);
       
+      st=-s/2
     } else if(type=='pout') {
       c.beginPath();
-      c.rect(x,y,s/4,s/2)
+      c.rect(x+s/2-s/8,y,s/4,s/2)
       c.closePath();
       c.stroke();
       c.fill();
-      fill=0;
+     // fill=0;
       c.lineWidth=1
+      c.strokeStyle=(state?'#9f9':'#262');
+       c.beginPath()
+       c.moveTo(x+s/2,y)
+      c.lineTo(x+s/2,y+s/4)
+      c.stroke()
+     
       c.beginPath();
-      c.arc(x+s/8,y+s/4+s/8,s/8,0,p,1);
+      c.arc(x+s/8+s/2-s/8,y+s/4+s/8,s/8,0,p,1);
+      
+   //   c.fillStyle=(state?'#9f9':'#262');
+      st=-s/2
     } else if (type='not') {
       c.beginPath();
       c.moveTo(x,y)
@@ -560,6 +625,7 @@ var dglcvs={
       c.beginPath();
       c.arc(x + s / 2, y + s, s / 8, 0, p * 2, 0);
       c.closePath()
+      st=s/8
     } else {
       throw ('unknownType '+type)
     }
