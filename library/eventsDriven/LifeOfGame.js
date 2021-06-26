@@ -82,6 +82,10 @@ var logm= {
       for(var n in ns) {
         vx= cx+ ns[n][0];
         vy= cy+ ns[n][1];
+        if(!((vx>-1 && vy>-1 && vx<123 && vy<123))) {
+          continue;
+        }
+        
         if(vx+'_'+vy in vxy) {
           continue;
         }
@@ -148,7 +152,7 @@ var logm= {
         lib.rectm(c,
          x*5+40,y*5+40, 4,4,0.5,'#9ff','#477')
       }
-      lib.textm(c,1,7,'Frm:'+this.frame,7,'#777');
+      lib.textm(c,1,27,'Frm:'+this.frame,20,'#777');
       
       if(this.debug.is) {
        for(var d in this.debug.queue) {
@@ -162,7 +166,7 @@ var logm= {
       setTimeout(this.cvsNext.bind(this),10);
   },
   cvsLib: {},
-  debug: {is:1,queue:[]}
+  debug: {is:0,queue:[]}
 };
 
 window.logm= logm
