@@ -956,6 +956,15 @@ for(var l in lineNodes) {
        15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
     
     }
+    } else {
+       for(var cid in comps) {
+      comp= comps[cid]
+   
+       dglcvs.lib.textm(c,
+       5+50*comp.x+pX+comp.xOfs+15/2,
+       5+25*comp.y+pY+comp.yOfs-15/2, comp.id, 6, '#fff','Arial','#333')
+       }
+     
     }
   
     
