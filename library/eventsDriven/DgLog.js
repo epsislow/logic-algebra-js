@@ -726,7 +726,8 @@ var dglcvs={
    //   c.fillStyle=(state?'#9f9':'#262');
       st=-s/2
     } else if (type=='probe') {
-      c.fillStyle='#333'
+      c.strokeStyle='#599'
+      c.fillStyle='#255'
       c.beginPath()
       c.moveTo(x,y)
       c.rect(x,y,s*2,s)
