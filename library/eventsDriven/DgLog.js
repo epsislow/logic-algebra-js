@@ -407,7 +407,7 @@ var dglcvs={
     var type=comp.type
     
      if(type=='controlled') {
-      type='lcd';
+      type='tunnel-out';
     }
    
     if(type=='controlled') {
