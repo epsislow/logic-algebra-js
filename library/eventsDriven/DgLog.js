@@ -407,7 +407,7 @@ var dglcvs={
     var type=comp.type
     
      if(type=='controlled') {
-      type='tunnel-out';
+      type='probe';
     }
    
     if(type=='controlled') {
@@ -725,7 +725,13 @@ var dglcvs={
       
    //   c.fillStyle=(state?'#9f9':'#262');
       st=-s/2
-    } else if (type='not') {
+    } else if (type=='probe') {
+      c.fillStyle='#333'
+      c.beginPath()
+      c.moveTo(x,y)
+      c.rect(x,y,s*2,s)
+      dt=s
+    } else if (type=='not') {
       if(state) {
         c.strokeStyle= sty[3]
       }
