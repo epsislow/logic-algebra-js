@@ -407,11 +407,14 @@ var dglcvs={
     var type=comp.type
     
      if(type=='controlled') {
-      type='count';
+      type='lcd';
     }
    
     if(type=='controlled') {
       sty=['#4a4','#040','#9f9'];
+    }
+    if(type=='lcd') {
+      sty=['#b50','#000','#fff']
     }
     if(type=='pin' || type=='pout'|| type=='chip' || type=='ram' || type=='count') {
       sty= ['#a44','#422','#ff9'];
@@ -436,6 +439,18 @@ var dglcvs={
       c.beginPath()
       c.rect(x,y,s,s/2)
       st=-s/2
+    } else if (type=='lcd') {
+      c.beginPath();
+      c.rect(x,y,s+s/4,s*2)
+   //   c.stroke()
+    //  c.fill()
+   //   stroke=0
+    //  c.beginPath()
+     // c.rect(x+s/8,y+s/8,s*2-s/4,s*2-s/4)
+   //   c.fillStyle='#000'
+      
+      st=s
+      dt=s/4
     } else if(type=='count') {
       c.beginPath();
       c.rect(x,y,s,s)
