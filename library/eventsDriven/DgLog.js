@@ -402,18 +402,18 @@ var dglcvs={
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
   'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0) {
-    var sty=['#779','#44a','#fff','#99f']
+    var sty=['#779','#44a','#fff','#aaf']
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
     
      if(type=='controlled') {
-      type='ram';
+      type='count';
     }
    
     if(type=='controlled') {
       sty=['#4a4','#040','#9f9'];
     }
-    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram') {
+    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram' || type=='count') {
       sty= ['#a44','#422','#ff9'];
       if(type=='chip') {
         sty[2]='#aa4'
@@ -436,6 +436,23 @@ var dglcvs={
       c.beginPath()
       c.rect(x,y,s,s/2)
       st=-s/2
+    } else if(type=='count') {
+      c.beginPath();
+      c.rect(x,y,s,s)
+      c.stroke()
+      c.fill()
+      c.beginPath()
+      c.rect(x+s/8,y+s/8,s-s/4,s-s/4)
+      c.textAlign='center'
+      c.stroke();
+      c.fill()
+      fill=0
+      stroke=0
+      
+   // this.lib.textm(c,x+s/2,y+s/2,'00 00',3.5,sty[2],'monospace')
+   
+     this.lib.textm(c,x+s/2,y+s/2,'00',5,sty[2],'monospace')
+     
     } else if(type=='ram') {
       c.beginPath()
       c.rect(x,y,s*2,s*2)
@@ -444,7 +461,7 @@ var dglcvs={
       c.beginPath()
       c.rect(x+s/8,y+s/8,s*2-s/4,s*2-s/4)
       c.textAlign='left'
-     this.lib.textm(c,x+s/8+2,y+s/4+1,'Adr: '+'024',5,sty[2])
+     this.lib.textm(c,x+s/8+2,y+s/4+1,'Adr: '+'00 24',5,sty[2])
      c.fillStyle=sty[0];
      c.beginPath()
      c.rect(x+s/8+2,y+8.5,11,4.5)
@@ -457,6 +474,36 @@ var dglcvs={
      stroke=0
       st=s
       dt=s
+    } else if(type=='tunnel-in') {
+       if(!state) {
+         c.strokeStyle='#222';
+       } else {
+         c.strokeStyle='#9f9';
+       }
+       
+       c.beginPath();
+       c.moveTo(x+s/2,y);
+       c.lineTo(x+s,y+s/4);
+       c.lineTo(x+s,y+s/2);
+       c.lineTo(x,y+s/2);
+       c.lineTo(x,y+s/4);
+       c.closePath()
+       st=-s/2
+    } else if(type=='tunnel-out') {
+      if (!state) {
+        c.strokeStyle = '#222';
+      } else {
+        c.strokeStyle = '#9f9';
+      }
+      
+      c.beginPath();
+      c.moveTo(x, y);
+      c.lineTo(x+s, y);
+      c.lineTo(x+s, y+s/4);
+      c.lineTo(x+s/2, y+s/2);
+      c.lineTo(x, y+s/4);
+      c.closePath()
+      st=-s/2
     } else if(type=='const') {
       
     } else if(type=='and' || type=='nand') {
