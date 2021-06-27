@@ -407,13 +407,13 @@ var dglcvs={
     var type=comp.type
     
      if(type=='controlled') {
-      type='chip';
+      type='ram';
     }
    
     if(type=='controlled') {
       sty=['#4a4','#040','#9f9'];
     }
-    if(type=='pin' || type=='pout'|| type=='chip') {
+    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram') {
       sty= ['#a44','#422','#ff9'];
       if(type=='chip') {
         sty[2]='#aa4'
@@ -425,17 +425,37 @@ var dglcvs={
     if(isDrag) {
       sty= ['#4aa','#499','#9ff']
     }
-    var st=0
+    var st=0,dt=0;
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
     
     const p= Math.PI
-    var fill=1;
+    var fill=1,stroke=1;
     if(type=='controlled') {
       c.beginPath()
       c.rect(x,y,s,s/2)
       st=-s/2
+    } else if(type=='ram') {
+      c.beginPath()
+      c.rect(x,y,s*2,s*2)
+      c.stroke()
+      c.fill()
+      c.beginPath()
+      c.rect(x+s/8,y+s/8,s*2-s/4,s*2-s/4)
+      c.textAlign='left'
+     this.lib.textm(c,x+s/4,y+s/2,'Adr:'+'024',5,sty[2])
+     c.fillStyle=sty[0];
+     c.beginPath()
+     c.rect(x+s/4,y+s/2+s/4+1,11,5)
+     c.fill();
+     this.lib.textm(c,x+s/4,y+s,'FF F2 02 46',3.5, '#fff','monospace')
+     fill=0
+     stroke=0
+      st=s
+      dt=s
+    } else if(type=='const') {
+      
     } else if(type=='and' || type=='nand') {
       if(state) {
         c.strokeStyle= sty[3]
@@ -658,15 +678,16 @@ var dglcvs={
     } else {
       throw ('unknownType '+type)
     }
-      
+      if(stroke) {
     	c.stroke();
+      }
     	if(fill) {
     	  c.fill();
     	}
     	
     	
     //pins and pouts
-    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s,s+st);
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s+dt,s+st);
     
     c.textAlign = 'center';
   	c.textBaseline = 'middle';
