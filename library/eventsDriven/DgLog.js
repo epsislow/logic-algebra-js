@@ -368,6 +368,12 @@ var dglcvs={
   checkBtnTouch: function() {
     
   },
+  drawCompMenu: function(c,isMain=1,chipActive,k=-100) {
+    this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
+
+    var i=1;
+    
+  },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
@@ -407,7 +413,7 @@ var dglcvs={
     var type=comp.type
     
      if(type=='controlled') {
-      type='probe';
+      type='pin';
     }
    
     if(type=='controlled') {
@@ -770,7 +776,8 @@ var dglcvs={
      // this.lib.textm(c,x+s/2,y-s/2, comp.id, 6, sty[2],'Arial','#333')
       
    // }
-    
+    comp.st=st;
+    comp.dt=dt;
   },
   'addPinSafeDistance': function(comp) {
     var x=comp.pinx+1;
@@ -1149,7 +1156,7 @@ for(var l in lineNodes) {
       comp= comps[cid]
    
        dglcvs.lib.textm(c,
-       5+50*comp.x+pX+comp.xOfs+15/2,
+       5+50*comp.x+pX+comp.xOfs+15/2+comp.dt/2,
        5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
    }
     
@@ -1176,10 +1183,10 @@ for(var l in lineNodes) {
    
    if(this.m.needsConfirm) {
     var cbtns= dglcvs.drawConfirm(c, this.m.confirmText);
-    if(!this.m.confirmShowed) {
-     this.btns.push.apply(this.btns,cbtns);
-      this.m.confirmShowed=1;
-    }
+  //  if(!this.m.confirmShowed) {
+    // this.btns(this.btns,cbtns);
+   //   this.m.confirmShowed=1;
+  //  }
    }
     
     if(debug.is) {
@@ -1249,6 +1256,18 @@ var dgl= {
     main:{ins:[],outs:[],comp:componentsPos(components),active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
+  },
+  compType: {
+    'Gates':['not','and','nand','or','nor','xor','nxor'],
+    'Chip':['pin','pout','chip','count','ram','mux','demux'],
+    'Fans':['fan','tunnel-in','tunnel-out'],
+    'Input':['clock','controlled','const'],
+    'Output':['probe','led','ledmin','lcd']
+  },
+  CompSnippets: {
+    'DFlipFlop':{},
+    'Mux': {},
+    'Demux':{}
   },
   cache:{
     save: function(zip=1) {

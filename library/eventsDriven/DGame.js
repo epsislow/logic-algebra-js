@@ -355,7 +355,10 @@ var dglcvs={
   checkBtnTouch: function() {
     
   },
-  drawChipMenu: function(c,chips,k=-100) {
+  drawAssembler: function(c,type,resourceId,) {
+    
+  },
+  drawChipMenu:function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
     var i=1;
