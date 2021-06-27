@@ -402,7 +402,7 @@ var dglcvs={
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
   'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0) {
-    var sty=['#779','#44a','#fff','#bb5']
+    var sty=['#779','#44a','#fff','#99f']
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
     
