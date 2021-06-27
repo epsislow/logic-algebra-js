@@ -322,9 +322,22 @@ var dglcvs={
   d:{
     chipMenuK:-100,
   },
-  drawChipSetup: function(c, name, chip) {
+  drawChipSetup: function(c, name, chip, sel) {
     
-    this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
+   // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
+    
+    this.drawComp(c, {
+      id:name,
+      ins:chip.ins,
+      out:chip.outs,
+      type:'chip'
+    },
+       40, 40,
+       100, 2);
+     
+    this.lib.textm(c,
+          90,
+          90, name, 7, '#fff', 'Arial', '#333') 
     
   },
   drawConfirm: function(c, text,yesCall, noCall) {
@@ -389,7 +402,7 @@ var dglcvs={
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
   },
   'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0) {
-    var sty=['#779','#44a','#fff','bb5'];
+    var sty=['#779','#44a','#fff','#bb5']
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
     
@@ -424,6 +437,9 @@ var dglcvs={
       c.rect(x,y,s,s/2)
       st=-s/2
     } else if(type=='and' || type=='nand') {
+      if(state) {
+        c.strokeStyle= sty[3]
+      }
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
   		c.lineTo(x+s, y);
@@ -441,6 +457,10 @@ var dglcvs={
 		    st=s/4
 		  }
     } else if (type=='or' || type=='nor') {
+      if(state) {
+        c.strokeStyle= sty[3]
+      }
+	  	
       c.beginPath(); 
       c.moveTo(x, y+s/2)
    
@@ -464,7 +484,10 @@ var dglcvs={
         st= s/4
       }
     } else if( type=='xor' || type=='nxor') {
-      c.beginPath();
+      if(state) {
+        c.strokeStyle= sty[3]
+      }
+	  	c.beginPath();
       c.moveTo(x+s,y);
       c.arc(x,y,s,0,p/3,0)
       c.arc(x+s,y,s,p-p/3,p,0)
@@ -528,7 +551,10 @@ var dglcvs={
         fill = 0
       }
     } else if(type=='fan') {
-      c.beginPath()
+      if(state) {
+        c.strokeStyle= sty[3]
+      }
+	  	c.beginPath()
       c.moveTo(x+s/4,y)
       c.lineTo(x+s-s/4, y)
       c.lineTo(x+s-s/8, y+s/4)
@@ -615,7 +641,10 @@ var dglcvs={
    //   c.fillStyle=(state?'#9f9':'#262');
       st=-s/2
     } else if (type='not') {
-      c.beginPath();
+      if(state) {
+        c.strokeStyle= sty[3]
+      }
+	  	c.beginPath();
       c.moveTo(x,y)
       c.lineTo(x+s,y)
       c.lineTo(x+s/2,y+s);
