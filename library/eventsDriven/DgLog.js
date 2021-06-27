@@ -444,12 +444,15 @@ var dglcvs={
       c.beginPath()
       c.rect(x+s/8,y+s/8,s*2-s/4,s*2-s/4)
       c.textAlign='left'
-     this.lib.textm(c,x+s/4,y+s/2,'Adr:'+'024',5,sty[2])
+     this.lib.textm(c,x+s/8+2,y+s/4+1,'Adr: '+'024',5,sty[2])
      c.fillStyle=sty[0];
      c.beginPath()
-     c.rect(x+s/4,y+s/2+s/4+1,11,5)
+     c.rect(x+s/8+2,y+8.5,11,4.5)
      c.fill();
-     this.lib.textm(c,x+s/4,y+s,'FF F2 02 46',3.5, '#fff','monospace')
+     this.lib.textm(c,x+s/8+2,y+11,'FF F2 02 46',3.5, '#fff','monospace')
+     this.lib.textm(c,x+s/8+2, y+11+5,'0A 3B A5 DF',3.5,'#fff','monospace')
+     this.lib.textm(c,x+s/8+2, y+11+10,'00 00 00 00',3.5,'#fff','monospace')
+     this.lib.textm(c,x+s/8+2, y+11+15,'00 00 00 00',3.5,'#fff','monospace')
      fill=0
      stroke=0
       st=s
