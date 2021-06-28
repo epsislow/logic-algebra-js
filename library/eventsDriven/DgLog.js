@@ -368,11 +368,17 @@ var dglcvs={
   checkBtnTouch: function() {
     
   },
-  drawCompMenu: function(c,isMain=1,chipActive,k=-100) {
-    this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
+  drawCompMenu: function(c,types, open,chipActive,k=-100) {
+    this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
 
     var i=1;
-    
+    var active=0;
+    for(var ct in types) {
+      c.textAlign='left';
+      this.lib.texti(c,5+k,10*i, (ct in open)?"\uf146":"\uf0fe", 7, (ct in open)?'#0ff':'#09f');
+      this.lib.textm(c, 15+k, 10*i, ct, 7, active?'#4f4':'#fff');
+      i++;
+    }
   },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
@@ -1301,20 +1307,29 @@ for(var l in lineNodes) {
        5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
    }
     
-   if(this.m.drawChips) {
+   if(this.m.drawChips || this.m.addComp) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
   dglcvs.d.chipMenuK+= frameTimeDiff/((100-dglcvs.d.chipMenuK)/100)
      }
      if(dglcvs.d.chipMenuK>=0) {
        dglcvs.d.chipMenuK=0;
      }
+     if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
+     } else {
+       dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.m.chipActive, dglcvs.d.chipMenuK)
+     }
      if(dglcvs.d.chipMenuK<0) {
        cvs.drawNext(1);
      }
    }else if(dglcvs.d.chipMenuK!==-100) {
-       dglcvs.d.chipMenuK -=  frameTimeDiff / ((100 - dglcvs.d.chipMenuK) / 100)
-       dglcvs.drawChipMenu(c, this.chip, dglcvs.d.chipMenuK);
+       dglcvs.d.chipMenuK -=  frameTimeDiff / ((100 - dglcvs.d.chipMenuK) / 100);
+    if(this.m.drawChips) {
+     dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
+     } else {
+       dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.m.chipActive, dglcvs.d.chipMenuK)
+     }
+     
        
      if(dglcvs.d.chipMenuK<-100) {
        dglcvs.d.chipMenuK=-100;
@@ -1405,7 +1420,8 @@ var dgl= {
     'Input':['clock','controlled','const'],
     'Output':['probe','led','ledmin','lcd']
   },
-  CompSnippets: {
+  compTypeOpen: {},
+  compSnippets: {
     'DFlipFlop':{},
     'Mux': {},
     'Demux':{}
@@ -1576,6 +1592,25 @@ var dgl= {
     return;
     }
       
+  }
+  if(this.m.addComp) {
+    var ct;
+    if(mdx >=0 && mdx<=100 && mdy>=0 && mdy<= 195) {
+      var i = 1;
+      for(var p in this.compType) {
+        ct= this.compType[p];
+        if(mdy>= 10*i-10 && mdy <= 10*(i+1)+5) {
+          if(p in this.compTypeOpen) {
+            delete this.compTypeOpen[p]
+          } else {
+            this.compTypeOpen[p]=1;
+          }
+          return;
+        }
+        i++;
+      }
+      return;
+    }
   }
      
      if(this.m.drawNodes) {
