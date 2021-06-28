@@ -434,7 +434,7 @@ var dglcvs={
     if(isDrag) {
       sty= ['#4aa','#499','#9ff']
     }
-    var st=0,dt=0;
+    var st=0,dt=0, trans=c.getTransform();
     c.lineWidth = width;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
@@ -530,6 +530,17 @@ var dglcvs={
     } else if(type=='and' || type=='nand') {
       if(state) {
         c.strokeStyle= sty[3]
+      }
+      if(comp.rt) {
+    //    if(type=='and') {
+        c.translate(x+s/2,y+s/2)
+        c.rotate(comp.rt*p/2)
+        c.translate(-x-s/2,-y-s/2)
+     //   } else {
+   //     c.translate(x+s/2+s/8,y+s/2+s/8)
+   //     c.rotate(comp.rt*p/2)
+  //      c.translate(-x-s/2-s/8,-y-s/2-s/8)
+  //      }
       }
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
@@ -742,6 +753,16 @@ var dglcvs={
       if(state) {
         c.strokeStyle= sty[3]
       }
+      if(comp.rt) {
+        c.translate(x+s/2,y+s/2)
+        c.rotate(comp.rt*p/2)
+        c.translate(-x-s/2,-y-s/2)
+        
+       /* c.translate(x+s/2+s/16,y+s/2+s/16)
+        c.rotate(comp.rt*p/2)
+        c.translate(-x-s/2-s/16,-y-s/2-s/16)*/
+      }
+	  	
 	  	c.beginPath();
       c.moveTo(x,y)
       c.lineTo(x+s,y)
@@ -762,10 +783,10 @@ var dglcvs={
     	if(fill) {
     	  c.fill();
     	}
-    	
+    	c.setTransform(trans)
     	
     //pins and pouts
-    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s+dt,s+st);
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s+dt,s+st,comp.rt);
     
     c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -779,13 +800,24 @@ var dglcvs={
     comp.st=st;
     comp.dt=dt;
   },
-  'addPinSafeDistance': function(comp) {
+  'addPinSafeDistance': function(comp,r=0) {
+    const rot={
+      0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
+      1:{'top':'right','right':'bottom','bottom':'left','left':'top'},
+      2:{'top':'bottom','right':'left','bottom':'top','left':'right'},
+      3:{'top':'left','right':'top','bottom':'right','left':'bottom'},
+    };
+    
     var x=comp.pinx+1;
     var y=comp.piny+1;
-    if(comp.pos=='top') {
-      y=y-4;
-    } else {
-      y=y+4;
+    if(rot[r][comp.pos]=='top') {
+      y-=4;
+    } else if(rot[r][comp.pos]=='right') {
+      x+=4
+    } else if(rot[r][comp.pos]=='left') {
+      x-=4
+    } else if(rot[r][comp.pos]=='bottom') {
+      y+=4;
     }
     return['safeDist', x,y];
   },
@@ -806,22 +838,36 @@ var dglcvs={
       comp.ins=indexBy(ins,'id');
       outs=[{pos:'bottom',id:cid}];
       comp.outs=indexBy(outs,'id');
+  //    comp.rt=3;
  //   }
   },
-  'drawPinsOfComp': function(c,type,ins,outs,revIns,x,y,w,h) {
+  'drawPinsOfComp': function(c,type,ins,outs,revIns,x,y,w,h,r=0) {
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
+    const rot={
+      0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
+      1:{'top':'right','right':'bottom','bottom':'left','left':'top'},
+      2:{'top':'bottom','right':'left','bottom':'top','left':'right'},
+      3:{'top':'left','right':'top','bottom':'right','left':'bottom'},
+    };
+    const rott= {
+      0: {w:w, h:h},
+      1: {w:h, h:w},
+      2: {w:w, h:h},
+      3: {w:h, h:w},
+    }
+    w=rott[r].w;
+    h=rott[r].h;
     var iid= Object.keys(ins);
     if(revIns) {
       iid.reverse();
     }
     for(var i in iid) {
    //   ins[i].pin='in';
-      pos[ins[iid[i]].pos].push(ins[iid[i]]);
+      pos[rot[r][ins[iid[i]].pos]].push(ins[iid[i]]);
     }
-    
     for(var k in outs) {
   //    ins[i].pin='out';
-      pos[outs[k].pos].push(outs[k]);
+      pos[rot[r][outs[k].pos]].push(outs[k]);
     }
   
     var k=0;
@@ -1013,6 +1059,10 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
   //  console.log(comps)
     for(var cid in comps) {
       comp= comps[cid]
+    //  if('ins' in comp) {
+    //    continue;
+   //   }
+      
       ins=[];
       for (var cinid of comp.inputs) {
       //  var cin = comps[cinid];
@@ -1021,6 +1071,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       comp.ins=indexBy(ins,'id');
       outs=[{pos:'bottom',id:cid}];
       comp.outs=indexBy(outs,'id');
+      comp.rt=3
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
       
@@ -1032,7 +1083,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
      }
      */
      /* dglcvs.drawInt(
-        c,txt, 
+        c,txt,
         comp.id,
         ty, 
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
@@ -1060,7 +1111,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
 lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
 
 lineNodes.push(
-   dglcvs.addPinSafeDistance(compin.outs[cinid])
+   dglcvs.addPinSafeDistance(compin.outs[cinid],compin.rt)
 );
 
 var idx=cinid+'_'+cid;
@@ -1079,7 +1130,7 @@ if(idx in dgl.nodeConn) {
 }
     
 lineNodes.push(
-  dglcvs.addPinSafeDistance(comp.ins[cinid])
+  dglcvs.addPinSafeDistance(comp.ins[cinid], comp.rt)
 );
 lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
 
