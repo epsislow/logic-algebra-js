@@ -368,7 +368,10 @@ var dglcvs={
   checkBtnTouch: function() {
     
   },
-  drawCompMenu: function(c,types, open,chipActive,k=-100) {
+  drawCompMenu: function(c,types, open,chipActive,k=-100,mcm) {
+    var pX= -Math.floor(mcm.pan.xOfs+mcm.pan.ofsX)
+    var pY= -Math.floor(mcm.pan.yOfs+mcm.pan.ofsY)
+    
     this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
     c.save()
     c.beginPath()
@@ -378,27 +381,28 @@ var dglcvs={
     var active=0;
     for(var ct in types) {
       c.textAlign='left';
-      this.lib.texti(c,5+k,10*i, (ct in open)?"\uf146":"\uf0fe", 7, (ct in open)?'#0ff':'#09f');
-      this.lib.textm(c, 15+k, 10*i, ct, 7, (ct in open)?'#aff':'#fff');
+      this.lib.texti(c,5+k,10*i+pY, (ct in open)?"\uf146":"\uf0fe", 7, (ct in open)?'#0ff':'#09f');
+      this.lib.textm(c, 15+k, 10*i+pY, ct, 7, (ct in open)?'#aff':'#fff');
       i++;
       if(ct in open) {
         for(var cg in types[ct]) {
           c.textAlign='left'
-          this.lib.textm(c, 15+k+5, 10*i, 
+          this.lib.textm(c, 15+k+5, 10*i+pY, 
           //types[ct][cg]
           types[ct][cg].charAt(0).toUpperCase()+types[ct][cg].slice(1)
           , 6, '#fff');
           i++;
-          this.drawComp(c, {
-              id: cg,
-              ins: {},
-              out: {},
-              type: types[ct][cg]
-            },
-           15+k+5, 10*i,
+          var comp={
+            id: cg,
+            ins: {},
+            out: {},
+            type: types[ct][cg]
+          }
+          this.drawComp(c, comp,
+           15+k+5, 10*i+pY,
             15, 2, 0,1);
             
-            i+=1.5;
+            i+=1+0.2+comp.st/10;
             
           i++;
         }
@@ -1354,7 +1358,7 @@ for(var l in lineNodes) {
      if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
      } else {
-       dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.m.chipActive, dglcvs.d.chipMenuK)
+       dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.m.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }
      if(dglcvs.d.chipMenuK<0) {
        cvs.drawNext(1);
@@ -1364,7 +1368,7 @@ for(var l in lineNodes) {
     if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
      } else {
-       dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.m.chipActive, dglcvs.d.chipMenuK)
+       dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.m.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }
      
        
@@ -1439,6 +1443,13 @@ var dgl= {
     },
     confirmNoCall: function() {
       this.needsConfirm=0;
+    },
+    compMenu: {
+      isPan:0,
+      pan:{
+        x:0,y:0,ofsX:0,ofsY:0,
+        xOfs:0,yOfs:0
+      },
     }
   },
   btns:{},
@@ -1642,9 +1653,14 @@ var dgl= {
           } else {
             this.compTypeOpen[p]=1;
           }
-          return;
+          break;
         }
         i++;
+      }
+      if(mdx>50) {
+      this.m.compMenu.isPan=1;
+      this.m.compMenu.pan.x = mdx;
+      this.m.compMenu.pan.y = mdy;
       }
       return;
     }
@@ -1868,6 +1884,16 @@ var er2= e.touches[1];
 	 this.m.pan.ofsX= mouse_x-this.m.pan.x;
 	 this.m.pan.ofsY= mouse_y-this.m.pan.y;
 		  }
+		  if(this.m.compMenu.isPan) {
+		  
+   this.m.compMenu.pan.ofsX= mouse_x-this.m.compMenu.pan.x;
+   if(this.m.compMenu.pan.yOfs+ mouse_y-this.m.compMenu.pan.y>0) {
+	   this.m.compMenu.pan.ofsY= mouse_y-this.m.compMenu.pan.y;
+   } else {
+     this.m.compMenu.pan.ofsY=-this.m.compMenu.pan.yOfs;
+   }
+	 
+		  }
 		}
 		cvs.draw(1)
   },
@@ -1921,6 +1947,14 @@ var er2= e.touches[1];
     	    this.m.isPan = false;
     	    this.m.pan.ofsX = 0;
     	    this.m.pan.ofsY = 0;
+    	  }
+    	  if (this.m.compMenu.isPan) {
+    	    this.m.compMenu.pan.xOfs += Math.floor(this.m.compMenu.pan.ofsX);
+    	    
+    	    this.m.compMenu.pan.yOfs += Math.floor(this.m.compMenu.pan.ofsY);
+    	    this.m.compMenu.isPan= false;
+    	    this.m.compMenu.pan.ofsX = 0;
+    	    this.m.compMenu.pan.ofsY = 0;
     	  }
     	}
     cvs.draw(1)
