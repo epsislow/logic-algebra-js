@@ -800,6 +800,22 @@ var dglcvs={
     comp.st=st;
     comp.dt=dt;
   },
+  'addNoUnderComp': function(x,y,comp,x2, y2,comp2) {
+    const r=comp.rt;
+    const w=15+comp.st;
+    const h=15+comp.dt;
+    
+    const r2=comp2.rt;
+    const w2=15+comp2.st;
+    const h2=15+comp2.dt;
+    var no=0, dots=[]
+    if(r==3 && x2<x) {
+      dots.push(['noUnder',x,y+h*(y2>y?1:-1)]);
+    }
+    
+    return dots;
+    
+  },
   'addPinSafeDistance': function(comp,r=0) {
     const rot={
       0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
@@ -1114,6 +1130,12 @@ lineNodes.push(
    dglcvs.addPinSafeDistance(compin.outs[cinid],compin.rt)
 );
 
+
+var dots=  dglcvs.addNoUnderComp(compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1, compin,comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1,comp)
+if(dots.length) {
+  lineNodes.push(...dots);
+}
+  
 var idx=cinid+'_'+cid;
 if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
@@ -1128,7 +1150,7 @@ if(idx in dgl.nodeConn) {
  }
  }
 }
-    
+
 lineNodes.push(
   dglcvs.addPinSafeDistance(comp.ins[cinid], comp.rt)
 );
