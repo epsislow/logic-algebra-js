@@ -819,7 +819,7 @@ var dglcvs={
       dots.push(['noUnder',x2,y2+(h2)*(y2>y?-1:1)])
     }
     if(rev && r2==2 && y2>y) {
-      dots.push(['noUnder',x2+w2*(y2>y?-1:1),y2])
+      dots.push(['noUnder',x2+w2*(x2>x?-1:1),y2])
     }
     
     return dots;
@@ -1096,7 +1096,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       comp.ins=indexBy(ins,'id');
       outs=[{pos:'bottom',id:cid}];
       comp.outs=indexBy(outs,'id');
-      comp.rt=2
+      comp.rt=0
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
       
@@ -1143,19 +1143,39 @@ lineNodes.push(
    outPinSafeDist
 );
 
-var dots= dglcvs.addNoUnderComp(
+var dotsOut= dglcvs.addNoUnderComp(
   compin.outs[cinid].pinx+1,
   compin.outs[cinid].piny+1, compin,
  // outPinSafeDist[1],
   //outPinSafeDist[2], compin,
  inPinSafeDist[1],
   inPinSafeDist[2],comp
-  //comp.ins[cinid].pinx+1,
-  //comp.ins[cinid].pinx+1, comp
-  
   )
-if(dots.length) {
-  lineNodes.push(...dots);
+ /* 
+var dotsIn= dglcvs.addNoUnderComp(
+  dotsOut[0][1],
+  dotsOut[0][2], compin,
+  inPinSafeDist[1],
+  inPinSafeDist[2],comp,
+  1)
+  */
+  /*
+dotsOut = dglcvs.addNoUnderComp(
+  dotsOut[0][1],
+  dotsOut[0][2], compin,
+  dotsIn[0][1],
+  dotsIn[0][2], comp)
+
+dotsIn= dglcvs.addNoUnderComp(
+  dotsOut[0][1],
+  dotsOut[0][2], compin,
+  dotsIn[0][1],
+  dotsIn[0][2], comp,
+  1)*/
+
+  
+if(dotsOut.length) {
+  lineNodes.push(...dotsOut);
 }
   
 var idx=cinid+'_'+cid;
@@ -1175,24 +1195,25 @@ if(idx in dgl.nodeConn) {
 
 
 var dots= dglcvs.addNoUnderComp(
-  outPinSafeDist[1],
-  outPinSafeDist[2], compin,
-  //lineNodes[lineNodes.length-1][1],
- // lineNodes[lineNodes.length-1][2], compin,
-  inPinSafeDist[1],
-  inPinSafeDist[2], comp,
-//  comp.ins[cinid].pinx+1,
-//  comp.ins[cinid].pinx+1, comp,
+  dotsOut.length? dotsOut[0][1]: outPinSafeDist[1],
+  dotsOut.length? dotsOut[0][2]: outPinSafeDist[2], compin,
+//  inPinSafeDist[1],
+ // inPinSafeDist[2], comp,
+   comp.ins[cinid].pinx+1,
+  comp.ins[cinid].piny+1, comp,
   1)
-  
+  /*
   dots= dglcvs.addNoUnderComp(
   //  compin.outs[cinid].pinx + 1,
    // compin.outs[cinid].piny+1, compin,
    outPinSafeDist[1],
   outPinSafeDist[2], compin,
   
-    comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1,comp,1
-    );
+  //  comp.ins[cinid].pinx+1,
+  //comp.ins[cinid].piny+1, comp,1
+    );*/
+    
+  
 
 if(dots.length) {
   lineNodes.push(...dots);
