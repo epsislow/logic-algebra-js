@@ -532,15 +532,15 @@ var dglcvs={
         c.strokeStyle= sty[3]
       }
       if(comp.rt) {
-    //    if(type=='and') {
+        if(type=='and') {
         c.translate(x+s/2,y+s/2)
         c.rotate(comp.rt*p/2)
         c.translate(-x-s/2,-y-s/2)
-     //   } else {
-   //     c.translate(x+s/2+s/8,y+s/2+s/8)
-   //     c.rotate(comp.rt*p/2)
-  //      c.translate(-x-s/2-s/8,-y-s/2-s/8)
-  //      }
+      } else {
+        c.translate(x+s/2,y+s/2+s/8)
+        c.rotate(comp.rt*p/2)
+        c.translate(-x-s/2,-y-s/2-s/8)
+        }
       }
 	  	c.beginPath(); 
 	  	c.moveTo(x, y);
@@ -1090,7 +1090,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       comp.ins=indexBy(ins,'id');
       outs=[{pos:'bottom',id:cid}];
       comp.outs=indexBy(outs,'id');
-      comp.rt=3
+      comp.rt=2
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
       
@@ -1138,13 +1138,13 @@ lineNodes.push(
 );
 
 var dots= dglcvs.addNoUnderComp(
-  //compin.outs[cinid].pinx+1,
-  //compin.outs[cinid].piny+1, compin,
-  outPinSafeDist[1],
-  outPinSafeDist[2], compin,
+  compin.outs[cinid].pinx+1,
+  compin.outs[cinid].piny+1, compin,
+ // outPinSafeDist[1],
+  //outPinSafeDist[2], compin,
  inPinSafeDist[1],
   inPinSafeDist[2],comp
- // comp.ins[cinid].pinx+1,
+  //comp.ins[cinid].pinx+1,
   //comp.ins[cinid].pinx+1, comp
   
   )
@@ -1178,6 +1178,15 @@ var dots= dglcvs.addNoUnderComp(
 //  comp.ins[cinid].pinx+1,
 //  comp.ins[cinid].pinx+1, comp,
   1)
+  
+  dots= dglcvs.addNoUnderComp(
+  //  compin.outs[cinid].pinx + 1,
+   // compin.outs[cinid].piny+1, compin,
+   outPinSafeDist[1],
+  outPinSafeDist[2], compin,
+  
+    comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1,comp,1
+    );
 
 if(dots.length) {
   lineNodes.push(...dots);
