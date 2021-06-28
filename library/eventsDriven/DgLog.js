@@ -372,6 +372,7 @@ var dglcvs={
     var pX= -Math.floor(mcm.pan.xOfs+mcm.pan.ofsX)
     var pY= -Math.floor(mcm.pan.yOfs+mcm.pan.ofsY)
     var openc=2.5
+    const csd=this.compStDt;
     this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
     c.save()
     c.beginPath()
@@ -450,6 +451,24 @@ var dglcvs={
     var pinw=2,pinh=2;
     
     this.lib.rectm(c,x-1,y-1,pinw,pinh,1, styles[type][0], styles[type][1])
+  },
+  compStDt: {
+    'not':[100/8,0],
+    'nand':[100/4,0],
+    'nor':[100/4,0],
+    'xor':[-100/4,0],
+    'nxor':[100/4-100/8,0],
+      'pin':[-100/2,0],
+      'pout':[-100/2,0],
+      'ram':[100,100],
+      'fan':[-100/2,0], 
+      'tunnel-in':[-100/2,-100/2],
+      'tunnel-out':[-100/2,-100/2],
+      'controlled':[-100/2,0],
+      'const':[-100/4,0],
+      'probe':[0,100],
+      'ledmin':[-100/4,0], 
+      'lcd':[100,100/4]
   },
   'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0) {
     var sty=['#779','#44a','#fff','#aaf']
@@ -1651,11 +1670,28 @@ var dgl= {
   }
   if(this.m.addComp) {
     var ct;
+    const csd = dglcvs.compStDt;
+    var opencnt= {};
+    for(var p in this.compType) {
+      opencnt[p]=0;
+      if(p in this.compTypeOpen) {
+        for(var j in this.compType[p]) {
+        if(j in csd) {
+           opencnt[p]+=((100+ csd[j][0])/100)*10
+        } else {
+          opencnt[p]++;
+        }
+        }
+      }
+    }
+    
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
       var i = 1;
+      const ppY=-Math.floor(this.m.compMenu.pan.yOfs+this.m.compMenu.pan.ofsY)
       for(var p in this.compType) {
         ct= this.compType[p];
-        if(mdy>= 10*i-10 && mdy <= 10*(i+1)+5) {
+        
+        if(mdy>= 10*i-10+ppY*2.5+opencnt [p]&& mdy <= 10*(i+1)+ppY*2.5+5+opencnt[p]) {
           if(p in this.compTypeOpen) {
             delete this.compTypeOpen[p]
           } else {
