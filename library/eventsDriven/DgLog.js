@@ -1673,17 +1673,18 @@ var dgl= {
     const csd = dglcvs.compStDt;
     var opencnt= {};
     for(var p in this.compType) {
-      opencnt[p]=0;
+      opencnt[p]=0
       if(p in this.compTypeOpen) {
         for(var j in this.compType[p]) {
-        if(j in csd) {
+          if(j in csd) {
            opencnt[p]+=((100+ csd[j][0])/100)*10
         } else {
-          opencnt[p]++;
+          opencnt[p]+=10;
         }
         }
       }
     }
+    console.log(opencnt)
     
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
       var i = 1;
