@@ -812,8 +812,14 @@ var dglcvs={
     if(!rev && r==3 && x2<x) {
       dots.push(['noUnder',x,y+(h)*(y2>y?1:-1)]);
     }
-    if(rev && r2==3 && x>x2) {
+    if(!rev && r==2 && y2>y) {
+      dots.push(['noUnder',x+w*(x2>x?1:-1),y])
+    }
+    if(rev && r2==3 && x2<x) {
       dots.push(['noUnder',x2,y2+(h2)*(y2>y?-1:1)])
+    }
+    if(rev && r2==2 && y2>y) {
+      dots.push(['noUnder',x2+w2*(y2>y?-1:1),y2])
     }
     
     return dots;
