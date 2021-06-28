@@ -370,15 +370,41 @@ var dglcvs={
   },
   drawCompMenu: function(c,types, open,chipActive,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
-
+    c.save()
+    c.beginPath()
+    c.rect(0.5, 2.5, 100+k, 190)
+    c.clip()
     var i=1;
     var active=0;
     for(var ct in types) {
       c.textAlign='left';
       this.lib.texti(c,5+k,10*i, (ct in open)?"\uf146":"\uf0fe", 7, (ct in open)?'#0ff':'#09f');
-      this.lib.textm(c, 15+k, 10*i, ct, 7, active?'#4f4':'#fff');
+      this.lib.textm(c, 15+k, 10*i, ct, 7, (ct in open)?'#aff':'#fff');
       i++;
+      if(ct in open) {
+        for(var cg in types[ct]) {
+          c.textAlign='left'
+          this.lib.textm(c, 15+k+5, 10*i, 
+          //types[ct][cg]
+          types[ct][cg].charAt(0).toUpperCase()+types[ct][cg].slice(1)
+          , 6, '#fff');
+          i++;
+          this.drawComp(c, {
+              id: cg,
+              ins: {},
+              out: {},
+              type: types[ct][cg]
+            },
+           15+k+5, 10*i,
+            15, 2, 0,1);
+            
+            i+=1.5;
+            
+          i++;
+        }
+      }
     }
+    c.restore()
   },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
@@ -532,7 +558,18 @@ var dglcvs={
       c.closePath()
       st=-s/2
     } else if(type=='const') {
+      c.beginPath()
+      c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
+      c.closePath()
+     
+      if(state) {
+        c.fillStyle='#2f2';
+      } else {
+        c.fillStyle='#252';
+      }
+      c.stroke()
       
+      st=-s/4
     } else if(type=='and' || type=='nand') {
       if(state) {
         c.strokeStyle= sty[3]
@@ -684,7 +721,7 @@ var dglcvs={
       if(state) {
         c.fillStyle='#f22';
         c.strokeStyle='#fff'
-      }ppp
+      }
    //   c.stroke()
       c.fill();
       fill=0
@@ -1415,7 +1452,7 @@ var dgl= {
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
-    'Chip':['pin','pout','chip','count','ram','mux','demux'],
+    'Chip':['pin','pout','chip','count','ram'],//'mux','demux'],
     'Fans':['fan','tunnel-in','tunnel-out'],
     'Input':['clock','controlled','const'],
     'Output':['probe','led','ledmin','lcd']
