@@ -140,7 +140,7 @@ $('document').ready(function() {
   .addButton('ChipSetup',0,'btn-secondary mx-2',{'id':'diag-chipsetup'})
   .br()
   .addButton('CompSetup',0,'btn-secondary mx-2',{'id':'diag-compsetup'})
-  .addButton('CompSel',0,'btn-secondary ',{'id':'diag-compsel'})
+  .addButton('CompInfo',0,'btn-secondary ',{'id':'diag-compinfo'})
   .addButton('CompConn',0,'btn-secondary mx-2',{'id':'diag-compconn'})
   .addButton('AddComp',0,'btn-secondary ',{'id':'diag-addcomp'})
   .addButton('DelComp',0,'btn-secondary mx-2',{'id':'diag-delcomp'})
@@ -327,9 +327,9 @@ $('document').ready(function() {
 	  	  var en=toggleBtn($(this));
 	  	  dgl.m.compConn=en;
 	  	  })
-	  $('#diag-compsel').click(function() {
+	  $('#diag-compinfo').click(function() {
 	  	  var en=toggleBtn($(this));
-	  	  dgl.m.compSel=en;
+	  	  dgl.m.compInfo=en;
 	  })
 	  
 	  $('#diag-addcomp').click(function() {

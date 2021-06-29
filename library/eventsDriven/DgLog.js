@@ -1217,7 +1217,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
         for(var o in comp.outputs) {
           outs.push({
             pos:'bottom',
-            id:comp.outputs[o]
+            id:comp.id
           })
         }
       } else {
@@ -1246,7 +1246,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
+       15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp[comp.id]? smp[comp.id]: 0 );
       
     }
     
@@ -1265,9 +1265,14 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
        continue;
      }
     var lineNodes= [];
-    
+   
+try { 
 lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
-
+} catch (e) {
+  console.log(compin.outs)
+  alert(cinid+' '+compin.id)
+  throw new Error('testq1')
+}
 var outPinSafeDist= dglcvs.addPinSafeDistance(compin.outs[cinid],compin.rt);
 
 var inPinSafeDist = dglcvs.addPinSafeDistance(comp.ins[cinid], comp.rt)
@@ -1562,7 +1567,8 @@ var dgl= {
     delComp:0,
     compConn:0,
     compSetup:0,
-    compSel:0,
+    compInfo:0,
+    compSel:[],
     drawNodes:0,
     linesUnder:0,
     drawGrid:1,
@@ -1616,8 +1622,8 @@ var dgl= {
     'nxor':[['in1','in2'],['out']],
     'pin':[[],['out']],
     'pout':[['in'],[]],
-    'count':[['en','desc','reset'],['val']],
-    'ram':[['en','write','read','adr','data'],['val']], 
+    'count':[['en','desc','reset'],['out']],
+    'ram':[['en','write','read','adr','data'],['out']], 
     //'mux','demux'],
     'fan':[['in'],['out']],
     'tunnel-in':[['in'],[]],
@@ -1689,18 +1695,56 @@ var dgl= {
       cvs.draw(1);
     }
   },
-  addCompC: function(type, name, x,y, state=0) {
+  compConnect: function(cids) {
+    //first goes from out
+    var fst= cids[0];
+    //2nd goes to ins
+    var snd= cids[1];
     
-    this.chip[this.chipActive]
-    .comp[name]={
-      id:name,
-      type:type,
-      x:x,
-      y:y,
-      ins:{},
-      outs:{},
-      state:state
-    };
+    var comps=this.chip[this.chipActive].comp;
+    
+    if(!(fst in comps)||!(snd in comps)) {
+      return false
+      }
+      var added=0;
+      var inputs= comps[snd].inputs;
+      for(var i in inputs) {
+        if(!(i in comps)) {
+          inputs[i]= fst;
+          var inn = $.extend({}, comps[snd].ins[i]);
+          
+          delete comps[snd].ins[i];
+          inn.id=fst;
+          comps[snd].ins[fst]= inn;
+          added=1
+          break;
+        }
+      }
+      if(!added && Object.keys(inputs).length < this.compInOuts[comps[snd].type][0].length) {
+        inputs.push(fst);
+        /*comp.ins[fst]= {
+          id: fst,
+          pos:'top',
+          pout: fst
+        }*/
+      }
+      
+      var added=0;
+      var outputs= comps[fst].outputs;
+      for(var i in outputs) {
+        if(!(i in comps)) {
+          outputs[i]= snd;
+          var outn = $.extend({}, comps[fst].outs[i]);
+          
+          delete comps[fst].outs[i];
+          outn.id=snd;
+          comps[fst].outs[snd]= outn;
+          added=1
+          break;
+        }
+      }
+      
+      return true;
   },
   addNodeC: function(cids) {
     var components= this.chip[this.chipActive].comp;
@@ -1971,6 +2015,32 @@ var dgl= {
   (mdy >=  (5+ 25*comp.y - sens -5 + pY) && mdy <=  (5+25* comp.y + 15 + sens + pY))
 )
         {
+          if(this.m.delComp) {
+            for(var i in comp.ins) {
+              //something w node and nodeconn
+              //something w check all comps.ins to have this id and remove from ins
+              
+            }
+       delete this.chip[this.chipActive].comp[comp.id];
+             return; 
+          }
+          if(this.m.compConn) {
+            if(!comp.outs) {
+              continue;
+            }
+            
+            if (this.m.compSel.includes(cid)) {
+              continue;
+            }
+            this.m.compSel.push(cid);
+            
+            if (this.m.compSel.length >= 2) {
+              this.compConnect(this.m.compSel);
+              this.m.compSel = []
+              
+            }
+          }
+      
           if(this.m.chgIns) {
             components[cid].revIns=(components[cid].revIns==1)?0:1
             return;
