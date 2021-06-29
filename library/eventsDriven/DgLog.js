@@ -1162,9 +1162,13 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       var step=150;
      for(var jx=pX%step;jx<lib.maxWidth;jx+=step) {
        lib.line(c, jx,0,jx, lib.maxHeight,'#444',0.5);
+       c.textAlign = 'left';
+       lib.textm(c, jx+1, 6, jx - pX, 6, '#555');
      }
      for (var jy = pY % step; jy < lib.maxHeight; jy += step) {
-       lib.line(c, 0, jy,lib.maxWidth, jy, '#444', 0.5);
+       lib.line(c, 0, jy, lib.maxWidth, jy, '#444', 0.5);
+       c.textAlign= 'left';
+       lib.textm(c,1,jy-5, jy-pY,6,'#555');
      }
     }
     
@@ -1215,10 +1219,15 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       var i=0;
       var il= comp.inputs.length;
       for(var cinid of comp.inputs) {
+       if(!cinid in comps) {
+         continue;
+       }
         var cin= comps[cinid];
         //line
         var compin = comps[cinid];
-     
+     if(!compin) {
+       continue;
+     }
     var lineNodes= [];
     
 lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
@@ -1733,7 +1742,7 @@ var dgl= {
           x:0,
           y:0,
           state:0,
-          inputs:[],
+          inputs:[0,1],
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
