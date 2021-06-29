@@ -387,6 +387,9 @@ var dglcvs={
       i++;
       if(ct in open) {
         for(var cg in types[ct]) {
+          if(chipActive=='main'&& ['pin','pout'].includes(types[ct][cg])) {
+            continue;
+          }
           c.textAlign='left'
           this.lib.textm(c, 15+k+5, 10*i+pY*openc, 
           //types[ct][cg]
@@ -407,6 +410,7 @@ var dglcvs={
             
           i++;
         }
+        i++
       }
     }
     var scrmx=(190/(i*10))*5+5
@@ -592,12 +596,13 @@ var dglcvs={
       c.beginPath()
       c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
       c.closePath()
-     
+     if(!isDrag) {
       if(state) {
         c.fillStyle='#2f2';
       } else {
         c.fillStyle='#252';
       }
+     }
       c.stroke()
       
       st=-s/4
@@ -743,16 +748,16 @@ var dglcvs={
       c.beginPath()
       c.arc(x+s/2,y+s/2,s/2,0,p*2,0)
       c.closePath()
-      if(state) {
+      if(state &&!isDrag) {
         c.fillStyle='#f22';
         c.strokeStyle='#fff'
       }
       
       c.stroke();
-      if(state) {
-        c.fillStyle='#f22';
-        c.strokeStyle='#fff'
-      }
+    //  if(state && !isDrag) {
+     //   c.fillStyle='#f22';
+   //     c.strokeStyle='#fff'
+   //   }
    //   c.stroke()
       c.fill();
       fill=0
@@ -765,7 +770,7 @@ var dglcvs={
       c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
       c.closePath()
      // c.stroke()
-      if(state) {
+      if(state && !isDrag) {
         c.fillStyle='#f22';
         c.strokeStyle='#fff'
       }
@@ -817,8 +822,10 @@ var dglcvs={
    //   c.fillStyle=(state?'#9f9':'#262');
       st=-s/2
     } else if (type=='probe') {
+    if(!isDrag) {
       c.strokeStyle='#599'
       c.fillStyle='#255'
+    }
       c.beginPath()
       c.moveTo(x,y)
       c.rect(x,y,s*2,s)
@@ -1385,7 +1392,7 @@ for(var l in lineNodes) {
      if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
      } else {
-       dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.m.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
+       dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }
      if(dglcvs.d.chipMenuK<0) {
        cvs.drawNext(1);
@@ -1395,7 +1402,7 @@ for(var l in lineNodes) {
     if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
      } else {
-       dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.m.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
+       dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }
      
        
@@ -1491,7 +1498,7 @@ var dgl= {
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
-    'Chip':['pin','pout','chip','count','ram'],//'mux','demux'],
+    'Chip':['pin','pout','count','ram'],//'mux','demux'],
     'Fans':['fan','tunnel-in','tunnel-out'],
     'Input':['clock','controlled','const'],
     'Output':['probe','led','ledmin','lcd']
@@ -1694,9 +1701,9 @@ var dgl= {
       for(var p in types) {
         ct= types[p];
      
-        if(mdy>= 10*i-10+ppY*2.5 && mdy <= 10*(i+1)+ppY*2.5+5) {
+        if(mdx<= 60 && mdy>= 10*i-5+ppY*2.5 && mdy <= 10*(i+1)+ppY*2.5+5) {
           
-               if(1) {
+               if(0) {
   var c = (cvs.getFirstCvs());
           
      debug.drawQueue.push([
@@ -1715,6 +1722,9 @@ var dgl= {
       if(p in open) {
         var im;
         for(var g in types[p]) {
+          if(this.chipActive=='main'&& ['pin','pout'].includes(types[p][g])) {
+            continue;
+          }
           im=i
           i++;
            if(types[p][g] in csd) {
@@ -1723,24 +1733,23 @@ var dgl= {
               i+=1+1
             }
          
-       
             
-            if(mdy>= 10*im+ppY*2.5 && mdy <= 10*(i)+ppY*2.5) {
+            if(mdx<50 && mdy>= 10*im+ppY*2.5 && mdy <= 10*(i)+ppY*2.5) {
               this.m.compMenu.sel=types[p][g];
-              console.log(types[p][g])
+         //     console.log(types[p][g])
                  
-             if(1) {
+             if(0) {
   var c = (cvs.getFirstCvs());
           
      debug.drawQueue.push([
        cvs.getLib().rectm,
        [c,0,10*im+ppY*2.5,120,10*(i-im),1,'#0ff']])
         }
-              
-              break;
+              return;
             }
     //      i++;
         }
+        i++
       }
       
       }
