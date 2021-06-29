@@ -1705,7 +1705,17 @@ var dgl= {
         this.m.compMenu.isDrag=1;
         this.m.compMenu.mdx=mdx;
         this.m.compMenu.mdy=mdy;
-        this.m.compMenu.comp= {};
+        this.m.compMenu.comp={
+          id:'test1',
+          type:this.m.compMenu.sel,
+          x:0,
+          y:0,
+          state:0,
+          inputs:[],
+          xOfs:35,
+          yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
+          revIns:0,
+        }
         return;
       } else {
         this.m.compMenu.isDrag=0;
@@ -1986,9 +1996,8 @@ var er2= e.touches[1];
 	  var cex = this.m.comp_old_x +mouse_x - this.m.compMenu.mdx;
 	  var cey = this.m.comp_old_y +mouse_y - this.m.compMenu.mdy;
 	  
-	  this.m.compMenu.comp.xOfs = Math.round(cex/12.5)*12.5;
-  	this.m.compMenu.comp.yOfs = Math.round(cey/12.5)*12.5;
-		  
+	  this.m.compMenu.comp.xOfs = Math.round(cex);
+  	this.m.compMenu.comp.yOfs = Math.round(cey);
 		     
 		     cvs.draw(1);
 		     return;
