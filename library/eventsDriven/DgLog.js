@@ -401,7 +401,7 @@ var dglcvs={
           }
           this.drawComp(c, comp,
            15+k+5, 10*i+pY*openc,
-            15, 2, 0,1);
+            15, 2, (mcm.sel==comp.type?1:0),1);
             
             i+=1+0.2+comp.st/10;
             
@@ -1472,6 +1472,7 @@ var dgl= {
       this.needsConfirm=0;
     },
     compMenu: {
+      sel:0,
       isPan:0,
       pan:{
         x:0,y:0,ofsX:0,ofsY:0,
@@ -1628,7 +1629,6 @@ var dgl= {
       
       if(0) {
      var c = (cvs.getFirstCvs());
-      debug.drawQueue = [];
           
      debug.drawQueue.push([
        cvs.getLib().circle,
@@ -1671,7 +1671,7 @@ var dgl= {
   if(this.m.addComp) {
     var ct;
     const csd = dglcvs.compStDt;
-    var opencnt= {};
+   /* var opencnt= {};
     for(var p in this.compType) {
       opencnt[p]=0
       if(p in this.compTypeOpen) {
@@ -1685,15 +1685,26 @@ var dgl= {
       }
     }
     console.log(opencnt)
-    
+   */ 
+    var types=this.compType;
+    var open= this.compTypeOpen;
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
       var i = 1;
       const ppY=-Math.floor(this.m.compMenu.pan.yOfs+this.m.compMenu.pan.ofsY)
-      for(var p in this.compType) {
-        ct= this.compType[p];
-        
-        if(mdy>= 10*i-10+ppY*2.5+opencnt [p]&& mdy <= 10*(i+1)+ppY*2.5+5+opencnt[p]) {
-          if(p in this.compTypeOpen) {
+      for(var p in types) {
+        ct= types[p];
+     
+        if(mdy>= 10*i-10+ppY*2.5 && mdy <= 10*(i+1)+ppY*2.5+5) {
+          
+               if(1) {
+  var c = (cvs.getFirstCvs());
+          
+     debug.drawQueue.push([
+       cvs.getLib().rectm,
+       [c,0,10*i-10+ppY*2.5,120,25,1,'#f00']])
+        }
+   
+          if(p in open) {
             delete this.compTypeOpen[p]
           } else {
             this.compTypeOpen[p]=1;
@@ -1701,6 +1712,37 @@ var dgl= {
           break;
         }
         i++;
+      if(p in open) {
+        var im;
+        for(var g in types[p]) {
+          im=i
+          i++;
+           if(types[p][g] in csd) {
+            i+=1+15*((100+csd[types[p][g]][0])/100)/10;
+            } else {
+              i+=1+1
+            }
+         
+       
+            
+            if(mdy>= 10*im+ppY*2.5 && mdy <= 10*(i)+ppY*2.5) {
+              this.m.compMenu.sel=types[p][g];
+              console.log(types[p][g])
+                 
+             if(1) {
+  var c = (cvs.getFirstCvs());
+          
+     debug.drawQueue.push([
+       cvs.getLib().rectm,
+       [c,0,10*im+ppY*2.5,120,10*(i-im),1,'#0ff']])
+        }
+              
+              break;
+            }
+    //      i++;
+        }
+      }
+      
       }
       if(mdx>50) {
       this.m.compMenu.isPan=1;
