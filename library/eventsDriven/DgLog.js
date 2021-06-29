@@ -480,7 +480,7 @@ var dglcvs={
     var type=comp.type
     
      if(type=='controlled') {
-      type='pin';
+   //   type='ctrl';
     }
    
     if(type=='controlled') {
@@ -511,6 +511,13 @@ var dglcvs={
     if(type=='controlled') {
       c.beginPath()
       c.rect(x,y,s,s/2)
+      c.stroke(),
+      c.fill()
+      if(!isDrag) {
+        c.fillStyle=state?'#9f9':'#252'
+      }
+      c.beginPath();
+      c.rect(x+s/8,y+s/8,s-s/4,s/2-s/4)
       st=-s/2
     } else if (type=='lcd') {
       c.beginPath();
