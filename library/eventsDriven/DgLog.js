@@ -1492,6 +1492,9 @@ var dgl= {
         x:0,y:0,ofsX:0,ofsY:0,
         xOfs:0,yOfs:0
       },
+      isDrag:0,
+      comp:0,
+      mdx:0,mdy:0
     }
   },
   btns:{},
@@ -1685,24 +1688,29 @@ var dgl= {
   if(this.m.addComp) {
     var ct;
     const csd = dglcvs.compStDt;
-   /* var opencnt= {};
-    for(var p in this.compType) {
-      opencnt[p]=0
-      if(p in this.compTypeOpen) {
-        for(var j in this.compType[p]) {
-          if(j in csd) {
-           opencnt[p]+=((100+ csd[j][0])/100)*10
-        } else {
-          opencnt[p]+=10;
-        }
-        }
-      }
-    }
-    console.log(opencnt)
-   */ 
+   
     var types=this.compType;
     var open= this.compTypeOpen;
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
+
+      if (1 && this.m.compMenu.sel) {
+        var c = (cvs.getFirstCvs());
+      
+        debug.drawQueue.push([
+             cvs.getLib().rectm,
+             [c, 0, this.m.compMenu.dragArea[0], 65, this.m.compMenu.dragArea[1] - this.m.compMenu.dragArea[0], 1, '#f00']])
+      }
+      
+      if(this.m.compMenu.sel && mdx < 65 && mdy >= this.m.compMenu.dragArea[0] && mdy <= this.m.compMenu.dragArea[1]) {
+        this.m.compMenu.isDrag=1;
+        this.m.compMenu.mdx=mdx;
+        this.m.compMenu.mdy=mdy;
+        this.m.compMenu.comp= {};
+        return;
+      } else {
+        this.m.compMenu.isDrag=0;
+        this.m.compMenu.comp=0;
+      }
       var i = 1;
       const ppY=-Math.floor(this.m.compMenu.pan.yOfs+this.m.compMenu.pan.ofsY)
       for(var p in types) {
@@ -1741,8 +1749,11 @@ var dgl= {
             }
          
             
-            if(mdx<50 && mdy>= 10*im+ppY*2.5 && mdy <= 10*(i)+ppY*2.5) {
+            if(mdx<65 && mdy>= 10*im+ppY*2.5 && mdy <= 10*(i)+ppY*2.5) {
               this.m.compMenu.sel=types[p][g];
+              this.m.compMenu.dragArea= [10*im+ppY*2.5, 10*(i)+ppY*2.5]
+              
+             // this.addCompC(this.m.compMenu.sel,rd.randomBytes(5),
          //     console.log(types[p][g])
                  
              if(0) {
@@ -1936,6 +1947,11 @@ var er2= e.touches[1];
 	
 		this.checkForDrag(Math.floor(this.m.pan.ofsX + this.m.pan.xOfs), Math.floor(this.m.pan.ofsY + this.m.pan.yOfs));
 		
+		if(this.m.compMenu.isDrag) {
+		  this.m.comp_old_x = this.m.compMenu.comp.xOfs;
+		  this.m.comp_old_y = this.m.compMenu.comp.yOfs;
+		}
+		
 	if (this.m.isDragged)
 		{
 		  this.m.comp_old_x = components[this.m.isDragged].xOfs;
@@ -1963,9 +1979,21 @@ var er2= e.touches[1];
 	  var mouse_x = er.clientX/2//- this.offsetLeft;
 		var mouse_y = er.clientY/2-20//- this.offsetTop;
 	
+	
 		if (this.m.mouseisdown)
 		{
+		   if (this.m.compMenu.isDrag) {
+	  var cex = this.m.comp_old_x +mouse_x - this.m.compMenu.mdx;
+	  var cey = this.m.comp_old_y +mouse_y - this.m.compMenu.mdy;
+	  
+	  this.m.compMenu.comp.xOfs = Math.round(cex/12.5)*12.5;
+  	this.m.compMenu.comp.yOfs = Math.round(cey/12.5)*12.5;
 		  
+		     
+		     cvs.draw(1);
+		     return;
+		   }
+	 
 		  if(this.m.isDragged) {
 		    
 		    var vexx = this.m.comp_old_x + mouse_x - this.m.mousedown_x;
@@ -2023,6 +2051,10 @@ var er2= e.touches[1];
     	   Math.round(this.node[this.m.nodeDragged].y/5)*5
     	   //*/
     	}
+    	if (this.m.compMenu.isDrag && 1 ) {
+        
+    	}
+    	
     	if(this.m.isDragged) {
     components[this.m.isDragged].x+= 
     	 Math.round(components[this.m.isDragged].xOfs/12.5)/4;
