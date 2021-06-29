@@ -1346,7 +1346,6 @@ for(var l in lineNodes) {
     if(this.m.linesUnder) {
     
     var ins,outs;
-  //  console.log(comps)
     for(var cid in comps) {
       comp= comps[cid]
       ins=[];
@@ -1417,6 +1416,29 @@ for(var l in lineNodes) {
        dglcvs.d.chipMenuK=-100;
      }
      cvs.drawNext(1)
+   }
+   
+   if(this.m.compMenu.comp) {
+     
+    var comp= this.m.compMenu.comp;
+    ins=[];
+      for (var cinid of comp.inputs) {
+      //  var cin = comps[cinid];
+        ins.push({pos:'top',
+          id:cinid
+        })
+      }
+   //   console.log(ins,comp.inputs)
+      comp.ins=indexBy(ins,'id');
+  
+      outs=[{pos:'bottom',id:comp.id}];
+      comp.outs=indexBy(outs,'id');
+      
+      dglcvs.drawComp(c, comp,
+       5+50*comp.x+comp.xOfs,
+       5+25*comp.y+comp.yOfs,
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
+     
    }
    
    if(this.m.needsConfirm) {
@@ -1706,7 +1728,7 @@ var dgl= {
         this.m.compMenu.mdx=mdx;
         this.m.compMenu.mdy=mdy;
         this.m.compMenu.comp={
-          id:'test1',
+          id:this.m.compMenu.sel+Object.keys(this.chip[this.chipActive].comp).length,
           type:this.m.compMenu.sel,
           x:0,
           y:0,
@@ -2044,6 +2066,9 @@ var er2= e.touches[1];
     
     var components= this.chip[this.chipActive].comp;
     
+    var pX= Math.floor(this.m.pan.xOfs+this.m.pan.ofsX)
+    var pY= Math.floor(this.m.pan.yOfs+this.m.pan.ofsY)
+    
     if (this.m.mouseisdown)
     {
       //  var pageX= event.touches[0].x;
@@ -2060,8 +2085,27 @@ var er2= e.touches[1];
     	   Math.round(this.node[this.m.nodeDragged].y/5)*5
     	   //*/
     	}
-    	if (this.m.compMenu.isDrag && 1 ) {
-        
+    	if (this.m.compMenu.isDrag && this.m.compMenu.comp) {
+    	  var comp= this.m.compMenu.comp;
+    	  if(comp.xOfs >110) {
+    comp.x=
+        Math.round(-pX/50) + 
+      Math.round((comp.xOfs)/12.5)/4;
+    	 
+    comp.y=
+        Math.round(-pY/25) + 
+      Math.round((comp.yOfs)/12.5)/2;
+    
+    // console.log(comp.x,comp.y)
+   	
+   	 comp.xOfs=0
+   	 comp.yOfs=0
+    	
+    	    this.chip[this.chipActive].comp[comp.id]=comp;
+    	  }
+        this.m.compMenu.comp=0;
+        this.m.compMenu.isDrag=0;
+        this.m.compMenu.sel=0;
     	}
     	
     	if(this.m.isDragged) {
