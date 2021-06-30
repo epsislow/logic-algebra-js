@@ -1217,7 +1217,8 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
         for(var o in comp.outputs) {
           outs.push({
             pos:'bottom',
-            id:comp.id
+            id:comp.id,
+            pout:comp.outputs[o]
           })
         }
       } else {
@@ -1708,41 +1709,58 @@ var dgl= {
       }
       var added=0;
       var inputs= comps[snd].inputs;
-      for(var i in inputs) {
-        if(!(i in comps)) {
-          inputs[i]= fst;
+      if(!('nextInput' in comps[snd])) {
+        comps[snd].nextInput=0;
+      } else {
+        comps[snd].nextInput++;
+        comps[snd].nextInput%=inputs.length
+      }
+      var nextI= comps[snd].nextInput;
+      
+      var i= inputs[nextI];
+     //   if(!(i in comps)) {
+          inputs[nextI]= fst;
           var inn = $.extend({}, comps[snd].ins[i]);
           
           delete comps[snd].ins[i];
           inn.id=fst;
           comps[snd].ins[fst]= inn;
           added=1
-          break;
-        }
-      }
+   //     }
+      /*
       if(!added && Object.keys(inputs).length < this.compInOuts[comps[snd].type][0].length) {
         inputs.push(fst);
-        /*comp.ins[fst]= {
-          id: fst,
-          pos:'top',
-          pout: fst
-        }*/
-      }
+        //comp.ins[fst]= {
+        //  id: fst,
+        //  pos:'top',
+       //   pout: fst
+       // }
+      }*/
       
       var added=0;
       var outputs= comps[fst].outputs;
-      for(var i in outputs) {
-        if(!(i in comps)) {
-          outputs[i]= snd;
+      
+     if(!('nextOutput' in comps[fst])) {
+        comps[fst].nextOutput=0;
+      } else {
+        comps[fst].nextOutput++;
+        comps[fst].nextOutput%=outputs.length
+      }
+      var nextO= comps[fst].nextOutput;
+      
+      var i= outputs[nextO];
+    
+    
+     //   if(!(i in comps)) {
+          outputs[nextO]= snd;
           var outn = $.extend({}, comps[fst].outs[i]);
           
           delete comps[fst].outs[i];
           outn.id=snd;
           comps[fst].outs[snd]= outn;
           added=1
-          break;
-        }
-      }
+    //    }
+      
       
       return true;
   },
