@@ -460,8 +460,8 @@ var dglcvs={
     'not':[100/8,0],
     'nand':[100/4,0],
     'nor':[100/4,0],
-    'xor':[-100/4,0],
-    'nxor':[100/4-100/8,0],
+    'xor':[0,0],
+    'nxor':[100/4-100/8+100/4,0],
       'pin':[-100/2,0],
       'pout':[-100/2,0],
       'ram':[100,100],
@@ -676,19 +676,19 @@ var dglcvs={
         c.strokeStyle= sty[3]
       }
 	  	c.beginPath();
-      c.moveTo(x+s,y);
-      c.arc(x,y,s,0,p/3,0)
-      c.arc(x+s,y,s,p-p/3,p,0)
-      c.arc(x+s/2,y-s-s/4,s,p/2-p/6,p/2+p/6,0)
+      c.moveTo(x+s,y+s/4);
+      c.arc(x,y+s/4,s,0,p/3,0)
+      c.arc(x+s,y+s/4,s,p-p/3,p,0)
+      c.arc(x+s/2,y-s-s/4+s/4,s,p/2-p/6,p/2+p/6,0)
       c.closePath();
-      st=-s/4
+
       if (type == 'nxor') {
         c.stroke()
         c.fill();
         c.beginPath();
-        c.arc(x + s / 2, y + s, s / 8, 0, p * 2, 0);
+        c.arc(x + s / 2, y + s+s/4, s / 8, 0, p * 2, 0);
         c.closePath()
-        st=s/4-s/8
+        st=s/4-s/8+s/4
       }
     } else if(type=='chip') {
       c.beginPath();
