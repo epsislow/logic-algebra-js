@@ -1201,9 +1201,8 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
   //  console.log(comps)
     for(var cid in comps) {
       comp= comps[cid]
-    //  if('ins' in comp) {
-    //    continue;
-   //   }
+      if(!('ins' in comp) ||Array.isArray(comp.ins)) {
+      // ss
       
       ins=[];
       for (var cinid of comp.inputs) {
@@ -1225,6 +1224,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
         outs=[{pos:'bottom',id:cid}];
       }
       comp.outs=indexBy(outs,'id');
+      }
       comp.rt=0
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
@@ -1399,7 +1399,7 @@ for(var l in lineNodes) {
     var ins,outs;
     for(var cid in comps) {
       comp= comps[cid]
-      ins=[];
+      /*ins=[];
       for (var cinid of comp.inputs) {
       //  var cin = comps[cinid];
         ins.push({pos:'top',id:cinid})
@@ -1418,7 +1418,7 @@ for(var l in lineNodes) {
         outs=[{pos:'bottom',id:cid}];
       }
       comp.outs=indexBy(outs,'id');
-      
+     */ 
       txt= (comp.type=='controlled'?comp.id:comp.type);
     /*  
      // console.log(comp)
@@ -1483,7 +1483,7 @@ for(var l in lineNodes) {
    if(this.m.compMenu.comp) {
      
     var comp= this.m.compMenu.comp;
-    ins=[];
+    /*ins=[];
       for (var cinid of comp.inputs) {
       //  var cin = comps[cinid];
         ins.push({pos:'top',
@@ -1506,7 +1506,7 @@ for(var l in lineNodes) {
         outs=[{pos:'bottom',id:cid}];
       }
       comp.outs=indexBy(outs,'id');
-      
+      */
      // outs=[{pos:'bottom',id:comp.id}];
       
      // comp.outs=indexBy(outs,'id');
@@ -1718,7 +1718,7 @@ var dgl= {
       var nextI= comps[snd].nextInput;
       
       var i= inputs[nextI];
-     //   if(!(i in comps)) {
+        if(!(fst in comps[snd].ins)) {
           inputs[nextI]= fst;
           var inn = $.extend({}, comps[snd].ins[i]);
           
@@ -1726,7 +1726,21 @@ var dgl= {
           inn.id=fst;
           comps[snd].ins[fst]= inn;
           added=1
-   //     }
+       } else {
+         var inn= $.extend({}, comps[snd].ins[fst]);
+         
+         delete comps[snd].ins[fst];
+         inn.id=inn.pin;
+         comps[snd].ins[inn.id]=inn;
+         
+         inputs[nextI] = fst;
+         var inn = $.extend({}, comps[snd].ins[i]);
+         
+         delete comps[snd].ins[i];
+         inn.id = fst;
+         comps[snd].ins[fst] = inn;
+         added = 1
+       }
       /*
       if(!added && Object.keys(inputs).length < this.compInOuts[comps[snd].type][0].length) {
         inputs.push(fst);
@@ -1884,6 +1898,26 @@ var dgl= {
         this.m.compMenu.isDrag=1;
         this.m.compMenu.mdx=mdx;
         this.m.compMenu.mdy=mdy;
+        var ins= {};
+        for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
+          var xi= this.compInOuts[this.m.compMenu.sel][0][i];
+          ins[xi] = {
+            pos:'top',
+            id:xi,
+            pin:xi,
+          }
+        }
+        
+        var outs={};
+        for (var o in this.compInOuts[this.m.compMenu.sel][1]) {
+          var xo = this.compInOuts[this.m.compMenu.sel][1][o];
+          outs[xo] = {
+            pos: 'bottom',
+            id: xo,
+            pout: xo,
+          }
+        }
+        
         this.m.compMenu.comp={
           id:this.m.compMenu.sel+Object.keys(this.chip[this.chipActive].comp).length,
           type:this.m.compMenu.sel,
@@ -1892,6 +1926,8 @@ var dgl= {
           state:0,
           inputs:this.compInOuts[this.m.compMenu.sel][0],
           outputs:this.compInOuts[this.m.compMenu.sel][1],
+          ins: ins, 
+          outs: outs,
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
