@@ -1197,6 +1197,14 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
      }
     }
     
+    //show chipActive
+    
+    c.textAlign='left';
+   // c.textBaseline='center';
+    lib.rectm(c,0,0,
+      c.measureText(this.chipActive).width+4,10,1,0,'#555');
+    lib.textm(c,2,5,this.chipActive,6,'#222')
+    
     var ins,outs;
   //  console.log(comps)
     for(var cid in comps) {
