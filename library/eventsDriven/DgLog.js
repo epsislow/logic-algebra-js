@@ -980,7 +980,12 @@ var dglcvs={
     }
     for(var k in outs) {
   //    ins[i].pin='out';
+  try {
       pos[rot[r][outs[k].pos]].push(outs[k]);
+  } catch (e) {
+    console.log(rot[r][outs[k].pos], k, outs[k], outs)
+    throw e;
+  }
     }
   
     var k=0;
@@ -1605,10 +1610,83 @@ var dgl= {
       mdx:0,mdy:0
     }
   },
+  compW: function(id, type, pins= [], pouts= []) {
+    var pub={};
+    
+    
+    pub.conn= function(compFrom, pout, compTo, pin) {
+      
+    }
+    pub.disconn= function (compFrom, pout, compTo, pin) {
+      
+    }
+    
+    pub.getComp() = function () {
+       var comp= {
+      id: id,
+      type: type,
+      inputs: inputs,
+      outputs: outputs,
+      pins: pins,
+      pouts: pouts,
+    };
+   
+   
+      return comp;
+    }
+    
+    return pub;
+  },
+  eval: function () {
+    var pub= {}
+    
+    pub.chip= function(chipName, chipInstance=0, datain= {}, dataout= {}) {
+      var comps= this.chip[chipName].comp;
+      
+      for (let i = 0; i < EVALS_PER_STEP; i++) {
+        evaluate(comps);
+      
+      }
+    }
+    pub.main= function() {
+      
+    }
+    
+    pub.current= function() {
+      
+    }
+    pub.instance= function() {
+      
+    }
+    return pub;
+  },
+  compState: [],
+  observerW: function () {
+    var pub= {};
+    pub.addObs = function (obsName) {
+    }
+    pub.subscrTo = function (obsName, subscrName, subscrObj) {
+      
+    }
+    pub.unsubscr= function (obsName, subscrName) {
+      
+    }
+    pub.notify= function (obsName, subscrName='', evOb) {
+      
+    }
+    
+    return pub;
+  },
   btns:{},
   node:[],
   nodeConn:{},
   chipActive:'main',
+  chipInstances:{},
+  chipInstancePath:'',
+  chipInstanceInOuts: {
+    'datain':{},
+    'dataout': {},
+  },
   chip: {
     main:{ins:[],outs:[],comp:componentsPos(components),active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
@@ -1906,6 +1984,7 @@ var dgl= {
         this.m.compMenu.isDrag=1;
         this.m.compMenu.mdx=mdx;
         this.m.compMenu.mdy=mdy;
+        var newid=this.m.compMenu.sel+Object.keys(this.chip[this.chipActive].comp).length;
         var ins= {};
         for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
           var xi= this.compInOuts[this.m.compMenu.sel][0][i];
@@ -1919,15 +1998,15 @@ var dgl= {
         var outs={};
         for (var o in this.compInOuts[this.m.compMenu.sel][1]) {
           var xo = this.compInOuts[this.m.compMenu.sel][1][o];
-          outs[xo] = {
+          outs[newid] = {
             pos: 'bottom',
-            id: xo,
+            id: newid,
             pout: xo,
           }
         }
         
         this.m.compMenu.comp={
-          id:this.m.compMenu.sel+Object.keys(this.chip[this.chipActive].comp).length,
+          id:newid,
           type:this.m.compMenu.sel,
           x:0,
           y:0,
