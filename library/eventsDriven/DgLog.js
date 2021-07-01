@@ -1281,7 +1281,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     var lineNodes= [];
    
 try { 
-lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
+lineNodes.push(['in', compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
 } catch (e) {
   console.log(compin.outs)
   alert(cinid+' '+compin.id)
@@ -1645,7 +1645,6 @@ var dgl= {
       
       for (let i = 0; i < EVALS_PER_STEP; i++) {
         evaluate(comps);
-      
       }
     }
     pub.main= function() {
@@ -1688,7 +1687,8 @@ var dgl= {
     'dataout': {},
   },
   chip: {
-    main:{ins:[],outs:[],comp:componentsPos(components),active:1},
+    main:{ins:[],outs:[],comp:{}//componentsPos(components)
+    ,active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
   },
@@ -1781,6 +1781,46 @@ var dgl= {
       console.log('Loaded');
       cvs.draw(1);
     }
+  },
+  compConnect0: function(cids) {
+      //first goes from out
+      var fst = cids[0];
+      //2nd goes to ins
+      var snd = cids[1];
+       var comps=this.chip[this.chipActive].comp;
+    
+    if(!(fst in comps)||!(snd in comps)) {
+      return 0
+      }
+      var added=0;
+      var inputs= comps[snd].inputs;
+      if(!('nextInput' in comps[snd])) {
+        comps[snd].nextInput=0;
+      } else {
+        comps[snd].nextInput++;
+        comps[snd].nextInput%=inputs.length
+      }
+      var nextI= comps[snd].nextInput;
+     
+      var outputs= comps[fst].outputs;
+      
+     if(!('nextOutput' in comps[fst])) {
+        comps[fst].nextOutput=0;
+      } else {
+        comps[fst].nextOutput++;
+        comps[fst].nextOutput%=outputs.length
+      }
+      var nextO= comps[fst].nextOutput;
+   
+      comps[snd].ins[inputs[nextI]].id= fst;
+      comps[snd].ins[inputs[nextI]].pout= outputs[nextO];
+      
+      
+      comps[fst].outs[outputs[nextO]].id= snd;
+      comps[fst].outs[outputs[nextO]].pin= inputs[nextI];
+      
+      
+      return 1;
   },
   compConnect: function(cids) {
     //first goes from out
@@ -1990,7 +2030,6 @@ var dgl= {
           var xi= this.compInOuts[this.m.compMenu.sel][0][i];
           ins[xi] = {
             pos:'top',
-            id:xi,
             pin:xi,
           }
         }
@@ -1998,9 +2037,8 @@ var dgl= {
         var outs={};
         for (var o in this.compInOuts[this.m.compMenu.sel][1]) {
           var xo = this.compInOuts[this.m.compMenu.sel][1][o];
-          outs[newid] = {
+          outs[xo] = {
             pos: 'bottom',
-            id: newid,
             pout: xo,
           }
         }
@@ -2176,7 +2214,7 @@ var dgl= {
             this.m.compSel.push(cid);
             
             if (this.m.compSel.length >= 2) {
-              this.compConnect(this.m.compSel);
+              this.compConnect0(this.m.compSel);
               this.m.compSel = []
               
             }
