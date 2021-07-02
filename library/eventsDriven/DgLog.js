@@ -1261,11 +1261,26 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
        15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp[comp.id]? smp[comp.id]: 0 );
-      
     }
     
     for(var cid in comps) {
-      comp= comps[cid];
+      //comp= comps[cid];
+      
+      
+    var comp= comps[cid];
+    var lineNodes= [];
+    for(var i in comp.ins) {
+      if('id' in comp.ins[i]) {
+        
+        var cinid= comp.ins[i].id;
+        var cinpout= comp.ins[i].pout;
+       
+        var outinf= comps[cinid].outs[cinpout];
+        //alert(cinpin+JSON.stringify(outinf));
+        
+      lineNodes= this.getLineNodesFor(comp.ins[i], comp, outinf, comps[cinid]);
+      
+      /*-
       var i=0;
       var il= comp.inputs.length;
       for(var cinid of comp.inputs) {
@@ -1278,23 +1293,27 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
      if(!compin) {
        continue;
      }
+     
     var lineNodes= [];
-   
+
+-*/
+/*-
 try { 
 lineNodes.push(['in', compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
 } catch (e) {
   console.log(compin.outs)
   alert(cinid+' '+compin.id)
   throw new Error('testq1')
-}
+}-*/
+/*-
 var outPinSafeDist= dglcvs.addPinSafeDistance(compin.outs[cinid],compin.rt);
 
 var inPinSafeDist = dglcvs.addPinSafeDistance(comp.ins[cinid], comp.rt)
 
 lineNodes.push(
    outPinSafeDist
-);
-
+);-*/
+/*-
 var dotsOut= dglcvs.addNoUnderComp(
   compin.outs[cinid].pinx+1,
   compin.outs[cinid].piny+1, compin,
@@ -1302,7 +1321,7 @@ var dotsOut= dglcvs.addNoUnderComp(
   //outPinSafeDist[2], compin,
  inPinSafeDist[1],
   inPinSafeDist[2],comp
-  )
+  )-*/
  /* 
 var dotsIn= dglcvs.addNoUnderComp(
   dotsOut[0][1],
@@ -1325,11 +1344,11 @@ dotsIn= dglcvs.addNoUnderComp(
   dotsIn[0][2], comp,
   1)*/
 
-  
+  /*-
 if(dotsOut.length) {
   lineNodes.push(...dotsOut);
-}
-  
+}-*/
+  /*-
 var idx=cinid+'_'+cid;
 if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
@@ -1353,7 +1372,7 @@ var dots= dglcvs.addNoUnderComp(
  // inPinSafeDist[2], comp,
    comp.ins[cinid].pinx+1,
   comp.ins[cinid].piny+1, comp,
-  1)
+  1)-*/
   /*
   dots= dglcvs.addNoUnderComp(
   //  compin.outs[cinid].pinx + 1,
@@ -1365,7 +1384,7 @@ var dots= dglcvs.addNoUnderComp(
   //comp.ins[cinid].piny+1, comp,1
     );*/
     
-  
+  /*-
 
 if(dots.length) {
   lineNodes.push(...dots);
@@ -1377,6 +1396,8 @@ lineNodes.push(
 lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
 
 //console.log(lineNodes);
+-*/
+
 
 var lastPoint=0;
 for(var l in lineNodes) {
@@ -1384,11 +1405,15 @@ for(var l in lineNodes) {
     lastPoint= lineNodes[l];
     continue;
   }
-  var s=
-  smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
-  if(cid== this.m.isDragged || compin.id== this.m.isDragged) {
-    s='#4ff';
+  //var s;
+  
+ // smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
+  
+  var s= '#474';
+  if (cid == this.m.isDragged || cinid == this.m.isDragged) {
+    s = '#4ff';
   }
+  
   lib.linex(c,lastPoint[1], lastPoint[2], 
     lineNodes[l][1], lineNodes[l][2],1,
     s)
@@ -1403,9 +1428,9 @@ for(var l in lineNodes) {
     smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
       */  
         
-        i++;
       }
     }
+  }
     
     if(this.m.linesUnder) {
     
@@ -1644,22 +1669,57 @@ var dgl= {
       var comps= this.chip[chipName].comp;
       
       for (let i = 0; i < EVALS_PER_STEP; i++) {
-        evaluate(comps);
+        if(comp.type=='chip') {
+          this.chipInstance = {
+            id: comp.id,
+            path: chipName+'/',
+            comp: this.chip[chipName].comp
+          };
+          pub.instance(comp, this.chipInstance);
+        } else {
+          pub.comp(comp, comps);
+        }
       }
     }
-    pub.main= function() {
+    
+    pub.comp= function(comp, comps) {
+      const binaryOp = (logicFn, comp) => {
+        var inStates= {};
+        var id;
+        for(var i in comp.ins) {
+          if('id' in comp.ins[i]) {
+            id = comp.ins[i].id;
+            inStates[i] = comps[id].states[i];
+          } else {
+            inStates[i] = -1;
+          }
+        }
+        comp.states=logicFn(inStates);
+
+        return;
+      }
       
+      comps.forEach(comp => {
+        if(comp.type==='controlled') {
+          return;
+        } else {
+          return binaryOp(this.libOp[comp.type], comp);
+        }
+      })
     }
     
-    pub.current= function() {
-      
-    }
-    pub.instance= function() {
+    pub.instance= function(comp, instance) {
       
     }
     return pub;
   },
-  compState: [],
+  libOp: {
+    'and': function(inStates) {
+      
+      var outStates={};
+      return outStates;
+    }
+  },
   observerW: function () {
     var pub= {};
     pub.addObs = function (obsName) {
@@ -1728,6 +1788,71 @@ var dgl= {
     'DFlipFlop':{},
     'Mux': {},
     'Demux':{}
+  },
+  getLineNodesFor: function(outinf, comp ,ininf,compin) {
+    
+    var nodes=[];
+        
+        nodes.push(['in', ininf.pinx+1, ininf.piny+1]);
+        
+        var inPinSafeDist = dglcvs.addPinSafeDistance(ininf, compin.rt);
+        
+        var outPinSafeDist = dglcvs.addPinSafeDistance(outinf, comp.rt)
+        
+        nodes.push(
+          inPinSafeDist
+        );
+        
+        
+var dotsIn= dglcvs.addNoUnderComp(
+  ininf.pinx+1,
+  ininf.piny+1, compin,
+ inPinSafeDist[1],
+  inPinSafeDist[2],comp
+  )
+  
+  
+if(dotsIn.length) {
+  nodes.push(...dotsIn);
+}
+
+var cinid= compin.id;
+var cid= comp.id;
+
+var idx=cinid+'_'+cid;
+if(idx in dgl.nodeConn) {
+ var nodex = dgl.nodeConn[idx];
+ 
+ for(var n in nodex) {
+   if(typeof dgl.node[nodex[n]]=='undefined') {
+     continue;
+   }
+ nodex.push(['node', dgl.node[nodex[n]].x +pX, dgl.node[nodex[n]].y+pY]);
+ if(this.m.drawNodes) {
+   dglcvs.drawNode(c,n,'node', dgl.node[nodex[n]].x+pX,dgl.node[nodex[n]].y+pY)
+ }
+ }
+}
+
+
+var dots= dglcvs.addNoUnderComp(
+  dotsIn.length? dotsIn[0][1]: inPinSafeDist[1],
+  dotsIn.length? dotsIn[0][2]: inPinSafeDist[2], compin,
+   outinf.pinx+1,
+   outinf.piny+1, comp,
+  1);
+  
+
+if(dots.length) {
+  nodes.push(...dots);
+}
+
+nodes.push(
+  outPinSafeDist
+);
+nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
+
+    return nodes;
   },
   cache:{
     save: function(zip=1) {
