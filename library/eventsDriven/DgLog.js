@@ -423,6 +423,52 @@ var dglcvs={
     c.fill()
     c.restore()
   },
+  drawCompInfo: function(c, cid, comps,k=-100) {
+    this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
+    c.save()
+    c.beginPath()
+    c.rect(0.5, 2.5, 100+k, 190)
+    c.clip()
+    
+    if(cid) {
+      var comp= comps[cid];
+    
+      this.lib.rectm(c, 5, 5, 90+k, 90+k, 1, '#888')
+      var st=0, dt=0;
+      if(comp.type in dglcvs.compStDt) {
+      st = dglcvs.compStDt[comp.type][0];
+      dt = dglcvs.compStDt[comp.type][1];
+      }
+      
+      this.drawComp(c, comp,
+     k+5+ (80-30*(100+ st)/100)/2,
+       20+(80-30*(100+dt)/100)/2, 
+       25, 4, 0,1,1);
+     
+     var styles= {
+       'pinin':['#cc7','#444'],
+       'pinout':['#7c7','#444']
+     }
+      
+     var i=0;  
+     c.textAlign='left';
+     for(var ci in comp.ins) {
+       var p= comp.ins[ci]
+       this.lib.rectm(c, 10, 15*i+100, 10, 10, 3, styles['pinin'][0], styles['pinout'][1])
+       this.lib.textm(c, 25, 15*i+105, p.pin, 6, styles['pinin'][0],'Arial');
+       
+       i++;
+     }
+     for(var co in comp.outs) {
+       var p = comp.outs[co]
+       this.lib.rectm(c, 10, 15*i+100, 10, 10, 3, styles['pinout'][0], styles['pinout'][1])
+       this.lib.textm(c, 25, 15*i+105, p.pout, 6, styles['pinout'][0],'Arial');
+       
+       i++;
+     }
+    }
+    c.restore();    
+  },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
@@ -996,8 +1042,8 @@ var dglcvs={
   
     var k=0;
     var pinh, pinw, pw;
-    if(type=='intb') {
-       pinh=7; pinw=7; pw=2;
+    if(inOutsText) {
+       pinh=5; pinw=5; pw=2;
    } else {
      pinh=2, pinw=2; pw=2;
    }
@@ -1494,7 +1540,7 @@ for(var l in lineNodes) {
        5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
    }
     
-   if(this.m.drawChips || this.m.addComp) {
+   if(this.m.drawChips || this.m.addComp|| this.m.compInfo) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
   dglcvs.d.chipMenuK+= frameTimeDiff/((100-dglcvs.d.chipMenuK)/100)
      }
@@ -1503,6 +1549,8 @@ for(var l in lineNodes) {
      }
      if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
+     } else if (this.m.compInfo) {
+       dglcvs.drawCompInfo(c,this.m.compInf.sel, this.chip[this.chipActive].comp, dglcvs.d.chipMenuK);
      } else {
        dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }
@@ -1513,6 +1561,8 @@ for(var l in lineNodes) {
        dglcvs.d.chipMenuK -=  frameTimeDiff / ((100 - dglcvs.d.chipMenuK) / 100);
     if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
+    } else if (this.m.compInfo) {
+       dglcvs.drawCompInfo(c,0, this.chip[this.chipActive].comp, dglcvs.d.chipMenuK);
      } else {
        dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }

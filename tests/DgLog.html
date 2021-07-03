@@ -342,6 +342,7 @@ window.onerror = function (message, url, line, column, error) {
 	  $('#diag-compinfo').click(function() {
 	  	  var en=toggleBtn($(this));
 	  	  dgl.m.compInfo=en;
+	  	  cvs.draw(1)
 	  })
 	  
 	  $('#diag-addcomp').click(function() {
