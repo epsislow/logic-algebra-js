@@ -454,16 +454,22 @@ var dglcvs={
      c.textAlign='left';
      for(var ci in comp.ins) {
        var p= comp.ins[ci]
-       this.lib.rectm(c, 10, 15*i+100, 10, 10, 3, styles['pinin'][0], styles['pinout'][1])
-       this.lib.textm(c, 25, 15*i+105, p.pin, 6, styles['pinin'][0],'Arial');
-       
+       this.lib.rectm(c, 10, 11*i+100, 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
+       this.lib.textm(c, 25, 11*i+105, p.pin, 5, styles['pinin'][0],'Arial');
+        if ('id' in p) {
+          this.lib.textm(c, 45, 11 * i + 105, p.id + ' -> ' + p.pout, 5, styles['pinout'][0], 'Arial')
+        }
        i++;
      }
      for(var co in comp.outs) {
        var p = comp.outs[co]
-       this.lib.rectm(c, 10, 15*i+100, 10, 10, 3, styles['pinout'][0], styles['pinout'][1])
-       this.lib.textm(c, 25, 15*i+105, p.pout, 6, styles['pinout'][0],'Arial');
+       this.lib.rectm(c, 10, 11*i+100, 6, 6, 3, styles['pinout'][0], styles['pinout'][1]);
        
+       this.lib.textm(c, 25, 11*i+105, p.pout, 5, styles['pinout'][0],'Arial');
+       
+       if('id' in p) {
+         this.lib.textm(c, 45, 11*i+105, p.id +' -> ' + p.pin, 5, styles['pinin'][0], 'Arial')
+       }
        i++;
      }
     }
