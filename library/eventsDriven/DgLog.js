@@ -468,6 +468,8 @@ var dglcvs={
       'fan':[-100/2,0], 
       'tunnel-in':[-100/2,-100/2],
       'tunnel-out':[-100/2,-100/2],
+      'demux':[-100/2,-100/2],
+      'mux':[-100/2,-100/2],
       'controlled':[-100/2,0],
       'const':[-100/4,0],
       'probe':[0,100],
@@ -489,7 +491,7 @@ var dglcvs={
     if(type=='lcd') {
       sty=['#b50','#000','#fff']
     }
-    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram' || type=='count') {
+    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram' || type=='count' || type=='mux'|| type=='demux') {
       sty= ['#a44','#422','#ff9'];
       if(type=='chip') {
         sty[2]='#aa4'
@@ -569,12 +571,14 @@ var dglcvs={
      stroke=0
       st=s
       dt=s
-    } else if(type=='tunnel-in') {
+    } else if(type=='tunnel-in' || type=='mux') {
+      if(type=='tunnel-in') {
        if(!state) {
          c.strokeStyle='#222';
        } else {
          c.strokeStyle='#9f9';
        }
+      }
        
        c.beginPath();
        c.moveTo(x+s/2,y);
@@ -584,11 +588,13 @@ var dglcvs={
        c.lineTo(x,y+s/4);
        c.closePath()
        st=-s/2
-    } else if(type=='tunnel-out') {
-      if (!state) {
-        c.strokeStyle = '#222';
-      } else {
-        c.strokeStyle = '#9f9';
+    } else if(type=='tunnel-out' || type=='demux') {
+      if(type=='tunnel-out') {
+        if (!state) {
+          c.strokeStyle = '#222';
+        } else {
+          c.strokeStyle = '#9f9';
+        }
       }
       
       c.beginPath();
@@ -1607,6 +1613,18 @@ var dgl= {
     compConn:0,
     compSetup:0,
     compInfo:0,
+    compInf: {
+      sel: 0,
+      isPan:0,
+      pan:{
+        x:0,y:0,ofsX:0,ofsY:0,
+        xOfs:0,yOfs:0
+      },
+      isDrag:0,
+      pinoutDragged:0,
+      mdx:0,mdy:0,
+      infoIndexOpened:[],
+    },
     compSel:[],
     drawNodes:0,
     linesUnder:0,
@@ -1754,7 +1772,7 @@ var dgl= {
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
-    'Chip':['pin','pout','count','ram'],//'mux','demux'],
+    'Chip':['pin','pout','count','ram', 'mux','demux'],
     'Fans':['fan','tunnel-in','tunnel-out'],
     'Input':['clock','controlled','const'],
     'Output':['probe','led','ledmin','lcd']
@@ -1770,8 +1788,9 @@ var dgl= {
     'pin':[[],['out']],
     'pout':[['in'],[]],
     'count':[['en','desc','reset'],['out']],
-    'ram':[['en','write','read','adr','data'],['out']], 
-    //'mux','demux'],
+    'ram':[['en','write','read','adr','datain'],['dataout']], 
+    'mux': [['sel','datain'], ['dataout1','dataout2']],
+    'demux': [['sel','datain1','datain2'], ['dataout']],
     'fan':[['in'],['out']],
     'tunnel-in':[['in'],[]],
     'tunnel-out':[[],['out']],
@@ -1927,6 +1946,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
       var nextI= comps[snd].nextInput;
      
+      
+     
       var outputs= comps[fst].outputs;
       
      if(!('nextOutput' in comps[fst])) {
@@ -1940,11 +1961,16 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       comps[snd].ins[inputs[nextI]].id= fst;
       comps[snd].ins[inputs[nextI]].pout= outputs[nextO];
       
+      if(!(fst + '^'+ outputs[nextO]in comps[snd].inConns)) {
+        comps[snd].inConns.push(fst+'^'+outputs[nextO]);
+      } 
       
-      comps[fst].outs[outputs[nextO]].id= snd;
-      comps[fst].outs[outputs[nextO]].pin= inputs[nextI];
-      
-      
+      if(!(snd+'^'+inputs[nextI] in comps[fst].outConns)) {
+        comps[fst].outConns.push(snd+'^'+inputs[nextI]);
+      }
+     // comps[fst].outs[outputs[nextO]].id= snd;
+    //  comps[fst].outs[outputs[nextO]].pin= inputs[nextI];
+    
       return 1;
   },
   compConnect: function(cids) {
@@ -2153,9 +2179,16 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         var ins= {};
         for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
           var xi= this.compInOuts[this.m.compMenu.sel][0][i];
-          ins[xi] = {
-            pos:'top',
-            pin:xi,
+          if(['demux','mux'].includes(this.m.compMenu.sel) && xi=='sel') {
+            ins[xi] = {
+              pos: 'left',
+              pin: xi,
+            }
+          } else {
+            ins[xi] = {
+              pos:'top',
+              pin:xi,
+            }
           }
         }
         
@@ -2178,6 +2211,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           outputs:this.compInOuts[this.m.compMenu.sel][1],
           ins: ins, 
           outs: outs,
+          inConns: [],
+          outConns: [],
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
@@ -2319,12 +2354,36 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
   (mdy >=  (5+ 25*comp.y - sens -5 + pY) && mdy <=  (5+25* comp.y + 15 + sens + pY))
 )
         {
+          
+          if(this.m.compInfo) {
+            this.m.compInf.sel=comp.id;
+            
+            return;
+          }
+          
           if(this.m.delComp) {
             for(var i in comp.ins) {
-              //something w node and nodeconn
-              //something w check all comps.ins to have this id and remove from ins
               
+              if('id' in comp.ins[i]) {
+    var pout= comp.ins[i].pout;
+                
+    delete comps[comp.ins[i].id].outs[pout].id;
+    delete comps[comp.ins[i].id].outs[pout].pin;
+              }
             }
+    for( var o in comp.outConns) {
+      [cinid, cinpin]= comp.outConns[o].split('^');
+      
+  delete comps[cinid].ins[cinpin].id;
+  delete comps[cinid].ins[cinpin].pout;
+   // comp.outConns.splice(o,1)
+    }
+    
+   // for(var o in comps[comp.])
+    
+            
+           /**/
+  
        delete this.chip[this.chipActive].comp[comp.id];
              return; 
           }
