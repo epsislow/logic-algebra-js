@@ -543,15 +543,14 @@ var dglcvs={
     if(type=='lcd') {
       sty=['#b50','#000','#fff']
     }
-    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram' || type=='count' || type=='mux'|| type=='demux') {
+    if(type=='pin' || type=='pout' || type=='ram' || type=='count' || type=='mux'|| type=='demux') {
       sty= ['#a44','#422','#ff9'];
-      if(type=='chip') {
-        sty[2]='#aa4'
-        sty[3]='#722'
-        sty[4]='#f44';
-    //    sty.push()
-      }
+     
     }
+    if (type.startsWith('chip') ) {
+      sty= ['#a44','#422','#aa4', '#722','#f44']
+    }
+     
     if(isDrag) {
       sty= ['#4aa','#499','#9ff']
     }
@@ -748,7 +747,7 @@ var dglcvs={
         c.closePath()
         st=s/4-s/8+s/4
       }
-    } else if(type=='chip') {
+    } else if(type.startsWith('chip')) {
       c.beginPath();
       c.rect(x,y,s,s)
       c.closePath();
@@ -1836,6 +1835,7 @@ var dgl= {
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
     'Chip':['pin','pout','count','ram', 'mux','demux'],
+    'Project':[],
     'Fans':['fan','tunnel-in','tunnel-out'],
     'Input':['clock','controlled','const'],
     'Output':['probe','led','ledmin','lcd']
@@ -2220,7 +2220,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
   if(this.m.addComp) {
     var ct;
     const csd = dglcvs.compStDt;
-   
+    
     var types=this.compType;
     var open= this.compTypeOpen;
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
@@ -2239,6 +2239,36 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         this.m.compMenu.mdy=mdy;
         var newid=this.m.compMenu.sel+Object.keys(this.chip[this.chipActive].comp).length;
         var ins= {};
+        
+    if(this.m.compMenu.sel.startsWith('chip.')) {
+      var chipNameSplit= this.m.compMenu.sel.split('.');
+      
+      chipNameSplit.shift();
+      
+      var chipName = chipNameSplit.join('.');
+      
+      var ins= this.chip[chipName].ins;
+      var outs= this.chip[chipName].outs;
+      
+        this.m.compMenu.comp={
+          id:newid,
+          type:this.m.compMenu.sel,
+          x:0,
+          y:0,
+          state:0,
+          inputs: Object.keys(ins),
+          outputs:Object.keys(outs),
+          ins: ins, 
+          outs: outs,
+          inConns: [],
+          outConns: [],
+          nextInput:0,
+          nextOutput:0,
+          xOfs:35,
+          yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
+          revIns:0,
+        }
+    } else {
         for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
           var xi= this.compInOuts[this.m.compMenu.sel][0][i];
           if(['demux','mux'].includes(this.m.compMenu.sel) && xi=='sel') {
@@ -2281,6 +2311,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
         }
+    }
+        
         return;
       } else {
         this.m.compMenu.isDrag=0;
@@ -2312,7 +2344,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       if(p in open) {
         var im;
         for(var g in types[p]) {
-          if(this.chipActive=='main'&& ['pin','pout'].includes(types[p][g])) {
+          if(this.chipActive=='main'&& ['pin','pout'].includes(types[p][g]) || types[p][g]=='chip.'+this.chipActive) {
             continue;
           }
           im=i
@@ -2328,9 +2360,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
               this.m.compMenu.sel=types[p][g];
               this.m.compMenu.dragArea= [10*im+ppY*2.5, 10*(i)+ppY*2.5]
               
-             // this.addCompC(this.m.compMenu.sel,rd.randomBytes(5),
-         //     console.log(types[p][g])
-                 
+          
              if(0) {
   var c = (cvs.getFirstCvs());
           
@@ -2724,14 +2754,14 @@ var er2= e.touches[1];
     	  if(comp.type=='pin') {
     	    this.chip[this.chipActive].ins[comp.id] = {
     	      pos:'top',
-    	      id:this.chipActive,
+    	    //  id:this.chipActive,
     	      pin:comp.id,
     	    }
     	  }
     	  if(comp.type=='pout') {
     	    this.chip[this.chipActive].outs[comp.id] = {
     	      pos:'bottom',
-    	      id:this.chipActive,
+    	    //  id:this.chipActive,
     	      pout:comp.id,
     	    }
     	  }
@@ -2785,7 +2815,17 @@ var er2= e.touches[1];
     cvs.draw(1)
     return cvsIteration;
   },
+  initCompTypeProjectChip: function() {
+    
+this.compType.Project= [];
+for(var ci in this.chip) {
+  if(ci!='main') {
+    this.compType.Project.push('chip.'+ci);
+  }
+}
+  },
   start:function() {
+this.initCompTypeProjectChip()
 
 const EVALS_PER_STEP = 2;
 
