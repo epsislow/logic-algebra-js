@@ -173,15 +173,15 @@ $('document').ready(function() {
  //  console.log(window.cvs)
    var cvs = window.cvs;
    var events= {
-     'touchstart': function(e){
+     'touchstart mousedown': function(e){
       dgl.m.offsetLeft= this.offsetLeft;
       dgl.m.offsetTop = this.offsetTop;
      //  return 
        dgl.callTouchStart.apply(dgl,[e])
      }
      ,
-     'touchmove': dgl.callTouchMove.bind(dgl),
-     'touchend': dgl.callTouchEnd.bind(dgl)
+     'touchmove mousemove': dgl.callTouchMove.bind(dgl),
+     'touchend mouseup': dgl.callTouchEnd.bind(dgl)
    }
    $('#tab-diagram').click(function() {
 	    $('.tab-cnt.show')

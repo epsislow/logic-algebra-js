@@ -2263,23 +2263,26 @@ var dgl= {
   $('#status').html(pre+ ' x='+Math.floor(x/devicePixelRatio) + ' y= ' + Math.floor(y/devicePixelRatio)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2)+' '+devicePixelRatio );
   },
   callTouchStart: function(e) {
-    //console.log(e.touches)
     e.preventDefault();
-		this.showMouse(e);
+
 		this.m.mouseisdown = true;
 var components= this.chip[this.chipActive].comp;
+var er,er2;
+if (typeof e.touches != 'undefined') {
+  er =  e.touches[0];
+  er2 = e.touches[1];
+} else {
+  er =  e
+  er2 = {clientX: 0, clientY:0}
+}
 
-var er= e.touches[0];
-var er2= e.touches[1];
+this.showMouse({x: er.clientX, y: er.clientY, x2: er2.clientX, y2: er2.clientY});
 
 //var pageX= event.touches[0].x;
    //   var pageY= event.touches[0].y;
 
 		this.m.mousedown_x = er.clientX/2//- this.offsetLeft;
 		this.m.mousedown_y = er.clientY/2-20//- this.offsetTop;
-		
-		var er = e.touches[0];
-		var er2 = e.touches[1];
 		
 		//var pageX= event.touches[0].x;
 		//   var pageY= event.touches[0].y;
@@ -2305,15 +2308,27 @@ var er2= e.touches[1];
   },
   callTouchMove: function(e) {
     e.preventDefault();
-
-	  this.m.lastMove={x:Math.floor(e.touches[0].pageX/devicePixelRatio), y:Math.floor(e.touches[0].pageY/devicePixelRatio-20)
-	  };
 	  
 	  var components= this.chip[this.chipActive].comp;
 	  
-	  this.showMouse(e, 'M');
-	  var er=e.touches[0];
-	  var er2=e.touches[1];
+var er,er2;
+if (typeof e.touches != 'undefined') {
+  console.log(e);
+  er =  e.touches[0];
+  er2 = e.touches[1];
+} else {
+  er =  e
+}
+
+
+	  this.m.lastMove={
+      x:Math.floor(er.clientX),
+      y:Math.floor(er.clientY-20),
+      x2: 0,
+      y2: 0
+	  };
+
+	  this.showMouse({x: er.clientX, y: er.clientY, x2: 0, y2:0}, 'M');
 
 	  var mouse_x = er.clientX/2//- this.offsetLeft;
 		var mouse_y = er.clientY/2-20//- this.offsetTop;
