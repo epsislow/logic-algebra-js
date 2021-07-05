@@ -170,6 +170,11 @@ $('document').ready(function() {
       }
     },
     start: function() {
+      
+window.onerror = function (message, url, line, column, error) {
+    console.log(message, url, line, column, error);
+    alert(message);
+}
  //  console.log(window.cvs)
    var cvs = window.cvs;
    var events= {
@@ -337,6 +342,7 @@ $('document').ready(function() {
 	  $('#diag-compinfo').click(function() {
 	  	  var en=toggleBtn($(this));
 	  	  dgl.m.compInfo=en;
+	  	  cvs.draw(1)
 	  })
 	  
 	  $('#diag-addcomp').click(function() {

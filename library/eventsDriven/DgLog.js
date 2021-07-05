@@ -423,6 +423,58 @@ var dglcvs={
     c.fill()
     c.restore()
   },
+  drawCompInfo: function(c, cid, comps,k=-100) {
+    this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
+    c.save()
+    c.beginPath()
+    c.rect(0.5, 2.5, 100+k, 190)
+    c.clip()
+    
+    if(cid) {
+      var comp= comps[cid];
+    
+      this.lib.rectm(c, 5, 5, 90+k, 90+k, 1, '#888')
+      var st=0, dt=0;
+      if(comp.type in dglcvs.compStDt) {
+      st = dglcvs.compStDt[comp.type][0];
+      dt = dglcvs.compStDt[comp.type][1];
+      }
+      
+      this.drawComp(c, comp,
+     k+5+ (80-30*(100+ st)/100)/2,
+       20+(80-30*(100+dt)/100)/2, 
+       25, 4, 0,1,1);
+     
+     var styles= {
+       'pinin':['#cc7','#444'],
+       'pinout':['#7c7','#444']
+     }
+      
+     var i=0;  
+     c.textAlign='left';
+     for(var ci in comp.ins) {
+       var p= comp.ins[ci]
+       this.lib.rectm(c, 10, 11*i+100, 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
+       this.lib.textm(c, 25, 11*i+105, p.pin, 5, styles['pinin'][0],'Arial');
+        if ('id' in p) {
+          this.lib.textm(c, 45, 11 * i + 105, p.id + ' -> ' + p.pout, 5, styles['pinout'][0], 'Arial')
+        }
+       i++;
+     }
+     for(var co in comp.outs) {
+       var p = comp.outs[co]
+       this.lib.rectm(c, 10, 11*i+100, 6, 6, 3, styles['pinout'][0], styles['pinout'][1]);
+       
+       this.lib.textm(c, 25, 11*i+105, p.pout, 5, styles['pinout'][0],'Arial');
+       
+       if('id' in p) {
+         this.lib.textm(c, 45, 11*i+105, p.id +' -> ' + p.pin, 5, styles['pinin'][0], 'Arial')
+       }
+       i++;
+     }
+    }
+    c.restore();    
+  },
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
@@ -468,6 +520,8 @@ var dglcvs={
       'fan':[-100/2,0], 
       'tunnel-in':[-100/2,-100/2],
       'tunnel-out':[-100/2,-100/2],
+      'demux':[-100/2,-100/2],
+      'mux':[-100/2,-100/2],
       'controlled':[-100/2,0],
       'const':[-100/4,0],
       'probe':[0,100],
@@ -489,15 +543,14 @@ var dglcvs={
     if(type=='lcd') {
       sty=['#b50','#000','#fff']
     }
-    if(type=='pin' || type=='pout'|| type=='chip' || type=='ram' || type=='count') {
+    if(type=='pin' || type=='pout' || type=='ram' || type=='count' || type=='mux'|| type=='demux') {
       sty= ['#a44','#422','#ff9'];
-      if(type=='chip') {
-        sty[2]='#aa4'
-        sty[3]='#722'
-        sty[4]='#f44';
-    //    sty.push()
-      }
+     
     }
+    if (type.startsWith('chip') ) {
+      sty= ['#a44','#422','#aa4', '#722','#f44']
+    }
+     
     if(isDrag) {
       sty= ['#4aa','#499','#9ff']
     }
@@ -569,12 +622,14 @@ var dglcvs={
      stroke=0
       st=s
       dt=s
-    } else if(type=='tunnel-in') {
+    } else if(type=='tunnel-in' || type=='mux') {
+      if(type=='tunnel-in') {
        if(!state) {
          c.strokeStyle='#222';
        } else {
          c.strokeStyle='#9f9';
        }
+      }
        
        c.beginPath();
        c.moveTo(x+s/2,y);
@@ -584,11 +639,13 @@ var dglcvs={
        c.lineTo(x,y+s/4);
        c.closePath()
        st=-s/2
-    } else if(type=='tunnel-out') {
-      if (!state) {
-        c.strokeStyle = '#222';
-      } else {
-        c.strokeStyle = '#9f9';
+    } else if(type=='tunnel-out' || type=='demux') {
+      if(type=='tunnel-out') {
+        if (!state) {
+          c.strokeStyle = '#222';
+        } else {
+          c.strokeStyle = '#9f9';
+        }
       }
       
       c.beginPath();
@@ -690,7 +747,7 @@ var dglcvs={
         c.closePath()
         st=s/4-s/8+s/4
       }
-    } else if(type=='chip') {
+    } else if(type.startsWith('chip')) {
       c.beginPath();
       c.rect(x,y,s,s)
       c.closePath();
@@ -874,7 +931,7 @@ var dglcvs={
     	c.setTransform(trans)
     	
     //pins and pouts
-    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp.revIns,x,y,s+dt,s+st,comp.rt, inOutsText);
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp,x,y,s+dt,s+st,comp.rt, inOutsText);
     
     c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -954,7 +1011,7 @@ var dglcvs={
   //    comp.rt=3;
  //   }
   },
-  'drawPinsOfComp': function(c,type,ins,outs,revIns,x,y,w,h,r=0, inOutsText=0) {
+  'drawPinsOfComp': function(c,type,ins,outs,comp,x,y,w,h,r=0, inOutsText=0) {
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
     const rot={
       0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
@@ -971,9 +1028,6 @@ var dglcvs={
     w=rott[r].w;
     h=rott[r].h;
     var iid= Object.keys(ins);
-    if(revIns) {
-      iid.reverse();
-    }
     for(var i in iid) {
    //   ins[i].pin='in';
       pos[rot[r][ins[iid[i]].pos]].push(ins[iid[i]]);
@@ -990,8 +1044,8 @@ var dglcvs={
   
     var k=0;
     var pinh, pinw, pw;
-    if(type=='intb') {
-       pinh=7; pinw=7; pw=2;
+    if(inOutsText) {
+       pinh=5; pinw=5; pw=2;
    } else {
      pinh=2, pinw=2; pw=2;
    }
@@ -1040,8 +1094,16 @@ var dglcvs={
       'pinout':['#7c7','#444']
     };
     
+    
+    var nextI=-1,nextO=-1;
+    if('inputs' in comp && 'nextInput' in comp) {
+    nextI = comp.inputs[comp.nextInput];
+    nextO = comp.outputs[comp.nextOutput];
+    }
+    
     for(var i in ins) {
-      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][1])
+      
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][i==nextI?0:1])
       if(inOutsText) {
         if(ins[i].xtt<0) {
           c.textAlign='left'
@@ -1054,7 +1116,7 @@ var dglcvs={
       }
     }
     for(var i in outs) {
-      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][1])
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][i==nextO?0:1])
      if(inOutsText) {
        if (outs[i].xtt < 0) {
          c.textAlign = 'left'
@@ -1151,11 +1213,13 @@ var dglcvs={
     //  this.lib.rectm(c, x+w+0.5, y+k, pinw,pinh,1, '#9f9', '#444')
     }
     
+    var nextI = comp.inputs[comp.nextInput];
+    var nextO = comp.outputs[comp.nextOutput];
     for(var i in ins) {
-      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][1])
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][i==nextI?0:1])
     }
     for(var i in outs) {
-      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][1])
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][i==nextO?0:1])
     }
   	c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -1261,11 +1325,26 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
        15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp[comp.id]? smp[comp.id]: 0 );
-      
     }
     
     for(var cid in comps) {
-      comp= comps[cid];
+      //comp= comps[cid];
+      
+      
+    var comp= comps[cid];
+    var lineNodes= [];
+    for(var i in comp.ins) {
+      if('id' in comp.ins[i]) {
+        
+        var cinid= comp.ins[i].id;
+        var cinpout= comp.ins[i].pout;
+       
+        var outinf= comps[cinid].outs[cinpout];
+        //alert(cinpin+JSON.stringify(outinf));
+        
+      lineNodes= this.getLineNodesFor(comp.ins[i], comp, outinf, comps[cinid]);
+      
+      /*-
       var i=0;
       var il= comp.inputs.length;
       for(var cinid of comp.inputs) {
@@ -1278,23 +1357,27 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
      if(!compin) {
        continue;
      }
+     
     var lineNodes= [];
-   
+
+-*/
+/*-
 try { 
-lineNodes.push(['in',compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
+lineNodes.push(['in', compin.outs[cinid].pinx+1, compin.outs[cinid].piny+1]);
 } catch (e) {
   console.log(compin.outs)
   alert(cinid+' '+compin.id)
   throw new Error('testq1')
-}
+}-*/
+/*-
 var outPinSafeDist= dglcvs.addPinSafeDistance(compin.outs[cinid],compin.rt);
 
 var inPinSafeDist = dglcvs.addPinSafeDistance(comp.ins[cinid], comp.rt)
 
 lineNodes.push(
    outPinSafeDist
-);
-
+);-*/
+/*-
 var dotsOut= dglcvs.addNoUnderComp(
   compin.outs[cinid].pinx+1,
   compin.outs[cinid].piny+1, compin,
@@ -1302,7 +1385,7 @@ var dotsOut= dglcvs.addNoUnderComp(
   //outPinSafeDist[2], compin,
  inPinSafeDist[1],
   inPinSafeDist[2],comp
-  )
+  )-*/
  /* 
 var dotsIn= dglcvs.addNoUnderComp(
   dotsOut[0][1],
@@ -1325,11 +1408,11 @@ dotsIn= dglcvs.addNoUnderComp(
   dotsIn[0][2], comp,
   1)*/
 
-  
+  /*-
 if(dotsOut.length) {
   lineNodes.push(...dotsOut);
-}
-  
+}-*/
+  /*-
 var idx=cinid+'_'+cid;
 if(idx in dgl.nodeConn) {
  var nodes = dgl.nodeConn[idx];
@@ -1353,7 +1436,7 @@ var dots= dglcvs.addNoUnderComp(
  // inPinSafeDist[2], comp,
    comp.ins[cinid].pinx+1,
   comp.ins[cinid].piny+1, comp,
-  1)
+  1)-*/
   /*
   dots= dglcvs.addNoUnderComp(
   //  compin.outs[cinid].pinx + 1,
@@ -1365,7 +1448,7 @@ var dots= dglcvs.addNoUnderComp(
   //comp.ins[cinid].piny+1, comp,1
     );*/
     
-  
+  /*-
 
 if(dots.length) {
   lineNodes.push(...dots);
@@ -1377,6 +1460,8 @@ lineNodes.push(
 lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
 
 //console.log(lineNodes);
+-*/
+
 
 var lastPoint=0;
 for(var l in lineNodes) {
@@ -1384,11 +1469,15 @@ for(var l in lineNodes) {
     lastPoint= lineNodes[l];
     continue;
   }
-  var s=
-  smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
-  if(cid== this.m.isDragged || compin.id== this.m.isDragged) {
-    s='#4ff';
+  //var s;
+  
+ // smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
+  
+  var s= '#474';
+  if (cid == this.m.isDragged || cinid == this.m.isDragged) {
+    s = '#4ff';
   }
+  
   lib.linex(c,lastPoint[1], lastPoint[2], 
     lineNodes[l][1], lineNodes[l][2],1,
     s)
@@ -1403,9 +1492,9 @@ for(var l in lineNodes) {
     smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474'))
       */  
         
-        i++;
       }
     }
+  }
     
     if(this.m.linesUnder) {
     
@@ -1463,7 +1552,7 @@ for(var l in lineNodes) {
        5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
    }
     
-   if(this.m.drawChips || this.m.addComp) {
+   if(this.m.drawChips || this.m.addComp|| this.m.compInfo) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
   dglcvs.d.chipMenuK+= frameTimeDiff/((100-dglcvs.d.chipMenuK)/100)
      }
@@ -1472,6 +1561,8 @@ for(var l in lineNodes) {
      }
      if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
+     } else if (this.m.compInfo) {
+       dglcvs.drawCompInfo(c,this.m.compInf.sel, this.chip[this.chipActive].comp, dglcvs.d.chipMenuK);
      } else {
        dglcvs.drawCompMenu(c,this.compType, this.compTypeOpen,this.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
      }
@@ -1482,8 +1573,10 @@ for(var l in lineNodes) {
        dglcvs.d.chipMenuK -=  frameTimeDiff / ((100 - dglcvs.d.chipMenuK) / 100);
     if(this.m.drawChips) {
      dglcvs.drawChipMenu(c,this.chip, dglcvs.d.chipMenuK);
-     } else {
+    } else if (this.m.compMenu) {
        dglcvs.drawCompMenu(c,this.compType,this.compTypeOpen, this.chipActive, dglcvs.d.chipMenuK,this.m.compMenu)
+    } else {
+       dglcvs.drawCompInfo(c,0, this.chip[this.chipActive].comp, dglcvs.d.chipMenuK);
      }
      
        
@@ -1582,6 +1675,18 @@ var dgl= {
     compConn:0,
     compSetup:0,
     compInfo:0,
+    compInf: {
+      sel: 0,
+      isPan:0,
+      pan:{
+        x:0,y:0,ofsX:0,ofsY:0,
+        xOfs:0,yOfs:0
+      },
+      isDrag:0,
+      pinoutDragged:0,
+      mdx:0,mdy:0,
+      infoIndexOpened:[],
+    },
     compSel:[],
     drawNodes:0,
     linesUnder:0,
@@ -1644,23 +1749,57 @@ var dgl= {
       var comps= this.chip[chipName].comp;
       
       for (let i = 0; i < EVALS_PER_STEP; i++) {
-        evaluate(comps);
-      
+        if(comp.type=='chip') {
+          this.chipInstance = {
+            id: comp.id,
+            path: chipName+'/',
+            comp: this.chip[chipName].comp
+          };
+          pub.instance(comp, this.chipInstance);
+        } else {
+          pub.comp(comp, comps);
+        }
       }
     }
-    pub.main= function() {
+    
+    pub.comp= function(comp, comps) {
+      const binaryOp = (logicFn, comp) => {
+        var inStates= {};
+        var id;
+        for(var i in comp.ins) {
+          if('id' in comp.ins[i]) {
+            id = comp.ins[i].id;
+            inStates[i] = comps[id].states[i];
+          } else {
+            inStates[i] = -1;
+          }
+        }
+        comp.states=logicFn(inStates);
+
+        return;
+      }
       
+      comps.forEach(comp => {
+        if(comp.type==='controlled') {
+          return;
+        } else {
+          return binaryOp(this.libOp[comp.type], comp);
+        }
+      })
     }
     
-    pub.current= function() {
-      
-    }
-    pub.instance= function() {
+    pub.instance= function(comp, instance) {
       
     }
     return pub;
   },
-  compState: [],
+  libOp: {
+    'and': function(inStates) {
+      
+      var outStates={};
+      return outStates;
+    }
+  },
   observerW: function () {
     var pub= {};
     pub.addObs = function (obsName) {
@@ -1688,13 +1827,15 @@ var dgl= {
     'dataout': {},
   },
   chip: {
-    main:{ins:[],outs:[],comp:componentsPos(components),active:1},
+    main:{ins:[],outs:[],comp:{}//componentsPos(components)
+    ,active:1},
     mem:{ins:{},outs:{},comp:{},active:0},
     myclock:{ins:{},outs:{},comp:{},active:0},
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
-    'Chip':['pin','pout','count','ram'],//'mux','demux'],
+    'Chip':['pin','pout','count','ram', 'mux','demux'],
+    'Project':[],
     'Fans':['fan','tunnel-in','tunnel-out'],
     'Input':['clock','controlled','const'],
     'Output':['probe','led','ledmin','lcd']
@@ -1710,8 +1851,9 @@ var dgl= {
     'pin':[[],['out']],
     'pout':[['in'],[]],
     'count':[['en','desc','reset'],['out']],
-    'ram':[['en','write','read','adr','data'],['out']], 
-    //'mux','demux'],
+    'ram':[['en','write','read','adr','datain'],['dataout']], 
+    'mux': [['sel','datain'], ['dataout1','dataout2']],
+    'demux': [['sel','datain1','datain2'], ['dataout']],
     'fan':[['in'],['out']],
     'tunnel-in':[['in'],[]],
     'tunnel-out':[[],['out']],
@@ -1728,6 +1870,71 @@ var dgl= {
     'DFlipFlop':{},
     'Mux': {},
     'Demux':{}
+  },
+  getLineNodesFor: function(outinf, comp ,ininf,compin) {
+    
+    var nodes=[];
+        
+        nodes.push(['in', ininf.pinx+1, ininf.piny+1]);
+        
+        var inPinSafeDist = dglcvs.addPinSafeDistance(ininf, compin.rt);
+        
+        var outPinSafeDist = dglcvs.addPinSafeDistance(outinf, comp.rt)
+        
+        nodes.push(
+          inPinSafeDist
+        );
+        
+        
+var dotsIn= dglcvs.addNoUnderComp(
+  ininf.pinx+1,
+  ininf.piny+1, compin,
+ inPinSafeDist[1],
+  inPinSafeDist[2],comp
+  )
+  
+  
+if(dotsIn.length) {
+  nodes.push(...dotsIn);
+}
+
+var cinid= compin.id;
+var cid= comp.id;
+
+var idx=cinid+'_'+cid;
+if(idx in dgl.nodeConn) {
+ var nodex = dgl.nodeConn[idx];
+ 
+ for(var n in nodex) {
+   if(typeof dgl.node[nodex[n]]=='undefined') {
+     continue;
+   }
+ nodex.push(['node', dgl.node[nodex[n]].x +pX, dgl.node[nodex[n]].y+pY]);
+ if(this.m.drawNodes) {
+   dglcvs.drawNode(c,n,'node', dgl.node[nodex[n]].x+pX,dgl.node[nodex[n]].y+pY)
+ }
+ }
+}
+
+
+var dots= dglcvs.addNoUnderComp(
+  dotsIn.length? dotsIn[0][1]: inPinSafeDist[1],
+  dotsIn.length? dotsIn[0][2]: inPinSafeDist[2], compin,
+   outinf.pinx+1,
+   outinf.piny+1, comp,
+  1);
+  
+
+if(dots.length) {
+  nodes.push(...dots);
+}
+
+nodes.push(
+  outPinSafeDist
+);
+nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
+
+    return nodes;
   },
   cache:{
     save: function(zip=1) {
@@ -1781,6 +1988,52 @@ var dgl= {
       console.log('Loaded');
       cvs.draw(1);
     }
+  },
+  compConnect0: function(cids) {
+      //first goes from out
+      var fst = cids[0];
+      //2nd goes to ins
+      var snd = cids[1];
+       var comps=this.chip[this.chipActive].comp;
+    
+    if(!(fst in comps)||!(snd in comps)) {
+      return 0
+      }
+      var added=0;
+      var inputs= comps[snd].inputs;
+      if(!('nextInput' in comps[snd])) {
+        comps[snd].nextInput=0;
+      }
+      var nextI= comps[snd].nextInput;
+      
+      
+     
+      var outputs= comps[fst].outputs;
+      
+     if(!('nextOutput' in comps[fst])) {
+        comps[fst].nextOutput=0;
+      }
+      var nextO= comps[fst].nextOutput;
+   
+      comps[snd].ins[inputs[nextI]].id= fst;
+      comps[snd].ins[inputs[nextI]].pout= outputs[nextO];
+      
+      if(!(fst + '^'+ outputs[nextO]in comps[snd].inConns)) {
+        comps[snd].inConns.push(fst+'^'+outputs[nextO]);
+      } 
+      
+      if(!(snd+'^'+inputs[nextI] in comps[fst].outConns)) {
+        comps[fst].outConns.push(snd+'^'+inputs[nextI]);
+      }
+     // comps[fst].outs[outputs[nextO]].id= snd;
+    //  comps[fst].outs[outputs[nextO]].pin= inputs[nextI];
+    
+    comps[snd].nextInput++;
+    comps[snd].nextInput %= inputs.length
+    
+    comps[fst].nextOutput++;
+    comps[fst].nextOutput %= outputs.length
+      return 1;
   },
   compConnect: function(cids) {
     //first goes from out
@@ -1967,7 +2220,7 @@ var dgl= {
   if(this.m.addComp) {
     var ct;
     const csd = dglcvs.compStDt;
-   
+    
     var types=this.compType;
     var open= this.compTypeOpen;
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
@@ -1986,21 +2239,56 @@ var dgl= {
         this.m.compMenu.mdy=mdy;
         var newid=this.m.compMenu.sel+Object.keys(this.chip[this.chipActive].comp).length;
         var ins= {};
+        
+    if(this.m.compMenu.sel.startsWith('chip.')) {
+      var chipNameSplit= this.m.compMenu.sel.split('.');
+      
+      chipNameSplit.shift();
+      
+      var chipName = chipNameSplit.join('.');
+      
+      var ins= this.chip[chipName].ins;
+      var outs= this.chip[chipName].outs;
+      
+        this.m.compMenu.comp={
+          id:newid,
+          type:this.m.compMenu.sel,
+          x:0,
+          y:0,
+          state:0,
+          inputs: Object.keys(ins),
+          outputs:Object.keys(outs),
+          ins: ins, 
+          outs: outs,
+          inConns: [],
+          outConns: [],
+          nextInput:0,
+          nextOutput:0,
+          xOfs:35,
+          yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
+          revIns:0,
+        }
+    } else {
         for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
           var xi= this.compInOuts[this.m.compMenu.sel][0][i];
-          ins[xi] = {
-            pos:'top',
-            id:xi,
-            pin:xi,
+          if(['demux','mux'].includes(this.m.compMenu.sel) && xi=='sel') {
+            ins[xi] = {
+              pos: 'left',
+              pin: xi,
+            }
+          } else {
+            ins[xi] = {
+              pos:'top',
+              pin:xi,
+            }
           }
         }
         
         var outs={};
         for (var o in this.compInOuts[this.m.compMenu.sel][1]) {
           var xo = this.compInOuts[this.m.compMenu.sel][1][o];
-          outs[newid] = {
+          outs[xo] = {
             pos: 'bottom',
-            id: newid,
             pout: xo,
           }
         }
@@ -2015,10 +2303,16 @@ var dgl= {
           outputs:this.compInOuts[this.m.compMenu.sel][1],
           ins: ins, 
           outs: outs,
+          inConns: [],
+          outConns: [],
+          nextInput:0,
+          nextOutput:0,
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
         }
+    }
+        
         return;
       } else {
         this.m.compMenu.isDrag=0;
@@ -2050,7 +2344,7 @@ var dgl= {
       if(p in open) {
         var im;
         for(var g in types[p]) {
-          if(this.chipActive=='main'&& ['pin','pout'].includes(types[p][g])) {
+          if(this.chipActive=='main'&& ['pin','pout'].includes(types[p][g]) || types[p][g]=='chip.'+this.chipActive) {
             continue;
           }
           im=i
@@ -2066,9 +2360,7 @@ var dgl= {
               this.m.compMenu.sel=types[p][g];
               this.m.compMenu.dragArea= [10*im+ppY*2.5, 10*(i)+ppY*2.5]
               
-             // this.addCompC(this.m.compMenu.sel,rd.randomBytes(5),
-         //     console.log(types[p][g])
-                 
+          
              if(0) {
   var c = (cvs.getFirstCvs());
           
@@ -2156,12 +2448,61 @@ var dgl= {
   (mdy >=  (5+ 25*comp.y - sens -5 + pY) && mdy <=  (5+25* comp.y + 15 + sens + pY))
 )
         {
+          
+          if(this.m.compInfo) {
+            this.m.compInf.sel=comp.id;
+            
+            return;
+          }
+          
           if(this.m.delComp) {
             for(var i in comp.ins) {
-              //something w node and nodeconn
-              //something w check all comps.ins to have this id and remove from ins
               
+              if('id' in comp.ins[i]) {
+    var pout= comp.ins[i].pout;
+                
+    delete comps[comp.ins[i].id].outs[pout].id;
+    delete comps[comp.ins[i].id].outs[pout].pin;
+    
+   // for
+   // var inConns=comps[comp.ins[i].id].inConns;
+    
+    //.indexOf(comp.id+'^');
+    //comps[comp.ins[i].id].inConns.splice(ii,1);
+    
+              }
             }
+    for( var o in comp.outConns) {
+      [cinid, cinpin]= comp.outConns[o].split('^');
+     /* 
+  var inConns=comps[cinid].inConns;
+  var pout=comps[cinid].ins[cinpin].pout;
+  
+  var ii= comps[cinid].inConns.indexOf(comp.id+'^'+pout);
+  
+  console.log(o,cinid,cinpin, inConns, pout, comp.id+'^'+pout, ii)
+  
+  comps[cinid].inConns.slice(ii,1);
+  
+  console.log(comps[cinid].inConns)
+  */
+  comps[cinid].inConns = comps[cinid].inConns.filter($item => !$item.startsWith(comp.id));
+  
+  delete comps[cinid].ins[cinpin].id;
+  delete comps[cinid].ins[cinpin].pout;
+  
+    
+   // comp.outConns.splice(o,1)
+    }
+    
+    
+   // for(var o in comps[comp.])
+    
+            
+           /**/
+  if(comp.id== this.m.compInf.sel) {
+    this.m.compInf.sel=0;
+  }
        delete this.chip[this.chipActive].comp[comp.id];
              return; 
           }
@@ -2176,7 +2517,7 @@ var dgl= {
             this.m.compSel.push(cid);
             
             if (this.m.compSel.length >= 2) {
-              this.compConnect(this.m.compSel);
+              this.compConnect0(this.m.compSel);
               this.m.compSel = []
               
             }
@@ -2428,14 +2769,14 @@ if (typeof e.touches != 'undefined') {
     	  if(comp.type=='pin') {
     	    this.chip[this.chipActive].ins[comp.id] = {
     	      pos:'top',
-    	      id:this.chipActive,
+    	    //  id:this.chipActive,
     	      pin:comp.id,
     	    }
     	  }
     	  if(comp.type=='pout') {
     	    this.chip[this.chipActive].outs[comp.id] = {
     	      pos:'bottom',
-    	      id:this.chipActive,
+    	    //  id:this.chipActive,
     	      pout:comp.id,
     	    }
     	  }
@@ -2489,7 +2830,17 @@ if (typeof e.touches != 'undefined') {
     cvs.draw(1)
     return cvsIteration;
   },
+  initCompTypeProjectChip: function() {
+    
+this.compType.Project= [];
+for(var ci in this.chip) {
+  if(ci!='main') {
+    this.compType.Project.push('chip.'+ci);
+  }
+}
+  },
   start:function() {
+this.initCompTypeProjectChip()
 
 const EVALS_PER_STEP = 2;
 
