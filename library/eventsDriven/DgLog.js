@@ -1242,7 +1242,9 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     return dglcvs.drawChipSetup(c, this.chipActive, this.chip[this.chipActive]);
   }
   
-    const smp= trace.getSamples()[cvsIteration];
+   // const smp= trace.getSamples()[cvsIteration];
+   
+   
     
     styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
     var comps=this.chip[this.chipActive].comp;
@@ -1320,11 +1322,15 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
       )*/
-      
+    var smp0=0;
+    if('states' in comp) {
+      smp0=comp.states[comp.outputs[0]];
+    }
+    
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp[comp.id]? smp[comp.id]: 0 );
+       15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp0 );
     }
     
     for(var cid in comps) {
@@ -1461,7 +1467,11 @@ lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
 
 //console.log(lineNodes);
 -*/
-
+smp0 = 0;
+var compin = comps[cinid];
+if ('states' in compin) {
+  smp0 = compin.states[compin.outputs[0]];
+}
 
 var lastPoint=0;
 for(var l in lineNodes) {
@@ -1474,9 +1484,13 @@ for(var l in lineNodes) {
  // smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
   
   var s= '#474';
+  if(smp0) {
+    s='#4f4';
+  }
   if (cid == this.m.isDragged || cinid == this.m.isDragged) {
     s = '#4ff';
   }
+  
   
   lib.linex(c,lastPoint[1], lastPoint[2], 
     lineNodes[l][1], lineNodes[l][2],1,
@@ -1540,7 +1554,7 @@ for(var l in lineNodes) {
         dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp0);
     
     }
     }
@@ -1745,22 +1759,30 @@ var dgl= {
   eval: function () {
     var pub= {}
     
+    var chipActive= this.chipActive;
+    var chip= this.chip;
+    
     pub.chip= function(chipName, chipInstance=0, datain= {}, dataout= {}) {
-      var comps= this.chip[chipName].comp;
+      var comps= chip[chipName].comp;
       
-      for (let i = 0; i < EVALS_PER_STEP; i++) {
+      for (let i = 0; i < 5; i++) {
+      for(var cid in comps) {
+        var comp= comps[cid]
         if(comp.type=='chip') {
           this.chipInstance = {
             id: comp.id,
             path: chipName+'/',
-            comp: this.chip[chipName].comp
+            comps: chip[chipName].comp
           };
           pub.instance(comp, this.chipInstance);
         } else {
           pub.comp(comp, comps);
         }
       }
+      }
     }
+    
+    var libOp= this.libOp;
     
     pub.comp= function(comp, comps) {
       const binaryOp = (logicFn, comp) => {
@@ -1769,35 +1791,60 @@ var dgl= {
         for(var i in comp.ins) {
           if('id' in comp.ins[i]) {
             id = comp.ins[i].id;
-            inStates[i] = comps[id].states[i];
+            var pout= comp.ins[i].pout;
+            if(!('states' in comps[id])) {
+              comps[id].states= {}
+            }
+            if(pout in comps[id].states) {
+              inStates[i] = comps[id].states[pout];
+            } else {
+              inStates[i] = 0;
+            }
           } else {
             inStates[i] = -1;
           }
         }
         comp.states=logicFn(inStates);
-
+        
         return;
       }
       
-      comps.forEach(comp => {
+    //  comps.forEach(comp => {
         if(comp.type==='controlled') {
           return;
         } else {
-          return binaryOp(this.libOp[comp.type], comp);
+          if(typeof libOp[comp.type]!=='function') {
+            console.log(comp.type)
+          }
+          return binaryOp(libOp[comp.type], comp);
         }
-      })
+    //  })
+      
     }
     
     pub.instance= function(comp, instance) {
       
     }
+    
+    pub.all= function() {
+      pub.chip(chipActive);
+    }
+    
     return pub;
   },
   libOp: {
-    'and': function(inStates) {
+    'and': function(iss) {
       
-      var outStates={};
-      return outStates;
+      return {'out': libFn.and(iss.in1,iss.in2)};
+    },
+    'nor': function(iss) {
+      return {'out': libFn.nor(iss.in1,iss.in2)};
+    },
+    'not': function(iss) {
+      return {'out': libFn.not(iss.in)};
+    },
+    'clock': function() {
+      return {'out':cvsIteration%2}
     }
   },
   observerW: function () {
@@ -2267,6 +2314,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
+          states: {},
         }
     } else {
         for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
@@ -2310,6 +2358,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
+          states: {},
         }
     }
         
@@ -2611,13 +2660,19 @@ var components= this.chip[this.chipActive].comp;
 var er,er2;
 if (typeof e.touches != 'undefined') {
   er =  e.touches[0];
+  
   er2 = e.touches[1];
-} else {
-  er =  e
-  er2 = {clientX: 0, clientY:0}
-}
+}// else {
+//  er =  e
+ // er2 = {clientX: 0, clientY:0}
+//}
 
-this.showMouse({x: er.clientX, y: er.clientY, x2: er2.clientX, y2: er2.clientY});
+this.showMouse({
+  x: er.clientX,
+  y: er.clientY, 
+  x2: 0, //er2.clientX,
+  y2: 0, //er2.clientY
+});
 
 //var pageX= event.touches[0].x;
    //   var pageY= event.touches[0].y;
@@ -2654,12 +2709,11 @@ this.showMouse({x: er.clientX, y: er.clientY, x2: er2.clientX, y2: er2.clientY})
 	  
 var er,er2;
 if (typeof e.touches != 'undefined') {
-  console.log(e);
   er =  e.touches[0];
   er2 = e.touches[1];
-} else {
-  er =  e
-}
+} //else {
+ // er =  e
+//}
 
 
 	  this.m.lastMove={
@@ -2823,6 +2877,12 @@ if (typeof e.touches != 'undefined') {
     	  }
     	}
     cvs.draw(1)
+  },
+  tick: function() {
+    cvsIteration++;
+    dgl.eval().all();
+    cvs.draw(1);
+    return cvsIteration;
   },
   drawNext: function() {
     cvsIteration++;

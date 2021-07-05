@@ -128,7 +128,7 @@ $('document').ready(function() {
 	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
                value="1300"/>*/
 	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
-	  .addButton('Next',0,'btn-secondary',{'id':'diag-next'})
+	  .addButton('Tick',0,'btn-secondary',{'id':'diag-tick'})
 	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
   .addButton('AddNode',0,'btn-secondary',{'id':'diag-addnode'})
   .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
@@ -173,7 +173,7 @@ $('document').ready(function() {
       
 window.onerror = function (message, url, line, column, error) {
     console.log(message, url, line, column, error);
-    alert(message);
+    alert(message+' L'+line+':'+column);
 }
  //  console.log(window.cvs)
    var cvs = window.cvs;
@@ -191,7 +191,7 @@ window.onerror = function (message, url, line, column, error) {
    $('#tab-diagram').click(function() {
 	    $('.tab-cnt.show')
 	      .removeClass('show')
-	      .addClass('hide');
+	       .addClass('hide');
 	      
 	    $('#tab-diagram-cnt')
 	      .removeClass('hide')
@@ -259,6 +259,11 @@ window.onerror = function (message, url, line, column, error) {
 	       .removeClass('btn-secondary')
 	       .addClass('active btn-light');
 	    doc.diagEvents(0, events)
+	  })
+	  
+	  $('#diag-tick').click(function() {
+	    $('#itr').val(dgl.tick());
+	    $(this).blur();
 	  })
 	  
 	  $('#diag-next').click(function() {
