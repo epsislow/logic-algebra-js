@@ -2590,6 +2590,10 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     return;
           }
           this.m.isDragged = cid;
+          if(comp.type=='controlled') {
+    comp.states['out']=
+    comp.states['out']==1?0:1
+          }
           /**/
           if(0){
           var c = (cvs.getFirstCvs());
