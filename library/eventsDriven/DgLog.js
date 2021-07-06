@@ -477,7 +477,7 @@ var dglcvs={
   },
   input:0,
   drawChipMenu: function(c,chips,k=-100) {
-    this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
+    this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+33, 1, '#669', '#222');
 
     var i=1;
     var cp;
@@ -504,6 +504,7 @@ var dglcvs={
       
       i++;
     }
+    i++;
     
     this.lib.rectm(c, 5+k, i*10 , 60, 10, 1, '#669', '#224');
     
@@ -2319,7 +2320,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       return;
     }
     if(this.m.drawChips==1) {
-      var maxy=Object.keys(this.chip).length*10+35;
+      var maxy=Object.keys(this.chip).length*10+40;
       
     if(mdx >=0 && mdx<=100 && mdy>=0 && mdy<= maxy) {
         
@@ -2337,6 +2338,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
       i++;
     }
+    i++;
     
     if(mdx >= 70 && mdx <= 120 && mdy >= i*10-20 && mdy <= i*10+50) {
       if(this.chipActive!='main') {
@@ -2372,9 +2374,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       //innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
       placeHolder: 'NewChip',
       onsubmit: function() {
-      
         var value= this.value();
-        if(value) {
+        if(value && !(value in chips)) {
           chips[this.value()] ={
             ins:{},outs:{},
             comp:{},active:0
