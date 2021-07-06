@@ -475,13 +475,20 @@ var dglcvs={
     }
     c.restore();    
   },
+  input:0,
   drawChipMenu: function(c,chips,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, Object.keys(chips).length*10+25, 1, '#669', '#222');
 
     var i=1;
     var cp;
-
-    for (var p in chips) {
+    
+    var keyss= Object.keys(chips);
+    keyss.splice(keyss.indexOf('main'),1)
+    keyss.unshift('main');
+    
+    for (var ks in keyss) {
+      var p = keyss[ks]
+      
       cp=chips[p];
       if(cp.active) {
         this.lib.rectm(c, 3+k, 10*i-5, 
@@ -497,49 +504,52 @@ var dglcvs={
       
       i++;
     }
-    /*
     
-    var input = new CanvasInput({
-      canvas: document.getElementById('cvs'),
-      fontSize: 7,
-      fontFamily: 'Arial',
-      fontColor: '#fff',
-      fontWeight: 'none',
-      width: 50,
-      height:10,
-      x:10,
-      y:40,
-      padding: 0,
-      backgroundColor:"#333",
-      borderWidth: 0,
-      borderColor: '#000',
-      borderRadius: 0,
-      innerShadow:'none',
-      boxShadow:'none',
-      //boxShadow: '1px 1px 0px #fff',
-      //innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
-      placeHolder: 'NewChip',
-      onsubmit: function() {
-        var value= this.value();
-        if(value) {
-          chips[this.value()] ={
-            ins:{},outs:{},
-            comp:{},active:0
-          }
-        }
-        cvs.draw(1)
-        this.blur();
-        this.destroy()
-      }
-    });
-    var cv= input.renderCanvas();
+    this.lib.rectm(c, 5+k, i*10 , 60, 10, 1, '#669', '#224');
+    
+    c.textAlign='left'
+    c.textBaseline='middle'
+    this.lib.texti(c, 7+k,i*10+5, "\uf055",5, '#fff')
+    this.lib.textm(c, 15+k, i*10+5, 'Add chip', 6, '#fff')
+    
+    this.lib.rectm(c, 70+k, i*10 , 28, 10, 1, '#966', '#422');
+    this.lib.texti(c, 72 + k, i * 10 + 5, "\uf057", 5, '#f00')
+    this.lib.textm(c, 79 + k, i * 10 + 5, 'Delete', 6, '#fff')
+  //  return;
+    
+  if(this.input) {
+    this.input.y(i*10);
+    this.input.render();
+    this.input.focus();
+     return;
+  }
+  
+   return
+   /*
+    var cv= this.input.renderCanvas();
     
     var cx= cv
     .getContext('2d');
-   let rect = cv.getBoundingClientRect();
+    
+    cvs.getLib().initScale(cx, cv, 0.5);
+   // cv.width = 50;
+   // cv.height =10;
+    //cv.style.width=50/2;
+   // cv.style.height=5
+    
+cx.imageSmoothingEnabled = false;
+    
+    cx.webkitImageSmoothingEnabled=false
+  cx.mozImageSmoothingEnabled = false;
+  */
+  // let rect = cv.getBoundingClientRect();
+   
+  
+   
+   
+   /*
    rect = {width: 50, height: 10}
 
-cx.imageSmoothingEnabled = false;
 
 
 // increase the actual size of our canvas
@@ -555,11 +565,11 @@ cv.style.width = rect.width/4 + 'px';
 cv.style.height = rect.height/4 + 'px';
 
    //cx.scale(devicePixelRatio*2,devicePixelRatio*2)
-    
- // cx.translate(0.5,0.5)
-    input.render()
-    input.focus();
     */
+ // cx.translate(0.5,0.5)
+ //   this.input.render()
+   // this.input.focus();
+    
   },
   drawNode: function(c,id,type,x,y) {
     var styles={
@@ -2309,7 +2319,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       return;
     }
     if(this.m.drawChips==1) {
-      var maxy=Object.keys(this.chip).length*10+25;
+      var maxy=Object.keys(this.chip).length*10+35;
       
     if(mdx >=0 && mdx<=100 && mdy>=0 && mdy<= maxy) {
         
@@ -2326,6 +2336,66 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         return;
       }
       i++;
+    }
+    
+    if(mdx >= 70 && mdx <= 120 && mdy >= i*10-20 && mdy <= i*10+50) {
+      if(this.chipActive!='main') {
+        delete this.chip[this.chipActive];
+      }
+      this.chipActive='main';
+    this.chip[this.chipActive].active=1;
+    cvs.drawNext();
+    }
+    
+    if(mdx >=5 && mdx<= 75 && mdy >=i*10-20 && mdy <= i*10+50) {
+      var chips= this.chip;
+      //shinput
+      dglcvs.input = new CanvasInput({
+      canvas: document.getElementById('cvs'),
+      fontSize: 7,
+      fontFamily: 'Arial',
+      fontColor: '#fff',
+      fontWeight: 'none',
+      width: 50,
+      height:10,
+      renderOnMain:1,
+      x:15,
+      y:40,
+      padding: 0,
+      backgroundColor:"#224",
+      borderWidth: 0,
+      borderColor: '#224',
+      borderRadius: 0,
+      innerShadow:'none',
+      boxShadow:'none',
+      //boxShadow: '1px 1px 0px #fff',
+      //innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
+      placeHolder: 'NewChip',
+      onsubmit: function() {
+      
+        var value= this.value();
+        if(value) {
+          chips[this.value()] ={
+            ins:{},outs:{},
+            comp:{},active:0
+          }
+        }
+       this.blur();
+       dglcvs.input=0;
+        this.destroy()
+        cvs.draw(1)
+      }
+    });
+   // var cv= dglcvs.input.renderCanvas();
+    
+   // var cx= cv.getContext('2d');
+    
+  //  cvs.getLib().initScale(cx, cv, 1);
+   // cv.style.width/=2
+   // cv.style.height/=2;
+ // dglcvs.input.focus();
+  //dglcvs.input.render();
+  //dglcvs.input.focus()
     }
     
     return;

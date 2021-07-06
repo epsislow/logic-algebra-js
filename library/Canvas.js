@@ -164,6 +164,37 @@ bar: function (c, menu_stack){
     }
   }
   
+  
+  lib.initScale= function(c, cvs, scaleFact=2) {
+    devicePixelRatio= window.devicePixelRatio | 1;
+    backingStoreRatio = 
+      c.webkitBackingStorePixelRatio || 
+      c.mozBackigStorePixelRatio ||
+      c.msBackigStorePixelRatio ||
+      c.oBackigStorePixelRatio || 
+      c.backigStorePixelRatio || 1
+      
+    ratio = devicePixelRatio / backingStoreRatio;
+    if(ratio !==1) {
+      oldWidth = cvs.width;
+      oldHeight = cvs.height;
+  
+    cvs.width = oldWidth * ratio;
+    cvs.height= oldHeight * ratio;
+    cvs.style.width = oldWidth +'px';
+    cvs.style.height = oldHeight +'px';
+    cvs.style['image-rendering']= '-webkit-optimize-contrast';
+    
+    c.scale(ratio*scaleFact, ratio*scaleFact)
+    }
+  
+  c.imageSmoothingEnabled=false;
+  c.webkitImageSmoothingEnabled=false
+  c.mozImageSmoothingEnabled = false;
+  
+    return c;
+  }
+  
   function initCvs(elId) {
     calls = [];
     var canvas = $('#'+elId).get(0);
@@ -180,6 +211,8 @@ bar: function (c, menu_stack){
 	lib.maxWidth= canvas.width;
 	lib.maxHeight= canvas.height;
 	
+	ctx = lib.initScale(ctx, canvas);
+	return ctx;
 //	ctx.translate(0.5, 0.5);
 
 	  // canvas.css({'border':'1px solid #21b'});
@@ -199,11 +232,8 @@ canvas.style.width = rect.width + 'px';
 canvas.style.height = rect.height + 'px';
 
 ctx.imageSmoothingEnabled = false;
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-	//	ctx.fillStyle = '#eee';
-	//	ctx.fillRect(0, 0, canvas.width, canvas.height);
-		
-	//	ctx.clearRect(10,10,1,1)
+
+ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     return ctx;
   }
