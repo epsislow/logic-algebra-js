@@ -497,6 +497,69 @@ var dglcvs={
       
       i++;
     }
+    /*
+    
+    var input = new CanvasInput({
+      canvas: document.getElementById('cvs'),
+      fontSize: 7,
+      fontFamily: 'Arial',
+      fontColor: '#fff',
+      fontWeight: 'none',
+      width: 50,
+      height:10,
+      x:10,
+      y:40,
+      padding: 0,
+      backgroundColor:"#333",
+      borderWidth: 0,
+      borderColor: '#000',
+      borderRadius: 0,
+      innerShadow:'none',
+      boxShadow:'none',
+      //boxShadow: '1px 1px 0px #fff',
+      //innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
+      placeHolder: 'NewChip',
+      onsubmit: function() {
+        var value= this.value();
+        if(value) {
+          chips[this.value()] ={
+            ins:{},outs:{},
+            comp:{},active:0
+          }
+        }
+        cvs.draw(1)
+        this.blur();
+        this.destroy()
+      }
+    });
+    var cv= input.renderCanvas();
+    
+    var cx= cv
+    .getContext('2d');
+   let rect = cv.getBoundingClientRect();
+   rect = {width: 50, height: 10}
+
+cx.imageSmoothingEnabled = false;
+
+
+// increase the actual size of our canvas
+//cv.width = rect.width * devicePixelRatio*8;
+//cv.height = rect.height * devicePixelRatio*8;
+
+// ensure all drawing operations are scaled
+//cx.scale(devicePixelRatio, devicePixelRatio);
+
+//cx.translate(0.5,0.5)
+// scale everything down using CSS
+cv.style.width = rect.width/4 + 'px';
+cv.style.height = rect.height/4 + 'px';
+
+   //cx.scale(devicePixelRatio*2,devicePixelRatio*2)
+    
+ // cx.translate(0.5,0.5)
+    input.render()
+    input.focus();
+    */
   },
   drawNode: function(c,id,type,x,y) {
     var styles={
@@ -1634,7 +1697,7 @@ for(var l in lineNodes) {
       dglcvs.drawComp(c, comp,
        5+50*comp.x+comp.xOfs,
        5+25*comp.y+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp[comp.id] );
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), 0 );
      
    }
    
@@ -1758,11 +1821,12 @@ var dgl= {
   },
   eval: function () {
     var pub= {}
+    var isRefresh=1;
     
     var chipActive= this.chipActive;
     var chip= this.chip;
     
-    pub.chip= function(chipName, chipInstance=0, datain= {}, dataout= {}) {
+    pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
       var comps= chip[chipName].comp;
       
       for (let i = 0; i < 5; i++) {
@@ -1776,7 +1840,7 @@ var dgl= {
           };
           pub.instance(comp, this.chipInstance);
         } else {
-          pub.comp(comp, comps);
+          pub.comp(comp, comps, refresh);
         }
       }
       }
@@ -1784,8 +1848,8 @@ var dgl= {
     
     var libOp= this.libOp;
     
-    pub.comp= function(comp, comps) {
-      const binaryOp = (logicFn, comp) => {
+    pub.comp= function(comp, comps, refresh=0) {
+      const binaryOp = (logicFn, comp, refresh=0) => {
         var inStates= {};
         var id;
         for(var i in comp.ins) {
@@ -1804,6 +1868,9 @@ var dgl= {
             inStates[i] = -1;
           }
         }
+        if(refresh && comp.type=='clock') {
+          return;
+        }
         comp.states=logicFn(inStates);
         
         return;
@@ -1816,7 +1883,7 @@ var dgl= {
           if(typeof libOp[comp.type]!=='function') {
             console.log(comp.type)
           }
-          return binaryOp(libOp[comp.type], comp);
+          return binaryOp(libOp[comp.type], comp, refresh);
         }
     //  })
       
@@ -1826,8 +1893,9 @@ var dgl= {
       
     }
     
-    pub.all= function() {
-      pub.chip(chipActive);
+    pub.all= function(refresh=0) {
+      isRefresh=refresh;
+      pub.chip(chipActive, refresh);
     }
     
     return pub;
@@ -2593,6 +2661,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           if(comp.type=='controlled') {
     comp.states['out']=
     comp.states['out']==1?0:1
+    dgl.tick(1);
           }
           /**/
           if(0){
@@ -2882,9 +2951,9 @@ if (typeof e.touches != 'undefined') {
     	}
     cvs.draw(1)
   },
-  tick: function() {
+  tick: function(refresh=0) {
     cvsIteration++;
-    dgl.eval().all();
+    dgl.eval().all(refresh);
     cvs.draw(1);
     return cvsIteration;
   },

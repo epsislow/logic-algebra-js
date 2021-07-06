@@ -198,7 +198,7 @@ ctx.scale(devicePixelRatio*2, devicePixelRatio*2);
 canvas.style.width = rect.width + 'px';
 canvas.style.height = rect.height + 'px';
 
-
+ctx.imageSmoothingEnabled = false;
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 	//	ctx.fillStyle = '#eee';
 	//	ctx.fillRect(0, 0, canvas.width, canvas.height);
