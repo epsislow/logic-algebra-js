@@ -1558,8 +1558,11 @@ for(var l in lineNodes) {
  // smp[compin.id] == 'x' ? '#f00' : (smp[compin.id] ? '#4f4' : '#474');
   
   var s= '#474';
-  if(smp0) {
+  if(smp0==1) {
     s='#4f4';
+  }
+  if(smp0==-2) {
+    s='#f44';
   }
   if (cid == this.m.isDragged || cinid == this.m.isDragged) {
     s = '#4ff';
@@ -1840,9 +1843,14 @@ var dgl= {
     pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
       var comps= chip[chipName].comp;
       
+      var resetVarStates =1;
       for (let i = 0; i < 5; i++) {
       for(var cid in comps) {
         var comp= comps[cid]
+        if (resetVarStates && ('varStates' in comp)) {
+          //console.log('del')
+          delete comp.varStates// = {};
+        }
         if(comp.type=='chip') {
           this.chipInstance = {
             id: comp.id,
@@ -1854,6 +1862,7 @@ var dgl= {
           pub.comp(comp, comps, refresh);
         }
       }
+      resetVarStates=0;
       }
     }
     
@@ -1882,7 +1891,8 @@ var dgl= {
         if(refresh && comp.type=='clock') {
           return;
         }
-        comp.states=logicFn(inStates);
+        
+        comp.states=checkVariableState(comp.states, logicFn(inStates), comp);
         
         return;
       }
@@ -1897,7 +1907,33 @@ var dgl= {
           return binaryOp(libOp[comp.type], comp, refresh);
         }
     //  })
+    }
+    
+    function checkVariableState(oldSts, newSts, comp) {
+      const oldStsArr= Object.keys(oldSts);
+      if(!oldStsArr.length) {
+        return newSts;
+      }
+      if(!('varStates' in comp)) {
+        comp.varStates={};
+      }
       
+      for(var i in oldStsArr) {
+        const k= oldStsArr[i];
+        if(!(k in newSts)) {
+          continue;
+        }
+        if(oldSts[k]!=newSts[k] && [1,0].includes(newSts[k])) {
+          if(!(k in comp.varStates)) {
+            comp.varStates[k] =0;
+          }
+          comp.varStates[k]++;
+          if(comp.varStates[k]>3) {
+            newSts[k] = -2;
+          }
+        }
+      }
+      return newSts;
     }
     
     pub.instance= function(comp, instance) {
@@ -1913,8 +1949,10 @@ var dgl= {
   },
   libOp: {
     'and': function(iss) {
-      
       return {'out': libFn.and(iss.in1,iss.in2)};
+    },
+    'or': function(iss) {
+      return { 'out': libFn.or(iss.in1, iss.in2) };
     },
     'nor': function(iss) {
       return {'out': libFn.nor(iss.in1,iss.in2)};
@@ -1924,6 +1962,9 @@ var dgl= {
     },
     'clock': function() {
       return {'out':cvsIteration%2}
+    },
+    'nand': function(iss) {
+      return {'out': libFn.nand(iss.in1, iss.in2)}
     }
   },
   observerW: function () {
