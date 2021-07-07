@@ -150,8 +150,11 @@ $('document').ready(function() {
   .addButton('CompSetup',0,'btn-secondary mx-2',{'id':'diag-compsetup'})
   .addButton('CompInfo',0,'btn-secondary ',{'id':'diag-compinfo'})
   .addButton('CompConn',0,'btn-secondary mx-2',{'id':'diag-compconn'})
-  .addButton('AddComp',0,'btn-secondary ',{'id':'diag-addcomp'})
-  .addButton('DelComp',0,'btn-secondary mx-2',{'id':'diag-delcomp'})
+  .addButton('CompSelect',0,'btn-secondary ',{'id':'diag-compselc'})
+  .addButton('AddComp',0,'btn-secondary mx-2',{'id':'diag-addcomp'})
+  .addButton('DelComp',0,'btn-secondary ',{'id':'diag-delcomp'})
+  .addButton('CompPaste',0,'btn-secondary mx-2',{'id':'diag-comppaste'})
+  
   .br()
   .br()
   .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
@@ -357,6 +360,23 @@ window.onerror = function (message, url, line, column, error) {
 	  	  dgl.m.compInfo=en;
 	  	  cvs.draw(1)
 	  })
+	  
+	  $('#diag-compselc').click(function() {
+	     var en=toggleBtn($(this));
+	     dgl.m.compSelc=en;
+	     if(dgl.m.compSel.length) {
+	  	     dgl.m.compSel=[];
+	  	 }
+	     cvs.draw(1)
+	  })
+	  
+	  $('#diag-comppaste').click(function() {
+	  	//  var en=toggleBtn($(this));
+	  	  dgl.m.compPaste=1;
+	  	  $(this).blur();
+	  	  dgl.compPasteC();
+	  	  cvs.draw(1)
+	   })
 	  
 	  $('#diag-addcomp').click(function() {
 	  	  var en=toggleBtn($(this));

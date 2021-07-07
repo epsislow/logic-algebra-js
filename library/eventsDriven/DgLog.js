@@ -1779,6 +1779,8 @@ var dgl= {
       infoIndexOpened:[],
     },
     compSel:[],
+    compSelc:0,
+    compPaste:0,
     drawNodes:0,
     linesUnder:0,
     drawGrid:1,
@@ -1832,6 +1834,9 @@ var dgl= {
     }
     
     return pub;
+  },
+  compPasteC() {
+    
   },
   eval: function () {
     var pub= {}
@@ -2677,7 +2682,14 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
   (mdy >=  (5+ 25*comp.y - sens -5 + pY) && mdy <=  (5+25* comp.y + 15 + sens + pY))
 )
         {
-          
+          if(this.m.compSelc) {
+            if (this.m.compSel.includes(cid)) {
+    this.m.compSel.splice(this.m.compSel.indexOf(cid),1)
+            } else {
+              this.m.compSel.push(cid);
+            }
+            return;
+          }
           if(this.m.compInfo) {
             this.m.compInf.sel=comp.id;
             
