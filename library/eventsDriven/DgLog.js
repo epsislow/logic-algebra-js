@@ -387,7 +387,7 @@ var dglcvs={
       i++;
       if(ct in open) {
         for(var cg in types[ct]) {
-          if(chipActive=='main'&& ['pin','pout'].includes(types[ct][cg])) {
+          if(chipActive=='main'&& ['pin','pout'].includes(types[ct][cg]) || types[ct][cg] == 'chip.' + chipActive) {
             continue;
           }
           c.textAlign='left'
@@ -1780,6 +1780,9 @@ var dgl= {
     },
     compSel:[],
     compSelc:0,
+    compCopy: {
+      chipName: 0, 
+    },
     compPaste:0,
     drawNodes:0,
     linesUnder:0,
@@ -1836,7 +1839,13 @@ var dgl= {
     return pub;
   },
   compPasteC() {
-    
+    if(this.m.compSelc && this.m.compSel.length && this.m.compCopy.chip) {
+      var sel= this.m.compSel;
+      for(var s of sel) {
+        var comp= this.chip[this.m.compCopy.chip].comp[s];
+        this.chip[this.chipActive].comp[s]=JSON.parse(JSON.stringify(comp));
+      }
+    }
   },
   eval: function () {
     var pub= {}
@@ -2156,6 +2165,23 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         buf.push(data.nodeConn[j][k]);
       }
       dgl.nodeConn[j] = buf;
+    }
+    var comps= dgl.chip[dgl.chipActive].comp, comp,
+      cid, cpin, cpout;
+    for(var cid in comps) {
+      var comp= comps[cid];
+      for(var i=comp.inConns.length-1; i>=0;i--) {
+        [cid, cpin] = comp.inConns[i].split('^');
+        if(!(cid in comps)) {
+          comp.inConns.splice(i,1)
+        }
+      }
+      for (var i=comp.outConns.length-1; i>=0; i--) {
+        [cid, cpout] = comp.outConns[i].split('^');
+        if (!(cid in comps)) {
+          comp.outConns.splice(i, 1)
+        }
+      }
     }
       console.log('Loaded');
       cvs.draw(1);
@@ -2683,6 +2709,9 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 )
         {
           if(this.m.compSelc) {
+            if(!this.m.compCopy.chip) {
+              this.m.compCopy.chip= this.chipActive;
+            }
             if (this.m.compSel.includes(cid)) {
     this.m.compSel.splice(this.m.compSel.indexOf(cid),1)
             } else {
@@ -2727,7 +2756,9 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
   
   console.log(comps[cinid].inConns)
   */
+  if('inConns' in comps[cinid]) {
   comps[cinid].inConns = comps[cinid].inConns.filter($item => !$item.startsWith(comp.id));
+  }
   
   delete comps[cinid].ins[cinpin].id;
   delete comps[cinid].ins[cinpin].pout;

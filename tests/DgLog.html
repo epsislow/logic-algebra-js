@@ -367,6 +367,11 @@ window.onerror = function (message, url, line, column, error) {
 	     if(dgl.m.compSel.length) {
 	  	     dgl.m.compSel=[];
 	  	 }
+	  	 if(en) {
+	  	 dgl.m.compCopy.chip= dgl.chipActive;
+	  	 } else {
+	  	   dgl.m.compCopy.chip=0;
+	  	 }
 	     cvs.draw(1)
 	  })
 	  
