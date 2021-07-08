@@ -1900,13 +1900,36 @@ var dgl= {
           //console.log('del')
           delete comp.varStates// = {};
         }
-        if(comp.type=='chip') {
+        if(comp.type.startsWith('chip.')) {
+          
+          var inStates= {};
+        var id;
+        for(var i in comp.ins) {
+          if('id' in comp.ins[i]) {
+            id = comp.ins[i].id;
+            var pout= comp.ins[i].pout;
+            if(!('states' in comps[id])) {
+              comps[id].states= {}
+            }
+            if(pout in comps[id].states) {
+              inStates[i] = comps[id].states[pout];
+            } else {
+              inStates[i] = 0;
+            }
+          } else {
+            inStates[i] = -1;
+          }
+        }
+        
           this.chipInstance = {
             id: comp.id,
             path: chipName+'/',
-            comps: chip[chipName].comp
+            comp: {...chip[chipName].comp},
+            states: inStates
           };
-          pub.instance(comp, this.chipInstance);
+          
+          pub.instance(comp, this.chipInstance, refresh);
+          
         } else {
           pub.comp(comp, comps, refresh);
         }
@@ -1985,7 +2008,10 @@ var dgl= {
       return newSts;
     }
     
-    pub.instance= function(comp, instance) {
+    pub.instance= function(comp, instance, refresh=0) {
+       
+       
+      pub.comp(comp, instance.comp, refresh);
       
     }
     
@@ -2546,7 +2572,7 @@ var comp= comps[this.m.compInf.sel]
         if(value && !(value in comps)) {
           if(comp.id in chip.ins) {
             var newin = { ...chip.ins[comp.id] }
-            newout.pin = value;
+            newin.pin = value;
             chip.ins[value] = newin;
             delete chip.ins[comp.id]
           }
@@ -2560,25 +2586,42 @@ var comp= comps[this.m.compInf.sel]
           comps[value] = newcomp;
           newcomp.id= value;
           var ccid, ccpin, ccpout;
-          for(var i in newcomp.inConns) 
-          {
+    for(var i in newcomp.inConns) 
+    {
             [ccid, ccpout] = newcomp.inConns[i].split('^');
             
             if(ccid in comps) {
-         //     console.log('ccid '+ccid);
               comps[ccid].outs[ccpout].id= newcomp.id;
-       //     console.log(comps[ccid].outConns, comp.id)
+      
         for(var k in comps[ccid].outConns) {
           [c2id, c2pin]= comps[ccid].outConns[k].split('^')
 
           if(c2id==comp.id) {
-        //    console.log('found');
             comps[ccid].outConns[k]=
             newcomp.id+'^'+c2pin;
           }
         }
+     }
+    }
+    
+    var cc2id, cc2pin, cc2pout;
+    for (var i in newcomp.outConns)
+    {
+      [cc2id, cc2pout] = newcomp.outConns[i].split('^');
+          
+            if (cc2id in comps) {
+              comps[cc2id].ins[cc2pout].id = newcomp.id;
+          
+              for (var k in comps[cc2id].insConns) {
+                    [c2id, c2pout] = comps[cc2id].inConns[k].split('^')
+          
+                if (c2id == comp.id) {
+                  comps[cc2id].inConns[k] =
+                    newcomp.id + '^' + c2pout;
+                }
+              }
             }
-          }
+      }
        //   console.log(comps[ccid].outConns)
        compInf.sel = value;
          delete comps[comp.id];
