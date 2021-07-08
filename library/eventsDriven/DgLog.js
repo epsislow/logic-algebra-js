@@ -433,7 +433,7 @@ var dglcvs={
     if(cid) {
       var comp= comps[cid];
     
-      this.lib.rectm(c, 5, 5, 90+k, 90+k, 1, '#888')
+      this.lib.rectm(c, 5+k, 5, 90, 90, 1, '#888')
       var st=0, dt=0;
       if(comp.type in dglcvs.compStDt) {
       st = dglcvs.compStDt[comp.type][0];
@@ -452,28 +452,63 @@ var dglcvs={
       
      var i=0;  
      c.textAlign='left';
+     c.textBaseline='middle';
+     
+      
+      this.lib.rectm(c, 10 + k, i * 11+100, 6, 6, 3, '#7cc', '#255');
+      
+      c.textAlign='left';
+      
+      this.lib.textm(c, 20 + k, i * 11 +103, 'Name: '+ comp.id, 6, '#fff')
+     
+     if(['pin','pout'].includes(comp.type)) {
+      this.lib.rectm(c, 86.5 + k, i * 11+100-1, 8, 8, 1, '#669', '#336');
+     
+      //c.textAlign='center'
+      this.lib.texti(c, 88 + k, i * 11 +103, "\uf044", 5, '#99f')
+     }
+      i++;
+     
+     
+      /*this.lib.rectm(c, 70 + k, i * 10, 28, 10, 1, '#966', '#422');
+      this.lib.texti(c, 72 + k, i * 10 + 5, "\uf057", 5, '#f00')
+      this.lib.textm(c, 79 + k, i * 10 + 5, 'Delete', 6, '#fff')*/
+     
+     /* if (this.input) {
+        this.input.y(i * 10);
+        this.input.render();
+        this.input.focus();
+        return;
+      }*/
+     
      for(var ci in comp.ins) {
        var p= comp.ins[ci]
-       this.lib.rectm(c, 10, 11*i+100, 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
-       this.lib.textm(c, 25, 11*i+105, p.pin, 5, styles['pinin'][0],'Arial');
+       this.lib.rectm(c, 10, 11*i+100 +k, 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
+       this.lib.textm(c, 20, 11*i+103 +k, 'Pin: '+ p.pin, 6, styles['pinin'][0],'Arial');
         if ('id' in p) {
-          this.lib.textm(c, 45, 11 * i + 105, p.id + ' -> ' + p.pout, 5, styles['pinout'][0], 'Arial')
+          this.lib.textm(c, 45, 11 * i + 103 +k, p.id + ' -> ' + p.pout, 6, styles['pinout'][0], 'Arial')
         }
        i++;
      }
      for(var co in comp.outs) {
        var p = comp.outs[co]
-       this.lib.rectm(c, 10, 11*i+100, 6, 6, 3, styles['pinout'][0], styles['pinout'][1]);
+       this.lib.rectm(c, 10+k, 11*i+100 , 6, 6, 3, styles['pinout'][0], styles['pinout'][1]);
        
-       this.lib.textm(c, 25, 11*i+105, p.pout, 5, styles['pinout'][0],'Arial');
+       this.lib.textm(c, 20+k, 11*i+103,'Pout: '+ p.pout, 6, styles['pinout'][0],'Arial');
        
        if('id' in p) {
-         this.lib.textm(c, 45, 11*i+105, p.id +' -> ' + p.pin, 5, styles['pinin'][0], 'Arial')
+         this.lib.textm(c, 45+k, 11*i+103, p.id +' -> ' + p.pin, 6, styles['pinin'][0], 'Arial')
        }
        i++;
      }
     }
-    c.restore();    
+    c.restore();
+    if (this.input) {
+    //  this.input.y(i * 10);
+      this.input.render();
+      this.input.focus();
+      return;
+    }
   },
   input:0,
   drawChipMenu: function(c,chips,k=-100) {
@@ -2474,6 +2509,53 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     return;
     }
       
+  }
+  if(this.m.compInfo && this.m.compInf.sel) {
+    var comps=this.chip[this.chipActive].comp;
+var comp= comps[this.m.compInf.sel]
+    if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
+    if(['pin','pout'].includes(comp.type)) {
+      //86.5, 100-1, 8, 8
+      if(mdx>=85-10 && mdx<= 95+10 && mdy>= 95-20 && mdy <= 110+20) {
+         dglcvs.input = new CanvasInput({
+      canvas: document.getElementById('cvs'),
+      fontSize: 7,
+      fontFamily: 'Arial',
+      fontColor: '#fff',
+      fontWeight: 'none',
+      width: 40,
+      height: 10,
+      renderOnMain:1,
+      x:39,
+      y:98,
+      padding: 0,
+      backgroundColor:"#224",
+      borderWidth: 0,
+      borderColor: '#224',
+      borderRadius: 0,
+      innerShadow:'none',
+      boxShadow:'none',
+      //boxShadow: '1px 1px 0px #fff',
+      //innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
+      placeHolder: comp.id,
+      onsubmit: function() {
+        var value= this.value();
+        
+        if(value && !(value in comps)) {
+          comp.id= value;
+        }
+       this.blur();
+       dglcvs.input=0;
+        this.destroy()
+        cvs.draw(1)
+      }
+    });
+    
+      }
+    }
+    
+    return;
+    }
   }
   if(this.m.addComp) {
     var ct;
