@@ -483,10 +483,10 @@ var dglcvs={
      
      for(var ci in comp.ins) {
        var p= comp.ins[ci]
-       this.lib.rectm(c, 10, 11*i+100 +k, 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
-       this.lib.textm(c, 20, 11*i+103 +k, 'Pin: '+ p.pin, 6, styles['pinin'][0],'Arial');
+       this.lib.rectm(c, 10+k, 11*i+100 , 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
+       this.lib.textm(c, 20+k, 11*i+103 , 'Pin: '+ p.pin, 6, styles['pinin'][0],'Arial');
         if ('id' in p) {
-          this.lib.textm(c, 45, 11 * i + 103 +k, p.id + ' -> ' + p.pout, 6, styles['pinout'][0], 'Arial')
+          this.lib.textm(c, 45+k, 11 * i + 103, p.id + ' -> ' + p.pout, 6, styles['pinout'][0], 'Arial')
         }
        i++;
      }
@@ -2511,12 +2511,14 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       
   }
   if(this.m.compInfo && this.m.compInf.sel) {
-    var comps=this.chip[this.chipActive].comp;
+    var chip= this.chip[this.chipActive]
+    var comps= chip.comp;
 var comp= comps[this.m.compInf.sel]
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
     if(['pin','pout'].includes(comp.type)) {
       //86.5, 100-1, 8, 8
       if(mdx>=85-10 && mdx<= 95+10 && mdy>= 95-20 && mdy <= 110+20) {
+       var compInf= this.m.compInf;
          dglcvs.input = new CanvasInput({
       canvas: document.getElementById('cvs'),
       fontSize: 7,
@@ -2542,7 +2544,46 @@ var comp= comps[this.m.compInf.sel]
         var value= this.value();
         
         if(value && !(value in comps)) {
-          comp.id= value;
+          if(comp.id in chip.ins) {
+            var newin = { ...chip.ins[comp.id] }
+            newout.pin = value;
+            chip.ins[value] = newin;
+            delete chip.ins[comp.id]
+          }
+          if(comp.id in chip.outs) {
+            var newout= {...chip.outs[comp.id]}
+            newout.pout=value;
+            chip.outs[value]= newout;
+            delete chip.outs[comp.id]
+          }
+          var newcomp = {...comp}
+          comps[value] = newcomp;
+          newcomp.id= value;
+          var ccid, ccpin, ccpout;
+          for(var i in newcomp.inConns) 
+          {
+            [ccid, ccpout] = newcomp.inConns[i].split('^');
+            
+            if(ccid in comps) {
+         //     console.log('ccid '+ccid);
+              comps[ccid].outs[ccpout].id= newcomp.id;
+       //     console.log(comps[ccid].outConns, comp.id)
+        for(var k in comps[ccid].outConns) {
+          [c2id, c2pin]= comps[ccid].outConns[k].split('^')
+
+          if(c2id==comp.id) {
+        //    console.log('found');
+            comps[ccid].outConns[k]=
+            newcomp.id+'^'+c2pin;
+          }
+        }
+            }
+          }
+       //   console.log(comps[ccid].outConns)
+       compInf.sel = value;
+         delete comps[comp.id];
+        //  comp.id= value;
+          
         }
        this.blur();
        dglcvs.input=0;
