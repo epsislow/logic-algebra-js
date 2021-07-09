@@ -1436,6 +1436,13 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       smp0=comp.states[comp.outputs[0]];
     }
     
+/*    
+smp0 = 0;
+var compin = comps[cinid];
+smp0= compin.states[cinpout]
+*/
+
+smp0=1
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
@@ -1578,9 +1585,7 @@ lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
 -*/
 smp0 = 0;
 var compin = comps[cinid];
-if ('states' in compin) {
-  smp0 = compin.states[compin.outputs[0]];
-}
+smp0= compin.states[cinpout]
 
 var lastPoint=0;
 for(var l in lineNodes) {
@@ -1995,10 +2000,10 @@ var dgl= {
         //  console.log('cid '+comp.id+' pout ',inStates);
           comp.states = logicFn(inStates)
           return
-        }
+        } 
+        
         
         comp.states=checkVariableState(comp.states, logicFn(inStates), comp, inStates);
-        
         
         return;
       }
@@ -2046,7 +2051,7 @@ var dgl= {
           }
         }
       }
-      return newSts;
+      return {...newSts};
     }
     
     pub.instance= function(comp, instance, refresh=0) {
@@ -2068,6 +2073,9 @@ var dgl= {
     return pub;
   },
   libOp: {
+    ledmin: function(iss) {
+      return { out: iss.in }
+    },
     led: function(iss) { 
       return {out: iss.in}
     },
