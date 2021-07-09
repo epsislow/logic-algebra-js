@@ -1432,8 +1432,9 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
         ins, outs,comp.revIns
       )*/
     var smp0=0;
-    if('states' in comp) {
-      smp0=comp.states[comp.outputs[0]];
+    for(var st in comp.states) {
+      smp0 |=comp.states[st];
+      smp0= smp0?1:0;
     }
     
 /*    
@@ -1442,7 +1443,7 @@ var compin = comps[cinid];
 smp0= compin.states[cinpout]
 */
 
-smp0=1
+
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
@@ -1668,6 +1669,12 @@ for(var l in lineNodes) {
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
       )*/
+      var smp0=0;
+    for(var st in comp.states) {
+      smp0 |=comp.states[st];
+      smp0= smp0?1:0;
+    }
+    
         dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
