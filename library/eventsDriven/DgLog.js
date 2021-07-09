@@ -1890,12 +1890,21 @@ var dgl= {
     var chip= this.chip;
     
     pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
-      var comps= chip[chipName].comp;
+      var comps;
+      if(chipInstance) {
+        comps= chipInstance.comp;
+    //    console.log('here', comps)
+      } else {
+        comps= chip[chipName].comp;
+      }
       
       var resetVarStates =1;
       for (let i = 0; i < 5; i++) {
       for(var cid in comps) {
         var comp= comps[cid]
+        if(chipInstance) {
+      //    console.log('p'+comp.id)
+        }
         if (resetVarStates && ('varStates' in comp)) {
           //console.log('del')
           delete comp.varStates// = {};
@@ -1904,28 +1913,32 @@ var dgl= {
           
           var inStates= {};
         var id;
-        for(var i in comp.ins) {
-          if('id' in comp.ins[i]) {
-            id = comp.ins[i].id;
-            var pout= comp.ins[i].pout;
+        for(var ii in comp.ins) {
+          if('id' in comp.ins[ii]) {
+            id = comp.ins[ii].id;
+            var pout= comp.ins[ii].pout;
             if(!('states' in comps[id])) {
               comps[id].states= {}
             }
             if(pout in comps[id].states) {
-              inStates[i] = comps[id].states[pout];
+              inStates[ii] = comps[id].states[pout];
             } else {
-              inStates[i] = 0;
+              inStates[ii] = 0;
             }
           } else {
-            inStates[i] = -1;
+            inStates[ii] = -1;
           }
         }
+        var chp, chipType;
+        
+        [chp,chipType]= comp.type.split('.')
         
           this.chipInstance = {
             id: comp.id,
             path: chipName+'/',
-            comp: {...chip[chipName].comp},
-            states: inStates
+            comp: {...chip[chipType].comp},
+            states: inStates,
+            outStates: {},
           };
           
           pub.instance(comp, this.chipInstance, refresh);
@@ -1936,11 +1949,23 @@ var dgl= {
       }
       resetVarStates=0;
       }
+      
+      if(chipInstance) {
+        chipInstance.outStates= {};
+        
+        var chipComp= chipName;
+        for(var co in chipComp.outputs) {
+      var cpo = chipComp.outputs[co];
+      chipComp.states[cpo]= chipInstance.comp[cpo].states['out']
+        }
+      //  console.log(chipComp)q
+      }
     }
     
     var libOp= this.libOp;
     
     pub.comp= function(comp, comps, refresh=0) {
+
       const binaryOp = (logicFn, comp, refresh=0) => {
         var inStates= {};
         var id;
@@ -1948,9 +1973,10 @@ var dgl= {
           if('id' in comp.ins[i]) {
             id = comp.ins[i].id;
             var pout= comp.ins[i].pout;
-            if(!('states' in comps[id])) {
+            if(!('states' in comps[id]) || typeof comps[id].states=='undefined') {
               comps[id].states= {}
             }
+    
             if(pout in comps[id].states) {
               inStates[i] = comps[id].states[pout];
             } else {
@@ -1962,9 +1988,17 @@ var dgl= {
         }
         if(refresh && comp.type=='clock') {
           return;
+        } else if (comp.type=='pin') {
+          //console.log()
+          return
+        } else if (comp.type=='pout') {
+        //  console.log('cid '+comp.id+' pout ',inStates);
+          comp.states = logicFn(inStates)
+          return
         }
         
-        comp.states=checkVariableState(comp.states, logicFn(inStates), comp);
+        comp.states=checkVariableState(comp.states, logicFn(inStates), comp, inStates);
+        
         
         return;
       }
@@ -1976,13 +2010,20 @@ var dgl= {
           if(typeof libOp[comp.type]!=='function') {
             console.log(comp.type)
           }
+
           return binaryOp(libOp[comp.type], comp, refresh);
         }
     //  })
     }
     
-    function checkVariableState(oldSts, newSts, comp) {
-      const oldStsArr= Object.keys(oldSts);
+    function checkVariableState(oldSts, newSts, comp, sts) {
+      var oldStsArr;
+      try {
+        oldStsArr= Object.keys(oldSts);
+      } catch(e) {
+     //   console.log(comp, newSts, sts);
+        throw e;
+      }
       if(!oldStsArr.length) {
         return newSts;
       }
@@ -2009,9 +2050,13 @@ var dgl= {
     }
     
     pub.instance= function(comp, instance, refresh=0) {
-       
-       
-      pub.comp(comp, instance.comp, refresh);
+     
+      for(var i in instance.states) {
+        instance.comp[i].states.out = instance.states[i];
+      }
+     // console.log(instance.comp, comp)
+      pub.chip(comp, refresh, instance);
+    //  console.log(instance.comp);
       
     }
     
@@ -2023,6 +2068,17 @@ var dgl= {
     return pub;
   },
   libOp: {
+    led: function(iss) { 
+      return {out: iss.in}
+    },
+    pin: function(iss) {
+    //  console.log(iss)
+      return { out: iss.out }
+    },
+    pout: function(iss) {
+   //   console.log(iss)
+      return { out: iss.in }
+    },
     'and': function(iss) {
       return {'out': libFn.and(iss.in1,iss.in2)};
     },
@@ -2189,10 +2245,10 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       };
       
       var string = JSON.stringify(data);
-    //  console.log(string);
+  
      // return;
        
-  //    console.log("Size: " + string.length);
+
       if(zip) {
         string = LZString
         .compressToUTF16(string);
