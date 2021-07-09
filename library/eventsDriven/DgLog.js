@@ -425,14 +425,19 @@ var dglcvs={
   },
   drawCompInfo: function(c, cid, comps,k=-100) {
     this.lib.rectm(c, 0.5, 0.5, 100+k, 195, 1, '#669', '#222');
-    c.save()
-    c.beginPath()
-    c.rect(0.5, 2.5, 100+k, 190)
-    c.clip()
-    
+      
+      c.save()
+      c.beginPath()
+      c.rect(0.5, 2.5, 100+k, 190)
+      c.clip()
+   
     if(cid) {
-      var comp= comps[cid];
-    
+    var comp= comps[cid];
+     if(!comp) {
+       c.restore();
+       return;
+     }
+      
       this.lib.rectm(c, 5+k, 5, 90, 90, 1, '#888')
       var st=0, dt=0;
       if(comp.type in dglcvs.compStDt) {
@@ -443,7 +448,7 @@ var dglcvs={
       this.drawComp(c, comp,
      k+5+ (80-30*(100+ st)/100)/2,
        20+(80-30*(100+dt)/100)/2, 
-       25, 4, 0,1,1);
+       25, 4, 0,1,2);
      
      var styles= {
        'pinin':['#cc7','#444'],
@@ -461,12 +466,13 @@ var dglcvs={
       
       this.lib.textm(c, 20 + k, i * 11 +103, 'Name: '+ comp.id, 6, '#fff')
      
-     if(['pin','pout'].includes(comp.type)) {
+     if(1 || ['pin','pout'].includes(comp.type)) {
       this.lib.rectm(c, 86.5 + k, i * 11+100-1, 8, 8, 1, '#669', '#336');
      
       //c.textAlign='center'
       this.lib.texti(c, 88 + k, i * 11 +103, "\uf044", 5, '#99f')
      }
+      i++;
       i++;
      
      
@@ -480,14 +486,24 @@ var dglcvs={
         this.input.focus();
         return;
       }*/
-     
+     var hadIns=0;
      for(var ci in comp.ins) {
+       hadIns=1;
        var p= comp.ins[ci]
        this.lib.rectm(c, 10+k, 11*i+100 , 6, 6, 3, styles['pinin'][0], styles['pinout'][1])
        this.lib.textm(c, 20+k, 11*i+103 , 'Pin: '+ p.pin, 6, styles['pinin'][0],'Arial');
         if ('id' in p) {
           this.lib.textm(c, 45+k, 11 * i + 103, p.id + ' -> ' + p.pout, 6, styles['pinout'][0], 'Arial')
+          
+          this.lib.rectm(c, 86.5 + k, i * 11 + 100 - 1, 8, 8, 1, '#966', '#633');
+          
+          //c.textAlign='center'
+          this.lib.texti(c, 88 + k, i * 11 + 103, "\uf057", 5, '#f33')
+          
         }
+       i++;
+     }
+     if(hadIns) {
        i++;
      }
      for(var co in comp.outs) {
@@ -1153,7 +1169,7 @@ cv.style.height = rect.height/4 + 'px';
   
     var k=0;
     var pinh, pinw, pw;
-    if(inOutsText) {
+    if(inOutsText==1) {
        pinh=5; pinw=5; pw=2;
    } else {
      pinh=2, pinw=2; pw=2;
@@ -1447,7 +1463,7 @@ smp0= compin.states[cinpout]
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp0 );
+       15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp0);
     }
     
     for(var cid in comps) {
@@ -2494,6 +2510,119 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
     }
   },
+  createInput : function (x,y, w=50, h=10, placeHolder='', handler, clr='#fff', bgr='#224', fontSize=7) {
+  dglcvs.input=  new CanvasInput({
+      canvas: document.getElementById('cvs'),
+      fontSize: fontSize,
+      fontFamily: 'Arial',
+      fontColor: clr,
+      fontWeight: 'none',
+      width: w,
+      height:h,
+      renderOnMain:1,
+      x:x,
+      y:y,
+      padding: 0,
+      backgroundColor:bgr,
+      borderWidth: 0,
+      borderColor: bgr,
+      borderRadius: 0,
+      innerShadow:'none',
+      boxShadow:'none',
+      placeHolder: placeHolder,
+      onsubmit: handler,
+     /* onsubmit: function() {
+        
+        var value= dglcvs.input.value();
+        if(typeof handler=='function') {
+          handler(value);
+        }
+        
+        this.blur();
+        dglcvs.input.destroy()
+        dglcvs.input=0;
+        cvs.draw(1)
+      }*/
+    });
+   // handler.bind(dglcvs.input)
+    
+    return dglcvs.input;
+  },
+  inputHandlers: {
+    deletePin: function(value) {
+      
+    },
+    renameComp: function(comps, chip, comp, compInf) {
+
+       return function() {
+         var value = this.value();
+       
+         if (value && !(value in comps)) {
+           if (comp.id in chip.ins) {
+             var newin = { ...chip.ins[comp.id] }
+             newin.pin = value;
+             chip.ins[value] = newin;
+             delete chip.ins[comp.id]
+           }
+           if (comp.id in chip.outs) {
+             var newout = { ...chip.outs[comp.id] }
+             newout.pout = value;
+             chip.outs[value] = newout;
+             delete chip.outs[comp.id]
+           }
+           var newcomp = { ...comp }
+           comps[value] = newcomp;
+           newcomp.id = value;
+           var ccid, ccpin, ccpout;
+           for (var i in newcomp.inConns)
+           {
+                   [ccid, ccpout] = newcomp.inConns[i].split('^');
+       
+             if (ccid in comps) {
+               comps[ccid].outs[ccpout].id = newcomp.id;
+       
+               for (var k in comps[ccid].outConns) {
+                 [c2id, c2pin] = comps[ccid].outConns[k].split('^')
+       
+                 if (c2id == comp.id) {
+                   comps[ccid].outConns[k] =
+                     newcomp.id + '^' + c2pin;
+                 }
+               }
+             }
+           }
+       
+           var cc2id, cc2pin, cc2pout;
+           for (var i in newcomp.outConns)
+           {
+             [cc2id, cc2pout] = newcomp.outConns[i].split('^');
+       
+             if (cc2id in comps) {
+               comps[cc2id].ins[cc2pout].id = newcomp.id;
+       
+               for (var k in comps[cc2id].insConns) {
+                           [c2id, c2pout] = comps[cc2id].inConns[k].split('^')
+       
+                 if (c2id == comp.id) {
+                   comps[cc2id].inConns[k] =
+                     newcomp.id + '^' + c2pout;
+                 }
+               }
+             }
+           }
+           //   console.log(comps[ccid].outConns)
+           compInf.sel = value;
+           delete comps[comp.id];
+           //  comp.id= value;
+       
+         }
+         this.blur();
+         dglcvs.input = 0;
+         this.destroy()
+         cvs.draw(1)
+       }
+    }
+  },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
     var components= this.chip[this.chipActive].comp;
 	  
@@ -2584,6 +2713,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
             ins:{},outs:{},
             comp:{},active:0
           }
+          dgl.initCompTypeProjectChip();
         }
        this.blur();
        dglcvs.input=0;
@@ -2612,10 +2742,17 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     var comps= chip.comp;
 var comp= comps[this.m.compInf.sel]
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
-    if(['pin','pout'].includes(comp.type)) {
+    if(1 || ['pin','pout'].includes(comp.type)) {
       //86.5, 100-1, 8, 8
       if(mdx>=85-10 && mdx<= 95+10 && mdy>= 95-20 && mdy <= 110+20) {
        var compInf= this.m.compInf;
+       
+     //  var inputHandlers= this.inputHandlers;
+      //dglcvs.input = this.createInput(39,98, 50, 10, comp.id,
+      //inputHandlers.renameComp(comps, chip, comp, compInf)
+      //, '#fff', '#224', 7);
+      
+      
          dglcvs.input = new CanvasInput({
       canvas: document.getElementById('cvs'),
       fontSize: 7,
@@ -2706,8 +2843,27 @@ var comp= comps[this.m.compInf.sel]
       }
     });
     
+    
       }
     }
+    var i=1;
+    i++;
+    
+    var hadIns=0
+     for(var ci in comp.ins) {
+       hadIns=1;
+       var p= comp.ins[ci];
+       if('id' in p) {
+         
+       }
+       i++;
+     }
+     if(hadIns) {
+       i++;
+     }
+    /*
+    
+    */
     
     return;
     }
