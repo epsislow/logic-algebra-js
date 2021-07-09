@@ -2510,8 +2510,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
     }
   },
-  createInput : function (x,y, w=50, h=10, placeHolder='', handler, clr='#fff', bgr='#224', fontSize=7) {
-  dglcvs.input=  new CanvasInput({
+  'createInput': function (x,y, w=50, h=10, placeHolder='', handler, clr='#fff', bgr='#224', fontSize=7) {
+ return new CanvasInput({
       canvas: document.getElementById('cvs'),
       fontSize: fontSize,
       fontFamily: 'Arial',
@@ -2546,7 +2546,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     });
    // handler.bind(dglcvs.input)
     
-    return dglcvs.input;
+    //return dglcvs.input;
   },
   inputHandlers: {
     deletePin: function(value) {
@@ -2622,6 +2622,13 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
          cvs.draw(1)
        }
     }
+  },
+  deletePinConn: function(comp, ci, compid, pout) {
+    console.log(comp, ci, compid, pout)
+    delete compid.ins[pout].id;
+    delete compid.ins[pout].ci;
+    
+    console.log(comp, ci, compimid, pout);
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
     var components= this.chip[this.chipActive].comp;
@@ -2744,15 +2751,14 @@ var comp= comps[this.m.compInf.sel]
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
     if(1 || ['pin','pout'].includes(comp.type)) {
       //86.5, 100-1, 8, 8
-      if(mdx>=85-10 && mdx<= 95+10 && mdy>= 95-20 && mdy <= 110+20) {
+      if(mdx>=85-10 && mdx<= 95+10 && mdy>= 95-20 && mdy <= 110+5) {
        var compInf= this.m.compInf;
        
-     //  var inputHandlers= this.inputHandlers;
-      //dglcvs.input = this.createInput(39,98, 50, 10, comp.id,
-      //inputHandlers.renameComp(comps, chip, comp, compInf)
-      //, '#fff', '#224', 7);
+      dglcvs.input = this.createInput(39,98, 50, 10, comp.id,
+      this.inputHandlers.renameComp(comps, chip, comp, compInf)
+      , '#fff', '#224', 7);
       
-      
+      /*
          dglcvs.input = new CanvasInput({
       canvas: document.getElementById('cvs'),
       fontSize: 7,
@@ -2842,7 +2848,7 @@ var comp= comps[this.m.compInf.sel]
         cvs.draw(1)
       }
     });
-    
+    */
     
       }
     }
@@ -2854,7 +2860,16 @@ var comp= comps[this.m.compInf.sel]
        hadIns=1;
        var p= comp.ins[ci];
        if('id' in p) {
-         
+         //86.5 + k, i * 11 + 100 - 1
+         if(mdx>= 83-20 && mdx <= 100+20 && mdy>= i*11 + 90 && mdy <= i*11 + 135 ) {
+           /*
+           dglcvs.input = this.createInput(39,98, 50, 10, comp.id,
+      this.inputHandlers.deletePin(comps, chip, comp, compInf)
+      , '#fff', '#224', 7);
+      */
+          this.deletePinConn(comp, ci,  comps[p.id], p.pout )
+      return;
+         }
        }
        i++;
      }
