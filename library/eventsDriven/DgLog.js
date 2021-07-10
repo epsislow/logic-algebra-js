@@ -2354,6 +2354,13 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
     }
     dgl.initCompTypeProjectChip();
+    for(var cl in dgl.chip) {
+    for(var d in dgl.chip[cl].outs) {
+      if (!(d in dgl.chip[cl].comp)) {
+        delete dgl.chip[cl].outs[d];
+      }
+    } 
+    }
       console.log('Loaded');
       cvs.draw(1);
     }
