@@ -2361,6 +2361,13 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
     } 
     }
+    for (var cl in dgl.chip) {
+      for (var d in dgl.chip[cl].ins) {
+        if (!(d in dgl.chip[cl].comp)) {
+          delete dgl.chip[cl].ins[d];
+        }
+      }
+    }
       console.log('Loaded');
       cvs.draw(1);
     }
