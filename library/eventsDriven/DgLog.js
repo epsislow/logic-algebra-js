@@ -1984,7 +1984,15 @@ var dgl= {
         var chipComp= chipName;
         for(var co in chipComp.outputs) {
       var cpo = chipComp.outputs[co];
+      
+      
+      try {
       chipComp.states[cpo]= chipInstance.comp[cpo].states['out']
+      } catch (e) {
+          console.log(e, cpo)
+      }
+      
+      
         }
       //  console.log(chipComp)q
       }
@@ -2331,6 +2339,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         }
       }
     }
+    dgl.initCompTypeProjectChip();
       console.log('Loaded');
       cvs.draw(1);
     }
@@ -2624,11 +2633,18 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     }
   },
   deletePinConn: function(comp, ci, compid, pout) {
-    console.log(comp, ci, compid, pout)
-    delete compid.ins[pout].id;
-    delete compid.ins[pout].ci;
+   // console.log(comp, ci, compid, pout)
+    delete compid.outs[pout].id;
+    delete compid.outs[pout].pin;
     
-    console.log(comp, ci, compimid, pout);
+    delete comp.ins[ci].id;
+    delete comp.ins[ci].pout;
+    
+    var iof= compid.outConns.indexOf(comp.id+'^'+ci)
+    
+    compid.outConns.splice(iof,1)
+    
+   // console.log(comp.id+'^'+ci, comp, compid);
   },
   checkForDrag: function(pX,pY,sens=0, zoom=1) {
     var components= this.chip[this.chipActive].comp;
@@ -2670,9 +2686,16 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     for (var p in this.chip) {
       cp=this.chip[p];
       if(mdy >= 10*i-10 && mdy<= 10*(i+1)+5) {
-        this.chip[this.chipActive].active=0;
-        this.chipActive=p;
-        this.chip[this.chipActive].active=1;
+    this.chip[this.chipActive].pX = this.m.pan.xOfs;
+    this.chip[this.chipActive].pY = this.m.pan.yOfs;
+    
+    this.chip[this.chipActive].active=0;
+    this.chipActive=p;
+    this.chip[this.chipActive].active=1;
+        
+    this.m.pan.xOfs = this.chip[this.chipActive].pX || 0;
+    this.m.pan.yOfs = this.chip[this.chipActive].pY || 0;
+    
         cvs.drawNext();
         return;
       }
@@ -3221,7 +3244,7 @@ var comp= comps[this.m.compInf.sel]
     return;
           }
           this.m.isDragged = cid;
-          if(comp.type=='controlled') {
+          if(comp.type=='controlled' || comp.type=='pin') {
     comp.states['out']=
     comp.states['out']==1?0:1
     dgl.tick(1);
