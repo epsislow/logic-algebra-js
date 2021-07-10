@@ -465,6 +465,7 @@ var dglcvs={
       c.textAlign='left';
       
       this.lib.textm(c, 20 + k, i * 11 +103, 'Name: '+ comp.id, 6, '#fff')
+      
      
      if(1 || ['pin','pout'].includes(comp.type)) {
       this.lib.rectm(c, 86.5 + k, i * 11+100-1, 8, 8, 1, '#669', '#336');
@@ -472,6 +473,13 @@ var dglcvs={
       //c.textAlign='center'
       this.lib.texti(c, 88 + k, i * 11 +103, "\uf044", 5, '#99f')
      }
+      i++;
+      this.lib.rectm(c, 10 + k, i * 11+100, 6, 6, 3, '#7cc', '#255');
+      
+      c.textAlign='left';
+      
+      this.lib.textm(c, 20 + k, i * 11 +103, 'Type: '+ comp.type, 6, '#ff7')
+      
       i++;
       i++;
      
@@ -1396,10 +1404,16 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     //show chipActive
     
     c.textAlign='left';
-   // c.textBaseline='center';
+    c.textBaseline='middle';
     lib.rectm(c,0,0,
       c.measureText(this.chipActive).width+4,10,1,0,'#555');
     lib.textm(c,2,5,this.chipActive,6,'#222')
+    
+    lib.rectm(c,
+    lib.maxWidth/2-10,0,10,10
+    ,0,false, '#533');
+    lib.texti(c,lib.maxWidth/2-8,5, '\uf31e',6,'#955')
+    
     
     var ins,outs;
   //  console.log(comps)
@@ -2877,6 +2891,7 @@ var comp= comps[this.m.compInf.sel]
     }
     var i=1;
     i++;
+  //  i++;
     
     var hadIns=0
      for(var ci in comp.ins) {
@@ -3125,6 +3140,36 @@ var comp= comps[this.m.compInf.sel]
           return;
         }
       }
+     }
+     
+     if(mdx>=dglcvs.lib.maxWidth/2-10 &&
+     mdx <= dglcvs.lib.maxWidth && mdy >= 0 && mdy <= 20) {
+       var minx=9999, maxx=-9999,
+       miny=9999,maxy=-9999;
+  var d=0
+       for(i in components) {
+         var comp= components[i];
+         
+         if(minx > comp.x) {
+           minx = comp.x
+         }
+         if(maxx < comp.x) {
+           maxx = comp.x
+         }
+         if (miny > comp.y) {
+           miny = comp.y
+         }
+         if (maxy < comp.y) {
+           maxy = comp.y
+         }
+       }
+       console.log(minx, maxx,'|', miny, maxy)
+       
+       var midx= minx+ (maxx-minx)/2,
+       midy= miny+ (maxy-miny)/2;
+       console.log(midx,midy)
+       this.m.pan.xOfs= -(midx)*25;
+       this.m.pan.yOfs= -(midy-4)*25;
      }
      
      if(this.m.compSetup) {
