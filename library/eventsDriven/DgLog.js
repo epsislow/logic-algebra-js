@@ -3372,6 +3372,7 @@ var comp= comps[this.m.compInf.sel]
   },
   
   getCoords: function (e) {
+
 	if (window.TouchEvent) {
 		return this.getTouchCoords(e);
 	}
@@ -3389,10 +3390,11 @@ var comp= comps[this.m.compInf.sel]
   
   getTouchCoords: function (e) {
 	let coords = {}; //e = {touches:[{x:1,y:1},{x:2,y:2}]};
+	
 	for(let t in e.touches) {
-    t = parseInt(t);
-		coords['x'+ (t>0? t+1: '')]= e.touches[t].pageX - this.m.offsetLeft;
-		coords['y'+ (t>0? t+1: '')]= e.ttouches[t].pageY - this.m.offsetTop;
+    tx = parseInt(t);
+		coords['x'+ (tx>0? tx+1: '')]= e.touches[t].pageX - this.m.offsetLeft;
+		coords['y'+ (tx>0? tx+1: '')]= e.touches[t].pageY - this.m.offsetTop;
 	}
 	
 	return coords;
@@ -3430,15 +3432,19 @@ var comp= comps[this.m.compInf.sel]
   
   callTouchStart: function(e) {
     e.preventDefault();
+if(typeof e.touches[0] == 'undefined') {
+  return ;
+}
+	const coords = this.getCoords(e);
 	
-	getTouchCoords
-	
-	startMouseAction({
+		this.showMouse(coords);
+
+/*	startMouseAction({
 		x: er.pageX,// - this.offsetLeft,
 		y: er.pageX,// - this.offsetTop, 
 		x2: 0, //er2.clientX,
 		y2: 0, //er2.clientY
-	})
+	})*/
   },
   
   callTouchStart0: function(e) {
