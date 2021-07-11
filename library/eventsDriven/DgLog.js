@@ -3404,6 +3404,7 @@ var comp= comps[this.m.compInf.sel]
   
   getTouchCoords: function (e) {
 	let coords = {}; //e = {touches:[{x:1,y:1},{x:2,y:2}]};
+	var tx;
 	
 	for(let t in e.touches) {
     tx = parseInt(t);
