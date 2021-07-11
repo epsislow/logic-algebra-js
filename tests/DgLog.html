@@ -86,10 +86,25 @@
 <script type="text/javascript" src="/library/Canvas.js"></script>
 <script type="text/javascript" src="/library/Visual.js"></script>
 <script type="text/javascript" src="/library/eventsDriven/trace.js"></script>
-<script type="text/javascript" src="/library/eventsDriven/DgLog.js"></script>
+<script src="/library/eventsDriven/DgLog.js" type="module"></script>
 
 
-<script type="text/javascript">
+<script type="module">
+import { dglcvs,dgl } from '/library/eventsDriven/DgLog.js'
+var init = function (cb) {
+	cb();
+}
+//init(() => console.log(dglcvs,dgl));
+
+//console.log(dglcvs,dgl)
+
+//export { init };
+
+//import { initDgl } from '/library/eventsDriven/DgLog.js'
+
+//var dglcvs,dgl;
+//[dglcvs,dgl] = initDgl();
+
 $('document').ready(function() {
   
   if('vs' in window) {

@@ -1,4 +1,4 @@
-//const Trace = require('./trace');
+import cacheSv from './DgLog-cache1.js';
 
 const indexBy = (array, prop) => array.reduce((output, item) => {
   output[item[prop]] = item;
@@ -1379,7 +1379,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
    
    
     
-    styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
+    var styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
     var comps=this.chip[this.chipActive].comp;
     var comp;
     var txt;
@@ -1899,7 +1899,7 @@ var dgl= {
       
     }
     
-    pub.getComp() = function () {
+    pub.getComp = function () {
        var comp= {
       id: id,
       type: type,
@@ -2298,9 +2298,6 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       };
       
       var string = JSON.stringify(data);
-  
-     // return;
-       
 
       if(zip) {
         string = LZString
@@ -2311,14 +2308,31 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       
        console.log('Saved');
     },
+	saveCacheSv: function (zip=1) {
+	  const data = cacheSv.one;
+	  
+      var string = JSON.stringify(data);
+
+      if(zip) {
+        string = LZString
+        .compressToUTF16(string);
+      } 
+      console.log("Compressed: " + string.length);
+      localStorage.setItem("dgl.data", string);
+      
+       console.log('SavedCacheSv');
+	},
     load: function(zip=1) {
+		
       var string= localStorage.getItem("dgl.data");
+	  
     //  console.log(string);
       if(zip) {
         string=LZString
           .decompressFromUTF16(string);
       }
       const data= JSON.parse(string);
+	  
     //  console.log(data);
       dgl.chip= data.chip;
       dgl.chipActive = data.chipActive;
@@ -3451,10 +3465,7 @@ if (typeof e.touches != 'undefined') {
   er =  e.touches[0];
   
   er2 = e.touches[1];
-}// else {
-//  er =  e
- // er2 = {clientX: 0, clientY:0}
-//}
+}
 
 this.showMouse({
   x: er.clientX,
@@ -3500,9 +3511,7 @@ var er,er2;
 if (typeof e.touches != 'undefined') {
   er =  e.touches[0];
   er2 = e.touches[1];
-} //else {
- // er =  e
-//}
+}
 
 
 	  this.m.lastMove={
@@ -3769,3 +3778,9 @@ trace.getTraces([
 
 }
 }
+
+
+
+
+export {dglcvs, dgl }
+
