@@ -3370,7 +3370,78 @@ var comp= comps[this.m.compInf.sel]
   }
   $('#status').html(pre+ ' x='+Math.floor(x/devicePixelRatio) + ' y= ' + Math.floor(y/devicePixelRatio)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2)+' '+devicePixelRatio );
   },
+  
+  getCoords: function (e) {
+	if (window.TouchEvent) {
+		return this.getTouchCoords(e);
+	}
+	return this.getMouseCoords(e);
+  },
+  
+  getMouseCoords: function (e) {
+	return {
+		x: e.pageX - this.m.offsetLeft,
+		y: e.pageY - this.m.offsetTop,
+		x2: 0,
+		y2: 0
+	}
+  },
+  
+  getTouchCoords: function (e) {
+	let coords = {}; //e = {touches:[{x:1,y:1},{x:2,y:2}]};
+	for(let t in e.touches) {
+    t = parseInt(t);
+		coords['x'+ (t>0? t+1: '')]= e.touches[t].pageX - this.m.offsetLeft;
+		coords['y'+ (t>0? t+1: '')]= e.ttouches[t].pageY - this.m.offsetTop;
+	}
+	
+	return coords;
+  },
+  
+  callMouseDown: function(e) {
+    e.preventDefault();
+	this.m.mousedown = true;
+	
+	const coords = this.getCoords(e);
+	this.showMouse(coords);
+
+	//startMouseAction(coords);
+  },
+  callMouseMove: function(e) {
+    e.preventDefault();
+	if (!this.m.mousedown)  {
+		return false;
+	}
+	
+	const coords = this.getCoords(e);
+	this.showMouse(coords, 'M');
+  },
+  callMouseUp: function(e) {
+    e.preventDefault();
+	
+	if (!this.m.mousedown)  {
+		return false;
+	}
+	this.m.mousedown = false;
+	
+	const coords = this.getCoords(e);
+	this.showMouse(coords, 'E');
+  },
+  
   callTouchStart: function(e) {
+    e.preventDefault();
+	
+	getTouchCoords
+	
+	startMouseAction({
+		x: er.pageX,// - this.offsetLeft,
+		y: er.pageX,// - this.offsetTop, 
+		x2: 0, //er2.clientX,
+		y2: 0, //er2.clientY
+	})
+  },
+  
+  callTouchStart0: function(e) {
     e.preventDefault();
 
 		this.m.mouseisdown = true;
@@ -3435,16 +3506,16 @@ if (typeof e.touches != 'undefined') {
 
 
 	  this.m.lastMove={
-      x:Math.floor(er.clientX),
-      y:Math.floor(er.clientY-20),
-      x2: 0,
-      y2: 0
+		  x:Math.floor(er.clientX),
+		  y:Math.floor(er.clientY-20),
+		  x2: 0,
+		  y2: 0,
 	  };
 
 	  this.showMouse({x: er.clientX, y: er.clientY, x2: 0, y2:0}, 'M');
 
-	  var mouse_x = er.clientX/2//- this.offsetLeft;
-		var mouse_y = er.clientY/2-20//- this.offsetTop;
+	  var mouse_x = er.clientX/2
+		var mouse_y = er.clientY/2-20
 	
 	
 		if (this.m.mouseisdown)

@@ -186,7 +186,9 @@ bar: function (c, menu_stack){
     cvs.style['image-rendering']= '-webkit-optimize-contrast';
     
     c.scale(ratio*scaleFact, ratio*scaleFact)
-    }
+    } else if (scaleFact>1) {
+		c.scale(ratio*scaleFact, ratio*scaleFact)
+	}
   
   c.imageSmoothingEnabled=false;
   c.webkitImageSmoothingEnabled=false
@@ -195,7 +197,7 @@ bar: function (c, menu_stack){
     return c;
   }
   
-  function initCvs(elId) {
+  function initCvs(elId, clientScaleFactor) {
     calls = [];
     var canvas = $('#'+elId).get(0);
     console.log(elId, canvas.width,canvas.height)
@@ -211,7 +213,7 @@ bar: function (c, menu_stack){
 	lib.maxWidth= canvas.width;
 	lib.maxHeight= canvas.height;
 	
-	ctx = lib.initScale(ctx, canvas);
+	ctx = lib.initScale(ctx, canvas, clientScaleFactor);
 	return ctx;
 //	ctx.translate(0.5, 0.5);
 
@@ -265,9 +267,9 @@ ctx.clearRect(0, 0, canvas.width, canvas.height);
     return ctx;
   }
   
-  pub.start= function(elId) {
+  pub.start= function(elId, clientScaleFactor) {
     if(!(elId in canvas)) {
-      var test= initCvs(elId);
+      var test= initCvs(elId, clientScaleFactor);
       if(!test) {
         console.log('Canvas context not found!');
         return false;

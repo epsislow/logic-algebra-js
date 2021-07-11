@@ -106,12 +106,28 @@ $('document').ready(function() {
 		  
 		  
         }, 0);*/
+		//var rect = $('#tab-diagram-cnt').get(0).getBoundingClientRect();
+	
+		
 		console.log('-- Load finished --');
         doc.start();
         dgl.start();
 		
       })
       .addScripts();
+	  
+	  var main =  $('main').get(0);
+	  
+	  var width = $(window).width() - main.offsetLeft ;
+	  if (width > 100) {
+		width -= (width%100 + 100);
+	  }
+	  
+	  var height = $(window).height() - main.offsetLeft;
+	  
+	  if (height > 300) {
+		height =  height - 200;
+	  }
 	  
 	  
     var ra = vs.clearBody()
@@ -129,8 +145,8 @@ $('document').ready(function() {
 	  .up()
 	  .up()
 	  
-	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;height:600px'})
-	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:400px;width:360px',width:360,height:400},'m-2')
+	  .container('tab-cnt bg-light hide boxsizingBorder','div',0,{'id':'tab-diagram-cnt','style':'display:block;width:100%;padding-right:15px;background-color:#222!important;'})
+	  .addEl('canvas',{'id':'cvs','style':'background-color:#333;height:'+height+'px;width:100%',width:360,height:height},'m-2')
 	  
 	  
 	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
@@ -189,15 +205,20 @@ window.onerror = function (message, url, line, column, error) {
  //  console.log(window.cvs)
    var cvs = window.cvs;
    var events= {
-     'touchstart mousedown': function(e){
-      dgl.m.offsetLeft= this.offsetLeft;
-      dgl.m.offsetTop = this.offsetTop;
-     //  return 
-       dgl.callTouchStart.apply(dgl,[e])
-     }
-     ,
-     'touchmove mousemove': dgl.callTouchMove.bind(dgl),
-     'touchend mouseup': dgl.callTouchEnd.bind(dgl)
+	 'mousedown': function(e){
+		dgl.m.offsetTop = this.offsetTop;
+		dgl.m.offsetLeft= this.offsetLeft;
+
+		dgl.callMouseDown.apply(dgl,[e])
+     },
+	 'mousemove': dgl.callMouseMove.bind(dgl),
+	 'mouseup': dgl.callMouseUp.bind(dgl),
+	 
+     'touchstart': function(e){
+		dgl.callTouchStart.apply(dgl,[e])
+     },
+     'touchmove': dgl.callTouchMove.bind(dgl),
+     'touchend': dgl.callTouchEnd.bind(dgl)
    }
    $('#tab-diagram').click(function() {
 	    $('.tab-cnt.show')
@@ -220,7 +241,18 @@ window.onerror = function (message, url, line, column, error) {
 	       .addClass('active btn-light');
 	       
 	    if(cvs) {
-	      cvs.start('cvs');
+		
+		  var rect = $('#cvs').get(0).getBoundingClientRect();
+		  $('#cvs').attr('width',rect.width);
+		
+		
+		var clientScaleFactor = 2;
+		
+		if (rect.width > 800) {
+			clientScaleFactor =  2;
+		}
+		
+	      cvs.start('cvs', clientScaleFactor);
 	      
 	      doc.diagEvents(1, events);
 	   } else {
