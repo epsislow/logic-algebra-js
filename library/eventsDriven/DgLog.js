@@ -1834,6 +1834,7 @@ var dgl= {
       x:0,y:0,ofsX:0,ofsY:0,
       xOfs:0,yOfs:0
     },
+    actions: {},
     nodeSel:[],
     chgIns:0,
     addNode:0,
@@ -3454,6 +3455,7 @@ if(typeof e.touches[0] == 'undefined') {
 	
 		this.showMouse(coords);
 
+this.startMouseAction(coords);
 /*	startMouseAction({
 		x: er.pageX,// - this.offsetLeft,
 		y: er.pageX,// - this.offsetTop, 
@@ -3461,12 +3463,36 @@ if(typeof e.touches[0] == 'undefined') {
 		y2: 0, //er2.clientY
 	})*/
   },
+  startMouseAction(e) {
+		this.m.mousedown_x = e.x;
+		this.m.mousedown_y = e.y;
+  },
+  addActionRect(name, x,y,w,h, actCb, r=10) {
+    this.m.actions[name] = {
+      x:x,y:y,w:w,h:h,cb:actCb, r:r,
+    }
+  },
+  checkActions(x,y) {
+    for(var a of this.m.actions) {
+      if(
+        x >= a.x - r &&
+        x <= a.x + w + r &&
+        y >= a.y - r &&
+        y <= a.y + h + r) {
+          a.cb();
+      }
+    }
+  },
   
   callTouchStart0: function(e) {
-    e.preventDefault();
+  //  e.preventDefault();
 
-		this.m.mouseisdown = true;
+if (!this.m.mouseisdown) {
+  this.m.mouseisdown = true;
+}
+
 var components= this.chip[this.chipActive].comp;
+
 var er,er2;
 if (typeof e.touches != 'undefined') {
   er =  e.touches[0];
@@ -3486,6 +3512,7 @@ this.showMouse({
 
 		this.m.mousedown_x = er.clientX/2//- this.offsetLeft;
 		this.m.mousedown_y = er.clientY/2-20//- this.offsetTop;
+		
 		
 		//var pageX= event.touches[0].x;
 		//   var pageY= event.touches[0].y;
