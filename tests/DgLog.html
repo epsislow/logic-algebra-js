@@ -215,6 +215,9 @@ window.onerror = function (message, url, line, column, error) {
 	 'mouseup': dgl.callMouseUp.bind(dgl),
 	 
      'touchstart': function(e){
+		dgl.m.offsetTop = this.offsetTop;
+		dgl.m.offsetLeft= this.offsetLeft;
+
 		dgl.callTouchStart.apply(dgl,[e])
      },
      'touchmove': dgl.callTouchMove.bind(dgl),
