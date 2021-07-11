@@ -2104,7 +2104,7 @@ var dgl= {
       for(var i in instance.states) {
         instance.comp[i].states.out = instance.states[i];
       }
-     // console.log(instance.comp, comp)
+      //console.log(comp.id, instance.comp, instance.states)
       pub.chip(comp, refresh, instance);
     //  console.log(instance.comp);
       
