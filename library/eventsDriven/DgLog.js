@@ -3403,8 +3403,8 @@ var comp= comps[this.m.compInf.sel]
 	    continue;
 	  }
     tx = parseInt(t);
-		coords['x'+ (tx>0? tx+1:'')]= Math.floor(e.touches[t].pageX - this.m.offsetLeft);
-		coords['y'+ (tx>0? tx+1: '')]= Math.floor(e.touches[t].pageY - this.m.offsetTop);
+		coords['x'+ (tx>0? tx+1:'')]= Math.floor(e.touches[t].pageX - this.m.offsetLeft)/2;
+		coords['y'+ (tx>0? tx+1: '')]= Math.floor(e.touches[t].pageY - this.m.offsetTop)/2;
   }
     
 	return coords;
@@ -3485,42 +3485,126 @@ var comp= comps[this.m.compInf.sel]
   startMouseAction(e) {
 		this.m.mousedown_x = e.x;
 		this.m.mousedown_y = e.y;
+		debug.drawQueue= [];
 		
 		this.initMActions();
-		this.checkMActions(this.m.mousedown_x, this.m.mousedown_y);
-		
+		this.checkMActions('start', this.m.mousedown_x, this.m.mousedown_y);
+		this.checkMActions('click', 0,0);
+		console.log(debug.drawQueue.length)
+    cvs.draw(1)
+    
   },
   moveMouseAction(e) {
-    
+    this.checkMActions('move', e.x, e.y)
   },
   endMouseAction(e) {
-    
+    this.checkMActions('end', e.x, e.y)
   },
-  addMActionRect(name, x,y,w,h, actCb, r=10) {
-    this.m.actions[name] = {
+  addMActionRect(name, event, x,y,w,h, actCb, prm =[],r=0) {
+    if(!(event in this.m.actions)) {
+      this.m.actions[event] = {}; 
+    }
+    this.m.actions[event][name] = {
       x:x,y:y,w:w,h:h,cb:actCb, r:r,
+      prm: prm,
     }
   },
-  checkMActions(x,y) {
+  checkMActions(event, x,y) {
     var a;
-    for(var i in this.m.actions) {
-      if(!this.m.actions.hasOwnProperty(i)){
+    if(!event in this.m.actions) {
+      return false;
+    }
+    
+    var c = (cvs.getFirstCvs());
+     
+    debug.drawQueue.push([
+        cvs.getLib().rectm,
+        [c, x-5,y-5, 10,10, 0,0, '#0ff']
+    ]);
+     
+    for(var i in this.m.actions[event]) {
+      if(!this.m.actions[event].hasOwnProperty(i)){
         continue;
       }
-      var a = this.m.actions[i]
+      var a = this.m.actions[event][i]
+     // console.log(a, {x:x,y:y},a.x-a.r,a.x+a.w+a.r, a.y-a.r,a.y+a.h+a.r)
+     
+     
+     
+     debug.drawQueue.push([
+      cvs.getLib().rectm,
+      [c, a.x, a.y, a.w, a.h, 1, '#f00']]);
+      
+     
       if(
-        x >= a.x - r &&
-        x <= a.x + w + r &&
-        y >= a.y - r &&
-        y <= a.y + h + r) {
-          a.cb();
+        x >= a.x - a.r &&
+        x <= a.x + a.w + a.r &&
+        y >= a.y - a.r &&
+        y <= a.y + a.h + a.r) {
+          a.cb.apply(dgl, a.prm);
       }
     }
   },
   initMActions() {
-    
+    if(this.m.drawChips==1) {
+      var maxy=Object.keys(this.chip).length*10+40;
+      
+      this.addMActionRect('chipsWin', 'start', 0, 0, 100, maxy, this.handlerMA.chipsWin)
+    }
   },
-  
+  handlerMA: {
+    chipWinP: function(p) {
+      console.log(p)
+      this.chip[this.chipActive].pX = this.m.pan.xOfs;
+    this.chip[this.chipActive].pY = this.m.pan.yOfs;
+    
+    this.chip[this.chipActive].active=0;
+    this.chipActive=p;
+    this.chip[this.chipActive].active=1;
+        
+    this.m.pan.xOfs = this.chip[this.chipActive].pX || 0;
+    this.m.pan.yOfs = this.chip[this.chipActive].pY || 0;
+    
+    cvs.drawNext();
+    
+    },
+    chipsWin: function() {
+      var cp;
+      var i=1;
+    
+    for (var p in this.chip) {
+     // console.log(p)
+      cp=this.chip[p];
+      this.addMActionRect(
+        'chip.'+p, 'start',
+        0, 10*i-10+5, 100, 10, 
+        this.handlerMA.chipWinP, [p]
+      );
+      
+     /*   
+      if(mdy>= 10*i-10 && mdy<= 10*(i+1)+5) {
+    
+        cvs.drawNext();
+        return;
+      }*/
+      i++;
+    }
+    console.log(this.m.actions)
+    i++;
+    /*
+    if(mdx >= 70 && mdx <= 120 && mdy >= i*10-20 && mdy <= i*10+50) {
+      if(this.chipActive!='main') {
+        delete this.chip[this.chipActive];
+      }
+      this.chipActive='main';
+    this.chip[this.chipActive].active=1;
+    cvs.drawNext();
+    }
+    
+    if(mdx >=5 && mdx<= 75 && mdy >=i*10-20 && mdy <= i*10+50) {
+    }*/
+    }
+  },
   callTouchStart0: function(e) {
   //  e.preventDefault();
 
