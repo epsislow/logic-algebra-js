@@ -141,7 +141,7 @@ $('document').ready(function() {
 	  var height = $(window).height() - main.offsetLeft;
 	  
 	  if (height > 300) {
-		height =  height - 200;
+		height =  height - 250;
 	  }
 	  
 	  
@@ -219,24 +219,36 @@ window.onerror = function (message, url, line, column, error) {
 }
  //  console.log(window.cvs)
    var cvs = window.cvs;
+   
+   function includeOffsets(cb,e, ob) {
+     dgl.m.offsetTop = ob.offsetTop;
+		 dgl.m.offsetLeft= ob.offsetLeft;
+		 
+		 cb.apply(dgl, [e])
+   }
    var events= {
 	 'mousedown': function(e){
-		dgl.m.offsetTop = this.offsetTop;
-		dgl.m.offsetLeft= this.offsetLeft;
-
+		
 		dgl.callMouseDown.apply(dgl,[e])
      },
 	 'mousemove': dgl.callMouseMove.bind(dgl),
 	 'mouseup': dgl.callMouseUp.bind(dgl),
 	 
-     'touchstart': function(e){
-		dgl.m.offsetTop = this.offsetTop;
-		dgl.m.offsetLeft= this.offsetLeft;
-
-		dgl.callTouchStart.apply(dgl,[e])
+     'touchstart': function(e) {
+     includeOffsets(dgl.callTouchStart, e, this);
      },
-     'touchmove': dgl.callTouchMove.bind(dgl),
-     'touchend': dgl.callTouchEnd.bind(dgl)
+     //function(e){
+		//dgl.m.offsetTop = this.offsetTop;
+	//	dgl.m.offsetLeft= this.offsetLeft;
+
+	//	dgl.callTouchStart.apply(dgl,[e])
+   //  },
+     'touchmove': function(e) {
+     includeOffsets(dgl.callTouchMove, e, this);
+     },
+     'touchend': function(e) {
+       includeOffsets(dgl.callTouchEnd, e, this);
+     }
    }
    $('#tab-diagram').click(function() {
 	    $('.tab-cnt.show')

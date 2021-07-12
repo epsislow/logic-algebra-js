@@ -3371,33 +3371,24 @@ var comp= comps[this.m.compInf.sel]
   },
   showMouse: function(e, pre='S') {
     var x,y,x2=0,y2=0;
-  if('x' in e) {
+    
     x= e.x;
     y= e.y;
-  }else {
-   // console.log(e.touches[0].pageX)
-    x= e.touches[0].clientX;
-    y= e.touches[0].clientY;
-    if(e.touches[1]) {
-      x2= e.touches[1].clientX;
-      y2= e.touches[1].clientY;
-    }
-  }
+  
   $('#status').html(pre+ ' x='+Math.floor(x/devicePixelRatio) + ' y= ' + Math.floor(y/devicePixelRatio)+' x2='+Math.floor(x2)+' y2='+ Math.floor(y2)+' '+devicePixelRatio );
   },
   
   getCoords: function (e) {
-
-	if (window.TouchEvent) {
-		return this.getTouchCoords(e);
-	}
-	return this.getMouseCoords(e);
+	  if (window.TouchEvent) {
+	  	return this.getTouchCoords(e);
+  	}
+  	return this.getMouseCoords(e);
   },
   
   getMouseCoords: function (e) {
 	return {
-		x: e.pageX - this.m.offsetLeft,
-		y: e.pageY - this.m.offsetTop,
+		x: Math.floor(e.pageX - this.m.offsetLeft),
+		y: Math.floor(e.pageY - this.m.offsetTop),
 		x2: 0,
 		y2: 0
 	}
@@ -3408,11 +3399,14 @@ var comp= comps[this.m.compInf.sel]
 	var tx;
 	
 	for(let t in e.touches) {
+	  if(!e.touches.hasOwnProperty(t)) {
+	    continue;
+	  }
     tx = parseInt(t);
-		coords['x'+ (tx>0? tx+1: '')]= e.touches[t].pageX - this.m.offsetLeft;
-		coords['y'+ (tx>0? tx+1: '')]= e.touches[t].pageY - this.m.offsetTop;
-	}
-	
+		coords['x'+ (tx>0? tx+1:'')]= Math.floor(e.touches[t].pageX - this.m.offsetLeft);
+		coords['y'+ (tx>0? tx+1: '')]= Math.floor(e.touches[t].pageY - this.m.offsetTop);
+  }
+    
 	return coords;
   },
   
@@ -3448,32 +3442,63 @@ var comp= comps[this.m.compInf.sel]
   
   callTouchStart: function(e) {
     e.preventDefault();
-if(typeof e.touches[0] == 'undefined') {
-  return ;
-}
-	const coords = this.getCoords(e);
+    if(typeof e.touches[0] == 'undefined') {
+      return;
+    }
+    this.m.mousedown= true;
+  	const coords = this.getCoords(e);
 	
 		this.showMouse(coords);
-
-this.startMouseAction(coords);
-/*	startMouseAction({
-		x: er.pageX,// - this.offsetLeft,
-		y: er.pageX,// - this.offsetTop, 
-		x2: 0, //er2.clientX,
-		y2: 0, //er2.clientY
-	})*/
+		
+    this.startMouseAction(coords);
   },
+  
+  callTouchMove: function(e) {
+    e.preventDefault();
+    if (!this.m.mousedown)  {
+  		return false;
+  	}
+	
+  	const coords = this.getCoords(e);
+  	
+  	this.m.lastMove= coords;
+
+  	this.showMouse(coords, 'M');
+  	
+  },
+  callTouchEnd: function(e) {
+    e.preventDefault();
+
+    if (!this.m.mousedown) {
+      return false;
+    }
+    this.m.mousedown = false;
+
+    const coords = this.m.lastMove;
+    
+    this.showMouse(coords, 'E');
+  },
+  
   startMouseAction(e) {
 		this.m.mousedown_x = e.x;
 		this.m.mousedown_y = e.y;
+		
+		this.initMActions();
+		this.checkMActions(this.m.mousedown_x, this.m.mousedown_y);
+		
   },
-  addActionRect(name, x,y,w,h, actCb, r=10) {
+  addMActionRect(name, x,y,w,h, actCb, r=10) {
     this.m.actions[name] = {
       x:x,y:y,w:w,h:h,cb:actCb, r:r,
     }
   },
-  checkActions(x,y) {
-    for(var a of this.m.actions) {
+  checkMActions(x,y) {
+    var a;
+    for(var i in this.m.actions) {
+      if(!this.m.actions.hasOwnProperty(i)){
+        continue;
+      }
+      var a = this.m.actions[i]
       if(
         x >= a.x - r &&
         x <= a.x + w + r &&
@@ -3482,6 +3507,9 @@ this.startMouseAction(coords);
           a.cb();
       }
     }
+  },
+  initMActions() {
+    
   },
   
   callTouchStart0: function(e) {
@@ -3536,7 +3564,7 @@ this.showMouse({
 		}
 		cvs.draw(1)
   },
-  callTouchMove: function(e) {
+  callTouchMove0: function(e) {
     e.preventDefault();
 	  
 	  var components= this.chip[this.chipActive].comp;
@@ -3608,7 +3636,7 @@ if (typeof e.touches != 'undefined') {
 		}
 		cvs.draw(1)
   },
-  callTouchEnd: function(e) {
+  callTouchEnd0: function(e) {
     e.preventDefault();
     
     this.showMouse(this.m.lastMove, 'E');
