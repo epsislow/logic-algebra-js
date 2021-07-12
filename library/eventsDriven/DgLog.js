@@ -3416,8 +3416,7 @@ var comp= comps[this.m.compInf.sel]
 	
 	const coords = this.getCoords(e);
 	this.showMouse(coords);
-
-	//startMouseAction(coords);
+	this.startMouseAction(coords);
   },
   callMouseMove: function(e) {
     e.preventDefault();
@@ -3426,7 +3425,9 @@ var comp= comps[this.m.compInf.sel]
 	}
 	
 	const coords = this.getCoords(e);
+	this.m.lastMove= coords;
 	this.showMouse(coords, 'M');
+	this.moveMouseAction(coords);
   },
   callMouseUp: function(e) {
     e.preventDefault();
@@ -3436,8 +3437,9 @@ var comp= comps[this.m.compInf.sel]
 	}
 	this.m.mousedown = false;
 	
-	const coords = this.getCoords(e);
+	const coords = this.m.lastMove;
 	this.showMouse(coords, 'E');
+	this.endMouseAction(coords);
   },
   
   callTouchStart: function(e) {
@@ -3464,7 +3466,7 @@ var comp= comps[this.m.compInf.sel]
   	this.m.lastMove= coords;
 
   	this.showMouse(coords, 'M');
-  	
+  	this.moveMouseAction(coords);
   },
   callTouchEnd: function(e) {
     e.preventDefault();
@@ -3477,6 +3479,7 @@ var comp= comps[this.m.compInf.sel]
     const coords = this.m.lastMove;
     
     this.showMouse(coords, 'E');
+    this.endMouseAction(coords);
   },
   
   startMouseAction(e) {
@@ -3486,6 +3489,12 @@ var comp= comps[this.m.compInf.sel]
 		this.initMActions();
 		this.checkMActions(this.m.mousedown_x, this.m.mousedown_y);
 		
+  },
+  moveMouseAction(e) {
+    
+  },
+  endMouseAction(e) {
+    
   },
   addMActionRect(name, x,y,w,h, actCb, r=10) {
     this.m.actions[name] = {
