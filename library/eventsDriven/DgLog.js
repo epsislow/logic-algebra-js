@@ -3566,7 +3566,6 @@ var comp= comps[this.m.compInf.sel]
     this.m.pan.yOfs = this.chip[this.chipActive].pY || 0;
     
     cvs.drawNext();
-    
     },
     chipsWin: function() {
       var cp;
@@ -3589,7 +3588,6 @@ var comp= comps[this.m.compInf.sel]
       }*/
       i++;
     }
-    console.log(this.m.actions)
     i++;
     /*
     if(mdx >= 70 && mdx <= 120 && mdy >= i*10-20 && mdy <= i*10+50) {
