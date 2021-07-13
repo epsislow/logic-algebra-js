@@ -3517,17 +3517,23 @@ var comp= comps[this.m.compInf.sel]
     }
   },
   checkMActions(event, x,y) {
-    var a;
+    /*var a;
     if(!event in this.m.actions) {
       return false;
-    }
+    }*/
     
     var c = (cvs.getFirstCvs());
      
-	debug.drawQueue.push([
+	  debug.drawQueue.push([
         cvs.getLib().rectm,
         [c, x-5,y-5, 10,10, 0,0, '#0f6']
     ]);
+     
+     this.checkMaCb(this.m.actions[event], x, y);
+     return ;
+     
+     
+     
      
     for(var i in this.m.actions[event]) {
       if(!this.m.actions[event].hasOwnProperty(i)){
@@ -3535,7 +3541,6 @@ var comp= comps[this.m.compInf.sel]
       }
       var a = this.m.actions[event][i]
      // console.log(a, {x:x,y:y},a.x-a.r,a.x+a.w+a.r, a.y-a.r,a.y+a.h+a.r)
-     
      
      
      debug.drawQueue.push([
@@ -3551,6 +3556,46 @@ var comp= comps[this.m.compInf.sel]
           a.cb.apply(dgl, a.prm);
       }
     }
+  },
+  checkMaCb(queue,x,y) {
+    var a, k;
+    if (!queue) {
+      return false;
+    }
+    
+    var c = (cvs.getFirstCvs());
+    
+     for(var i in queue) {
+      if(!queue.hasOwnProperty(i)){
+        continue;
+      }
+      var a = queue[i]
+      var kqueue= false;
+      // console.log(a, {x:x,y:y},a.x-a.r,a.x+a.w+a.r, a.y-a.r,a.y+a.h+a.r)
+      
+      
+      debug.drawQueue.push([
+            cvs.getLib().rectm,
+            [c, a.x, a.y, a.w, a.h, 1, '#f00']]);
+      
+      if (
+        x >= a.x - a.r &&
+        x <= a.x + a.w + a.r &&
+        y >= a.y - a.r &&
+        y <= a.y + a.h + a.r) {
+        
+        k = a.cb.apply(dgl, a.prm);
+      
+        if(typeof k=='object' && k!=null) {
+          return this.checkMaCb(k.queue,k.x, k.y);
+        }
+        
+        if(k) {
+          return true;
+        }
+        
+      }
+     }
   },
   initMActions() {
     if(this.m.drawChips==1) {
