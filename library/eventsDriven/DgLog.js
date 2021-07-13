@@ -3582,13 +3582,15 @@ var comp= comps[this.m.compInf.sel]
         kqueue = a.cb.apply(dgl, a.prm);
       
         if(typeof kqueue=='object' && kqueue!=null) {
-          return this.checkMaCb(kqueue, x, y);
+          var kk= this.checkMaCb(kqueue, x, y);
+          if(!kk) {
+            continue;
+          }
         }
         
         if(kqueue) {
           return true;
         }
-        
       }
      }
   },
@@ -3624,19 +3626,52 @@ var comp= comps[this.m.compInf.sel]
 			dglcvs.lib.maxWidth/2, dglcvs.lib.maxHeight/2, 
 			this.handlerMA.compSetup
 		 )
-		 
-		 this.addMActionRect(
-			'panScene', 'start', 0, 0, 
-			dglcvs.lib.maxWidth/2, dglcvs.lib.maxHeight/2, 
-			this.handlerMA.panScene
-		 )
 	 }
+	 this.addMActionRect(
+	   'panScene', 'start', 0, 0,
+	   dglcvs.lib.maxWidth / 2, dglcvs.lib.maxHeight / 2,
+	   this.handlerMA.panScene
+	 )
+	 
+	 this.addMActionRect(
+	      'panSceneMove', 'move', 
+	       -1000, -1000, 
+	       2000, 2000,
+	       this.handlerMA.panSceneMove
+	       );
+
+	 this.addMActionRect(
+	      'panSceneEnd', 'end',
+	      -1000, -1000, 
+	       2000, 2000,
+	       this.handlerMA.panSceneEnd
+	       );
   },
   handlerMA: {
+  panSceneEnd: function() {
+    if(this.m.isPan) {
+      this.m.pan.xOfs += Math.floor(this.m.pan.ofsX);
+    	    this.m.pan.yOfs += Math.floor(this.m.pan.ofsY);
+    	    this.m.isPan = false;
+    	    this.m.pan.ofsX = 0;
+    	    this.m.pan.ofsY = 0;
+    }
+  },
+  panSceneMove: function() {
+    if(this.m.isPan) {
+      this.m.pan.ofsX = this.m.lastMove.x - this.m.pan.x;
+      this.m.pan.ofsY = this.m.lastMove.y - this.m.pan.y;
+      cvs.draw(1)
+    }
+  },
 	panScene: function () {
+	  this.m.isPan = 1;
+    this.m.pan.x = this.m.mousedown_x;
+    this.m.pan.y = this.m.mousedown_y;
 	},
-    compHdl: function(comp) {
+  compHdl: function(comp) {
           this.m.isDragged = comp.id;
+          return false;
 	},
 	compSetup: function (comps) {
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
