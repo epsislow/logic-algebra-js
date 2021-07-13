@@ -3386,7 +3386,6 @@ var comp= comps[this.m.compInf.sel]
   },
   
   getMouseCoords: function (e) {
-	  //alert(this.m.offsetLeft+ ' '+ this.m.offsetTop);
 	return {
 		x: Math.floor(e.pageX - this.m.offsetLeft)/2,
 		y: Math.floor(e.pageY - this.m.offsetTop)/2,
@@ -3416,8 +3415,10 @@ var comp= comps[this.m.compInf.sel]
 	this.m.mousedown = true;
 	
 	const coords = this.getCoords(e);
+	this.m.lastMove= coords;
 	this.showMouse(coords);
 	this.startMouseAction(coords);
+	cvs.draw(1);
   },
   callMouseMove: function(e) {
     e.preventDefault();
@@ -3429,6 +3430,7 @@ var comp= comps[this.m.compInf.sel]
 	this.m.lastMove= coords;
 	this.showMouse(coords, 'M');
 	this.moveMouseAction(coords);
+	cvs.draw(1);
   },
   callMouseUp: function(e) {
     e.preventDefault();
@@ -3441,6 +3443,7 @@ var comp= comps[this.m.compInf.sel]
 	const coords = this.m.lastMove;
 	this.showMouse(coords, 'E');
 	this.endMouseAction(coords);
+	cvs.draw(1);
   },
   
   callTouchStart: function(e) {
@@ -3451,7 +3454,9 @@ var comp= comps[this.m.compInf.sel]
     this.m.mousedown= true;
   	const coords = this.getCoords(e);
 	
-		this.showMouse(coords);
+  	this.m.lastMove= coords;
+	
+	this.showMouse(coords);
 		
     this.startMouseAction(coords);
   },
@@ -3481,6 +3486,7 @@ var comp= comps[this.m.compInf.sel]
     
     this.showMouse(coords, 'E');
     this.endMouseAction(coords);
+	this.m.lastMove = null;
   },
   
   startMouseAction(e) {
@@ -3490,8 +3496,8 @@ var comp= comps[this.m.compInf.sel]
 		
 		this.initMActions();
 		this.checkMActions('start', this.m.mousedown_x, this.m.mousedown_y);
-		this.checkMActions('click', 0,0);
-		console.log(debug.drawQueue.length)
+		this.checkMActions('click', this.m.mousedown_x, this.m.mousedown_y);
+		//console.log(debug.drawQueue.length)
     cvs.draw(1)
     
   },
@@ -3518,9 +3524,9 @@ var comp= comps[this.m.compInf.sel]
     
     var c = (cvs.getFirstCvs());
      
-    debug.drawQueue.push([
+	debug.drawQueue.push([
         cvs.getLib().rectm,
-        [c, x-5,y-5, 10,10, 0,0, '#0ff']
+        [c, x-5,y-5, 10,10, 0,0, '#0f6']
     ]);
      
     for(var i in this.m.actions[event]) {
