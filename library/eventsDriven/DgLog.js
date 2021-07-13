@@ -3671,7 +3671,7 @@ var comp= comps[this.m.compInf.sel]
 	},
   compHdl: function(comp) {
           this.m.isDragged = comp.id;
-          return false;
+          return true;
 	},
 	compSetup: function (comps) {
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
