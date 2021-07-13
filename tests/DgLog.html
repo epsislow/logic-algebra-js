@@ -90,20 +90,10 @@
 
 
 <script type="module">
-import { dglcvs,dgl } from '/library/eventsDriven/DgLog.js'
-var init = function (cb) {
-	cb();
-}
-//init(() => console.log(dglcvs,dgl));
-
-//console.log(dglcvs,dgl)
-
-//export { init };
-
-//import { initDgl } from '/library/eventsDriven/DgLog.js'
-
-//var dglcvs,dgl;
-//[dglcvs,dgl] = initDgl();
+import { dglcvs, dgl, debug } from '/library/eventsDriven/DgLog.js'
+window.dgl =  dgl;
+window.dglcvs =  dglcvs;
+window.debug =  debug;
 
 $('document').ready(function() {
   
