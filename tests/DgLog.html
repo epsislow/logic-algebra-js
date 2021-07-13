@@ -227,22 +227,19 @@ window.onerror = function (message, url, line, column, error) {
 		 cb.apply(dgl, [e])
    }
    var events= {
-	 'mousedown': function(e){
-		
-		dgl.callMouseDown.apply(dgl,[e])
+	 'mousedown': function(e) {
+		includeOffsets(dgl.callMouseDown, e, this);
      },
-	 'mousemove': dgl.callMouseMove.bind(dgl),
-	 'mouseup': dgl.callMouseUp.bind(dgl),
+	 'mousemove': function(e) {
+		includeOffsets(dgl.callMouseMove, e, this);
+     },
+	 'mouseup': function(e) {
+		includeOffsets(dgl.callMouseUp, e, this);
+     },
 	 
      'touchstart': function(e) {
      includeOffsets(dgl.callTouchStart, e, this);
      },
-     //function(e){
-		//dgl.m.offsetTop = this.offsetTop;
-	//	dgl.m.offsetLeft= this.offsetLeft;
-
-	//	dgl.callTouchStart.apply(dgl,[e])
-   //  },
      'touchmove': function(e) {
      includeOffsets(dgl.callTouchMove, e, this);
      },

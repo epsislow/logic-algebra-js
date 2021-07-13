@@ -3386,9 +3386,10 @@ var comp= comps[this.m.compInf.sel]
   },
   
   getMouseCoords: function (e) {
+	  //alert(this.m.offsetLeft+ ' '+ this.m.offsetTop);
 	return {
-		x: Math.floor(e.pageX - this.m.offsetLeft),
-		y: Math.floor(e.pageY - this.m.offsetTop),
+		x: Math.floor(e.pageX - this.m.offsetLeft)/2,
+		y: Math.floor(e.pageY - this.m.offsetTop)/2,
 		x2: 0,
 		y2: 0
 	}
