@@ -3522,10 +3522,10 @@ var comp= comps[this.m.compInf.sel]
   moveMouseAction(e) {
 	var c = (cvs.getFirstCvs());
 
-	debug.drawQueue.push([
+	/*debug.drawQueue.push([
 		cvs.getLib().rectm,
 		[c, e.x-4, e.y-4, 8, 8, 0,0, '#00f']
-	]);
+	]);*/
     this.checkMActions('move', e.x, e.y)
   },
   endMouseAction(e) {
@@ -3700,6 +3700,8 @@ var comp= comps[this.m.compInf.sel]
 		
 		comps[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5;
 		comps[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5;
+		
+		cvs.draw(1)
 	},
 	compDragEnd: function () {
 		if (!this.m.isDragged) {
@@ -3721,6 +3723,10 @@ var comp= comps[this.m.compInf.sel]
 	},
     compHdl: function(comp) {
           this.m.isDragged = comp.id;
+        
+          this.m.comp_old_x = comp.xOfs;
+          this.m.comp_old_y = comp.yOfs;
+          
           return true;
 	},
 	compSetup: function (comps) {
