@@ -3538,7 +3538,9 @@ var comp= comps[this.m.compInf.sel]
 	
     this.checkMActions('end', e.x, e.y)
   },
-  addMActionRect(name, event = {}, x,y,w,h, actCb, prm =[],r=0) {
+  addMActionRect(name, event = {},
+     x,y,w,h, actCb, prm =[],
+     r=0, useZoom=1, noXYCheck=0) {
 	var queue;
 	if(typeof event=='object') {
 		queue = event;
@@ -3548,11 +3550,16 @@ var comp= comps[this.m.compInf.sel]
 		}
 		queue = this.m.actions[event];
 	}
-	
-	queue[name] = {
-	  x:x,y:y,w:w,h:h,cb:actCb, r:r,
-	  prm: prm,
+	var z=this.m.zoom;
+	if(useZoom==0) {
+	  z=1;
 	}
+	
+	 queue[name] = {
+	  x:x*z,y:y*z,w:w*z,h:h*z,
+	  cb:actCb, r:r*z, nxy:noXYCheck,
+	  prm: prm,
+   }
   },
   checkMActions(event, x,y) {
      this.checkMaCb(this.m.actions[event], x, y);
@@ -3576,7 +3583,7 @@ var comp= comps[this.m.compInf.sel]
             cvs.getLib().rectm,
             [c, a.x, a.y, a.w, a.h, 1, '#f00']]);
       
-      if (
+      if (a.nxy || 
         x >= a.x - a.r &&
         x <= a.x + a.w + a.r &&
         y >= a.y - a.r &&
@@ -3599,11 +3606,12 @@ var comp= comps[this.m.compInf.sel]
   },
   initMActions() {
 	this.m.actions = {};
+	var z= 1/this.m.zoom;
 	
 	if(this.m.drawChips==1) {
 	  var maxy=Object.keys(this.chip).length*10+35;
 	  
-	  this.addMActionRect('chipsWin', 'start', 0, 0, 100, maxy, this.handlerMA.chipsWin)
+	  this.addMActionRect('chipsWin', 'start', 0, 0, 100, maxy, this.handlerMA.chipsWin,[],0,0)
 	}
 	
 	//cannot check without the rest already implemented like compSetup
@@ -3618,7 +3626,7 @@ var comp= comps[this.m.compInf.sel]
 	
 	this.addMActionRect(
 		'centerComps', 'start', 
-		dglcvs.lib.maxWidth/2-10, 0, 10, 10, 
+		dglcvs.lib.maxWidth*z/2-10, 0, 10, 10, 
 		this.handlerMA.centerComps
 	)
 		
@@ -3626,43 +3634,43 @@ var comp= comps[this.m.compInf.sel]
      if(this.m.compSetup) {
 		 this.addMActionRect(
 			'compSetup', 'start', 0, 0, 
-			dglcvs.lib.maxWidth/2, dglcvs.lib.maxHeight/2, 
+			dglcvs.lib.maxWidth*z/2, dglcvs.lib.maxHeight*z/2, 
 			this.handlerMA.compSetup
 		 )
 	 }
 	 this.addMActionRect(
 	   'panScene', 'start', 0, 0,
-	   dglcvs.lib.maxWidth / 2, dglcvs.lib.maxHeight / 2,
+	   dglcvs.lib.maxWidth*z / 2, dglcvs.lib.maxHeight*z/ 2,
 	   this.handlerMA.panScene
 	 )
 	 
 	 this.addMActionRect(
 	      'compDragMove', 'move', 
-	       -1000, -1000, 
-	       2000, 2000,
-	       this.handlerMA.compDragMove
+	       0,0,0,0,
+	       this.handlerMA.compDragMove,[],
+	       0,1,1
 	 );
 	 
 	 this.addMActionRect(
 	      'panSceneMove', 'move', 
-	       -1000, -1000, 
-	       2000, 2000,
-	       this.handlerMA.panSceneMove
+	       0,0,0,0,
+	       this.handlerMA.panSceneMove,[],
+	       0,1,1
 	 );
 	 
 	 
 	 this.addMActionRect(
 		  'compDragEnd', 'end', 
-	      -1000, -1000,
-	       2000, 2000,
-		  this.handlerMA.compDragEnd
+	    0,0,0,0,
+		  this.handlerMA.compDragEnd,[],
+		  0,1,1
 	 );
 	 
 	 this.addMActionRect(
 	      'panSceneEnd', 'end',
-	      -1000, -1000, 
-	       2000, 2000,
-	       this.handlerMA.panSceneEnd
+	      0,0,0,0,
+	      this.handlerMA.panSceneEnd,[],
+	      0,1,1
 	 );
 
   },
@@ -3840,7 +3848,8 @@ var comp= comps[this.m.compInf.sel]
       this.addMActionRect(
         'chip.'+p, kqueue,
         0, 10*i-10+5, 100, 10, 
-        this.handlerMA.chipWinP, [p]
+        this.handlerMA.chipWinP, [p], 
+        0,0
       );
       i++;
     }
@@ -3849,13 +3858,15 @@ var comp= comps[this.m.compInf.sel]
 	this.addMActionRect(
         'chipWinDel', kqueue,
         70, 10*i, 30, 12, 
-        this.handlerMA.chipWinDel
+        this.handlerMA.chipWinDel,
+        [],0,0
     )
 	
 	this.addMActionRect(
         'chipWinAdd', kqueue,
         5, 10*i, 60, 12, 
-        this.handlerMA.chipWinAdd
+        this.handlerMA.chipWinAdd,
+        [],0,0
     )
 	
 	return kqueue;
