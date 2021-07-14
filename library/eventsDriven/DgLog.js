@@ -1377,7 +1377,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
   
    // const smp= trace.getSamples()[cvsIteration];
    
-   
+   c.scale(this.m.zoom, this.m.zoom);
     
     var styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
     var comps=this.chip[this.chipActive].comp;
@@ -1719,6 +1719,8 @@ for(var l in lineNodes) {
        5+50*comp.x+pX+comp.xOfs+15/2+comp.dt/2,
        5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
    }
+   
+   c.scale(1/this.m.zoom, 1/this.m.zoom);
     
    if(this.m.drawChips || this.m.addComp|| this.m.compInfo) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
@@ -1834,6 +1836,7 @@ var dgl= {
       x:0,y:0,ofsX:0,ofsY:0,
       xOfs:0,yOfs:0
     },
+	zoom: 1,
     actions: {},
     nodeSel:[],
     chgIns:0,
@@ -3634,42 +3637,89 @@ var comp= comps[this.m.compInf.sel]
 	 )
 	 
 	 this.addMActionRect(
+	      'compDragMove', 'move', 
+	       -1000, -1000, 
+	       2000, 2000,
+	       this.handlerMA.compDragMove
+	 );
+	 
+	 this.addMActionRect(
 	      'panSceneMove', 'move', 
 	       -1000, -1000, 
 	       2000, 2000,
 	       this.handlerMA.panSceneMove
-	       );
-
+	 );
+	 
+	 
+	 this.addMActionRect(
+		  'compDragEnd', 'end', 
+	      -1000, -1000,
+	       2000, 2000,
+		  this.handlerMA.compDragEnd
+	 );
+	 
 	 this.addMActionRect(
 	      'panSceneEnd', 'end',
 	      -1000, -1000, 
 	       2000, 2000,
 	       this.handlerMA.panSceneEnd
-	       );
+	 );
+
   },
   handlerMA: {
-  panSceneEnd: function() {
-    if(this.m.isPan) {
-      this.m.pan.xOfs += Math.floor(this.m.pan.ofsX);
-    	    this.m.pan.yOfs += Math.floor(this.m.pan.ofsY);
-    	    this.m.isPan = false;
-    	    this.m.pan.ofsX = 0;
-    	    this.m.pan.ofsY = 0;
-    }
-  },
-  panSceneMove: function() {
-    if(this.m.isPan) {
-      this.m.pan.ofsX = this.m.lastMove.x - this.m.pan.x;
-      this.m.pan.ofsY = this.m.lastMove.y - this.m.pan.y;
-      cvs.draw(1)
-    }
-  },
-	panScene: function () {
-	  this.m.isPan = 1;
-    this.m.pan.x = this.m.mousedown_x;
-    this.m.pan.y = this.m.mousedown_y;
+	panSceneEnd: function() {
+		if(this.m.isPan) {
+			this.m.pan.xOfs += this.m.pan.ofsX;
+			this.m.pan.yOfs += this.m.pan.ofsY;
+			this.m.isPan = false;
+			this.m.pan.ofsX = 0;
+			this.m.pan.ofsY = 0;
+		}
 	},
-  compHdl: function(comp) {
+	panSceneMove: function() {
+		if(this.m.isPan) {
+		  this.m.pan.ofsX = (this.m.lastMove.x - this.m.pan.x)/this.m.zoom;
+		  this.m.pan.ofsY = (this.m.lastMove.y - this.m.pan.y)/this.m.zoom;
+		  cvs.draw(1)
+		}
+	},
+	panScene: function () {
+		this.m.isPan = 1;
+		this.m.pan.x = this.m.mousedown_x;
+		this.m.pan.y = this.m.mousedown_y;
+	},
+	compDragMove: function () {
+		if(!this.m.isDragged) {
+			return;
+		}
+		    
+		var vexx = this.m.comp_old_x + this.m.lastMove.x - this.m.mousedown_x;
+		var vexy = this.m.comp_old_y + this.m.lastMove.y - this.m.mousedown_y;
+
+		var comps= this.chip[this.chipActive].comp;
+		
+		comps[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5;
+		comps[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5;
+	},
+	compDragEnd: function () {
+		if (!this.m.isDragged) {
+			return;
+		}
+		
+		var comps= this.chip[this.chipActive].comp;
+		comps[this.m.isDragged].x+= 
+			Math.round(comps[this.m.isDragged].xOfs/12.5)/4;
+		 
+		comps[this.m.isDragged].y+= 
+			Math.round(comps[this.m.isDragged].yOfs/12.5)/2;
+		comps[this.m.isDragged].xOfs=0
+		comps[this.m.isDragged].yOfs=0
+
+		this.m.isDragged = false;
+		this.m.comp_old_x = 0;
+		this.m.comp_old_y = 0;
+	},
+    compHdl: function(comp) {
           this.m.isDragged = comp.id;
           return true;
 	},
@@ -3695,7 +3745,7 @@ var comp= comps[this.m.compInf.sel]
 				'comp.'+cid, kqueue,
 				compx, compy, compw, comph, 
 				this.handlerMA.compHdl, [comp]
-		  );
+		    );
 		  
 			/*if (
 			  (mdx >= ( 5+50*comp.x - sens + pX) && mdx <=  (5+50*comp.x + 40+ sens + pX)) &&

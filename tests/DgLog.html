@@ -134,7 +134,6 @@ $('document').ready(function() {
 		height =  height - 250;
 	  }
 	  
-	  
     var ra = vs.clearBody()
     .section('top')
     .addButton('Index', '/index.html', 'btn-dark')
@@ -175,7 +174,9 @@ $('document').ready(function() {
   .addButton('AddComp',0,'btn-secondary mx-2',{'id':'diag-addcomp'})
   .addButton('DelComp',0,'btn-secondary ',{'id':'diag-delcomp'})
   .addButton('CompPaste',0,'btn-secondary mx-2',{'id':'diag-comppaste'})
-  
+  .addButton('+ Zoom',0,'btn-secondary mx-2',{'id':'diag-zoom-plus'})
+  .addButton('- Zoom',0,'btn-secondary mx-2',{'id':'diag-zoom-minus'})
+  .addButton('Debug',0,'btn-warning mx-2',{'id':'diag-debug'})
   .br()
   .br()
   .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
@@ -189,6 +190,7 @@ $('document').ready(function() {
 	  
 //	  console.log(window.cvs);
   }
+
   
   var doc= {
     diagEvents: function(start=1, events={}) {
@@ -332,14 +334,15 @@ window.onerror = function (message, url, line, column, error) {
 	    $(this).blur();
 	  })
 	  
-	  function toggleBtn(b) {
+	  function toggleBtn(b, enabledCls = 'btn-light', disabledCls = 'btn-secondary') {
 	    var en;
-	   if(b.hasClass('btn-secondary')) {
-	    b.removeClass('btn-secondary').addClass('btn-light')
+	   if(b.hasClass(disabledCls)) {
+	    b.removeClass(disabledCls)
+		.addClass(enabledCls)
 	    en=1;
 	   } else {
-	     b.removeClass('btn-light')
-	     .addClass('btn-secondary')
+	     b.removeClass(enabledCls)
+	     .addClass(disabledCls)
 	     en=0;
 	   }
 	   b.blur();
@@ -425,7 +428,6 @@ window.onerror = function (message, url, line, column, error) {
 	  })
 	  
 	  $('#diag-comppaste').click(function() {
-	  	//  var en=toggleBtn($(this));
 	  	  dgl.m.compPaste=1;
 	  	  $(this).blur();
 	  	  dgl.compPasteC();
@@ -443,6 +445,29 @@ window.onerror = function (message, url, line, column, error) {
 	     dgl.m.delComp=en
 	     cvs.draw(1);
 	   });
+	   
+
+	   $('#diag-zoom-plus').click(function() {
+	     dgl.m.zoom *= 1.25;
+		 dgl.m.zoom = Math.round(dgl.m.zoom * 100)/100;
+		 console.log('zoom '+dgl.m.zoom);
+	     cvs.draw(1);
+	   });	   
+  
+	   $('#diag-zoom-minus').click(function() {
+		 dgl.m.zoom /= 1.25;
+		 dgl.m.zoom = Math.round(dgl.m.zoom * 100)/100;
+		 console.log('zoom '+dgl.m.zoom);
+	     cvs.draw(1);
+	   });	   
+
+	   
+	  $('#diag-debug').click(function() {
+	  	  var en=toggleBtn($(this), 'btn-warning', 'btn-dark');
+	  	  debug.is=en;
+	  	  $(this).blur();
+	  	  cvs.draw(1)
+	   })
 	  
 	  $('#diag-save').click(function() {
 	    dgl.cache.save(1);

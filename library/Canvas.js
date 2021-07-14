@@ -164,6 +164,18 @@ bar: function (c, menu_stack){
     }
   }
   
+  lib.scaleFactor = 1;
+  
+  pub.changeScaleFactor= function(cvsel, scaleFact = 2) {
+	var canvas = $('#'+cvsel).get(0);
+    var c =canvas.getContext('2d')
+	
+	//initCvs(cvsel, scaleFact);
+	lib.initScale(c, canvas, scaleFact);
+	
+	lib.maxWidth= canvas.width;
+	lib.maxHeight= canvas.height;
+  }
   
   lib.initScale= function(c, cvs, scaleFact=2) {
     devicePixelRatio= window.devicePixelRatio | 1;
@@ -175,20 +187,21 @@ bar: function (c, menu_stack){
       c.backigStorePixelRatio || 1
       
     ratio = devicePixelRatio / backingStoreRatio;
-    if(ratio !==1) {
-      oldWidth = cvs.width;
-      oldHeight = cvs.height;
-  
-    cvs.width = oldWidth * ratio;
-    cvs.height= oldHeight * ratio;
-    cvs.style.width = oldWidth +'px';
-    cvs.style.height = oldHeight +'px';
-    cvs.style['image-rendering']= '-webkit-optimize-contrast';
-    
-    c.scale(ratio*scaleFact, ratio*scaleFact)
-    } else if (scaleFact>1) {
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    //if(ratio !==1) {
+		oldWidth = cvs.width;
+		oldHeight = cvs.height;  
+		cvs.width = oldWidth * ratio;
+		cvs.height= oldHeight * ratio;
+		cvs.style.width = oldWidth +'px';
+		cvs.style.height = oldHeight +'px';
+		cvs.style['image-rendering']= '-webkit-optimize-contrast';
 		c.scale(ratio*scaleFact, ratio*scaleFact)
-	}
+    //} else if (scaleFact>1) {
+//		c.scale(ratio*scaleFact, ratio*scaleFact)
+	//}
+	
+  lib.scaleFactor = scaleFact;
   
   c.imageSmoothingEnabled=false;
   c.webkitImageSmoothingEnabled=false
