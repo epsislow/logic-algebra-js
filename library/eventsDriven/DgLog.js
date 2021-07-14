@@ -415,7 +415,7 @@ var dglcvs={
     }
     var scrmx=(190/(i*10))*5+5
     c.strokeStyle='#99a';
-    c.lineWidth=2
+    c.lineWidth=2/dgl.m.zoom
     c.fillStyle='#44a'
     c.beginPath()
     c.rect(92+k, -pY/2.5+5,5, scrmx);
@@ -688,7 +688,7 @@ cv.style.height = rect.height/4 + 'px';
       sty= ['#4aa','#499','#9ff']
     }
     var st=0,dt=0, trans=c.getTransform();
-    c.lineWidth = width;
+    c.lineWidth = width/dgl.m.zoom;
 		c.strokeStyle = sty[0];
     c.fillStyle= sty[1];
     
@@ -889,7 +889,7 @@ cv.style.height = rect.height/4 + 'px';
       }
       c.stroke();
       c.fill();
-      c.lineWidth=1;
+      c.lineWidth=1/dgl.m.zoom;
       c.strokeStyle=sty[0];
        if(state){
         c.strokeStyle=sty[2]
@@ -906,7 +906,7 @@ cv.style.height = rect.height/4 + 'px';
       c.closePath();
       c.stroke();
       c.fill();
-      c.lineWidth=1;
+      c.lineWidth=1/dgl.m.zoom;
       if(!state) {
         c.strokeStyle='#222';
         c.beginPath()
@@ -961,7 +961,7 @@ cv.style.height = rect.height/4 + 'px';
       c.beginPath()
       c.moveTo(x+s/2-s/4,y+s/2)
       c.lineTo(x+s/2+s/4,y+s/2)
-      c.lineWidth=1;
+      c.lineWidth=1/dgl.m.zoom;
     } else if(type=='ledmin') {
       c.beginPath()
       c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
@@ -978,7 +978,7 @@ cv.style.height = rect.height/4 + 'px';
       c.beginPath()
       c.moveTo(x + s / 2 - s / 8, y + s / 2)
       c.lineTo(x + s / 2 + s / 8, y + s / 2)
-      c.lineWidth = 1;
+      c.lineWidth = 1/dgl.m.zoom;
       st=-s/4
     } else if(type=='pin') {
       c.beginPath();
@@ -989,12 +989,12 @@ cv.style.height = rect.height/4 + 'px';
       c.beginPath()
      // c.fillStyle=(state?'#9f9':'#262');
       c.strokeStyle=(state?'#9f9':'#262');
-      c.lineWidth=1
+      c.lineWidth=1/dgl.m.zoom
       c.moveTo(x+s/2,y)
       c.lineTo(x+s/2,y+s/4)
       c.stroke()
       //fill=0;
-      c.lineWidth=1
+      c.lineWidth=1/dgl.m.zoom
       c.beginPath();
       c.arc(x+s/8+s/2-s/8,y+s/8,s/8,0,p,0);
       
@@ -1006,7 +1006,7 @@ cv.style.height = rect.height/4 + 'px';
       c.stroke();
       c.fill();
      // fill=0;
-      c.lineWidth=1
+      c.lineWidth=1/dgl.m.zoom
       c.strokeStyle=(state?'#9f9':'#262');
        c.beginPath()
        c.moveTo(x+s/2,y)
@@ -1236,7 +1236,7 @@ cv.style.height = rect.height/4 + 'px';
     
     for(var i in ins) {
       
-      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][i==nextI?0:1])
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw/dgl.m.zoom,styles['pinin'][0], styles['pinin'][i==nextI?0:1])
       if(inOutsText) {
         if(ins[i].xtt<0) {
           c.textAlign='left'
@@ -1249,7 +1249,7 @@ cv.style.height = rect.height/4 + 'px';
       }
     }
     for(var i in outs) {
-      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][i==nextO?0:1])
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw/dgl.m.zoom, styles['pinout'][0], styles['pinout'][i==nextO?0:1])
      if(inOutsText) {
        if (outs[i].xtt < 0) {
          c.textAlign = 'left'
@@ -1349,10 +1349,10 @@ cv.style.height = rect.height/4 + 'px';
     var nextI = comp.inputs[comp.nextInput];
     var nextO = comp.outputs[comp.nextOutput];
     for(var i in ins) {
-      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw,styles['pinin'][0], styles['pinin'][i==nextI?0:1])
+      this.lib.rectm(c, ins[i].pinx,ins[i].piny, pinw,pinh, pw/dgl.m.zoom,styles['pinin'][0], styles['pinin'][i==nextI?0:1])
     }
     for(var i in outs) {
-      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw, styles['pinout'][0], styles['pinout'][i==nextO?0:1])
+      this.lib.rectm(c,outs[i].pinx, outs[i].piny, pinw, pinh, pw/dgl.m.zoom, styles['pinout'][0], styles['pinout'][i==nextO?0:1])
     }
   	c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -1641,7 +1641,7 @@ for(var l in lineNodes) {
   
   
   lib.linex(c,lastPoint[1], lastPoint[2], 
-    lineNodes[l][1], lineNodes[l][2],1,
+    lineNodes[l][1], lineNodes[l][2],1/dgl.m.zoom,
     s)
    lastPoint=lineNodes[l]
 }
