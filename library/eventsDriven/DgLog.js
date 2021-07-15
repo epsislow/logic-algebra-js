@@ -3538,6 +3538,24 @@ var comp= comps[this.m.compInf.sel]
 	
     this.checkMActions('end', e.x, e.y)
   },
+  addMActionNoXY(name, event = {}, actCb, prm=[]) {
+    var queue;
+	if(typeof event=='object') {
+		queue = event;
+	} else {
+		if(!(event in this.m.actions)) {
+		  this.m.actions[event] = {}; 
+		}
+		queue = this.m.actions[event];
+	}
+	
+	queue[name] = {
+	  x:0,y:0,w:0,h:0,
+	  cb:actCb, r:0, nxy:1,
+	  prm: prm,
+   }
+   
+  },
   addMActionRect(name, event = {},
      x,y,w,h, actCb, prm =[],
      r=0, useZoom=1, noXYCheck=0) {
