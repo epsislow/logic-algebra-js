@@ -3710,13 +3710,10 @@ var comp= comps[this.m.compInf.sel]
 		var vexx = this.m.comp_old_x + this.m.lastMove.x - this.m.mousedown_x;
 		var vexy = this.m.comp_old_y + this.m.lastMove.y - this.m.mousedown_y;
 		
-	//	vexy/=z;
-	//	vexy/=z;
-
 		var comps= this.chip[this.chipActive].comp;
 		
-		comps[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5;
-		comps[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5;
+		comps[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5/z;
+		comps[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5/z;
 		
 		cvs.draw(1)
 	},
