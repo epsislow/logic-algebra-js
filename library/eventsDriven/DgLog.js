@@ -3849,7 +3849,11 @@ var comp= comps[this.m.compInf.sel]
         
           this.m.comp_old_x = comp.xOfs;
           this.m.comp_old_y = comp.yOfs;
-          
+          if (comp.type == 'controlled' || comp.type == 'pin') {
+            comp.states['out'] =
+              comp.states['out'] == 1 ? 0 : 1
+            dgl.tick(1);
+          }
           return true;
 	},
 	compSetup: function (comps) {
