@@ -134,6 +134,17 @@ $('document').ready(function() {
 		height =  height - 250;
 	  }
 	  
+  function mx(m) {
+	return (m%2?' mx-2': '');
+  }
+  
+  function rmx() {
+	m =1;
+	return ' mx-2';
+  }
+  
+  var m = 1;
+	  
     var ra = vs.clearBody()
     .section('top')
     .addButton('Index', '/index.html', 'btn-dark')
@@ -155,28 +166,29 @@ $('document').ready(function() {
 	  
 	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
                value="1300"/>*/
-	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'},'mx-2','0')
-	  .addButton('Tick',0,'btn-secondary',{'id':'diag-tick'})
-	  .addButton('ChgIns',0,'btn-secondary mx-2',{'id':'diag-chg-ins'})
-  .addButton('AddNode',0,'btn-secondary',{'id':'diag-addnode'})
-  .addButton('DelNode',0,'btn-secondary mx-2',{'id':'diag-delnode'})
+	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'}, mx(m++),'0')
+	  .addButton('Tick',0,'btn-secondary'+mx(++m),{'id':'diag-tick'})
+	  .addButton('ChgIns',0,'btn-secondary'+mx(++m),{'id':'diag-chg-ins'})
+  .addButton('AddNode',0,'btn-secondary'+mx(++m),{'id':'diag-addnode'})
+  .addButton('DelNode',0,'btn-secondary'+mx(++m),{'id':'diag-delnode'})
   .br()
-  .addButton('LinesUnder',0,'btn-secondary mx-2',{'id':'diag-linesunder'})
-  .addButton('DrawNodes',0,'btn-secondary ',{'id':'diag-drawnodes'})
-  .addEl('i',0,'fas fa-road text-light mx-2')
-  .addButton('Chips',0,'btn-secondary',{'id':'diag-drawchips'})
-  .addButton('ChipSetup',0,'btn-secondary mx-2',{'id':'diag-chipsetup'})
+  .addButton('LinesUnder',0,'btn-secondary'+rmx(),{'id':'diag-linesunder'})
+  .addButton('DrawNodes',0,'btn-secondary'+mx(++m),{'id':'diag-drawnodes'})
+  .addEl('i',0,'fas fa-road text-light'+mx(++m))
+  .addButton('Chips',0,'btn-secondary'+mx(++m),{'id':'diag-drawchips'})
+  .addButton('ChipSetup',0,'btn-secondary'+mx(++m),{'id':'diag-chipsetup'})
   .br()
-  .addButton('CompSetup',0,'btn-secondary mx-2',{'id':'diag-compsetup'})
-  .addButton('CompInfo',0,'btn-secondary ',{'id':'diag-compinfo'})
-  .addButton('CompConn',0,'btn-secondary mx-2',{'id':'diag-compconn'})
-  .addButton('CompSelect',0,'btn-secondary ',{'id':'diag-compselc'})
-  .addButton('AddComp',0,'btn-secondary mx-2',{'id':'diag-addcomp'})
-  .addButton('DelComp',0,'btn-secondary ',{'id':'diag-delcomp'})
-  .addButton('CompPaste',0,'btn-secondary mx-2',{'id':'diag-comppaste'})
-  .addButton('+ Zoom',0,'btn-secondary mx-2',{'id':'diag-zoom-plus'})
-  .addButton('- Zoom',0,'btn-secondary mx-2',{'id':'diag-zoom-minus'})
-  .addButton('Debug',0,'btn-warning mx-2',{'id':'diag-debug'})
+  .addButton('CompSetup',0,'btn-secondary'+rmx(),{'id':'diag-compsetup'})
+  .addButton('CompInfo',0,'btn-secondary'+mx(++m),{'id':'diag-compinfo'})
+  .addButton('CompConn',0,'btn-secondary'+mx(++m),{'id':'diag-compconn'})
+  .addButton('CompSelect',0,'btn-secondary'+mx(++m),{'id':'diag-compselc'})
+  .addButton('AddComp',0,'btn-secondary'+mx(++m),{'id':'diag-addcomp'})
+  .addButton('DelComp',0,'btn-secondary'+mx(++m),{'id':'diag-delcomp'})
+  .addButton('CompPaste',0,'btn-secondary'+mx(++m),{'id':'diag-comppaste'})
+  .addButton('+ Zoom',0,'btn-secondary'+mx(++m),{'id':'diag-zoom-plus'})
+  .addButton('- Zoom',0,'btn-secondary'+mx(++m),{'id':'diag-zoom-minus'})
+  .addButton('Debug',0,'btn-warning'+mx(++m),{'id':'diag-debug'})
+  .addButton('ExportLogic',0,'btn-dark'+mx(++m),{'id':'diag-exportlogic'})
   .br()
   .br()
   .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
@@ -467,13 +479,24 @@ window.onerror = function (message, url, line, column, error) {
 	  	  debug.is=en;
 	  	  $(this).blur();
 	  	  cvs.draw(1)
-	   })
+	   });
+	   
+	   $('#diag-exportlogic').click(function() {
+		  console.log(dgl.exportLogic());
+	   });
 	  
 	  $('#diag-save').click(function() {
+		if (!confirm('You want to save it?')) {
+			return;
+		}
+		
 	    dgl.cache.save(1);
 	    $(this).blur();
 	  })
 	  $('#diag-load').click(function() {
+		if (dgl.m.needsSave && !confirm('You want to reset all progress?')) {
+			return;
+		}
 	    dgl.cache.load(1);
 	    $(this).blur();
 	  })

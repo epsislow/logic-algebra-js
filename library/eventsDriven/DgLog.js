@@ -1839,6 +1839,7 @@ var dgl= {
 	zoom: 1,
     actions: {},
     nodeSel:[],
+	needsSave: 0,
     chgIns:0,
     addNode:0,
     delNode:0,
@@ -1928,12 +1929,89 @@ var dgl= {
       }
     }
   },
+  exportLogic : function() {
+	  return this.eval().getChipLogic(this.chipActive);
+  },
   eval: function () {
     var pub= {}
     var isRefresh=1;
     
     var chipActive= this.chipActive;
     var chip= this.chip;
+	
+	var libExportOp= this.libExportOp;
+	
+	pub.getChipLogic= function(chipName, chipInstance) {
+		var comp,comps, compIds, id;
+		if(chipInstance) {
+			comps= chipInstance.comp;
+		} else {
+			comps= chip[chipName].comp;
+		}
+		
+      for (let j = 0; j < 5; j++) {
+		for(var cid in comps) {
+			comp= comps[cid];
+			compIds = [];
+			
+			if(chipInstance) {
+				comp.exportOb = {type:'chipInstance'}
+			}
+			
+			if(comp.type.startsWith('chip.')) {
+				comp.exportOb = {type:comp.type};
+			} else {
+				var inNames = {};
+				var inIds = [];
+				for(var i in comp.ins) {
+				  if('id' in comp.ins[i]) {
+					id = comp.ins[i].id;
+					var pout= comp.ins[i].pout;
+					
+					if (comps[id].exportOb) {
+						inNames[i] = comps[id].exportOb.str;
+						inIds = comps[id].exportOb.ids;
+					}
+				  } else {
+					inNames[i] = '#';
+				  }
+				}
+				
+				if(1 && comp.type=='clock') {
+				  continue;
+				} else if (comp.type=='pin') {
+				  continue;
+				} else if(comp.type==='controlled') {
+				  continue;
+				}
+				
+				if(typeof libExportOp[comp.type]!=='function') {
+					console.log(comp.type)
+					
+					continue;
+				}
+				 
+				if (!comp.exportOb) {
+					compIds = []
+				} else {
+					compIds = comp.exportOb.ids;
+				}
+				if (!compIds.includes(comp.id)) {
+					compIds.push(comp.id);
+				}
+				
+				compIds.concat(inIds);
+				
+				comp.exportOb = {
+					str: libExportOp[comp.type](inNames),
+					ids: compIds
+				}
+				
+				console.log(comp.exportOb);
+			}
+		}
+	  }
+	}
     
     pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
       var comps;
@@ -2120,6 +2198,30 @@ var dgl= {
     }
     
     return pub;
+  },
+  libExportOp: {
+	inStr: function (inNames) {
+		  let s = [];
+		  for(const p in inNames) {
+			  s.push(p+':'+inNames[p]);
+		  }
+		  return s.join(',');
+	},
+	'and': function(inNames) {
+      return 'and('+this.inStr(inNames)+')';
+    },
+    'or': function(inNames) {
+      return 'or('+this.inStr(inNames)+')';
+    },
+    'nor': function(inNames) {
+      return 'nor('+this.inStr(inNames)+')';
+    },
+    'not': function(inNames) {
+      return 'not('+this.inStr(inNames)+')';
+    },
+    'nand': function(inNames) {
+      return 'nand('+this.inStr(inNames)+')';
+    }
   },
   libOp: {
     ledmin: function(iss) {
@@ -2386,6 +2488,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         }
       }
     }
+	  dgl.m.needsSave = 0;
       console.log('Loaded');
       cvs.draw(1);
     }
@@ -2515,7 +2618,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           added=1
     //    }
       
-      
+      this.m.needsSave = 1;
       return true;
   },
   addNodeC: function(cids) {
@@ -2553,6 +2656,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
    // this.nodeConn[idx2].push(next);
     var len=Object.keys(this.nodeConn[idx1]).length
     this.node[next][Math.round(Math.random())==1?'x':'y']+=5*len;
+	
+	this.m.needsSave = 1;
   },
   checkBtns: function(mdx,mdy) {
     var bs= this.btns;
@@ -2609,6 +2714,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 			comp:{},active:0
 		  }
 		  this.initCompTypeProjectChip();
+		  this.m.needsSave = 1;
 		}
 	},
     deletePin: function(value) {
@@ -2675,9 +2781,11 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
            //   console.log(comps[ccid].outConns)
            compInf.sel = value;
            delete comps[comp.id];
+		   this.m.needsSave = 1;
            //  comp.id= value;
        
          }
+		 dgl.m.needsSave = 1;
          this.blur();
          dglcvs.input = 0;
          this.destroy()
@@ -2696,6 +2804,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     var iof= compid.outConns.indexOf(comp.id+'^'+ci)
     
     compid.outConns.splice(iof,1)
+	this.m.needsSave = 1;
     
    // console.log(comp.id+'^'+ci, comp, compid);
   },
@@ -3813,7 +3922,7 @@ var comp= comps[this.m.compInf.sel]
 		}
 		this.chipActive='main';
 		this.chip[this.chipActive].active=1;
-		
+		this.m.needsSave = 1;
 		cvs.drawNext();
 	},
 	chipWinAdd: function () {
@@ -4042,6 +4151,7 @@ if (typeof e.touches != 'undefined') {
    	 comp.yOfs=0
     	
     	  this.chip[this.chipActive].comp[comp.id]=comp;
+		  this.m.needsSave = 1;
     	  }
     	  if(comp.type=='pin') {
     	    this.chip[this.chipActive].ins[comp.id] = {
