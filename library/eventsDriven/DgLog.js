@@ -1376,8 +1376,8 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
   }
   
    // const smp= trace.getSamples()[cvsIteration];
-   
-   c.scale(this.m.zoom, this.m.zoom);
+   var z= this.m.zoom;
+   c.scale(z, z);
     
     var styles = [1,'#779', '#449', 6, 'Arial', '#ffffff'];
     var comps=this.chip[this.chipActive].comp;
@@ -1389,13 +1389,13 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     
     if(this.m.drawGrid) {
       var step=150;
-     for(var jx=pX%step;jx<lib.maxWidth;jx+=step) {
-       lib.line(c, jx,0,jx, lib.maxHeight,'#444',0.5);
+     for(var jx=pX%step;jx<lib.maxWidth/z;jx+=step) {
+       lib.line(c, jx,0,jx, lib.maxHeight/z,'#444',0.5);
        c.textAlign = 'left';
        lib.textm(c, jx+1, 6, jx - pX, 6, '#555');
      }
-     for (var jy = pY % step; jy < lib.maxHeight; jy += step) {
-       lib.line(c, 0, jy, lib.maxWidth, jy, '#444', 0.5);
+     for (var jy = pY % step; jy < lib.maxHeight/z; jy += step) {
+       lib.line(c, 0, jy, lib.maxWidth/z, jy, '#444', 0.5);
        c.textAlign= 'left';
        lib.textm(c,1,jy-5, jy-pY,6,'#555');
      }
@@ -1410,9 +1410,9 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     lib.textm(c,2,5,this.chipActive,6,'#222')
     
     lib.rectm(c,
-    lib.maxWidth/2-10,0,10,10
+    lib.maxWidth/2/z-10,0,10,10
     ,0,false, '#533');
-    lib.texti(c,lib.maxWidth/2-8,5, '\uf31e',6,'#955')
+    lib.texti(c,lib.maxWidth/2/z-8,5, '\uf31e',6,'#955')
     
     
     var ins,outs;
