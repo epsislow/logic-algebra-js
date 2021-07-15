@@ -3647,6 +3647,24 @@ var comp= comps[this.m.compInf.sel]
 	
     this.checkMActions('end', e.x, e.y)
   },
+  addMActionNoXY(name, event = {}, actCb, prm=[]) {
+    var queue;
+	if(typeof event=='object') {
+		queue = event;
+	} else {
+		if(!(event in this.m.actions)) {
+		  this.m.actions[event] = {}; 
+		}
+		queue = this.m.actions[event];
+	}
+	
+	queue[name] = {
+	  x:0,y:0,w:0,h:0,
+	  cb:actCb, r:0, nxy:1,
+	  prm: prm,
+   }
+   
+  },
   addMActionRect(name, event = {},
      x,y,w,h, actCb, prm =[],
      r=0, useZoom=1, noXYCheck=0) {
@@ -3739,48 +3757,34 @@ var comp= comps[this.m.compInf.sel]
 		this.handlerMA.centerComps
 	)
 		
-
-     if(this.m.compSetup) {
+  if(this.m.compSetup) {
 		 this.addMActionRect(
 			'compSetup', 'start', 0, 0, 
 			dglcvs.lib.maxWidth*z/2, dglcvs.lib.maxHeight*z/2, 
 			this.handlerMA.compSetup
 		 )
-	 }
+	}
+	 
 	 this.addMActionRect(
 	   'panScene', 'start', 0, 0,
 	   dglcvs.lib.maxWidth*z / 2, dglcvs.lib.maxHeight*z/ 2,
 	   this.handlerMA.panScene
 	 )
 	 
-	 this.addMActionRect(
-	      'compDragMove', 'move', 
-	       0,0,0,0,
-	       this.handlerMA.compDragMove,[],
-	       0,1,1
-	 );
+	 this.addMActionNoXY(
+	   'compDragMove', 'move', this.handlerMA.compDragMove);
 	 
-	 this.addMActionRect(
-	      'panSceneMove', 'move', 
-	       0,0,0,0,
-	       this.handlerMA.panSceneMove,[],
-	       0,1,1
-	 );
+	 this.addMActionNoXY(
+	   'panSceneMove', 'move', this.handlerMA.panSceneMove
+	   );
 	 
+	 this.addMActionNoXY(
+	   'compDragEnd', 'end', this.handlerMA.compDragEnd
+	   );
 	 
-	 this.addMActionRect(
-		  'compDragEnd', 'end', 
-	    0,0,0,0,
-		  this.handlerMA.compDragEnd,[],
-		  0,1,1
-	 );
-	 
-	 this.addMActionRect(
-	      'panSceneEnd', 'end',
-	      0,0,0,0,
-	      this.handlerMA.panSceneEnd,[],
-	      0,1,1
-	 );
+	 this.addMActionNoXY(
+	   'panSceneEnd', 'end', this.handlerMA.panSceneEnd
+	   );
 
   },
   handlerMA: {
@@ -3809,14 +3813,16 @@ var comp= comps[this.m.compInf.sel]
 		if(!this.m.isDragged) {
 			return;
 		}
+		
+		var z = this.m.zoom;
 		    
 		var vexx = this.m.comp_old_x + this.m.lastMove.x - this.m.mousedown_x;
 		var vexy = this.m.comp_old_y + this.m.lastMove.y - this.m.mousedown_y;
-
+		
 		var comps= this.chip[this.chipActive].comp;
 		
-		comps[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5;
-		comps[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5;
+		comps[this.m.isDragged].xOfs = Math.round(vexx/12.5)*12.5/z;
+		comps[this.m.isDragged].yOfs = Math.round(vexy/12.5)*12.5/z;
 		
 		cvs.draw(1)
 	},
