@@ -3735,7 +3735,7 @@ var comp= comps[this.m.compInf.sel]
 	this.m.actions = {};
 	var z= 1/this.m.zoom;
 	
-	if(this.m.drawChips==1) {
+	if(this.m.drawChips) {
 	  var maxy=Object.keys(this.chip).length*10+35;
 	  
 	  this.addMActionRect('chipsWin', 'start', 0, 0, 100, maxy, this.handlerMA.chipsWin,[],0,0)
@@ -3746,9 +3746,10 @@ var comp= comps[this.m.compInf.sel]
 	  this.addMActionRect('compInfo', 'start', 0, 0, 100, 195, this.handlerMA.compInfo)
 	}
 	
-	//cannot check without the rest already implemented like compSetup
 	if(this.m.addComp) {
-		
+		this.addMActionRect(
+		  'addCompHdl', 'start', 
+		  0, 0, 100, 195, this.handlerMA.addCompHdl)
 	}
 	
 	this.addMActionRect(
@@ -3769,15 +3770,26 @@ var comp= comps[this.m.compInf.sel]
 	   'panScene', 'start', 0, 0,
 	   dglcvs.lib.maxWidth*z / 2, dglcvs.lib.maxHeight*z/ 2,
 	   this.handlerMA.panScene
-	 )
+  )
+  
+	 this.addMActionNoXY(
+	   'addCompPanMove', 'move', this.handlerMA.addCompPanMove
+	 );
 	 
 	 this.addMActionNoXY(
 	   'compDragMove', 'move', this.handlerMA.compDragMove);
+	   
 	 
 	 this.addMActionNoXY(
 	   'panSceneMove', 'move', this.handlerMA.panSceneMove
 	   );
 	 
+   
+     
+   this.addMActionNoXY(
+     'addCompPanEnd', 'end', this.handlerMA.addCompPanEnd
+     );
+     
 	 this.addMActionNoXY(
 	   'compDragEnd', 'end', this.handlerMA.compDragEnd
 	   );
@@ -3788,6 +3800,62 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
+    addCompOpenSt: function() {
+      
+    },
+    addCompPanEnd: function() {
+      if (this.m.compMenu.isPan) {
+        this.m.compMenu.pan.xOfs += Math.floor(this.m.compMenu.pan.ofsX);
+      
+        this.m.compMenu.pan.yOfs += Math.floor(this.m.compMenu.pan.ofsY);
+        this.m.compMenu.isPan = false;
+        this.m.compMenu.pan.ofsX = 0;
+        this.m.compMenu.pan.ofsY = 0;
+        cvs.draw(1)
+      }
+    },
+    addCompPanMove: function() {
+       if (this.m.compMenu.isPan) {
+       
+         this.m.compMenu.pan.ofsX = this.m.lastMove.x - this.m.compMenu.pan.x;
+         if (this.m.compMenu.pan.yOfs + this.m.lastMove.y - this.m.compMenu.pan.y > 0) {
+           this.m.compMenu.pan.ofsY = this.m.lastMove.y - this.m.compMenu.pan.y;
+         } else {
+           this.m.compMenu.pan.ofsY = -this.m.compMenu.pan.yOfs;
+         }
+      //   return false;
+       }
+       cvs.draw(1);
+    },
+    addCompOpen: function() {
+      
+      return true;
+    },
+    addCompPan: function() {
+      this.m.compMenu.isPan=1;
+      this.m.compMenu.pan.x = this.m.mousedown_x;
+      this.m.compMenu.pan.y = this.m.mousedown_y;
+      
+      return true;
+    },
+    addCompHdl: function() {
+      var kqueue= {};
+      
+      
+      this.addMActionRect(
+        'addCompOpen', kqueue,
+        0,0,50,195,
+        this.handlerMA.addCompOpen
+      );
+      
+      this.addMActionRect(
+				'addCompPan', kqueue,
+				50, 0, 50, 195, 
+				this.handlerMA.addCompPan
+		  );
+		  
+		  return kqueue;
+    },
 	panSceneEnd: function() {
 		if(this.m.isPan) {
 			this.m.pan.xOfs += this.m.pan.ofsX;
@@ -3844,16 +3912,20 @@ var comp= comps[this.m.compInf.sel]
 		this.m.comp_old_x = 0;
 		this.m.comp_old_y = 0;
 	},
+	compCtrls: function(comp) {
+	  if (comp.type == 'controlled' || comp.type == 'pin') {
+	    comp.states['out'] =
+	      comp.states['out'] == 1 ? 0 : 1
+	    dgl.tick(1);
+	  }
+	},
     compHdl: function(comp) {
           this.m.isDragged = comp.id;
         
           this.m.comp_old_x = comp.xOfs;
           this.m.comp_old_y = comp.yOfs;
-          if (comp.type == 'controlled' || comp.type == 'pin') {
-            comp.states['out'] =
-              comp.states['out'] == 1 ? 0 : 1
-            dgl.tick(1);
-          }
+          
+          this.handlerMA.compCtrls(comp)
           return true;
 	},
 	compSetup: function (comps) {
