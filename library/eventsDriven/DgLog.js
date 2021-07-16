@@ -3749,6 +3749,11 @@ var comp= comps[this.m.compInf.sel]
 				0
 		  );
 		  
+	  this.addMActionNoXY(
+	    'stop',kqueue, 
+	    this.handlerMA.stop
+	  );
+
 		  return kqueue;
     },
 	panSceneEnd: function() {
@@ -3813,15 +3818,34 @@ var comp= comps[this.m.compInf.sel]
 	      comp.states['out'] == 1 ? 0 : 1
 	    dgl.tick(1);
 	  }
+	  if(!dgl.m.lastCompClick) {
+	    dgl.m.lastCompClick = comp.id;
+	    setTimeout(function () {
+	      dgl.m.lastCompClick= 0;
+	    }, 1000)
+	  } else {
+	    if(comp.type.startsWith('chip.')){
+	      //alert(comp.id)
+	   
+	       var chipNameSplit= comp.type.split('.');
+      
+      chipNameSplit.shift();
+      
+      var chipName = chipNameSplit.join('.');
+     //dgl.chipActive= chipName
+	    }
+	    //alert(comp.id)
+	  }
+	  
 	},
     compHdl: function(comp) {
-          this.m.isDragged = comp.id;
+      this.m.isDragged = comp.id;
         
-          this.m.comp_old_x = comp.xOfs;
-          this.m.comp_old_y = comp.yOfs;
+      this.m.comp_old_x = comp.xOfs;
+      this.m.comp_old_y = comp.yOfs;
           
-          this.handlerMA.compCtrls(comp)
-          return true;
+      this.handlerMA.compCtrls(comp)
+      return true;
 	},
 	compSetup: function (comps) {
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
