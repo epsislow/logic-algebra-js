@@ -2837,6 +2837,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       this.checkBtns(mdx,mdy);
       return;
     }
+    /*
     if(this.m.drawChips==1) {
       var maxy=Object.keys(this.chip).length*10+40;
       
@@ -2929,6 +2930,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     }
       
   }
+  */
   if(this.m.compInfo && this.m.compInf.sel) {
     var chip= this.chip[this.chipActive]
     var comps= chip.comp;
@@ -3180,11 +3182,6 @@ var comp= comps[this.m.compInf.sel]
         if(mdx<= 60 && mdy>= 10*i-5+ppY*2.5 && mdy <= 10*(i+1)+ppY*2.5+5) {
           
                if(0) {
-  var c = (cvs.getFirstCvs());
-          
-     debug.drawQueue.push([
-       cvs.getLib().rectm,
-       [c,0,10*i-10+ppY*2.5,120,25,1,'#f00']])
         }
    
           if(p in open) {
@@ -3216,11 +3213,6 @@ var comp= comps[this.m.compInf.sel]
               
           
              if(0) {
-  var c = (cvs.getFirstCvs());
-          
-     debug.drawQueue.push([
-       cvs.getLib().rectm,
-       [c,0,10*im+ppY*2.5,120,10*(i-im),1,'#0ff']])
         }
               return;
             }
