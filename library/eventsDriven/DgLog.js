@@ -2945,97 +2945,7 @@ var comp= comps[this.m.compInf.sel]
       this.inputHandlers.renameComp(comps, chip, comp, compInf)
       , '#fff', '#224', 7);
       
-      /*
-         dglcvs.input = new CanvasInput({
-      canvas: document.getElementById('cvs'),
-      fontSize: 7,
-      fontFamily: 'Arial',
-      fontColor: '#fff',
-      fontWeight: 'none',
-      width: 40,
-      height: 10,
-      renderOnMain:1,
-      x:39,
-      y:98,
-      padding: 0,
-      backgroundColor:"#224",
-      borderWidth: 0,
-      borderColor: '#224',
-      borderRadius: 0,
-      innerShadow:'none',
-      boxShadow:'none',
-      //boxShadow: '1px 1px 0px #fff',
-      //innerShadow: '0px 0px 5px rgba(0, 0, 0, 0.5)',
-      placeHolder: comp.id,
-      onsubmit: function() {
-        var value= this.value();
-        
-        if(value && !(value in comps)) {
-          if(comp.id in chip.ins) {
-            var newin = { ...chip.ins[comp.id] }
-            newin.pin = value;
-            chip.ins[value] = newin;
-            delete chip.ins[comp.id]
-          }
-          if(comp.id in chip.outs) {
-            var newout= {...chip.outs[comp.id]}
-            newout.pout=value;
-            chip.outs[value]= newout;
-            delete chip.outs[comp.id]
-          }
-          var newcomp = {...comp}
-          comps[value] = newcomp;
-          newcomp.id= value;
-          var ccid, ccpin, ccpout;
-    for(var i in newcomp.inConns) 
-    {
-            [ccid, ccpout] = newcomp.inConns[i].split('^');
-            
-            if(ccid in comps) {
-              comps[ccid].outs[ccpout].id= newcomp.id;
-      
-        for(var k in comps[ccid].outConns) {
-          [c2id, c2pin]= comps[ccid].outConns[k].split('^')
-
-          if(c2id==comp.id) {
-            comps[ccid].outConns[k]=
-            newcomp.id+'^'+c2pin;
-          }
-        }
-     }
-    }
-    
-    var cc2id, cc2pin, cc2pout;
-    for (var i in newcomp.outConns)
-    {
-      [cc2id, cc2pout] = newcomp.outConns[i].split('^');
-          
-            if (cc2id in comps) {
-              comps[cc2id].ins[cc2pout].id = newcomp.id;
-          
-              for (var k in comps[cc2id].insConns) {
-                    [c2id, c2pout] = comps[cc2id].inConns[k].split('^')
-          
-                if (c2id == comp.id) {
-                  comps[cc2id].inConns[k] =
-                    newcomp.id + '^' + c2pout;
-                }
-              }
-            }
-      }
-       //   console.log(comps[ccid].outConns)
-       compInf.sel = value;
-         delete comps[comp.id];
-        //  comp.id= value;
-          
-        }
-       this.blur();
-       dglcvs.input=0;
-        this.destroy()
-        cvs.draw(1)
-      }
-    });
-    */
+      /*  */
     
       }
     }
@@ -3078,14 +2988,6 @@ var comp= comps[this.m.compInf.sel]
     var types=this.compType;
     var open= this.compTypeOpen;
     if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
-
-      if (0 && this.m.compMenu.sel) {
-        var c = (cvs.getFirstCvs());
-      
-        debug.drawQueue.push([
-             cvs.getLib().rectm,
-             [c, 0, this.m.compMenu.dragArea[0], 65, this.m.compMenu.dragArea[1] - this.m.compMenu.dragArea[0], 1, '#f00']])
-      }
       
       if(this.m.compMenu.sel && mdx < 65 && mdy >= this.m.compMenu.dragArea[0] && mdy <= this.m.compMenu.dragArea[1]) {
         this.m.compMenu.isDrag=1;
@@ -3843,7 +3745,8 @@ var comp= comps[this.m.compInf.sel]
       this.addMActionRect(
 				'addCompPan', kqueue,
 				50, 0, 50, 195, 
-				this.handlerMA.addCompPan
+				this.handlerMA.addCompPan,[],0,
+				0
 		  );
 		  
 		  return kqueue;
@@ -3990,6 +3893,9 @@ var comp= comps[this.m.compInf.sel]
 	compInfo: function () {
 		
 	},
+	stop: function() {
+	  return true;
+	},
 	chipWinDel: function () {
 		if(this.chipActive!='main') {
 			delete this.chip[this.chipActive];
@@ -3998,6 +3904,7 @@ var comp= comps[this.m.compInf.sel]
 		this.chip[this.chipActive].active=1;
 		this.m.needsSave = 1;
 		cvs.drawNext();
+		return true;
 	},
 	chipWinAdd: function () {
 		var self = this;
@@ -4006,6 +3913,8 @@ var comp= comps[this.m.compInf.sel]
 			self.inputHandlers.newChip.bind(self),
 			'#fff', '#224', 7
 		);
+		cvs.drawNext()
+		return true;
 	},
 	chipWinP: function(p) {
 		this.chip[this.chipActive].pX = this.m.pan.xOfs;
@@ -4019,6 +3928,7 @@ var comp= comps[this.m.compInf.sel]
 		this.m.pan.yOfs = this.chip[this.chipActive].pY || 0;
 
 		cvs.drawNext();
+		return true;
     },
     chipsWin: function() {
       var cp;
@@ -4052,6 +3962,10 @@ var comp= comps[this.m.compInf.sel]
         [],0,0
     )
 	
+	this.addMActionNoXY(
+	  'stop',kqueue, 
+	  this.handlerMA.stop);
+	  
 	return kqueue;
     }
   },
