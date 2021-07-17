@@ -1402,12 +1402,15 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     }
     
     //show chipActive
+    var bcs = this.m.bcrumbs;
+    var txt = this.chipActive;
+    txt = bcs.join('>');
     
     c.textAlign='left';
     c.textBaseline='middle';
     lib.rectm(c,0,0,
-      c.measureText(this.chipActive).width+4,10,1,0,'#555');
-    lib.textm(c,2,5,this.chipActive,6,'#222')
+      c.measureText(txt).width+4,10,1,0,'#555');
+    lib.textm(c,2,5,txt,6,'#222')
     
     lib.rectm(c,
     lib.maxWidth/2/z-10,0,10,10
@@ -1844,6 +1847,8 @@ var dgl= {
     addNode:0,
     delNode:0,
     addComp:0,
+    lastCompClick:0,
+    bcrumbs: ['main'],
     delComp:0,
     compConn:0,
     compSetup:0,
@@ -3826,16 +3831,18 @@ var comp= comps[this.m.compInf.sel]
 	  } else {
 	    if(comp.type.startsWith('chip.')){
 	      //alert(comp.id)
+	      
 	   
-	       var chipNameSplit= comp.type.split('.');
+	   var chipNameSplit= comp.type.split('.');
       
       chipNameSplit.shift();
       
       var chipName = chipNameSplit.join('.');
       this.m.isDragged = 0;
       
-      this.handlerMA.chipWinP.apply(dgl, [chipName]);
-      
+      this.handlerMA.chipWinP.apply(dgl, [chipName,0]);
+      this.m.bcrumbs.push(chipName);
+	      
       return true;
 	    }
 	  }
@@ -3948,7 +3955,7 @@ var comp= comps[this.m.compInf.sel]
 		cvs.drawNext()
 		return true;
 	},
-	chipWinP: function(p) {
+	chipWinP: function(p, brcr=1) {
 		this.chip[this.chipActive].pX = this.m.pan.xOfs;
 		this.chip[this.chipActive].pY = this.m.pan.yOfs;
 
@@ -3959,6 +3966,9 @@ var comp= comps[this.m.compInf.sel]
 		this.m.pan.xOfs = this.chip[this.chipActive].pX || 0;
 		this.m.pan.yOfs = this.chip[this.chipActive].pY || 0;
 
+if(brcr) {
+  this.m.bcrumbs= [p];
+}
 		cvs.drawNext();
 		return true;
     },
