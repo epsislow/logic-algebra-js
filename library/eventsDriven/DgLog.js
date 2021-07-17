@@ -3846,7 +3846,7 @@ var comp= comps[this.m.compInf.sel]
       return true;
 	    }
 	  }
-	  
+	  return true;
 	},
     compHdl: function(comp) {
       this.m.isDragged = comp.id;
@@ -3886,6 +3886,7 @@ var comp= comps[this.m.compInf.sel]
 				this.handlerMA.compHdl, [comp]
 		    );
 		  
+		
 			/*if (
 			  (mdx >= ( 5+50*comp.x - sens + pX) && mdx <=  (5+50*comp.x + 40+ sens + pX)) &&
 			  (mdy >=  (5+ 25*comp.y - sens -5 + pY) && mdy <=  (5+25* comp.y + 15 + sens + pY))
