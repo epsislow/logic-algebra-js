@@ -1410,7 +1410,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     c.textBaseline='middle';
     lib.rectm(c,bcs.length>1?8:0,0,
       c.measureText(txt).width+4,10,1,0,'#777');
-    lib.textm(c,bcs.length>1?10:2,5,txt,6,'#222')
+    lib.textm(c,bcs.length>1?10:2,5,txt,6,'#000')
     if(bcs.length>1) {
       lib.rectm(c, 0,0,8,10,1,0,'#7bb');
       lib.texti(c, 1,5, '\uf30a',6,'#222')
@@ -1426,13 +1426,13 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     if(txt) {
     lib.rectm(c,
       0, lib.maxHeight/2/z-10,
-      c.measureText(txt).width+5,10,
+      c.measureText(txt).width+4,10,
       0,0,'#777'
     );
     
-    lib.texti(c,
+    lib.textm(c,
       2, lib.maxHeight/2/z-5, txt,
-      6,'#444'
+      6,'#000'
     );
     }
     
