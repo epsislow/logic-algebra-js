@@ -3832,9 +3832,12 @@ var comp= comps[this.m.compInf.sel]
       chipNameSplit.shift();
       
       var chipName = chipNameSplit.join('.');
-     //dgl.chipActive= chipName
+      this.m.isDragged = 0;
+      
+      this.handlerMA.chipWinP.apply(dgl, [chipName]);
+      
+      return true;
 	    }
-	    //alert(comp.id)
 	  }
 	  
 	},
@@ -3843,9 +3846,14 @@ var comp= comps[this.m.compInf.sel]
         
       this.m.comp_old_x = comp.xOfs;
       this.m.comp_old_y = comp.yOfs;
-          
-      this.handlerMA.compCtrls(comp)
-      return true;
+      
+      var kqueue= {};
+      this.addMActionNoXY(
+        'compCtrls', kqueue,
+        this.handlerMA.compCtrls, [comp]
+      );
+      
+      return kqueue;
 	},
 	compSetup: function (comps) {
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
