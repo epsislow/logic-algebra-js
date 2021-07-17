@@ -1408,14 +1408,19 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     
     c.textAlign='left';
     c.textBaseline='middle';
-    lib.rectm(c,0,0,
+    lib.rectm(c,bcs.length>1?8:0,0,
       c.measureText(txt).width+4,10,1,0,'#777');
-    lib.textm(c,2,5,txt,6,'#222')
+    lib.textm(c,bcs.length>1?10:2,5,txt,6,'#222')
+    if(bcs.length>1) {
+      lib.rectm(c, 0,0,8,10,1,0,'#7bb');
+      lib.texti(c, 1,5, '\uf30a',6,'#222')
+    }
     
     lib.rectm(c,
     lib.maxWidth/2/z-10,0,10,10
     ,0,false, '#533');
     lib.texti(c,lib.maxWidth/2/z-8,5, '\uf31e',6,'#955')
+    
     
     
     var ins,outs;
@@ -3652,6 +3657,12 @@ var comp= comps[this.m.compInf.sel]
 	}
 	
 	this.addMActionRect(
+	  'prevBcrumps', 'start',
+	  0,0,8,10, 
+	  this.handlerMA.prevBcrumps
+	 );
+	  
+	this.addMActionRect(
 		'centerComps', 'start', 
 		dglcvs.lib.maxWidth*z/2-10, 0, 10, 10, 
 		this.handlerMA.centerComps
@@ -3899,6 +3910,14 @@ var comp= comps[this.m.compInf.sel]
 		//console.log(kqueue);
 		
 		return kqueue;
+	},
+	prevBcrumps: function() {
+	  this.m.bcrumbs.pop();
+	  
+	  this.handlerMA.chipWinP.apply(dgl, [this.m.bcrumbs[this.m.bcrumbs.length-1],0]);
+      
+	  cvs.draw();
+	  return true;
 	},
 	centerComps: function () {
 		var comps= this.chip[this.chipActive].comp;
