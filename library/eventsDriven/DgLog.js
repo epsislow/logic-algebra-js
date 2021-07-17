@@ -1404,12 +1404,12 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     //show chipActive
     var bcs = this.m.bcrumbs;
     var txt = this.chipActive;
-    txt = bcs.join('>');
+    txt = bcs.join(' > ');
     
     c.textAlign='left';
     c.textBaseline='middle';
     lib.rectm(c,0,0,
-      c.measureText(txt).width+4,10,1,0,'#555');
+      c.measureText(txt).width+4,10,1,0,'#777');
     lib.textm(c,2,5,txt,6,'#222')
     
     lib.rectm(c,
