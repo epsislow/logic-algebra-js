@@ -1421,6 +1421,20 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     ,0,false, '#533');
     lib.texti(c,lib.maxWidth/2/z-8,5, '\uf31e',6,'#955')
     
+    var txt = this.m.bcrumbIds[this.m.bcrumbIds.length-1];
+    
+    if(txt) {
+    lib.rectm(c,
+      0, lib.maxHeight/2/z-10,
+      c.measureText(txt).width+5,10,
+      0,0,'#777'
+    );
+    
+    lib.texti(c,
+      2, lib.maxHeight/2/z-5, txt,
+      6,'#444'
+    );
+    }
     
     
     var ins,outs;
@@ -1854,6 +1868,7 @@ var dgl= {
     addComp:0,
     lastCompClick:0,
     bcrumbs: ['main'],
+    bcrumbIds: [0],
     delComp:0,
     compConn:0,
     compSetup:0,
@@ -3853,6 +3868,7 @@ var comp= comps[this.m.compInf.sel]
       
       this.handlerMA.chipWinP.apply(dgl, [chipName,0]);
       this.m.bcrumbs.push(chipName);
+      this.m.bcrumbIds.push(comp.id)
 	      
       return true;
 	    }
@@ -3913,6 +3929,7 @@ var comp= comps[this.m.compInf.sel]
 	},
 	prevBcrumps: function() {
 	  this.m.bcrumbs.pop();
+	  this.m.bcrumbIds.pop();
 	  
 	  this.handlerMA.chipWinP.apply(dgl, [this.m.bcrumbs[this.m.bcrumbs.length-1],0]);
       
@@ -3988,6 +4005,7 @@ var comp= comps[this.m.compInf.sel]
 
 if(brcr) {
   this.m.bcrumbs= [p];
+  this.m.bcrumbIds= [0];
 }
 		cvs.drawNext();
 		return true;
