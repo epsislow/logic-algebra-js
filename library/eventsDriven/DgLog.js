@@ -1436,7 +1436,6 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     );
     }
     
-    
     var ins,outs;
   //  console.log(comps)
     for(var cid in comps) {
@@ -1465,7 +1464,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       }
       comp.outs=indexBy(outs,'id');
       }
-      comp.rt=0
+     // comp.rt=0
       
       txt= (comp.type=='controlled'?comp.id:comp.type);
       
@@ -1873,6 +1872,7 @@ var dgl= {
     compConn:0,
     compSetup:0,
     compInfo:0,
+    compRotate:0,
     compInf: {
       sel: 0,
       isPan:0,
@@ -3843,6 +3843,17 @@ var comp= comps[this.m.compInf.sel]
 		this.m.comp_old_x = 0;
 		this.m.comp_old_y = 0;
 	},
+	compRotate: function(comp) {
+	  if(!this.m.compRotate) {
+	    return false;
+	  }
+	  comp.rt= (comp.rt+1)%4;
+	  this.m.isDragged=0;
+	 // dgl.tick(1);
+	  cvs.drawNext(1)
+//	  alert(JSON.stringify(comp.rt))
+	  return true;
+	},
 	compCtrls: function(comp) {
 	  if (comp.type == 'controlled' || comp.type == 'pin') {
 	    comp.states['out'] =
@@ -3857,7 +3868,6 @@ var comp= comps[this.m.compInf.sel]
 	  } else {
 	    if(comp.type.startsWith('chip.')){
 	      //alert(comp.id)
-	      
 	   
 	   var chipNameSplit= comp.type.split('.');
       
@@ -3883,8 +3893,13 @@ var comp= comps[this.m.compInf.sel]
       
       var kqueue= {};
       this.addMActionNoXY(
+        'compRotate', kqueue,
+      this.handlerMA.compRotate, [comp]
+        );
+        
+      this.addMActionNoXY(
         'compCtrls', kqueue,
-        this.handlerMA.compCtrls, [comp]
+      this.handlerMA.compCtrls, [comp]
       );
       
       return kqueue;

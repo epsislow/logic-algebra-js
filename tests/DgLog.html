@@ -181,6 +181,7 @@ $('document').ready(function() {
   .addButton('CompSetup',0,'btn-secondary'+rmx(),{'id':'diag-compsetup'})
   .addButton('CompInfo',0,'btn-secondary'+mx(++m),{'id':'diag-compinfo'})
   .addButton('CompConn',0,'btn-secondary'+mx(++m),{'id':'diag-compconn'})
+  .addButton('CompRotate',0,'btn-secondary'+mx(++m),{'id':'diag-comprotate'})
   .addButton('CompSelect',0,'btn-secondary'+mx(++m),{'id':'diag-compselc'})
   .addButton('AddComp',0,'btn-secondary'+mx(++m),{'id':'diag-addcomp'})
   .addButton('DelComp',0,'btn-secondary'+mx(++m),{'id':'diag-delcomp'})
@@ -419,6 +420,12 @@ window.onerror = function (message, url, line, column, error) {
 	  	   }
 	       cvs.draw(1);
 	  	  })
+	  $('#diag-comprotate').click(function() {
+	  	  var en=toggleBtn($(this));
+	  	  dgl.m.compRotate=en;
+	  	  cvs.draw(1)
+	  })
+	  
 	  $('#diag-compinfo').click(function() {
 	  	  var en=toggleBtn($(this));
 	  	  dgl.m.compInfo=en;
