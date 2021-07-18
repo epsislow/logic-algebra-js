@@ -3895,15 +3895,21 @@ var comp= comps[this.m.compInf.sel]
       this.m.comp_old_y = comp.yOfs;
       
       var kqueue= {};
+        
       this.addMActionNoXY(
         'compRotate', kqueue,
       this.handlerMA.compRotate, [comp]
         );
-        
+       
       this.addMActionNoXY(
         'compCtrls', kqueue,
       this.handlerMA.compCtrls, [comp]
       );
+      
+      this.addMActionNoXY(
+        'compInfoSel', kqueue,
+        this.handlerMA.compInfoSel, [comp]);
+      
       
       return kqueue;
 	},
@@ -3984,8 +3990,15 @@ var comp= comps[this.m.compInf.sel]
        this.m.pan.xOfs= -(midx)*25;
        this.m.pan.yOfs= -(midy-4)*25;
 	},
-	compInfo: function () {
+	compInfo: function() {
+	  
+	},
+	compInfoSel: function (comp) {
+		if (this.m.compInfo) {
+		  this.m.compInf.sel = comp.id;
 		
+		  return true;
+		}
 	},
 	stop: function() {
 	  return true;
