@@ -3860,6 +3860,9 @@ var comp= comps[this.m.compInf.sel]
 	      comp.states['out'] == 1 ? 0 : 1
 	    dgl.tick(1);
 	  }
+	  if(dgl.m.compInfo) {
+	    return;
+	  }
 	  if(!dgl.m.lastCompClick) {
 	    dgl.m.lastCompClick = comp.id;
 	    setTimeout(function () {
