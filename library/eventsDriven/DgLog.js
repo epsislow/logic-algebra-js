@@ -322,16 +322,10 @@ var dglcvs={
   d:{
     chipMenuK:-100,
   },
-  drawChipSetup: function(c, name, chip, sel) {
+  drawChipSetup: function(c, name, chip, chipSetupComp) {
     
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
-    
-    this.drawComp(c, {
-      id:name,
-      ins:chip.ins,
-      outs:chip.outs,
-      type:'chip'
-    },
+    this.drawComp(c, chipSetupComp,
        40, 40,
        100, 2, 0, 0,1);
      
@@ -1372,7 +1366,21 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
     lib.clear(c);
   }
   if(this.m.chipSetup) {
-    return dglcvs.drawChipSetup(c, this.chipActive, this.chip[this.chipActive]);
+    if(!this.m.chipSetupComp) {
+      var chip= this.chip[this.chipActive];
+      
+     this.m.chipSetupComp= {
+      id: name,
+      ins: chip.ins,
+      outs: chip.outs,
+      type: 'chip'
+     };
+    }
+    
+    dglcvs.drawChipSetup(c, this.chipActive, this.chip[this.chipActive], this.m.chipSetupComp);
+    
+    debug.draw();
+    return;
   }
   
    // const smp= trace.getSamples()[cvsIteration];
@@ -1823,26 +1831,31 @@ for(var l in lineNodes) {
   //  }
    }
     
-    if(debug.is) {
-      for(var d in debug.drawQueue) {
-        debug.drawQueue[d][0].apply(this, debug.drawQueue[d][1]);
-        
-     if(!debug.drawQueueDel) {
-       debug.drawQueueDel=1;
-        setTimeout(function() {
-          debug.drawQueue= [];
-          cvs.draw(1);
-        }, 3000);
-        
-     }
-      
-      }
-    }
+    debug.draw();
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
    
-var debug= {is:true,drawQueue:[],drawQueueDel:0};  
+var debug= {is:true,drawQueue:[],drawQueueDel:0,
+  
+  draw: function() {
+    if (debug.is) {
+      for (var d in debug.drawQueue) {
+        debug.drawQueue[d][0].apply(this, debug.drawQueue[d][1]);
+    
+        if (!debug.drawQueueDel) {
+          debug.drawQueueDel = 1;
+          setTimeout(function() {
+            debug.drawQueue = [];
+            cvs.draw(1);
+          }, 3000);
+    
+        }
+    
+      }
+    }
+  }
+};  
 
 const trace= new Trace();
 var dgl= {
@@ -1896,6 +1909,7 @@ var dgl= {
     drawGrid:1,
     drawChips:0,
     chipSetup:0,
+    chipSetupComp: 0,
     needsConfirm:0,
     confirmText:'?',
     confirmValue:-1,
@@ -3659,6 +3673,7 @@ var comp= comps[this.m.compInf.sel]
 	    'chipSetup','start',
 	    this.handlerMA.chipSetup
 	  );
+	  return;
 	}
 	
 	if(this.m.drawChips) {
@@ -4001,15 +4016,27 @@ var comp= comps[this.m.compInf.sel]
 	  if(!this.m.chipSetup) {
 	    return;
 	  }
-	  var comp= {
-	    id: name,
-	    ins: chip.ins,
-	    outs: chip.outs,
-	    type: 'chip'
-	  };
+	  var comp= this.m.chipSetupComp;
 //	  40, 40,
 //	  100, 2
 
+   var kqueue= {};
+   
+   for(var p in comp.ins) {
+     this.addMActionRect(
+     'chipSetupPin'+p, kqueue, comp.ins[p].pinx, comp.ins[p].piny, 5,5, this.handlerMA.chipSetupPin, [comp.ins[p], comp,0]
+     );
+   }
+   
+   for (var p in comp.outs) {
+     this.addMActionRect(
+       'chipSetupPout' + p, kqueue, comp.outs[p].pinx, comp.outs[p].piny, 5, 5, this.handlerMA.chipSetupPin, [comp.outs[p], comp,1]
+     );
+   }
+
+	  return kqueue;
+	},
+	chipSetupPin:function(comppin, comp, isOut=0) {
 	  return true;
 	},
 	compInfo: function() {
