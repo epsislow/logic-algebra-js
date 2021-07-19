@@ -3654,6 +3654,13 @@ var comp= comps[this.m.compInf.sel]
 	this.m.actions = {};
 	var z= 1/this.m.zoom;
 	
+	if(this.m.chipSetup) {
+	  this.addMActionNoXY(
+	    'chipSetup','start',
+	    this.handlerMA.chipSetup
+	  );
+	}
+	
 	if(this.m.drawChips) {
 	  var maxy=Object.keys(this.chip).length*10+35;
 	  
@@ -3990,8 +3997,23 @@ var comp= comps[this.m.compInf.sel]
        this.m.pan.xOfs= -(midx)*25;
        this.m.pan.yOfs= -(midy-4)*25;
 	},
+	chipSetup: function() {
+	  if(!this.m.chipSetup) {
+	    return;
+	  }
+	  var comp= {
+	    id: name,
+	    ins: chip.ins,
+	    outs: chip.outs,
+	    type: 'chip'
+	  };
+//	  40, 40,
+//	  100, 2
+
+	  return true;
+	},
 	compInfo: function() {
-	  
+	  return true;
 	},
 	compInfoSel: function (comp) {
 		if (this.m.compInfo) {
