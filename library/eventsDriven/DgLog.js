@@ -4024,19 +4024,20 @@ var comp= comps[this.m.compInf.sel]
    
    for(var p in comp.ins) {
      this.addMActionRect(
-     'chipSetupPin'+p, kqueue, comp.ins[p].pinx, comp.ins[p].piny, 5,5, this.handlerMA.chipSetupPin, [comp.ins[p], comp,0]
+     'chipSetupPin'+p, kqueue, comp.ins[p].pinx-2, comp.ins[p].piny-2, 10,10, this.handlerMA.chipSetupPin, [comp.ins[p], p, comp,0]
      );
    }
    
    for (var p in comp.outs) {
      this.addMActionRect(
-       'chipSetupPout' + p, kqueue, comp.outs[p].pinx, comp.outs[p].piny, 5, 5, this.handlerMA.chipSetupPin, [comp.outs[p], comp,1]
+       'chipSetupPout' + p, kqueue, comp.outs[p].pinx-2, comp.outs[p].piny-2, 10, 10, this.handlerMA.chipSetupPin, [comp.outs[p], p, comp,1]
      );
    }
 
 	  return kqueue;
 	},
-	chipSetupPin:function(comppin, comp, isOut=0) {
+	chipSetupPin:function(comppin,pname, comp, isOut=0) {
+	  console.log(pname);
 	  return true;
 	},
 	compInfo: function() {
