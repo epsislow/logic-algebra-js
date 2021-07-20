@@ -123,12 +123,12 @@ $('document').ready(function() {
 	  
 	  var main =  $('main').get(0);
 	  
-	  var width = $(window).width() - main.offsetLeft ;
+	  var width = $(window).width() - main.offsetLeft;
 	  if (width > 100) {
 		width -= (width%100 + 100);
 	  }
 	  
-	  var height = $(window).height() - main.offsetLeft;
+	  var height = $(window).height() - main.offsetTop;
 	  
 	  if (height > 300) {
 		height =  height - 250;
