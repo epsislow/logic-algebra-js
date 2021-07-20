@@ -327,7 +327,7 @@ var dglcvs={
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
     this.drawComp(c, chipSetupComp,
        40, 40,
-       100, 2, 0, 0,1,1);
+       100, 2, 0, 0,1,0);
      
     this.lib.textm(c,
           90,
@@ -1387,11 +1387,25 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       
      this.m.chipSetupComp= {
       id: name,
-      ins: chip.ins,
-      outs: chip.outs,
+      ins: {...chip.ins},
+      outs: {...chip.outs},
       type: 'chip'
      };
     }
+    if(this.m.chipSetupPinRecalc) {
+    var chc= this.m.chipSetupComp;
+    for(var k in chc.ins) {
+      delete chc.ins[k].pinx
+     delete chc.ins[k].piny
+    }
+   for(var k in chc.outs) {
+   delete   chc.outs[k].pinx
+    delete  chc.outs[k].piny
+    }
+    this.m.chipSetupPinRecalc=0;
+    
+    }
+  
     
     dglcvs.drawChipSetup(c, this.chipActive, this.chip[this.chipActive], this.m.chipSetupComp);
     
@@ -1926,6 +1940,7 @@ var dgl= {
     drawChips:0,
     chipSetup:0,
     chipSetupComp: 0,
+    chipSetupPinRecalc:0,
     needsConfirm:0,
     confirmText:'?',
     confirmValue:-1,
@@ -4061,6 +4076,9 @@ var comp= comps[this.m.compInf.sel]
 	  
 	  comppin.pinx = this.m.chipSetupPinX + this.m.lastMove.x - this.m.mousedown_x;
 	  
+	 
+	  
+	  cvs.draw(1);
 	  cvs.drawNext(1);
 	 // console.log(comppin.pinx)
 	},
@@ -4074,7 +4092,7 @@ var comp= comps[this.m.compInf.sel]
 	  
 	  this.addMActionNoXY(
 	    'chipSetupPinMove','move', this.handlerMA.chipSetupPinMove);
-	    
+	   
 	  //console.log(pname);
 	  return true;
 	},

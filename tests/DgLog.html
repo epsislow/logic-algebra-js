@@ -401,6 +401,7 @@ window.onerror = function (message, url, line, column, error) {
 	  $('#diag-chipsetup').click(function() {
 	  	  var en=toggleBtn($(this));
 	  	  dgl.m.chipSetup=en;
+	  	  dgl.m.chipSetupPinRecalc=1;
 	  	  cvs.draw(1)
 	  	  })
 	  
