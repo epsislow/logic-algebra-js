@@ -327,7 +327,7 @@ var dglcvs={
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
     this.drawComp(c, chipSetupComp,
        40, 40,
-       100, 2, 0, 0,1);
+       100, 2, 0, 0,1,1);
      
     this.lib.textm(c,
           90,
@@ -655,7 +655,7 @@ cv.style.height = rect.height/4 + 'px';
       'ledmin':[-100/4,0], 
       'lcd':[100,100/4]
   },
-  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0,inOutsText=0) {
+  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0,inOutsText=0, calcxy=1) {
     var sty=['#779','#44a','#fff','#aaf']
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
@@ -1058,7 +1058,7 @@ cv.style.height = rect.height/4 + 'px';
     	c.setTransform(trans)
     	
     //pins and pouts
-    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp,x,y,s+dt,s+st,comp.rt, inOutsText);
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp,x,y,s+dt,s+st,comp.rt, inOutsText, calcxy);
     
     c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -1138,7 +1138,7 @@ cv.style.height = rect.height/4 + 'px';
   //    comp.rt=3;
  //   }
   },
-  'drawPinsOfComp': function(c,type,ins,outs,comp,x,y,w,h,r=0, inOutsText=0) {
+  'drawPinsOfComp': function(c,type,ins,outs,comp,x,y,w,h,r=0, inOutsText=0, calcxy=1) {
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
     const rot={
       0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
@@ -1177,6 +1177,10 @@ cv.style.height = rect.height/4 + 'px';
      pinh=2, pinw=2; pw=2;
    }
     for(var i=0;i<pos.top.length;i++){
+      if(!calcxy && 'pinx' in pos.top[i]) {
+        continue;
+      }
+      
       k=i*(w/pos.top.length)
         +w/(2*pos.top.length)-pinw/2;
       pos.top[i].pinx= x+k;
@@ -1188,6 +1192,10 @@ cv.style.height = rect.height/4 + 'px';
     }
     
     for(var i=0;i<pos.bottom.length;i++){
+      if(!calcxy && 'pinx' in pos.bottom[i]) {
+        continue;
+      }
+      
       k=i*(w/pos.bottom.length)
         +w/(2*pos.bottom.length)-pinw/2
       pos.bottom[i].pinx= x+k;
@@ -1198,6 +1206,10 @@ cv.style.height = rect.height/4 + 'px';
     }
     
     for(var i=0;i<pos.left.length;i++){
+      if(!calcxy && 'pinx' in pos.left[i]) {
+        continue;
+      }
+      
       k=i*(h/pos.left.length)
         +h/(2*pos.left.length)-pinh/2
       pos.left[i].pinx= x-pinw-1;
@@ -1208,6 +1220,10 @@ cv.style.height = rect.height/4 + 'px';
     }
     
     for (var i=0; i < pos.right.length; i++) {
+      if(!calcxy && 'pinx' in pos.right[i]) {
+        continue;
+      }
+      
       k=i*(h/pos.right.length) +
         h/(2*pos.right.length) - pinh/2
       pos.right[i].pinx= x+w+1
@@ -4036,8 +4052,30 @@ var comp= comps[this.m.compInf.sel]
 
 	  return kqueue;
 	},
+	chipSetupPinMove: function() {
+	  if(!this.m.chipSetupPinDrag) {
+	    return;
+	  }
+	  
+	  var comppin = this.m.chipSetupPinDrag;
+	  
+	  comppin.pinx = this.m.chipSetupPinX + this.m.lastMove.x - this.m.mousedown_x;
+	  
+	  cvs.drawNext(1);
+	 // console.log(comppin.pinx)
+	},
 	chipSetupPin:function(comppin,pname, comp, isOut=0) {
-	  console.log(pname);
+	  this.m.chipSetupPinDrag= comppin;
+	  
+	  this.m.chipSetupPinX = comppin.pinx;
+	  this.m.chipSetupPinY = comppin.piny;
+	  
+	  this.m.actions['move'] = {};
+	  
+	  this.addMActionNoXY(
+	    'chipSetupPinMove','move', this.handlerMA.chipSetupPinMove);
+	    
+	  //console.log(pname);
 	  return true;
 	},
 	compInfo: function() {
