@@ -326,8 +326,8 @@ var dglcvs={
     
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
     this.drawComp(c, chipSetupComp,
-       40, 40,
-       100, 2, 0, 0,1,0);
+       30, 30,
+       120, 2, 0, 0,1,0);
      
     this.lib.textm(c,
           90,
@@ -4074,8 +4074,54 @@ var comp= comps[this.m.compInf.sel]
 	  
 	  var comppin = this.m.chipSetupPinDrag;
 	  
-	  comppin.pinx = this.m.chipSetupPinX + this.m.lastMove.x - this.m.mousedown_x;
+	 
+	  var newx = this.m.chipSetupPinX + this.m.lastMove.x - this.m.mousedown_x;
 	  
+	  var newy = this.m.chipSetupPinY + this.m.lastMove.y - this.m.mousedown_y;
+	  
+	 if(comppin.pos=='top' || comppin.pos=='bottom') {
+	  if(newx >25 && newx<145) {
+	   comppin.pinx= newx;
+	  }
+	  
+	  if(newx <= 25) {
+	    comppin.pinx=25;
+	    if(newy > 25) {
+	      comppin.pinx=25;
+	      comppin.piny=newy;
+	      comppin.pos='left';
+	    }
+	  }
+	  if(newx >=145) {
+	    comppin.pinx=145;
+	    if(newy > 25) {
+	      comppin.pinx = 150;
+	      comppin.piny = newy;
+	      comppin.pos = 'right';
+	    }
+	  }
+	 } else {
+	  if (newy > 25 && newy < 150) {
+	    comppin.piny = newy;
+	  }
+	  
+	  if (newy <= 25) {
+	    comppin.piny = 25;
+	    if(newx > 25) {
+	      comppin.piny = 25;
+	      comppin.pinx = newx;
+	      comppin.pos = 'top';
+	    }
+	  }
+	  if (newy >= 150) {
+	    comppin.piny = 150;
+	    if (newx < 145 && newx > 25) {
+	      comppin.piny = 150;
+	      comppin.pinx = newx;
+	      comppin.pos = 'bottom';
+	    }
+	  }
+	 }
 	 
 	  
 	  cvs.draw(1);
