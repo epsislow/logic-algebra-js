@@ -1155,12 +1155,20 @@ cv.style.height = rect.height/4 + 'px';
     w=rott[r].w;
     h=rott[r].h;
     var iid= Object.keys(ins);
+    if(Array.isArray(comp.posOrder) && comp.posOrder.length) {
+      iid= comp.posOrder;
+    }
     for(var i in iid) {
+      if(!(iid[i] in ins)) {
+        continue;
+      }
    //   ins[i].pin='in';
       pos[rot[r][ins[iid[i]].pos]].push(ins[iid[i]]);
     }
+    
     for(var k in outs) {
   //    ins[i].pin='out';
+
   try {
       pos[rot[r][outs[k].pos]].push(outs[k]);
   } catch (e) {
@@ -1389,6 +1397,7 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
       id: name,
       ins: {...chip.ins},
       outs: {...chip.outs},
+      posOrder: chip.posOrder,
       type: 'chip'
      };
     }
@@ -2354,10 +2363,9 @@ var dgl= {
     'dataout': {},
   },
   chip: {
-    main:{ins:[],outs:[],comp:{}//componentsPos(components)
-    ,active:1},
-    mem:{ins:{},outs:{},comp:{},active:0},
-    myclock:{ins:{},outs:{},comp:{},active:0},
+    main:{ins:[],outs:[],comp:{},posOrder:[],active:1},
+    mem:{ins:{},outs:{},comp:{},posOrder:[],active:0},
+    myclock:{ins:{},outs:{},comp:{},posOrder:[],active:0},
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
@@ -2781,7 +2789,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 		if(value && !(value in this.chip)) {
 		  this.chip[value] ={
 			ins:{},outs:{},
-			comp:{},active:0
+			comp:{},posOrder:[],active:0
 		  }
 		  this.initCompTypeProjectChip();
 		  this.m.needsSave = 1;
@@ -3075,6 +3083,7 @@ var comp= comps[this.m.compInf.sel]
       
       var ins= this.chip[chipName].ins;
       var outs= this.chip[chipName].outs;
+      var posOrder= this.chip[chipName].posOrder;
       
         this.m.compMenu.comp={
           id:newid,
@@ -3088,6 +3097,7 @@ var comp= comps[this.m.compInf.sel]
           outs: outs,
           inConns: [],
           outConns: [],
+          posOrder: posOrder,
           nextInput:0,
           nextOutput:0,
           xOfs:35,
@@ -3132,6 +3142,7 @@ var comp= comps[this.m.compInf.sel]
           outs: outs,
           inConns: [],
           outConns: [],
+          posOrder:[],
           nextInput:0,
           nextOutput:0,
           xOfs:35,
@@ -4055,17 +4066,66 @@ var comp= comps[this.m.compInf.sel]
    
    for(var p in comp.ins) {
      this.addMActionRect(
-     'chipSetupPin'+p, kqueue, comp.ins[p].pinx-2, comp.ins[p].piny-2, 10,10, this.handlerMA.chipSetupPin, [comp.ins[p], p, comp,0]
+     'chipSetupPin'+p, kqueue, comp.ins[p].pinx-7, comp.ins[p].piny-7, 20, 20, this.handlerMA.chipSetupPin, [comp.ins[p], p, comp,0]
      );
    }
    
    for (var p in comp.outs) {
      this.addMActionRect(
-       'chipSetupPout' + p, kqueue, comp.outs[p].pinx-2, comp.outs[p].piny-2, 10, 10, this.handlerMA.chipSetupPin, [comp.outs[p], p, comp,1]
+       'chipSetupPout' + p, kqueue, comp.outs[p].pinx-7, comp.outs[p].piny-7, 20, 20, this.handlerMA.chipSetupPin, [comp.outs[p], p, comp,1]
      );
    }
 
 	  return kqueue;
+	},
+	chipSetupPinEnd: function(comp) {
+	  if(!this.m.chipSetupPinDrag) {
+	    return;
+	  }
+	  
+	  var posOrder=[];
+	  for(var i in comp.ins) {
+	    var p= comp.ins[i];
+	    if(['top','bottom'].includes(p.pos)) {
+	      posOrder.push({
+	        name: i,
+	       pos: p.pos,
+	        xy: p.pinx
+	      })
+	    } else {
+	      posOrder.push({
+	        name:i,
+	        pos: p.pos,
+	        xy: p.piny
+	      })
+	    }
+	  }
+	  
+	  
+	  for (var i in comp.outs) {
+	    var p = comp.outs[i];
+	    if (['top', 'bottom'].includes(p.pos)) {
+	      posOrder.push({
+	        name: i,
+	        xy: p.pinx
+	      })
+	    } else {
+	      posOrder.push({
+	        name: i,
+	        xy: p.piny
+	      })
+	    }
+	  }
+	 
+	 posOrder.sort((a,b) => (a.xy > b.xy ?1:-1))
+	 
+	 comp.posOrder=[];
+	 for(var q in posOrder) {
+	   comp.posOrder.push(posOrder[q].name);
+	 }
+	 this.chip[this.chipActive].posOrder=comp.posOrder;
+	 this.m.chipSetupPinRecalc=1;
+	 
 	},
 	chipSetupPinMove: function() {
 	  if(!this.m.chipSetupPinDrag) {
@@ -4073,7 +4133,6 @@ var comp= comps[this.m.compInf.sel]
 	  }
 	  
 	  var comppin = this.m.chipSetupPinDrag;
-	  
 	 
 	  var newx = this.m.chipSetupPinX + this.m.lastMove.x - this.m.mousedown_x;
 	  
@@ -4139,7 +4198,11 @@ var comp= comps[this.m.compInf.sel]
 	  this.addMActionNoXY(
 	    'chipSetupPinMove','move', this.handlerMA.chipSetupPinMove);
 	   
-	  //console.log(pname);
+	  this.m.actions['end'] = {};
+	  
+	  this.addMActionNoXY(
+	    'chipSetupPinEnd','end', this.handlerMA.chipSetupPinEnd, [comp]);
+
 	  return true;
 	},
 	compInfo: function() {
