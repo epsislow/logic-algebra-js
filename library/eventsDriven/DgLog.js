@@ -1157,9 +1157,7 @@ cv.style.height = rect.height/4 + 'px';
     var iid= Object.keys(ins);
     if(typeof comp.posOrder!='undefined' && comp.posOrder.ins.length) {
       iid= comp.posOrder.ins;
-	  if(comp.type.startsWith('chip.')) {
-		//debugger;
-	  }
+
     }
     for(var i in iid) {
       if(!(iid[i] in ins)) {
