@@ -1097,7 +1097,7 @@ cv.style.height = rect.height/4 + 'px';
     return dots;
     
   },
-  'addPinSafeDistance': function(comp,r=0) {
+  'addPinSafeDistance': function(comp,r=0, pos) {
     const rot={
       0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
       1:{'top':'right','right':'bottom','bottom':'left','left':'top'},
@@ -1107,13 +1107,13 @@ cv.style.height = rect.height/4 + 'px';
     
     var x=comp.pinx+1;
     var y=comp.piny+1;
-    if(rot[r][comp.pos]=='top') {
+    if(rot[r][pos]=='top') {
       y-=4;
-    } else if(rot[r][comp.pos]=='right') {
+    } else if(rot[r][pos]=='right') {
       x+=4
-    } else if(rot[r][comp.pos]=='left') {
+    } else if(rot[r][pos]=='left') {
       x-=4
-    } else if(rot[r][comp.pos]=='bottom') {
+    } else if(rot[r][pos]=='bottom') {
       y+=4;
     }
     return['safeDist', x,y];
@@ -1577,7 +1577,7 @@ smp0= compin.states[cinpout]
         var outinf= comps[cinid].outs[cinpout];
         //alert(cinpin+JSON.stringify(outinf));
         
-      lineNodes= this.getLineNodesFor(comp.ins[i], comp, outinf, comps[cinid]);
+      lineNodes= this.getLineNodesFor(comp.ins[i], comp, comp.posOrder.pos[i], outinf, comps[cinid], comps[cinid].posOrder.pos[cinpout]);
       
       /*-
       var i=0;
@@ -2420,15 +2420,15 @@ var dgl= {
     'Mux': {},
     'Demux':{}
   },
-  getLineNodesFor: function(outinf, comp ,ininf,compin) {
+  getLineNodesFor: function(outinf, comp , poso,ininf,compin, posi) {
     
     var nodes=[];
         
         nodes.push(['in', ininf.pinx+1, ininf.piny+1]);
         
-        var inPinSafeDist = dglcvs.addPinSafeDistance(ininf, compin.rt);
+        var inPinSafeDist = dglcvs.addPinSafeDistance(ininf, compin.rt, posi);
         
-        var outPinSafeDist = dglcvs.addPinSafeDistance(outinf, comp.rt)
+        var outPinSafeDist = dglcvs.addPinSafeDistance(outinf, comp.rt, poso)
         
         nodes.push(
           inPinSafeDist
@@ -2438,7 +2438,7 @@ var dgl= {
 var dotsIn= dglcvs.addNoUnderComp(
   ininf.pinx+1,
   ininf.piny+1, compin,
- inPinSafeDist[1],
+  inPinSafeDist[1],
   inPinSafeDist[2],comp
   )
   
