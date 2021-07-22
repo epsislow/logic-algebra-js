@@ -3836,6 +3836,10 @@ var comp= comps[this.m.compInf.sel]
 	   this.handlerMA.panScene
   )
   
+  this.addMActionNoXY(
+    'addCompMenuIsDragMove', 'move',this.handlerMA.addCompMenuIsDragMove
+    );
+    
 	 this.addMActionNoXY(
 	   'addCompPanMove', 'move', this.handlerMA.addCompPanMove
 	 );
@@ -3849,7 +3853,8 @@ var comp= comps[this.m.compInf.sel]
 	   );
 	 
    
-     
+   this.addMActionNoXY(
+     'addCompMenuIsDragEnd','end', this.handlerMA.addCompMenuIsDragEnd)  
    this.addMActionNoXY(
      'addCompPanEnd', 'end', this.handlerMA.addCompPanEnd
      );
@@ -3864,6 +3869,68 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
+    addCompMenuIsDragMove: function() {
+      if (this.m.compMenu.isDrag) {
+        var cex = this.m.comp_old_x + mouse_x - this.m.compMenu.mdx;
+        var cey = this.m.comp_old_y + mouse_y - this.m.compMenu.mdy;
+      
+        this.m.compMenu.comp.xOfs = Math.round(cex);
+        this.m.compMenu.comp.yOfs = Math.round(cey);
+      
+        cvs.draw(1);
+        return true;
+      }
+    },
+    addCompMenuIsDragEnd: function() {
+      if (this.m.compMenu.isDrag && this.m.compMenu.comp) {
+        var comp = this.m.compMenu.comp;
+        if (comp.xOfs > 110) {
+          comp.x =
+            Math.round(-pX / 50) +
+            Math.round((comp.xOfs) / 12.5) / 4;
+      
+          comp.y =
+            Math.round(-pY / 25) +
+            Math.round((comp.yOfs) / 12.5) / 2;
+      
+          // console.log(comp.x,comp.y)
+      
+          comp.xOfs = 0
+          comp.yOfs = 0
+      
+          this.chip[this.chipActive].comp[comp.id] = comp;
+          this.m.needsSave = 1;
+        }
+        if (comp.type == 'pin') {
+          this.chip[this.chipActive].ins[comp.id] = {
+            pos: 'top',
+            //  id:this.chipActive,
+            pin: comp.id,
+          },
+          this.chip[this.chipActive]
+          .posOrder.ins.push(comp.id)
+          this.chip[this.chipActive]
+          .posOrder.pos[comp.id]='top';
+        }
+        if (comp.type == 'pout') {
+          this.chip[this.chipActive].outs[comp.id] = {
+            pos: 'bottom',
+            //  id:this.chipActive,
+            pout: comp.id,
+          }
+          
+          this.chip[this.chipActive]
+          .posOrder.outs.push(comp.id)
+          this.chip[this.chipActive]
+          .posOrder.pos[comp.id]='bottom';
+        }
+        this.m.compMenu.comp = 0;
+        this.m.compMenu.isDrag = 0;
+        this.m.compMenu.sel = 0;
+        cvs.draw(1);
+        return true;
+      }
+    },
     addCompOpenSt: function() {
       
     },
