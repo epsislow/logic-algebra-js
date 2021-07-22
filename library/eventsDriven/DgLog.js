@@ -1382,6 +1382,7 @@ cv.style.height = rect.height/4 + 'px';
   }
 }
 
+
 var cvsIteration=0;
 var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
  // console.log('ff');
@@ -2534,10 +2535,15 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
       dgl.nodeConn[j] = buf;
     }
-    var comps= dgl.chip[dgl.chipActive].comp, comp,
-      cid, cpin, cpout;
+    var comps, comp, cid, cpin, cpout;
+      
+    for(var chipName in dgl.chip) {
+      comps= dgl.chip[chipName].comp;
+      
     for(var cid in comps) {
       var comp= comps[cid];
+      comp.posOrder= dgl.chip[chipName].posOrder;
+      
       for(var i=comp.inConns.length-1; i>=0;i--) {
         [cid, cpin] = comp.inConns[i].split('^');
         if(!(cid in comps)) {
@@ -2551,6 +2557,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         }
       }
     }
+    }
+    
     dgl.initCompTypeProjectChip();
     for(var cl in dgl.chip) {
     for(var d in dgl.chip[cl].outs) {
