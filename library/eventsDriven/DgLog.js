@@ -689,6 +689,11 @@ cv.style.height = rect.height/4 + 'px';
     const p= Math.PI
     var fill=1,stroke=1;
     if(type=='controlled') {
+      if (comp.rt) {
+        c.translate(x+s/2, y+s/2-s/4)
+        c.rotate(comp.rt * p/2)
+        c.translate(-x-s/2, -y-s/2+s/4)
+      }
       c.beginPath()
       c.rect(x,y,s,s/2)
       c.stroke(),
@@ -784,6 +789,11 @@ cv.style.height = rect.height/4 + 'px';
       c.closePath()
       st=-s/2
     } else if(type=='const') {
+      if (comp.rt) {
+        c.translate(x+s/2, y+s/2-s/8)
+        c.rotate(comp.rt * p/2)
+        c.translate(-x-s/2, -y-s/2+s/8)
+      }
       c.beginPath()
       c.arc(x + s / 2, y + s / 2, s / 4, 0, p * 2, 0)
       c.closePath()
@@ -975,6 +985,11 @@ cv.style.height = rect.height/4 + 'px';
       c.lineWidth = 1/dgl.m.zoom;
       st=-s/4
     } else if(type=='pin') {
+      if (comp.rt) {
+        c.translate(x+s/2, y+s/2-s/4)
+        c.rotate(comp.rt * p/2)
+        c.translate(-x-s/2,-y-s/2+s/4)
+      }
       c.beginPath();
       c.rect(x+s/2-s/8,y,s/4,s/2)
       c.closePath();
@@ -994,6 +1009,11 @@ cv.style.height = rect.height/4 + 'px';
       
       st=-s/2
     } else if(type=='pout') {
+      if (comp.rt) {
+        c.translate(x+s/2, y+s/2-s/4)
+        c.rotate(comp.rt * p/2)
+        c.translate(-x-s/2, -y-s/2+s/4)
+      }
       c.beginPath();
       c.rect(x+s/2-s/8,y,s/4,s/2)
       c.closePath();
