@@ -1157,22 +1157,23 @@ cv.style.height = rect.height/4 + 'px';
     var iid= Object.keys(ins);
     if(typeof comp.posOrder!='undefined' && comp.posOrder.ins.length) {
       iid= comp.posOrder.ins;
-
     }
+	
+	var k;
     for(var i in iid) {
-      if(!(iid[i] in ins)) {
+	  k = iid[i];
+      if(!(k in ins)) {
         continue;
       }
-   //   ins[i].pin='in';
-      pos[rot[r][ins[iid[i]].pos]].push(ins[iid[i]]);
+      //pos[rot[r][ins[iid[i]].pos]].push(ins[iid[i]]);
+	  pos[rot[r][comp.posOrder.pos[k]]].push(ins[k]);
     }
     
     var oid= Object.keys(outs);
 	if(typeof comp.posOrder!='undefined' && comp.posOrder.outs.length) {
       oid= comp.posOrder.outs;
-	  //console.log(comp.id + ':',comp.posOrder.outs);
     }
-	var k;
+	
     for(var o in oid) {
 		k = oid[o];
 		if(!(k in outs)) {
@@ -1181,7 +1182,8 @@ cv.style.height = rect.height/4 + 'px';
 		
 	
   try {
-      pos[rot[r][outs[k].pos]].push(outs[k]);
+      //pos[rot[r][outs[k].pos]].push(outs[k]);
+	  pos[rot[r][comp.posOrder.pos[k]]].push(outs[k]);
   } catch (e) {
     console.log(rot[r][outs[k].pos], k, outs[k], outs)
     throw e;
@@ -2375,9 +2377,9 @@ var dgl= {
     'dataout': {},
   },
   chip: {
-    main:{ins:[],outs:[],comp:{},posOrder:{ins:[],outs:[]},active:1},
-    mem:{ins:{},outs:{},comp:{},posOrder:{ins:[],outs:[]},active:0},
-    myclock:{ins:{},outs:{},comp:{},posOrder:{ins:[],outs:[]},active:0},
+    main:{ins:[],outs:[],comp:{},posOrder:{ins:[],outs:[],pos:{}},active:1},
+    mem:{ins:{},outs:{},comp:{},posOrder:{ins:[],outs:[],pos:{}},active:0},
+    myclock:{ins:{},outs:{},comp:{},posOrder:{ins:[],outs:[],pos:{}},active:0},
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
@@ -2552,12 +2554,14 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     for(var chipName in dgl.chip) {
 		
 	  if (!('posOrder' in dgl.chip[chipName])) {
-		  dgl.chip[chipName].posOrder = {ins:[],outs:[]};
+		  dgl.chip[chipName].posOrder = {ins:[],outs:[],pos:{}};
 		  for(var ii in dgl.chip[chipName].ins) {
 			  dgl.chip[chipName].posOrder.ins.push(ii); 
+			  dgl.chip[chipName].posOrder.pos[ii] =(dgl.chip[chipName].ins[ii].pos); 
 		  }
 		  for(var ii in dgl.chip[chipName].outs) {
 			  dgl.chip[chipName].posOrder.outs.push(ii); 
+			  dgl.chip[chipName].posOrder.pos[ii] = (dgl.chip[chipName].outs[ii].pos); 
 		  }
 	  }
 	}
@@ -2576,12 +2580,14 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 		comp.posOrder = dgl.chip[compChipName].posOrder;
 		
 	  } else if (!('posOrder' in comp)) {
-		  comp.posOrder = {ins:[],outs:[]};
+		  comp.posOrder = {ins:[],outs:[],pos:{}};
 		  for(var ii in comp.ins) {
 			  comp.posOrder.ins.push(ii); 
+			  comp.posOrder.pos[ii] = comp.ins[ii].pos; 
 		  }
 		  for(var ii in comp.outs) {
-			  comp.posOrder.outs.push(ii); 
+			  comp.posOrder.outs.push(ii);
+			  comp.posOrder.pos[ii] = comp.outs[ii].pos;  
 		  }
 	  }
       
@@ -2838,7 +2844,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 		if(value && !(value in this.chip)) {
 		  this.chip[value] ={
 			ins:{},outs:{},
-			comp:{},posOrder:{ins:[],outs:[]},active:0
+			comp:{},posOrder:{ins:[],outs:[],pos:{}},active:0
 		  }
 		  this.initCompTypeProjectChip();
 		  this.m.needsSave = 1;
@@ -3191,7 +3197,7 @@ var comp= comps[this.m.compInf.sel]
           outs: outs,
           inConns: [],
           outConns: [],
-          posOrder:{ins:[],outs:[]},
+          posOrder:{ins:[],outs:[],pos:{}},
           nextInput:0,
           nextOutput:0,
           xOfs:35,
@@ -4132,14 +4138,14 @@ var comp= comps[this.m.compInf.sel]
 	    return;
 	  }
 	  
-	  var posOrder={ins:[],outs:[]};
+	  var posOrder={ins:[],outs:[],pos:{}};
 	  
 	  for(var i in comp.ins) {
 	    var p= comp.ins[i];
 	    if(['top','bottom'].includes(p.pos)) {
 	      posOrder.ins.push({
 	        name: i,
-	       pos: p.pos,
+	        pos: p.pos,
 	        xy: p.pinx
 	      })
 	    } else {
@@ -4157,11 +4163,13 @@ var comp= comps[this.m.compInf.sel]
 	    if (['top', 'bottom'].includes(p.pos)) {
 	      posOrder.outs.push({
 	        name: i,
+	        pos: p.pos,
 	        xy: p.pinx
 	      })
 	    } else {
 	      posOrder.outs.push({
 	        name: i,
+	        pos: p.pos,
 	        xy: p.piny
 	      })
 	    }
@@ -4170,16 +4178,20 @@ var comp= comps[this.m.compInf.sel]
 	 posOrder.ins.sort((a,b) => (a.xy > b.xy ?1:-1))
 	 posOrder.outs.sort((a,b) => (a.xy > b.xy ?1:-1))
 	 
-	 comp.posOrder={ins:[], outs:[]};
+	 comp.posOrder={ins:[], outs:[], pos:{}};
 	 for(var q in posOrder.ins) {
 	   comp.posOrder.ins.push(posOrder.ins[q].name);
+	   comp.posOrder.pos[posOrder.ins[q].name] = posOrder.ins[q].pos;
 	 }
 	 for(var q in posOrder.outs) {
 	   comp.posOrder.outs.push(posOrder.outs[q].name);
+	   comp.posOrder.pos[posOrder.outs[q].name] = posOrder.outs[q].pos;
 	 }
 	 
 	 this.chip[this.chipActive].posOrder.ins=comp.posOrder.ins;
 	 this.chip[this.chipActive].posOrder.outs=comp.posOrder.outs;
+	 this.chip[this.chipActive].posOrder.pos=comp.posOrder.pos;
+	 
 	 this.m.chipSetupPinRecalc=1;
 	 
 	},
