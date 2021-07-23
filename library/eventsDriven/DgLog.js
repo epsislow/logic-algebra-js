@@ -3925,6 +3925,8 @@ var comp= comps[this.m.compInf.sel]
       
           comp.xOfs = 0
           comp.yOfs = 0
+		  
+		  console.log(comp);
       
           this.chip[this.chipActive].comp[comp.id] = comp;
           this.m.needsSave = 1;
@@ -3969,6 +3971,9 @@ var comp= comps[this.m.compInf.sel]
 		this.m.compMenu.mdy = this.m.mousedown_y;
 		
 		var newid = this.m.compMenu.sel + Object.keys(this.chip[this.chipActive].comp).length;
+		if (newid in this.chip[this.chipActive].comp) {
+			newid +='b';
+		}
 		var ins = {};
 		
 		if (this.m.compMenu.sel.startsWith('chip.')) {
@@ -3978,8 +3983,21 @@ var comp= comps[this.m.compInf.sel]
 
 			var chipName = chipNameSplit.join('.');
 
-			var ins = this.chip[chipName].ins;
-			var outs = this.chip[chipName].outs;
+			var ins = {...this.chip[chipName].ins};
+			var outs = {...this.chip[chipName].outs};
+			
+			for(var ii in ins) {
+				if ('id' in ins[ii]) {
+					delete ins[ii].id;
+					delete ins[ii].pout;
+				}
+			}
+			for(var io in outs) {
+				if ('id' in outs[io]) {
+					delete outs[io].id;
+					delete outs[io].pin;
+				}
+			}
 			var posOrder = this.chip[chipName].posOrder;
 
 			this.m.compMenu.comp = {
@@ -4064,7 +4082,15 @@ var comp= comps[this.m.compInf.sel]
 	addCompTypeSel: function (p, dragArea) {
 		this.m.compMenu.sel = p;
 		this.m.compMenu.dragArea = dragArea;
-		return true;
+		var kqueue = {};
+		
+		this.addMActionNoXY(
+			'addCompMenuIsDrag', kqueue,
+			this.handlerMA.addCompMenuIsDrag,
+			[]
+		);
+		
+		return kqueue;
 	},
     addCompTypeOpen: function (p) {
 		if (p in this.compTypeOpen) {
@@ -4161,21 +4187,20 @@ var comp= comps[this.m.compInf.sel]
     addCompOpen: function() {     	
 		var kqueue = {};
 
-		if (this.m.compMenu.sel) {
-			this.addMActionRect(
-				'addCompMenuIsDrag', kqueue,
-				0, this.m.compMenu.dragArea[0],
-				100, this.m.compMenu.dragArea[1] - this.m.compMenu.dragArea[0],
-				this.handlerMA.addCompMenuIsDrag,
-				[]
-			)
-		}
-		
+		/*this.addMActionRect(
+			'addCompMenuIsDrag', kqueue,
+			0, this.m.compMenu.dragArea[0],
+			100, this.m.compMenu.dragArea[1] - this.m.compMenu.dragArea[0],
+			this.handlerMA.addCompMenuIsDrag,
+			[]
+		)*/
+			
 		this.addMActionNoXY(
 			'addCompOpenSt', kqueue,
 			this.handlerMA.addCompOpenSt,
 			[]
 		);
+		
 					
 		return kqueue;
     },
