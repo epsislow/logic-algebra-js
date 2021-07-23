@@ -321,6 +321,28 @@ var dglcvs={
   'lib': {},
   d:{
     chipMenuK:-100,
+    chipStyles: (function () {
+      var styles =  [
+            ['#f77', '#a77'],
+            ['#4ff', '#499']
+         ];
+      
+      for(var i=0; i<=7; i++) {
+        styles.push([
+          '#'+
+      (Math.floor(Math.random()*15)).toString(16)+
+      (Math.floor(Math.random()*15)).toString(16)+
+      (Math.floor(Math.random()*15)).toString(16),
+          '#' +
+      (Math.floor(Math.random()*15)).toString(16) +
+      (Math.floor(Math.random()*15)).toString(16) +
+      (Math.floor(Math.random()*15)).toString(16)
+         ] )
+      }
+      
+      return styles;
+    })()
+      
   },
   drawChipSetup: function(c, name, chip, chipSetupComp) {
     
@@ -332,7 +354,16 @@ var dglcvs={
     this.lib.textm(c,
           90,
           90, name, 7, '#fff', 'Arial', '#333') 
-    
+    var j=0;
+    for(var s in dglcvs.d.chipStyles) {
+      const st = dglcvs.d.chipStyles[s];
+      
+      this.lib.rectm(c,
+        20+15*j,200, 10, 10, 2, st[0], st[1]
+      );
+      console.log(st)
+      j++;
+    }
   },
   drawConfirm: function(c, text,yesCall, noCall) {
     c.globalAlpha = 0.7;
