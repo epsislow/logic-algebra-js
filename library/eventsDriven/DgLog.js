@@ -1147,7 +1147,7 @@ cv.style.height = rect.height/4 + 'px';
   //  console.log(comps)
    // for(var cid in comps) {
    //   comp= comps[cid]
-      cid= comp.id;
+      var cid= comp.id;
       ins=[];
       for (var cinid of comp.inputs) {
       //  var cin = comps[cinid];
@@ -1175,6 +1175,7 @@ cv.style.height = rect.height/4 + 'px';
     }
     w=rott[r].w;
     h=rott[r].h;
+	
     var iid= Object.keys(ins);
     if(typeof comp.posOrder!='undefined' && comp.posOrder.ins.length) {
       iid= comp.posOrder.ins;
@@ -3180,6 +3181,7 @@ var comp= comps[this.m.compInf.sel]
           posOrder: posOrder,
           nextInput:0,
           nextOutput:0,
+		  rt:0,
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
@@ -3231,6 +3233,7 @@ var comp= comps[this.m.compInf.sel]
           posOrder: posOrder,
           nextInput:0,
           nextOutput:0,
+		  rt:0,
           xOfs:35,
           yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
           revIns:0,
@@ -4015,6 +4018,7 @@ var comp= comps[this.m.compInf.sel]
 				posOrder: posOrder,
 				nextInput: 0,
 				nextOutput: 0,
+				rt:0
 				xOfs: 35,
 				yOfs: (this.m.compMenu.dragArea[0] + this.m.compMenu.dragArea[1]) / 2,
 				revIns: 0,
@@ -4066,6 +4070,7 @@ var comp= comps[this.m.compInf.sel]
 			  posOrder: posOrder,
 			  nextInput:0,
 			  nextOutput:0,
+			  rt:0
 			  xOfs:35,
 			  yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
 			  revIns:0,
@@ -4336,6 +4341,65 @@ var comp= comps[this.m.compInf.sel]
 	  }
 	  return true;
 	},
+	compDelH: function (comp) {
+		if(!this.m.delComp) {
+			return;
+		}
+		
+		for(var i in comp.ins) {
+
+			if('id' in comp.ins[i]) {
+				var pout= comp.ins[i].pout;
+
+				delete comps[comp.ins[i].id].outs[pout].id;
+				delete comps[comp.ins[i].id].outs[pout].pin;
+			}
+		}
+		for( var o in comp.outConns) {
+			[cinid, cinpin]= comp.outConns[o].split('^');
+
+			if('inConns' in comps[cinid]) {
+				comps[cinid].inConns = comps[cinid].inConns.filter($item => !$item.startsWith(comp.id));
+			}
+
+			delete comps[cinid].ins[cinpin].id;
+			delete comps[cinid].ins[cinpin].pout;
+
+		}
+
+		if(comp.id=== this.m.compInf.sel) {
+			this.m.compInf.sel=0;
+		}
+		delete this.chip[this.chipActive].comp[comp.id];
+		this.m.isDragged = 0;
+		return true;
+	},
+	compConnH: function (comp) {
+		if(!this.m.compConn) {
+			return;
+		}
+		
+		var cid = comp.id;
+		
+		if(!comp.outs) {
+			return;
+		}
+
+		if (this.m.compSel.includes(cid)) {
+			this.m.compSel.splice(this.m.compSel.indexOf(cid), 1);
+			
+			return;
+		}
+		
+		this.m.compSel.push(cid);
+
+		if (this.m.compSel.length >= 2) {
+			this.compConnect0(this.m.compSel);
+			this.m.compSel = [];
+			
+			return true;
+		}
+	},
     compHdl: function(comp) {
       this.m.isDragged = comp.id;
         
@@ -4343,6 +4407,15 @@ var comp= comps[this.m.compInf.sel]
       this.m.comp_old_y = comp.yOfs;
       
       var kqueue= {};
+
+	  this.addMActionNoXY(
+        'compDelH', kqueue,
+        this.handlerMA.compDelH, [comp]);
+
+	  this.addMActionNoXY(
+        'compConnH', kqueue,
+        this.handlerMA.compConnH, [comp]);
+
         
       this.addMActionNoXY(
         'compRotate', kqueue,
@@ -4357,7 +4430,6 @@ var comp= comps[this.m.compInf.sel]
       this.addMActionNoXY(
         'compInfoSel', kqueue,
         this.handlerMA.compInfoSel, [comp]);
-      
       
       return kqueue;
 	},
