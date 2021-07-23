@@ -393,7 +393,8 @@ var dglcvs={
           var comp={
             id: cg,
             ins: {},
-            out: {},
+            outs: {},
+			posOrder: {ins:[], outs:[], pos:{}},
             type: types[ct][cg]
           }
           this.drawComp(c, comp,
@@ -655,7 +656,7 @@ cv.style.height = rect.height/4 + 'px';
       'ledmin':[-100/4,0], 
       'lcd':[100,100/4]
   },
-  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0,inOutsText=0, calcxy=1) {
+  'drawComp': function(c, comp, x,y, s=30,width=2, isDrag=0, state=0,inOutsText=0, calcxy=1, debug = 0) { 
     var sty=['#779','#44a','#fff','#aaf']
   //  var sty=['#bb5','#885','#fff']
     var type=comp.type
@@ -1190,6 +1191,8 @@ cv.style.height = rect.height/4 + 'px';
     }
     
     var oid= Object.keys(outs);
+	
+	
 	if(typeof comp.posOrder!='undefined' && comp.posOrder.outs.length) {
       oid= comp.posOrder.outs;
     }
@@ -2003,7 +2006,9 @@ var dgl= {
       },
       isDrag:0,
       comp:0,
-      mdx:0,mdy:0
+      mdx:0,
+	  mdy:0,
+	  dragArea: [],
     }
   },
   compW: function(id, type, pins= [], pouts= []) {
@@ -3181,28 +3186,34 @@ var comp= comps[this.m.compInf.sel]
           states: {},
         }
     } else {
+		var posOrder = {ins:[],outs:[],pos:{}};
         for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
           var xi= this.compInOuts[this.m.compMenu.sel][0][i];
+		  posOrder.ins.push[xi];
           if(['demux','mux'].includes(this.m.compMenu.sel) && xi=='sel') {
             ins[xi] = {
               pos: 'left',
               pin: xi,
             }
+			posOrder.pos[xi] = 'left';
           } else {
             ins[xi] = {
               pos:'top',
               pin:xi,
             }
+			posOrder.pos[xi] = 'top';
           }
         }
         
         var outs={};
         for (var o in this.compInOuts[this.m.compMenu.sel][1]) {
           var xo = this.compInOuts[this.m.compMenu.sel][1][o];
+		  posOrder.outs.push[xo];
           outs[xo] = {
             pos: 'bottom',
             pout: xo,
           }
+		  posOrder.pos[xo] = 'bottom';
         }
         
         this.m.compMenu.comp={
@@ -3217,7 +3228,7 @@ var comp= comps[this.m.compInf.sel]
           outs: outs,
           inConns: [],
           outConns: [],
-          posOrder:{ins:[],outs:[],pos:{}},
+          posOrder: posOrder,
           nextInput:0,
           nextOutput:0,
           xOfs:35,
@@ -3232,6 +3243,8 @@ var comp= comps[this.m.compInf.sel]
         this.m.compMenu.isDrag=0;
         this.m.compMenu.comp=0;
       }
+	  
+	  
       var i = 1;
       const ppY=-Math.floor(this.m.compMenu.pan.yOfs+this.m.compMenu.pan.ofsY)
       for(var p in types) {
@@ -3820,59 +3833,70 @@ var comp= comps[this.m.compInf.sel]
 		'centerComps', 'start', 
 		dglcvs.lib.maxWidth*z/2-10, 0, 10, 10, 
 		this.handlerMA.centerComps
-	)
+	);
 		
-  if(this.m.compSetup) {
+	if(this.m.compSetup) {
 		 this.addMActionRect(
 			'compSetup', 'start', 0, 0, 
 			dglcvs.lib.maxWidth*z/2, dglcvs.lib.maxHeight*z/2, 
 			this.handlerMA.compSetup
-		 )
+		 );
 	}
 	 
-	 this.addMActionRect(
-	   'panScene', 'start', 0, 0,
-	   dglcvs.lib.maxWidth*z / 2, dglcvs.lib.maxHeight*z/ 2,
-	   this.handlerMA.panScene
-  )
+	this.addMActionRect(
+		'panScene', 'start', 0, 0,
+		dglcvs.lib.maxWidth*z / 2, dglcvs.lib.maxHeight*z/ 2,
+		this.handlerMA.panScene
+	);
   
-  this.addMActionNoXY(
-    'addCompMenuIsDragMove', 'move',this.handlerMA.addCompMenuIsDragMove
-    );
-    
-	 this.addMActionNoXY(
-	   'addCompPanMove', 'move', this.handlerMA.addCompPanMove
-	 );
-	 
-	 this.addMActionNoXY(
-	   'compDragMove', 'move', this.handlerMA.compDragMove);
-	   
-	 
-	 this.addMActionNoXY(
-	   'panSceneMove', 'move', this.handlerMA.panSceneMove
-	   );
-	 
+	this.addMActionNoXY(
+		'addCompMenuIsDragMove', 'move',
+		this.handlerMA.addCompMenuIsDragMove
+	);
+
+	this.addMActionNoXY(
+		'addCompPanMove', 'move', 
+		this.handlerMA.addCompPanMove
+	);
+
+	this.addMActionNoXY(
+		'compDragMove', 'move',
+		this.handlerMA.compDragMove
+	);
+
+
+	this.addMActionNoXY(
+		'panSceneMove', 'move',
+		this.handlerMA.panSceneMove
+	);
+
    
-   this.addMActionNoXY(
-     'addCompMenuIsDragEnd','end', this.handlerMA.addCompMenuIsDragEnd)  
-   this.addMActionNoXY(
-     'addCompPanEnd', 'end', this.handlerMA.addCompPanEnd
-     );
-     
-	 this.addMActionNoXY(
-	   'compDragEnd', 'end', this.handlerMA.compDragEnd
-	   );
+	this.addMActionNoXY(
+	 'addCompMenuIsDragEnd','end',
+	 this.handlerMA.addCompMenuIsDragEnd
+	);
 	 
-	 this.addMActionNoXY(
-	   'panSceneEnd', 'end', this.handlerMA.panSceneEnd
-	   );
+	this.addMActionNoXY(
+		'addCompPanEnd', 'end',
+		this.handlerMA.addCompPanEnd
+	);
+     
+	this.addMActionNoXY(
+		'compDragEnd', 'end',
+		this.handlerMA.compDragEnd
+	);
+	 
+	this.addMActionNoXY(
+		'panSceneEnd', 'end',
+		this.handlerMA.panSceneEnd
+	);
 
   },
   handlerMA: {
     addCompMenuIsDragMove: function() {
       if (this.m.compMenu.isDrag) {
-        var cex = this.m.comp_old_x + mouse_x - this.m.compMenu.mdx;
-        var cey = this.m.comp_old_y + mouse_y - this.m.compMenu.mdy;
+        var cex = this.m.comp_old_x + this.m.lastMove.x - this.m.compMenu.mdx;
+        var cey = this.m.comp_old_y + this.m.lastMove.y - this.m.compMenu.mdy;
       
         this.m.compMenu.comp.xOfs = Math.round(cex);
         this.m.compMenu.comp.yOfs = Math.round(cey);
@@ -3883,6 +3907,10 @@ var comp= comps[this.m.compInf.sel]
     },
     addCompMenuIsDragEnd: function() {
       if (this.m.compMenu.isDrag && this.m.compMenu.comp) {
+		  
+		var pX= Math.floor(this.m.pan.xOfs+this.m.pan.ofsX)
+		var pY= Math.floor(this.m.pan.yOfs+this.m.pan.ofsY)
+		
         var comp = this.m.compMenu.comp;
         if (comp.xOfs > 110) {
           comp.x =
@@ -3931,8 +3959,180 @@ var comp= comps[this.m.compInf.sel]
         return true;
       }
     },
-    addCompOpenSt: function() {
-      
+	addCompMenuIsDrag: function () {
+		if (!this.m.compMenu.sel) {
+			return;
+		}
+		
+		this.m.compMenu.isDrag = 1;
+		this.m.compMenu.mdx = this.m.mousedown_x;
+		this.m.compMenu.mdy = this.m.mousedown_y;
+		
+		var newid = this.m.compMenu.sel + Object.keys(this.chip[this.chipActive].comp).length;
+		var ins = {};
+		
+		if (this.m.compMenu.sel.startsWith('chip.')) {
+			var chipNameSplit = this.m.compMenu.sel.split('.');
+
+			chipNameSplit.shift();
+
+			var chipName = chipNameSplit.join('.');
+
+			var ins = this.chip[chipName].ins;
+			var outs = this.chip[chipName].outs;
+			var posOrder = this.chip[chipName].posOrder;
+
+			this.m.compMenu.comp = {
+				id: newid,
+				type: this.m.compMenu.sel,
+				x: 0,
+				y: 0,
+				state: 0,
+				inputs: Object.keys(ins),
+				outputs: Object.keys(outs),
+				ins: ins,
+				outs: outs,
+				inConns: [],
+				outConns: [],
+				posOrder: posOrder,
+				nextInput: 0,
+				nextOutput: 0,
+				xOfs: 35,
+				yOfs: (this.m.compMenu.dragArea[0] + this.m.compMenu.dragArea[1]) / 2,
+				revIns: 0,
+				states: {},
+			}
+		} else {
+			var posOrder = {ins:[],outs:[],pos:{}};
+			for(var i in this.compInOuts[this.m.compMenu.sel][0]) {
+			  var xi= this.compInOuts[this.m.compMenu.sel][0][i];
+			  posOrder.ins.push[xi];
+			  if(['demux','mux'].includes(this.m.compMenu.sel) && xi=='sel') {
+				ins[xi] = {
+				  pos: 'left',
+				  pin: xi,
+				}
+				posOrder.pos[xi] = 'left';
+			  } else {
+				ins[xi] = {
+				  pos:'top',
+				  pin:xi,
+				}
+				posOrder.pos[xi] = 'top';
+			  }
+			}
+			
+			var outs={};
+			for (var o in this.compInOuts[this.m.compMenu.sel][1]) {
+			  var xo = this.compInOuts[this.m.compMenu.sel][1][o];
+			  posOrder.outs.push[xo];
+			  outs[xo] = {
+				pos: 'bottom',
+				pout: xo,
+			  }
+			  posOrder.pos[xo] = 'bottom';
+			}
+			
+			this.m.compMenu.comp={
+			  id:newid,
+			  type:this.m.compMenu.sel,
+			  x:0,
+			  y:0,
+			  state:0,
+			  inputs:this.compInOuts[this.m.compMenu.sel][0],
+			  outputs:this.compInOuts[this.m.compMenu.sel][1],
+			  ins: ins, 
+			  outs: outs,
+			  inConns: [],
+			  outConns: [],
+			  posOrder: posOrder,
+			  nextInput:0,
+			  nextOutput:0,
+			  xOfs:35,
+			  yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
+			  revIns:0,
+			  states: {},
+			}
+		}
+		
+		this.m.comp_old_x = this.m.compMenu.comp.xOfs;
+		this.m.comp_old_y = this.m.compMenu.comp.yOfs;
+		
+		return true;
+
+	},
+	addCompTypeSel: function (p, dragArea) {
+		this.m.compMenu.sel = p;
+		this.m.compMenu.dragArea = dragArea;
+		return true;
+	},
+    addCompTypeOpen: function (p) {
+		if (p in this.compTypeOpen) {
+			delete this.compTypeOpen[p]
+		} else {
+			this.compTypeOpen[p] = 1;
+		}
+		
+		return true;
+	},
+	addCompOpenSt: function() {
+		if (this.m.compMenu.isDrag) {
+			this.m.compMenu.isDrag = 0;
+			this.m.compMenu.comp = 0;
+		}
+		
+		var mdx = this.mousedown_x;
+		var mdy = this.mousedown_y;
+		
+		var kqueue = {};
+
+		var ct;
+		const csd = dglcvs.compStDt;
+
+		var types = this.compType;
+		var open = this.compTypeOpen;
+		
+		var i = 1;
+        const ppY = -Math.floor(this.m.compMenu.pan.yOfs + this.m.compMenu.pan.ofsY)
+		
+		for (var p in types) {
+            ct = types[p];
+			
+			this.addMActionRect(
+				'addCompTypeOpen'+p, kqueue,
+				0, 10 * i -5 + ppY * 2.5,
+				60, 10,
+				this.handlerMA.addCompTypeOpen, [p]
+			)
+            i++;
+			
+            if (p in open) {
+                var im;
+                for (var g in types[p]) {
+                    if (this.chipActive == 'main' && ['pin', 'pout'].includes(types[p][g]) || types[p][g] == 'chip.' + this.chipActive) {
+                        continue;
+                    }
+                    im = i
+                    i++;
+                    if (types[p][g] in csd) {
+                        i += 1 + 15 * ((100 + csd[types[p][g]][0]) / 100) / 10;
+                    } else {
+                        i += 1 + 1
+                    }
+
+
+					this.addMActionRect(
+						'addCompTypeSel'+types[p][g], kqueue,
+						0, 10 * im + ppY * 2.5,
+						65, 10 * (i- im),
+						this.handlerMA.addCompTypeSel, [types[p][g], [10 * im + ppY * 2.5, 10 * (i) + ppY * 2.5]]
+					)
+                }
+                i++;
+            }
+        }
+		
+        return kqueue;
     },
     addCompPanEnd: function() {
       if (this.m.compMenu.isPan) {
@@ -3958,9 +4158,26 @@ var comp= comps[this.m.compInf.sel]
        }
        cvs.draw(1);
     },
-    addCompOpen: function() {
-      
-      return true;
+    addCompOpen: function() {     	
+		var kqueue = {};
+
+		if (this.m.compMenu.sel) {
+			this.addMActionRect(
+				'addCompMenuIsDrag', kqueue,
+				0, this.m.compMenu.dragArea[0],
+				100, this.m.compMenu.dragArea[1] - this.m.compMenu.dragArea[0],
+				this.handlerMA.addCompMenuIsDrag,
+				[]
+			)
+		}
+		
+		this.addMActionNoXY(
+			'addCompOpenSt', kqueue,
+			this.handlerMA.addCompOpenSt,
+			[]
+		);
+					
+		return kqueue;
     },
     addCompPan: function() {
       this.m.compMenu.isPan=1;
@@ -3975,19 +4192,19 @@ var comp= comps[this.m.compInf.sel]
       
       this.addMActionRect(
         'addCompOpen', kqueue,
-        0,0,50,195,
+        0,0,65,195,
         this.handlerMA.addCompOpen
       );
       
       this.addMActionRect(
-				'addCompPan', kqueue,
-				50, 0, 50, 195, 
-				this.handlerMA.addCompPan,[],0,
-				0
-		  );
+		'addCompPan', kqueue,
+		65, 0, 35, 195, 
+		this.handlerMA.addCompPan,[],0,
+		0
+	  );
 		  
 	  this.addMActionNoXY(
-	    'stop',kqueue, 
+	    'stop', kqueue, 
 	    this.handlerMA.stop
 	  );
 
