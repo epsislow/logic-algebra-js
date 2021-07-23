@@ -321,10 +321,11 @@ var dglcvs={
   'lib': {},
   d:{
     chipMenuK:-100,
+    chipStyleSel:0,
     chipStyles: (function () {
       var styles =  [
-            ['#f77', '#a77'],
-            ['#4ff', '#499']
+        ['#a44','#422','#722','#f44'],
+        ['#4aa', '#244','#277', '#a77']
          ];
       
       for(var i=0; i<=7; i++) {
@@ -333,10 +334,22 @@ var dglcvs={
       (Math.floor(Math.random()*15)).toString(16)+
       (Math.floor(Math.random()*15)).toString(16)+
       (Math.floor(Math.random()*15)).toString(16),
+      
+          '#'+
+      (Math.floor(Math.random()*15)).toString(16)+
+      (Math.floor(Math.random()*15)).toString(16)+
+      (Math.floor(Math.random()*15)).toString(16),
+      
           '#' +
       (Math.floor(Math.random()*15)).toString(16) +
       (Math.floor(Math.random()*15)).toString(16) +
+      (Math.floor(Math.random()*15)).toString(16),
+      
+       '#' +
+      (Math.floor(Math.random()*15)).toString(16) +
+      (Math.floor(Math.random()*15)).toString(16) +
       (Math.floor(Math.random()*15)).toString(16)
+      
          ] )
       }
       
@@ -361,7 +374,16 @@ var dglcvs={
       this.lib.rectm(c,
         20+15*j,200, 10, 10, 2, st[0], st[1]
       );
-      console.log(st)
+      
+      this.lib.rectm(c,
+        20 + 15 * j, 200, 5, 10, 0, 0, st[2]
+      );
+      if(dglcvs.d.chipStyleSel==j) {
+        this.lib.rectm(c,
+          20 + 15 * j-2, 200-2, 14, 14,
+          1, '#fff'
+        );
+      }
       j++;
     }
   },
@@ -707,7 +729,11 @@ cv.style.height = rect.height/4 + 'px';
      
     }
     if (type.startsWith('chip') ) {
-      sty= ['#a44','#422','#aa4', '#722','#f44']
+      sty= ['#a44','#422','#aa4', '#722','#f44'];
+      var sy= dglcvs.d.chipStyles[dglcvs.d.chipStyleSel];
+      
+      sty = [sy[0], sy[1], sy[2],
+      sy[2], sy[3]];
     }
      
     if(isDrag) {
@@ -4541,6 +4567,11 @@ var comp= comps[this.m.compInf.sel]
        this.m.pan.xOfs= -(midx)*25;
        this.m.pan.yOfs= -(midy-4)*25;
 	},
+	chipSetupStyle: function (j) {
+	  dglcvs.d.chipStyleSel= j;
+	  cvs.draw(1);
+	  return true;
+	},
 	chipSetup: function() {
 	  if(!this.m.chipSetup) {
 	    return;
@@ -4550,6 +4581,14 @@ var comp= comps[this.m.compInf.sel]
 //	  100, 2
 
    var kqueue= {};
+   
+   for(var j in dglcvs.d.chipStyles) {
+     this.addMActionRect(
+       'chipSetupStyle'+j, kqueue,
+       20 + 15 * j-2, 200-2, 14, 14,
+       this.handlerMA.chipSetupStyle, [j]
+       );
+   }
    
    for(var p in comp.ins) {
      this.addMActionRect(
