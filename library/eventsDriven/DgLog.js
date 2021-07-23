@@ -4018,7 +4018,7 @@ var comp= comps[this.m.compInf.sel]
 				posOrder: posOrder,
 				nextInput: 0,
 				nextOutput: 0,
-				rt:0
+				rt:0,
 				xOfs: 35,
 				yOfs: (this.m.compMenu.dragArea[0] + this.m.compMenu.dragArea[1]) / 2,
 				revIns: 0,
@@ -4070,7 +4070,7 @@ var comp= comps[this.m.compInf.sel]
 			  posOrder: posOrder,
 			  nextInput:0,
 			  nextOutput:0,
-			  rt:0
+			  rt:0,
 			  xOfs:35,
 			  yOfs:(this.m.compMenu.dragArea[0]+this.m.compMenu.dragArea[1])/2,
 			  revIns:0,
