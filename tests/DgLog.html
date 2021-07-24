@@ -501,18 +501,21 @@ window.onerror = function (message, url, line, column, error) {
 	   });
 	  
 	  $('#diag-save').click(function() {
+	    dgl.m.storageMenu=1;
+	    cvs.draw(1);
+	    return;
 		if (!confirm('You want to save it?')) {
 			return;
 		}
 		
-	    dgl.cache.save(1);
+	    dgl.cache.save('');
 	    $(this).blur();
 	  })
 	  $('#diag-load').click(function() {
 		if (dgl.m.needsSave && !confirm('You want to reset all progress?')) {
 			return;
 		}
-	    dgl.cache.load(1);
+	    dgl.cache.load('');
 	    $(this).blur();
 	  })
 	  

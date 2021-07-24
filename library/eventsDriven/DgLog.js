@@ -357,6 +357,31 @@ var dglcvs={
     },
     chipStyles: []
   },
+  drawStorageMenu: function(c, cache) {
+    var j=0;
+    
+    c.textAlign='left';
+    c.textBaseline='middle'
+    var slots= Object.keys(cache.slots);
+    slots.splice(slots.indexOf('default'),1);
+    slots.unshift('default');
+    
+    for(var i in slots) {
+      var s= slots[i];
+      this.lib.rectm(c,
+        40, 50+20*j, 100, 15, 2,
+        cache.currentSlot==s? '#aaf':'#559', 
+        cache.currentSlot==s? '#77a':'#338'
+      );
+      
+      this.lib.textm(c, 
+        50,50+20*j+8, 'Slot: '+ s, 7,
+        '#fff',
+      );
+     j++;
+    }
+    cvs.draw(1);
+  },
   drawChipSetup: function(c, name, chip, chipSetupComp) {
     
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
@@ -1506,6 +1531,11 @@ var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
   if(upd){
     lib.clear(c);
   }
+  if(this.m.storageMenu) {
+    dglcvs.drawStorageMenu(c, this.cache);
+    
+    return;
+  }
   if(this.m.chipSetup) {
     if(!this.m.chipSetupComp) {
       var chip= this.chip[this.chipActive];
@@ -2065,6 +2095,7 @@ var dgl= {
     drawGrid:1,
     drawChips:0,
     chipSetup:0,
+    storageMenu:0,
     chipSetupComp: 0,
     chipSetupPinRecalc:0,
     needsConfirm:0,
@@ -2591,7 +2622,9 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     return nodes;
   },
   cache:{
-    save: function(zip=1) {
+    slots: {'default':'', '1':'1','2':'2'},
+    currentSlot: 'default',
+    save: function(slot='', zip=1) {
       const data= {
         chipActive: dgl.chipActive,
         chip: dgl.chip,
@@ -2607,11 +2640,11 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         .compressToUTF16(string);
       } 
       console.log("Compressed: " + string.length);
-      localStorage.setItem("dgl.data", string);
+      localStorage.setItem("dgl.data"+slot, string);
       
        console.log('Saved');
     },
-	saveCacheSv: function (zip=1) {
+	saveCacheSv: function (slot='', zip=1) {
 	  const data = cacheSv.one;
 	  
       var string = JSON.stringify(data);
@@ -2621,13 +2654,13 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         .compressToUTF16(string);
       } 
       console.log("Compressed: " + string.length);
-      localStorage.setItem("dgl.data", string);
+      localStorage.setItem("dgl.data"+slot, string);
       
        console.log('SavedCacheSv');
 	},
-    load: function(zip=1) {
+    load: function(slot='', zip=1) {
 		
-      var string= localStorage.getItem("dgl.data");
+      var string= localStorage.getItem("dgl.data"+ slot);
 	  
     //  console.log(string);
       if(zip) {
