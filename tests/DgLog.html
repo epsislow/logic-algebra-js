@@ -188,6 +188,7 @@ $('document').ready(function() {
   .addButton('CompPaste',0,'btn-secondary'+mx(++m),{'id':'diag-comppaste'})
   .addButton('+ Zoom',0,'btn-secondary'+mx(++m),{'id':'diag-zoom-plus'})
   .addButton('- Zoom',0,'btn-secondary'+mx(++m),{'id':'diag-zoom-minus'})
+  .addButton('Rnd Styles', 0, 'btn-secondary'+mx(++m), {'id':'diag-rndsty'})
   .addButton('Debug',0,'btn-warning'+mx(++m),{'id':'diag-debug'})
   .addButton('ExportLogic',0,'btn-dark'+mx(++m),{'id':'diag-exportlogic'})
   .br()
@@ -482,6 +483,11 @@ window.onerror = function (message, url, line, column, error) {
 	     cvs.draw(1);
 	   });	   
 
+    $('#diag-rndsty').click(function() {
+      dglcvs.d.chipStyles= dglcvs.d.chipStylesGen();
+      $(this).blur();
+	    cvs.draw(1);
+    });
 	   
 	  $('#diag-debug').click(function() {
 	  	  var en=toggleBtn($(this), 'btn-warning', 'btn-dark');
