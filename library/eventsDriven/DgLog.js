@@ -368,6 +368,11 @@ var dglcvs={
           90,
           90, name, 7, '#fff', 'Arial', '#333') 
     var j=0;
+    
+    this.lib.rectm(c,
+    7,200, 7, 10, 2, '#777','#000'
+    );
+    
     for(var s in dglcvs.d.chipStyles) {
       const st = dglcvs.d.chipStyles[s];
       
@@ -4589,6 +4594,11 @@ var comp= comps[this.m.compInf.sel]
 	  cvs.draw(1);
 	  return true;
 	},
+	chipSetupStyleGen: function () {
+	  dglcvs.d.chipStyles= dglcvs.d.chipStylesGen();
+	  cvs.draw(1);
+	  return true;
+	},
 	chipSetup: function() {
 	  if(!this.m.chipSetup) {
 	    return;
@@ -4606,6 +4616,12 @@ var comp= comps[this.m.compInf.sel]
        this.handlerMA.chipSetupStyle, [j],0,0
        );
    }
+   
+   this.addMActionRect(
+       'chipSetupStyleGen', kqueue,
+       7,200, 7, 10,
+       this.handlerMA.chipSetupStyleGen,[], 0,0
+     );
    
    for(var p in comp.ins) {
      this.addMActionRect(
