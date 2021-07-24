@@ -322,7 +322,7 @@ var dglcvs={
   d:{
     chipMenuK:-100,
     chipStyleSel:0,
-    chipStyles: (function () {
+    chipStylesGen: function () {
       var styles =  [
         ['#a44','#422','#722','#f44'],
         ['#4aa', '#244','#277', '#a77']
@@ -354,8 +354,8 @@ var dglcvs={
       }
       
       return styles;
-    })()
-      
+    },
+    chipStyles: []
   },
   drawChipSetup: function(c, name, chip, chipSetupComp) {
     
@@ -378,6 +378,23 @@ var dglcvs={
       this.lib.rectm(c,
         20 + 15 * j, 200, 5, 10, 0, 0, st[2]
       );
+      
+      let x0= 20+15*j-0.5;
+      let y0= 200-0.5;
+      let w0= 5;
+      let h0= 11;
+      
+      c.strokeStyle= st[3];
+      c.lineWidth= 1;
+      
+      c.beginPath();
+      c.moveTo(x0+w0, y0);
+      c.lineTo(x0, y0);
+      c.lineTo(x0, y0+h0);
+      c.lineTo(x0+w0, y0+h0);
+      
+      c.stroke();
+      
       if(dglcvs.d.chipStyleSel==j) {
         this.lib.rectm(c,
           20 + 15 * j-2, 200-2, 14, 14,
@@ -4586,7 +4603,7 @@ var comp= comps[this.m.compInf.sel]
      this.addMActionRect(
        'chipSetupStyle'+j, kqueue,
        20 + 15 * j-2, 200-2, 14, 14,
-       this.handlerMA.chipSetupStyle, [j]
+       this.handlerMA.chipSetupStyle, [j],0,0
        );
    }
    
@@ -5086,7 +5103,8 @@ for(var ci in this.chip) {
 }
   },
   start:function() {
-this.initCompTypeProjectChip()
+this.initCompTypeProjectChip();
+dglcvs.d.chipStyles = dglcvs.d.chipStylesGen();
 
 const EVALS_PER_STEP = 2;
 
