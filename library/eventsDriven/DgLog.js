@@ -2259,7 +2259,7 @@ var dgl= {
             id: comp.id,
             path: chipName+'/',
             comp: {...chip[chipType].comp},
-            states: inStates,
+            states: {...inStates},
             outStates: {},
           };
           
