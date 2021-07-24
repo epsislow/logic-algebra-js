@@ -369,17 +369,65 @@ var dglcvs={
     for(var i in slots) {
       var s= slots[i];
       this.lib.rectm(c,
-        40, 50+20*j, 100, 15, 2,
+        30, 50+20*j, 120, 15, 2,
         cache.currentSlot==s? '#aaf':'#559', 
         cache.currentSlot==s? '#77a':'#338'
       );
       
+      this.lib.texti(c,
+        34,50+20*j+8, '\uf187', 7, cache.currentSlot==s?'#fa0':'#ccf'
+      )
+        
+      if(cache.currentSlot==s) {
+        
+        /*this.lib.rectm(c,
+        141.5,50+20*j+5.5,4,4,0,0,'#fff'
+        )*/
+        
+       this.lib.texti(c,
+        140, 50+20*j+8, '\uf057',
+        7,'#ccf'
+        )
+       
+       this.lib.texti(c,
+         130, 50 + 20 * j + 8, '\uf044', 7, '#ccf'
+       )
+       
+       this.lib.texti(c,
+         120,50+20*j+8, '\uf093', //'\uf14d', 
+          7,'#ccf'
+       )
+       
+       this.lib.texti(c,
+         110, 50 + 20 * j + 8, '\uf0c7', //'\uf14d', 
+         7, '#ccf'
+       )
+       
+      }
       this.lib.textm(c, 
-        50,50+20*j+8, 'Slot: '+ s, 7,
+        45,50+20*j+8, 'Slot: '+ s, 7,
         '#fff',
       );
      j++;
     }
+    
+    this.lib.rectm(c,
+      30, 50 + 20 * j, 120, 15, 2,
+      '#445', '#334'
+    );
+    
+    this.lib.texti(c,
+      130, 50 + 20 * j + 8, '\uf044', 7, '#668'
+    )
+    
+    this.lib.textm(c,
+      45, 50 + 20 * j + 8, 'New slot', 7,
+      '#668',
+    );
+    
+    this.lib.texti(c,
+      34, 50 + 20 * j + 8, '\uf187', 7, '#668'
+    )
     cvs.draw(1);
   },
   drawChipSetup: function(c, name, chip, chipSetupComp) {
