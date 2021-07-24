@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+</head>
+
+<body class="bg-black">
+  <button id="b">b</button>
+<main role="main" class="container">
+  
+</main>
+
+<script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script>
+<!--script src="https://requirejs.org/docs/release/2.3.5/minified/require.js" type="text/javascript"></script-->
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<script type="text/javascript" src="/library/Visual.js"></script>
+<script src="/library/storage/Storage.js" type="module"></script>
+
+
+<script type="module">
+import { Storage, debug } from '/library/storage/Storage.js'
+window.Storage =  Storage;
+window.debug =  debug;
+
+$('document').ready(function() {
+  
+  if('vs' in window) {
+  }
+  
+  $('#b').click(async function() {
+    var p= await Storage.persist();
+    if(p=='prompt') {
+      navigator.storage.persist();
+    }
+    console.log(p);
+    Storage.start();
+  })
+  
+  Storage.start();
+  console.log('loaded');
+})
+</script>
+
+</body>
+
+</html>
