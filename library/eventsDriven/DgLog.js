@@ -384,24 +384,33 @@ var dglcvs={
         141.5,50+20*j+5.5,4,4,0,0,'#fff'
         )*/
         
-       this.lib.texti(c,
-        140, 50+20*j+8, '\uf057',
-        7,'#ccf'
-        )
+       //delete
+       if(s!=='default') {
+         this.lib.texti(c,
+          140, 50+20*j+8, '\uf057',
+          7,'#ccf'
+          )
+       }
        
+       //edit
        this.lib.texti(c,
-         130, 50 + 20 * j + 8, '\uf044', 7, '#ccf'
+         125, 50 + 20 * j + 8, '\uf044', 7, '#ccf'
        )
        
-       this.lib.texti(c,
+      
+       
+       
+       //load
+       /*this.lib.texti(c,
          120,50+20*j+8, '\uf093', //'\uf14d', 
           7,'#ccf'
-       )
+       )*/
        
-       this.lib.texti(c,
-         110, 50 + 20 * j + 8, '\uf0c7', //'\uf14d', 
+       //save
+       /*this.lib.texti(c,
+         110, 50 + 20 * j + 8, '\uf0c7',
          7, '#ccf'
-       )
+       )*/
        
       }
       this.lib.textm(c, 
@@ -417,7 +426,7 @@ var dglcvs={
     );
     
     this.lib.texti(c,
-      130, 50 + 20 * j + 8, '\uf044', 7, '#668'
+      125, 50 + 20 * j + 8, '\uf044', 7, '#668'
     )
     
     this.lib.textm(c,
@@ -3961,6 +3970,27 @@ var comp= comps[this.m.compInf.sel]
 	this.m.actions = {};
 	var z= 1/this.m.zoom;
 	
+	if(this.m.storageMenu) {
+	  var j=0;
+	  var slots= Object.keys(this.cache.slots);
+    slots.splice(slots.indexOf('default'),1);
+    slots.unshift('default');
+    
+    for(var i in slots) {
+      var s= slots[i];
+      
+	    this.addMActionRect(
+	      'storageMenuSt'+s,'start',
+	      30, 50+20*j, 120, 15, 
+	      this.handlerMA.storageMenuSt,
+	      [s]
+	    );
+	    
+	    j++;
+	  }
+	  
+	}
+	
 	if(this.m.chipSetup) {
 	  this.addMActionNoXY(
 	    'chipSetup','start',
@@ -4056,6 +4086,11 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
+    storageMenuSt: function(slotIdx) {
+      this.cache.currentSlot= slotIdx;
+      cvs.draw(1);
+      return true;
+    },
     addCompMenuIsDragMove: function() {
       if (this.m.compMenu.isDrag) {
         var cex = this.m.comp_old_x + this.m.lastMove.x - this.m.compMenu.mdx;
