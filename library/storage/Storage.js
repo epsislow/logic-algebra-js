@@ -1,8 +1,3 @@
-var persistentStorage = window.navigator.persistentStorage ||
-  window.navigator.webkitPersistentStorage ||
-  window.navigator.mozPersistentStorage ||
-  window.navigator.msPersistentStorage ||
-  undefined;
 
 //persistentStorage.requestPersistentQuota(20* 1024 * 1024)
   
@@ -20,6 +15,38 @@ requestFileSystem(TEMPORARY, 1024*1024, function(fs) {
 */
 var Storage = (function () {
   var pub = {};
+  
+  var persistentStorage = window.navigator.persistentStorage ||
+  window.navigator.webkitPersistentStorage ||
+  window.navigator.mozPersistentStorage ||
+  window.navigator.msPersistentStorage ||
+  undefined;
+  
+  function errorFn() {
+    console.log('error');
+    console.log({ ...arguments });
+  }
+  
+  
+  pub.requestQuota = function(disp_quota) {
+    persistentStorage.requestQuota(disp_quota * 1024 * 1024,
+      function(quota) {
+        disp_quota = ~~(quota / 1024 / 1024);
+        console.log(disp_quota);
+        
+        //this.change_file_system();
+      }, errorFn);
+  }
+
+  pub.query = function() {
+    persistentStorage.queryUsageAndQuota(function(usage, quota) {
+        var disp_quota = ~~(quota / 1024 / 1024);
+        var disp_usage = ~~(usage / 1024 / 1024);
+        
+        console.log(disp_quota + '/'+disp_usage);
+        
+    }, errorFn)
+  }
   
   pub.persist = async function tryPersistWithoutPromtingUser() {
     if (!navigator.storage || !navigator.storage.persisted) {

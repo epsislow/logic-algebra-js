@@ -39,8 +39,10 @@ $('document').ready(function() {
     console.log(p);
     Storage.start();
   })
+  Storage.requestQuota(3);
+  Storage.query();
   
-  Storage.start();
+  //Storage.start();
   console.log('loaded');
 })
 </script>
