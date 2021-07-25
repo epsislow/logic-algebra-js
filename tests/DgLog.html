@@ -193,6 +193,7 @@ $('document').ready(function() {
   .addButton('ExportLogic',0,'btn-dark'+mx(++m),{'id':'diag-exportlogic'})
   .br()
   .br()
+  .addButton('Slots',0,'btn-light mx-2',{'id':'diag-slots'})
   .addButton('Save',0,'btn-danger mx-2',{'id':'diag-save'})
   .addButton('Load',0,'btn-warning mx-2',{'id':'diag-load'})
 	  .addEl('div',{id:'status',style:'color:#fff'})
@@ -499,11 +500,16 @@ window.onerror = function (message, url, line, column, error) {
 	   $('#diag-exportlogic').click(function() {
 		  console.log(dgl.exportLogic());
 	   });
+	   
+	  $('#diag-slots').click(function() {
+	    dgl.m.storageMenu= dgl.m.storageMenu == 0?1:0;
+	    cvs.draw(1);
+		
+	    $(this).blur();
+	  });
+	   
 	  
 	  $('#diag-save').click(function() {
-	    dgl.m.storageMenu=1;
-	    cvs.draw(1);
-	    return;
 		if (!confirm('You want to save it?')) {
 			return;
 		}
