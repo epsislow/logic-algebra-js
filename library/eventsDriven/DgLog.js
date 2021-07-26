@@ -376,23 +376,25 @@ var dglcvs={
         current? '#77a':'#338'
       );
       
+	  
       this.lib.texti(c,
-        34, 20+20*j+8, '\uf187', 7, current?'#fa0':'#ccf'
+        34, 20+20*j+8, (i in cache.savedSlots) ? '\uf187':'\uf850', 7, current?'#fa0':'#ccf'
       )
 	  
 	   if(i!=0) {
-		  if (current) {
-			this.lib.rectm(c,
-			141.5, 20+20*j+5.5,4,4,0,0,'#fff'
-			);
-		  }
+		    if (current) {
+			  this.lib.rectm(c,
+			  141.5, 20+20*j+5.5,4,4,0,0,'#fff'
+			  );
+		    }
         
-       //delete
-         this.lib.texti(c,
-          140, 20+20*j+8, '\uf057',
-          7,current?'#f00':'#ccf'
-          );
-       }
+		    //minus or delete 
+			this.lib.texti(c,
+			  140, 20+20*j+8, (i in cache.savedSlots) ? '\uf056':'\uf057',
+			  7,current?'#f00':'#ccf'
+			);
+	   }
+	   
        
        //edit
        this.lib.texti(c,
@@ -418,6 +420,18 @@ var dglcvs={
         45, 20+20*j+8, 'Slot: '+ s, 7,
         '#fff',
       );
+	  
+	  if (i in cache.savedSlots) {
+		  this.lib.textm(c, 
+			105, 20+20*j+8, cache.savedSlots[i].chips, 6,
+			'#f90',
+		  );
+		  
+		   this.lib.texti(c,
+			 110, 20 + 20 * j + 8, "\uf2db", 6,
+			 '#f90'
+		   )
+	  }
      j++;
     }
     
@@ -436,7 +450,7 @@ var dglcvs={
     );
     
     this.lib.texti(c,
-      34, 20 + 20 * j + 8, '\uf187', 7, '#668'
+      34, 20 + 20 * j + 8, '\uf850', 7, '#668'
     )
 	if (this.input) {
     //  this.input.y(i * 10);
@@ -2690,6 +2704,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     return nodes;
   },
   cache:{
+	savedSlots: {},
     slots: ['default', 'key1', 'key2'],
     currentSlot: 0,
 	loadSlotsInfo: function (zip=1) {
@@ -2707,8 +2722,15 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
       const data= JSON.parse(string);
 	  
-	  this.slots = data.slots;
-	  this.currentSlot = data.currentSlot;
+	  if (data.slots) {
+		this.slots = data.slots;
+	  }
+	  if (data.savedSlots) {
+		this.savedSlots= data.savedSlots;
+	  }
+	  if (data.currentSlot) {
+		this.currentSlot = data.currentSlot;
+	  }
 	  
 	  console.log('Slots info:', data);
 	},
@@ -2716,6 +2738,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	saveSlotsInfo: function(zip=1) {
 	  const data= {
         slots: this.slots,
+		savedSlots: this.savedSlots,
 		currentSlot: this.currentSlot,
       };
       
@@ -2734,6 +2757,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	},
 	
     save: function(slotId=0, zip=1) {
+	  this.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
+	  
 	  slotId = slotId==0? '': slotId;
       const data= {
         chipActive: dgl.chipActive,
@@ -2773,6 +2798,9 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	remove: function(slotId) {
 	  slotId = slotId==0? '': slotId;
 	  localStorage.removeItem("dgl.data"+ slotId);
+	  
+	  slotId = slotId==''? 0: slotId;
+	  delete this.savedSlots[parseInt(slotId)];
 	},
     load: function(slotId='', zip=1) {
 	  slotId = slotId==0? '': slotId;
@@ -2796,6 +2824,9 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       dgl.chipActive = data.chipActive;
       dgl.m.pan= data.mpan;
       dgl.node= data.node;
+	  
+	  slotId = slotId==''? 0: slotId;
+	  this.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
     //  dgl.nodeConn= data.nodeConn;
     var buf;
     for(var j in data.nodeConn) {
@@ -4166,22 +4197,28 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
-	storageMenuDelete: function (slotId) {
-		console.log('del '+slotId);
+	storageMenuRemove: function (slotId) {
+		dgl.cache.remove(slotId);
+		delete dgl.cache.savedSlots[slotId];
+		dgl.cache.saveSlotsInfo();
 		
+		cvs.draw(1);
+		return true;
+	},
+	storageMenuDelete: function (slotId) {
 		if (slotId==0) {
 			return;
 		}
 		
 		dgl.cache.slots.splice(slotId, 1);
 		dgl.cache.remove(slotId);
+		dgl.cache.currentSlot = 0;
 		dgl.cache.saveSlotsInfo();
 		
 		cvs.draw(1);
 		return true;
 	},
 	storageMenuEdit: function (slotId, areaXY) {
-		console.log('edit '+slotId);
 		
 		if(typeof dgl.cache.slots[slotId] == 'undefined') {
 			dglcvs.input = dgl.createInput(areaXY.x + 15,areaXY.y+3, 50, 10, 'key'+slotId,
@@ -4215,9 +4252,9 @@ var comp= comps[this.m.compInf.sel]
 	  
 	  if (slotId != 0) {
 		  this.addMActionRect(
-			'storageMenuDelete', kqueue,
+			(slotId in this.cache.savedSlots)? 'storageMenuRemove': 'storageMenuDelete', kqueue,
 			areaXY.x+108.5, areaXY.y+3, 10,10,
-			this.handlerMA.storageMenuDelete,
+			(slotId in this.cache.savedSlots)? this.handlerMA.storageMenuRemove : this.handlerMA.storageMenuDelete,
 			[slotId]
 		  );
 	  }
