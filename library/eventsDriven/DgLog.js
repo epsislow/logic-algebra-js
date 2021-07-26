@@ -362,23 +362,25 @@ var dglcvs={
     
     c.textAlign='left';
     c.textBaseline='middle'
-    var slots= Object.keys(cache.slots);
-    slots.splice(slots.indexOf('default'),1);
-    slots.unshift('default');
+    var slots= cache.slots;
+	
+	var current;
     
     for(var i in slots) {
       var s= slots[i];
+	  var current = cache.currentSlot==i;
+	  
       this.lib.rectm(c,
         30, 50+20*j, 120, 15, 2,
-        cache.currentSlot==s? '#aaf':'#559', 
-        cache.currentSlot==s? '#77a':'#338'
+        current? '#aaf':'#559', 
+        current? '#77a':'#338'
       );
       
       this.lib.texti(c,
-        34,50+20*j+8, '\uf187', 7, cache.currentSlot==s?'#fa0':'#ccf'
+        34,50+20*j+8, '\uf187', 7, current?'#fa0':'#ccf'
       )
         
-      if(cache.currentSlot==s) {
+      if(current) {
         
         /*this.lib.rectm(c,
         141.5,50+20*j+5.5,4,4,0,0,'#fff'
@@ -439,6 +441,7 @@ var dglcvs={
     )
     cvs.draw(1);
   },
+  
   drawChipSetup: function(c, name, chip, chipSetupComp) {
     
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
@@ -1582,8 +1585,14 @@ cv.style.height = rect.height/4 + 'px';
 
 
 var cvsIteration=0;
-var cvsDraw=function(c, upd=0, lib, frameTimeDiff=0) {
- // console.log('ff');
+
+var cvsDraw = function (c, upd=0, lib, frameTimeDiff=0) {
+	cvsDrawDgl.apply(this,[c, upd, lib, frameTimeDiff]);
+	
+	debug.draw();
+}
+
+var cvsDrawDgl = function(c, upd=0, lib, frameTimeDiff=0) {
   dglcvs.lib= lib;
   if(upd){
     lib.clear(c);
@@ -2073,8 +2082,6 @@ for(var l in lineNodes) {
    //   this.m.confirmShowed=1;
   //  }
    }
-    
-    debug.draw();
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
    }
@@ -2679,9 +2686,46 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     return nodes;
   },
   cache:{
-    slots: {'default':'', '1':'1','2':'2'},
-    currentSlot: 'default',
-    save: function(slot='', zip=1) {
+    slots: ['default', 'key1', 'key2'],
+    currentSlot: 0,
+	loadSlotsInfo: function (zip=1) {
+      var string= localStorage.getItem("dgl.slots.inf");
+	  
+	  if(zip) {
+        string=LZString
+          .decompressFromUTF16(string);
+      }
+	  
+      const data= JSON.parse(string);
+	  
+	  this.slots = data.slots;
+	  this.currentSlot = data.currentSlot;
+	  
+	  console.log('Slots info:', data);
+	},
+	
+	saveSlotsInfo: function(zip=1) {
+	  const data= {
+        slots: this.slots,
+		currentSlot: this.currentSlot,
+      };
+      
+      var string = JSON.stringify(data);
+
+      if(zip) {
+        string = LZString
+        .compressToUTF16(string);
+		
+		console.log("Compressed: " + string.length);
+      } 
+	  
+      localStorage.setItem("dgl.slots.info", string);
+      
+       console.log('Saved SlotsInfo');
+	},
+	
+    save: function(slotId=0, zip=1) {
+	  slotId = slotId==0? '': slotId;
       const data= {
         chipActive: dgl.chipActive,
         chip: dgl.chip,
@@ -2697,11 +2741,13 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         .compressToUTF16(string);
       } 
       console.log("Compressed: " + string.length);
-      localStorage.setItem("dgl.data"+slot, string);
+      localStorage.setItem("dgl.data"+slotId, string);
       
        console.log('Saved');
     },
-	saveCacheSv: function (slot='', zip=1) {
+	
+	saveCacheSv: function (slotId=0, zip=1) {
+	  slotId = slotId==0? '': slotId;	  
 	  const data = cacheSv.one;
 	  
       var string = JSON.stringify(data);
@@ -2711,13 +2757,15 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         .compressToUTF16(string);
       } 
       console.log("Compressed: " + string.length);
-      localStorage.setItem("dgl.data"+slot, string);
+      localStorage.setItem("dgl.data"+slotId, string);
       
        console.log('SavedCacheSv');
 	},
-    load: function(slot='', zip=1) {
-		
-      var string= localStorage.getItem("dgl.data"+ slot);
+    load: function(slotId='', zip=1) {
+	  slotId = slotId==0? '': slotId;
+	  var slotId = slotId==0? '': slotId;
+	  
+      var string= localStorage.getItem("dgl.data"+ slotId);
 	  
     //  console.log(string);
       if(zip) {
@@ -3977,13 +4025,11 @@ var comp= comps[this.m.compInf.sel]
     slots.unshift('default');
     
     for(var i in slots) {
-      var s= slots[i];
-      
 	    this.addMActionRect(
-	      'storageMenuSt'+s,'start',
+	      'storageMenuSt'+i,'start',
 	      30, 50+20*j, 120, 15, 
 	      this.handlerMA.storageMenuSt,
-	      [s]
+	      [i, {x:30, y:50+20*j}]
 	    );
 	    
 	    j++;
@@ -4086,10 +4132,40 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
-    storageMenuSt: function(slotIdx) {
-      this.cache.currentSlot= slotIdx;
+	storageMenuDelete: function (slotId) {
+		console.log('del '+slotId);
+		cvs.draw(1);
+		
+		return true;
+	},
+	storageMenuEdit: function (slotId) {
+		console.log('edit '+slotId);
+        cvs.draw(1);
+		
+		return true;
+	},
+    storageMenuSt: function(slotId, areaXY) {
+      this.cache.currentSlot= slotId;
+	  var kqueue = [];
+	  
+	  this.addMActionRect(
+		'storageMenuEdit', kqueue,
+		areaXY.x+40, areaXY.y, 10, 10,
+		this.handlerMA.storageMenuEdit,
+		[slotId]
+	  );
+	  
+	  if (slotId !== 0) {
+		  this.addMActionRect(
+			'storageMenuDelete', kqueue,
+			areaXY.x+60, areaXY.y, 10,10,
+			this.handlerMA.storageMenuDelete,
+			[slotId]
+		  );
+	  }
       cvs.draw(1);
-      return true;
+	  
+      return kqueue;
     },
     addCompMenuIsDragMove: function() {
       if (this.m.compMenu.isDrag) {

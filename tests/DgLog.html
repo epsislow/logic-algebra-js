@@ -513,14 +513,14 @@ window.onerror = function (message, url, line, column, error) {
 			return;
 		}
 		
-	    dgl.cache.save('');
+	    dgl.cache.save(dgl.cache.currentSlot);
 	    $(this).blur();
 	  })
 	  $('#diag-load').click(function() {
 		if (dgl.m.needsSave && !confirm('You want to reset all progress?')) {
 			return;
 		}
-	    dgl.cache.load('');
+	    dgl.cache.load(dgl.cache.currentSlot);
 	    $(this).blur();
 	  })
 	  
