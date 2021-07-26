@@ -2141,7 +2141,7 @@ var dgl= {
 	zoom: 1,
     actions: {},
     nodeSel:[],
-	needsSave: 0,
+	  needsSave: 0,
     chgIns:0,
     addNode:0,
     delNode:0,
@@ -2773,7 +2773,10 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       if(zip) {
         string = LZString
         .compressToUTF16(string);
-      } 
+      }
+      
+      this.saveSlotsInfo();
+      
       console.log("Compressed: " + string.length);
       localStorage.setItem("dgl.data"+slotId, string);
       
@@ -2801,6 +2804,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
 	  slotId = slotId==''? 0: slotId;
 	  delete this.savedSlots[parseInt(slotId)];
+	  
+    this.saveSlotsInfo();
 	},
     load: function(slotId='', zip=1) {
 	  slotId = slotId==0? '': slotId;
@@ -2841,7 +2846,6 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     }
     var comps, comp, cid, cpin, cpout;
 	
-	
     for(var chipName in dgl.chip) {
 		
 	  if (!('posOrder' in dgl.chip[chipName])) {
@@ -2855,6 +2859,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 			  dgl.chip[chipName].posOrder.pos[ii] = (dgl.chip[chipName].outs[ii].pos); 
 		  }
 	  }
+	  
 	}
       
     for(var chipName in dgl.chip) {
@@ -2914,6 +2919,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     }
 	  dgl.m.needsSave = 0;
       console.log('Loaded');
+      
+      this.saveSlotsInfo();
       cvs.draw(1);
     }
   },
@@ -4707,7 +4714,7 @@ var comp= comps[this.m.compInf.sel]
 	  }
 	  return true;
 	},
-	compDelH: function (comp) {
+	compDelH: function (comp, comps) {
 		if(!this.m.delComp) {
 			return;
 		}
@@ -4721,6 +4728,8 @@ var comp= comps[this.m.compInf.sel]
 				delete comps[comp.ins[i].id].outs[pout].pin;
 			}
 		}
+		
+		var cinid, cinpin;
 		for( var o in comp.outConns) {
 			[cinid, cinpin]= comp.outConns[o].split('^');
 
@@ -4766,7 +4775,7 @@ var comp= comps[this.m.compInf.sel]
 			return true;
 		}
 	},
-    compHdl: function(comp) {
+    compHdl: function(comp, comps) {
       this.m.isDragged = comp.id;
         
       this.m.comp_old_x = comp.xOfs;
@@ -4776,7 +4785,7 @@ var comp= comps[this.m.compInf.sel]
 
 	  this.addMActionNoXY(
         'compDelH', kqueue,
-        this.handlerMA.compDelH, [comp]);
+        this.handlerMA.compDelH, [comp, comps]);
 
 	  this.addMActionNoXY(
         'compConnH', kqueue,
@@ -4820,7 +4829,7 @@ var comp= comps[this.m.compInf.sel]
 			this.addMActionRect(
 				'comp.'+cid, kqueue,
 				compx, compy, compw, comph, 
-				this.handlerMA.compHdl, [comp]
+				this.handlerMA.compHdl, [comp, comps]
 		    );
 		  
 		
