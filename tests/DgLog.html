@@ -525,6 +525,8 @@ window.onerror = function (message, url, line, column, error) {
 	  })
 	  
     	$('#tab-diagram').click();
+		
+		dgl.cache.loadSlotsInfo();
 	    cvs.draw();
     }
   }

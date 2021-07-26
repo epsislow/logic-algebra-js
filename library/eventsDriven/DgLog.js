@@ -371,35 +371,34 @@ var dglcvs={
 	  var current = cache.currentSlot==i;
 	  
       this.lib.rectm(c,
-        30, 50+20*j, 120, 15, 2,
+        30, 20+20*j, 120, 15, 2,
         current? '#aaf':'#559', 
         current? '#77a':'#338'
       );
       
       this.lib.texti(c,
-        34,50+20*j+8, '\uf187', 7, current?'#fa0':'#ccf'
+        34, 20+20*j+8, '\uf187', 7, current?'#fa0':'#ccf'
       )
-        
-      if(current) {
-        
-        /*this.lib.rectm(c,
-        141.5,50+20*j+5.5,4,4,0,0,'#fff'
-        )*/
+	  
+	   if(i!=0) {
+		  if (current) {
+			this.lib.rectm(c,
+			141.5, 20+20*j+5.5,4,4,0,0,'#fff'
+			);
+		  }
         
        //delete
-       if(s!=='default') {
          this.lib.texti(c,
-          140, 50+20*j+8, '\uf057',
-          7,'#ccf'
-          )
+          140, 20+20*j+8, '\uf057',
+          7,current?'#f00':'#ccf'
+          );
        }
        
        //edit
        this.lib.texti(c,
-         125, 50 + 20 * j + 8, '\uf044', 7, '#ccf'
+         125, 20 + 20 * j + 8, '\uf044', 7,
+		 current?'#fff':'#ccf'
        )
-       
-      
        
        
        //load
@@ -414,32 +413,37 @@ var dglcvs={
          7, '#ccf'
        )*/
        
-      }
+	   
       this.lib.textm(c, 
-        45,50+20*j+8, 'Slot: '+ s, 7,
+        45, 20+20*j+8, 'Slot: '+ s, 7,
         '#fff',
       );
      j++;
     }
     
     this.lib.rectm(c,
-      30, 50 + 20 * j, 120, 15, 2,
+      30, 20 + 20 * j, 120, 15, 2,
       '#445', '#334'
     );
     
     this.lib.texti(c,
-      125, 50 + 20 * j + 8, '\uf044', 7, '#668'
+      125, 20 + 20 * j + 8, '\uf044', 7, '#668'
     )
     
     this.lib.textm(c,
-      45, 50 + 20 * j + 8, 'New slot', 7,
+      45, 20 + 20 * j + 8, 'New slot', 7,
       '#668',
     );
     
     this.lib.texti(c,
-      34, 50 + 20 * j + 8, '\uf187', 7, '#668'
+      34, 20 + 20 * j + 8, '\uf187', 7, '#668'
     )
-    cvs.draw(1);
+	if (this.input) {
+    //  this.input.y(i * 10);
+      this.input.render();
+      this.input.focus();
+      return;
+    }
   },
   
   drawChipSetup: function(c, name, chip, chipSetupComp) {
@@ -2689,7 +2693,12 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     slots: ['default', 'key1', 'key2'],
     currentSlot: 0,
 	loadSlotsInfo: function (zip=1) {
-      var string= localStorage.getItem("dgl.slots.inf");
+      var string= localStorage.getItem("dgl.slots.info");
+	  
+	  
+	  if (string===null) {
+		  return;
+	  }
 	  
 	  if(zip) {
         string=LZString
@@ -2761,11 +2770,19 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       
        console.log('SavedCacheSv');
 	},
+	remove: function(slotId) {
+	  slotId = slotId==0? '': slotId;
+	  localStorage.removeItem("dgl.data"+ slotId);
+	},
     load: function(slotId='', zip=1) {
 	  slotId = slotId==0? '': slotId;
 	  var slotId = slotId==0? '': slotId;
 	  
       var string= localStorage.getItem("dgl.data"+ slotId);
+	  
+	  if (string === null) {
+		  return false;
+	  }
 	  
     //  console.log(string);
       if(zip) {
@@ -3092,6 +3109,14 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 		  this.initCompTypeProjectChip();
 		  this.m.needsSave = 1;
 		}
+	},
+	newSlot: function(slotId, cache) {
+		return function(value) {
+			cache.slots[slotId] = value;
+			cache.currentSlot = slotId;
+		    dgl.m.needsSave = 1;
+			cache.saveSlotsInfo();
+		};
 	},
     deletePin: function(value) {
       
@@ -4027,15 +4052,24 @@ var comp= comps[this.m.compInf.sel]
     for(var i in slots) {
 	    this.addMActionRect(
 	      'storageMenuSt'+i,'start',
-	      30, 50+20*j, 120, 15, 
+	      30, 20+20*j, 120, 15, 
 	      this.handlerMA.storageMenuSt,
-	      [i, {x:30, y:50+20*j}]
+	      [i, {x:30, y: 20+20*j}]
 	    );
 	    
 	    j++;
 	  }
-	  
 	}
+	
+	var newI = parseInt(i) + 1;
+	this.addMActionRect(
+	      'storageMenuEdit'+newI,'start',
+	      30, 20+20*j, 120, 15, 
+	      this.handlerMA.storageMenuSt,
+	      [newI, {x:30, y: 20+20*j}]
+	    );
+	
+		
 	
 	if(this.m.chipSetup) {
 	  this.addMActionNoXY(
@@ -4134,31 +4168,55 @@ var comp= comps[this.m.compInf.sel]
   handlerMA: {
 	storageMenuDelete: function (slotId) {
 		console.log('del '+slotId);
-		cvs.draw(1);
 		
+		if (slotId==0) {
+			return;
+		}
+		
+		dgl.cache.slots.splice(slotId, 1);
+		dgl.cache.remove(slotId);
+		dgl.cache.saveSlotsInfo();
+		
+		cvs.draw(1);
 		return true;
 	},
-	storageMenuEdit: function (slotId) {
+	storageMenuEdit: function (slotId, areaXY) {
 		console.log('edit '+slotId);
-        cvs.draw(1);
 		
+		if(typeof dgl.cache.slots[slotId] == 'undefined') {
+			dglcvs.input = dgl.createInput(areaXY.x + 15,areaXY.y+3, 50, 10, 'key'+slotId,
+				this.inputHandlers.newSlot(slotId, dgl.cache)
+			, '#fff', '#334', 7);
+
+		} else {
+			dglcvs.input = dgl.createInput(areaXY.x + 31,areaXY.y+3, 50, 10, dgl.cache.slots[slotId],
+				this.inputHandlers.newSlot(slotId, dgl.cache)
+			, '#fff', '#77a', 7);
+		}
+        cvs.draw(1);
 		return true;
 	},
     storageMenuSt: function(slotId, areaXY) {
       this.cache.currentSlot= slotId;
 	  var kqueue = [];
 	  
+	  if (dglcvs.input != 0) {
+		  dglcvs.input.blur();
+		  dglcvs.input.destroy();
+		  dglcvs.input = 0;
+	  }
+	  
 	  this.addMActionRect(
 		'storageMenuEdit', kqueue,
-		areaXY.x+40, areaXY.y, 10, 10,
+		areaXY.x+94.5, areaXY.y+3, 10, 10,
 		this.handlerMA.storageMenuEdit,
-		[slotId]
+		[slotId, areaXY]
 	  );
 	  
-	  if (slotId !== 0) {
+	  if (slotId != 0) {
 		  this.addMActionRect(
 			'storageMenuDelete', kqueue,
-			areaXY.x+60, areaXY.y, 10,10,
+			areaXY.x+108.5, areaXY.y+3, 10,10,
 			this.handlerMA.storageMenuDelete,
 			[slotId]
 		  );
