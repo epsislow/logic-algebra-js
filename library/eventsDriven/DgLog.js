@@ -2407,7 +2407,7 @@ var dgl= {
           pub.instance(comp, this.chipInstance, refresh);
           
           
-          dgl.chipInstances[comp.id]= this.chipInstance;
+          dgl.chipInstances[comp.id]= JSON.parse(JSON.stringify(this.chipInstance));
           
         } else {
           pub.comp(comp, comps, refresh);
