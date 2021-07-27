@@ -2354,9 +2354,11 @@ var dgl= {
     
     pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
       var comps;
+	  var chipPath = chipName;
       if(chipInstance) {
         comps= {...chipInstance.comp};
     //    console.log('here', comps)
+		chipPath = chipInstance.path;
       } else {
         comps= chip[chipName].comp;
       }
@@ -2398,7 +2400,7 @@ var dgl= {
         
           this.chipInstance = {
             id: comp.id,
-            path: chipName+'/',
+            path: chipPath+'/'+comp.id,
             comp: {...chip[chipType].comp},
             states: {...inStates},
             outStates: {},
@@ -2406,8 +2408,19 @@ var dgl= {
           
           pub.instance(comp, this.chipInstance, refresh);
           
-          
-          dgl.chipInstances[comp.id]= JSON.parse(JSON.stringify(this.chipInstance));
+          var chipInstanceResult = JSON.parse(JSON.stringify(this.chipInstance));
+		  chipInstanceResult.compInfo = {};
+		  for(var c in chipInstanceResult.comp) {
+			  chipInstanceResult.compInfo[c] = {
+				  inConns: chipInstanceResult.comp[c].inConns,
+				  outConns: chipInstanceResult.comp[c].outConns,
+				  inStates: chipInstanceResult.comp[c].inStates,
+				  states: chipInstanceResult.comp[c].states
+			  }
+		  }
+		  
+		  delete chipInstanceResult.comp;
+          dgl.chipInstances[this.chipInstance.path]= chipInstanceResult;
           
         } else {
           pub.comp(comp, comps, refresh);
@@ -2462,6 +2475,7 @@ var dgl= {
             inStates[i] = -1;
           }
         }
+		comp.inStates = inStates;
         if(refresh && comp.type=='clock') {
           return;
         } else if (comp.type=='pin') {
@@ -2538,7 +2552,11 @@ var dgl= {
     
     pub.all= function(refresh=0) {
       isRefresh=refresh;
-      pub.chip(chipActive, refresh);
+	  var firstChipActive = chipActive;
+	  if (dgl.m.bcrumbs.length) {
+		  firstChipActive = dgl.m.bcrumbs[0];
+	  }
+      pub.chip(firstChipActive, refresh);
     }
     
     return pub;
@@ -2798,7 +2816,9 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         chip: dgl.chip,
         mpan: dgl.m.pan,
         node: dgl.node,
-        nodeConn: dgl.nodeConn
+        nodeConn: dgl.nodeConn,
+		bcrumbs: dgl.m.bcrumbs,
+		bcrumbsIds: dgl.m.bcrumbsIds,
       };
       
       var string = JSON.stringify(data);
@@ -2862,6 +2882,12 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       dgl.chipActive = data.chipActive;
       dgl.m.pan= data.mpan;
       dgl.node= data.node;
+	  if (data.bcrumbs) {
+		dgl.m.bcrumbs = data.bcrumbs;
+	  }
+	  if (data.bcrumbsIds) {
+		dgl.m.bcrumbsIds = data.bcrumbsIds;
+	  }
 	  
 	  slotId = slotId==''? 0: slotId;
 	  this.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
@@ -2973,7 +2999,6 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         comps[snd].nextInput=0;
       }
       var nextI= comps[snd].nextInput;
-      
       
      
       var outputs= comps[fst].outputs;
@@ -3189,9 +3214,6 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 			cache.saveSlotsInfo();
 		};
 	},
-    deletePin: function(value) {
-      
-    },
     renameComp: function(comps, chip, comp, compInf) {
 
        return function() {
@@ -3269,13 +3291,22 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
    // console.log(comp, ci, compid, pout)
     delete compid.outs[pout].id;
     delete compid.outs[pout].pin;
+	
+	var iif = comp.inConns.indexOf(comp.ins[ci].id+ '^'+comp.ins[ci].pout);
+	if (iif !== false) {
+		compid.inConns.splice(iif,1);
+	}
     
     delete comp.ins[ci].id;
     delete comp.ins[ci].pout;
+	
     
-    var iof= compid.outConns.indexOf(comp.id+'^'+ci)
+    var iof = compid.outConns.indexOf(comp.id+'^'+ci);
     
-    compid.outConns.splice(iof,1)
+	if (iof !== false) {
+		compid.outConns.splice(iof,1)
+	}
+	
 	this.m.needsSave = 1;
     
    // console.log(comp.id+'^'+ci, comp, compid);
@@ -5107,6 +5138,56 @@ var comp= comps[this.m.compInf.sel]
 	  return true;
 	},
 	compInfo: function() {
+	  if(!this.m.compInfo || !this.m.compInf.sel) {
+		  return;
+	  }
+	  
+	var chip= this.chip[this.chipActive]
+    var comps= chip.comp;
+	var comp= comps[this.m.compInf.sel];
+	var mdx= this.m.mousedown_x, mdy = this.m.mousedown_y;
+	console.log(mdx+'/'+ mdy);
+		if(mdx >=0 && mdx<=120 && mdy>=0 && mdy<= 195) {
+		if(1 || ['pin','pout'].includes(comp.type)) {
+		  //86.5, 100-1, 8, 8
+		  if(mdx>=85-10 && mdx<= 95+10 && mdy>= 95-20 && mdy <= 110+5) {
+		   var compInf= this.m.compInf;
+		   
+		  dglcvs.input = this.createInput(39,98, 50, 10, comp.id,
+		  this.inputHandlers.renameComp(comps, chip, comp, compInf)
+		  , '#fff', '#224', 7);
+		  
+		  /*  */
+		
+		  }
+		}
+		var i=1;
+		i++;
+	  //  i++;
+		
+		var hadIns=0
+		 for(var ci in comp.ins) {
+		   hadIns=1;
+		   var p= comp.ins[ci];
+		   if('id' in p) {
+			 //86.5 + k, i * 11 + 100 - 11
+			 if(mdx>= 83-20 && mdx <= 100+20 && mdy>= i*11 + 90 && mdy <= i*11 + 135 ) {
+			  this.deletePinConn(comp, ci,  comps[p.id], p.pout )
+		  return;
+			 }
+		   }
+		   i++;
+		 }
+		 if(hadIns) {
+		   i++;
+		 }
+		/*
+		
+		*/
+		
+		return;
+		}
+	  
 	  return true;
 	},
 	compInfoSel: function (comp) {
