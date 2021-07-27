@@ -2509,7 +2509,7 @@ var dgl= {
     
     function checkVariableState(oldSts, newSts, comp, sts) {
       if(comp.id=='nand14') {
-  console.log(comp.id, oldSts, newSts, sts);
+  //console.log(comp.id, oldSts, newSts, sts);
 }
 
       var oldStsArr;
