@@ -1926,9 +1926,11 @@ var compin = comps[cinid];
 smp0= compin.states[cinpout];
 if(this.m.bcrumbIds.length) {
   var bchipId= this.m.bcrumbIds[this.m.bcrumbIds.length-1];
+  //console.log(bchipId)
   if(bchipId in this.chipInstances) {
   var chipCompin= this.chipInstances[bchipId].comp[cinid];
   smp0= chipCompin.states[cinpout];
+ // console.log('found')
   }
 }
 
