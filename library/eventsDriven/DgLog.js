@@ -2420,7 +2420,7 @@ var dgl= {
 			  }
 		  }
 		  
-		  delete chipInstanceResult.comp;
+		 // delete chipInstanceResult.comp;
           dgl.chipInstances[this.chipInstance.path] = chipInstanceResult;
           
         } else {
@@ -2508,6 +2508,10 @@ var dgl= {
     }
     
     function checkVariableState(oldSts, newSts, comp, sts) {
+      if(comp.id=='nand14') {
+  console.log(comp.id, oldSts, newSts, sts);
+}
+
       var oldStsArr;
       try {
         oldStsArr= Object.keys(oldSts);
@@ -2820,7 +2824,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         node: dgl.node,
         nodeConn: dgl.nodeConn,
 		bcrumbs: dgl.m.bcrumbs,
-		bcrumbsIds: dgl.m.bcrumbsIds,
+		bcrumbIds: dgl.m.bcrumbIds,
       };
       
       var string = JSON.stringify(data);
@@ -2887,8 +2891,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  if (data.bcrumbs) {
 		dgl.m.bcrumbs = data.bcrumbs;
 	  }
-	  if (data.bcrumbsIds) {
-		dgl.m.bcrumbsIds = data.bcrumbsIds;
+	  if (data.bcrumbIds) {
+		dgl.m.bcrumbIds = data.bcrumbIds;
 	  }
 	  
 	  slotId = slotId==''? 0: slotId;
@@ -4748,9 +4752,12 @@ var comp= comps[this.m.compInf.sel]
 	},
 	compCtrls: function(comp) {
 	  if (comp.type == 'controlled' || comp.type == 'pin') {
+	    console.log(comp.states);
 	    comp.states['out'] =
 	      comp.states['out'] == 1 ? 0 : 1
+	    console.log(comp.states);
 	    dgl.tick(1);
+	    cvs.draw(1);
 	  }
 	  if(dgl.m.compInfo) {
 	    return;
