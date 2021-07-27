@@ -1925,11 +1925,12 @@ smp0 = 0;
 var compin = comps[cinid];
 smp0= compin.states[cinpout];
 if(this.m.bcrumbIds.length) {
-  var bchipId= this.m.bcrumbIds[this.m.bcrumbIds.length-1];
-  //console.log(bchipId)
+  //var bchipId= this.m.bcrumbIds[this.m.bcrumbIds.length-1];
+  var bchipId = this.m.bcrumbIds.join('/');
+  bchipId = this.m.bcrumbs[0]+ bchipId.substr(1,bchipId.length);
   if(bchipId in this.chipInstances) {
-  var chipCompin= this.chipInstances[bchipId].comp[cinid];
-  smp0= chipCompin.states[cinpout];
+    var chipCompin= this.chipInstances[bchipId].compInfo[cinid];
+    smp0= chipCompin.states[cinpout];
  // console.log('found')
   }
 }
@@ -2420,7 +2421,7 @@ var dgl= {
 		  }
 		  
 		  delete chipInstanceResult.comp;
-          dgl.chipInstances[this.chipInstance.path]= chipInstanceResult;
+          dgl.chipInstances[this.chipInstance.path] = chipInstanceResult;
           
         } else {
           pub.comp(comp, comps, refresh);
@@ -2551,6 +2552,7 @@ var dgl= {
     }
     
     pub.all= function(refresh=0) {
+	  dgl.chipInstances = {};
       isRefresh=refresh;
 	  var firstChipActive = chipActive;
 	  if (dgl.m.bcrumbs.length) {
