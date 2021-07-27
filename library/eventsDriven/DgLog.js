@@ -1761,9 +1761,17 @@ var cvsDrawDgl = function(c, upd=0, lib, frameTimeDiff=0) {
         ins, outs,comp.revIns
       )*/
     var smp0=0;
+    var q=0;
     for(var st in comp.states) {
+      if(comp.states==-1) {
+        continue;
+      }
+      q=1;
       smp0 |=comp.states[st];
       smp0= smp0?1:0;
+    }
+    if(q=0) {
+      smp0=-1;
     }
     
 /*    
@@ -1915,7 +1923,14 @@ lineNodes.push(['out',comp.ins[cinid].pinx+1,comp.ins[cinid].piny+1]);
 -*/
 smp0 = 0;
 var compin = comps[cinid];
-smp0= compin.states[cinpout]
+smp0= compin.states[cinpout];
+if(this.m.bcrumbIds.length) {
+  var bchipId= this.m.bcrumbIds[this.m.bcrumbIds.length-1];
+  if(bchipId in this.chipInstances) {
+  var chipCompin= this.chipInstances[bchipId].comp[cinid];
+  smp0= chipCompin.states[cinpout];
+  }
+}
 
 var lastPoint=0;
 for(var l in lineNodes) {
@@ -1930,6 +1945,9 @@ for(var l in lineNodes) {
   var s= '#474';
   if(smp0==1) {
     s='#4f4';
+  }
+  if(smp0==-1) {
+    s='#448';
   }
   if(smp0==-2) {
     s='#f44';
@@ -1998,10 +2016,18 @@ for(var l in lineNodes) {
         5+50*comp.x+pX+comp.xOfs,5+25*comp.y+pY+comp.yOfs, 40, 10,
         ins, outs,comp.revIns
       )*/
-      var smp0=0;
+    var smp0=0;
+    var q=0;
     for(var st in comp.states) {
+      if(comp.states==-1) {
+        continue;
+      }
+      q=1;
       smp0 |=comp.states[st];
       smp0= smp0?1:0;
+    }
+    if(q=0) {
+      smp0=-1;
     }
     
         dglcvs.drawComp(c, comp,
@@ -2327,7 +2353,7 @@ var dgl= {
     pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
       var comps;
       if(chipInstance) {
-        comps= chipInstance.comp;
+        comps= {...chipInstance.comp};
     //    console.log('here', comps)
       } else {
         comps= chip[chipName].comp;
@@ -2378,6 +2404,9 @@ var dgl= {
           
           pub.instance(comp, this.chipInstance, refresh);
           
+          
+          dgl.chipInstances[comp.id]= this.chipInstance;
+          
         } else {
           pub.comp(comp, comps, refresh);
         }
@@ -2395,6 +2424,8 @@ var dgl= {
       
       try {
       chipComp.states[cpo]= chipInstance.comp[cpo].states['out']
+      
+      chipInstance.outStates[cpo] = chipComp.states[cpo]
       } catch (e) {
           console.log(e, cpo)
       }
