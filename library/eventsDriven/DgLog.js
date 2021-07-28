@@ -2438,12 +2438,15 @@ var dgl= {
       
       var resetVarStates =1;
 	  var dd =0;
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 3; i++) {
       for(var ck in compKeys) {
 		var cid = compKeys[ck];
         var comp= comps[cid]
-		if (comp.id=='nor2') {
-			dd = 1;
+		if (comp.id=='nand14' || comp.id=='nand15') {
+			dd=1;
+			//console.log('pre',comp);
+		} else {
+		  dd=0;
 		}
         if (resetVarStates && ('varStates' in comp)) {
           delete comp.varStates;
@@ -2507,6 +2510,8 @@ var dgl= {
 		  }
           dgl.allChipInstances[this.chipInstance.path].push(chipInstanceResult);
         } else {
+          dd && alert(chipPath+"\n"+comp.id+' '+i+' '+JSON.stringify(comp.inStates)+JSON.stringify(comp.states));
+          
           pub.comp(comp, comps, refresh);
         }
       }
