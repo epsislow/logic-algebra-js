@@ -2365,7 +2365,7 @@ var dgl= {
       }
       
       var resetVarStates =1;
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 2; i++) {
       for(var cid in comps) {
         var comp= comps[cid]
         if(chipInstance) {
@@ -2397,12 +2397,20 @@ var dgl= {
         }
         var chp, chipType;
         
-        [chp,chipType]= comp.type.split('.')
+        [chp,chipType]= comp.type.split('.');
+		
+		var chipInstanceComps;
+		
+		if((chipPath+'/'+comp.id) in dgl.chipInstances) {
+			chipInstanceComps = dgl.chipInstances[chipPath+'/'+comp.id].comp;
+		} else {
+			chipInstanceComps = JSON.parse(JSON.stringify(chip[chipType].comp));
+		}
         
           this.chipInstance = {
             id: comp.id,
             path: chipPath+'/'+comp.id,
-            comp: {...chip[chipType].comp},
+            comp: chipInstanceComps,
             states: {...inStates},
             outStates: {},
           };
@@ -2420,9 +2428,11 @@ var dgl= {
 			  }
 		  }
 		  
-		 // delete chipInstanceResult.comp;
           dgl.chipInstances[this.chipInstance.path] = chipInstanceResult;
-          
+		  if (!dgl.allChipInstances[this.chipInstance.path]) {
+			  dgl.allChipInstances[this.chipInstance.path] = [];
+		  }
+          dgl.allChipInstances[this.chipInstance.path].push(chipInstanceResult);
         } else {
           pub.comp(comp, comps, refresh);
         }
@@ -2563,7 +2573,67 @@ var dgl= {
 		  firstChipActive = dgl.m.bcrumbs[0];
 	  }
       pub.chip(firstChipActive, refresh);
+	  
+	  //filterAllChipInstancesDiffs();
     }
+	function getDiff(ob1, ob2) {
+		var diff = {};
+		var count= 0;
+		for(var i in ob1) {
+			if (ob1[i]!=ob2[i]) {
+				diff[i] = ' ! ' + ob1[i] + ' => ' + ob2[i];
+				count++;
+			}
+		}
+		return count ? diff:0;
+	}
+	function filterAllChipInstancesDiffs() {
+		var firstinst = 0;
+		for(var d in dgl.allChipInstances) {
+			var c = dgl.allChipInstances[d];
+			firstinst = 0;
+			dgl.diffChipInstances[d] = {};
+			
+			for(var i in c) {
+				var inst = c[i];
+				if (!firstinst) {
+					firstinst = inst;
+					dgl.diffChipInstances[d][i] = {
+						firstinst:firstinst,
+					}
+					continue;
+				}
+				
+				
+				var compInfoDiff = {};
+				
+				for(var cid in inst.compInfo) {
+					var inStates = getDiff(
+								firstinst.compInfo[cid].inStates,
+								inst.compInfo[cid].inStates
+							);
+					var outStates = getDiff(
+								firstinst.compInfo[cid].states,
+								inst.compInfo[cid].states
+							);
+					if (inStates || outStates) {
+						compInfoDiff[cid]= {};
+						if (inStates) {
+							compInfoDiff[cid].inStates = inStates;
+						} else {
+							compInfoDiff[cid].outStates = outStates;
+						}
+					}
+				}
+				
+				dgl.diffChipInstances[d][i] = {
+					states: inst.states,
+					outStates: inst.outStates,
+					compInfoDiff: compInfoDiff
+				}
+			}
+		}
+	}
     
     return pub;
   },
@@ -2646,6 +2716,8 @@ var dgl= {
   nodeConn:{},
   chipActive:'main',
   chipInstances:{},
+  allChipInstances:{},
+  diffChipInstances: {},
   chipInstancePath:'',
   chipInstanceInOuts: {
     'datain':{},
