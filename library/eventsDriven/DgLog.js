@@ -2352,8 +2352,78 @@ var dgl= {
 		}
 	  }
 	}
+	
+	function inRequireLoop(f, require) {
+		if (!(f in require)) {
+			return false
+		}
+		
+		var fr = require[f];
+		
+		for(var t in fr) {
+			if(fr[t] in require) {
+				if (require[fr[t]].includes(f)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	function orderKeysFromRequire(require, keys, noChanges= 0) {
+		
+		for(var r in require) {
+			for (var t=require[r].length-1; t>=0;t--) {
+				var f= require[r][t];
+				if (!(f in require) || noChanges > 2 && inRequireLoop(f,require)) {
+					if (!keys.includes(f)) {
+						keys.push(f);
+					}
+					require[r].splice(t,1);
+					if (require[r].length == 0) {
+						if (!keys.includes(r)) {
+							keys.push(r);
+						}
+						delete require[r];
+						if (Object.keys(require).length == 0) {
+							return [noChanges, keys];
+						}
+					}
+				}
+			}
+		}
+		
+		noChanges++;
+		return [noChanges, keys];
+	}
+	
+	function orderComps(comps) {
+		var keys = [];
+		var require = {};
+		
+		for(var cid in comps) {
+			var comp = comps[cid];
+			for(var inl in comp.ins) {
+				if('id' in comp.ins[inl]) {
+					if (!require[cid]) {
+						require[cid] = [];
+					}
+					require[cid].push(comp.ins[inl].id);
+				}
+			}
+		}
+		
+		var q=0, noChanges = 0;
+		do {
+			[noChanges, keys] = orderKeysFromRequire(require, keys, noChanges);
+			q++;
+		} while (Object.keys(require).length && q <100);
+		
+		//console.log(require, keys, q);
+		return keys;
+	}
     
-    pub.chip= function(chipName, refresh=0, chipInstance=0, datain= {}, dataout= {}) {
+    pub.chip= function(chipName, refresh=0, chipInstance=0) {
       var comps;
 	  var chipPath = chipName;
       if(chipInstance) {
@@ -2363,17 +2433,20 @@ var dgl= {
       } else {
         comps= chip[chipName].comp;
       }
+	  
+	  var compKeys = orderComps(comps);
       
       var resetVarStates =1;
+	  var dd =0;
       for (let i = 0; i < 2; i++) {
-      for(var cid in comps) {
+      for(var ck in compKeys) {
+		var cid = compKeys[ck];
         var comp= comps[cid]
-        if(chipInstance) {
-      //    console.log('p'+comp.id)
-        }
+		if (comp.id=='nor2') {
+			dd = 1;
+		}
         if (resetVarStates && ('varStates' in comp)) {
-          //console.log('del')
-          delete comp.varStates// = {};
+          delete comp.varStates;
         }
         if(comp.type.startsWith('chip.')) {
           
