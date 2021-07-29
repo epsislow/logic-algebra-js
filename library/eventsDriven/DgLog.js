@@ -2499,7 +2499,7 @@ var dgl= {
 			chipInstanceComps = JSON.parse(JSON.stringify(chip[chipType].comp));
 		}
         
-          this.chipInstance = {
+          var chipInstance = {
             id: comp.id,
             path: chipPath+'/'+comp.id,
             comp: chipInstanceComps,
@@ -2512,9 +2512,10 @@ var dgl= {
           dgl.chipInstancePath.push(chipPath+'/'+ comp.id);
           }
           
-          pub.instance(comp, this.chipInstance, refresh);
+          pub.instance(comp, chipInstance, refresh);
           
-          var chipInstanceResult = JSON.parse(JSON.stringify(this.chipInstance));
+          var chipInstanceResult = JSON.parse(JSON.stringify(chipInstance));
+          
 		  chipInstanceResult.compInfo = {};
 		  for(var c in chipInstanceResult.comp) {
 			  chipInstanceResult.compInfo[c] = {
@@ -2525,7 +2526,9 @@ var dgl= {
 			  }
 		  }
 		  
-          dgl.chipInstances[this.chipInstance.path] = chipInstanceResult;
+      dgl.chipInstances[chipInstance.path] = chipInstanceResult;
+          
+          
 		  /*if (!dgl.allChipInstances[this.chipInstance.path]) {
 			  dgl.allChipInstances[this.chipInstance.path] = [];
 		  }
