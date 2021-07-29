@@ -1261,7 +1261,7 @@ cv.style.height = rect.height/4 + 'px';
     	c.setTransform(trans)
     	
     //pins and pouts
-    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp,x,y,s+dt,s+st,comp.rt, inOutsText, calcxy);
+    this.drawPinsOfComp(c, comp.type,comp.ins,comp.outs,comp,x,y,s+dt,s+st,comp.rt, inOutsText, calcxy, debug);
     
     c.textAlign = 'center';
   	c.textBaseline = 'middle';
@@ -1341,7 +1341,7 @@ cv.style.height = rect.height/4 + 'px';
   //    comp.rt=3;
  //   }
   },
-  'drawPinsOfComp': function(c,type,ins,outs,comp,x,y,w,h,r=0, inOutsText=0, calcxy=1) {
+  'drawPinsOfComp': function(c,type,ins,outs,comp,x,y,w,h,r=0, inOutsText=0, calcxy=1, debug=0) {
     var pos={'top':[],'bottom':[],'left':[],'right':[]};
     const rot={
       0:{'top':'top','right':'right','bottom':'bottom','left':'left'},
@@ -1397,12 +1397,21 @@ cv.style.height = rect.height/4 + 'px';
     }
   
     var k=0;
-    var pinh, pinw, pw;
+    var pinh, pinw, pw, fontSize =5, tstep = 5, tbottom = 2;
     if(inOutsText==1) {
        pinh=5; pinw=5; pw=2;
    } else {
+	 if(inOutsText== 3) {
+		 fontSize= 3;
+		 tstep = 2;
+	 }
      pinh=2, pinw=2; pw=2;
    }
+   
+   
+	if (debug) {
+		console.log([pinh,pinw,pw].join(','));
+	}
     for(var i=0;i<pos.top.length;i++){
       if(!calcxy && 'pinx' in pos.top[i]) {
         continue;
@@ -1413,7 +1422,7 @@ cv.style.height = rect.height/4 + 'px';
       pos.top[i].pinx= x+k;
       pos.top[i].piny= y-pinh-1;
       pos.top[i].xtt= 0;
-      pos.top[i].ytt= -5;
+      pos.top[i].ytt= -tstep;
       
     //  this.lib.rectm(c,x+k,y-pinh-0.5,pinw,pinh,1,'#ff9','#444')
     }
@@ -1428,7 +1437,7 @@ cv.style.height = rect.height/4 + 'px';
       pos.bottom[i].pinx= x+k;
       pos.bottom[i].piny= y+h+1;
       pos.bottom[i].xtt = 0;
-      pos.bottom[i].ytt = 7; 
+      pos.bottom[i].ytt = tbottom+tstep; 
     //  this.lib.rectm(c,x+k,y+h+0.5,pinw,pinh,1,'#9f9','#444')
     }
     
@@ -1441,7 +1450,7 @@ cv.style.height = rect.height/4 + 'px';
         +h/(2*pos.left.length)-pinh/2
       pos.left[i].pinx= x-pinw-1;
       pos.left[i].piny= y+k;
-      pos.left[i].xtt = -5;
+      pos.left[i].xtt = -tstep;
       pos.left[i].ytt = 0;
     //  this.lib.rectm(c,x-pinw-0.5,y+k,pinw,pinh,1,'#ff9','#444')
     }
@@ -1455,7 +1464,7 @@ cv.style.height = rect.height/4 + 'px';
         h/(2*pos.right.length) - pinh/2
       pos.right[i].pinx= x+w+1
       pos.right[i].piny= y+k
-      pos.right[i].xtt = 5;
+      pos.right[i].xtt = 2+tstep;
       pos.right[i].ytt = 0;
     //  this.lib.rectm(c, x+w+0.5, y+k, pinw,pinh,1, '#9f9', '#444')
     }
@@ -1482,7 +1491,7 @@ cv.style.height = rect.height/4 + 'px';
         } else {
           c.textAlign='center'
         }
-       this.lib.textm(c,ins[i].pinx+ins[i].xtt,ins[i].piny+ins[i].ytt, ins[i].pin?ins[i].pin:i,5,styles['pinin'][0],'Arial','#333');
+       this.lib.textm(c,ins[i].pinx+ins[i].xtt,ins[i].piny+ins[i].ytt, ins[i].pin?ins[i].pin:i, fontSize, styles['pinin'][0],'Arial','#333');
       }
     }
     for(var i in outs) {
@@ -1495,7 +1504,7 @@ cv.style.height = rect.height/4 + 'px';
        } else {
          c.textAlign = 'center'
        }
-      this.lib.textm(c,outs[i].pinx+outs[i].xtt,outs[i].piny+outs[i].ytt, outs[i].pout?outs[i].pout:i ,5,styles['pinout'][0],'Arial','#333');
+      this.lib.textm(c,outs[i].pinx+outs[i].xtt,outs[i].piny+outs[i].ytt, outs[i].pout?outs[i].pout:i , fontSize, styles['pinout'][0],'Arial','#333');
      }
     }
     
@@ -1784,7 +1793,10 @@ smp0= compin.states[cinpout]
       dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)), smp0);
+       15,2, 
+	   (comp.id== this.m.isDragged || this.m.nodeSel.includes(comp.id) || this.m.compSel.includes(comp.id)),
+	   smp0,
+	   (z> 2)? 3:0);
     }
     
     for(var cid in comps) {
@@ -2036,7 +2048,9 @@ for(var l in lineNodes) {
         dglcvs.drawComp(c, comp,
        5+50*comp.x+pX+comp.xOfs,
        5+25*comp.y+pY+comp.yOfs,
-       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp0);
+       15,2, (comp.id== this.m.isDragged|| this.m.nodeSel.includes(comp.id)), smp0,
+	   (z>2)?3:0
+	   );
     
     }
     }
@@ -5151,13 +5165,15 @@ var comp= comps[this.m.compInf.sel]
    
    for(var p in comp.ins) {
      this.addMActionRect(
-     'chipSetupPin'+p, kqueue, comp.ins[p].pinx-7, comp.ins[p].piny-7, 20, 20, this.handlerMA.chipSetupPin, [comp.ins[p], p, comp,0]
+     'chipSetupPin'+p, kqueue, comp.ins[p].pinx-7, comp.ins[p].piny-7, 20, 20, 
+	 this.handlerMA.chipSetupPin, [comp.ins[p], p, comp,0],0,0
      );
    }
    
    for (var p in comp.outs) {
      this.addMActionRect(
-       'chipSetupPout' + p, kqueue, comp.outs[p].pinx-7, comp.outs[p].piny-7, 20, 20, this.handlerMA.chipSetupPin, [comp.outs[p], p, comp,1]
+       'chipSetupPout' + p, kqueue, comp.outs[p].pinx-7, comp.outs[p].piny-7, 20, 20,
+	   this.handlerMA.chipSetupPin, [comp.outs[p], p, comp,1],0,0
      );
    }
 
