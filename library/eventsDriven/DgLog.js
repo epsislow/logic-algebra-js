@@ -2442,7 +2442,7 @@ var dgl= {
       for(var ck in compKeys) {
 		var cid = compKeys[ck];
         var comp= comps[cid]
-		if (comp.id=='nand14' || comp.id=='nand15') {
+		if (comp.id=='nor2' || comp.id=='nor3') {
 			dd=1;
 			//console.log('pre',comp);
 		} else {
@@ -2505,12 +2505,13 @@ var dgl= {
 		  }
 		  
           dgl.chipInstances[this.chipInstance.path] = chipInstanceResult;
-		  if (!dgl.allChipInstances[this.chipInstance.path]) {
+		  /*if (!dgl.allChipInstances[this.chipInstance.path]) {
 			  dgl.allChipInstances[this.chipInstance.path] = [];
 		  }
           dgl.allChipInstances[this.chipInstance.path].push(chipInstanceResult);
+		  */
         } else {
-          dd && alert(chipPath+"\n"+comp.id+' '+i+' '+JSON.stringify(comp.inStates)+JSON.stringify(comp.states));
+          dd && console.log(chipPath+"\n"+comp.id+' '+i+' '+JSON.stringify(comp.inStates)+JSON.stringify(comp.states));
           
           pub.comp(comp, comps, refresh);
         }
@@ -2644,7 +2645,6 @@ var dgl= {
     }
     
     pub.all= function(refresh=0) {
-	  dgl.chipInstances = {};
       isRefresh=refresh;
 	  var firstChipActive = chipActive;
 	  if (dgl.m.bcrumbs.length) {
