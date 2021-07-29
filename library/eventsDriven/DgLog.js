@@ -2494,6 +2494,8 @@ var dgl= {
 		if((chipPath+'/'+comp.id) in dgl.chipInstances) {
 			chipInstanceComps = dgl.chipInstances[chipPath+'/'+comp.id].comp;
 		} else {
+		  console.log('not found in chipInstances: '+ chipPath+'/'+comp.id);
+		  
 			chipInstanceComps = JSON.parse(JSON.stringify(chip[chipType].comp));
 		}
         
@@ -2504,6 +2506,11 @@ var dgl= {
             states: {...inStates},
             outStates: {},
           };
+          
+          if(!dgl.chipInstancePath.includes(chipPath+'/'+comp.id)) {
+            
+          dgl.chipInstancePath.push(chipPath+'/'+ comp.id);
+          }
           
           pub.instance(comp, this.chipInstance, refresh);
           
@@ -2525,7 +2532,7 @@ var dgl= {
           dgl.allChipInstances[this.chipInstance.path].push(chipInstanceResult);
 		  */
         } else {
-          dd && console.log(chipPath+"\n"+comp.id+' '+i+' '+JSON.stringify(comp.inStates)+JSON.stringify(comp.states));
+          //dd && console.log(chipPath+"\n"+comp.id+' '+i+' '+JSON.stringify(comp.inStates)+JSON.stringify(comp.states));
           
           pub.comp(comp, comps, refresh);
         }
@@ -2810,7 +2817,7 @@ var dgl= {
   chipInstances:{},
   allChipInstances:{},
   diffChipInstances: {},
-  chipInstancePath:'',
+  chipInstancePath: [],
   chipInstanceInOuts: {
     'datain':{},
     'dataout': {},
@@ -4539,7 +4546,7 @@ var comp= comps[this.m.compInf.sel]
           comp.xOfs = 0
           comp.yOfs = 0
 		  
-		  console.log(comp);
+		  //console.log(comp);
       
           this.chip[this.chipActive].comp[comp.id] = comp;
           this.m.needsSave = 1;
@@ -4919,10 +4926,10 @@ var comp= comps[this.m.compInf.sel]
 	},
 	compCtrls: function(comp) {
 	  if (comp.type == 'controlled' || comp.type == 'pin') {
-	    console.log(comp.states);
+	    //console.log(comp.states);
 	    comp.states['out'] =
 	      comp.states['out'] == 1 ? 0 : 1
-	    console.log(comp.states);
+	    //console.log(comp.states);
 	    dgl.tick(1);
 	    cvs.draw(1);
 	  }
