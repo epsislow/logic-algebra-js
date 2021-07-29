@@ -3911,7 +3911,10 @@ var comp= comps[this.m.compInf.sel]
           }
           if(this.m.compInfo) {
             this.m.compInf.sel=comp.id;
-            
+            if(dglcvs.input) {
+				dglcvs.input.destroy();
+				dglcvs.input = 0;
+			}
             return;
           }
           
@@ -4967,6 +4970,10 @@ var comp= comps[this.m.compInf.sel]
 
 		if(comp.id=== this.m.compInf.sel) {
 			this.m.compInf.sel=0;
+			if(dglcvs.input) {
+				dglcvs.input.destroy();
+				dglcvs.input = 0;
+			}
 		}
 		delete this.chip[this.chipActive].comp[comp.id];
 		this.m.isDragged = 0;
@@ -5300,7 +5307,12 @@ var comp= comps[this.m.compInf.sel]
 	  if(!this.m.compInfo || !this.m.compInf.sel) {
 		  return;
 	  }
-	  
+	
+	if(dglcvs.input) {
+		dglcvs.input.destroy();
+		dglcvs.input = 0;
+	}
+			
 	var chip= this.chip[this.chipActive]
     var comps= chip.comp;
 	var comp= comps[this.m.compInf.sel];
@@ -5351,9 +5363,12 @@ var comp= comps[this.m.compInf.sel]
 	},
 	compInfoSel: function (comp) {
 		if (this.m.compInfo) {
-		  this.m.compInf.sel = comp.id;
-		
-		  return true;
+			this.m.compInf.sel = comp.id;
+			if(dglcvs.input) {
+				dglcvs.input.destroy();
+				dglcvs.input = 0;
+			}
+			return true;
 		}
 	},
 	stop: function() {
