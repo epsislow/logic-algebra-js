@@ -1,4 +1,4 @@
-class Comp{
+class Comp extends CompType{
 
 	constructor(type, name, x, y) {
 		this.pins = []
@@ -30,8 +30,42 @@ class Comp{
 	
 	disconnectPout() {
 	}
+	
+	notifyComps() {
+		for(var cc of this.connectedComps) {
+			cc.pout
+			cc.comp.subscriber(this.id, this.valuesSet);
+		}
+	}
 }
 
+
+class CompType{
+	const name;
+	
+	let draw = function() {
+	};
+	
+	const pins= {};
+	const outStates= {out: 0};
+	
+	set values(values) {
+		this.valuesSet = values;
+	}
+	
+	get values() {
+		return this.valuesSet;
+	}
+	
+	subscriber(pin, pinValue) {
+		this.calcValues(
+		return;
+	}
+	
+	calcValues(inStates = {}) {
+		return;
+	}
+}
 
 
 {
