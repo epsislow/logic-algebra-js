@@ -4016,7 +4016,8 @@ var comp= comps[this.m.compInf.sel]
             components[cid].revIns=(components[cid].revIns==1)?0:1
             return;
           }
-          if(this.m.addNode) {
+          
+  if(this.m.addNode) {
      if(this.m.nodeSel.includes(cid)) {
         continue;
      }
@@ -4028,7 +4029,8 @@ var comp= comps[this.m.compInf.sel]
     /**/
     }
     return;
-          }
+  }
+          
           this.m.isDragged = cid;
           if(comp.type=='controlled' || comp.type=='pin') {
     comp.states['out']=
@@ -4374,7 +4376,7 @@ var comp= comps[this.m.compInf.sel]
 	if(this.m.compInfo && this.m.compInf.sel) {
 	  this.addMActionRect('compInfo', 'start', 0, 0, 100, 195, this.handlerMA.compInfo)
 	}
-	
+
 	if(this.m.addComp) {
 		this.addMActionRect(
 		  'addCompHdl', 'start', 
@@ -5029,13 +5031,44 @@ var comp= comps[this.m.compInf.sel]
 			return true;
 		}
 	},
+	nodeAdd: function(comp) {
+	  var cid = comp.id;
+	  
+  if(!this.m.addNode) {
+    return; 
+  }
+	  if (this.m.nodeSel.includes(cid)) {
+	    this.m.nodeSel.splice(this.m.nodeSel.indexOf(cid), 1);
+	    return true;
+	  }
+	  this.m.nodeSel.push(cid);
+	  
+	  if (this.m.nodeSel.length >= 2) {
+	    this.addNodeC(this.m.nodeSel);
+	    this.m.nodeSel = []
+	    /**/
+	  }
+	  cvs.draw(1);
+	  return true;
+	},
     compHdl: function(comp, comps) {
+      
+      var kqueue= {};
+      
+     if (this.m.addNode) {
+       this.addMActionNoXY(
+         'nodeAdd', kqueue,
+         this.handlerMA.nodeAdd, [comp]
+       );
+       return kqueue;
+     }
+     
       this.m.isDragged = comp.id;
         
       this.m.comp_old_x = comp.xOfs;
       this.m.comp_old_y = comp.yOfs;
       
-      var kqueue= {};
+  
 
 	  this.addMActionNoXY(
         'compDelH', kqueue,
