@@ -2184,6 +2184,7 @@ var dgl= {
 	zoom: 1,
     actions: {},
     nodeSel:[],
+    nodeSelIo:[],
 	  needsSave: 0,
     chgIns:0,
     addNode:0,
@@ -4029,6 +4030,7 @@ var comp= comps[this.m.compInf.sel]
      if(this.m.nodeSel.includes(cid)) {
         continue;
      }
+
      this.m.nodeSel.push(cid);
             
     if(this.m.nodeSel.length>=2) {
@@ -5045,10 +5047,14 @@ var comp= comps[this.m.compInf.sel]
   if(!this.m.addNode) {
     return; 
   }
-	  if (this.m.nodeSel.includes(cid)) {
-	    this.m.nodeSel.splice(this.m.nodeSel.indexOf(cid), 1);
+  var ci=comp.inputs[comp.nextInput];
+  var co=comp.outputs[comp.nextOutput];
+  var cido= cid+'^'+ci+'^'+co;
+	  if (this.m.nodeSel.includes(cido)) {
+	    this.m.nodeSel.splice(this.m.nodeSel.indexOf(cido), 1);
 	    return true;
 	  }
+    this.m.nodeSelIo.push(cid);
 	  this.m.nodeSel.push(cid);
 	  
 	  if (this.m.nodeSel.length >= 2) {
@@ -5077,6 +5083,11 @@ var comp= comps[this.m.compInf.sel]
       this.m.comp_old_y = comp.yOfs;
       
   
+    comp.nextInput++;
+    comp.nextInput %= comp.inputs.length
+    
+    comp.nextOutput++;
+    comp.nextOutput %= comp.outputs.length
 
 	  this.addMActionNoXY(
         'compDelH', kqueue,
