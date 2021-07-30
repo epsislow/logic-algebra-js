@@ -3291,17 +3291,25 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       return true;
   },
   addNodeC: function(cids) {
-    var components= this.chip[this.chipActive].comp;
+    var comps= this.chip[this.chipActive].comp;
 	  
     var which=0;
-    if(cids[1] in components[cids[0]].ins) {
+    for(var cc in comps[cids[0]].ins) {
+      var cd = comps[cids[0]].ins[cc];
+      if(('id' in cd) && (cd.id == cids[0])) {
       console.log('y1')
       which=[cids[1],cids[0]];
+      }
     }
-    if(cids[0] in components[cids[1]].ins) {
-      console.log('y2')
-      which=[cids[0],cids[1]];
+    
+    for (var cc in comps[cids[1]].ins) {
+      var cd = comps[cids[1]].ins[cc];
+      if (('id' in cd) && (cd.id == cids[0])) {
+        console.log('y2')
+        which = [cids[1], cids[0]];
+      }
     }
+
     if(!which) {
       console.log('n');
       return;
@@ -3310,8 +3318,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     this.node[next] = {
       from:which[0],
       to:which[1],
-      x:components[which[0]].x*50+25,
-      y:components[which[1]].y*25+35
+      x:comps[which[0]].x*50+25,
+      y:comps[which[1]].y*25+35
     }
     
    // const idx1=cids[0]+'_'+cids[1];
