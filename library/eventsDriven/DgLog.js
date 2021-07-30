@@ -5716,7 +5716,7 @@ if (typeof e.touches != 'undefined') {
   },
   stopAutoTick: function () {
          clearInterval(dgl.timeInterval);
-  }
+  },
   tick: function(refresh=0) {
     cvsIteration++;
     dgl.eval().all(refresh);
