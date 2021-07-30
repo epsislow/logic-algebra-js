@@ -5707,6 +5707,16 @@ if (typeof e.touches != 'undefined') {
     	}
     cvs.draw(1)
   },
+  startAutoTick: function (interval = 1500) {
+         dgl.timeInterval = setInterval(function () {
+                 console.log('<tick>');
+                 dgl.tick(0);
+                 cvs.draw(1)
+         }, interval);
+  },
+  stopAutoTick: function () {
+         clearInterval(dgl.timeInterval);
+  }
   tick: function(refresh=0) {
     cvsIteration++;
     dgl.eval().all(refresh);
