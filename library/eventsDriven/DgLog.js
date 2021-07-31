@@ -3291,47 +3291,43 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       this.m.needsSave = 1;
       return true;
   },
-  addNodeC: function(cids) {
-    var comps= this.chip[this.chipActive].comp;
+  addNodeC: function(cids, cios, comps) {
 	  
-    var which=0;
-    for(var cc in comps[cids[0]].ins) {
-      var cd = comps[cids[0]].ins[cc];
-      if(('id' in cd) && (cd.id == cids[0])) {
-      console.log('y1')
-      which=[cids[1],cids[0]];
-      }
-    }
+    var which=[cids[0], cids[1]];
+    var wpin=[cios[0], cios[1]];
+    console.log(cids, cios);
     
-    for (var cc in comps[cids[1]].ins) {
-      var cd = comps[cids[1]].ins[cc];
-      if (('id' in cd) && (cd.id == cids[0])) {
-        console.log('y2')
-        which = [cids[1], cids[0]];
-      }
-    }
-
-    if(!which) {
-      console.log('n');
+    var outt=comps[cids[0]]
+      .outs[cios[0]];
+    var inn=comps[cids[1]]
+      .ins[cios[1]];
+      console.log(outt, inn)
+    if(!('id' in outt) || outt.id !== cids[1] || outt.pin !== cios[1]) {
+      console.log('n1')
       return;
     }
+    
+    if(!('id' in inn) || inn.id !== cids[0] || inn.pout !== cios[0]) {
+      console.log('n2')
+      return;
+    }
+    
     var next =this.node.length;
     this.node[next] = {
       from:which[0],
+      pout:wpin[0],
       to:which[1],
+      pin:wpin[1],
       x:comps[which[0]].x*50+25,
       y:comps[which[1]].y*25+35
     }
     
-   // const idx1=cids[0]+'_'+cids[1];
-  //  const idx2=cids[1]+'_'+cids[0];
-  const idx1=which.join('_');
+  const idx1=which[0]+'^'+wpin[0]+'_'+which[1]+'^'+wpin[1];
     if(!(idx1 in this.nodeConn)) {
       this.nodeConn[idx1]=[];
-    //  this.nodeConn[idx2]=[];
     }
     this.nodeConn[idx1].push(next);
-   // this.nodeConn[idx2].push(next);
+    
     var len=Object.keys(this.nodeConn[idx1]).length
     this.node[next][Math.round(Math.random())==1?'x':'y']+=5*len;
 	
@@ -5041,25 +5037,35 @@ var comp= comps[this.m.compInf.sel]
 			return true;
 		}
 	},
-	nodeAdd: function(comp) {
+	nodeAdd: function(comp, comps) {
 	  var cid = comp.id;
 	  
   if(!this.m.addNode) {
     return; 
   }
-  var ci=comp.inputs[comp.nextInput];
-  var co=comp.outputs[comp.nextOutput];
-  var cido= cid+'^'+ci+'^'+co;
-	  if (this.m.nodeSel.includes(cido)) {
-	    this.m.nodeSel.splice(this.m.nodeSel.indexOf(cido), 1);
+  var ci;
+  
+  ci=(this.m.nodeSel.length===0)? 
+    comp.outputs[comp.nextOutput]
+    :comp.inputs[comp.nextInput];
+  
+  
+	  if (this.m.nodeSel.includes(cid)) {
+	    //this.m.nodeSel.splice(this.m.nodeSel.indexOf(cid), 1);
+	    
 	    return true;
 	  }
-    this.m.nodeSelIo.push(cid);
+    this.m.nodeSelIo.push(ci);
 	  this.m.nodeSel.push(cid);
 	  
 	  if (this.m.nodeSel.length >= 2) {
-	    this.addNodeC(this.m.nodeSel);
+	    this.addNodeC(
+	        this.m.nodeSel, 
+	        this.m.nodeSelIo, comps
+	    );
+	    
 	    this.m.nodeSel = []
+	    this.m.nodeSelIo = [];
 	    /**/
 	  }
 	  cvs.draw(1);
@@ -5072,7 +5078,7 @@ var comp= comps[this.m.compInf.sel]
      if (this.m.addNode) {
        this.addMActionNoXY(
          'nodeAdd', kqueue,
-         this.handlerMA.nodeAdd, [comp]
+         this.handlerMA.nodeAdd, [comp,comps]
        );
        return kqueue;
      }
