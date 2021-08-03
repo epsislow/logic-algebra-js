@@ -1,4 +1,33 @@
-class Comp extends CompType{
+class CompDecorator {
+	
+	constructor(compDec = false) {
+		if (compDec !== false && compDec.constructor.name != 'CompDecorator') {
+			throw new Error("Expected CompDecorator");
+		}
+		this.nextDec = compDec;
+	}
+	
+	applyDec(name = 'def') {
+		if (this.nextDec) {
+			console.log(this.nextDec.applyDec(name));
+		}
+		return this[name]();
+	}
+	
+	def() {
+		return this.constructor.name;
+	}
+}
+
+
+let c = new CompDecorator();
+
+let d = new CompDecorator(c);
+let e = new CompDecorator(d);
+console.log(e.applyDec());
+
+/*
+class Comp extends Evaled{
 
 	constructor(type, name, x, y) {
 		this.pins = []
@@ -39,14 +68,14 @@ class Comp extends CompType{
 	}
 }
 
-
-class CompType{
-	const name;
+class Evaled{
+	const name
 	
 	let draw = function() {
 	};
 	
 	const pins= {};
+	const inStates= {};
 	const outStates= {out: 0};
 	
 	set values(values) {
@@ -58,15 +87,20 @@ class CompType{
 	}
 	
 	subscriber(pin, pinValue) {
-		this.calcValues(
-		return;
+		if (inStates[pin] == pinValue) {
+			return false;
+		}
+		calcValues(inStates);
+		
+		return true;
 	}
 	
 	calcValues(inStates = {}) {
-		return;
+		 return;
 	}
 }
-
+*/
+/*
 
 {
 	id:newid,
@@ -87,3 +121,6 @@ class CompType{
 	revIns:0,
 	states: {},
 }
+*/
+
+export {CompDecorator};

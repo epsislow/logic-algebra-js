@@ -90,10 +90,13 @@
 
 
 <script type="module">
+import { CompDecorator } from '/library/eventsDriven/DGComp.js'
 import { dglcvs, dgl, debug } from '/library/eventsDriven/DgLog.js'
+import { Storage } from '/library/storage/Storage.js'
 window.dgl =  dgl;
 window.dglcvs =  dglcvs;
 window.debug =  debug;
+window.Storage = Storage;
 
 $('document').ready(function() {
   
@@ -116,6 +119,7 @@ $('document').ready(function() {
 		
 		console.log('-- Load finished --');
         doc.start();
+		Storage.start();
         dgl.start();
 		
       })

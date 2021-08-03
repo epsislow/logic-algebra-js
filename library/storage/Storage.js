@@ -76,7 +76,7 @@ var Storage = (function () {
     return "never";
   }
   
-  pub.start= function() {
+  pub.start0= function() {
      if (navigator.storage && navigator.storage.persist)
    navigator.storage.persist().then(function(persistent) {
      if (persistent)
@@ -84,12 +84,256 @@ var Storage = (function () {
      else
        console.log("Storage may be cleared by the UA under storage pressure.");
    }); 
-  
   }
+  
+  pub.start = function() {
+	  pub.idxdb.idx = window.indexedDB
+                     || window.webkitIndexedDB
+                     || window.mozIndexedDB;
+					 
+					 
+	  pub.idxdb.schema.add('test');
+	  pub.idxdb.schema.add('comp');
+	  pub.idxdb.open('testDb');
+	  
+					 /*
+	if ( 'webkitIndexedDB' in window ) {
+		window.IDBCursor = window.webkitIDBCursor;
+		window.IDBDatabase = window.webkitIDBDatabase;
+		window.IDBDatabaseError = window.webkitIDBDatabaseError;
+		window.IDBDatabaseException = window.webkitIDBDatabaseException;
+		window.IDBErrorEvent = window.webkitIDBErrorEvent;
+		window.IDBEvent = window.webkitIDBEvent;
+		window.IDBFactory = window.webkitIDBFactory;
+		window.IDBIndex = window.webkitIDBIndex;
+		window.IDBKeyRange = window.webkitIDBKeyRange;
+		window.IDBObjectStore = window.webkitIDBObjectStore;
+		window.IDBRequest = window.webkitIDBRequest;
+		window.IDBSuccessEvent = window.webkitIDBSuccessEvent;
+		window.IDBTransaction = window.webkitIDBTransaction;
+		window.indexedDB = window.webkitIndexedDB;
+	} else if ( 'mozIndexedDB' in window ) {
+		window.indexedDB = window.mozIndexedDB;
+	}*/
+  }
+  
+  pub.idxdb = {
+	  idx: null,
+	  db: null,
+	  
+	  open: function(dbName, ver = 1) {
+		  const req = this.idx.open(dbName, ver);
+		  
+		  req.onerror = function (e) {
+			  console.log('problem opening Db:'+dbName);
+		  }
+		  
+		  var that = this;
+		  
+		  req.onupgradeneeded = function (e) {
+			  console.log('onupgradeneeded');
+			  //db not exists/ diff version
+			  that.db = e.target.result;
+			  
+			  that.schemaUpgrade();
+		  };
+		  
+		  req.onsuccess = function (e) {
+			  that.db = e.target.result;
+			  console.log('db:'+dbName+' opended');
+		  }
+		  
+		  console.log(req);
+	  },
+	  
+	  drop: function(dbName) {
+		  const req = this.idx.deleteDatabase(dbName);
+		  console.log('here drop');
+		  
+		  req.onerror = function (e) {
+			  console.log('Error on drop db:');
+		  }
+		  
+		  req.onsuccess = function (e) {
+			  console.log('db was deleted.');
+		  }
+	  },
+	  schemaUpgrade: function () {
+		console.log('here schemaUpgrade');
+		if(!this.db) {
+		  console.log('No db opened.');
+		  return;
+		}
+
+		console.log(this.schema.stores);
+
+		for(var s in this.schema.stores) {
+		  this.storeAdd(s, this.schema.stores[s]);
+		}
+	  },
+	  schema: {
+		stores: {},
+		add: function (name, settings = { keyPath: 'id'}) {
+		  this.stores[name] = settings;
+		}
+	  },
+	  storeAdd: function(name, settings) {
+		console.log(name,settings);
+		const store = this.db.createObjectStore(name, settings);
+		
+		store.createIndex(settings.keyPath, settings.keyPath, { unique: true });
+	
+		store.transaction.oncomplete = function(e) {
+			console.log('Table:'+name+' created.');
+		}
+	  },
+
+	  insert: function(storeName, records) {
+		  if(!this.db) {
+			  console.log('No db opened.');
+			  return;
+		  }
+		  
+		  const insert_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readwrite');
+		  const store = insert_transaction.objectStore(storeName);
+		  
+		  insert_transaction.onerror = function() {
+			  console.log('Problem with insert transaction on store:'+storeName);
+		  }
+		  
+		  insert_transaction.oncomplete = function() {
+			  console.log('Success insert transaction on store:'+storeName);
+		  }
+		  
+		  records.forEach(record => {
+			  let req = store.add(record);
+			  req.onerror = function(e) {
+				  console.log('Could not add record to '+storeName, record);
+			  }
+			  
+			  req.onsuccess = function(e) {
+				  console.log('Success added record to '+storeName, record);
+			  }
+		  });
+	  },
+	  get: function(storeName, key) {
+		  if(!this.db) {
+			  console.log('No db opened.');
+			  return;
+		  }
+		  const get_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readonly');
+		  const store = get_transaction.objectStore(storeName);
+		  
+		  get_transaction.onerror = function() {
+			  console.log('Problem with get transaction on store:' + storeName);
+		  }
+		  
+		  get_transaction.oncomplete = function() {
+			  console.log('Success get transaction on store:' + storeName);
+		  }
+		  
+		  let req = store.get(key);
+		  req.onerror = function(e) {
+			  console.log('Could not get record '+key+' from ' + storeName);
+		  }
+		  
+		  req.onsuccess = function(e) {
+			  console.log('Success got record '+key+' from ' + storeName, e.target.result);
+		  }
+	  },
+	  getAll: function(storeName) {
+		  if(!this.db) {
+			  console.log('No db opened.');
+			  return;
+		  }
+		  const get_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readonly');
+		  const store = get_transaction.objectStore(storeName);
+		  
+		  get_transaction.onerror = function() {
+			  console.log('Problem with getAll transaction on store:' + storeName);
+		  }
+		  
+		  get_transaction.oncomplete = function() {
+			  console.log('Success getAll transaction on store:' + storeName);
+		  }
+		  
+		  let req = store.getAll();
+		  req.onerror = function(e) {
+			  console.log('Could not get all records from ' + storeName);
+		  }
+		  
+		  req.onsuccess = function(e) {
+			  console.log('Success got all records  from ' + storeName, e.target.result);
+		  }
+	  },
+	  update: function() {
+		  if(!this.db) {
+			  console.log('No db opened.');
+			  return;
+		  }
+		  
+		  const get_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readwrite');
+		  const store = insert_transaction.objectStore(storeName);
+		  
+		  insert_transaction.onerror = function() {
+			  console.log('Problem with insert transaction on store:'+storeName);
+		  }
+		  
+		  insert_transaction.oncomplete = function() {
+			  console.log('Success insert transaction on store:'+storeName);
+		  }
+		  
+		  records.forEach(record => {
+			  let req = store.add(record);
+			  req.onerror = function(e) {
+				  console.log('Could not add record to '+storeName, record);
+			  }
+			  
+			  req.onsuccess = function(e) {
+				  console.log('Success added record to '+storeName, record);
+			  }
+		  });
+	  },
+	  del: function() {
+		  if(!this.db) {
+			  console.log('No db opened.');
+			  return;
+		  }
+		  
+		  const get_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readwrite');
+		  const store = insert_transaction.objectStore(storeName);
+		  
+		  insert_transaction.onerror = function() {
+			  console.log('Problem with insert transaction on store:'+storeName);
+		  }
+		  
+		  insert_transaction.oncomplete = function() {
+			  console.log('Success insert transaction on store:'+storeName);
+		  }
+		  
+		  records.forEach(record => {
+			  let req = store.add(record);
+			  req.onerror = function(e) {
+				  console.log('Could not add record to '+storeName, record);
+			  }
+			  
+			  req.onsuccess = function(e) {
+				  console.log('Success added record to '+storeName, record);
+			  }
+		  });
+	  },
+  };
   
   return pub;
 })();
 
 var debug= {is: true};
+
+/*
+Storage.start();
+Storage.idxdb.schema.add('test');
+Storage.idxdb.create('testDb');
+Storage.idxdb.drop('testDb');  
+*/
 
 export {Storage, debug}
