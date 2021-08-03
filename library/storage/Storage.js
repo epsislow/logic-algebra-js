@@ -94,10 +94,13 @@ var Storage = (function () {
 					 
 	  pub.idxdb.schema.add('test');
 	  pub.idxdb.schema.add('comp');
-	  pub.idxdb.open('testDb');
+	  pub.idxdb.open(
+	    'testDb',1,
 	  
+	   function() {
+	     Storage.idxdb.insert('comp', [{'id': 1, 'someObj':{'a':'b','x':0,'y':1}}])
 	  
-	  Storage.idxdb.insert('comp', [{'id': 1, 'someObj':{'a':'b','x':0,'y':1}}])
+	   });
 	  
 	  
 					 /*
@@ -147,7 +150,7 @@ var Storage = (function () {
 	  idx: null,
 	  db: null,
 	  
-	  open: function(dbName, ver = 1) {
+	  open: function(dbName, ver = 1, next) {
 		  const req = this.idx.open(dbName, ver);
 		  
 		  req.onerror = function (e) {
@@ -167,6 +170,8 @@ var Storage = (function () {
 		  req.onsuccess = function (e) {
 			  that.db = e.target.result;
 			  console.log('db:'+dbName+' opended');
+			  
+			  next();
 		  }
 		  
 		  console.log(req);
