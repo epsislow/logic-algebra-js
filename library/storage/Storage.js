@@ -96,6 +96,10 @@ var Storage = (function () {
 	  pub.idxdb.schema.add('comp');
 	  pub.idxdb.open('testDb');
 	  
+	  
+	  Storage.idxdb.insert('comp', [{'id': 1, 'someObj':{'a':'b','x':0,'y':1}}])
+	  
+	  
 					 /*
 	if ( 'webkitIndexedDB' in window ) {
 		window.IDBCursor = window.webkitIDBCursor;
@@ -116,6 +120,28 @@ var Storage = (function () {
 		window.indexedDB = window.mozIndexedDB;
 	}*/
   }
+  
+  
+	const workers = {};
+  
+	function customWorker(name, workFunc, messageHdl, errorHdl) {
+		if (name in workers) {
+			return workers[name];
+		}
+
+		let blobWork = new Blob(["onmessage =" + workFunc.toString()], {type: "text/javascript"});
+
+		workers[name] = new Worker(URL.createObjectURL(blobWork));
+
+		workers[name].onmessage = messageHdl;
+
+		if (typeof errorHdl == 'function') {
+			workers[name].onerror = errorHdl;
+		}
+
+		return workers[name];
+	}
+	
   
   pub.idxdb = {
 	  idx: null,
@@ -146,6 +172,34 @@ var Storage = (function () {
 		  console.log(req);
 	  },
 	  
+	  dropAllDbs: function() {
+		var workThatDropAll = customWorker(
+			'dropAllDbs', 
+			function (data) {
+				//worker fn
+				const idd = indexedDB
+                     || webkitIndexedDB
+                     || mozIndexedDB;
+				
+				const deletedDbs = [];
+				
+				const promise = indexedDB.databases();
+				
+				idd.databases().then(dbs => dbs.forEach(db => {idd.deleteDatabase(db.name); deletedDbs.push(db.name);})).then();
+				self.postMessage(deletedDbs);
+			},
+			function (deletedDbs) {
+				//success hdl
+				console.log('deleted databases: '+ deletedDbs.join(','));
+			},
+			function (e) {
+				//error hdl
+				console.log('Error? What error? ', e.message);
+			}
+		);
+		
+		workThatDropAll.postMessage(1);
+	  },
 	  drop: function(dbName) {
 		  const req = this.idx.deleteDatabase(dbName);
 		  console.log('here drop');
@@ -240,6 +294,7 @@ var Storage = (function () {
 		  req.onsuccess = function(e) {
 			  console.log('Success got record '+key+' from ' + storeName, e.target.result);
 		  }
+		  
 	  },
 	  getAll: function(storeName) {
 		  if(!this.db) {
@@ -266,59 +321,57 @@ var Storage = (function () {
 			  console.log('Success got all records  from ' + storeName, e.target.result);
 		  }
 	  },
-	  update: function() {
+	  update: function(storeName, record) {
 		  if(!this.db) {
 			  console.log('No db opened.');
 			  return;
 		  }
 		  
-		  const get_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readwrite');
-		  const store = insert_transaction.objectStore(storeName);
+		  const update_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readwrite');
+		  const store = update_transaction.objectStore(storeName);
 		  
-		  insert_transaction.onerror = function() {
-			  console.log('Problem with insert transaction on store:'+storeName);
+		  update_transaction.onerror = function() {
+			  console.log('Problem with update transaction on store:'+storeName);
 		  }
 		  
-		  insert_transaction.oncomplete = function() {
-			  console.log('Success insert transaction on store:'+storeName);
+		  update_transaction.oncomplete = function() {
+			  console.log('Success update transaction on store:'+storeName);
 		  }
 		  
-		  records.forEach(record => {
-			  let req = store.add(record);
-			  req.onerror = function(e) {
-				  console.log('Could not add record to '+storeName, record);
-			  }
-			  
-			  req.onsuccess = function(e) {
-				  console.log('Success added record to '+storeName, record);
-			  }
-		  });
+		  let req = store.put(record);
+		  req.onerror = function(e) {
+			  console.log('Could not update record to '+storeName, record);
+		  }
+		  
+		  req.onsuccess = function(e) {
+			  console.log('Success updated record to '+storeName, record);
+		  }
 	  },
-	  del: function() {
+	  delete: function(storeName, key) {
 		  if(!this.db) {
 			  console.log('No db opened.');
 			  return;
 		  }
 		  
 		  const get_transaction = this.db.transaction(Object.keys(this.schema.stores), 'readwrite');
-		  const store = insert_transaction.objectStore(storeName);
+		  const store = delete_transaction.objectStore(storeName);
 		  
-		  insert_transaction.onerror = function() {
-			  console.log('Problem with insert transaction on store:'+storeName);
+		  delete_transaction.onerror = function() {
+			  console.log('Problem with insert transaction on store:' + storeName);
 		  }
 		  
-		  insert_transaction.oncomplete = function() {
-			  console.log('Success insert transaction on store:'+storeName);
+		  delete_transaction.oncomplete = function() {
+			  console.log('Success insert transaction on store:' + storeName);
 		  }
 		  
 		  records.forEach(record => {
-			  let req = store.add(record);
+			  let req = store.delete(key);
 			  req.onerror = function(e) {
-				  console.log('Could not add record to '+storeName, record);
+				  console.log('Could not delete record '+key+' from '+storeName, record);
 			  }
 			  
 			  req.onsuccess = function(e) {
-				  console.log('Success added record to '+storeName, record);
+				  console.log('Success deleted record '+key+' from '+storeName, record);
 			  }
 		  });
 	  },
