@@ -7,7 +7,7 @@
 var Workers = (function () {
 	const workers = {};
   
-	const pub = {
+	var pub = {
 		add: function(name, workFunc, messageHdl, errorHdl, debug = 0) {
 			pub.create(
 				name,
@@ -72,6 +72,8 @@ var Workers = (function () {
 			}
 		},
 	}
+	
+	return pub;
 })();
 
 export { Workers }

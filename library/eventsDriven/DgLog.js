@@ -1,4 +1,8 @@
+import { Storage, debug as StorageDebug } from '/library/storage/Storage.js'
 import cacheSv from './DgLog-cache1.js';
+
+//StorageDebug.is = false;
+StorageDebug.level = StorageDebug.const.B_ALL;
 
 const indexBy = (array, prop) => array.reduce((output, item) => {
   output[item[prop]] = item;
@@ -2939,9 +2943,99 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	savedSlots: {},
     slots: ['default', 'key1', 'key2'],
     currentSlot: 0,
+	currentStorageMgr: 'localStorage',
+	storage: {
+		dbopend: false,
+		initIdxdb: function () {
+			Storage.start();
+			Storage.idxdb.schema.add('dgldb', 'dgl');
+			Storage.idxdb.open('dgldb', 1, this.initDefaults);
+		},
+		initDefaults: function () {
+			dgl.cache.storage.dbopend = 1;
+			
+			dgl.cache.loadSlotsInfo();
+		},
+		has: function(key, next) {
+			Storage.idxdb.has('dgl', key, next);
+		},
+		get: function(key, next) {
+			Storage.idxdb.get('dgl', key, function (record) {return next(record.value)});
+		},
+		set: function(key, value, next = 0) {
+			Storage.idxdb.update('dgl', [{'id': key, 'value': value}], next);
+		},
+		remove: function(keys, next=0) {
+			Storage.idxdb.delete('dgl', keys, next);
+		},
+		addToChain(next, chainObj) {
+			chainObj.hdls.push(next);
+		},
+		nextInChain: function(chainObj) {
+			if(!chainObj.hdls.length) {
+				return 0;
+			}
+			
+			return chainObj.hdls.shift();
+		},
+		execChain: function(chainObj) {
+			if(!chainObj.hdls.length) {
+				return 0;
+			}
+			
+			chainObj.hdls.shift()();
+		}
+	},
 	loadSlotsInfo: function (zip=1) {
+		var slotsInfoObj = {hdls:[]};
+		
+		var that = this;
+		console.log('loadSlotsInfo');
+		slotsInfoObj.hdls.push(function () {
+			console.log('slotsInfoObj.has dgl.slots.info');
+			that.storage.has("dgl.slots.info", that.storage.nextInChain(slotsInfoObj))
+		});
+		
+		slotsInfoObj.hdls.push(function (exists) {
+			if (!exists) {
+				return;
+			}
+			console.log('slotsInfoObj.get dgl.slots.info');
+			that.storage.get("dgl.slots.info", that.storage.nextInChain(slotsInfoObj))
+		});
+		
+		slotsInfoObj.hdls.push(function (string) {
+			console.log('after slotsInfoObj.get success');
+			if(!string) {
+				return 0;
+			}
+			
+			console.log('slotsInfoObj.get decompress');
+
+		  if(zip) {
+			string=LZString
+			  .decompressFromUTF16(string);
+		  }
+		  
+		  const data= JSON.parse(string);
+		  
+		  if (data.slots) {
+			that.slots = data.slots;
+		  }
+		  if (data.savedSlots) {
+			that.savedSlots= data.savedSlots;
+		  }
+		  if (data.currentSlot) {
+			that.currentSlot = data.currentSlot;
+		  }
+		  
+		  console.log('Slots info:', data);
+		});
+		
+		this.storage.execChain(slotsInfoObj);
+	},
+	loadSlotsInfo0: function (zip=1) {
       var string= localStorage.getItem("dgl.slots.info");
-	  
 	  
 	  if (string===null) {
 		  return;
@@ -2966,8 +3060,38 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
 	  console.log('Slots info:', data);
 	},
-	
 	saveSlotsInfo: function(zip=1) {
+	  console.log('saveSlotsInfo');
+	  const data= {
+        slots: this.slots,
+		savedSlots: this.savedSlots,
+		currentSlot: this.currentSlot,
+      };
+	  
+      var string = JSON.stringify(data);
+	  
+      if(zip) {
+        string = LZString
+        .compressToUTF16(string);
+		
+		console.log("Compressed: " + string.length);
+      } 
+	  
+	  var slotsInfoObj = {hdls:[]};
+	  var that = this;
+	  slotsInfoObj.hdls.push(function () {
+		console.log('slotsInfoObj.set dgl.slots.info');
+		that.storage.set("dgl.slots.info", string,  that.storage.nextInChain(slotsInfoObj))
+	  });
+      
+	  slotsInfoObj.hdls.push(function () {
+       console.log('Saved SlotsInfo');
+	  });
+	  
+	  
+	  this.storage.execChain(slotsInfoObj);
+	},
+	saveSlotsInfo0: function(zip=1) {
 	  const data= {
         slots: this.slots,
 		savedSlots: this.savedSlots,
@@ -2987,8 +3111,44 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       
        console.log('Saved SlotsInfo');
 	},
-	
-    save: function(slotId=0, zip=1) {
+	save: function(slotId=0, zip=1) {
+	  this.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
+	  this.saveSlotsInfo();
+	  
+	  slotId = slotId==0? '': slotId;
+      const data= {
+        chipActive: dgl.chipActive,
+        chip: dgl.chip,
+        mpan: dgl.m.pan,
+        node: dgl.node,
+        nodeConn: dgl.nodeConn,
+		bcrumbs: dgl.m.bcrumbs,
+		bcrumbIds: dgl.m.bcrumbIds,
+      };
+      
+      var string = JSON.stringify(data);
+
+      if(zip) {
+        string = LZString
+        .compressToUTF16(string);
+      }
+      console.log("Compressed: " + string.length);
+	  
+	  var chainObj = {hdls:[]};
+	  var that = this;
+	  chainObj.hdls.push(function () {
+		console.log('Pre-save chainObj');
+		that.storage.set("dgl.data"+slotId, string, that.storage.nextInChain(chainObj))
+	  });
+      
+	  chainObj.hdls.push(function () {
+       console.log('Saved Comps');
+	  });
+	  
+	  this.storage.execChain(chainObj);
+	  
+	},
+    save0: function(slotId=0, zip=1) {
 	  this.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
 	  
 	  slotId = slotId==0? '': slotId;
@@ -3028,22 +3188,104 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         .compressToUTF16(string);
       } 
       console.log("Compressed: " + string.length);
-      localStorage.setItem("dgl.data"+slotId, string);
+      localStorage.setItem("dgl.data"+slotId, string); 
       
        console.log('SavedCacheSv');
 	},
 	remove: function(slotId) {
+	  slotId = slotId==0? '': slotId;
+	  
+	  var chainObj = {hdls:[]};
+	  var that = this;
+	  
+	  chainObj.hdls.push(function () {
+		console.log('Pre-delete slot');
+		that.storage.remove(["dgl.data"+slotId], that.storage.nextInChain(chainObj))
+	  });
+	  
+	  slotId = slotId==''? 0: slotId;
+	  delete this.savedSlots[parseInt(slotId)];
+	  
+	  chainObj.hdls.push(function () {
+		console.log('Slot '+slotId+' deleted');
+	  });
+	  this.storage.execChain(chainObj);
+
+      this.saveSlotsInfo();
+	},
+	remove0: function(slotId) {
 	  slotId = slotId==0? '': slotId;
 	  localStorage.removeItem("dgl.data"+ slotId);
 	  
 	  slotId = slotId==''? 0: slotId;
 	  delete this.savedSlots[parseInt(slotId)];
 	  
-    this.saveSlotsInfo();
+      this.saveSlotsInfo();
 	},
-    load: function(slotId='', zip=1) {
+	load: function(slotId='', zip=1) {
 	  slotId = slotId==0? '': slotId;
-	  var slotId = slotId==0? '': slotId;
+	  
+	  var chainObj = {hdls:[]};
+	  var that = this;
+	  
+	  chainObj.hdls.push(function () {
+		console.log('Pre-load chainObj');
+		that.storage.get("dgl.data"+slotId, that.storage.nextInChain(chainObj))
+	  });
+      
+	  chainObj.hdls.push(function (string) {
+		  if (string === null) {
+			  return false;
+		  }
+		  
+		//  console.log(string);
+		  if(zip) {
+			string=LZString
+			  .decompressFromUTF16(string);
+		  }
+		  const data= JSON.parse(string);
+		  
+		//  console.log(data);
+		  dgl.chip= data.chip;
+		  dgl.chipActive = data.chipActive;
+		  dgl.m.pan= data.mpan;
+		  dgl.node= data.node;
+		  if (data.bcrumbs) {
+			dgl.m.bcrumbs = data.bcrumbs;
+		  }
+		  if (data.bcrumbIds) {
+			dgl.m.bcrumbIds = data.bcrumbIds;
+		  }
+		  
+	  
+		var buf;
+		for(var j in data.nodeConn) {
+			buf=[];
+		  for(var k in data.nodeConn[j]) {
+			if(!dgl.node[data.nodeConn[j][k]]) {
+			  continue
+			}
+			buf.push(data.nodeConn[j][k]);
+		  }
+		  dgl.nodeConn[j] = buf;
+		}
+		
+		dgl.cleanUpErrors();
+		dgl.initCompTypeProjectChip();
+		dgl.m.needsSave = 0;
+		console.log('Loaded comp');
+		  
+	    slotId = slotId==''? 0: slotId;
+	    that.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
+		that.saveSlotsInfo();
+		  
+		cvs.draw(1);
+	  });
+	  
+	  this.storage.execChain(chainObj);
+	},
+    load0: function(slotId='', zip=1) {
+	  slotId = slotId==0? '': slotId;
 	  
       var string= localStorage.getItem("dgl.data"+ slotId);
 	  
@@ -3072,7 +3314,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
 	  slotId = slotId==''? 0: slotId;
 	  this.savedSlots[parseInt(slotId)] = {chips: Object.keys(dgl.chip).length};
-    //  dgl.nodeConn= data.nodeConn;
+
     var buf;
     for(var j in data.nodeConn) {
         buf=[];
@@ -3084,6 +3326,18 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       }
       dgl.nodeConn[j] = buf;
     }
+	
+	dgl.cleanUpErrors();
+    dgl.initCompTypeProjectChip();
+	  dgl.m.needsSave = 0;
+      console.log('Loaded');
+      
+      this.saveSlotsInfo();
+      cvs.draw(1);
+    }
+  },
+  cleanUpErrors: function(){
+
     var comps, comp, cid, cpin, cpout;
 	
     for(var chipName in dgl.chip) {
@@ -3142,7 +3396,6 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     }
     }
     
-    dgl.initCompTypeProjectChip();
     for(var cl in dgl.chip) {
     for(var d in dgl.chip[cl].outs) {
       if (!(d in dgl.chip[cl].comp)) {
@@ -3156,12 +3409,6 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
           delete dgl.chip[cl].ins[d];
         }
       }
-    }
-	  dgl.m.needsSave = 0;
-      console.log('Loaded');
-      
-      this.saveSlotsInfo();
-      cvs.draw(1);
     }
   },
   compConnect0: function(cids) {
@@ -5799,6 +6046,7 @@ for(var ci in this.chip) {
   start:function() {
 this.initCompTypeProjectChip();
 dglcvs.d.chipStyles = dglcvs.d.chipStylesGen();
+dgl.cache.storage.initIdxdb();
 
 const EVALS_PER_STEP = 2;
 
