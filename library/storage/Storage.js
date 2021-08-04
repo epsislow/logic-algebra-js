@@ -98,6 +98,7 @@ var Storage = (function () {
 	    'testDb',1,
 	  
 	   function() {
+	     
 	     Storage.idxdb.insert('comp', [{'id': 1, 'someObj':{'a':'b','x':0,'y':1}}])
 	  
 	   });
