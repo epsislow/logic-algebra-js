@@ -1,18 +1,10 @@
-
-//persistentStorage.requestPersistentQuota(20* 1024 * 1024)
-  
-
 /*
-var requestFileSystem = window.requestFileSystem ||
-  window.webkitRequestFileSystem ||
-  window.mozRequestFileSystem ||
-  window.msRequestFileSystem ||
-  undefined;
-
-requestFileSystem(TEMPORARY, 1024*1024, function(fs) {
-  console.log('yes');
-});
+ Module: Storage
+ Version: 1.0.1
+ Author: epsislow@gmail.com
 */
+import {Workers} from '/library/modules/Workers.js'
+
 var Storage = (function () {
   var pub = {};
   
@@ -27,7 +19,20 @@ var Storage = (function () {
     console.log({ ...arguments });
   }
   
-  
+	//persistentStorage.requestPersistentQuota(20* 1024 * 1024)
+	  
+
+	/*
+	var requestFileSystem = window.requestFileSystem ||
+	  window.webkitRequestFileSystem ||
+	  window.mozRequestFileSystem ||
+	  window.msRequestFileSystem ||
+	  undefined;
+
+	requestFileSystem(TEMPORARY, 1024*1024, function(fs) {
+	  console.log('yes');
+	});
+	*/
   pub.requestQuota = function(disp_quota) {
     persistentStorage.requestQuota(disp_quota * 1024 * 1024,
       function(quota) {
@@ -88,22 +93,10 @@ var Storage = (function () {
   
   pub.start = function() {
 	  pub.idxdb.idx = window.indexedDB
-                     || window.webkitIndexedDB
-                     || window.mozIndexedDB;
-					 
-					 
-	  pub.idxdb.schema.add('test');
-	  pub.idxdb.schema.add('comp');
-	  pub.idxdb.open(
-	    'testDb',1,
-	  
-	   function() {
-	     
-	     Storage.idxdb.insert('comp', [{'id': 1, 'someObj':{'a':'b','x':0,'y':1}}])
-	  
-	   });
-	  
-	  
+		 || window.webkitIndexedDB
+		 || window.mozIndexedDB;
+  }
+  
 					 /*
 	if ( 'webkitIndexedDB' in window ) {
 		window.IDBCursor = window.webkitIDBCursor;
@@ -123,30 +116,7 @@ var Storage = (function () {
 	} else if ( 'mozIndexedDB' in window ) {
 		window.indexedDB = window.mozIndexedDB;
 	}*/
-  }
-  
-  
-	const workers = {};
-  
-	function customWorker(name, workFunc, messageHdl, errorHdl) {
-		if (name in workers) {
-			return workers[name];
-		}
-
-		let blobWork = new Blob(["onmessage =" + workFunc.toString()], {type: "text/javascript"});
-
-		workers[name] = new Worker(URL.createObjectURL(blobWork));
-
-		workers[name].onmessage = messageHdl;
-
-		if (typeof errorHdl == 'function') {
-			workers[name].onerror = errorHdl;
-		}
-
-		return workers[name];
-	}
 	
-  
   pub.idxdb = {
 	  idx: null,
 	  db: null,
@@ -165,46 +135,22 @@ var Storage = (function () {
 			  //db not exists/ diff version
 			  that.db = e.target.result;
 			  
-			  that.schemaUpgrade();
+			  that.schemaUpgrade(dbName);
 		  };
 		  
 		  req.onsuccess = function (e) {
 			  that.db = e.target.result;
 			  console.log('db:'+dbName+' opended');
 			  
-			  next();
+			  if (typeof next=='function') {
+				next();
+			  }
 		  }
 		  
 		  console.log(req);
 	  },
 	  
 	  dropAllDbs: function() {
-		var workThatDropAll = customWorker(
-			'dropAllDbs', 
-			function (data) {
-				//worker fn
-				const idd = indexedDB
-                     || webkitIndexedDB
-                     || mozIndexedDB;
-				
-				const deletedDbs = [];
-				
-				const promise = indexedDB.databases();
-				
-				idd.databases().then(dbs => dbs.forEach(db => {idd.deleteDatabase(db.name); deletedDbs.push(db.name);})).then();
-				self.postMessage(deletedDbs);
-			},
-			function (deletedDbs) {
-				//success hdl
-				console.log('deleted databases: '+ deletedDbs.join(','));
-			},
-			function (e) {
-				//error hdl
-				console.log('Error? What error? ', e.message);
-			}
-		);
-		
-		workThatDropAll.postMessage(1);
 	  },
 	  drop: function(dbName) {
 		  const req = this.idx.deleteDatabase(dbName);
@@ -218,27 +164,33 @@ var Storage = (function () {
 			  console.log('db was deleted.');
 		  }
 	  },
-	  schemaUpgrade: function () {
-		console.log('here schemaUpgrade');
+	  schemaUpgrade: function (dbName) {
+		console.log('Request for schemaUpgrade');
 		if(!this.db) {
 		  console.log('No db opened.');
 		  return;
 		}
+		
+		if (!(dbName in this.schema.stores)) {
+			console.log('No schema registered for db:'+ dbName);
+			return;
+		}
 
-		console.log(this.schema.stores);
-
-		for(var s in this.schema.stores) {
-		  this.storeAdd(s, this.schema.stores[s]);
+		for(var s in this.schema.stores[dbName]) {
+		  this.storeAdd(s, this.schema.stores[dbName][s]);
 		}
 	  },
 	  schema: {
 		stores: {},
-		add: function (name, settings = { keyPath: 'id'}) {
-		  this.stores[name] = settings;
+		add: function (dbName, name, settings = { keyPath: 'id'}) {
+			if (!(dbName in this.stores)) {
+				this.stores[dbName] = {};
+			}
+			this.stores[dbName][name] = settings;
 		}
 	  },
 	  storeAdd: function(name, settings) {
-		console.log(name,settings);
+		console.log('Attempt to add store '+name, settings);
 		const store = this.db.createObjectStore(name, settings);
 		
 		store.createIndex(settings.keyPath, settings.keyPath, { unique: true });
@@ -268,6 +220,18 @@ var Storage = (function () {
 		  records.forEach(record => {
 			  let req = store.add(record);
 			  req.onerror = function(e) {
+				  switch(e.target.error.name) {
+					  case 'AbortError': 
+					  break;
+					  case 'ConstraintError': 
+					  break;
+					  case 'QuotaExceededError':
+					  break;
+					  case 'VersionError':
+					  break;
+				  }
+				  
+				  console.log(e.target.error);
 				  console.log('Could not add record to '+storeName, record);
 			  }
 			  
