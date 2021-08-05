@@ -284,6 +284,7 @@ var Storage = (function () {
 		  });
 	  },
 	  has: function(storeName, key, next=0) {
+		  console.log('Pre-has in '+ storeName);
 		  if(!this.db) {
 			  if (debug.is && debug.level & debug.const.B_VERBOSE) {
 				console.log('No db opened.');
@@ -304,12 +305,10 @@ var Storage = (function () {
 		  }
 		  
 		  req.onsuccess = function(e) {
-			  console.log('151.');
-			  
 			  var cursor = e.target.result; 
 			  if (cursor) { // key already exist
 				 if (debug.is && debug.level & debug.const.B_HAS) {
-					console.log('Success record '+key+' exists in  ' + storeName);
+					console.log('Success record '+key+' exists in ' + storeName);
 				  }
 			  } else { // key not exist
 				if (debug.is && debug.level & debug.const.B_HAS) {
@@ -325,25 +324,21 @@ var Storage = (function () {
 	  get: function(storeName, key, next= 0) {
 		  console.log('Pre-get in '+ storeName);
 		  if(!this.db) {
-			  console.log('101.');
 			  if (debug.is && debug.level & debug.const.B_VERBOSE) {
 				console.log('No db opened.');
 			  }
 			  return;
 		  }
-			  console.log('111.');
 		  const get_transaction = this.db.transaction(storeName, 'readonly');
 		  const store = get_transaction.objectStore(storeName);
 		  
 		  get_transaction.onerror = function() {
-			  console.log('121.');
 			  if (debug.is && debug.level & debug.const.B_VERBOSE) {
 				console.log('Problem with get transaction on store:' + storeName);
 			  }
 		  }
 		  
 		  get_transaction.oncomplete = function() {
-			  console.log('131.');
 			  if (debug.is && debug.level & debug.const.B_VERY_VERBOSE) {
 				console.log('Success get transaction on store:' + storeName);
 			  }
@@ -351,14 +346,12 @@ var Storage = (function () {
 		  
 		  let req = store.get(key);
 		  req.onerror = function(e) {
-			  console.log('141.');
 			  if (debug.is && debug.level & (debug.const.B_GET | debug.const.B_VERBOSE)) {
 				console.log('Could not get record '+key+' from ' + storeName);
 			  }
 		  }
 		  
 		  req.onsuccess = function(e) {
-			  console.log('151.');
 			  if (debug.is && debug.level & debug.const.B_GET) {
 				console.log('Success got record '+key+' from ' + storeName, e.target.result);
 			  }

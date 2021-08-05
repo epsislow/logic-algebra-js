@@ -2,7 +2,7 @@ import { Storage, debug as StorageDebug } from '/library/storage/Storage.js'
 import cacheSv from './DgLog-cache1.js';
 
 //StorageDebug.is = false;
-StorageDebug.level = StorageDebug.const.B_ALL;
+StorageDebug.level = StorageDebug.const.B_VERBOSE + StorageDebug.const.B_HAS;
 
 const indexBy = (array, prop) => array.reduce((output, item) => {
   output[item[prop]] = item;
@@ -3198,8 +3198,12 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  var chainObj = {hdls:[]};
 	  var that = this;
 	  
+	  
 	  chainObj.hdls.push(function () {
-		console.log('Pre-delete slot');
+			that.storage.has(["dgl.data"+slotId], that.storage.nextInChain(chainObj))
+		});
+	  
+	  chainObj.hdls.push(function () {
 		that.storage.remove(["dgl.data"+slotId], that.storage.nextInChain(chainObj))
 	  });
 	  
@@ -3209,6 +3213,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  chainObj.hdls.push(function () {
 		console.log('Slot '+slotId+' deleted');
 	  });
+	  
 	  this.storage.execChain(chainObj);
 
       this.saveSlotsInfo();
