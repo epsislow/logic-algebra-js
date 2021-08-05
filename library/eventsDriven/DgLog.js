@@ -1643,7 +1643,11 @@ var cvsDrawDgl = function(c, upd=0, lib, frameTimeDiff=0) {
     lib.clear(c);
   }
   if(this.m.storageMenu) {
+       var z = this.m.zoom;
+       c.scale(z, z);
     dglcvs.drawStorageMenu(c, this.cache);
+    
+    c.scale(1/z,1/z);
     
     return;
   }
@@ -4658,8 +4662,6 @@ var comp= comps[this.m.compInf.sel]
 	      this.handlerMA.storageMenuSt,
 	      [newI, {x:30+px, y: 20+20*j+py}]
 	    );
-	
-		
 	
 	if(this.m.chipSetup) {
 	  this.addMActionNoXY(
