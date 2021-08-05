@@ -4619,21 +4619,24 @@ var comp= comps[this.m.compInf.sel]
   if(this.m.storageMenu) {
 	  var j=0;
 	  var slots= Object.keys(this.cache.slots);
+	  var px= this.cache.px+this.cache.opx;
+	  var py= this.cache.py+this.cache.opy;
+	  
     slots.splice(slots.indexOf('default'),1);
     slots.unshift('default');
     
     for(var i in slots) {
 	    this.addMActionRect(
 	      'storageMenuSt'+i,'start',
-	      30, 20+20*j, 120, 15, 
+	      30+px, 20+20*j+py, 120, 15, 
 	      this.handlerMA.storageMenuSt,
-	      [i, {x:30, y: 20+20*j}]
+	      [i, {x:30+px, y: 20+20*j+py}]
 	    );
 		
 		if (!(i in this.cache.savedSlots)) {
 			this.addMActionRect(
 			'storageMenuLoadSnippet'+i,'start',
-			  10, 20+20*j, 15,15,
+			  10+px, 20+20*j+py, 15,15,
 			  this.handlerMA.storageMenuLoadSnippet,
 			  [i]
 			)
@@ -4651,9 +4654,9 @@ var comp= comps[this.m.compInf.sel]
 	var newI = parseInt(i) + 1;
 	this.addMActionRect(
 	      'storageMenuEdit'+newI,'start',
-	      30, 20+20*j, 120, 15, 
+	      30+px, 20+20*j+py, 120, 15, 
 	      this.handlerMA.storageMenuSt,
-	      [newI, {x:30, y: 20+20*j}]
+	      [newI, {x:30+px, y: 20+20*j+py}]
 	    );
 	
 		
