@@ -171,7 +171,8 @@ $('document').ready(function() {
 	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
                value="1300"/>*/
 	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'}, mx(m++),'0')
-	  .addButton('Tick',0,'btn-secondary'+mx(++m),{'id':'diag-tick'})
+	  .addButton('Tick',0,'btn-secondary'+mx(++m),{'id':'diag-tick'})	  
+	  .addButton('TicTok',0,'btn-secondary'+mx(++m),{'id':'diag-toggletick'})
 	  .addButton('ChgIns',0,'btn-secondary'+mx(++m),{'id':'diag-chg-ins'})
   .addButton('AddNode',0,'btn-secondary'+mx(++m),{'id':'diag-addnode'})
   .addButton('DelNode',0,'btn-secondary'+mx(++m),{'id':'diag-delnode'})
@@ -344,6 +345,17 @@ window.onerror = function (message, url, line, column, error) {
 	  $('#diag-tick').click(function() {
 	    $('#itr').val(dgl.tick());
 	    $(this).blur();
+	  })
+	  
+	  $('#diag-toggletick').click(function() {
+	    var en=toggleBtn($(this));
+	    if(en) {
+	      dgl.startAutoTick(1000, function() {
+	        $('#itr').val(dgl.currentTick);
+	      });
+	    } else {
+	      dgl.stopAutoTick();
+	    }
 	  })
 	  
 	  $('#diag-next').click(function() {
