@@ -379,6 +379,20 @@ var dglcvs={
         current? '#aaf':'#559', 
         current? '#77a':'#338'
       );
+	  
+	  
+	  if (!(i in cache.savedSlots)) {		  
+		  this.lib.rectm(c,
+			10, 20+20*j, 15, 15, 2,
+			current? '#aaf':'#559', 
+			current? '#77a':'#338'
+		  );
+		  
+		  this.lib.texti(c,
+			14, 20+20*j+8, '\uf472', 7, current?'#fff':'#ccf'
+		  )
+	  }
+
       
 	  
       this.lib.texti(c,
@@ -3188,9 +3202,22 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
         .compressToUTF16(string);
       } 
       console.log("Compressed: " + string.length);
-      localStorage.setItem("dgl.data"+slotId, string); 
+	  
+	  var chainObj = {hdls:[]};
+	  var that = this;
+	  chainObj.hdls.push(function () {
+		console.log('Pre-save chainObj');
+		that.storage.set("dgl.data"+slotId, string, that.storage.nextInChain(chainObj))
+	  });
       
-       console.log('SavedCacheSv');
+	  chainObj.hdls.push(function () {
+       console.log('SavedCacheSv to slot:'+ slotId);
+	   console.log('Now lets load.');
+	   that.load(slotId==''?0:slotId, zip);
+	  });
+	  
+	  this.storage.execChain(chainObj);
+	  
 	},
 	remove: function(slotId) {
 	  slotId = slotId==0? '': slotId;
@@ -4601,6 +4628,15 @@ var comp= comps[this.m.compInf.sel]
 	      this.handlerMA.storageMenuSt,
 	      [i, {x:30, y: 20+20*j}]
 	    );
+		
+		if (!(i in this.cache.savedSlots)) {
+			this.addMActionRect(
+			'storageMenuLoadSnippet'+i,'start',
+			  10, 20+20*j, 15,15,
+			  this.handlerMA.storageMenuLoadSnippet,
+			  [i]
+			)
+		}
 	    
 	    j++;
 	  }
@@ -4745,6 +4781,12 @@ var comp= comps[this.m.compInf.sel]
 			, '#fff', '#77a', 7);
 		}
         cvs.draw(1);
+		return true;
+	},
+	storageMenuLoadSnippet: function(slotId) {
+		dgl.cache.saveCacheSv(slotId);
+		
+		cvs.draw(1);
 		return true;
 	},
     storageMenuSt: function(slotId, areaXY) {
