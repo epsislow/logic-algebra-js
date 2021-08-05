@@ -6012,20 +6012,25 @@ if (typeof e.touches != 'undefined') {
     	}
     cvs.draw(1)
   },
-  startAutoTick: function (interval = 1500) {
+  startAutoTick: function (interval = 1500, next=0) {
          dgl.timeInterval = setInterval(function () {
-                 console.log('<tick>');
-                 dgl.tick(0);
-                 cvs.draw(1)
+      console.log(this.currentTick%2?'tic /':'tok \\');
+      dgl.tick(0);
+      cvs.draw(1);
+      if(typeof next=='function') {
+        next();
+      }
          }, interval);
   },
   stopAutoTick: function () {
          clearInterval(dgl.timeInterval);
   },
+  currentTick:0,
   tick: function(refresh=0) {
     cvsIteration++;
     dgl.eval().all(refresh);
     cvs.draw(1);
+    this.currentTick= cvsIteration;
     return cvsIteration;
   },
   drawNext: function() {
