@@ -367,6 +367,8 @@ var dglcvs={
     c.textAlign='left';
     c.textBaseline='middle'
     var slots= cache.slots;
+	var px = cache.px + cache.opx;
+	var py = cache.py + cache.opy;
 	
 	var current;
     
@@ -375,7 +377,7 @@ var dglcvs={
 	  var current = cache.currentSlot==i;
 	  
       this.lib.rectm(c,
-        30, 20+20*j, 120, 15, 2,
+        30+px, 20+20*j+py, 120, 15, 2,
         current? '#aaf':'#559', 
         current? '#77a':'#338'
       );
@@ -383,32 +385,30 @@ var dglcvs={
 	  
 	  if (!(i in cache.savedSlots)) {		  
 		  this.lib.rectm(c,
-			10, 20+20*j, 15, 15, 2,
+			10+px, 20+20*j+py, 15, 15, 2,
 			current? '#aaf':'#559', 
 			current? '#77a':'#338'
 		  );
 		  
 		  this.lib.texti(c,
-			14, 20+20*j+8, '\uf472', 7, current?'#fff':'#ccf'
+			14+px, 20+20*j+8+py, '\uf472', 7, current?'#fff':'#ccf'
 		  )
 	  }
-
-      
 	  
       this.lib.texti(c,
-        34, 20+20*j+8, (i in cache.savedSlots) ? '\uf187':'\uf850', 7, current?'#fa0':'#ccf'
+        34+px, 20+20*j+8+py, (i in cache.savedSlots) ? '\uf187':'\uf850', 7, current?'#fa0':'#ccf'
       )
 	  
 	   if(i!=0) {
 		    if (current) {
 			  this.lib.rectm(c,
-			  141.5, 20+20*j+5.5,4,4,0,0,'#fff'
+			  141.5+px, 20+20*j+5.5+py,4,4,0,0,'#fff'
 			  );
 		    }
         
 		    //minus or delete 
 			this.lib.texti(c,
-			  140, 20+20*j+8, (i in cache.savedSlots) ? '\uf056':'\uf057',
+			  140+px, 20+20*j+8+py, (i in cache.savedSlots) ? '\uf056':'\uf057',
 			  7,current?'#f00':'#ccf'
 			);
 	   }
@@ -416,7 +416,7 @@ var dglcvs={
        
        //edit
        this.lib.texti(c,
-         125, 20 + 20 * j + 8, '\uf044', 7,
+         125+px, 20 + 20 * j + 8+py, '\uf044', 7,
 		 current?'#fff':'#ccf'
        )
        
@@ -435,18 +435,18 @@ var dglcvs={
        
 	   
       this.lib.textm(c, 
-        45, 20+20*j+8, 'Slot: '+ s, 7,
+        45+px, 20+20*j+8+py, 'Slot: '+ s, 7,
         '#fff',
       );
 	  
 	  if (i in cache.savedSlots) {
 		  this.lib.textm(c, 
-			105, 20+20*j+8, cache.savedSlots[i].chips, 6,
+			105+px, 20+20*j+8+py, cache.savedSlots[i].chips, 6,
 			'#f90',
 		  );
 		  
 		   this.lib.texti(c,
-			 110, 20 + 20 * j + 8, "\uf2db", 6,
+			 110+px, 20 + 20 * j + 8+py, "\uf2db", 6,
 			 '#f90'
 		   )
 	  }
@@ -454,21 +454,21 @@ var dglcvs={
     }
     
     this.lib.rectm(c,
-      30, 20 + 20 * j, 120, 15, 2,
+      30+px, 20 + 20 * j+py, 120, 15, 2,
       '#445', '#334'
     );
     
     this.lib.texti(c,
-      125, 20 + 20 * j + 8, '\uf044', 7, '#668'
+      125+px, 20 + 20 * j + 8+py, '\uf044', 7, '#668'
     )
     
     this.lib.textm(c,
-      45, 20 + 20 * j + 8, 'New slot', 7,
+      45+px, 20 + 20 * j + 8+py, 'New slot', 7,
       '#668',
     );
     
     this.lib.texti(c,
-      34, 20 + 20 * j + 8, '\uf850', 7, '#668'
+      34+px, 20 + 20 * j + 8+py, '\uf850', 7, '#668'
     )
 	if (this.input) {
     //  this.input.y(i * 10);
@@ -2955,6 +2955,7 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
   },
   cache:{
 	savedSlots: {},
+	pan:0,px:0,py:0, opx:0,opy:0,
     slots: ['default', 'key1', 'key2'],
     currentSlot: 0,
 	currentStorageMgr: 'localStorage',
@@ -4615,7 +4616,7 @@ var comp= comps[this.m.compInf.sel]
 	this.m.actions = {};
 	var z= 1/this.m.zoom;
 	
-	if(this.m.storageMenu) {
+  if(this.m.storageMenu) {
 	  var j=0;
 	  var slots= Object.keys(this.cache.slots);
     slots.splice(slots.indexOf('default'),1);
@@ -4639,8 +4640,13 @@ var comp= comps[this.m.compInf.sel]
 		}
 	    
 	    j++;
-	  }
 	}
+	  
+	this.addMActionNoXY(
+	  'storageMenuPanSt', 'start',
+	  this.handlerMA.storageMenuPanSt, [this.cache]
+	);
+  }
 	
 	var newI = parseInt(i) + 1;
 	this.addMActionRect(
@@ -4747,6 +4753,49 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
+	storageMenuPanEnd:function () {
+		if (!this.cache.pan) {
+			return;
+		}
+		this.cache.pan = 0;
+		
+		this.cache.px += this.cache.opx;
+		this.cache.py += this.cache.opy;
+		
+		this.cache.opx = 0;
+		this.cache.opy = 0;
+
+        cvs.draw(1)
+	},
+	storageMenuPanMove:function () {
+		if (!this.cache.pan) {
+			return;
+		}
+		
+		this.cache.opx = Math.floor(this.m.lastMove.x - this.m.mousedown_x);
+		this.cache.opy = Math.floor(this.m.lastMove.y - this.m.mousedown_y);
+
+        cvs.draw(1);
+	},
+	storageMenuPanSt: function () {
+		this.cache.pan = 1;
+		
+		this.m.actions['move'] = {};
+
+		this.addMActionNoXY(
+			'storageMenuPanMove','move', 
+			this.handlerMA.storageMenuPanMove
+		);
+
+		this.m.actions['end'] = {};
+
+		this.addMActionNoXY(
+			'storageMenuPanEnd','end', 
+			this.handlerMA.storageMenuPanEnd
+		);
+		
+		return true;
+	},
 	storageMenuRemove: function (slotId) {
 		dgl.cache.remove(slotId);
 		delete dgl.cache.savedSlots[slotId];

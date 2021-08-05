@@ -518,6 +518,10 @@ window.onerror = function (message, url, line, column, error) {
 	   
 	  $('#diag-slots').click(function() {
 	    dgl.m.storageMenu= dgl.m.storageMenu == 0?1:0;
+		dgl.cache.px=0
+		dgl.cache.py=0
+		dgl.cache.opx=0
+		dgl.cache.opy=0
 	    cvs.draw(1);
 		
 	    $(this).blur();
