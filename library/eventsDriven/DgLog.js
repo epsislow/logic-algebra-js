@@ -1634,6 +1634,9 @@ var cvsIteration=0;
 var cvsDraw = function (c, upd=0, lib, frameTimeDiff=0) {
 	cvsDrawDgl.apply(this,[c, upd, lib, frameTimeDiff]);
 	
+	
+	
+  
 	debug.draw();
 }
 
@@ -1642,15 +1645,7 @@ var cvsDrawDgl = function(c, upd=0, lib, frameTimeDiff=0) {
   if(upd){
     lib.clear(c);
   }
-  if(this.m.storageMenu) {
-       var z = this.m.zoom;
-       c.scale(z, z);
-    dglcvs.drawStorageMenu(c, this.cache);
-    
-    c.scale(1/z,1/z);
-    
-    return;
-  }
+  
   if(this.m.chipSetup) {
     if(!this.m.chipSetupComp) {
       var chip= this.chip[this.chipActive];
@@ -2167,6 +2162,20 @@ for(var l in lineNodes) {
    }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
+    
+    if (this.m.storageMenu) {
+      c.globalAlpha = 0.50;
+      lib.rectm(c, 0, 0, 300, 300, 1, 0, '#000')
+      c.globalAlpha = 1;
+    
+      var z = this.m.zoom;
+      c.scale(z, z);
+      dglcvs.drawStorageMenu(c, this.cache);
+    
+      c.scale(1 / z, 1 / z);
+    
+      return;
+    }
    }
    
 var debug= {is:true,drawQueue:[],drawQueueDel:0,
