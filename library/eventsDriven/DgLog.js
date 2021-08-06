@@ -4649,19 +4649,20 @@ var comp= comps[this.m.compInf.sel]
 	    j++;
 	}
 	  
-	this.addMActionNoXY(
-	  'storageMenuPanSt', 'start',
-	  this.handlerMA.storageMenuPanSt, [this.cache]
-	);
-  }
-	
 	var newI = parseInt(i) + 1;
 	this.addMActionRect(
 	      'storageMenuEdit'+newI,'start',
 	      30+px, 20+20*j+py, 120, 15, 
 	      this.handlerMA.storageMenuSt,
-	      [newI, {x:30+px, y: 20+20*j+py}]
+	      [newI, {x:30+px, y: 20+20*j+py}, 1]
 	    );
+		
+	this.addMActionNoXY(
+	  'storageMenuPanSt', 'start',
+	  this.handlerMA.storageMenuPanSt, [this.cache]
+	);
+  }
+		
 	
 	if(this.m.chipSetup) {
 	  this.addMActionNoXY(
@@ -4843,7 +4844,7 @@ var comp= comps[this.m.compInf.sel]
 		cvs.draw(1);
 		return true;
 	},
-    storageMenuSt: function(slotId, areaXY) {
+    storageMenuSt: function(slotId, areaXY, isNew = 0) {
       this.cache.currentSlot= slotId;
 	  var kqueue = [];
 	  
@@ -4860,7 +4861,7 @@ var comp= comps[this.m.compInf.sel]
 		[slotId, areaXY]
 	  );
 	  
-	  if (slotId != 0) {
+	  if (slotId != 0 && !isNew) {
 		  this.addMActionRect(
 			(slotId in this.cache.savedSlots)? 'storageMenuRemove': 'storageMenuDelete', kqueue,
 			areaXY.x+108.5, areaXY.y+3, 10,10,
