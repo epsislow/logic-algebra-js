@@ -3486,11 +3486,11 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
      // comps[fst].outs[outputs[nextO]].id= snd;
     //  comps[fst].outs[outputs[nextO]].pin= inputs[nextI];
     
-    comps[snd].nextInput++;
-    comps[snd].nextInput %= inputs.length
+    //comps[snd].nextInput++;
+    //comps[snd].nextInput %= inputs.length
     
-    comps[fst].nextOutput++;
-    comps[fst].nextOutput %= outputs.length
+    //comps[fst].nextOutput++;
+    //comps[fst].nextOutput %= outputs.length
       return 1;
   },
   compConnect: function(cids) {
@@ -3509,8 +3509,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
       if(!('nextInput' in comps[snd])) {
         comps[snd].nextInput=0;
       } else {
-        comps[snd].nextInput++;
-        comps[snd].nextInput%=inputs.length
+        //comps[snd].nextInput++;
+        //comps[snd].nextInput%=inputs.length
       }
       var nextI= comps[snd].nextInput;
       
@@ -3554,8 +3554,8 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
      if(!('nextOutput' in comps[fst])) {
         comps[fst].nextOutput=0;
       } else {
-        comps[fst].nextOutput++;
-        comps[fst].nextOutput%=outputs.length
+        //comps[fst].nextOutput++;
+        //comps[fst].nextOutput%=outputs.length
       }
       var nextO= comps[fst].nextOutput;
       
