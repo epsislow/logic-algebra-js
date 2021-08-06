@@ -926,13 +926,13 @@ var r = {
 					'quester':[0,1],
 					'Galaxy': [1,1],
 					'Cluster': [2,4],
-					'Solar system': [3,5],
+					'Solar system': [3,10],
 					'Asteroid belt': [0,3],
 					'Asteroid': [0,2],
 					'Ring': [0,2],
 					'Resource Asteroid': [0,2],
 					'Resource Asteroid2': [0,4],
-					'Planet': [2,5],
+					'Planet': [2,7],
 					'Space colony': [0,1],
 					'Space city': [0,1],
 					'Space dock': [0,2],
@@ -1046,7 +1046,7 @@ var r = {
 					
 					if (!['road','rafinery', 'trade', 'docker', 'Mining place','Some place', 'Ring', 'Resource Asteroid', 'Resource Asteroid2', 'Asteroid'].includes(type)) {
 						suf = rd2.randomBytes(1,2) + rd2.pickOneFrom(['m','s','x','c','t','d','n','r','y','j','k','v'], 0);
-						name = rd2.randomName(rd2.rand(2,5),0,suf);
+						name = rd2.randomName(rd2.rand(2,10),0,suf);
 					} else {
 						name ='0'+ i;
 					}
@@ -1273,6 +1273,8 @@ var r = {
 			 var currentIcon = $('<i>').addClass('fas fa-map-marker-alt');
 			var	placeIcon =  $('<i>').addClass('fas')
 					.addClass('fa-'+place.icon)
+					.addClass('icon')
+					.addClass('ic-'+place.type.replaceAll(' ','-').toLowerCase())
 					.attr('style', 'color:'+place.color);
           
           var typeClass = place.type;
@@ -1354,6 +1356,8 @@ return tr;
 //return trs;
 					placeIcon =  $('<i>').addClass('fas')
 					.addClass('fa-'+place.icon)
+					.addClass('icon')
+					.addClass('ic-'+place.type.replaceAll(' ','-').toLowerCase())
 					.attr('style', 'color:'+place.color);
           
           var typeClass = place.type;
@@ -1403,6 +1407,8 @@ return tr;
  //continue;
 				  placeIcon =  $('<i>').addClass('fas')
 					.addClass('fa-'+place.icon)
+					.addClass('icon')
+					.addClass('ic-'+place.type.replaceAll(' ','-').toLowerCase())
 					.attr('style', 'color:'+place.color);
 
 				  var tr = $('<tr>')
