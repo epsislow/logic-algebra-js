@@ -3241,10 +3241,13 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
 	  
 	  chainObj.hdls.push(function () {
-			that.storage.has(["dgl.data"+slotId], that.storage.nextInChain(chainObj))
+			that.storage.has("dgl.data"+slotId, that.storage.nextInChain(chainObj))
 		});
 	  
-	  chainObj.hdls.push(function () {
+	  chainObj.hdls.push(function (exists) {
+	    if(!exists) {
+	      return;
+	    }
 		that.storage.remove(["dgl.data"+slotId], that.storage.nextInChain(chainObj))
 	  });
 	  
@@ -3270,11 +3273,19 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	},
 	load: function(slotId='', zip=1) {
 	  slotId = slotId==0? '': slotId;
-	  
+
 	  var chainObj = {hdls:[]};
 	  var that = this;
 	  
-	  chainObj.hdls.push(function () {
+	  chainObj.hdls.push(function() {
+	    console.log('pre-has load');
+	    that.storage.has('dgl.data'+slotId, that.storage.nextInChain(chainObj))
+	  });
+	  
+	  chainObj.hdls.push(function (exists) {
+	    if(!exists) {
+	      return;
+	    }
 		console.log('Pre-load chainObj');
 		that.storage.get("dgl.data"+slotId, that.storage.nextInChain(chainObj))
 	  });
