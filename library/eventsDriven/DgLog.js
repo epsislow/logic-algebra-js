@@ -2165,7 +2165,7 @@ for(var l in lineNodes) {
     
     if (this.m.storageMenu) {
       c.globalAlpha = 0.50;
-      lib.rectm(c, 0, 0, 300, 300, 1, 0, '#000')
+      lib.rectm(c, 0, 0, dglcvs.lib.maxWidth/2, dglcvs.lib.maxHeight/2, 1, 0, '#000')
       c.globalAlpha = 1;
     
       var z = this.m.zoom;
