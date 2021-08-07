@@ -359,7 +359,6 @@ var Storage = (function () {
 				next(e.target.result);
 			  }
 		  }
-		  console.log(req)
 	  },
 	  getAll: function(storeName, next = 0) {
 		  if(!this.db) {
