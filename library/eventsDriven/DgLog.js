@@ -4814,8 +4814,8 @@ var comp= comps[this.m.compInf.sel]
 	  var mw = dglcvs.lib.maxWidth/2;
 	  var mh = dglcvs.lib.maxHeight/2;
 	  
-	  mpx= (mw)/z-160;
-	  mpy= (mh)/z-50;
+	  mpx= Math.floor((mw)/z-160);
+	  mpy= Math.floor((mh)/z-50);
 		
     if(cc.px + cc.opx < npx) {
       cc.opx = -cc.px + npx;
