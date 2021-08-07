@@ -4797,6 +4797,8 @@ var comp= comps[this.m.compInf.sel]
 	},
 	storageMenuPanMove:function () {
 	  var cc = this.cache;
+	  var z = this.m.zoom;
+	  
 		if (!cc.pan) {
 			return;
 		}
