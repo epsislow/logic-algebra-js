@@ -370,6 +370,8 @@ var dglcvs={
 	var px = cache.px + cache.opx;
 	var py = cache.py + cache.opy;
 	
+	this.lib.textm(c,10,10, px+', '+py,7, '#fff')
+	
 	var current;
     
     for(var i in slots) {
@@ -4794,13 +4796,28 @@ var comp= comps[this.m.compInf.sel]
         cvs.draw(1)
 	},
 	storageMenuPanMove:function () {
-		if (!this.cache.pan) {
+	  var cc = this.cache;
+		if (!cc.pan) {
 			return;
 		}
 		
-		this.cache.opx = Math.floor(this.m.lastMove.x - this.m.mousedown_x);
-		this.cache.opy = Math.floor(this.m.lastMove.y - this.m.mousedown_y);
-
+		cc.opx = Math.floor(this.m.lastMove.x - this.m.mousedown_x);
+		cc.opy = Math.floor(this.m.lastMove.y - this.m.mousedown_y);
+    if(cc.px + cc.opx < -6) {
+      cc.opx = -cc.px - 6;
+    }
+    
+    if(cc.py + cc.opy < -9) {
+      cc.opy = -cc.py - 9;
+    }
+    
+    if (cc.px + cc.opx> 23) {
+      cc.opx = -cc.px + 23;
+    }
+    
+    if (cc.py + cc.opy > 128) {
+      cc.opy = - cc.py + 128;
+    }
         cvs.draw(1);
 	},
 	storageMenuPanSt: function () {
