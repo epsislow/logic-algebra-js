@@ -4805,20 +4805,24 @@ var comp= comps[this.m.compInf.sel]
 		
 		cc.opx = Math.floor(this.m.lastMove.x - this.m.mousedown_x);
 		cc.opy = Math.floor(this.m.lastMove.y - this.m.mousedown_y);
-    if(cc.px + cc.opx < -6) {
-      cc.opx = -cc.px - 6;
+		
+		var npx= -6, npy=-9,
+		mpx=23, mpy=128;
+		
+    if(cc.px + cc.opx < npx) {
+      cc.opx = -cc.px + npx;
     }
     
-    if(cc.py + cc.opy < -9) {
-      cc.opy = -cc.py - 9;
+    if(cc.py + cc.opy < npy) {
+      cc.opy = -cc.py + npy;
     }
     
-    if (cc.px + cc.opx> 23) {
-      cc.opx = -cc.px + 23;
+    if (cc.px + cc.opx > mpx) {
+      cc.opx = -cc.px + mpx;
     }
     
-    if (cc.py + cc.opy > 128) {
-      cc.opy = - cc.py + 128;
+    if (cc.py + cc.opy > mpy) {
+      cc.opy = - cc.py + mpy;
     }
         cvs.draw(1);
 	},
