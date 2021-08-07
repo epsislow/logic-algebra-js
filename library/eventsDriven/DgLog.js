@@ -4806,8 +4806,16 @@ var comp= comps[this.m.compInf.sel]
 		cc.opx = Math.floor(this.m.lastMove.x - this.m.mousedown_x);
 		cc.opy = Math.floor(this.m.lastMove.y - this.m.mousedown_y);
 		
-		var npx= -6, npy=-9,
-		mpx=23, mpy=128;
+		var npx= -6,
+		npy=-9,
+		mpx=23,
+		mpy=128;
+		
+	  var mw = dglcvs.lib.maxWidth/2;
+	  var mh = dglcvs.lib.maxHeight/2;
+	  
+	  mpx= (mw)/z-160;
+	  mpy= (mh)/z-50;
 		
     if(cc.px + cc.opx < npx) {
       cc.opx = -cc.px + npx;
