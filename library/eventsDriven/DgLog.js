@@ -4875,7 +4875,7 @@ var comp= comps[this.m.compInf.sel]
 		return true;
 	},
 	storageMenuEdit: function (slotId, areaXY) {
-		
+		var z= this.m.zoom;
 		if(typeof dgl.cache.slots[slotId] == 'undefined') {
 			dglcvs.input = dgl.createInput(areaXY.x + 15,areaXY.y+3, 50, 10, 'key'+slotId,
 				this.inputHandlers.newSlot(slotId, dgl.cache)
