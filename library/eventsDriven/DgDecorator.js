@@ -1,30 +1,47 @@
 class CompDecorator {
-	
+  isDecorator=1;
+  
 	constructor(compDec = false) {
-		if (compDec !== false && compDec.constructor.name != 'CompDecorator') {
+		if (compDec !== false && !compDec.isDecorator) {
 			throw new Error("Expected CompDecorator");
 		}
 		this.nextDec = compDec;
 	}
 	
 	applyDec(name = 'def') {
+	  var fromPrev=null;
 		if (this.nextDec) {
-			console.log(this.nextDec.applyDec(name));
+			fromPrev= this.nextDec.applyDec(name);
 		}
-		return this[name]();
+		if(typeof this[name]==='function') {
+		  return this[name](fromPrev);
+		} else {
+		  return fromPrev;
+		}
 	}
 	
-	def() {
-		return this.constructor.name;
+	def(fromPrev) {
+	  if(fromPrev) {
+		return this.constructor.name+'/'+fromPrev;
+	  }
+	  return this.constructor.name;
 	}
 }
 
+class DrawDecorator extends CompDecorator {
+  draw(c, lib) {
+    console.log('draw');
+  }
+}
 
-let c = new CompDecorator();
+
+let c = new DrawDecorator();
 
 let d = new CompDecorator(c);
 let e = new CompDecorator(d);
 console.log(e.applyDec());
+
+e.applyDec('draw');
 
 /*
 class Comp extends Evaled{
