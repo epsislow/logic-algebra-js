@@ -1,0 +1,5 @@
+class CompApp {
+  
+}
+
+export { CompApp }
