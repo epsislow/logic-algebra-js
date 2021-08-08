@@ -4816,6 +4816,8 @@ var comp= comps[this.m.compInf.sel]
 	  
 	  mpx= Math.floor((mw)/z-160);
 	  mpy= Math.floor((mh)/z-50);
+	 
+	  npy= Math.floor(-10-20*(cc.slots.length-1));
 		
     if(cc.px + cc.opx < npx) {
       cc.opx = -cc.px + npx;
