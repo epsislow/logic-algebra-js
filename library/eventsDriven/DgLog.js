@@ -837,6 +837,7 @@ cv.style.height = rect.height/4 + 'px';
   compStDt: {
     'not':[100/8,0],
     'nand':[100/4,0],
+    'nna':[0,0],
     'nor':[100/4,0],
     'xor':[0,0],
     'nxor':[100/4-100/8+100/4,0],
@@ -891,7 +892,34 @@ cv.style.height = rect.height/4 + 'px';
     
     const p= Math.PI
     var fill=1,stroke=1;
-    if(type=='controlled') {
+    if(type=='nna') {
+      c.beginPath()
+      c.rect(x,y,s,s)
+      c.stroke();
+      c.fill()
+      
+      c.lineWidth=0.5;
+      c.beginPath();
+      c.moveTo(x+s/2,y);
+      c.lineTo(x+s/2,y+s);
+      c.moveTo(x, y+s/2);
+      c.lineTo(x+s,y+s/2);
+      c.stroke();
+      fill=0;
+      
+      c.textAlign='center';
+      
+      var type= comp.inStates.type;
+      var lim= comp.inStates.lim;
+    
+      
+      this.lib.textm(c,x+s/4,y+s/4, comp.inStates.in1?'1':'0', 7, type?'#0f0':'#ff0');
+      this.lib.textm(c,x+s/2+s/4,y+s/4, comp.inStates.in2?'1':'0', 7, '#ff0');
+      
+      this.lib.textm(c,x+s/4,y+s/2+s/4, comp.states.out1?'1':'0', 7, lim?'#0f0':'#ff0');
+      this.lib.textm(c,x+s/2+s/4,y+s/2+s/4, comp.inStates.out2?'1':'0', 7, '#ff0');
+      
+    } else if(type=='controlled') {
       if (comp.rt) {
         c.translate(x+s/2, y+s/2-s/4)
         c.rotate(comp.rt * p/2)
@@ -2829,6 +2857,31 @@ var dgl= {
     },
     'nand': function(iss) {
       return {'out': libFn.nand(iss.in1, iss.in2)}
+    },
+    'nna': function(iss) {
+      var o1=0, o2=0;
+      if(iss.type) {
+        if(libFn.nand(iss.in1, iss.in2)) {
+        if(iss.lim) {
+          o1=iss.o2?1:0;
+          o2=1;
+        } else {
+          o2=iss.o1?1:0;
+          o1=1;
+        }
+        }
+      } else {
+        if (libFn.xnor(iss.in1, iss.in2)) {
+          if (iss.lim) {
+            o1 = iss.o2 ? 1 : 0;
+            o2 = 1;
+          } else {
+            o2 = iss.o1 ? 1 : 0;
+            o1 = 1;
+          }
+        }
+      }
+      return {'out1': o1, 'out2':o2};
     }
   },
   observerW: function () {
@@ -2866,7 +2919,7 @@ var dgl= {
   },
   compType: {
     'Gates':['not','and','nand','or','nor','xor','nxor'],
-    'Chip':['pin','pout','count','ram', 'mux','demux'],
+    'Chip':['pin','pout','count','ram', 'mux','demux','nna'],
     'Project':[],
     'Fans':['fan','tunnel-in','tunnel-out'],
     'Input':['clock','controlled','const'],
@@ -2876,6 +2929,7 @@ var dgl= {
     'not':[['in'],['out']], 
     'and':[['in1','in2'],['out']],
     'nand':[['in1','in2'],['out']], 
+    'nna':[['in1','in2','type','lim'],['out1','out2']],
     'or':[['in1','in2'],['out']],
     'nor':[['in1','in2'],['out']],
     'xor':[['in1','in2'],['out']],
@@ -5064,6 +5118,12 @@ var comp= comps[this.m.compInf.sel]
 				  pos: 'left',
 				  pin: xi,
 				}
+				posOrder.pos[xi] = 'left';
+			  } else if(this.m.compMenu.sel==='nna' && ['type','lim'].includes(xi)) {
+			    ins[xi] = {
+			      pos: 'left',
+			      pin: xi,
+			    }
 				posOrder.pos[xi] = 'left';
 			  } else {
 				ins[xi] = {
