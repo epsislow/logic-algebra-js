@@ -908,7 +908,15 @@ cv.style.height = rect.height/4 + 'px';
       fill=0;
       
       c.textAlign='center';
-      
+      if (!('inStates' in comp)) {
+        comp.inStates = {
+          type:-1, in2:-1,
+          lim:-1, in1:-1,
+        }
+        comp.states = {
+          out1:-1, out2:-1
+        }
+      } else {
       var type= comp.inStates.type;
       var lim= comp.inStates.lim;
     
@@ -918,6 +926,7 @@ cv.style.height = rect.height/4 + 'px';
       
       this.lib.textm(c,x+s/4,y+s/2+s/4, comp.states.out1?'1':'0', 7, lim?'#0f0':'#ff0');
       this.lib.textm(c,x+s/2+s/4,y+s/2+s/4, comp.inStates.out2?'1':'0', 7, '#ff0');
+      }
       
     } else if(type=='controlled') {
       if (comp.rt) {
@@ -2618,7 +2627,7 @@ var dgl= {
       
       chipInstance.outStates[cpo] = chipComp.states[cpo]
       } catch (e) {
-          console.log(e, cpo)
+         console.log(e, cpo, chipComp)
       }
       
       
@@ -2857,6 +2866,16 @@ var dgl= {
     },
     'nand': function(iss) {
       return {'out': libFn.nand(iss.in1, iss.in2)}
+    },
+    'm1b': function(iss) {
+      var o1=0;
+      var c= iss.c;
+      var d= iss.d;
+      var n=lib.nand;
+      
+      return {
+        //out: n(n(c,d), n())  n(n(c, d), d)
+      }
     },
     'nna': function(iss) {
       var o1=0, o2=0;
