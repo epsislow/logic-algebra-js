@@ -5309,7 +5309,6 @@ var comp= comps[this.m.compInf.sel]
     addCompHdl: function() {
       var kqueue= {};
       
-      
       this.addMActionRect(
         'addCompOpen', kqueue,
         0,0,65,195,

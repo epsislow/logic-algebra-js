@@ -481,6 +481,7 @@ window.onerror = function (message, url, line, column, error) {
 	  
 	  $('#diag-addcomp').click(function() {
 	  	  var en=toggleBtn($(this));
+	  	  dgl.compTypeOpen={};
 	  	  dgl.m.addComp=en;
 	  	  cvs.draw(1)
 	   })
