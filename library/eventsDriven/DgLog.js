@@ -2629,8 +2629,6 @@ var dgl= {
       } catch (e) {
          console.log(e, cpo, chipComp)
       }
-      
-      
         }
       //  console.log(chipComp)q
       }
