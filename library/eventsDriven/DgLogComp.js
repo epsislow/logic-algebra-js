@@ -1,12 +1,14 @@
 wire =  function () {
   const pub = {
     state: -1,
+    compAtEnd: 0,
+    pinAtEnd:0,
     setState: function(newState) {
       if(pub.state!=newState) {
         pub.state= newState;
-        var comp = getCompDestination();
+        var comp = pub.compAtEnd;
         if(comp) {
-          comp.trigger();
+          comp.trigger(pub.pinAtEnd, pub.compAtEnd);
         }
       }
     }
@@ -46,8 +48,11 @@ comp = function () {
       pub.inStates = iss;
       return pub.states = evalThis(iss);
     },
-    trigger: function(iss) {
+    trigger: function(pinChg, valueChg) {
+      var iss=pub.inStates;
+      iss[pinChg] = valueChg;
      // var old = {...pub.states};
+     
       pub.eval(iss);
       
       setOutputWireStates(pub.states);
