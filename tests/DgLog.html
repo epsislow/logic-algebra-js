@@ -89,15 +89,22 @@
 <script src="/library/eventsDriven/DgLog.js" type="module"></script>
 
 <script type="module">
-import { CompApp, Chip, Comp, CompType, compTypeFactory } from  '/library/eventsDriven/DgComp.js'
-import { CompDecorator } from '/library/eventsDriven/DgDecorator.js'
+//import { CompApp, Chip, Comp, CompType, compTypeFactory } from  '/library/eventsDriven/DgComp.js'
+//import { CompDecorator } from '/library/eventsDriven/DgDecorator.js'
+import { comp, wire, compExt, typeFactory } from  '/library/eventsDriven/DgLogComp.js'
 import { dglcvs, dgl, debug } from '/library/eventsDriven/DgLog.js'
 import { Storage } from '/library/storage/Storage.js'
-window.CompApp =  CompApp;
+window.comp = comp;
+window.wire = wire;
+window.compExt = compExt;
+window.typeFactory = typeFactory;
+
+/*window.CompApp =  CompApp;
 window.Chip = Chip;
 window.Comp = Comp;
 window.CompType = CompType;
 window.compTypeFactory = compTypeFactory;
+*/
 
 
 window.dgl =  dgl;

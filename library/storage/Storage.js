@@ -149,7 +149,7 @@ var Storage = (function () {
 			  }
 		  }
 		  
-		  console.log(req);
+		  //console.log(req);
 	  },
 	  
 	  dropAllDbs: function() {

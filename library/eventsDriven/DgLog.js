@@ -1,5 +1,7 @@
 import { Storage, debug as StorageDebug } from '/library/storage/Storage.js'
 import cacheSv from './DgLog-cache1.js';
+import { comp, wire, compExt, typeFactory, compLibFn } from  '/library/eventsDriven/DgLogComp.js'
+console.log('aaaa', compExt);
 
 //StorageDebug.is = false;
 StorageDebug.level = StorageDebug.const.B_VERBOSE + StorageDebug.const.B_HAS;
@@ -44,6 +46,10 @@ const libFn = {
  },
  xnor:(a, b) => ~(a ^ b)&1,
 };
+
+//var compExtObj = compExt(compLibFn);
+//window.compExtObj = compExtObj;
+
 
 const createDFF = (name, clk, dIn) => {
   return [
@@ -6283,6 +6289,15 @@ for(var ci in this.chip) {
 this.initCompTypeProjectChip();
 dglcvs.d.chipStyles = dglcvs.d.chipStylesGen();
 dgl.cache.storage.initIdxdb();
+
+typeFactory
+  .set('and', compExt.types.and)
+  .set('nand', compExt.types.nand)
+  .set('or', compExt.types.or)
+  .set('nor', compExt.types.nor)
+  .set('xor', compExt.types.xor)
+
+
 
 const EVALS_PER_STEP = 2;
 
