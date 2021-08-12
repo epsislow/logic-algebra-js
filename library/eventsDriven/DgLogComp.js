@@ -130,7 +130,7 @@ const wire =  function () {
 		  wireEnd.setState(newState);
 		}
 		
-    },
+  },
 	destroy: function () {
 		pub.compIdAtEnd = 0;
 		pub.pinAtEnd = 0;
