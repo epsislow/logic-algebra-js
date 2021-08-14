@@ -99,12 +99,18 @@ const wire =  function () {
     state: -1,
     compIdAtEnd: 0,
     pinAtEnd:0,
+    wiresAtEnd: [],
 	to: function(compId, pin) {
+	  //pub.destination.push(compId,pin);
 		pub.compIdAtEnd= compId;
 		pub.pinAtEnd = pin;
 		return pub;
 	},
-    setState: function(newState) {
+	addWireEnd: function(wire) {
+	  wiresAtEnd.push(wire);
+	  return pub;
+	},
+	setState: function(newState) {
 		if(pub.state==newState) {
 		  console.log('Same state: ' + newState);
 		  return false;
@@ -118,7 +124,13 @@ const wire =  function () {
 		} else {
 			console.log('No comp named:' + pub.compIdAtEnd);
 		}
-    },
+		
+		for(let w in pub.wiresAtEnd) {
+		  var wireEnd= pub.wiresAtEnd[w];
+		  wireEnd.setState(newState);
+		}
+		
+  },
 	destroy: function () {
 		pub.compIdAtEnd = 0;
 		pub.pinAtEnd = 0;
