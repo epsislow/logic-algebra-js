@@ -143,6 +143,14 @@ const typeFactory = (function () {
 	return pub;
 })();
 
+typeFactory
+  .set('and', compExt.types.and)
+  .set('nand', compExt.types.nand)
+  .set('or', compExt.types.or)
+  .set('nor', compExt.types.nor)
+  .set('xor', compExt.types.xor)
+
+
 const comp = function (type) {
   var wires = {};
   const objChanged = function(a, b) {
