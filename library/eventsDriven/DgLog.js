@@ -485,7 +485,21 @@ var dglcvs={
       return;
     }
   },
-  
+  'drawConnMenu': function(c, showPins=0, comps) {
+    var compid;
+    if(showPins) {
+      compid=this.m.compConnPinsMenu;
+    } else {
+      compid=this.m.compConnPoutsMenu;
+    }
+    
+    var comp= comps[compid];
+    
+    this.lib.rectm(c,
+      7, 200, 7, 10, 2, '#777', '#000'
+    );
+    
+  },
   drawChipSetup: function(c, name, chip, chipSetupComp) {
     
    // this.drawInt(c, name, name, 'intb', 40, 40, 100, 100, chip.ins, chip.outs);
@@ -2210,11 +2224,11 @@ for(var l in lineNodes) {
    
    
    if (this.m.compConnPinsMenu && !this.m.compConnPin) {
-	   dglcvs.drawConnMenu(1);
+	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp);
    }
    
    if (this.m.compConnPoutsMenu && !this.m.compConnPout) {
-	   dglcvs.drawConnMenu(2);
+	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp);
    }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
@@ -5532,7 +5546,7 @@ var comp= comps[this.m.compInf.sel]
 		return true;
 	},
 	compConnH: function (comp) {
-		if(!this.m.compConn) {
+		if(!this.compConn) {
 			return;
 		}
 		
