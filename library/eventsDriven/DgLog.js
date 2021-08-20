@@ -492,6 +492,7 @@ var dglcvs={
     } else {
       compid=this.m.compConnPoutsMenu;
     }
+    this.lib.rectm(c, 0.5, 0.5, 100, 195, 1, '#669', '#222');
     
     var comp= comps[compid];
     
@@ -5546,7 +5547,7 @@ var comp= comps[this.m.compInf.sel]
 		return true;
 	},
 	compConnH: function (comp) {
-		if(!this.compConn) {
+		if(!this.m.compConn) {
 			return;
 		}
 		
@@ -5554,21 +5555,24 @@ var comp= comps[this.m.compInf.sel]
 		
 		if(!this.m.compConnPoutsMenu) {
 			if (!Object.keys(comp.outs).length) {
+			  console.log('no outs');
 				return false;
 			}
-			this.m.compConnPoutsMenu = comp.id;
+			this.m.compConnPoutsMenu = cid;
+			console.log('poutmenu '+ cid);
 			
 			cvs.draw(1);
 			return true;
 		} else if(!this.m.compConnPinsMenu) {
 			if (!Object.keys(comp.ins).length) {
+			  console.log('no ins');
 				return false;
 			}
-			this.m.compConnPinsMenu = comp.id;
-			
+			this.m.compConnPinsMenu = cid;
+			console.log('pinmenu '+cid)
 			cvs.draw(1);
 			return true;
-		} else if (this.m.compConnPinsMenu && this.m.compConnPoutsMenu){
+		} else if (this.m.compConnPin && this.m.compConnPout){
 			this.compConnect0();
 			
 			cvs.draw(1);
@@ -5577,6 +5581,8 @@ var comp= comps[this.m.compInf.sel]
 		
 		this.m.compConnPinsMenu = 0;
 		this.m.compConnPoutsMenu = 0;
+		this.m.compConnPout =0;
+		this.m.compConnPin=0;
 		
 		cvs.draw(1);
 		return false;
@@ -5639,7 +5645,6 @@ var comp= comps[this.m.compInf.sel]
 	  this.addMActionNoXY(
         'compConnH', kqueue,
         this.handlerMA.compConnH, [comp]);
-
         
       this.addMActionNoXY(
         'compRotate', kqueue,
