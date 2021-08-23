@@ -5609,7 +5609,7 @@ var comp= comps[this.m.compInf.sel]
 		
 		var cid = comp.id;
 		
-		if(!this.m.compConnPoutsMenu) {
+		if(!this.m.compConnPout) {
 			if (!Object.keys(comp.outs).length) {
 			  console.log('no outs');
 				return false;
@@ -5619,7 +5619,7 @@ var comp= comps[this.m.compInf.sel]
 			
 			cvs.draw(1);
 			return true;
-		} else if(!this.m.compConnPinsMenu) {
+		} else if(!this.m.compConnPin) {
 			if (!Object.keys(comp.ins).length) {
 			  console.log('no ins');
 				return false;
