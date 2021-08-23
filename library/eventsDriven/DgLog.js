@@ -485,19 +485,76 @@ var dglcvs={
       return;
     }
   },
-  'drawConnMenu': function(c, showPins=0, comp) {
+  'drawConnMenu': function(c, showPins=0, comp, pX,pY) {
     var entr=[];
+	var p;
+	var ss = 'pinin';
+	
     if(showPins) {
       entr = Object.keys(comp.ins);
+	  ss = 'pinin';
     } else {
       entr = Object.keys(comp.outs);
+	  ss = 'pinout';
     }
-    
-    this.lib.rectm(c, 0.5, 0.5, 100, 195, 1, '#669', '#222');
-    
-    this.lib.rectm(c,
-      7, 200, 7, 10, 2, '#777', '#000'
-    );
+	
+     var styles= {
+       'pinin':['#cc7','#444'],
+       'pinout':['#7c7','#444']
+     }
+      
+     var i=0;  
+     c.textAlign='left';
+     c.textBaseline='middle';
+	 
+	var entrmax = entr.length+0.6;
+	 
+	var tx = 5+50*comp.x+pX+comp.xOfs;
+	var ty = 5+25*comp.y+pY+comp.yOfs;
+	
+	 
+	if(tx >= 50) { 
+		tx -= 50;
+	} else {
+		tx += 30;
+	}
+	
+	if(ty >= entrmax*10) { 
+		ty -= entrmax*10;
+	} else {
+		ty += Math.min(20, entrmax*10);
+	}
+
+		
+    this.lib.rectm(c, 
+		tx, ty,
+		40, entrmax*10, 1, '#669', '#222'
+	);
+	
+	for(var n in entr) {
+		if (!entr.hasOwnProperty(n)) {
+			continue;
+		}
+		var en = entr[n];
+		
+    if(showPins) {
+	  p= comp.ins[en];
+	} else {
+	  p= comp.outs[en];
+	}
+		
+       this.lib.rectm(c, tx+5, ty+11*i+5, 6, 6, 3, styles[ss][0], styles[ss][1])
+       this.lib.textm(c, tx+15, ty+ 11*i+8 , en, 6, styles[ss][0],'Arial');
+        if ('id' in p) {
+          this.lib.textm(c, 4, 11 * i + 103, p.id + ' -> ' + p.pout, 6, styles[ss][0], 'Arial')
+          
+          this.lib.rectm(c, 86.5 , i * 11 + 100 - 1, 8, 8, 1, '#966', '#633');
+          
+          this.lib.texti(c, 88 , i * 11 + 103, "\uf057", 5, '#f33')
+          
+        }
+		i++;
+	}
     
   },
   drawChipSetup: function(c, name, chip, chipSetupComp) {
@@ -2224,11 +2281,11 @@ for(var l in lineNodes) {
    
    
    if (this.m.compConnPinsMenu && !this.m.compConnPin) {
-	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp[this.m.compConnPinsMenu]);
+	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp[this.m.compConnPinsMenu], pX, pY);
    }
    
    if (this.m.compConnPoutsMenu && !this.m.compConnPout) {
-	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp[this.m.compConnPoutsMenu]);
+	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp[this.m.compConnPoutsMenu], pX, pY);
    }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
