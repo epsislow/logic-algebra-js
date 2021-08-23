@@ -485,16 +485,15 @@ var dglcvs={
       return;
     }
   },
-  'drawConnMenu': function(c, showPins=0, comps) {
-    var compid;
+  'drawConnMenu': function(c, showPins=0, comp) {
+    var entr=[];
     if(showPins) {
-      compid=this.m.compConnPinsMenu;
+      entr = Object.keys(comp.ins);
     } else {
-      compid=this.m.compConnPoutsMenu;
+      entr = Object.keys(comp.outs);
     }
-    this.lib.rectm(c, 0.5, 0.5, 100, 195, 1, '#669', '#222');
     
-    var comp= comps[compid];
+    this.lib.rectm(c, 0.5, 0.5, 100, 195, 1, '#669', '#222');
     
     this.lib.rectm(c,
       7, 200, 7, 10, 2, '#777', '#000'
@@ -2225,11 +2224,11 @@ for(var l in lineNodes) {
    
    
    if (this.m.compConnPinsMenu && !this.m.compConnPin) {
-	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp);
+	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp[this.m.compConnPinsMenu]);
    }
    
    if (this.m.compConnPoutsMenu && !this.m.compConnPout) {
-	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp);
+	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp[this.m.compConnPoutsMenu]);
    }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
