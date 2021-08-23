@@ -545,14 +545,14 @@ var dglcvs={
 		
        this.lib.rectm(c, tx+5, ty+11*i+5, 6, 6, 3, styles[ss][0], styles[ss][1])
        this.lib.textm(c, tx+15, ty+ 11*i+8 , en, 6, styles[ss][0],'Arial');
-        if ('id' in p) {
+       /* if ('id' in p) {
           this.lib.textm(c, 4, 11 * i + 103, p.id + ' -> ' + p.pout, 6, styles[ss][0], 'Arial')
           
           this.lib.rectm(c, 86.5 , i * 11 + 100 - 1, 8, 8, 1, '#966', '#633');
           
           this.lib.texti(c, 88 , i * 11 + 103, "\uf057", 5, '#f33')
           
-        }
+        }*/
 		i++;
 	}
     
