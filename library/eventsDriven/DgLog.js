@@ -507,7 +507,7 @@ var dglcvs={
      c.textAlign='left';
      c.textBaseline='middle';
 	 
-	var entrmax = entr.length+0.6;
+	var entrmax = entr.length;
 	 
 	var tx = 5+50*comp.x+pX+comp.xOfs;
 	var ty = 5+25*comp.y+pY+comp.yOfs;
@@ -519,16 +519,16 @@ var dglcvs={
 		tx += 30;
 	}
 	
-	if(ty >= entrmax*10) { 
-		ty -= entrmax*10;
+	if(ty >= entrmax*11) { 
+		ty -= entrmax*11;
 	} else {
-		ty += Math.min(20, entrmax*10);
+		ty += Math.min(20, entrmax*11);
 	}
 
 		
     this.lib.rectm(c, 
 		tx, ty,
-		40, entrmax*10, 1, '#669', '#222'
+		40, entrmax*11+5, 1, '#669', '#222'
 	);
 	
 	for(var n in entr) {
@@ -5611,21 +5611,21 @@ var comp= comps[this.m.compInf.sel]
 		
 		if(!this.m.compConnPout) {
 			if (!Object.keys(comp.outs).length) {
-			  console.log('no outs');
+			//  console.log('no outs');
 				return false;
 			}
 			this.m.compConnPoutsMenu = cid;
-			console.log('poutmenu '+ cid);
+			//console.log('poutmenu '+ cid);
 			
 			cvs.draw(1);
 			return true;
 		} else if(!this.m.compConnPin) {
 			if (!Object.keys(comp.ins).length) {
-			  console.log('no ins');
+			 // console.log('no ins');
 				return false;
 			}
 			this.m.compConnPinsMenu = cid;
-			console.log('pinmenu '+cid)
+		//	console.log('pinmenu '+cid)
 			cvs.draw(1);
 			return true;
 		} else if (this.m.compConnPin && this.m.compConnPout){
