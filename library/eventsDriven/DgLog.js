@@ -5602,6 +5602,9 @@ var comp= comps[this.m.compInf.sel]
 		this.m.isDragged = 0;
 		return true;
 	},
+	compConnEntriesPin: function (entries, tx, ty) {
+		return true;
+	},
 	compConnH: function (comp) {
 		if(!this.m.compConn) {
 			return;
@@ -5701,6 +5704,49 @@ var comp= comps[this.m.compInf.sel]
 	  this.addMActionNoXY(
         'compConnH', kqueue,
         this.handlerMA.compConnH, [comp]);
+		
+    if(!this.m.compConnPout || !this.m.compConnPin ) {
+		var entr = [];
+		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
+			pY = Math.floor(this.m.pan.ofsY + this.m.pan.yOfs)
+	  var tx = 5+50*comp.x+pX+comp.xOfs;
+	  var ty = 5+25*comp.y+pY+comp.yOfs;
+	
+	
+    if(!this.m.compConnPin) {
+      entr = Object.keys(comp.ins);
+    } else {
+      entr = Object.keys(comp.outs);
+    }
+	
+	  var entrmax = entr.length+0.6;
+	 
+	  if(tx >= 50) { 
+		tx -= 50;
+	  } else {
+		tx += 30;
+	  }
+	
+	  if(ty >= entrmax*10) { 
+		ty -= entrmax*10;
+	  } else {
+		ty += Math.min(20, entrmax*10);
+	  }
+
+		
+		
+     //  this.lib.rectm(c, tx+5, ty+11*i+5, 6, 6, 3, styles[ss][0], styles[ss][1])
+     //  this.lib.textm(c, tx+15, ty+ 11*i+8 , en, 6, styles[ss][0],'Arial');
+
+		  
+		  
+		  this.addMActionRect(
+			'compConnEntriesPin', kqueue,
+			tx, ty, 40, entrmax*10,
+			this.handlerMA.compConnEntries, 
+			[entr, tx, ty]
+		  );
+	}
         
       this.addMActionNoXY(
         'compRotate', kqueue,
