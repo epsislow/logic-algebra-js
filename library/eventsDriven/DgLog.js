@@ -1,7 +1,7 @@
 import { Storage, debug as StorageDebug } from '/library/storage/Storage.js'
 import cacheSv from './DgLog-cache1.js';
 import { comp, wire, compExt, typeFactory, compLibFn } from  '/library/eventsDriven/DgLogComp.js'
-console.log('aaaa', compExt);
+console.log('aaab', compExt);
 
 //StorageDebug.is = false;
 StorageDebug.level = StorageDebug.const.B_VERBOSE + StorageDebug.const.B_HAS;
