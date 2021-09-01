@@ -4906,6 +4906,28 @@ var comp= comps[this.m.compInf.sel]
 		dglcvs.lib.maxWidth*z/2-10, 0, 10, 10, 
 		this.handlerMA.centerComps
 	);
+	
+	if(this.m.compConn && this.m.compConnPoutsMenu && !this.m.compConnPout) {
+		var rect = this.calculateConnRectForComp(	this.m.compConnPoutsMenu, 0);
+		
+		this.addMActionRect(
+			'compConnPoutEntries', 'start',
+			rect.x, rect.y, rect.w, rect.h, 
+			this.handlerMA.compConnPoutEntries, 
+			[0, this.m.compConnPoutsMenu], 0,
+		 );
+	}
+	
+	if(this.m.compConn && this.m.compConnPinsMenu && !this.m.compConnPin) {
+		var rect = this.calculateConnRectForComp(this.m.compConnPinsMenu, 1);
+		
+		this.addMActionRect(
+			'compConnPinEntries', 'start', 
+			rect.x, rect.y, rect.w, rect.h, 
+			this.handlerMA.compConnPinEntries,
+			[1, this.m.compConnPinsMenu], 0,
+		 );
+	}
 		
 	if(this.m.compSetup) {
 		 this.addMActionRect(
@@ -5705,7 +5727,8 @@ var comp= comps[this.m.compInf.sel]
         'compConnH', kqueue,
         this.handlerMA.compConnH, [comp]);
 		
-    if(!this.m.compConnPout || !this.m.compConnPin ) {
+    if(this.m.compConn && this.m.compConnPoutsMenu && (!this.m.compConnPout || !this.m.compConnPin )) {
+		console.log('hh');
 		var entr = [];
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
 			pY = Math.floor(this.m.pan.ofsY + this.m.pan.yOfs)
