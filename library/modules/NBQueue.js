@@ -18,8 +18,21 @@ var NBQueue = (function () {
 		}
 	}
 	
+	pub.deleteQueue = function (name) {
+		delete pub.queue[name];
+		delete pub.settings[name];
+	}
+	
 	pub.appendToQueue = function(queueName, runHdl, finHdl, dro = 0) {
 	  pub.queue[queueName].push({run: runHdl, fin: finHdl, dro: dro})
+	}
+	
+	pub.countOnQueue = function(queueName) {
+		return pub.queue[queueName].length;
+	}
+	
+	pub.truncateQueue = function(queueName) {
+		pub.queue[queueName] = [];
 	}
 	
 	pub.prependToQueue = function(queueName, runHdl, finHdl, dro) {
@@ -41,7 +54,7 @@ var NBQueue = (function () {
 		}
 	}
 	
-	pub.consumeFromQueue = function (queueName, delay = 1000) {
+	pub.consumeFromQueue = function (queueName, delay = 1000, blocking = 0) {
 		var elem;
 		var type = pub.settings[queueName].type;
 		var readd = pub.settings[queueName].readd;
@@ -52,9 +65,26 @@ var NBQueue = (function () {
 			elem = pub.queue[queueName].pop();
 		}
 		
-		setTimeout(function () {
+		if (blocking) {
 			runFromQueue(queueName, elem, readd);
-		}, delay);
+		} else {
+			setTimeout(function () {
+				runFromQueue(queueName, elem, readd);
+			}, delay);
+		}
+	}
+	
+	pub.consumeAllFromQueue = function (queueName, every = 1000, consumerDelay = 0, stopOnNone = 1, blocking= 1) {
+		var interval;
+		interval = setInterval(function() {
+			pub.consumeFromQueue(queueName, consumerDelay, blocking);
+			
+			if (stopOnNone && !pub.countOnQueue(queueName)) {
+				console.log('clear');
+				clearInterval(interval);
+			}
+		}, every);
+		return interval;
 	}
 	
 	return pub;
@@ -63,6 +93,7 @@ var NBQueue = (function () {
 /**
 
 var c = 0; NBQueue.addQueue('test', 'fifo', 'fi'); NBQueue.appendToQueue('test', function () {console.log('c=', c++); return c>11} , function () {console.log('done')});NBQueue.consumeFromQueue('test',100); 
+NBQueue.consumeAllFromQueue('test',100,0)
 */
 
 export { NBQueue }
