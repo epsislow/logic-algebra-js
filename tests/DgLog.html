@@ -99,6 +99,10 @@ window.wire = wire;
 window.compExt = compExt;
 window.typeFactory = typeFactory;
 
+import { NBQueue } from '/library/modules/NBQueue.js'
+
+window.NBQueue = NBQueue;
+
 /*window.CompApp =  CompApp;
 window.Chip = Chip;
 window.Comp = Comp;
@@ -184,7 +188,7 @@ $('document').ready(function() {
 	  
 	  /*<input id="nounceVis" name="nounceVis" style="width:120px;border:0px; background-color:#444; color:#fff"
                value="1300"/>*/
-	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'}, mx(m++),'0')
+	  .addEl('input',{id:'itr', 'style':'border:0; background-color:#000;color:#fff;width:30px','value':'0'}, mx(m++ ),'0')
 	  .addButton('Tick',0,'btn-secondary'+mx(++m),{'id':'diag-tick'})	  
 	  .addButton('TicTok',0,'btn-secondary'+mx(++m),{'id':'diag-toggletick'})
 	  .addButton('ChgIns',0,'btn-secondary'+mx(++m),{'id':'diag-chg-ins'})

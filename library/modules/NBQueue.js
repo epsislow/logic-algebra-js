@@ -5,13 +5,64 @@
 */
 
 var NBQueue = (function () {
-	const pub = {};
+	const pub = {
+		'queue': {},
+		'settings': {},
+	};
 	
-	pub.add = function(hdl) {
-	  
+	pub.addQueue = function (name, type = 'fifo', readd = 0) {
+		pub.queue[name] = [];
+		pub.settings[name] = {
+			'type' : type,
+			'readd' : readd,
+		}
+	}
+	
+	pub.appendToQueue = function(queueName, runHdl, finHdl, dro = 0) {
+	  pub.queue[queueName].push({run: runHdl, fin: finHdl, dro: dro})
+	}
+	
+	pub.prependToQueue = function(queueName, runHdl, finHdl, dro) {
+	  pub.queue[queueName].unshift({run: runHdl, fin: finHdl, dro: dro})
+	}
+	
+	function runFromQueue(queueName, elem, readd) {
+		const isFinish = (elem.dro) ? elem.run.apply(elem.dro.ctx, elem.dro.param): elem.run();
+		if (isFinish) {
+			if (elem.dro) {
+				elem.fin.apply(elem.dro.ctx, null);
+			} else {
+				elem.fin();
+			}
+		} else if (readd == 'fi') {
+			pub.appendToQueue(queueName, elem.run, elem.fin, elem.dro);
+		} else if (readd == 'li') {
+			pub.prependToQueue(queueName, elem.run, elem.fin, elem.dro);
+		}
+	}
+	
+	pub.consumeFromQueue = function (queueName, delay = 1000) {
+		var elem;
+		var type = pub.settings[queueName].type;
+		var readd = pub.settings[queueName].readd;
+		
+		if (type == 'fifo') {
+			elem = pub.queue[queueName].shift();
+		} else if (type == 'lifo') {
+			elem = pub.queue[queueName].pop();
+		}
+		
+		setTimeout(function () {
+			runFromQueue(queueName, elem, readd);
+		}, delay);
 	}
 	
 	return pub;
 })();
+
+/**
+
+var c = 0; NBQueue.addQueue('test', 'fifo', 'fi'); NBQueue.appendToQueue('test', function () {console.log('c=', c++); return c>11} , function () {console.log('done')});NBQueue.consumeFromQueue('test',100); 
+*/
 
 export { NBQueue }
