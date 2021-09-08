@@ -90,10 +90,19 @@ var NBQueue = (function () {
 	return pub;
 })();
 
+var NBSchedule = (function () {
+	const pub = {
+		'intervals': {},
+		'settings': {},
+	};
+	
+	return pub;
+})();
+
 /**
 
 var c = 0; NBQueue.addQueue('test', 'fifo', 'fi'); NBQueue.appendToQueue('test', function () {console.log('c=', c++); return c>11} , function () {console.log('done')});NBQueue.consumeFromQueue('test',100); 
 NBQueue.consumeAllFromQueue('test',100,0)
 */
 
-export { NBQueue }
+export { NBQueue, NBSchedule }
