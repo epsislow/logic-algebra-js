@@ -120,7 +120,7 @@ var NBSch = (function () {
 	    list: {},
 	  };
 	  pub.add= function(name, hdl) {
-	      this.list[name] = hdl;
+	      pub.list[name] = hdl;
 	    };
 	    
 	  pub.run= function() {
