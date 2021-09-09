@@ -92,9 +92,45 @@ var NBQueue = (function () {
 
 var NBSchedule = (function () {
 	const pub = {
-		'intervals': {},
+		'list': {},
 		'settings': {},
 	};
+	
+	pub.add = function(name, startsInSec, periodInSec, hdl) {
+	  
+	  pub.settings[name]= {
+	    startsInSec: startsInSec,
+	    periodInSec: periodInSec,
+	    hdl: hdl,
+	  }
+	  
+	  setTimeout(function() {
+	  pub.list[name] = {
+	    interval: setInterval(hdl, periodInSec),
+	    drop: function() {
+	      clearInterval(pub.list[name].interval);
+	    }
+	  }
+	  }, startsInSec);
+	}
+	
+	pub.addAt = function(startsInSec, name, hdl) {
+	  var timeInSec= Date.now() + startsInSec;
+	  
+	  pub.settings[name] = {
+	    timeInSec: timeInSec,
+	    startsInSec: startsInSec,
+	    hdl: hdl,
+	  }
+	  
+	  pub.list[name] = {
+	    
+	  }
+	}
+	
+	pub.startAt = function() {
+	  
+	}
 	
 	return pub;
 })();
