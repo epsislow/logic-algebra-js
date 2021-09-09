@@ -116,31 +116,38 @@ var NBSch = (function () {
 	}
 	
 	function hdlController() {
-	  var pub= {
+	  var pub2= {
 	    list: {},
 	  };
-	  pub.add= function(name, hdl) {
-	      pub.list[name] = hdl;
+	  pub2.add= function(name, hdl, periodInSec=0) {
+	      pub2.list[name] = {
+	        hdl: hdl,
+	        periodInSec: periodInSec
+	      };
 	    };
 	    
-	  pub.run= function() {
+	  pub2.run= function() {
 	      console.log('run');
-	      for(var r in pub.list) {
-	        pub.list[r]();
+	      for(var r in pub2.list) {
+	        var sett= pub2.list[r];
+	        sett.hdl();
+	        if(sett.periodInSec) {
+	          pub.addAt(sett.periodInSec, r, sett.hdl, sett.periodInSec );
+	        }
 	      }
 	    }
 	  
 	  
-	  return pub;
+	  return pub2;
 	}
 
-	pub.addAt = function(startsInSec, name, hdl) {
+	pub.addAt = function(startsInSec, name, hdl, periodInSec=0) {
 	  var timeInSec= Math.round(Date.now() /1000)+ startsInSec;
 	  if(!(timeInSec in pub.int)) {
 	    pub.int[timeInSec] =
 	      hdlController();
 	  }
-	  pub.int[timeInSec].add(name, hdl);
+	  pub.int[timeInSec].add(name, hdl, periodInSec);
 	}
 	
 	pub.nextRunAt = function() {
@@ -171,10 +178,10 @@ NBQueue.consumeAllFromQueue('test',100,0)
 var c= 0; 
 NBSch.addAt(1,0, function() {
   console.log('c1=', ++c);
-});
-NBSch.addAt(5,0, function() {
+}, 0);
+NBSch.addAt(3,0, function() {
   console.log('c2=', ++c);
-});
+},0);
 
 NBSch.runAllAt();
 
