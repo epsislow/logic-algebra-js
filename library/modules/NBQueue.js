@@ -90,8 +90,9 @@ var NBQueue = (function () {
 	return pub;
 })();
 
-var NBSchedule = (function () {
+var NBSch = (function () {
 	const pub = {
+	  'int': {},
 		'list': {},
 		'settings': {},
 	};
@@ -114,35 +115,49 @@ var NBSchedule = (function () {
 	  }, startsInSec);
 	}
 	
-	hdlController = function() {
-	  return {
+	function hdlController() {
+	  var pub= {
 	    list: {},
-	    add: function(name, hdl) {
+	  };
+	  pub.add= function(name, hdl) {
 	      this.list[name] = hdl;
-	    },
-	    run: function() {
-	      for(var r in this.list) {
-	        r();
+	    };
+	    
+	  pub.run= function() {
+	      console.log('run');
+	      for(var r in pub.list) {
+	        pub.list[r]();
 	      }
 	    }
-	  }
 	  
+	  
+	  return pub;
 	}
+
 	pub.addAt = function(startsInSec, name, hdl) {
-	  var timeInSec= Date.now() + startsInSec;
-	  if(!(timeInSec in pun.int)) {
+	  var timeInSec= Math.round(Date.now() /1000)+ startsInSec;
+	  if(!(timeInSec in pub.int)) {
 	    pub.int[timeInSec] =
 	      hdlController();
 	  }
 	  pub.int[timeInSec].add(name, hdl);
-	 
-	  pub.list[name] = {
-	    
+	}
+	
+	pub.nextRunAt = function() {
+	  var nextSec = Math.round(Date.now() /1000);
+	  console.log(nextSec);
+	  if(nextSec in pub.int) {
+	    pub.int[nextSec].run();
 	  }
 	}
 	
-	pub.startAt = function() {
-	  
+	var runInterval;
+	pub.runAllAt = function() {
+	  runInterval = setInterval(pub.nextRunAt, 1000);
+	}
+	
+	pub.stopAllAt = function() {
+	  clearInterval(runInterval);
 	}
 	
 	return pub;
@@ -152,6 +167,17 @@ var NBSchedule = (function () {
 
 var c = 0; NBQueue.addQueue('test', 'fifo', 'fi'); NBQueue.appendToQueue('test', function () {console.log('c=', c++); return c>11} , function () {console.log('done')});NBQueue.consumeFromQueue('test',100); 
 NBQueue.consumeAllFromQueue('test',100,0)
+
+var c= 0; 
+NBSch.addAt(1,0, function() {
+  console.log('c1=', ++c);
+});
+NBSch.addAt(5,0, function() {
+  console.log('c2=', ++c);
+});
+
+NBSch.runAllAt();
+
 */
 
-export { NBQueue, NBSchedule }
+export { NBQueue, NBSch }
