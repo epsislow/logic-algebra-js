@@ -114,15 +114,28 @@ var NBSchedule = (function () {
 	  }, startsInSec);
 	}
 	
-	pub.addAt = function(startsInSec, name, hdl) {
-	  var timeInSec= Date.now() + startsInSec;
-	  
-	  pub.settings[name] = {
-	    timeInSec: timeInSec,
-	    startsInSec: startsInSec,
-	    hdl: hdl,
+	hdlController = function() {
+	  return {
+	    list: {},
+	    add: function(name, hdl) {
+	      this.list[name] = hdl;
+	    },
+	    run: function() {
+	      for(var r in this.list) {
+	        r();
+	      }
+	    }
 	  }
 	  
+	}
+	pub.addAt = function(startsInSec, name, hdl) {
+	  var timeInSec= Date.now() + startsInSec;
+	  if(!(timeInSec in pun.int)) {
+	    pub.int[timeInSec] =
+	      hdlController();
+	  }
+	  pub.int[timeInSec].add(name, hdl);
+	 
 	  pub.list[name] = {
 	    
 	  }
