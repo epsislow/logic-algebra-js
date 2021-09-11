@@ -3869,6 +3869,40 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
     
     return dglcvs.input;
   },
+  calculateConnRectForComp: function (cid, isOut = 0) {
+	  var x,y,w,h,
+		comp= this.chip[this.chipActive].comp[cid];
+	  
+	  var entr = [];
+		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
+			pY = Math.floor(this.m.pan.ofsY + this.m.pan.yOfs)
+	  var tx = 5+50*comp.x+pX+comp.xOfs;
+	  var ty = 5+25*comp.y+pY+comp.yOfs;
+	
+	
+    if(!isOut) {
+      entr = Object.keys(comp.ins);
+    } else {
+      entr = Object.keys(comp.outs);
+    }
+	
+	  var entrmax = entr.length+0.6;
+	 
+	  if(tx >= 50) { 
+		tx -= 50;
+	  } else {
+		tx += 30;
+	  }
+	
+	  if(ty >= entrmax*10) { 
+		ty -= entrmax*10;
+	  } else {
+		ty += Math.min(20, entrmax*10);
+	  }
+
+	  
+	  return {x:tx, y:y, w:40, h:entrmax*10};
+  },
   inputHandlers: {
 	newChip: function(value) {
 		if(value && !(value in this.chip)) {
@@ -4908,7 +4942,7 @@ var comp= comps[this.m.compInf.sel]
 	);
 	
 	if(this.m.compConn && this.m.compConnPoutsMenu && !this.m.compConnPout) {
-		var rect = this.calculateConnRectForComp(	this.m.compConnPoutsMenu, 0);
+		var rect = this.calculateConnRectForComp(this.m.compConnPoutsMenu, 0);
 		
 		this.addMActionRect(
 			'compConnPoutEntries', 'start',
@@ -5727,6 +5761,7 @@ var comp= comps[this.m.compInf.sel]
         'compConnH', kqueue,
         this.handlerMA.compConnH, [comp]);
 		
+		/*
     if(this.m.compConn && this.m.compConnPoutsMenu && (!this.m.compConnPout || !this.m.compConnPin )) {
 		console.log('hh');
 		var entr = [];
@@ -5769,7 +5804,7 @@ var comp= comps[this.m.compInf.sel]
 			this.handlerMA.compConnEntries, 
 			[entr, tx, ty]
 		  );
-	}
+	}*/
         
       this.addMActionNoXY(
         'compRotate', kqueue,
@@ -5787,7 +5822,7 @@ var comp= comps[this.m.compInf.sel]
       
       return kqueue;
 	},
-	compSetup: function (comps) {
+	compSetup: function () {
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
 			pY = Math.floor(this.m.pan.ofsY + this.m.pan.yOfs),
 			maxX = dglcvs.lib.maxWidth/2,
