@@ -155,6 +155,7 @@ var NBSch = (function () {
 	  console.log(nextSec);
 	  if(nextSec in pub.int) {
 	    pub.int[nextSec].run();
+		//delete pub.int[nextSec];
 	  }
 	}
 	
@@ -178,10 +179,10 @@ NBQueue.consumeAllFromQueue('test',100,0)
 var c= 0; 
 NBSch.addAt(1,0, function() {
   console.log('c1=', ++c);
-}, 0);
-NBSch.addAt(3,0, function() {
+}, 1);
+NBSch.addAt(3,1, function() {
   console.log('c2=', ++c);
-},0);
+}, 5);
 
 NBSch.runAllAt();
 
