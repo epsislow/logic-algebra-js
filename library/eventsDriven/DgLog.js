@@ -3700,6 +3700,12 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
       comps[fst].outs[pout].id= snd;
       comps[fst].outs[pout].pin= pin;
+	  
+	  this.m.compConnPin = 0;
+	  this.m.compConnPout = 0;
+	  this.m.compConnPoutsMenu = 0;
+	  this.m.compConnPinsMenu = 0;
+	  
       return 1;
   },
   compConnect: function(cids) {
@@ -3875,33 +3881,33 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 	  
 	  var entr = [];
 		var pX = Math.floor(this.m.pan.ofsX + this.m.pan.xOfs),
-			pY = Math.floor(this.m.pan.ofsY + this.m.pan.yOfs)
-	  var tx = 5+50*comp.x+pX+comp.xOfs;
-	  var ty = 5+25*comp.y+pY+comp.yOfs;
+			pY = Math.floor(this.m.pan.ofsY + this.m.pan.yOfs);
+	var tx = 5+50*comp.x+pX+comp.xOfs;
+	var ty = 5+25*comp.y+pY+comp.yOfs;
 	
 	
     if(!isOut) {
-      entr = Object.keys(comp.ins);
-    } else {
       entr = Object.keys(comp.outs);
+    } else {
+      entr = Object.keys(comp.ins);
     }
 	
-	  var entrmax = entr.length+0.6;
+	  var entrmax = entr.length;
 	 
-	  if(tx >= 50) { 
+	  if(tx >= 50) {
 		tx -= 50;
 	  } else {
 		tx += 30;
 	  }
 	
-	  if(ty >= entrmax*10) { 
-		ty -= entrmax*10;
+	  if(ty >= entrmax*11) { 
+		ty -= entrmax*11;
 	  } else {
-		ty += Math.min(20, entrmax*10);
+		ty += Math.min(20, entrmax*11);
 	  }
 
 	  
-	  return {x:tx, y:y, w:40, h:entrmax*10};
+	  return {x:tx, y:ty, w:40, h:entrmax*11+5};
   },
   inputHandlers: {
 	newChip: function(value) {
@@ -4841,7 +4847,12 @@ var comp= comps[this.m.compInf.sel]
         y >= a.y - a.r &&
         y <= a.y + a.h + a.r) {
         
+		try {
         kqueue = a.cb.apply(dgl, a.prm);
+		} catch (e) {
+			console.log(i, a);
+			throw e;
+		}
       
         if(typeof kqueue=='object' && kqueue!=null) {
           var kk= this.checkMaCb(kqueue, x, y);
@@ -4943,23 +4954,23 @@ var comp= comps[this.m.compInf.sel]
 	
 	if(this.m.compConn && this.m.compConnPoutsMenu && !this.m.compConnPout) {
 		var rect = this.calculateConnRectForComp(this.m.compConnPoutsMenu, 0);
-		
+		var comp = this.chip[this.chipActive].comp[this.m.compConnPoutsMenu];
 		this.addMActionRect(
-			'compConnPoutEntries', 'start',
+			'compConnEntries0', 'start',
 			rect.x, rect.y, rect.w, rect.h, 
-			this.handlerMA.compConnPoutEntries, 
-			[0, this.m.compConnPoutsMenu], 0,
+			this.handlerMA.compConnEntries, 
+			[comp, 0, rect.x, rect.y], 0,
 		 );
 	}
 	
 	if(this.m.compConn && this.m.compConnPinsMenu && !this.m.compConnPin) {
 		var rect = this.calculateConnRectForComp(this.m.compConnPinsMenu, 1);
-		
+		var comp = this.chip[this.chipActive].comp[this.m.compConnPinsMenu];
 		this.addMActionRect(
-			'compConnPinEntries', 'start', 
+			'compConnEntries1', 'start', 
 			rect.x, rect.y, rect.w, rect.h, 
-			this.handlerMA.compConnPinEntries,
-			[1, this.m.compConnPinsMenu], 0,
+			this.handlerMA.compConnEntries,
+			[comp, 1, rect.x, rect.y], 0,
 		 );
 	}
 		
@@ -5021,6 +5032,38 @@ var comp= comps[this.m.compInf.sel]
 
   },
   handlerMA: {
+	compConnEntries: function (comp, isPin = 0, tx, ty) {
+		var entr, kqueue= [];
+		if(isPin) {
+		  entr = Object.keys(comp.ins);
+		} else {
+		  entr = Object.keys(comp.outs);
+		}
+		var q = 0;
+		for(var i in entr) {
+			this.addMActionRect(
+				'compConnEntry'+q, kqueue, 
+				tx, ty + 11*q, 40, 11, 
+				this.handlerMA.compConnPressedEntry,
+				[comp, entr[i],  isPin], 0,
+			);
+			q++;
+		}
+        cvs.draw(1);
+		return kqueue;
+	},
+	compConnPressedEntry: function(comp, entry, isPin=0) {
+		if(isPin) {
+			this.m.compConnPin = entry;
+			this.compConnect0();
+			
+			cvs.draw(1);
+		} else {
+			this.m.compConnPout = entry;
+		}
+		cvs.draw(1);
+		return true;
+	},
 	storageMenuPanEnd:function () {
 		if (!this.cache.pan) {
 			return;
@@ -5658,9 +5701,6 @@ var comp= comps[this.m.compInf.sel]
 		this.m.isDragged = 0;
 		return true;
 	},
-	compConnEntriesPin: function (entries, tx, ty) {
-		return true;
-	},
 	compConnH: function (comp) {
 		if(!this.m.compConn) {
 			return;
@@ -5673,6 +5713,11 @@ var comp= comps[this.m.compInf.sel]
 			//  console.log('no outs');
 				return false;
 			}
+			if (this.m.compConnPoutsMenu && this.m.compConnPoutsMenu == cid) {
+				this.m.compConnPoutsMenu = 0;
+				return true;
+			}
+			
 			this.m.compConnPoutsMenu = cid;
 			//console.log('poutmenu '+ cid);
 			
@@ -5682,6 +5727,10 @@ var comp= comps[this.m.compInf.sel]
 			if (!Object.keys(comp.ins).length) {
 			 // console.log('no ins');
 				return false;
+			}
+			if (this.m.compConnPinsMenu && this.m.compConnPinsMenu == cid) {
+				this.m.compConnPinsMenu = 0;
+				return true;
 			}
 			this.m.compConnPinsMenu = cid;
 		//	console.log('pinmenu '+cid)
