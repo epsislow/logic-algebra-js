@@ -457,6 +457,12 @@ window.onerror = function (message, url, line, column, error) {
 	  	   if(dgl.m.compSel.length) {
 	  	     dgl.m.compSel=[];
 	  	   }
+		   if(!en) {
+		   dgl.m.compConnPoutsMenu = 0;
+		   dgl.m.compConnPout = 0;
+		   dgl.m.compConnPinsMenu = 0;
+		   dgl.m.compConnPin = 0;
+		   }
 	       cvs.draw(1);
 	  	  })
 	  $('#diag-comprotate').click(function() {

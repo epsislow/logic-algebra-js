@@ -2197,8 +2197,19 @@ for(var l in lineNodes) {
        5+25*comp.y+pY+comp.yOfs-10, comp.id, 6, '#fff','Arial','#333')
    }
    
-   c.scale(1/this.m.zoom, 1/this.m.zoom);
     
+	
+
+   
+   if (this.m.compConnPinsMenu && !this.m.compConnPin) {
+	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp[this.m.compConnPinsMenu], pX, pY);
+   }
+   
+   if (this.m.compConnPoutsMenu && !this.m.compConnPout) {
+	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp[this.m.compConnPoutsMenu], pX, pY);
+   }
+   c.scale(1/this.m.zoom, 1/this.m.zoom);
+	
    if(this.m.drawChips || this.m.addComp|| this.m.compInfo) {
      if(dglcvs.d.chipMenuK<=0 && frameTimeDiff>0) {
   dglcvs.d.chipMenuK+= frameTimeDiff/((100-dglcvs.d.chipMenuK)/100)
@@ -2279,14 +2290,6 @@ for(var l in lineNodes) {
   //  }
    }
    
-   
-   if (this.m.compConnPinsMenu && !this.m.compConnPin) {
-	   dglcvs.drawConnMenu(c,1, this.chip[this.chipActive].comp[this.m.compConnPinsMenu], pX, pY);
-   }
-   
-   if (this.m.compConnPoutsMenu && !this.m.compConnPout) {
-	   dglcvs.drawConnMenu(c,0, this.chip[this.chipActive].comp[this.m.compConnPoutsMenu], pX, pY);
-   }
     
     //dglcvs.drawInt(c,'test','gate',20,20,40,10,[{pos:'top'},{pos:'top'}],[{pos:'bottom'}]);
     
