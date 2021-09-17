@@ -1806,15 +1806,23 @@ var cvsDrawDgl = function(c, upd=0, lib, frameTimeDiff=0) {
     /**/
     var pX= Math.floor(dgl.m.pan.xOfs+this.m.pan.ofsX)
     var pY= Math.floor(dgl.m.pan.yOfs+this.m.pan.ofsY)
-    
+	
     if(this.m.drawGrid) {
       var step=150;
+	  var deltax = 1,deltay = 1;
+	  var q = 0;
      for(var jx=pX%step;jx<lib.maxWidth/z;jx+=step) {
+	   //q++;
+	   //delta-= 0.1;
+	   //lib.line(c, jx*(deltax),0,jx*(deltax), lib.maxHeight/z,'#383838',0.5);
+	
        lib.line(c, jx,0,jx, lib.maxHeight/z,'#444',0.5);
        c.textAlign = 'left';
        lib.textm(c, jx+1, 6, jx - pX, 6, '#555');
      }
      for (var jy = pY % step; jy < lib.maxHeight/z; jy += step) {
+	   //lib.line(c, 0, jy*(deltay), lib.maxWidth/z, jy*(deltay), '#383838', 0.5);
+		 
        lib.line(c, 0, jy, lib.maxWidth/z, jy, '#444', 0.5);
        c.textAlign= 'left';
        lib.textm(c,1,jy-5, jy-pY,6,'#555');
