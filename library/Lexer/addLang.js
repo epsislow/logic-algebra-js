@@ -142,12 +142,11 @@ var lex = (function() {
 		  if(flags.type) {
 		    pushTypeToAst();
 		  }
-			return ast;
+		  return ast;
 		}
 	}
-	
-	return getLastError();
-  }
+	getLastError();
+}
   
   return pub;
 })();

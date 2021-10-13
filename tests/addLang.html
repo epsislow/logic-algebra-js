@@ -79,7 +79,10 @@ function start () {
   console.log('start');
   
   $('#execute1').click(function() {
-	console.log(Lex.parse($('#query1').val()));
+	  const ast=Lex.parse($('#query1').val());
+	  
+    $('#output').text(JSON.stringify(ast));
+			
   });
   
 }
