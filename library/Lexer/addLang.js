@@ -45,6 +45,17 @@ var lex = (function() {
   const pub= {};
   
   pub.parse=function(txt) {
+    const ast=pub.syntax(
+      pub.lexer(txt)
+    );
+    return ast;
+  }
+  
+  pub.syntax= function(ast) {
+    return ast;
+  }
+  
+  pub.lexer=function(txt) {
     const ast= [];
 	var cursor=0;
 	const flags = {type:0};
