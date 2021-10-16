@@ -62,30 +62,48 @@ var lex = (function() {
     var type='', newType=false;
     var val='';
     
+    function pushOldVal(typenew) {
+      if(!val.length) {
+        if(!type) {
+      a = ast.length;
+      ast[a] = {};
+          type=typenew;
+        }
+        return;
+      }
+      if(type == typenew) {
+        return;
+      }
+      newType = type !== typenew;
+      if(!type) {
+        return;
+      }
+        
+      a = ast.length;
+      ast[a] = {};
+      ast[a][type] = val;
+      val = '';
+      type = typenew;
+    }
+    
     function lexNext() {
       var token= txt.charAt(cursor);
       if(token >= '0' && token <='9') {
-        newType = type !== 'num';
-        val+=token;
-        type='num';
+        pushOldVal('num');
+        val += token;
       } else if( token >='a' && token<='z') {
-        newType = type !== 'var';
+        pushOldVal('var');
         val+=token;
-        type='var';
       } else if (token === '') {
-        newType = type !== 'end';
-        val+=token;
-        type='unk';
+        pushOldVal('end');
+        val += token;
       } else {
-        newType = type !== 'unk';
-        val+=token;
-        type='unk';
+        pushOldVal('unk');
+        val += token;
       }
-      if(newType) {
-        a=ast.length;
-        ast[a] = {};
+      
+      if(type) {
         ast[a][type] = val;
-        val='';
       }
       return 1;
     }
