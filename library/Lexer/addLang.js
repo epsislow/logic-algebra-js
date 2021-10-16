@@ -60,24 +60,37 @@ var lex = (function() {
     var cursor=0;
     var a=ast.length;
     var type='', newType=false;
+    var val='';
     
     function lexNext() {
       var token= txt.charAt(cursor);
       if(token >= '0' && token <='9') {
         newType = type !== 'num';
         val+=token;
-        ast[a] = {type:val};
         type='num';
-      } else if( token >='a' && token <='z') {
+      } else if( token >='a' && token<='z') {
         newType = type !== 'var';
+        val+=token;
+        type='var';
+      } else if (token === '') {
+        newType = type !== 'end';
+        val+=token;
+        type='unk';
+      } else {
+        newType = type !== 'unk';
+        val+=token;
+        type='unk';
       }
       if(newType) {
-        
+        a=ast.length;
+        ast[a] = {};
+        ast[a][type] = val;
+        val='';
       }
       return 1;
     }
     
-    while((cursor += lexNext())<= txt.length) {
+    while((cursor += lexNext())<=txt.length) {
     }
     
     return ast;
