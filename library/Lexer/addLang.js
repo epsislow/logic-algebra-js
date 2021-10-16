@@ -56,6 +56,34 @@ var lex = (function() {
   }
   
   pub.lexer=function(txt) {
+    const ast=[];
+    var cursor=0;
+    var a=ast.length;
+    var type='', newType=false;
+    
+    function lexNext() {
+      var token= txt.charAt(cursor);
+      if(token >= '0' && token <='9') {
+        newType = type !== 'num';
+        val+=token;
+        ast[a] = {type:val};
+        type='num';
+      } else if( token >='a' && token <='z') {
+        newType = type !== 'var';
+      }
+      if(newType) {
+        
+      }
+      return 1;
+    }
+    
+    while((cursor += lexNext())<= txt.length) {
+    }
+    
+    return ast;
+  }
+  
+  pub.lexer1=function(txt) {
     const ast= [];
 	var cursor=0;
 	const flags = {type:0};
