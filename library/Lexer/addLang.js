@@ -93,6 +93,12 @@ var lex = (function() {
       } else if (token === '') {
         pushOldVal('end');
         val += token;
+       } else if (['-','+','/','÷','*','×'].includes(token)) {
+         pushOldVal('op');
+         val += token;
+       } else if (token === '(' || token ===')') {
+        pushOldVal('block');
+        val += token;
       } else {
         pushOldVal('unk');
         val += token;
