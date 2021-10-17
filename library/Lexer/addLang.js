@@ -59,36 +59,25 @@ var lex = (function() {
     const ast=[];
     var cursor=0;
     var a=ast.length;
-    var type='', newType=false;
+    var type='';
     var val='';
     
     function pushOldVal(typenew) {
       if(!val.length) {
         if(!type) {
           a = ast.length;
-        //  ast[a] = {};
           type=typenew;
         }
         return;
       }
-   //   if(type == typenew) {
-   //     return;
-   //   }
-      newType = type !== typenew;
-    //  if(!type) {
-     //   return;
-    //  }
       
-      if(newType) {
+      if(type !== typenew) {
         a = ast.length;
         ast[a] = {};
-      ast[a][type] = val;
-      val = '';
-      type = typenew;
-      } else {
-        //ast[a][type] =val
+        ast[a][type] = val;
+        val = '';
+        type = typenew;
       }
-      newType=0;
     }
     
     function lexNext() {
@@ -107,9 +96,6 @@ var lex = (function() {
         val += token;
       }
       
-      if(type) {
-      //  ast[a][type] = val;
-      }
       return 1;
     }
     
