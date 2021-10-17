@@ -71,13 +71,13 @@ var lex = (function() {
         }
         return;
       }
-      if(type == typenew) {
-        return;
-      }
+   //   if(type == typenew) {
+   //     return;
+   //   }
       newType = type !== typenew;
-      if(!type) {
-        return;
-      }
+    //  if(!type) {
+     //   return;
+    //  }
       
       if(newType) {
         a = ast.length;
@@ -88,6 +88,7 @@ var lex = (function() {
       } else {
         ast[a][type] =val
       }
+      newType=0;
     }
     
     function lexNext() {
