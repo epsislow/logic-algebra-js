@@ -89,11 +89,14 @@ var lex = (function() {
         val += token;
       } else if( token >='a' && token<='z') {
         pushOldVal('var');
-        val+=token;
+        val+=token
+      } else if (token === '=') {
+          pushOldVal('assign');
+          val += token;
       } else if (token === '') {
         pushOldVal('end');
         val += token;
-       } else if (['-','+','/','÷','*','×'].includes(token)) {
+      } else if (['-','+','/','÷','*','×'].includes(token)) {
          pushOldVal('op');
          val += token;
        } else if (token === '(' || token ===')') {
