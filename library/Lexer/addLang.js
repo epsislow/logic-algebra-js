@@ -83,7 +83,9 @@ var lex = (function() {
     function lexNext() {
       var token= txt.charAt(cursor);
       if(token >= '0' && token <='9') {
-        pushOldVal('num');
+        if(type!='num' && type!='var') {
+          pushOldVal('num');
+        }
         val += token;
       } else if( token >='a' && token<='z') {
         pushOldVal('var');
