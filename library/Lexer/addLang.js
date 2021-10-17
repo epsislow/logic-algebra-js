@@ -65,8 +65,8 @@ var lex = (function() {
     function pushOldVal(typenew) {
       if(!val.length) {
         if(!type) {
-      a = ast.length;
-      ast[a] = {};
+          a = ast.length;
+          ast[a] = {};
           type=typenew;
         }
         return;
@@ -78,12 +78,16 @@ var lex = (function() {
       if(!type) {
         return;
       }
-        
-      a = ast.length;
-      ast[a] = {};
+      
+      if(newType) {
+        a = ast.length;
+        ast[a] = {};
       ast[a][type] = val;
       val = '';
       type = typenew;
+      } else {
+        ast[a][type] =val
+      }
     }
     
     function lexNext() {
