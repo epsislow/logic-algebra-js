@@ -62,6 +62,10 @@ var lex = (function() {
     var type='';
     var val='';
     
+    function pushValAs(typenew) {
+      
+    }
+    
     function pushOldVal(typenew) {
       if(!val.length) {
         if(!type) {
