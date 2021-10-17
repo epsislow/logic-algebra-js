@@ -66,7 +66,7 @@ var lex = (function() {
       if(!val.length) {
         if(!type) {
           a = ast.length;
-          ast[a] = {};
+        //  ast[a] = {};
           type=typenew;
         }
         return;
@@ -86,7 +86,7 @@ var lex = (function() {
       val = '';
       type = typenew;
       } else {
-        ast[a][type] =val
+        //ast[a][type] =val
       }
       newType=0;
     }
@@ -108,7 +108,7 @@ var lex = (function() {
       }
       
       if(type) {
-        ast[a][type] = val;
+      //  ast[a][type] = val;
       }
       return 1;
     }
