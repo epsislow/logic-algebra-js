@@ -102,6 +102,7 @@ var lex = (function() {
        } else if (token === '(' || token ===')') {
         pushOldVal('block');
         val += token;
+        //type='s';
       } else {
         pushOldVal('unk');
         val += token;
