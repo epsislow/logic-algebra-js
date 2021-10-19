@@ -62,11 +62,7 @@ var lex = (function() {
     var type='';
     var val='';
     
-    function pushValAs(typenew) {
-      
-    }
-    
-    function pushOldVal(typenew) {
+    function pushOldVal(typenew, once=0) {
       if(!val.length) {
         if(!type) {
           a = ast.length;
@@ -75,7 +71,7 @@ var lex = (function() {
         return;
       }
       
-      if(type !== typenew) {
+      if(type !== typenew || once) {
         a = ast.length;
         ast[a] = {};
         ast[a][type] = val;
@@ -103,11 +99,13 @@ var lex = (function() {
       } else if (['-','+','/','÷','*','×'].includes(token)) {
          pushOldVal('op');
          val += token;
-       } else if (token === '(' || token ===')') {
-        pushOldVal('block');
-        val += token;
-        //type='s';
-      } else {
+       } else if (token === '(') {
+        pushOldVal('lpar',1);
+        val = token;
+       } else if (token === ')') {
+        pushOldVal('rpar',1);
+        val = token;
+     } else {
         pushOldVal('unk');
         val += token;
       }
