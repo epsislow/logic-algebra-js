@@ -91,8 +91,13 @@ var lex = (function() {
         pushOldVal('var');
         val+=token
       } else if (token === '=') {
+        if(type=='assign') {
+          type='macroAssign';
+          pushOldVal('macroAssign');
+        } else {
           pushOldVal('assign');
-          val += token;
+        }
+        val = token;
       } else if (token === '') {
         pushOldVal('end');
         val += token;
@@ -105,6 +110,39 @@ var lex = (function() {
        } else if (token === ')') {
         pushOldVal('rpar',1);
         val = token;
+       } else if (token === '{') {
+          pushOldVal('lelem', 1);
+          val = token;
+       } else if (token === '}') {
+         pushOldVal('relem', 1);
+         val = token;
+       } else if (token === ',') {
+         pushOldVal('comma', 1);
+         val = token;
+       } else if (token === '&') {
+         pushOldVal('and', 1);
+         val = token;
+       } else if (token === '!') {
+         pushOldVal('not', 1);
+         val = token;
+       } else if (token === '|') {
+         pushOldVal('or', 1);
+         val = token;
+       } else if (['>','<','='].includes(token )) {
+         pushOldVal('equivOp', 1);
+         val = token;
+       } else if (token === '?') {
+         pushOldVal('if', 1);
+         val = token;
+       } else if (token === ':') {
+         pushOldVal('else', 1);
+         val = token;
+       } else if (token === ';') {
+         pushOldVal('endif', 1);
+         val = token;
+       } else if (token === ' ') {
+      //   pushOldVal('space', 1);
+     //    val = token;
      } else {
         pushOldVal('unk');
         val += token;
