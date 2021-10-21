@@ -52,11 +52,58 @@ var lex = (function() {
   }
   
   pub.syntax= function(ast) {
+    var stack=['root'];
+    var p=0;
+    var flags={};
+    flags['root'+p]=0;
+    
     var rules={
-      'e':'g[og]',
-      'f':'n|v',
-      'g':'f|(f)'
       };
+    //{root}={mexpr}
+    //{root}={@var}{@assign}{mexpr}
+    //{mexpr}={operand}{@op}{operand}
+    //{mexpr}={operand}
+    //{operand}={sign}{@factor}
+    //{operand}={factor}
+    //{factor}={@num}
+    //{factor}={@var}
+    //{factor}={@lpar}{mexpr}{@rpar}
+    
+    function gFlag(name) {
+      return flags[name+p];
+    }
+    
+    function incFlag(name) {
+      if(!((name+p) in flags)) {
+        flage[name+p]=0;
+      }
+      flags[name+p]++;
+    }
+    
+    function expect(type, value) {
+      switch(stack[p]) {
+        case 'root':
+          if(flags.root==0) {
+            if(type=='var') {
+              flags['root'+p]++;
+            } else {
+              p++;
+              stack[p] ='mexpr';
+            }
+          }
+        
+          break;
+      }
+      
+      return 1;
+    }
+    for(const type in ast) {
+      if(!expect(type, ast[type])) {
+        break;
+      }
+      continue;
+    }
+    
     return ast;
   }
   
