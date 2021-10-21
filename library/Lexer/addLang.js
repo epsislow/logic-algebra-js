@@ -52,6 +52,11 @@ var lex = (function() {
   }
   
   pub.syntax= function(ast) {
+    var rules={
+      'e':'g[og]',
+      'f':'n|v',
+      'g':'f|(f)'
+      };
     return ast;
   }
   
@@ -139,6 +144,12 @@ var lex = (function() {
          val = token;
        } else if (token === ';') {
          pushOldVal('endif', 1);
+         val = token;
+       } else if (token === '[') {
+         pushOldVal('lblock', 1);
+         val = token;
+       } else if (token === ']') {
+         pushOldVal('rblock', 1);
          val = token;
        } else if (token === ' ') {
       //   pushOldVal('space', 1);
