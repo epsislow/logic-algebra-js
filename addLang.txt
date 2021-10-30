@@ -1,0 +1,10 @@
+
++     //{root}={mexpr}
++     //{root}={@var}{@assign}{mexpr}
++     //{mexpr}={operand}{@op}{operand}
++     //{mexpr}={operand}
++     //{operand}={sign}{@factor}
++     //{operand}={factor}
++     //{factor}={@num}
++     //{factor}={@var}
++     //{factor}={@lpar}{mexpr}{@rpar}
