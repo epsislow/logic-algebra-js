@@ -52,11 +52,60 @@ var lex = (function() {
   }
   
   pub.syntax= function(ast) {
-    var rules={
-      'e':'g[og]',
-      'f':'n|v',
-      'g':'f|(f)'
-      };
+	var cursor = 0;
+	var advanceWith = 0;
+	
+	var astTree = [];
+	
+	function checkNext() {
+		astTree.push(expr());
+		
+		return advanceWith;
+	}
+	  
+    function expr() {
+		return [
+			term(),
+			op(['+','-']),
+			term()
+		];
+	}
+	
+	function factor() {
+		const currentToken = ast[cursor+advanceWith];
+		if (currentToken.type !='num') {
+			throw new Error('[3] Syntax Error. Expected Number got: '+ currentToken.type);
+		}
+		advanceWith++;
+		
+		return currentToken;
+	}
+	
+	function term() {
+		return [
+			factor(),
+			op(['*','/']),
+			factor(),
+		];
+	}
+	
+	function op(allowedOps) {
+		const currentToken = ast[cursor+advanceWith];
+		if (currentToken.type !== 'op') {
+			throw new Error('[1] Syntax Error. Expected Op got: '+ currentToken.type);
+		}
+		if (!allowedOps.includes(currentToken.value)) {
+			throw new Error('[2] Syntax Error unexpected OP value: '+ currentToken.value);	
+		}
+		
+		advanceWith++;
+		
+		return currentToken;
+	}
+	
+	while((cursor += checkNext())<=ast.length) {
+    }
+	
     return ast;
   }
   
@@ -79,7 +128,8 @@ var lex = (function() {
       if(type !== typenew || once) {
         a = ast.length;
         ast[a] = {};
-        ast[a][type] = val;
+		ast[a].type = type;
+        ast[a].value = val;
         val = '';
         type = typenew;
       }
@@ -106,7 +156,7 @@ var lex = (function() {
       } else if (token === '') {
         pushOldVal('end');
         val += token;
-      } else if (['-','+','/','÷','*','×'].includes(token)) {
+      } else if (['-','+','/','รท','*','ร—'].includes(token)) {
          pushOldVal('op');
          val += token;
        } else if (token === '(') {
