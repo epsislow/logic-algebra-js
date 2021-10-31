@@ -58,22 +58,58 @@ var lex = (function() {
 	var astTree = [];
 	
 	function checkNext() {
+	  advanceWith=0;
 		astTree.push(expr());
 		
 		return advanceWith;
 	}
+	 
+	function assign(isMacro=0) {
+	  const currentToken=ast[cursor+advanceWith];
 	  
-    function expr() {
-		return [
-			term(),
+	  if(!isMacro && currentToken.type != 'assign') {
+	    throw new Error('[3] Syntax Error. Expected assign got: '+ currentToken.type);
+	  }
+	  if (isMacro && currentToken.type != 'macroAssign') {
+	    throw new Error('[3] Syntax Error. Expected macroAssign got: ' + currentToken.type);
+	  }
+	  advanceWith++;
+	}
+	
+  function expr(noAssign=0) {
+    var a, a0;
+    try {
+      a0=term();
+      
+      alert(JSON.stringify(a0));
+		a= [
+			a0,
 			op(['+','-']),
 			term()
-		];
+		 ];
+		 return a;
+    } catch (error) {
+      console.log(a0);
+      
+      if(a0[0].type!=='var' || noAssign) {
+        console.log("11")
+        //throw error;
+      }
+      
+      advanceWith=0;
+      console.log('12');
+      return [];
+      return [
+        //term(),
+       // assign(),
+       // expr(1)
+      ];
+    }
 	}
 	
 	function factor() {
 		const currentToken = ast[cursor+advanceWith];
-		if (currentToken.type !='num') {
+		if (currentToken.type !='num' && currentToken.type!='var') {
 			throw new Error('[3] Syntax Error. Expected Number got: '+ currentToken.type);
 		}
 		advanceWith++;
@@ -103,7 +139,7 @@ var lex = (function() {
 		return currentToken;
 	}
 	
-	while((cursor += checkNext())<=ast.length) {
+	while((cursor += checkNext()) <=ast.length) {
     }
 	
     return ast;
