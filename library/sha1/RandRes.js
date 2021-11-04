@@ -50,12 +50,6 @@ var r = {
 			
 				a.buildings.addBuilding(firstResBuildList, 'industry', 4);
 
-				r.app.place.add('road', 'road', 0, 0, 0, 0, 0, 0, 0);
-				
-				r.app.place.gen('Galaxy', 7);
-				
-				r.app.place.currentId = rd.pickOneFrom(r.app.place.dockers, 0);
-				
 			}
 			
 
@@ -82,8 +76,7 @@ var r = {
               .add('calc', a.calcTicker.bind(r))
               .add('winMgr', r.win.mgrTicker.bind(r.win));
 			  
-			r.win.show('map');
-         //   r.win.show('res');
+            r.win.show('res');
 
         },
         painters: function () {
