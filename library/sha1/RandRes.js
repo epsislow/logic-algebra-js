@@ -43,6 +43,14 @@ var r = {
 				a.resource.gen(2, ids[2], 4, 1);
 				a.resource.gen(1, ids[2], 5, 1);
 				a.resource.gen(1, ids[2], 6, 1);
+			
+				a.resource.gen(1, ids[0], 3, 1);
+				a.resource.gen(1, ids[0], 3, 1);
+				a.resource.gen(10, ids[0], 0, 1);
+				
+				a.resource.gen(5, ids[1], 0, 1);
+				
+				
 				a.resource.get(moneyId).ratePerTick = 0.07;
 				a.resource.get(energyId+1).ratePerTick = 0.16;
 				var firstResBuildList = a.resource.get(energyId+1).buildingListId
@@ -278,6 +286,8 @@ var r = {
             },
             gen: function (num, planetId=0, tradeValuePow, genBuildingList = 0) {
               var i, name,ico;
+           
+		var tradeValuePow2=tradeValuePow;   
               for(i=0;i<num;i++) {
         ico = rd.pickOneFrom(this.icoList,1);
         suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
@@ -287,7 +297,12 @@ var r = {
 		if (genBuildingList) {
 			buildingList = this.parent.buildings.add();
 		}
-                this.add(planetId, name, ico,color, tradeValuePow, buildingList);
+		
+		if(tradeValuePow==0) {
+		  tradeValuePow2=rd.rand(1,5);
+		}
+		
+      this.add(planetId, name, ico,color, tradeValuePow2, buildingList);
               }
             },
             getAllEls: function(resources) {
