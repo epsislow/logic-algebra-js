@@ -39,11 +39,11 @@ var r = {
 				a.resource.gen(2, ids[0], 3, 1);
 				a.resource.gen(1, ids[1], 2, 1);
 				a.resource.gen(1, ids[1], 3, 1);
-				a.resource.gen(1, ids[2], 3, 1);
+			/*	a.resource.gen(1, ids[2], 3, 1);
 				a.resource.gen(2, ids[2], 4, 1);
 				a.resource.gen(1, ids[2], 5, 1);
 				a.resource.gen(1, ids[2], 6, 1);
-			
+			*/
 				a.resource.gen(1, ids[0], 3, 1);
 				a.resource.gen(1, ids[0], 3, 1);
 				a.resource.gen(10, ids[0], 0, 1);
@@ -269,7 +269,6 @@ var r = {
             autoGenTrade: function(cnt) {
     for(var sid=2; sid<this.reg.length; sid++) {
        this.genTrade(cnt, sid, -1);
-       
     }
             },
             genTrade: function(count, sid=-1, did=-1) {
@@ -331,7 +330,7 @@ var r = {
               for(i=0;i<num;i++) {
         ico = rd.pickOneFrom(this.icoList,1);
         suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-        name = rd.randomName(rd.rand(3,8),0,suf);
+        name = rd.randomName(rd.rand(2,4),0,suf);
         color=rd.pickOneFrom(this.colorList,0);
 		var buildingList = 0;
 		if (genBuildingList) {
