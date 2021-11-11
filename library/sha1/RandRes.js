@@ -39,17 +39,19 @@ var r = {
 				a.resource.gen(2, ids[0], 3, 1);
 				a.resource.gen(1, ids[1], 2, 1);
 				a.resource.gen(1, ids[1], 3, 1);
-				a.resource.gen(1, ids[2], 3, 1);
+			/*	a.resource.gen(1, ids[2], 3, 1);
 				a.resource.gen(2, ids[2], 4, 1);
 				a.resource.gen(1, ids[2], 5, 1);
 				a.resource.gen(1, ids[2], 6, 1);
-			
+			*/
 				a.resource.gen(1, ids[0], 3, 1);
 				a.resource.gen(1, ids[0], 3, 1);
 				a.resource.gen(10, ids[0], 0, 1);
 				
 				a.resource.gen(5, ids[1], 0, 1);
 				
+				a.resource.autoGenTrade(5);
+				console.log(a.resource.table);
 				
 				a.resource.get(moneyId).ratePerTick = 0.07;
 				a.resource.get(energyId+1).ratePerTick = 0.16;
@@ -263,6 +265,43 @@ var r = {
         resource: { //fish//box//book-open/city/coins/cogs/cog/compass/globe-europe/globe/microchip/network-wired
             icoList:['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','ethetnet','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore'],
             colorList:["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
+            table: {},
+            autoGenTrade: function(cnt) {
+    for(var sid=2; sid<this.reg.length; sid++) {
+       this.genTrade(cnt, sid, -1);
+    }
+            },
+            genTrade: function(count, sid=-1, did=-1) {
+              var srcId=sid,
+              dstId=did,i=0;
+              for(i=0;i<count;i++)
+              {
+              if(sid===-1) {
+                srcId= rd.rand(2,this.reg.length-1);
+              }
+              if(did===-1 || sid===did) {
+                dstId= rd.rand(2, this.reg.length-1);
+                if(dstId==srcId) {
+                  dstId= dstId<0?1:dstId-1;
+                }
+              }
+              var s= this.reg[srcId].tradeValue;
+              var d= this.reg[dstId].tradeValue;
+              
+              var key= (srcId<dstId)? srcId+'_'+dstId: dstId+'_'+srcId;
+              
+              this.table[key]={
+                srcId: srcId,
+                src: this.reg[srcId].name,
+                dst: this.reg[dstId].name,
+                dstId: dstId,
+                srcQty: (s<d)? Math.ceil(d/s):1,
+                dstQty: (d<s)? Math.ceil(s/d):1,
+              };
+             // sid=did;
+             // did=-1;
+              }
+            },
             reg:[],
             add: function (planetId, name, ico=0, color='light', tradeValuePow = -1, buildingListId = 0) {
               var id=this.reg.length;
@@ -291,7 +330,7 @@ var r = {
               for(i=0;i<num;i++) {
         ico = rd.pickOneFrom(this.icoList,1);
         suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-        name = rd.randomName(rd.rand(3,8),0,suf);
+        name = rd.randomName(rd.rand(2,4),0,suf);
         color=rd.pickOneFrom(this.colorList,0);
 		var buildingList = 0;
 		if (genBuildingList) {
@@ -386,6 +425,7 @@ var r = {
 							.append(
 								$('<td>')
 								.addClass('info-col')
+								.append(resPerPlanet[p][r].id)
 								.append(
 									$('<span>')
 										.addClass('res-value')
