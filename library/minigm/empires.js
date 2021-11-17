@@ -11,11 +11,11 @@ var EmpiresConstants = {
 		'resource': [
 			'Metal','Gas','Crystals','Fertility','Area','Solar Energy'
 		],
-		'size': ['planet','moon'],
+		'size': ['Planet','Moon'],
 		'position': [1, 2, 3, 4, 5],
 		'positionResources': {
 			6: [5,4,3,2,2],
-			3: [-1,0,1,1,0],
+			4: [-1,0,1,1,0],
 			2: [0,0,0,1,2]
 		},
 		'type': {
@@ -116,10 +116,31 @@ var Empires = (function (constants) {
 		checkBestPlanets: function (type, size, pos) {
 			var typeRes = constants.terrain.type[type];
 			
+			var resName= 
+			  constants.terrain.resource;
+			 var prop={
+			   'Type': type,
+			   'Size': constants.terrain.size[size-1],
+			   'Position': pos
+			 };
+			 
+			 prop[resName[0]]= typeRes[0];
+			 prop[resName[1]]= typeRes[1]+ constants.terrain.positionResources[2][pos];
+			 
+			 prop[resName[2]]= typeRes[2];
+			 prop[resName[3]]= typeRes[3]+ constants.terrain.positionResources[4][pos];
+			 
+			 prop[resName[4]]= typeRes[3+size];
+			 prop[resName[5]]= constants.terrain.positionResources[6][pos];
+			
 			//constants.terrain.positionResources
 			
-			return typeRes;
+			return prop;
+		},
+		cbp: function () {
+		  return this.checkBestPlanets.apply(this, arguments);
 		}
+		//empires.cpb('Arid',1,3)
 	}
 	
 	return pub;
