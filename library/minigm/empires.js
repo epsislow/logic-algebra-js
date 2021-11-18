@@ -140,7 +140,7 @@ var Empires = (function (constants) {
 		cbp: function () {
 		  return this.checkBestPlanets.apply(this, arguments);
 		}
-		//empires.cpb('Arid',1,3)
+		
 	}
 	
 	return pub;
