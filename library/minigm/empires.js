@@ -23,7 +23,7 @@ var EmpiresConstants = {
 			'Asteroid': [4,2,3,4,0,65],
 			'Craters': [4,2,2,4,85,75],
 			'Crystalline': [3,2,4,4,80,71],
-			'Earthly': [33,0,6,85,75],
+			'Earthly': [3,3,0,6,85,75],
 			'Gaia': [3,2,0,6,90,79],
 			'Glacial': [2,4,0,5,95,83],
 			'Magma': [3,5,0,5,80,71],
@@ -125,22 +125,57 @@ var Empires = (function (constants) {
 			 };
 			 
 			 prop[resName[0]]= typeRes[0];
-			 prop[resName[1]]= typeRes[1]+ constants.terrain.positionResources[2][pos];
+			 prop[resName[1]]= typeRes[1]+ constants.terrain.positionResources[2][pos-1];
 			 
 			 prop[resName[2]]= typeRes[2];
-			 prop[resName[3]]= typeRes[3]+ constants.terrain.positionResources[4][pos];
+			 prop[resName[3]]= typeRes[3]+ constants.terrain.positionResources[4][pos-1];
 			 
 			 prop[resName[4]]= typeRes[3+size];
-			 prop[resName[5]]= constants.terrain.positionResources[6][pos];
+			 prop[resName[5]]= constants.terrain.positionResources[6][pos-1];
 			
 			//constants.terrain.positionResources
 			
 			return prop;
 		},
 		cbp: function () {
-		  return this.checkBestPlanets.apply(this, arguments);
+		  
+		  var arg= arguments;
+		  
+		  var posReses=[];
+		  
+		  for(var pos=1;pos<=5;pos++){
+		    arg[2]=pos;
+		    
+		    var posRes=[];
+		    posRes=this.checkBestPlanets.apply(this, arg);
+		    
+		    posRes['xNG']=this.calcNG(posRes);
+		    posRes['xUT']=this.calcUT(posRes);
+		    
+		    posRes['xA']= posRes['xNG'] + posRes['xUT'];
+		    
+		    posReses.push(posRes);
+		    
+		  }
+		  
+		  return posReses;
+		},
+		calcUT: function(posRes) {
+		  return Math.floor(posRes['Area']/(posRes['Fertility']+1));
+		},
+		calcNG: function(posRes) {
+		  return Math.floor(posRes['Area']/(posRes['Solar Energy']+1));
+		},
+		start: function() {
+		  console.table(this.cbp('Earthly',1,2));
+		  
+		  console.table(this.cbp('Rocky',1,2));/*
+		  console.table(this.cbp('Craters',1,2));
+		  console.table(this.cbp('Asteroid',2,2));
+		  console.table(this.cbp('Crystalline',1,2));
+		  */
+		  
 		}
-		
 	}
 	
 	return pub;
