@@ -207,12 +207,35 @@ var Empires = (function (constants) {
 		  });
 		  
 		  
-		  var q2=q.slice(18,27);
+		  //var q2=q.slice(18,27);
 		  
-		  this.showTableRes(q2);
+		  this.showTableRes(q);
 		},
 		
 		showTableRes: function(tb) {
+			
+		  $('main').html('<table id="tbl"><thead><tr></tr></thead><tbody></tbody></table>');
+		  
+		  var headAdded = false;
+		  var trs = '';
+		  for(var i in tb) {  
+			var tr = tb[i];
+			if(!headAdded) {
+				var ths = '';
+				for(var k in tr) {
+					ths += '<th>'+k+'</th>';
+				}
+				$('#tbl').find("thead").html('<tr>'+ths+'</tr>');
+				headAdded = true;
+			}
+			var tds = '';
+			for(var k in tr) {
+				tds += '<td>'+tr[k]+'</td>';
+			}
+			trs += '<tr>'+tds+'</tr>';
+		  }
+		  $('#tbl').find("tbody").html(trs);
+		  
 		  console.table(tb);
 		}
 	}
