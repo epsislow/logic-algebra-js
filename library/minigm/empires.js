@@ -173,38 +173,40 @@ var Empires = (function (constants) {
 		  
 		  var all= Object.keys(constants.terrain.type);
 		  
+		  var size=1;
 		  
 		  for(var k in all) {
-		    if(all[k]=='Asteroid') {
+		    if(all[k]=='Asteroid' && size==1)
+		    {
 		      continue;
 		    }
-		    Array.prototype.push.apply(q,this.cbp(all[k],1,2));
+		    Array.prototype.push.apply(q,this.cbp(all[k], size,2));
 		  }
 		  
-		 // Array.prototype.push.apply(q,this.cbp('Rocky',1,2));
-		  
 		  
 		  /*
-		  console.table(this.cbp('Earthly',1,2));
-		  
-		  console.table(this.cbp('Rocky',1,2));
-		  console.table(this.cbp('Craters',1,2));
-		  console.table(this.cbp('Asteroid',2,2));
-		  console.table(this.cbp('Crystalline',1,2));
 		  */
-		  
-		  /*
+		  var sort=1;
+		  if(sort==1) {
 		  q.sort(function(a, b) {
 		    if(a.Metal === b.Metal) {
 		      return parseInt(a.xA) - parseInt(b.xA);
 		    }
 		    return parseInt(b.Metal) - parseInt(a.Metal);
 		  });
-		  */
-		  
+		  } else if (sort==2) {
+		  q.sort(function(a, b) {
+		    if(a.Crystals === b.Crystals) {
+		      return parseInt(a.xA) - parseInt(b.xA);
+		    }
+		    return parseInt(b.Crystals) - parseInt(a.Crystals);
+		  });
+
+		  } else if (sort==0) {
 		  q.sort(function(a,b) {
 		    return parseInt(b.xB) - parseInt(a.xB);
 		  });
+		  }
 		  
 		  
 		  //var q2=q.slice(18,27);
@@ -236,7 +238,7 @@ var Empires = (function (constants) {
 		  }
 		  $('#tbl').find("tbody").html(trs);
 		  
-		  console.table(tb);
+		  //console.table(tb);
 		}
 	}
 	
