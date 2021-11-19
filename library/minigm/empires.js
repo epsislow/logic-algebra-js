@@ -209,8 +209,11 @@ var Empires = (function (constants) {
 		  
 		  var q2=q.slice(0,9);
 		  
-		  console.table(q2);
-		  
+		  this.showTableRes(q2);
+		},
+		
+		showTableRes: function(tb) {
+		  console.table(tb);
 		}
 	}
 	
