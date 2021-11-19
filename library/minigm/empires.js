@@ -154,6 +154,8 @@ var Empires = (function (constants) {
 		    
 		    posRes['xA']= posRes['xNG'] + posRes['xUT'];
 		    
+		    posRes['xB']= posRes['Area'] - posRes['xA'];
+		    
 		    posReses.push(posRes);
 		    
 		  }
@@ -190,12 +192,20 @@ var Empires = (function (constants) {
 		  console.table(this.cbp('Asteroid',2,2));
 		  console.table(this.cbp('Crystalline',1,2));
 		  */
+		  
+		  /*
 		  q.sort(function(a, b) {
 		    if(a.Metal === b.Metal) {
 		      return parseInt(a.xA) - parseInt(b.xA);
 		    }
 		    return parseInt(b.Metal) - parseInt(a.Metal);
 		  });
+		  */
+		  
+		  q.sort(function(a,b) {
+		    return parseInt(b.xB) - parseInt(a.xB);
+		  });
+		  
 		  
 		  var q2=q.slice(0,9);
 		  
