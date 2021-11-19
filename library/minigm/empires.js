@@ -207,7 +207,7 @@ var Empires = (function (constants) {
 		  });
 		  
 		  
-		  var q2=q.slice(0,9);
+		  var q2=q.slice(18,27);
 		  
 		  this.showTableRes(q2);
 		},
