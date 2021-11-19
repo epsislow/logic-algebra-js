@@ -164,16 +164,42 @@ var Empires = (function (constants) {
 		  return Math.floor(posRes['Area']/(posRes['Fertility']+1));
 		},
 		calcNG: function(posRes) {
-		  return Math.floor(posRes['Area']/(posRes['Solar Energy']+1));
+		  return Math.floor(posRes['Area']/(Math.max(posRes['Solar Energy']+1,posRes['Gas']+1)));
 		},
 		start: function() {
+		  var q=[];
+		  
+		  var all= Object.keys(constants.terrain.type);
+		  
+		  
+		  for(var k in all) {
+		    if(all[k]=='Asteroid') {
+		      continue;
+		    }
+		    Array.prototype.push.apply(q,this.cbp(all[k],1,2));
+		  }
+		  
+		 // Array.prototype.push.apply(q,this.cbp('Rocky',1,2));
+		  
+		  
+		  /*
 		  console.table(this.cbp('Earthly',1,2));
 		  
-		  console.table(this.cbp('Rocky',1,2));/*
+		  console.table(this.cbp('Rocky',1,2));
 		  console.table(this.cbp('Craters',1,2));
 		  console.table(this.cbp('Asteroid',2,2));
 		  console.table(this.cbp('Crystalline',1,2));
 		  */
+		  q.sort(function(a, b) {
+		    if(a.Metal === b.Metal) {
+		      return parseInt(a.xA) - parseInt(b.xA);
+		    }
+		    return parseInt(b.Metal) - parseInt(a.Metal);
+		  });
+		  
+		  var q2=q.slice(0,9);
+		  
+		  console.table(q2);
 		  
 		}
 	}
