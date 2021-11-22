@@ -186,18 +186,18 @@ var Empires = (function (constants) {
 		  
 		  /*
 		  */
-		  var sort=1;
+		  var sort=2;
 		  if(sort==1) {
 		  q.sort(function(a, b) {
 		    if(a.Metal === b.Metal) {
-		      return parseInt(a.xA) - parseInt(b.xA);
+				return parseInt(b.xB) - parseInt(a.xB);
 		    }
 		    return parseInt(b.Metal) - parseInt(a.Metal);
 		  });
 		  } else if (sort==2) {
 		  q.sort(function(a, b) {
 		    if(a.Crystals === b.Crystals) {
-		      return parseInt(a.xA) - parseInt(b.xA);
+				return parseInt(b.xB) - parseInt(a.xB);
 		    }
 		    return parseInt(b.Crystals) - parseInt(a.Crystals);
 		  });
@@ -216,6 +216,15 @@ var Empires = (function (constants) {
 		
 		showTableRes: function(tb) {
 			
+		function componentToHex(c) {
+		  var hex = c.toString(16);
+		  return hex.length == 1 ? "0" + hex : hex;
+		}
+		
+		function rgbToHex(r, g, b) {
+		  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+		}
+
 		  $('main').html('<table id="tbl"><thead><tr></tr></thead><tbody></tbody></table>');
 		  
 		  var headAdded = false;
@@ -232,7 +241,12 @@ var Empires = (function (constants) {
 			}
 			var tds = '';
 			for(var k in tr) {
-				tds += '<td>'+tr[k]+'</td>';
+				if (k == 'xB') {
+					var g = Math.ceil(128*(tr[k]/(95-40)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,40)+'">'+tr[k]+'</td>';
+				} else {
+					tds += '<td>'+tr[k]+'</td>';
+				}
 			}
 			trs += '<tr>'+tds+'</tr>';
 		  }
