@@ -168,53 +168,87 @@ var Empires = (function (constants) {
 		calcNG: function(posRes) {
 		  return Math.floor(posRes['Area']/(Math.max(posRes['Solar Energy']+1,posRes['Gas']+1)));
 		},
-		start: function() {
+		start: function(sort = 1) {
 		  var q=[];
 		  
 		  var all= Object.keys(constants.terrain.type);
 		  
-		  var size=1;
+		  var size=2;
 		  
 		  for(var k in all) {
 		    if(all[k]=='Asteroid' && size==1)
 		    {
 		      continue;
 		    }
-		    Array.prototype.push.apply(q,this.cbp(all[k], size,2));
+		    Array.prototype.push.apply(
+				q,
+				this.cbp(all[k], size,2)
+			);
 		  }
 		  
-		  
-		  /*
-		  */
-		  var sort=2;
+		  var sortCols = [];
 		  if(sort==1) {
-		  q.sort(function(a, b) {
-		    if(a.Metal === b.Metal) {
-				return parseInt(b.xB) - parseInt(a.xB);
-		    }
-		    return parseInt(b.Metal) - parseInt(a.Metal);
-		  });
+			  q.sort(function(a, b) {
+				if(a.Metal === b.Metal) {
+					return parseInt(b.xB) - parseInt(a.xB);
+				}
+				return parseInt(b.Metal) - parseInt(a.Metal);
+			  });
+			  sortCols = ['Metal', 'xB'];
 		  } else if (sort==2) {
-		  q.sort(function(a, b) {
-		    if(a.Crystals === b.Crystals) {
-				return parseInt(b.xB) - parseInt(a.xB);
-		    }
-		    return parseInt(b.Crystals) - parseInt(a.Crystals);
-		  });
-
+			  q.sort(function(a, b) {
+				if(a.Crystals === b.Crystals) {
+					return parseInt(b.xB) - parseInt(a.xB);
+				}
+				return parseInt(b.Crystals) - parseInt(a.Crystals);
+			  });
+			  sortCols = ['Crystals', 'xB'];
+		  } else if (sort==3) {
+			  q.sort(function(a, b) {
+				if(a.Area === b.Area) {
+					return parseInt(b.xB) - parseInt(a.xB);
+				}
+				return parseInt(b.Area) - parseInt(a.Area);
+			  });
+			  sortCols = ['Area', 'xB'];
+		  } else if (sort==4) {
+			  q.sort(function(a, b) {
+				if(a.Fertility === b.Fertility) {
+					return parseInt(b.xB) - parseInt(a.xB);
+				}
+				return parseInt(b.Fertility) - parseInt(a.Fertility);
+			  });
+			  sortCols = ['Fertility', 'xB'];
+		  } else if (sort==5) {
+			  q.sort(function(a, b) {
+				if(a.Gas === b.Gas) {
+					return parseInt(b.xB) - parseInt(a.xB);
+				}
+				return parseInt(b.Gas) - parseInt(a.Gas);
+			  });
+			  sortCols = ['Gas', 'xB'];
+			} else if (sort==6) {
+			  q.sort(function(a, b) {
+				if(a['Solar Energy'] === b['Solar Energy']) {
+					return parseInt(b.xB) - parseInt(a.xB);
+				}
+				return parseInt(b['Solar Energy']) - parseInt(a['Solar Energy']);
+			  });
+			  sortCols = ['Solar Energy', 'xB'];
 		  } else if (sort==0) {
-		  q.sort(function(a,b) {
-		    return parseInt(b.xB) - parseInt(a.xB);
-		  });
+			  q.sort(function(a,b) {
+				return parseInt(b.xB) - parseInt(a.xB);
+			  });
+			  sortCols = ['xB'];
 		  }
 		  
 		  
 		  //var q2=q.slice(18,27);
 		  
-		  this.showTableRes(q);
+		  this.showTableRes(q, sortCols);
 		},
 		
-		showTableRes: function(tb) {
+		showTableRes: function(tb, sortCols) {
 			
 		function componentToHex(c) {
 		  var hex = c.toString(16);
@@ -234,16 +268,45 @@ var Empires = (function (constants) {
 			if(!headAdded) {
 				var ths = '';
 				for(var k in tr) {
-					ths += '<th>'+k+'</th>';
+					if (['Metal','Crystals','Area','xB','Fertility','Solar Energy','Gas'].includes(k)) {
+						var sortIcon = 'genderless';
+						if (sortCols.includes(k)) {
+							sortIcon = 'sort-amount-down';
+						}
+						ths += '<th style="cursor: pointer">'+'<i class="sorter fas fa-'+sortIcon+'" style="color:#ff9922;" id="sort'+k.replace(' ','')+'"></i> '+k+'</th>';
+					} else {
+						ths += '<th>'+k+'</th>';
+					}
 				}
 				$('#tbl').find("thead").html('<tr>'+ths+'</tr>');
-				headAdded = true;
+				headAdded = true; 
 			}
 			var tds = '';
 			for(var k in tr) {
 				if (k == 'xB') {
 					var g = Math.ceil(128*(tr[k]/(95-40)));
-					tds += '<td style="background-color:'+rgbToHex(40,g,40)+'">'+tr[k]+'</td>';
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Crystals') {
+					var g = Math.ceil(128*((4+tr[k])/(10)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Metal') {
+					var g = Math.ceil(128*((4+tr[k])/(10)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Fertility') {
+					var g = Math.ceil(128*((4+tr[k])/(10)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Solar Energy') {
+					var g = Math.ceil(128*((4+tr[k])/(10)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Gas') {
+					var g = Math.ceil(128*((4+tr[k])/(10)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Area') {
+					var g = Math.ceil(128*((tr[k]-(tr['Size']=='Moon'?50:65))/((tr['Size']=='Moon'?95:95)-65)));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
+				} else if (k == 'Position') {
+					var g = Math.ceil(128*((1+tr[k])/7));
+					tds += '<td style="background-color:'+rgbToHex(40,g,(sortCols.includes(k)? 40:40))+'">'+tr[k]+'</td>';
 				} else {
 					tds += '<td>'+tr[k]+'</td>';
 				}
@@ -252,6 +315,28 @@ var Empires = (function (constants) {
 		  }
 		  $('#tbl').find("tbody").html(trs);
 		  
+			  
+	$('#sortxB').parent().click(function () {
+		empires.start(0);
+	});
+	$('#sortMetal').parent().click(function () {
+		empires.start(1);
+	});
+	$('#sortCrystals').parent().click(function () {
+		empires.start(2);
+	});
+	$('#sortArea').parent().click(function () {
+		empires.start(3);
+	});
+	$('#sortFertility').parent().click(function () {
+		empires.start(4);
+	});
+	$('#sortGas').parent().click(function () {
+		empires.start(5);
+	});
+	$('#sortSolarEnergy').parent().click(function () {
+		empires.start(6);
+	});
 		  //console.table(tb);
 		}
 	}
