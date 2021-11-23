@@ -35,6 +35,36 @@ var EmpiresConstants = {
 			'Tundra': [3,3,0,5,95,83],
 			'Volcanic': [3,5,0,5,80,71],
 		},
+	},
+	'basesCost': function (baseNumber = 0, maxTotalBases = 0, discount = 0) {
+		if(baseNumber == 0) {
+			return 0;
+		}
+		//1,2,3,4,5,6,7,8,9,10
+		//0,1,2,5,1,2,5,1,2,5
+		//0,2,2,2,3,3,3,4,4,4
+		
+		var noMoreMaxDiscountProc = (maxTotalBases> baseNumber) ? 25:100;
+		
+		var prefix = [1,2,5];
+		
+		var power = Math.floor((baseNumber+5)/3);
+		
+		return Math.max(0, Math.round(prefix[(baseNumber-1)%3]*Math.pow(10,power)*noMoreMaxDiscountProc/100) - discount);
+	},
+	'structures': {
+		'UT': {
+			'name': 'Urban Structures',
+			'description': 'Increases population capacity by bases fertility.',
+			'require': {},
+			'resources': {'Credits': 1, 'Area': -1},
+		},
+		'SP': {
+			'name': 'Solar Plants',
+			'description': 'Increases bases energy output by bases solar energy.',
+			'require': {},
+			'resources': {'Credits': 1, 'Area': -1},
+		},
 	}
 		
 /*
@@ -59,6 +89,77 @@ Volcanic	3	5	0	5	80	71
 Solar Energy	5	4	3	2	2
 Fertility	-1	0	+1	+1	0
 Gas	0	0	0	+1	+2
+*/
+/*
+Urban Structures
+Increases population capacity by bases fertility.
+	1				-1		
+Solar Plants
+Increases bases energy output by bases solar energy.
+	1			-1	-1		
+Gas Plants
+Increases bases energy output by bases gas resource.
+	1			-1	-1		
+Fusion Plants
+Increases bases energy output by 4.
+	20	4		-1	-1		Energy 6
+Antimatter Plants
+Increases bases energy output by 10.
+	2,000	10		-1	-1	x	Energy 20
+Orbital Plants
+Increases bases energy output by 12.
+	40,000	12		-1		x	Energy 25
+Research Labs
+Increases bases research by 8, allows new technologies.
+	2	-1		-1	-1		
+Metal Refineries
+Increases production and construction by bases metal.
+	1	-1	1	-1	-1		
+Crystal Mines
+Increases bases economy by bases crystals resource.
+	2	-1		-1	-1		
+Robotic Factories
+Increases production and construction by 2.
+	5	-1	1	-1	-1		Computer 2
+Shipyards
+Increases bases production by 2 and allows new units.
+	5	-1	1	-1	-1		
+Orbital Shipyards
+Increases bases production by 8 and allows new units.
+	10,000	-12	2	-1			Cybernetics 2
+Spaceports
+Increases bases economy by 2 and allows trade routes.
+	5	-1	2	-1	-1		
+Command Centers
+Adds 5% fleet attack power at base and allows 1 occupation.
+	20	-1		-1	-1		Computer 6
+Nanite Factories
+Increases production and construction by 4.
+	80	-2	2	-1	-1	x	Computer 10 + Laser 8
+Android Factories
+Increases production and construction by 6.
+	1,000	-4	2	-1	-1	x	Artificial Intelligence 4
+Economic Centers
+Increases bases economy by 4.
+	80	-2	4	-1	-1	x	Computer 10
+Terraform
+Increases bases area by 5.
+	80				5	x	Computer 10 + Energy 10
+Multi-Level Platforms
+Increases bases area by 10.
+	10,000				10	x	Armour 22
+Orbital Base
+Increase population capacity by 10.
+	2,000			10		x	Computer 20
+Jump Gate
+Increases fleet speed by 100%, allows stellar units to move between galaxies.
+	5,000	-12		-1			Warp Drive 12 + Energy 20
+Biosphere Modification
+Increases astro fertility by 1.
+	20,000	-24		-1	-1		Computer 24 + Energy 24
+Capital
+Increases economy by 10 and other bases by 2. -15% empire income while occupied.
+	15,000	-12	10	-1	-1		Tachyon Communications 1
 */
 }
 
@@ -340,6 +441,8 @@ var Empires = (function (constants) {
 		  //console.table(tb);
 		}
 	}
+	
+	pub.constants = EmpiresConstants;
 	
 	return pub;
 })(EmpiresConstants);
