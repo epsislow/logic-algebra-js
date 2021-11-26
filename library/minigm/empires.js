@@ -4,9 +4,10 @@
  Version: 1.0.1
  Author: epsislow@gmail.com
 */
-
+import { galaxyMaps } from '/library/minigm/galaxyMaps.js'
 
 var EmpiresConstants = {
+	'galaxyMaps': galaxyMaps,
 	'terrain': {
 		'resource': [
 			'Metal','Gas','Crystals','Fertility','Area','Solar Energy'
@@ -269,7 +270,13 @@ var Empires = (function (constants) {
 		calcNG: function(posRes) {
 		  return Math.floor(posRes['Area']/(Math.max(posRes['Solar Energy']+1,posRes['Gas']+1)));
 		},
-		start: function(sort = 1) {
+		start: function (sort = 1) {
+			this.planetsSort(sort);
+			
+			empires.constants.galaxyMaps.getMap(25);
+			console.log(empires.constants.galaxyMaps.maps);
+		},
+		planetsSort: function(sort = 1) {
 		  var q=[];
 		  
 		  var all= Object.keys(constants.terrain.type);
@@ -418,25 +425,25 @@ var Empires = (function (constants) {
 		  
 			  
 	$('#sortxB').parent().click(function () {
-		empires.start(0);
+		empires.planetsSort(0);
 	});
 	$('#sortMetal').parent().click(function () {
-		empires.start(1);
+		empires.planetsSort(1);
 	});
 	$('#sortCrystals').parent().click(function () {
-		empires.start(2);
+		empires.planetsSort(2);
 	});
 	$('#sortArea').parent().click(function () {
-		empires.start(3);
+		empires.planetsSort(3);
 	});
 	$('#sortFertility').parent().click(function () {
-		empires.start(4);
+		empires.planetsSort(4);
 	});
 	$('#sortGas').parent().click(function () {
-		empires.start(5);
+		empires.planetsSort(5);
 	});
 	$('#sortSolarEnergy').parent().click(function () {
-		empires.start(6);
+		empires.planetsSort(6);
 	});
 		  //console.table(tb);
 		}
