@@ -20,7 +20,7 @@ var galaxyMaps = {
 		
 		$(xml).find('region').each(function () {
 		            var id = parseInt($(this).attr('id'), 10);
-		console.log('id='+id);
+		//console.log('id='+id);
 		            var title = $(this).find('stars').text();
 
 		            var stars_Arr = title.split(";");
