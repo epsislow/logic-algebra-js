@@ -10,7 +10,8 @@ var galaxyMaps = {
 	'getMap': function (galaxy) {
 		this.getMapXml(galaxy,
 		//'http://aemini/map/getXml/?galaxy='+ galaxy
-		'http://logic/library/minigm/D'+ galaxy+'.xml'
+		//'http://logic/library/minigm/D'+ galaxy+'.xml'
+		'/library/minigm/D'+galaxy+'.xml'
 		, this.parseMap);
 	},
 	'parseMap': function (galaxy, xml) {
