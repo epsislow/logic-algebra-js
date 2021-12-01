@@ -270,6 +270,16 @@ var NBQueue2 = (function () {
 		return r;
 	}
 	
+	pub.clearAllJobs = function () {
+		for(var q in pub.jobs) {
+			pub.removeJob(q);
+		}
+		
+		for(var q in pub.jobIntervals) {
+			pub.removeJobInterval(q);
+		}
+	}
+	
 	return pub;
 })();
 
