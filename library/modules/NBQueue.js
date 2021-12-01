@@ -210,7 +210,7 @@ var NBQueue2 = (function () {
 	}
 	
 	pub.addJob = function(name, delaySec, hdl, hdlParams = [], hdlContext = null, removeJob = 1) {
-		if (pub.jobs[name]) {
+		if (name in pub.jobs) {
 			pub.removeJob(name);
 		}
 		
@@ -227,17 +227,13 @@ var NBQueue2 = (function () {
 	}
 	
 	pub.addJobInterval = function(name, delaySec, hdl, hdlParams = [], hdlContext = null, removeJob = 1) {
-		if (pub.jobIntervals[name]) {
-			pub.removeJob(name);
+		if (name in pub.jobIntervals) {
+			pub.removeJobInterval(name);
 		}
 		
 		pub.jobIntervals[name] = {
 			'id': setInterval(function () {
-					if (removeJob) {
-						delete pub.jobIntervals[name];
-					}
 					runJob(hdl, hdlParams, hdlContext);
-					
 				}, delaySec*1000
 			),
 			'runsAt': (Math.round(Date.now() /1000) + delaySec),
@@ -264,7 +260,7 @@ var NBQueue2 = (function () {
 		}
 		
 		for(var q in pub.jobIntervals) {
-			r.push([q, humanReadable? pub.timeToDate(pub.jobIntervals[q]['runsAt']): pub.jobIntervals[q]['runsAt'] + ' ('+ pub.jobIntervals[q]['delaySec'] +')']);
+			r.push([q, (humanReadable? pub.timeToDate(pub.jobIntervals[q]['runsAt']): pub.jobIntervals[q]['runsAt']) + ' ('+ pub.jobIntervals[q]['delaySec'] +')']);
 		}
 		
 		return r;
