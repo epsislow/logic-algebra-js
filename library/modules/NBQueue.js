@@ -222,7 +222,9 @@ var NBQueue2 = (function () {
 					runJob(hdl, hdlParams, hdlContext, name);
 				}, delaySec*1000
 			),
-			'runsAt': (Math.round(Date.now() /1000) + delaySec)
+			'runsAt': (Math.round(Date.now() /1000) + delaySec),
+			'delaySec': delaySec,
+			'startedAt': Math.round(Date.now() /1000)
 		}
 	}
 	
@@ -233,12 +235,14 @@ var NBQueue2 = (function () {
 		
 		pub.jobIntervals[name] = {
 			'id': setInterval(function () {
+					pub.jobIntervals[name]['startedAt'] = Math.round(Date.now() /1000);
+					
 					runJob(hdl, hdlParams, hdlContext);
 				}, delaySec*1000
 			),
 			'runsAt': (Math.round(Date.now() /1000) + delaySec),
 			'delaySec': delaySec,
-			'startSec': 0,
+			'startedAt': Math.round(Date.now() /1000)
 		}
 	}
 	
@@ -255,12 +259,15 @@ var NBQueue2 = (function () {
 	
 	pub.getAllJobs = function(humanReadable = 0) {
 		var r = [];
+		var elapsed = -1;
 		for(var q in pub.jobs) {
-			r.push([q, humanReadable? pub.timeToDate(pub.jobs[q]['runsAt']): pub.jobs[q]['runsAt']]);
+			elapsed = Math.round(Date.now() /1000) - pub.jobs[q]['startedAt'];
+			r.push([q, humanReadable? pub.timeToDate(pub.jobs[q]['runsAt']): pub.jobs[q]['runsAt'], elapsed, pub.jobs[q]['delaySec']]);
 		}
 		
 		for(var q in pub.jobIntervals) {
-			r.push([q, (humanReadable? pub.timeToDate(pub.jobIntervals[q]['runsAt']): pub.jobIntervals[q]['runsAt']) + ' ('+ pub.jobIntervals[q]['delaySec'] +')']);
+			elapsed = Math.round(Date.now() /1000) - pub.jobIntervals[q]['startedAt'];
+			r.push([q, (humanReadable? pub.timeToDate(pub.jobIntervals[q]['runsAt']): pub.jobIntervals[q]['runsAt']) + ' ('+ pub.jobIntervals[q]['delaySec'] +')', elapsed, pub.jobIntervals[q]['delaySec']]);
 		}
 		
 		return r;
@@ -296,6 +303,8 @@ NBQueue2.addJob('test20', 20, function () {console.log('now20');})
 NBQueue2.addJobInterval('everySec', 1, function () {console.log(NBQueue2.timeToDate(Math.round(Date.now() /1000)));})
 console.table(NBQueue2.getAllJobs(1))
 
+NBQueue2.clearAllJobs()
+//clearAll
 
 **/
 export { NBQueue, NBSch, NBQueue2}
