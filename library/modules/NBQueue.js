@@ -188,4 +188,108 @@ NBSch.runAllAt();
 
 */
 
-export { NBQueue, NBSch }
+var NBQueue2 = (function () {
+	const pub = {
+		'jobs': {},
+		'jobIntervals': {},
+	};
+	
+	pub.timeToDate = function (timeStamp = 0) {
+		var a = new Date(timeStamp * 1000);
+		var year = a.getFullYear();
+		var month = a.getMonth()+1;
+		var date = a.getDate();
+		var hour =(a.getHours() < 10 ? '0':'') + a.getHours();
+		var min = (a.getMinutes() < 10 ? '0':'') +  a.getMinutes();
+		var sec = (a.getSeconds() < 10 ? '0':'') + a.getSeconds();
+		return year + '-' + month + '-' + date + ' ' + hour + ':' + min + ':' + sec ;
+	}
+	
+	var runJob = function (hdl, params = [], context = null) {
+		hdl.apply(context, params);
+	}
+	
+	pub.addJob = function(name, delaySec, hdl, hdlParams = [], hdlContext = null, removeJob = 1) {
+		if (pub.jobs[name]) {
+			pub.removeJob(name);
+		}
+		
+		pub.jobs[name] = {
+			'id': setTimeout(function () {
+					if (removeJob) {
+						delete pub.jobs[name];
+					}
+					runJob(hdl, hdlParams, hdlContext, name);
+				}, delaySec*1000
+			),
+			'runsAt': (Math.round(Date.now() /1000) + delaySec)
+		}
+	}
+	
+	pub.addJobInterval = function(name, delaySec, hdl, hdlParams = [], hdlContext = null, removeJob = 1) {
+		if (pub.jobIntervals[name]) {
+			pub.removeJob(name);
+		}
+		
+		pub.jobIntervals[name] = {
+			'id': setInterval(function () {
+					if (removeJob) {
+						delete pub.jobIntervals[name];
+					}
+					runJob(hdl, hdlParams, hdlContext);
+					
+				}, delaySec*1000
+			),
+			'runsAt': (Math.round(Date.now() /1000) + delaySec),
+			'delaySec': delaySec,
+			'startSec': 0,
+		}
+	}
+	
+	
+	pub.removeJob = function(name) {
+		clearTimeout(pub.jobs[name]['id']);
+		delete pub.jobs[name];
+	}
+	
+	pub.removeJobInterval = function(name) {
+		clearInterval(pub.jobIntervals[name]['id']);
+		delete pub.jobIntervals[name];
+	}
+	
+	pub.getAllJobs = function(humanReadable = 0) {
+		var r = [];
+		for(var q in pub.jobs) {
+			r.push([q, humanReadable? pub.timeToDate(pub.jobs[q]['runsAt']): pub.jobs[q]['runsAt']]);
+		}
+		
+		for(var q in pub.jobIntervals) {
+			r.push([q, humanReadable? pub.timeToDate(pub.jobIntervals[q]['runsAt']): pub.jobIntervals[q]['runsAt'] + ' ('+ pub.jobIntervals[q]['delaySec'] +')']);
+		}
+		
+		return r;
+	}
+	
+	return pub;
+})();
+
+/**
+NBQueue2.addJob('test200', 100, function () {console.log('now200');})
+NBQueue2.addJob('test100', 100, function () {console.log('now100');})
+console.table(NBQueue2.getAllJobs(1))
+//only1 can use the same name, the last one
+
+NBQueue2.addJob('test10', 10, function () {console.log('now10');})
+NBQueue2.addJob('test20', 20, function () {console.log('now20');})
+console.table(NBQueue2.getAllJobs(1))
+//2 different timeouts 
+
+
+NBQueue2.addJob('test10', 10, function () {console.log('now10');})
+NBQueue2.addJob('test20', 20, function () {console.log('now20');})
+NBQueue2.addJobInterval('everySec', 1, function () {console.log(NBQueue2.timeToDate(Math.round(Date.now() /1000)));})
+console.table(NBQueue2.getAllJobs(1))
+
+
+**/
+export { NBQueue, NBSch, NBQueue2}
