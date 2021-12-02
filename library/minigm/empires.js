@@ -57,14 +57,50 @@ var EmpiresConstants = {
 		'UT': {
 			'name': 'Urban Structures',
 			'description': 'Increases population capacity by bases fertility.',
-			'require': {},
-			'resources': {'Credits': 1, 'Area': -1},
+			'technologies': {},
+			'resources': {'Credits': -1, 'Area': -1},
 		},
 		'SP': {
 			'name': 'Solar Plants',
 			'description': 'Increases bases energy output by bases solar energy.',
-			'require': {},
-			'resources': {'Credits': 1, 'Area': -1},
+			'technologies': {},
+			'resources': {'Credits': -1, 'Population': -1, 'Area': -1},
+		},
+		'GP': {
+			'name': 'Gas Plants',
+			'description': 'Increases bases energy output by bases gas resource.',
+			'technologies': {},
+			'resources': {'Credits': -1, 'Population': -1, 'Area': -1},
+		},
+		'FP': {
+			'name': 'Fusion Plants',
+			'description': 'Increases bases energy output by 4.',
+			'technologies': {'Energy': 6},
+			'resources': {'Credits': -20, 'Energy': 4, 'Population': -1, 'Area': -1},
+		},
+		'AP': {
+			'name': 'Antimatter Plants',
+			'description': 'Increases bases energy output by 10.',
+			'technologies': {'Energy': 20},
+			'resources': {'Credits': -2000, 'Energy': 10, 'Population': -1, 'Area': -1, 'Advanced': 1},
+		},
+		'OP': {
+			'name': 'Orbital Plants',
+			'description': 'Increases bases energy output by 12.',
+			'technologies': {'Energy': 25},
+			'resources': {'Credits': -40000, 'Energy': 12, 'Population': -1, 'Advanced': 1},
+		},
+		'RL': {
+			'name': 'Research Labs',
+			'description': 'Increases bases research by 8, allows new technologies.',
+			'technologies': {},
+			'resources': {'Credits': -2, 'Energy': -1, 'Research': 8, 'Population': -1, 'Area': -1},
+		},
+		'MR': {
+			'name': 'Metal Refineries',
+			'description': 'Increases production and construction by bases metal.',
+			'technologies': {},
+			'resources': {'Credits': -2, 'Energy': -1, 'Economy': 1, 'Production': 1,'Construction': 1, 'Population': -1, 'Area': -1},
 		},
 	}
 		
