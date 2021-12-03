@@ -58,7 +58,7 @@ var EmpiresConstants = {
 			'name': 'Urban Structures',
 			'description': 'Increases population capacity by bases fertility.',
 			'technologies': {},
-			'resources': {'Credits': -1, 'Area': -1},
+			'resources': {'Credits': -1,'Population':'Fertility', 'Area': -1},
 		},
 		'SP': {
 			'name': 'Solar Plants',
@@ -173,6 +173,24 @@ var EmpiresConstants = {
 			'description': 'Increase population capacity by 10.',
 			'technologies': {'Computer': 20},
 			'resources': {'Credits': -2000, 'Population': 10, 'Advanced': 1},
+		},
+		'JG': {
+			'name': 'Jump Gate',
+			'description': 'Increases fleet speed by 100%, allows stellar units to move between galaxies.',
+			'technologies': {'Warp Drive':12, 'Energy': 20},
+			'resources': {'Credits': -5000, 'Energy':-12,'Population': 10, 'BaseSpeed':100},
+		},
+		'BM': {
+			'name': 'Biosphere Modification',
+			'description': 'Increases astro fertility by 1.',
+			'technologies': {'Computer': 24, 'Energy': 24},
+			'resources': {'Credits': -20000, 'Energy':-24,'Population': -1, 'Area': -1, 'BaseFertility':1},
+		},
+		'CA': {
+			'name': 'Capital',
+			'description': 'Increases economy by 10 and other bases by 2. -15% empire income while occupied.',
+			'technologies': {'Tachyon Communications': 1},
+			'resources': {'Credits': -15000, 'Energy':-12, 'Population': -1, 'Area': -1, 'Economy':10, 'OtherBasesEconomy':2},
 		},
 	}
 /*
