@@ -99,34 +99,82 @@ var EmpiresConstants = {
 		'MR': {
 			'name': 'Metal Refineries',
 			'description': 'Increases production and construction by bases metal.',
+			'technologies': {'Base': 'hasMetal'},
+			'resources': {'Credits': -2, 'Energy': -1, 'Economy': 1, 'Production': 'Metal','Construction': 'Metal', 'Population': -1, 'Area': -1},
+		},
+		'CM': {
+			'name': 'Crystal Mines',
+			'description': 'Increases bases economy by bases crystals resource.',
+			'technologies': {'Base': 'hasCrystals'},
+			'resources': {'Credits': -2, 'Energy': -1, 'Economy': 'Crystals', 'Population': -1, 'Area': -1},
+		},
+		'RF': {
+			'name': 'Robotic Factories',
+			'description': 'Increases production and construction by 2.',
+			'technologies': {'Computer': 2},
+			'resources': {'Credits': -5, 'Energy': -1, 'Economy': 1, 'Production': 2, 'Construction': 2, 'Population': -1, 'Area': -1},
+		},
+		'SY': {
+			'name': 'Shipyards',
+			'description': 'Increases bases production by 2 and allows new units.',
 			'technologies': {},
-			'resources': {'Credits': -2, 'Energy': -1, 'Economy': 1, 'Production': 1,'Construction': 1, 'Population': -1, 'Area': -1},
+			'resources': {'Credits': -5, 'Energy': -1, 'Economy': 2, 'Production': 2,'Population': -1, 'Area': -1},
+		},
+		'OS': {
+			'name': 'Orbital Shipyards',
+			'description': 'Increases bases production by 8 and allows new units.',
+			'technologies': {'Cybernetics': 2},
+			'resources': {'Credits': -10000, 'Energy': -12, 'Economy': 2, 'Production': 8,'Population': -1},
+		},
+		'SP': {
+			'name': 'Spaceports',
+			'description': 'Increases bases economy by 2 and allows trade routes.',
+			'technologies': {'Computer': 2},
+			'resources': {'Credits': -5, 'Energy': -1, 'Economy': 2, 'Population': -1, 'Area': -1, 'Trades': 1},
+		},
+		'CC': {
+			'name': 'Command Centers',
+			'description': 'Adds 5% fleet attack power at base and allows 1 occupation.',
+			'technologies': {'Computer': 6},
+			'resources': {'Credits': -20, 'Energy': -1, 'Population': -1, 'Area': -1, 'Ocupation':1},
+		},
+		'NF': {
+			'name': 'Nanite Factories',
+			'description': 'Increases production and construction by 4.',
+			'technologies': {'Computer': 10, 'Laser': 8},
+			'resources': {'Credits': -80, 'Energy': -2, 'Economy': 2, 'Production': 4, 'Construction': 4,'Population': -1, 'Area': -1, 'Advanced': 1},
+		},
+		'AF': {
+			'name': 'Android Factories',
+			'description': 'Increases production and construction by 6.',
+			'technologies': {'Artificial Intelligence': 4},
+			'resources': {'Credits': -1000, 'Energy': -4, 'Economy': 2, 'Production': 6, 'Construction': 6,'Population': -1, 'Area': -1, 'Advanced': 1},
+		},
+		'EC': {
+			'name': 'Economic Centers',
+			'description': 'Increases bases economy by 4.',
+			'technologies': {'Computer': 10},
+			'resources': {'Credits': -80, 'Energy': -2, 'Economy': 4, 'Population': -1, 'Area': -1, 'Advanced': 1},
+		},
+		'TF': {
+			'name': 'Terraform',
+			'description': 'Increases bases area by 5.',
+			'technologies': {'Computer': 10, 'Energy': 10},
+			'resources': {'Credits': -80, 'Area': 5, 'Advanced': 1},
+		},
+		'MP': {
+			'name': 'Multi-Level Platforms',
+			'description': 'Increases bases area by 10.',
+			'technologies': {'Armour': 22},
+			'resources': {'Credits': -1000, 'Area': 10, 'Advanced': 1},
+		},
+		'OB': {
+			'name': 'Orbital Base',
+			'description': 'Increase population capacity by 10.',
+			'technologies': {'Computer': 20},
+			'resources': {'Credits': -2000, 'Population': 10, 'Advanced': 1},
 		},
 	}
-		
-/*
-		Metal	Gas	Crystals	Fertility	Area Planet	Area Moon
-Arid	3	3	0	5	95	83
-Asteroid	4	2	3	4	-	(65)
-Craters	4	2	2	4	85	75
-Crystalline	3	2	4	4	80	71
-Earthly	3	3	0	6	85	75
-Gaia	3	2	0	6	90	79
-Glacial	2	4	0	5	95	83
-Magma	3	5	0	5	80	71
-Metallic	4	2	2	4	85	75
-Oceanic	2	4	0	6	80	71
-Radioactive	3	4	0	4	90	79
-Rocky	4	2	0	5	85	75
-Toxic	3	5	0	4	90	79
-Tundra	3	3	0	5	95	83
-Volcanic	3	5	0	5	80	71
-
-	1	2	3	4	5
-Solar Energy	5	4	3	2	2
-Fertility	-1	0	+1	+1	0
-Gas	0	0	0	+1	+2
-*/
 /*
 Urban Structures
 Increases population capacity by bases fertility.
@@ -198,6 +246,30 @@ Capital
 Increases economy by 10 and other bases by 2. -15% empire income while occupied.
 	15,000	-12	10	-1	-1		Tachyon Communications 1
 */
+/*
+		Metal	Gas	Crystals	Fertility	Area Planet	Area Moon
+Arid	3	3	0	5	95	83
+Asteroid	4	2	3	4	-	(65)
+Craters	4	2	2	4	85	75
+Crystalline	3	2	4	4	80	71
+Earthly	3	3	0	6	85	75
+Gaia	3	2	0	6	90	79
+Glacial	2	4	0	5	95	83
+Magma	3	5	0	5	80	71
+Metallic	4	2	2	4	85	75
+Oceanic	2	4	0	6	80	71
+Radioactive	3	4	0	4	90	79
+Rocky	4	2	0	5	85	75
+Toxic	3	5	0	4	90	79
+Tundra	3	3	0	5	95	83
+Volcanic	3	5	0	5	80	71
+
+	1	2	3	4	5
+Solar Energy	5	4	3	2	2
+Fertility	-1	0	+1	+1	0
+Gas	0	0	0	+1	+2
+*/
+
 }
 
 
