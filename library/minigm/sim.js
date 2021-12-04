@@ -189,7 +189,10 @@ var Sim1= (function () {
   pub.learnScoreGens= function() {
     return;
   }
-
+  
+  pub.epiGens= function() {
+    
+  }
   
   return pub;
 })();
