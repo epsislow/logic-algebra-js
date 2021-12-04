@@ -53,6 +53,10 @@ var Sim1= (function () {
     
   }
   
+  pub.learnByScore= function(gens= [], base) {
+    return gens;
+  }
+  
   pub.getConstrOptions= function(base) {
     var r = pub.rules;
     var ret=['A'];
@@ -110,8 +114,9 @@ var Sim1= (function () {
     return 1;
   }
   
-  pub.scoreBase= function(base) {
+  pub.getBaseRet= function(base) {
     var ret={
+      cr:0,
       hCr:0,
       timeWaste:0,
       timeConstr:0,
@@ -122,7 +127,7 @@ var Sim1= (function () {
     var crSec=pub.rules.crSec;
     var rule=0;
     
-    var scoreConst = function(rule, lvls) {
+    var getConstInfo = function(rule, lvls) {
       if (cr < rule.require.cr) {
         var crNeed = rule.require.cr - cr;
         if (hcr = 0) {
@@ -138,27 +143,28 @@ var Sim1= (function () {
       ret.timeConstr += rule.require.sec * lvls;
       ret.spent += rule.require.cr * lvls;
       res.hCr += rule.require.hcr * lvls;
+      ret.cr=cr;
     }
     
     for(var i in base) {
       switch(i) {
         case 'A':
-          scoreConst(pub.rules.A);
+          getConstInfo(pub.rules.A);
           break;
         case 'B':
-          scoreConst(pub.rules.B);
+          getConstInfo(pub.rules.B);
           //ret.timeConstr+=pub.rules.B.require.sec * base[i];
           //ret.spent+=pub.rules.B.require.cr * base[i];
           //res.hCr+=pub.rules.B.require.hcr * base[i];
           break;
         case 'C':
-          scoreConst(pub.rules.C);
+          getConstInfo(pub.rules.C);
           //ret.timeConstr+=pub.rules.C.require.sec * base[i];
           //ret.spent+=pub.rules.C.require.cr * base[i];
           //res.hCr+=pub.rules.C.require.hcr * base[i];
           break;
         case 'D':
-          scoreConst(pub.rules.D);
+          getConstInfo(pub.rules.D);
           //ret.timeConstr+=pub.rules.D.require.sec * base[i];
           //ret.spent+=pub.rules.D.require.cr * base[i];
           //res.hCr+=pub.rules.D.require.hcr * base[i];
@@ -166,8 +172,24 @@ var Sim1= (function () {
         
       }
     }
-    
+    return ret;
   }
+  
+  pub.scoreByGens= function(gens = [], base) {
+    var ret=pub.getBaseRet(base);
+    var retKeys=Object.keys(ret);
+    var score=0;
+    
+    for(var i in retKeys) {
+      score+= Math.floor(gens[i]*base[retKeys[i]]/100);
+    }
+    return score;
+  }
+  
+  pub.learnScoreGens= function() {
+    return;
+  }
+
   
   return pub;
 })();
