@@ -45,10 +45,69 @@ var Sim1= (function () {
     },
     'startCr':10,
     'crSec':60,
+    'areaMax': 30,
   };
   
-  pub.genBaseByGens = function(gens = []) {
+  pub.genBaseByGens = function(gens = [], base={}) {
+    var options=[];
     
+  }
+  
+  pub.getConstrOptions= function(base) {
+    var r = pub.rules;
+    var ret=['A'];
+    if(base.A>=r.B.require.A) {
+      ret.push('B');
+    }
+    if(base.B>=r.C.require.B) {
+      ret.push('C');
+    }
+    if(base.B>=r.D.require.A 
+      && base.A>=r.D.require.B) {
+      ret.push('D');
+    }
+    
+    return ret;
+  }
+  
+  pub.demolishConstr= function(type, base) {
+    if(type in base) {
+      base[type]--;
+      if (!base.area) {
+        return 0;
+        base.area = 0;
+      }
+      base.area--;
+      if(base[type]==0) {
+        delete base[type];
+      }
+    }
+    return 1;
+  }
+  
+  pub.canBuildConstr= function(type,base) {
+    if (!base.area) {
+      base.area = 0;
+    }
+    if(base.area >= pub.rules.areaMax) {
+      return 0;
+    }
+    if(!(type in pub.getConstrOptions(base))) {
+      return 0;
+    }
+    return 1;
+  }
+  
+  pub.buildConstr= function(type, base) {
+    if(!type in base) {
+      base[type]=0;
+    }
+    base[type]++;
+    if(!base.area) {
+      base.area=0;
+    }
+    base.area++;
+    return 1;
   }
   
   pub.scoreBase= function(base) {
