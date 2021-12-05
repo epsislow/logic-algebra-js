@@ -190,8 +190,30 @@ var Sim1= (function () {
     return;
   }
   
-  pub.epiGens= function() {
-    
+  pub.getEpiGens= function(gens= []) {
+    return {'gens':gens, 'flags': []};
+  }
+  
+  pub.setEpiGensFlags= function(epiGens, flagBits, isAdd=1, position) {
+    if(isAdd) {
+      epiGens.flags[position] |= flag;
+    } else {
+      epiGens.flags[position] &= (epiGens.flags[position] ^ flagBits);
+    }
+  }
+  
+  pub.endHereFlag = 1;
+  pub.ignoreFlag = 2;
+  
+  pub.address= 4;
+  pub.jumpPlace = 16;
+  pub.jumpNext = 32;
+  pub.jumpPrev= 64;
+  
+  pub.
+  
+  pub.hasEpiGensFlags= function(epiGens, flagBits, position) {
+    return (epiGens.flags[position] & flagBits) === flagBits;
   }
   
   return pub;
