@@ -209,8 +209,7 @@ var Sim1= (function () {
   pub.jumpPlace = 16;
   pub.jumpNext = 32;
   pub.jumpPrev= 64;
-  
-  pub.
+
   
   pub.hasEpiGensFlags= function(epiGens, flagBits, position) {
     return (epiGens.flags[position] & flagBits) === flagBits;
