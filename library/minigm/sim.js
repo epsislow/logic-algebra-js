@@ -190,6 +190,16 @@ var Sim1= (function () {
     return;
   }
   
+  pub.setGenFlag= function(genes, flagBits, isAdd=1, pos=0) {
+    genes[pos] +=100*(isAdd?1:-1)*flagBits;
+    return genes;
+  }
+  pub.hasGenFlags= function(genes, flagBits, pos=0) {
+    return (
+        ((genes[pos] - (genes[pos] % 100))/100)
+      & flagBits
+      ) === flagBits;
+  }
   pub.getEpiGens= function(gens= []) {
     return {'gens':gens, 'flags': []};
   }
