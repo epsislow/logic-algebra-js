@@ -224,6 +224,33 @@ var Sim1= (function () {
   pub.hasEpiGensFlags= function(epiGens, flagBits, position) {
     return (epiGens.flags[position] & flagBits) === flagBits;
   }
+  //aA aB aC aE dA dB dC dE (d demolish)
+  //a1 a2 a3 a4 a5 (add 1st mod options)
+  //d1 d2 d3 d4 d5 (demolish 5th mod options)
+  //r1>A r1<B r1<200  r2< r3 r4 r5>
+  // j1 j2 j3 j4 j5 (jump2 next location X)
+  // l1 l2 l3 l4 l5 (location)
+  // n1 n2 n3 n4 n5 (next)
+  // p1 p2 p3 p4 p5 (prev)
+  //r1>A~n3
+  //r1>B:p3
+  //s3~e (loop 3 times until end e, if reach e 3rd time continue else jump 2 s3)
+  //s1 s2 s3 s4 s5
+  
+  //root:
+  // 
+  //1 aX dX sX nX pX jX lX rX e(ignored)
+  //2 X
+  //3 a,d,s,e,n,p,j,l: goto 1
+  //3 r: > < !> !<
+  //4 r: numX nonNum
+  //  num: X digits
+  //  X: number 
+  //  nonNum: a b c d
+  //  X,a b c d: nX,pX,jX
+  //e: goto last s or next
+  
+  
   
   return pub;
 })();
