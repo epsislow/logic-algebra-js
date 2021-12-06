@@ -235,7 +235,7 @@ var Sim1= (function () {
   //r1>A~n3
   //r1>B:p3
   //s3~e (loop 3 times until end e, if reach e 3rd time continue else jump 2 s3)
-  //s1 s2 s3 s4 s5
+  //s2 s3 s5 s7 s10
   
   //root:
   // 
@@ -250,7 +250,10 @@ var Sim1= (function () {
   //  X,a b c d: nX,pX,jX
   //e: goto last s or next
   
-  
+  //simplfy2:
+  // 1  2   3       4  5 
+  // aX dX jn/p/2lX rX sX e(ignored)
+  //             
   
   return pub;
 })();
