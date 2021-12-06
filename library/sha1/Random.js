@@ -27,18 +27,18 @@ var rd = (function () {
 	    return this;
 	  }
 
-    pub.rand = function (min, max,seed = 0, alg = 0, d=0) {
+    pub.rand = function (min, max,seed = 0, alg = 0, d=0, restart = 0) {
 		if (alg == 1) {
 			return Math.floor(Math.random() * (max - min)) + min;
 		}
 		if(!seed) {
 			seed = this.seed;
 		}
-		
-		if (!(seed in this.randFunc)) {
+
+		if (!(seed in this.randFunc) || restart) {
 			this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed)());
 			if(d) {
-			  console.log('seed func added');
+			  console.log('seed func added or restarted');
 			}
 		}
 		if(d) {
