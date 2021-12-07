@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tester</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+      
+      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
+      
+      <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
+      
+      <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
+    
+    <style>
+	table {
+		color:#fff;
+		text-align:center;
+	}
+	table th, table.td {
+		padding: 2px 10px;
+	}
+	table th {
+		width: 100px;
+	}
+	tr:nth-child(even) {background: #222}
+	tr:nth-child(odd) {background: #333}
+	</style>
+</head>
+
+<body class="bg-dark">
+<main role="main" class="container">
+Tester
+</main><!-- /.container -->
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+
+<!--script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script-->
+
+<!--script src="/ext/popper.js" type="text/javascript"></script-->
+
+<!--script src="/ext/bootstrap.4.0.0.js" type="text/javascript"></script-->
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+
+<script type="text/javascript" src="/library/sha1/Random.js"></script>
+
+<script type="module">
+import { TgeFn } from '/library/modules/TinyGenExpr.js'
+
+window.tge = TgeFn(rd);
+console.log('[sim]-----');
+
+var a= [
+  tge.gen(2, 30,1),
+  tge.gen(2, 30),
+];
+
+function show(a, inf=0) {
+  //console.log(a);
+  if(!inf) {
+    inf = tge.lexer(a);
+  }
+  tge.show(inf.b, inf.br);
+  return inf;
+}
+
+var inf=[];
+inf[0] = show(a[0]);
+inf[1] = show(a[1]);
+a[2] = tge.cross(a[0], a[1])
+inf[2] = show(a[2]);
+
+window.inf= inf;
+
+</script>
+</body>
+</html>
