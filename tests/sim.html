@@ -68,8 +68,8 @@ window.tge = TgeFn(rd);
 console.log('[sim]-----');
 
 var a= [
-  tge.gen(2, 300,1),
-  tge.gen(2, 300),
+  tge.gen(2, 35,1),
+  tge.gen(2, 35),
 ];
 
 function show(a, inf=0) {
@@ -86,6 +86,23 @@ inf[0] = show(a[0]);
 inf[1] = show(a[1]);
 a[2] = tge.cross(a[0], a[1])
 inf[2] = show(a[2]);
+a[3] = tge.mutate(a[2]);
+inf[3] = show(a[3]);
+
+
+a[3] = tge.mutate(a[3]);
+inf[3] = show(a[3]);
+
+a[3] = tge.mutate(a[3]);
+inf[3] = show(a[3]);
+a[3] = tge.mutate(a[3]);
+inf[3] = show(a[3]);
+a[3] = tge.mutate(a[3]);
+inf[3] = show(a[3]);
+a[3] = tge.mutate(a[3]);
+inf[3] = show(a[3]);
+a[3] = tge.mutate(a[3]);
+inf[3] = show(a[3]);
 
 window.inf= inf;
 

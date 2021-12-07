@@ -161,7 +161,7 @@ var TgeFn = function (rd) {
       console.log.apply(null, cs);
     }
     
-    pub.mutate = function (a, seed, mutations=0, restart = 1) {
+    pub.mutate = function (a, seed, mutations=0, restart = 0) {
       seed += 100;
       if (restart) {
         rd.deleteRand(seed);
