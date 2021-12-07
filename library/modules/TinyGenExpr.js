@@ -55,18 +55,19 @@ var TinyGenExpr = (function () {
 //} else if (k === 3 && v > 20*k+10) {
 //  return 'r';
 
-
 function gen(seed, qmax= 1000, restart = 1) {
     if (restart) {
         rd.deleteRand(1);
     }
 
     var v = [];
-    for (var i = 0; i <= qmax; i++) {
+    for (var i = 0; i < qmax; i++) {
         v[i] = rd.rand(1, 100, seed, 0, 0);
     }
     ;
-
+    return v;
+}
+function lexer(v) {
     var getI = function (v) {
         var s = ['a', 'd', 'j', 'r', 's'];
         var k = Math.ceil(v / 25);
@@ -122,7 +123,7 @@ function gen(seed, qmax= 1000, restart = 1) {
     var lvl = 0;
     var I = '';
     var flagS = 0;
-    for (var i = 0; i <= qmax; i++) {
+    for (var i = 0; i < v.length; i++) {
         if (I === '') {
             I = getI(v[i]);
             flagS ^= (I === 's');
@@ -161,6 +162,9 @@ function gen(seed, qmax= 1000, restart = 1) {
             }
         }
     }
+    return {'b':b, 'br': br};
+}
+function show(b, br = []) {
     var bb = '%c';
     var cs = ['color:auto'];
     var style = 0
@@ -187,7 +191,64 @@ function gen(seed, qmax= 1000, restart = 1) {
     cs.unshift(bb);
     console.log.apply(null, cs);
 }
-gen(2)
+function mutate(a, seed, restart = 1) {
+    seed += 100;
+    if (restart) {
+        rd.deleteRand(seed);
+    }
+
+    var s = {};var ss;
+    var i;
+    var smax = rd.rand(Math.ceil(a.length/10), Math.ceil(a.length/5));
+    for (i = 0; i < smax; i++) {
+        ss = rd.rand(1, a.length, seed, 0, 0);
+        s['v'+ss] = 1;
+    }
+    for (i = 0; i < a.length; i++) {
+        if ('v'+i in s) {
+            a[i] = a[i] + rd.rand(0, 18, seed, 0, 0) - 9;
+        }
+    }
+    return a;
+}
+function bimutate(a, b, seed, restart = 1) {
+    seed += 200;
+    if (restart) {
+        rd.deleteRand(seed);
+    }
+
+    var s = {};var ss;
+    var i;
+    var smax = rd.rand(Math.ceil(a.length/10), Math.ceil(a.length/5));
+    for (i = 0; i < smax; i++) {
+        ss = rd.rand(1, a.length, seed, 0, 0);
+        s['v'+ss] = 1;
+    }
+    var change= 0;
+
+    for (i = 0; i < a.length; i++) {
+        if ('v'+i in s) {
+            change++;
+            change = change % 2;
+        }
+        if (change === 0) {
+            b[i]= a[i];
+        }
+    }
+    return b;
+}
+
+var a = gen(2, 1000, 1);
+var ainfo = lexer(a);
+show(ainfo.b, ainfo.br);
+var a2 = gen(2, 1000);
+var ainfo2 = lexer(a2);
+show(ainfo2.b, ainfo2.br);
+
+//var a3 = mutate(a, 2, 1);
+a3 = bimutate(a, a2, 2, 1);
+a3info = lexer(a3);
+show(a3info.b, a3info.br);
  */
 
 
