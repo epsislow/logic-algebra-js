@@ -117,6 +117,11 @@ var TgeFn = function (rd) {
           }
         }
       }
+      //remove last unterminated I sequence:
+      if(br.length>1) {
+        var lastbr = br[br.length-1];
+        b.splice(lastbr+1);
+      }
       return { 'b': b, 'br': br };
     }
     
@@ -128,6 +133,14 @@ var TgeFn = function (rd) {
         if (b[k] === 'j') {
           bb += '%c';
           cs.push('color: red');
+          style = 1;
+        } else if (b[k] === 'a') {
+          bb += '%c';
+          cs.push('color: #77ff77');
+          style=1;
+        } else if (b[k] === 'd') {
+          bb += '%c';
+          cs.push('color: #77ffff');
           style = 1;
         } else if (b[k] === 'l') {
           bb += '%c';
