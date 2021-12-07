@@ -210,6 +210,10 @@ var TgeFn = function (rd) {
       }
       return b;
     }
+    
+    pub.interpret = function (b) {
+      
+    }
 
     return pub;
 };
