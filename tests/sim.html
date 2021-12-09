@@ -113,6 +113,110 @@ inf[3] = show('a3m5', a[3]);
 
 window.inf= inf;
 
+var actions = {
+    'mem': {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'timeWaste': 0, 'spent': 0, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}},
+    'doOption' : function (isA, opt) {
+        if (isA) {
+            if (this.mem.costs[opt] > this.mem.cr) {
+                if (this.mem.hcr === 0) {
+                    console.log('-- Stop --');
+                    return;
+                }
+                var times= Math.ceil(this.mem.costs[opt] / this.mem.hcr);
+                this.mem.timeWaste += times; // * hrs
+                this.mem.cr = this.mem.cr + this.mem.hcr*times - this.mem.costs[opt];
+            } else {
+                this.mem.cr -= this.mem.costs[opt];
+            }
+            this.mem.spent += this.mem.costs[opt];
+            this.mem[opt]++;
+            if (opt === 'A') {
+                this.mem.hcr+=1;
+            } else if (opt === 'B') {
+                this.mem.hcr+=2;
+            } else if (opt === 'C') {
+                this.mem.hcr+=5;
+            } else if (opt === 'D') {
+                this.mem.hcr+=10;
+            }
+        } else if (this.mem[opt]> 0) {
+            this.mem[opt]--;
+            if (opt === 'A') {
+                this.mem.hcr-=1;
+            } else if (opt === 'B') {
+                this.mem.hcr-=2;
+            } else if (opt === 'C') {
+                this.mem.hcr-=5;
+            } else if (opt === 'D') {
+                this.mem.hcr-=10;
+            }
+            this.mem.cr = this.mem.cr + Math.ceil(this.mem.costs[opt]/2);
+            //this.mem.cr = this.mem.cr + this.mem.costs[opt];
+            if (this.mem.cr == 0) {
+                console.log(this.mem);
+                console.log('here', isA, opt);
+            }
+        }
+    },
+    'getOptions': function () {
+        var t = ['A'];
+        if (this.mem.A> 5) {
+            t.push('B');
+        }
+        if (this.mem.A> 10 && this.mem.B> 10) {
+            t.push('C');
+        }
+        if (this.mem.B> 20) {
+            t.push('D');
+        }
+        return t;
+    },
+    'getRvals': function () {
+        return [
+            this.mem.cr,
+            this.mem.hcr,
+            this.mem.spent,
+            this.mem.timeWaste,
+            this.mem.A + this.mem.B * 2 + this.mem.C * 3 + this.mem.D * 4,
+        ];
+    },
+    'getScore': function (importance = [1,10,-1,-2, 1]) {
+        var r = this.getRvals();
+        var sc = 0;
+        for(var i in r) {
+            console.log(r[i],' x ', importance[i], '=', r[i]*importance[i]);
+            sc += r[i]*importance[i];
+        }
+        return sc;
+    },
+    'reset': function () {
+        this.mem = {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'timeWaste': 0, 'spent': 0, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}};
+    }
+}
+
+tge.interpret(inf[0].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score0: ', actions.getScore());
+actions.reset();
+
+tge.interpret(inf[1].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score1: ', actions.getScore());
+actions.reset();
+
+tge.interpret(inf[2].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score2: ', actions.getScore());
+actions.reset();
+
+tge.interpret(inf[3].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score3: ', actions.getScore());
+actions.reset();
+
+
+
+window.actions = actions;
 </script>
 </body>
 </html>

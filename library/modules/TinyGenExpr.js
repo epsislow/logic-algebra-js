@@ -17,13 +17,14 @@ var TgeFn = function (rd) {
 
       var v = [];
       for (var i = 0; i < qmax; i++) {
-          v[i] = rd.rand(1, 100, seed, 0, 0);
+          v[i] = rd.rand(1, 99, seed, 0, 0);
       }
       return v;
     }
     
     pub.lexer= function (v) {
       var getI = function(v) {
+        v++;
         var s = ['a', 'd', 'j', 'r', 's'];
         var k = Math.ceil(v / 25)-1;//0,1,2,3,4
         var v2 = v % 20;
@@ -40,9 +41,11 @@ var TgeFn = function (rd) {
         }
       }
       var getX = function(v) {
+        v++;
         return Math.ceil(v / 20); // 1 - 5
       }
       var getR = function(v, lvl = 1) {
+        v++;
         if (lvl === 1) {
           return Math.ceil(v / 20); // 1,2,3,4,5
         } else if (lvl === 2) {
@@ -178,6 +181,12 @@ var TgeFn = function (rd) {
       for (i = 0; i < a.length; i++) {
         if ('v' + i in s) {
           a[i] = a[i] + rd.rand(0, 18, seed, 0, 0) - 9;
+          if (a[i] < 0) {
+            a[i] += 99;
+          }
+          if (a[i] > 99) {
+            a[i] -= 99;
+          }
         }
       }
       return a;
@@ -211,11 +220,105 @@ var TgeFn = function (rd) {
       return b;
     }
     
-    pub.interpret = function (b, start = 0, mem = {}) {
-      var i=0;
-     // do {
-        
-     // } while ();
+    pub.interpret = function (b, start = 0, mem = {}, actions = {'doOption': function (isA, X) {}, 'getOptions':function () {return ['A'];}, 'getRvals': function() { return [1,100,1000,10000]}}, d = 0) {
+      var cr=0;
+      var error = 0;
+      var X = 0;
+      var Y = [];
+      var Z = [];
+
+      var ddd = function (instrCr, action, x=1,y=[],z=[],t=0) {
+        var t;
+        if(action === 'a') {
+          t = actions.getOptions();
+          if (d & 1) {
+            console.log(instrCr + '> Assemble ', action + t[x % t.length]);
+          }
+          actions.doOption(1, t[x % t.length]);
+        } else if(action === 'd') {
+          t = actions.getOptions();
+          if (d & 2) {
+            console.log('Options:', t);
+          }
+          if (d & 1) {
+            console.log(instrCr + '> Assemble ', action + t[x % t.length]);
+          }
+          actions.doOption(0, t[x % t.length]);
+        } else if(action === 's') {
+          if (d & 1) {
+            console.log(instrCr + '> Loop Start x', x);
+          }
+        } else if(action === 'e') {
+          if (d & 1) {
+            console.log(instrCr + '> End Loop');
+          }
+        } else if(action === 'n') {
+          if (d & 1) {
+            console.log(instrCr + '> Next >>', x);
+          }
+        } else if(action === 'p') {
+          if (d & 1) {
+            console.log(instrCr + '> Prev <<', x);
+          }
+        } else if(action === 'l') {
+          if (d & 1) {
+            console.log(instrCr + '> Label ', x);
+          }
+        } else if(action === 'j') {
+          if (d & 1) {
+            console.log(instrCr + '> JumpTo Label ', x);
+          }
+        } else if(action === 'e') {
+          if (d & 1) {
+            console.log(instrCr + '> End Loop');
+          }
+        } else if(action === 'r') {
+          if (d & 1) {
+            console.log(instrCr + '> If (r' + X + ' ' + Y.join('') + ') Then ' + Z.join(''));
+          }
+          var r = actions.getRvals();
+
+          if (r[X] > Y[1]) {
+            if (d & 1) {
+              console.log(instrCr + '>  > Does ', Z.join(''));
+            }
+          }
+        }
+      }
+
+      var interDo = function () {
+        var adv= 1;
+        switch(b[cr]) {
+          case 'd':
+          case 'a':
+            X = b[cr+1];
+            ddd(cr+1, b[cr], X);
+            adv++;
+            break;
+          case 'r':
+            X = b[cr+1];
+            Y = [b[cr+2],b[cr+3]];
+            Z = [b[cr+4],b[cr+5]];
+            ddd(cr+1, b[cr], X,Y,Z);
+            adv+=5;
+            break;
+          case 'n':
+          case 'p':
+          case 'j':
+          case 'l':
+          case 's':
+            X = b[cr+1];
+            ddd(cr+1, b[cr], X);
+            adv++;
+            break;
+          case 'e':
+            break;
+        }
+        return adv;
+      };
+       do {
+         cr += interDo();
+      } while (cr <= b.length);
     }
 
     return pub;
