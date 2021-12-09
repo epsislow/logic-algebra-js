@@ -225,6 +225,18 @@ tge.interpret(inf[5].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score5: ', actions.getScore());
 
+
+a[4] = tge.cross(a[3], a[1]);
+a[4] = tge.mutate(a[4]);
+
+inf[6] = show('a4', a[4]);
+
+tge.interpret(inf[6].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score6: ', actions.getScore());
+
+
+
 window.actions = actions;
 </script>
 </body>
