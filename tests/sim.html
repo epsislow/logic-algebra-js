@@ -67,16 +67,18 @@ import { TgeFn } from '/library/modules/TinyGenExpr.js'
 window.tge = TgeFn(rd);
 console.log('[sim]-----');
 
-tge.gen(2, 35,1);
-tge.gen(2, 35);
-tge.gen(2, 35);
-tge.gen(2, 35);
-tge.gen(2, 35);
-tge.gen(2, 35);
+var m=350;
+
+tge.gen(2, m/10,1);
+tge.gen(2, m/10);
+tge.gen(2, m/10);
+tge.gen(2, m/10);
+tge.gen(2, m/10);
+tge.gen(2, m/10);
 
 var a= [
-  tge.gen(2, 350),
-  tge.gen(2, 350),
+  tge.gen(2, m),
+  tge.gen(2, m),
 ];
 
 function show(descr = '', a, inf=0) {
@@ -231,7 +233,7 @@ a[4] = tge.mutate(a[4]);
 
 inf[6] = show('a4', a[4]);
 
-tge.interpret(inf[6].b, 0, {}, actions);
+tge.interpret(inf[6].b, 0, {}, actions, 1);
 console.log(actions.mem);
 console.log('Score6: ', actions.getScore());
 
