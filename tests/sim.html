@@ -180,11 +180,12 @@ var actions = {
             this.mem.A + this.mem.B * 2 + this.mem.C * 3 + this.mem.D * 4,
         ];
     },
-    'getScore': function (importance = [1,10,-1,-2, 1]) {
+    'getScore': function (importance = [1,15,-1,-2, 1]) {
         var r = this.getRvals();
+        var q = ['cr', 'hcr', 'spent','timeWaste', 'lvl'];
         var sc = 0;
         for(var i in r) {
-            console.log(r[i],' x ', importance[i], '=', r[i]*importance[i]);
+            console.log(q[i]+':',r[i],' x ', importance[i], '=', r[i]*importance[i]);
             sc += r[i]*importance[i];
         }
         return sc;
@@ -197,24 +198,32 @@ var actions = {
 tge.interpret(inf[0].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score0: ', actions.getScore());
-actions.reset();
 
 tge.interpret(inf[1].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score1: ', actions.getScore());
-actions.reset();
 
 tge.interpret(inf[2].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score2: ', actions.getScore());
-actions.reset();
 
 tge.interpret(inf[3].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score3: ', actions.getScore());
-actions.reset();
 
+a[3] = tge.mutate(a[3]);
+inf[4] = show('a3m6', a[3]);
 
+tge.interpret(inf[4].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score4: ', actions.getScore());
+
+a[3] = tge.mutate(a[3]);
+inf[5] = show('a3m6', a[3]);
+
+tge.interpret(inf[5].b, 0, {}, actions);
+console.log(actions.mem);
+console.log('Score5: ', actions.getScore());
 
 window.actions = actions;
 </script>
