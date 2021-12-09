@@ -67,13 +67,20 @@ import { TgeFn } from '/library/modules/TinyGenExpr.js'
 window.tge = TgeFn(rd);
 console.log('[sim]-----');
 
+tge.gen(2, 35,1);
+tge.gen(2, 35);
+tge.gen(2, 35);
+tge.gen(2, 35);
+tge.gen(2, 35);
+tge.gen(2, 35);
+
 var a= [
-  tge.gen(2, 35,1),
-  tge.gen(2, 35),
+  tge.gen(2, 350),
+  tge.gen(2, 350),
 ];
 
-function show(a, inf=0) {
-  //console.log(a);
+function show(descr = '', a, inf=0) {
+  console.log(descr+':');
   if(!inf) {
     inf = tge.lexer(a);
   }
@@ -82,27 +89,27 @@ function show(a, inf=0) {
 }
 
 var inf=[];
-inf[0] = show(a[0]);
-inf[1] = show(a[1]);
+inf[0] = show('a0', a[0]);
+inf[1] = show('a1', a[1]);
 a[2] = tge.cross(a[0], a[1])
-inf[2] = show(a[2]);
+inf[2] = show('a2', a[2]);
 a[3] = tge.mutate(a[2]);
-inf[3] = show(a[3]);
+inf[3] = show('a3', a[3]);
 
 
 a[3] = tge.mutate(a[3]);
-inf[3] = show(a[3]);
+inf[3] = show('a3m0', a[3]);
 
 a[3] = tge.mutate(a[3]);
-inf[3] = show(a[3]);
+inf[3] = show('a3m1', a[3]);
 a[3] = tge.mutate(a[3]);
-inf[3] = show(a[3]);
+inf[3] = show('a3m2', a[3]);
 a[3] = tge.mutate(a[3]);
-inf[3] = show(a[3]);
+inf[3] = show('a3m3', a[3]);
 a[3] = tge.mutate(a[3]);
-inf[3] = show(a[3]);
+inf[3] = show('a3m4', a[3]);
 a[3] = tge.mutate(a[3]);
-inf[3] = show(a[3]);
+inf[3] = show('a3m5', a[3]);
 
 window.inf= inf;
 

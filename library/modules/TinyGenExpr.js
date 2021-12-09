@@ -25,7 +25,7 @@ var TgeFn = function (rd) {
     pub.lexer= function (v) {
       var getI = function(v) {
         var s = ['a', 'd', 'j', 'r', 's'];
-        var k = Math.ceil(v / 25);
+        var k = Math.ceil(v / 25)-1;//0,1,2,3,4
         var v2 = v % 20;
         if (k === 2 && v2 % 5 === 1) {
           return 'l';
@@ -44,7 +44,7 @@ var TgeFn = function (rd) {
       }
       var getR = function(v, lvl = 1) {
         if (lvl === 1) {
-          return Math.ceil(v / 20); // 1 - 5
+          return Math.ceil(v / 20); // 1,2,3,4,5
         } else if (lvl === 2) {
           var v2 = Math.ceil(v / 25); // 1,2,3,4
           if (v2 === 1) {
