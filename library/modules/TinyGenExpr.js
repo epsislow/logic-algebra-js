@@ -211,8 +211,11 @@ var TgeFn = function (rd) {
       return b;
     }
     
-    pub.interpret = function (b) {
-      
+    pub.interpret = function (b, start = 0, mem = {}) {
+      var i=0;
+     // do {
+        
+     // } while ();
     }
 
     return pub;
