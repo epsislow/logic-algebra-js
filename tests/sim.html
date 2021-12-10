@@ -67,7 +67,7 @@ import { TgeFn } from '/library/modules/TinyGenExpr.js'
 window.tge = TgeFn(rd);
 console.log('[sim]-----');
 
-var m=350;
+var m=50;
 
 tge.gen(2, m/10,1);
 tge.gen(2, m/10);
@@ -116,7 +116,7 @@ inf[3] = show('a3m5', a[3]);
 window.inf= inf;
 
 var actions = {
-    'mem': {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'timeWaste': 0, 'spent': 0, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}},
+    'mem': {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'loops':0, 'timeWaste': 0, 'spent': 0, 'area': 100, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100},
     'doOption' : function (isA, opt) {
         if (isA) {
             if (this.mem.costs[opt] > this.mem.cr) {
@@ -132,6 +132,7 @@ var actions = {
             }
             this.mem.spent += this.mem.costs[opt];
             this.mem[opt]++;
+            this.mem.area--;
             if (opt === 'A') {
                 this.mem.hcr+=1;
             } else if (opt === 'B') {
@@ -143,6 +144,7 @@ var actions = {
             }
         } else if (this.mem[opt]> 0) {
             this.mem[opt]--;
+            this.mem.area++;
             if (opt === 'A') {
                 this.mem.hcr-=1;
             } else if (opt === 'B') {
@@ -154,11 +156,12 @@ var actions = {
             }
             this.mem.cr = this.mem.cr + Math.ceil(this.mem.costs[opt]/2);
             //this.mem.cr = this.mem.cr + this.mem.costs[opt];
-            if (this.mem.cr == 0) {
+            if (this.mem.cr === 0) {
                 console.log(this.mem);
                 console.log('here', isA, opt);
             }
         }
+        return (this.mem.area === 0);
     },
     'getOptions': function () {
         var t = ['A'];
@@ -180,20 +183,27 @@ var actions = {
             this.mem.spent,
             this.mem.timeWaste,
             this.mem.A + this.mem.B * 2 + this.mem.C * 3 + this.mem.D * 4,
+            this.mem.loops,
+            this.mem.area,
         ];
     },
-    'getScore': function (importance = [1,15,-1,-2, 1]) {
+    'getScore': function (d= 2,importance = [1,15,-1,-2, 1, -0.25, -0.5]) {
         var r = this.getRvals();
-        var q = ['cr', 'hcr', 'spent','timeWaste', 'lvl'];
+        var q = ['cr', 'hcr', 'spent','timeWaste', 'lvl', 'loops', 'areaEmpty'];
         var sc = 0;
         for(var i in r) {
-            console.log(q[i]+':',r[i],' x ', importance[i], '=', r[i]*importance[i]);
+            if (d & 2) {
+                console.log(q[i] + ':', r[i], ' x ', importance[i], '=', r[i] * importance[i]);
+            }
             sc += r[i]*importance[i];
         }
         return sc;
     },
     'reset': function () {
-        this.mem = {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'timeWaste': 0, 'spent': 0, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}};
+        this.mem =  {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'loops':0, 'timeWaste': 0, 'spent': 0, 'area': 100, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100};
+    },
+    'setLoops': function (loops) {
+        this.mem.loops = loops;
     }
 }
 
@@ -209,7 +219,7 @@ tge.interpret(inf[2].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score2: ', actions.getScore());
 
-tge.interpret(inf[3].b, 0, {}, actions);
+tge.interpret(inf[3].b, 0, {}, actions, 1);
 console.log(actions.mem);
 console.log('Score3: ', actions.getScore());
 
@@ -233,7 +243,7 @@ a[4] = tge.mutate(a[4]);
 
 inf[6] = show('a4', a[4]);
 
-tge.interpret(inf[6].b, 0, {}, actions, 1);
+tge.interpret(inf[6].b, 0, {}, actions);
 console.log(actions.mem);
 console.log('Score6: ', actions.getScore());
 

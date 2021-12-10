@@ -22,11 +22,17 @@ var TgeFn = function (rd) {
       return v;
     }
     
-    pub.lexer= function (v) {
+    pub.lexer= function (v, type= 0) {
       var getI = function(v) {
         v++;
-        var s = ['a', 'd', 'j', 'r', 's'];
-        var k = Math.ceil(v / 25)-1;//0,1,2,3,4
+        var s,k;
+        if (type === 1) {
+          s = ['a', 'd', 'j', 'r', 's'];
+          k = Math.ceil(v / 25) - 1;//0,1,2,3,4
+        } else if (type === 0) {
+          s = ['a', 'd', 'j'];
+          k = Math.ceil(v / 34) - 1;//0,1,2
+        }
         var v2 = v % 20;
         if (k === 2 && v2 % 5 === 1) {
           return 'l';
@@ -220,13 +226,16 @@ var TgeFn = function (rd) {
       return b;
     }
     
-    pub.interpret = function (b, start = 0, mem = {}, actions = {'reset': function() {}, 'doOption': function (isA, X) {}, 'getOptions':function () {return ['A'];}, 'getRvals': function() { return [1,100,1000,10000]}}, d = 0) {
+    pub.interpret = function (b, start = 0, mem = {}, actions = {'reset': function() {}, 'doOption': function (isA, X) {}, 'getOptions':function () {return ['A'];}, 'getRvals': function() { return [1,100,1000,10000]}, 'setLoops': function(a) {}, 'getScore': function() { return 0;}}, d = 0) {
       actions.reset();
       var cr=0;
       var error = 0;
       var X = 0;
       var Y = [];
       var Z = [];
+      var loops = 0;
+      var maxLoops = 1000;
+      var end = 0;
 
       var ddd = function (instrCr, action, x=1,y=[],z=[],t=0) {
         var t;
@@ -235,14 +244,17 @@ var TgeFn = function (rd) {
           if (d & 1) {
             console.log(instrCr + '> Assemble ', action + t[x % t.length]);
           }
-          actions.doOption(1, t[x % t.length]);
+          end = actions.doOption(1, t[x % t.length]);
+          if (end) {
+            return 1;
+          }
         } else if(action === 'd') {
           t = actions.getOptions();
           if (d & 2) {
             console.log('Options:', t);
           }
           if (d & 1) {
-            console.log(instrCr + '> Assemble ', action + t[x % t.length]);
+            console.log(instrCr + '> Destroy ', action + t[x % t.length]);
           }
           actions.doOption(0, t[x % t.length]);
         } else if(action === 's') {
@@ -253,14 +265,19 @@ var TgeFn = function (rd) {
           if (d & 1) {
             console.log(instrCr + '> End Loop');
           }
+          loops++;
         } else if(action === 'n') {
           if (d & 1) {
             console.log(instrCr + '> Next >>', x);
           }
+          loops++;
+          return advTo(instrCr, x, 1);
         } else if(action === 'p') {
           if (d & 1) {
             console.log(instrCr + '> Prev <<', x);
           }
+          loops++;
+          return advTo(instrCr, -x, 1);
         } else if(action === 'l') {
           if (d & 1) {
             console.log(instrCr + '> Label ', x);
@@ -269,10 +286,8 @@ var TgeFn = function (rd) {
           if (d & 1) {
             console.log(instrCr + '> JumpTo Label ', x);
           }
-        } else if(action === 'e') {
-          if (d & 1) {
-            console.log(instrCr + '> End Loop');
-          }
+          loops++;
+          return findPlace(instrCr, x, 1);
         } else if(action === 'r') {
           if (d & 1) {
             console.log(instrCr + '> If (r' + X + ' ' + Y.join('') + ') Then ' + Z.join(''));
@@ -282,9 +297,26 @@ var TgeFn = function (rd) {
           if (r[X] > Y[1]) {
             if (d & 1) {
               console.log(instrCr + '>  > Does ', Z.join(''));
+              return ddd(instrCr+ 5, Z[0], Z[1]);
             }
           }
         }
+        return 0;
+      }
+
+      var findPlace = function (instrCr, X = 1, currentInstrLength = 1) {
+        return X*2*10 + currentInstrLength;
+      }
+
+      var advTo = function (instrCr, deltaX = 0, currentInstrLength = 1 ) {
+        var instrCrAdv = instrCr;
+        if (deltaX > 0) {
+          instrCrAdv += deltaX*2*5 + currentInstrLength;
+        } else {
+          instrCrAdv += deltaX*2*5 - currentInstrLength;
+        }
+
+        return instrCrAdv - instrCr;
       }
 
       var interDo = function () {
@@ -300,8 +332,11 @@ var TgeFn = function (rd) {
             X = b[cr+1];
             Y = [b[cr+2],b[cr+3]];
             Z = [b[cr+4],b[cr+5]];
-            ddd(cr+1, b[cr], X,Y,Z);
             adv+=5;
+            adv+=ddd(cr+1, b[cr], X,Y,Z);
+            if (d & 1) {
+              console.log('%c[[ If Advance ' + adv + ' ]]', 'color:cyan');
+            }
             break;
           case 'n':
           case 'p':
@@ -309,8 +344,12 @@ var TgeFn = function (rd) {
           case 'l':
           case 's':
             X = b[cr+1];
-            ddd(cr+1, b[cr], X);
             adv++;
+            adv += ddd(cr+1, b[cr], X);
+
+            if (d & 1) {
+              console.log('%c[[ Advance ' + adv + ' ]]', 'color:cyan');
+            }
             break;
           case 'e':
             break;
@@ -319,7 +358,20 @@ var TgeFn = function (rd) {
       };
        do {
          cr += interDo();
-      } while (cr <= b.length);
+         if (cr < 0) {
+           cr= b.length + cr;
+           //cr = 0;
+         }
+         cr %= b.length;
+         loops++;
+         if (d & 4) {
+           console.log('Score @', cr, ':', actions.getScore(0));
+         }
+      } while (cr <= b.length && loops < maxLoops && !end);
+       if(loops >= maxLoops) {
+         console.log('%c[[ Max Loops passed emergency close! ]]', 'color:red');
+       }
+      actions.setLoops(loops);
     }
 
     return pub;
