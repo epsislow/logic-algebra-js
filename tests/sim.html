@@ -187,7 +187,7 @@ var actions = {
             this.mem.area,
         ];
     },
-    'getScore': function (d= 2,importance = [1,15,-1,-2, 1, -0.25, -0.5]) {
+    'getScore': function (d= 2,importance = [1,15,-1,-2, 5, -0.25, -0.5]) {
         var r = this.getRvals();
         var q = ['cr', 'hcr', 'spent','timeWaste', 'lvl', 'loops', 'areaEmpty'];
         var sc = 0;
@@ -198,6 +198,9 @@ var actions = {
             sc += r[i]*importance[i];
         }
         return sc;
+    },
+    'getScoreImportance': function () {
+        return [1,15,-1,-2, 5, -0.25, -0.5];
     },
     'reset': function () {
         this.mem =  {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'loops':0, 'timeWaste': 0, 'spent': 0, 'area': 100, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100};

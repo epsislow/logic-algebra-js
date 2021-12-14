@@ -226,7 +226,7 @@ var TgeFn = function (rd) {
       return b;
     }
     
-    pub.interpret = function (b, start = 0, mem = {}, actions = {'reset': function() {}, 'doOption': function (isA, X) {}, 'getOptions':function () {return ['A'];}, 'getRvals': function() { return [1,100,1000,10000]}, 'setLoops': function(a) {}, 'getScore': function() { return 0;}}, d = 0) {
+    pub.interpret = function (b, start = 0, mem = {}, actions = {'reset': function() {}, 'getScoreImportance': function () {return []}, 'doOption': function (isA, X) {}, 'getOptions':function () {return ['A'];}, 'getRvals': function() { return [1,100,1000,10000]}, 'setLoops': function(a) {}, 'getScore': function() { return 0;}}, d = 0) {
       actions.reset();
       var cr=0;
       var error = 0;
