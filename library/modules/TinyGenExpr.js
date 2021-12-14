@@ -344,6 +344,7 @@ var TgeFn = function (rd) {
           case 'l':
           case 's':
             X = b[cr+1];
+            b[cr] = 'x';
             adv++;
             adv += ddd(cr+1, b[cr], X);
 
@@ -351,6 +352,11 @@ var TgeFn = function (rd) {
               console.log('%c[[ Advance ' + adv + ' ]]', 'color:cyan');
             }
             break;
+          case 'x':
+            if (d & 1) {
+              console.log('%c[[ Supressed ]]', 'background-color:black; color: grey');
+            }
+            adv++;
           case 'e':
             break;
         }
