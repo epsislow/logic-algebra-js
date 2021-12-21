@@ -22,7 +22,7 @@ var TgeFn = function (rd) {
       return v;
     }
     
-    pub.lexer= function (v, type= 0) {
+    pub.lexer= function (v, type= 1) {
       var getI = function(v) {
         v++;
         var s,k;
@@ -134,43 +134,52 @@ var TgeFn = function (rd) {
       return { 'b': b, 'br': br };
     }
     
-    pub.show = function(b, br = []) {
-      var bb = '%c';
+    pub.show = function(b, br = [], returnIt = 0) {
+      var bb = '';
+      if (!returnIt) {
+        bb = '%c'
+      }
       var cs = ['color:auto'];
       var style = 0
       for (var k in b) {
-        if (b[k] === 'j') {
-          bb += '%c';
-          cs.push('color: red');
-          style = 1;
-        } else if (b[k] === 'a') {
-          bb += '%c';
-          cs.push('color: #77ff77');
-          style=1;
-        } else if (b[k] === 'd') {
-          bb += '%c';
-          cs.push('color: #77ffff');
-          style = 1;
-        } else if (b[k] === 'l') {
-          bb += '%c';
-          cs.push('color: yellow');
-          style = 1;
+        if (!returnIt) {
+          if (b[k] === 'j') {
+            bb += '%c';
+            cs.push('color: red');
+            style = 1;
+          } else if (b[k] === 'a') {
+            bb += '%c';
+            cs.push('color: #77ff77');
+            style = 1;
+          } else if (b[k] === 'd') {
+            bb += '%c';
+            cs.push('color: #77ffff');
+            style = 1;
+          } else if (b[k] === 'l') {
+            bb += '%c';
+            cs.push('color: yellow');
+            style = 1;
+          }
         }
         bb += b[k];
         if (br.includes(parseInt(k))) {
           bb += "; ";
         }
-        if (style) {
+        if (style && !returnIt) {
           bb += '%c';
           cs.push('color: auto');
           style = 0;
         }
       }
+      if (returnIt) {
+        return bb;
+      }
       cs.unshift(bb);
       console.log.apply(null, cs);
     }
     
-    pub.mutate = function (a, seed, mutations=0, restart = 0) {
+    pub.mutate = function (ao, seed, mutations=0, restart = 0) {
+      const a = ao.slice();
       seed += 100;
       if (restart) {
         rd.deleteRand(seed);
@@ -198,7 +207,8 @@ var TgeFn = function (rd) {
       return a;
     }
     
-    pub.cross= function(a, b, seed, restart = 1) {
+    pub.cross= function(a, bi, seed, restart = 1) {
+      var b = bi.slice();
       seed += 200;
       if (restart) {
         rd.deleteRand(seed);
@@ -294,11 +304,21 @@ var TgeFn = function (rd) {
           }
           var r = actions.getRvals();
 
-          if (r[X] > Y[1]) {
+          var isIt = 0;
+          if (Y[0] === '!>') {
+            isIt = !(r[X] > Y[1]);
+          } else if (Y[0] === '!<') {
+            isIt = !(r[X] < Y[1]);
+          } else if (Y[0] === '>') {
+            isIt = (r[X] > Y[1]);
+          } else if (Y[0] === '<') {
+            isIt = (r[X] > Y[1]);
+          }
+          if (isIt) {
             if (d & 1) {
               console.log(instrCr + '>  > Does ', Z.join(''));
-              return ddd(instrCr+ 5, Z[0], Z[1]);
             }
+            return ddd(instrCr+ 5, Z[0], Z[1]);
           }
         }
         return 0;
@@ -357,6 +377,7 @@ var TgeFn = function (rd) {
               console.log('%c[[ Supressed ]]', 'background-color:black; color: grey');
             }
             adv++;
+            break;
           case 'e':
             break;
         }
@@ -375,7 +396,7 @@ var TgeFn = function (rd) {
          }
       } while (cr <= b.length && loops < maxLoops && !end);
        if(loops >= maxLoops) {
-         console.log('%c[[ Max Loops passed emergency close! ]]', 'color:red');
+         //console.log('%c[[ Max Loops passed emergency close! ]]', 'color:red');
        }
       actions.setLoops(loops);
     }
