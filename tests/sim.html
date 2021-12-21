@@ -267,10 +267,10 @@ window.findScoreFor = function findScoreFor(a, i) {
 
     return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem];
 }
-m = 100;
+m = 50;
 mm = 50;
 for(i = 0 ; i<mm; i++ ) {
-    if (i === 0) {
+    if (i === 0 && 0) {
         a[i] = [16,74,91,30,41,14,2,61,9,75,5,20,31,68,87,79,74,97,72,80,5,15,61,32,74,65,22,74,87,88,96,39,8,43,32,18,85,80,8,97,8,89,53,1,36,82,69,69,70,66,71,63,5,53,63,42,55,58,93,24,1,66,17,78,3,79,32,53,53,43,32,16,15,50,55,55,11,46,77,16,64,77,12,83,87,95,9,63,73,5,40,47,10,10,71,39,3,60,16,60];
     } else {
         a[i] = tge.gen(2, m, 0);
@@ -291,14 +291,25 @@ scores.sort(function (a, b) {
     }
 });
 
-window.epoch = function () {
+function getFirst(s, n) {
+  var t= [];
+  for(var i=0; i< n; i++) {
+      t[i]=JSON.parse(JSON.stringify(s[i]));
+  }
+  return t;
+}
+
+window.epoch = function (max=10) {
     n = 0;
     do {
         for (i = 0; i < 20; i++) {
             scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
-            if (i < 10) {
+            /*if (i < 10) {
                 scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
-            }
+            }*/
+        }
+        for(i = 0; i < 10; i++) {
+          scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
         }
         for (i = 2; i < scores.length; i++) {
             scores[i] = findScoreFor(tge.mutate(scores[i][1], 4, 55), i);
@@ -311,12 +322,15 @@ window.epoch = function () {
             }
         });
         n++;
-    } while (n < 1000)
-
-    console.table(scores);
+    } while (n < max)
+    
+    var show=getFirst(scores, 3);
+    console.table(show);
 }
-epoch();
-
+//epoch(20);
+//epoch(10);
+epoch(230);
+//epoch(200);
 </script>
 </body>
 </html>
