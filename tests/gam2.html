@@ -122,9 +122,11 @@
       'actions': {
         'mine': function (resId) {
           //console.log('mine' + resId);
+          //setTimeout(function () {
           gam2.res[resId].amount++;
           ra.clear();
           gam2.show();
+          //}, 1000);
         },
         'sell': function (resId, amount = -1) {
           amount = amount<0? gam2.res[resId].amount: amount;
