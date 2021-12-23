@@ -21,8 +21,9 @@
     }
     .button {
       margin-right: 5px;
-      padding: 4px;
+      padding: 2px;
     }
+    
 
   </style>
 </head>
@@ -76,6 +77,7 @@
               .br()
               .addButton('Index', '/index.html')
               .br()
+              .container('main','div');
 
       vs.addSectionsToMain();
       gam2.init();
@@ -119,10 +121,18 @@
       },
       'actions': {
         'mine': function (resId) {
-          console.log('mine' + resId);
+          //console.log('mine' + resId);
+          gam2.res[resId].amount++;
+          ra.clear();
+          gam2.show();
         },
         'sell': function (resId, amount = -1) {
-          console.log('sell' + resId + ' ' +  amount);
+          amount = amount<0? gam2.res[resId].amount: amount;
+          gam2.res[resId].amount-= amount;
+          gam2.money+=gam2.res[resId].unitValue * amount;
+          //console.log('sell' + resId + ' ' +  amount);
+          ra.clear();
+          gam2.show();
         },
         'search':function () {
           console.log('search');
@@ -130,33 +140,33 @@
       },
       'show': function () {
         var box;
-        ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px; border: 1px solid #fff')
+        ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('$')
                 .up()
-                .container('media text-muted pt-3')
+                .container('media text-muted pt-2')
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
                 .container('d-block text-light', 'strong')
                 .addText('Money')
                 .up()
                 .addText('Amount: ' + this.money)
-                .br()
+                .br() 
                 .br();
 
         for(var r in this.res) {
           box = this.res[r];
-          var ra2 = ra.container('m-2 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
+          var ra2 = ra.container('m-2 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
                   .container('border-bottom border-gray pb-2 mb-0', 'h6')
                   .addText(box.title)
                   .up()
-                  .container('media text-muted pt-3')
+                  .container('media text-muted pt-2')
                   .container('media-body ml-2 mb-0 small lh-125', 'p')
                   .container('d-block text-light', 'strong')
                   .addText(box.name)
                   .up()
                   .addText('Amount: ' + box.amount)
                   .br()
-                  .addText('Value: ' + box.unitValue * box.amount)
+                  .addText('Value: ' + box.unitValue * box.amount +'$')
                   .br()
                   .br();
 
@@ -168,11 +178,11 @@
           }
         }
 
-        ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
+        ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('+1 Resource')
                 .up()
-                .container('media text-muted pt-3')
+                .container('media text-muted pt-2')
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
                 .container('d-block text-light', 'strong')
                 .addText('Up for more?')
@@ -181,8 +191,7 @@
                 .br()
                 .br()
                 .addButton('Search', gam2.actions.search, 'btn-light button')
-                .br()
-                .br();
+                ;
       }
   };
 </script>
