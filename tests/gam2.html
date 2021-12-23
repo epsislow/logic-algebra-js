@@ -214,7 +214,7 @@ window.onerror = function (message, url, line, column, error) {
         
         for(var m in this.util) {
         box= this.util[m];
-        ra.container('m-2 p-3 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
+        let ra2= ra.container('m-2 p-3 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
         .container('border-bottom border-gray pb-2 mb-0', 'h6')
         .addText(box.title)
         .up()
@@ -226,13 +226,16 @@ window.onerror = function (message, url, line, column, error) {
         .addText(box.description)
         .br()
         .br()
-        .br()
-        .addButton('Resource', false, 'btn-warning button')
-        ;
+        .br();
+        if(box.title==='Smelter') {
+          ra2.addButton('Resource', false, 'btn-warning button');
+        
+        } else if (box.title==='Crafter') {
+          ra2.addButton('Recepie', false, 'btn-warning button');
+          
         }
-        
+        }
         if(this.menu.length==0) {
-        
                 ra.container('m-2 p-3 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('+1 Resource')
