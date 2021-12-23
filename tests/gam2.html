@@ -23,7 +23,12 @@
       margin-right: 5px;
       padding: 2px;
     }
-    
+    .bg-darkcyan {
+      background-color: #005555;
+    }
+    .bg-util {
+      background-color: #552d17;
+    }
 
   </style>
 </head>
@@ -65,6 +70,11 @@
 
   window.queue = NBQueue2;
   var ra;
+     
+window.onerror = function (message, url, line, column, error) {
+    console.log(message, url, line, column, error);
+    alert(message+' L'+line+':'+column);
+}
 
   $('document').ready(function() {
 
@@ -87,8 +97,9 @@
   window.gam2 = {
     'money': 0,
     'res': [],
-    'craft': [],
-    'smelt': [],
+    'building': [],
+    'util': [],
+    'menu':[],
     'addRes': function (name, amount = 0, unitValue = 0) {
         this.res.push({
           title: 'Resource',
@@ -98,21 +109,28 @@
           unitValue: unitValue,
         });
     },
-    'addCraft': function (name, resMax = 1) {
-      this.res.push({
+    'addCraft': function (to, name, resMax = 1, ques=1) {
+      to.push({
         title: 'Crafter',
+        name: name,
         description:  'Craft items',
-        amount: amount,
-        unitValue: unitValue,
+        resMax: resMax,
+        queues: ques,
       });
     },
-    'addSmelt': function (name) {
-      this.res.push({
+    'addSmelt': function (to, name, ques=1) {
+      to.push({
         title: 'Smelter',
+        name: name,
         description:  'Smelt items',
-        amount: amount,
-        unitValue: unitValue,
+        queues: ques,
       });
+    },
+    'addMenu': function(name) {
+      if(name==='util') {
+        this.addSmelt(this.menu, 'Smelter 1');
+        this.addCraft(this.menu, 'Crafter 1');
+      }
     },
       'init': function () {
         this.addRes('Galvinum', 10, 5);
@@ -138,6 +156,17 @@
         },
         'search':function () {
           console.log('search');
+        },
+        'build':function() {
+          gam2.addMenu('util');
+          ra.clear();
+          gam2.show();
+        },
+        'selectMenu': function(to, util) {
+          to.push(util);
+          gam2.menu= [];
+          ra.clear();
+          gam2.show();
         },
       },
       'show': function () {
@@ -179,8 +208,32 @@
                 .addButton('Sell All', (function(opt) { return function() { gam2.actions.sell(opt) };})(r), 'btn-danger button');
           }
         }
-
-        ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
+        
+        if(this.menu.length==0) {
+        }
+        
+        for(var m in this.util) {
+        box= this.util[m];
+        ra.container('m-2 p-3 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
+        .container('border-bottom border-gray pb-2 mb-0', 'h6')
+        .addText(box.title)
+        .up()
+        .container('media text-muted pt-2')
+        .container('media-body ml-2 mb-0 small lh-125', 'p')
+        .container('d-block text-light', 'strong')
+        .addText(box.name)
+        .up()
+        .addText(box.description)
+        .br()
+        .br()
+        .br()
+        .addButton('Resource', false, 'btn-warning button')
+        ;
+        }
+        
+        if(this.menu.length==0) {
+        
+                ra.container('m-2 p-3 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('+1 Resource')
                 .up()
@@ -194,6 +247,44 @@
                 .br()
                 .addButton('Search', gam2.actions.search, 'btn-light button')
                 ;
+
+          ra.container('m-2 p-3 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+          .container('border-bottom border-gray pb-2 mb-0', 'h6')
+          .addText('+1 Utility')
+          .up()
+          .container('media text-muted pt-2')
+          .container('media-body ml-2 mb-0 small lh-125', 'p')
+          .container('d-block text-light', 'strong')
+          .addText('Need an utility?')
+          .up()
+          .br()
+          .br()
+          .br()
+          .addButton('Build', gam2.actions.build, 'btn-light button')
+          ;
+        } else {
+          for(var m in this.menu) {
+            box= this.menu[m];
+            ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+            .container('border-bottom border-gray pb-2 mb-0', 'h6')
+            .addText(box.title)
+            .up()
+            .container('media text-muted pt-2')
+            .container('media-body ml-2 mb-0 small lh-125', 'p')
+            .container('d-block text-light', 'strong')
+            .addText(box.name)
+            .up()
+            .addText(box.description)
+            .br()
+            .br()
+            .br()
+            .addButton('Select',
+              (function(to,w) { return function() { gam2.actions.selectMenu(to,w) };})(gam2.util, box),
+              'btn-light button'
+            )
+            ;
+          }
+        }
       }
   };
 </script>
