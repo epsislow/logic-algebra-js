@@ -98,6 +98,17 @@
         this.addRes('Soltzis', 25, 10);
         this.show();
       },
+      'actions': {
+        'mine': function (resId) {
+          console.log('mine' + resId);
+        },
+        'sell': function (resId, amount = -1) {
+          console.log('sell' + resId + ' ' +  amount);
+        },
+        'search':function () {
+          console.log('search');
+        },
+      },
       'show': function () {
         var box;
         for(var r in this.res) {
@@ -119,9 +130,9 @@
 
 
           if (box.title === 'Resource') {
-            ra2.addButton('Mine', false, 'btn-success button')
-                .addButton('Sell 1', false, 'btn-warning button')
-                .addButton('Sell All', false, 'btn-danger button');
+            ra2.addButton('Mine', function () {gam2.actions.mine(r)}, 'btn-success button')
+                .addButton('Sell 1', function () {gam2.actions.sell(r, 1)}, 'btn-warning button')
+                .addButton('Sell All', function () {gam2.actions.sell(r)}, 'btn-danger button');
           }
         }
         ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
@@ -136,7 +147,7 @@
                 .br()
                 .br()
                 .br()
-                .addButton('Search', false, 'btn-light button')
+                .addButton('Search', gam2.actions.search, 'btn-light button')
                 .br()
                 .br();
       }
