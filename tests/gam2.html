@@ -96,6 +96,8 @@ window.onerror = function (message, url, line, column, error) {
 
   window.gam2 = {
     'money': 0,
+    'power': 3,
+    'powerUsage':2,
     'res': [],
     'building': [],
     'util': [],
@@ -105,6 +107,7 @@ window.onerror = function (message, url, line, column, error) {
           title: 'Resource',
           name: name,
           description:  'Used as coin',
+          level: 2,
           amount: amount,
           unitValue: unitValue,
         });
@@ -126,10 +129,22 @@ window.onerror = function (message, url, line, column, error) {
         queues: ques,
       });
     },
+    'addPower': function (to, name, lvl=1) {
+      to.push({
+        title: 'Power',
+        name: name,
+        description: 'Adds power to the grid',
+        level: 1,
+        generated: 0,
+        max:5,
+      });
+    },
     'addMenu': function(name) {
       if(name==='util') {
+        this.addPower(this.menu, 'Power 1');
         this.addSmelt(this.menu, 'Smelter 1');
         this.addCraft(this.menu, 'Crafter 1');
+        
       }
     },
       'init': function () {
@@ -164,6 +179,7 @@ window.onerror = function (message, url, line, column, error) {
         },
         'selectMenu': function(to, util) {
           to.push(util);
+          console.log(util)
           gam2.menu= [];
           ra.clear();
           gam2.show();
@@ -181,7 +197,8 @@ window.onerror = function (message, url, line, column, error) {
                 .addText('Money')
                 .up()
                 .addText('Amount: ' + this.money)
-                .br() 
+                .br()
+                .addText('Power: '+ this.powerUsage +' / '+ this.power)
                 .br();
 
         for(var r in this.res) {
@@ -224,14 +241,23 @@ window.onerror = function (message, url, line, column, error) {
         .addText(box.name)
         .up()
         .addText(box.description)
-        .br()
-        .br()
-        .br();
+        ;
         if(box.title==='Smelter') {
-          ra2.addButton('Resource', false, 'btn-warning button');
+          ra2.br().br().br()
+            .addButton('Resource', false, 'btn-warning button');
         
         } else if (box.title==='Crafter') {
-          ra2.addButton('Recepie', false, 'btn-warning button');
+          ra2.br().br().br()
+            .addButton('Recepie', false, 'btn-warning button');
+          
+        } else if (box.title=='Power') {
+          ra2.br()
+            .addText('Level: '+ box.level)
+            .br()
+            .addText('Generated:' + box.generated)
+            .br()
+            .addButton('On', false, 'btn-success button')
+            .addButton('Level up', false, 'btn-warning button');
           
         }
         }
