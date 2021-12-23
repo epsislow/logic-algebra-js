@@ -82,7 +82,7 @@
     }
   });
 
-  var gam2 = {
+  window.gam2 = {
       'res': [],
       'addRes': function (name, amount = 0, unitValue = 0) {
         this.res.push({
@@ -132,7 +132,7 @@
           if (box.title === 'Resource') {
             ra2.addButton('Mine', function () {gam2.actions.mine(r)}, 'btn-success button')
                 .addButton('Sell 1', function () {gam2.actions.sell(r, 1)}, 'btn-warning button')
-                .addButton('Sell All', function () {gam2.actions.sell(r)}, 'btn-danger button');
+                .addButton('Sell All', "javascript:gam2.actions.sell("+r+")", 'btn-danger button');
           }
         }
         ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
