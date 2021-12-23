@@ -83,8 +83,11 @@
   });
 
   window.gam2 = {
-      'res': [],
-      'addRes': function (name, amount = 0, unitValue = 0) {
+    'money': 0,
+    'res': [],
+    'craft': [],
+    'smelt': [],
+    'addRes': function (name, amount = 0, unitValue = 0) {
         this.res.push({
           title: 'Resource',
           name: name,
@@ -92,7 +95,23 @@
           amount: amount,
           unitValue: unitValue,
         });
-      },
+    },
+    'addCraft': function (name, resMax = 1) {
+      this.res.push({
+        title: 'Crafter',
+        description:  'Craft items',
+        amount: amount,
+        unitValue: unitValue,
+      });
+    },
+    'addSmelt': function (name) {
+      this.res.push({
+        title: 'Smelter',
+        description:  'Smelt items',
+        amount: amount,
+        unitValue: unitValue,
+      });
+    },
       'init': function () {
         this.addRes('Galvinum', 10, 5);
         this.addRes('Soltzis', 25, 10);
@@ -111,6 +130,19 @@
       },
       'show': function () {
         var box;
+        ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px; border: 1px solid #fff')
+                .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                .addText('$')
+                .up()
+                .container('media text-muted pt-3')
+                .container('media-body ml-2 mb-0 small lh-125', 'p')
+                .container('d-block text-light', 'strong')
+                .addText('Money')
+                .up()
+                .addText('Amount: ' + this.money)
+                .br()
+                .br();
+
         for(var r in this.res) {
           box = this.res[r];
           var ra2 = ra.container('m-2 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
@@ -135,9 +167,10 @@
                 .addButton('Sell All', (function(opt) { return function() { gam2.actions.sell(opt) };})(r), 'btn-danger button');
           }
         }
+
         ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                .addText('+1')
+                .addText('+1 Resource')
                 .up()
                 .container('media text-muted pt-3')
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
