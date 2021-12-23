@@ -146,7 +146,12 @@ $('document').ready(function() {
 	head: 'Sim',
 	description: 'Js',
 	button: {text: 'Sim', href: '/tests/sim.html', 'class': 'btn-info'}
-	}, ];
+	}, {
+      title: 'Gam2',
+      head: 'Gam2',
+      description: 'Js + Html',
+      button: {text: 'Gam2', href: '/tests/gam2.html', 'class': 'btn-success'}
+  },];
 	
 	var page;
 	for(var p in pages) {
@@ -164,7 +169,7 @@ $('document').ready(function() {
 		.addText(page.description)
 		.br()
 		.br()
-		.addButton(page.button.text, page.button.href, page.button.class)
+		.addButton(page.button.text, false, page.button.class)
 		.up()
 		.up()
 		.up();

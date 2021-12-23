@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tester</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
+
+  <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
+
+  <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
+
+  <style>
+
+    .bg-black {
+      background-color: #000;
+    }
+    .button {
+      margin-right: 5px;
+      padding: 4px;
+    }
+
+  </style>
+</head>
+
+<body class="bg-black">
+<main role="main" class="container">
+  Tester
+</main><!-- /.container -->
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+
+<!--script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script-->
+
+<!--script src="/ext/popper.js" type="text/javascript"></script-->
+
+<!--script src="/ext/bootstrap.4.0.0.js" type="text/javascript"></script-->
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+<script type="text/javascript" src="/library/Visual.js"></script>
+
+<script type="text/javascript" src="/library/sha1/Random.js"></script>
+
+<script type="module">
+  import { NBQueue2 } from '/library/modules/NBQueue.js'
+
+  window.queue = NBQueue2;
+  var ra;
+
+  $('document').ready(function() {
+
+    if('vs' in window) {
+
+      vs.page('Gam2');
+
+      ra = vs.clearBody()
+              .section('top')
+              .br()
+              .addButton('Index', '/index.html')
+              .br()
+
+      vs.addSectionsToMain();
+      gam2.init();
+    }
+  });
+
+  var gam2 = {
+      'res': [],
+      'addRes': function (name, amount = 0, unitValue = 0) {
+        this.res.push({
+          title: 'Resource',
+          name: name,
+          description:  'Used as coin',
+          amount: amount,
+          unitValue: unitValue,
+        });
+      },
+      'init': function () {
+        this.addRes('Galvinum', 10, 5);
+        this.addRes('Soltzis', 25, 10);
+        this.show();
+      },
+      'show': function () {
+        var box;
+        for(var r in this.res) {
+          box = this.res[r];
+          var ra2 = ra.container('m-2 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
+                  .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                  .addText(box.title)
+                  .up()
+                  .container('media text-muted pt-3')
+                  .container('media-body ml-2 mb-0 small lh-125', 'p')
+                  .container('d-block text-light', 'strong')
+                  .addText(box.name)
+                  .up()
+                  .addText('Amount: ' + box.amount)
+                  .br()
+                  .addText('Value: ' + box.unitValue * box.amount)
+                  .br()
+                  .br();
+
+
+          if (box.title === 'Resource') {
+            ra2.addButton('Mine', false, 'btn-success button')
+                .addButton('Sell 1', false, 'btn-warning button')
+                .addButton('Sell All', false, 'btn-danger button');
+          }
+        }
+        ra.container('m-2 p-3 bg-info rounded box-shadow text-light', 'div', 'float:left;width:200px; height: 180px')
+                .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                .addText('+1')
+                .up()
+                .container('media text-muted pt-3')
+                .container('media-body ml-2 mb-0 small lh-125', 'p')
+                .container('d-block text-light', 'strong')
+                .addText('Up for more?')
+                .up()
+                .br()
+                .br()
+                .br()
+                .addButton('Search', false, 'btn-light button')
+                .br()
+                .br();
+      }
+  };
+</script>
+</body>
+</html>
