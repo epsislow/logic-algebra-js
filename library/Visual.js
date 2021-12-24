@@ -189,6 +189,17 @@ window.vs = (function () {
      return controlsForContainer(name, content, pub);
     }
     
+    pub.from = function(name, jsEl) {
+      if(name in page.section) {
+         return page.getControlsFor('section', name);
+      }
+      
+      page.section[name] = jsEl;
+      
+      //return pub;
+      return controlsForContainer(name, jsEl, pub);
+    }
+    
     pub.addSectionsToMain = function() {
       pub.clearBody();
       

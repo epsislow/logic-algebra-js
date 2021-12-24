@@ -130,7 +130,14 @@ window.onerror = function (message, url, line, column, error) {
     'menuType':0,
     'vs': {
       'dropDown': function(btn, box) {
+        //var btn= $(btn);
+        //console.log(btn);
+        $(btn).after($('<div>').html('test'));
         
+        /*
+        vs.from('dropdn', btn)
+          .br()
+          .addText('sdff');*/
       }
     },
     'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
@@ -341,7 +348,8 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
-        'crafterRecepie': function(box, btn) {
+        'crafterRecepie': function(btn, box) {
+          //console.log(box)
           gam2.vs.dropDown(btn, {});
         }
       },
@@ -417,7 +425,7 @@ window.onerror = function (message, url, line, column, error) {
         } else if (box.title==='Crafter') {
           ra2.br().br().br().br()
             .addButton('Recepie', 
-           (function(box) { return function() { gam2.actions.crafterRecepie(this, box) };})(box),
+           (function(box) { return function(e) { gam2.actions.crafterRecepie( this, box) };})(box),
             'btn-warning button');
         
         } else if (box.title==='Storage') {
