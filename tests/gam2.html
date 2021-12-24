@@ -358,6 +358,7 @@ window.onerror = function (message, url, line, column, error) {
           .addButton('Build', gam2.actions.build, 'btn-light button')
           ;
         } else {
+          var powerLeft = gam2.power - gam2.powerUsage;
           for(var m in this.menu) {
             box= this.menu[m];
             var ra0= ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
@@ -379,7 +380,11 @@ window.onerror = function (message, url, line, column, error) {
               ra0
                 .container('d-block text-danger')
                 .addText('Low money');
+            } else if (powerLeft < box.powerUsage ) {  
               
+              ra0
+                .container('d-block text-danger')
+                .addText('Low power');
             } else {
               ra0.addButton('Select',
               (function(to,w) { return function() { gam2.actions.selectMenu(to,w) };})(gam2[gam2.menuType], box),
