@@ -240,8 +240,10 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
-        'selectMenu': function(to, util) {
-          to.push(util);
+        'selectMenu': function(to, box) {
+          to.push(box);
+          gam2.money -= box.cost;
+          gam2.powerUsage += box.powerUsage;
           //console.log(util)
           gam2.menu= [];
           gam2.menuType=0;
@@ -348,7 +350,7 @@ window.onerror = function (message, url, line, column, error) {
           var ra3= ra2.br()
             .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
             .br()
-            .addText('Generated:' + box.generated)
+            .addText('Generated: ' + box.generated +' / '+ box.level * 5)
             .br();
           if(box.generated === 0) {
             ra3
