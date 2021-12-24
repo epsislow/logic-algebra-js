@@ -102,7 +102,7 @@ window.onerror = function (message, url, line, column, error) {
   });
 
   window.gam2 = {
-    'money': 0,
+    'money': 10000,
     'power': 50,
     'powerUsage':30,
     'res': [],
@@ -120,6 +120,7 @@ window.onerror = function (message, url, line, column, error) {
           unitValue: unitValue,
           cost:1500,
           powerUsage:15,
+          levelCost: 500,
         });
     },
     'addCraft': function (to, name, resMax = 1, ques=1) {
@@ -153,6 +154,7 @@ window.onerror = function (message, url, line, column, error) {
         max:5,
         cost:1500,
         powerUsage:0,
+        levelCost: 200,
       });
     },
     
@@ -166,6 +168,7 @@ window.onerror = function (message, url, line, column, error) {
         level: 1,
         cost:650,
         powerUsage:3,
+        levelCost: 100,
       });
     },
     'addStorage': function (to, name, slots=5, max=20) {
@@ -178,6 +181,7 @@ window.onerror = function (message, url, line, column, error) {
         level: 1,
         cost: 500,
         powerUsage:5,
+        levelCost: 250,
       });
     },
     'addMenu': function(name) {
@@ -244,6 +248,26 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
+        'powerOn': function(box) {
+          box.generated= box.level*5;
+          gam2.power += box.generated;
+          ra.clear();
+          gam2.show();
+        },
+        'powerOff': function(box) {
+          gam2.power -= box.generated;
+          box.generated=0;
+          
+          ra.clear();
+          gam2.show();
+        },
+        'levelUp': function(box) {
+          gam2.money -= box.levelCost;
+          box.level++;
+          box.levelCost += Math.round(box.levelCost*1.5);
+          ra.clear();
+          gam2.show();
+        }
       },
       'show': function () {
         var box;
@@ -256,7 +280,7 @@ window.onerror = function (message, url, line, column, error) {
                 .container('d-block text-light', 'strong')
                 .addText('Money')
                 .up()
-                .addText('Amount: ' + this.money)
+                .addText('Amount: $' + this.money)
                 .br()
                 .addText('Power: '+ this.powerUsage +' / '+ this.power)
                 .br();
@@ -321,14 +345,31 @@ window.onerror = function (message, url, line, column, error) {
             .addButton('Clear', false, 'btn-warning button');
           
         } else if (box.title=='Power') {
-          ra2.br()
-            .addText('Level: '+ box.level)
+          var ra3= ra2.br()
+            .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
             .br()
             .addText('Generated:' + box.generated)
-            .br()
-            .addButton('On', false, 'btn-success button')
-            .addButton('Level up', false, 'btn-warning button');
-          
+            .br();
+          if(box.generated === 0) {
+            ra3
+            .addButton('On', 
+            (function(box) { return function() { gam2.actions.powerOn(box) };})(box),
+             'btn-success button');
+             if(gam2.money > box.levelCost) {
+              ra3.addButton('Level up',
+              (function(box) { return function() { gam2.actions.levelUp(box) };})(box),
+             'btn-warning button');
+           //  } else {
+             //  ra3.container('text-danger d-block','strong')
+            //   .addText('$'+ box.levelCost )
+             }
+          } else {
+             ra3
+            .addButton('Off', 
+            (function(box) { return function() { gam2.actions.powerOff(box) };})(box),
+             'btn-success button');
+
+          }
         }
         }
         if(this.menu.length==0) {
