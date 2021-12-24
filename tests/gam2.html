@@ -102,12 +102,13 @@ window.onerror = function (message, url, line, column, error) {
     'building': [],
     'util': [],
     'menu':[],
-    'addRes': function (name, amount = 0, unitValue = 0) {
-        this.res.push({
+    'menuType':0,
+    'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
+        to.push({
           title: 'Resource',
           name: name,
-          description:  'Used as coin',
-          level: 2,
+          description:  'Asteroid resource',
+          level: 1,
           amount: amount,
           unitValue: unitValue,
         });
@@ -168,11 +169,16 @@ window.onerror = function (message, url, line, column, error) {
         this.addStorage(this.menu, 'Storage 1');
         this.addSilo(this.menu, 'Silo 1');
         
+      } else if(name==='res') {
+        this.addRes(this.menu, 'Name1', 0, 7);
+        this.addRes(this.menu, 'Name2', 0, 15);
+        
       }
+      this.menuType=name;
     },
       'init': function () {
-        this.addRes('Galvinum', 10, 5);
-        this.addRes('Soltzis', 25, 10);
+        this.addRes(this.res,'Galvinum', 10, 5,2);
+        this.addRes(this.res,'Soltzis', 25, 10,2);
         this.show();
       },
       'actions': {
@@ -193,7 +199,9 @@ window.onerror = function (message, url, line, column, error) {
           gam2.show();
         },
         'search':function () {
-          console.log('search');
+          gam2.addMenu('res');
+          ra.clear();
+          gam2.show();
         },
         'build':function() {
           gam2.addMenu('util');
@@ -204,6 +212,7 @@ window.onerror = function (message, url, line, column, error) {
           to.push(util);
           console.log(util)
           gam2.menu= [];
+          gam2.menuType=0;
           ra.clear();
           gam2.show();
         },
@@ -341,7 +350,7 @@ window.onerror = function (message, url, line, column, error) {
             .br()
             .br()
             .addButton('Select',
-              (function(to,w) { return function() { gam2.actions.selectMenu(to,w) };})(gam2.util, box),
+              (function(to,w) { return function() { gam2.actions.selectMenu(to,w) };})(gam2[gam2.menuType], box),
               'btn-light button'
             )
             ;
