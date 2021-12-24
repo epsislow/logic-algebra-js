@@ -128,6 +128,11 @@ window.onerror = function (message, url, line, column, error) {
     'util': [],
     'menu':[],
     'menuType':0,
+    'vs': {
+      'dropDown': function(btn, box) {
+        
+      }
+    },
     'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
         to.push({
           title: 'Resource',
@@ -335,6 +340,9 @@ window.onerror = function (message, url, line, column, error) {
           box.levelCost += Math.round(box.levelCost*1.5);
           ra.clear();
           gam2.show();
+        },
+        'crafterRecepie': function(box, btn) {
+          gam2.vs.dropDown(btn, {});
         }
       },
       'show': function () {
@@ -408,7 +416,9 @@ window.onerror = function (message, url, line, column, error) {
         
         } else if (box.title==='Crafter') {
           ra2.br().br().br().br()
-            .addButton('Recepie', false, 'btn-warning button');
+            .addButton('Recepie', 
+           (function(box) { return function() { gam2.actions.crafterRecepie(this, box) };})(box),
+            'btn-warning button');
         
         } else if (box.title==='Storage') {
           ra2.br().br().br().br()
