@@ -134,6 +134,19 @@ window.onerror = function (message, url, line, column, error) {
         powerUsage:15,
       });
     },
+    'addAsmb': function (to, name, resMax = 2, ques=1) {
+      to.push({
+        title: 'Assambler',
+        name: name,
+        description:  'Assamble items',
+        resMax: resMax,
+        queues: ques,
+        cost:10000,
+        powerUsage:25,
+        level: 1,
+        levelCost: 2000,
+      });
+    },
     'addSmelt': function (to, name, ques=1) {
       to.push({
         title: 'Smelter',
@@ -190,7 +203,8 @@ window.onerror = function (message, url, line, column, error) {
         this.addSmelt(this.menu, 'Smelter 1');
         this.addCraft(this.menu, 'Crafter 1');
         this.addStorage(this.menu, 'Storage 1');
-        this.addSilo(this.menu, 'Silo 1');
+        this.addSilo(this.menu, 'Silo 1')
+        this.addAsmb(this.menu, 'Assambler 1');
         
       } else if(name==='res') {
         this.addRes(this.menu, 'Name1', 0, 7);
@@ -203,17 +217,38 @@ window.onerror = function (message, url, line, column, error) {
         this.addRes(this.res,'Galvinum', 10, 5,2);
         this.addRes(this.res,'Soltzis', 25, 10,2);
         this.show();
+        this.initEvents();
+      },
+      'initEvents': function() {
+        setInterval(this.event.everySec, 1000);
+      },
+      'event': {
+        'everySec': function() {
+          for(let r in gam2.res) {
+            var box = gam2.res[r];
+            if(box) {
+              gam2.actions.mine(r,0);
+            }
+          }
+          gam2.actions.show();
+        }
       },
       'actions': {
-        'mine': function (resId) {
+        'show': function() {
+            ra.clear();
+            gam2.show();
+        },
+        'mine': function (resId, show=1) {
           //console.log('mine' + resId);
           //setTimeout(function () {
-          gam2.res[resId].amount++;
-          ra.clear();
-          gam2.show();
+          gam2.res[resId].amount+= gam2.res[resId].level;
+          if(show) {
+            ra.clear();
+            gam2.show();
+          }
           //}, 1000);
         },
-        'sell': function (resId, amount = -1) {
+        'sell': function (resId, amount = -1, show=1) {
           amount = amount<0? gam2.res[resId].amount: amount;
           if(amount> gam2.res[resId].amount) {
             return;
@@ -221,8 +256,10 @@ window.onerror = function (message, url, line, column, error) {
           gam2.res[resId].amount-= amount;
           gam2.money+=gam2.res[resId].unitValue * amount;
           //console.log('sell' + resId + ' ' +  amount);
-          ra.clear();
-          gam2.show();
+          if (show) {
+            ra.clear();
+            gam2.show();
+          }
         },
         'search':function () {
           gam2.addMenu('res');
@@ -298,17 +335,22 @@ window.onerror = function (message, url, line, column, error) {
                   .container('d-block text-light', 'strong')
                   .addText(box.name)
                   .up()
-                  .addText('Amount: ' + box.amount)
+                  .addText('Amount: ' + box.amount+' $'+  box.unitValue * box.amount)
                   .br()
-                  .addText('Value: ' + box.unitValue * box.amount +'$')
+                  .addText('Level: ' + box.level + ' ($'+box.levelCost+')')
                   .br()
                   .br();
 
 
           if (box.title === 'Resource') {
-            ra2.addButton('Mine', (function(opt) { return function() { gam2.actions.mine(opt) };})(r), 'btn-success button')
+            ra2 //.addButton('Mine', (function(opt) { return function() { gam2.actions.mine(opt) };})(r), 'btn-success button')
                 .addButton('Sell 1', (function(opt) { return function() { gam2.actions.sell(opt,1) };})(r), 'btn-warning button')
-                .addButton('Sell All', (function(opt) { return function() { gam2.actions.sell(opt) };})(r), 'btn-danger button');
+                .addButton('Sell *', (function(opt) { return function() { gam2.actions.sell(opt) };})(r), 'btn-danger button');
+            if(gam2.money > box.levelCost) {
+              ra2.addButton('Lvl up',
+            (function(box) { return function() { gam2.actions.levelUp(box) };})(box),
+            'btn-success button');
+            }
           }
         }
         
@@ -358,9 +400,9 @@ window.onerror = function (message, url, line, column, error) {
             (function(box) { return function() { gam2.actions.powerOn(box) };})(box),
              'btn-success button');
              if(gam2.money > box.levelCost) {
-              ra3.addButton('Level up',
+              ra3.addButton('Lvl up',
               (function(box) { return function() { gam2.actions.levelUp(box) };})(box),
-             'btn-warning button');
+             'btn-success button');
            //  } else {
              //  ra3.container('text-danger d-block','strong')
             //   .addText('$'+ box.levelCost )
