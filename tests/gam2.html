@@ -36,6 +36,24 @@
     .bg-back {
       background-color: mediumslateblue;
     }
+    .bg-crafter {
+      background-color: #773333;
+    }
+    .bg-smelter {
+      background-color: #444499;
+    }
+    .bg-power {
+      background-color: #224460;
+    }
+    .bg-silo {
+      background-color: #445533;
+    }
+    .bg-storage {
+      background-color: #604460;
+    }
+    .bg-asmb {
+      background-color: #553333;
+    }
 
   </style>
 </head>
@@ -121,6 +139,7 @@ window.onerror = function (message, url, line, column, error) {
           cost:1500,
           powerUsage:15,
           levelCost: 500,
+          color:'dark',
         });
     },
     'addCraft': function (to, name, resMax = 1, ques=1) {
@@ -132,6 +151,9 @@ window.onerror = function (message, url, line, column, error) {
         queues: ques,
         cost:5000,
         powerUsage:15,
+        level:1,
+        levelCost:100,
+        color:'crafter',
       });
     },
     'addAsmb': function (to, name, resMax = 2, ques=1) {
@@ -142,9 +164,10 @@ window.onerror = function (message, url, line, column, error) {
         resMax: resMax,
         queues: ques,
         cost:10000,
-        powerUsage:25,
+        powerUsage:5,
         level: 1,
         levelCost: 2000,
+        color:'asmb',
       });
     },
     'addSmelt': function (to, name, ques=1) {
@@ -154,7 +177,10 @@ window.onerror = function (message, url, line, column, error) {
         description:  'Smelt items',
         queues: ques,
         cost:2500,
-        powerUsage:10
+        powerUsage:10,
+        level:1,
+        levelCost:100,
+        color:'smelter',
       });
     },
     'addPower': function (to, name, lvl=1) {
@@ -168,6 +194,7 @@ window.onerror = function (message, url, line, column, error) {
         cost:1500,
         powerUsage:0,
         levelCost: 200,
+        color:'power',
       });
     },
     
@@ -182,6 +209,7 @@ window.onerror = function (message, url, line, column, error) {
         cost:650,
         powerUsage:3,
         levelCost: 100,
+        color:'silo',
       });
     },
     'addStorage': function (to, name, slots=5, max=20) {
@@ -195,6 +223,7 @@ window.onerror = function (message, url, line, column, error) {
         cost: 500,
         powerUsage:5,
         levelCost: 250,
+        color:'storage',
       });
     },
     'addMenu': function(name) {
@@ -326,9 +355,9 @@ window.onerror = function (message, url, line, column, error) {
 
         for(var r in this.res) {
           box = this.res[r];
-          var ra2 = ra.container('m-2 p-3 bg-dark rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
+          var ra2 = ra.container('m-2 p-3 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
                   .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                  .addText(box.title)
+                  .addText(box.title+' '+box.level)
                   .up()
                   .container('media text-muted pt-2')
                   .container('media-body ml-2 mb-0 small lh-125', 'p')
@@ -359,9 +388,9 @@ window.onerror = function (message, url, line, column, error) {
         
         for(var m in this.util) {
         box= this.util[m];
-        let ra2= ra.container('m-2 p-3 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
+        let ra2= ra.container('m-2 p-3 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
         .container('border-bottom border-gray pb-2 mb-0', 'h6')
-        .addText(box.title)
+        .addText(box.title+ ' '+box.level)
         .up()
         .container('media text-muted pt-2')
         .container('media-body ml-2 mb-0 small lh-125', 'p')
