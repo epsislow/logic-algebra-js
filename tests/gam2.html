@@ -129,6 +129,7 @@ window.onerror = function (message, url, line, column, error) {
     'menu':[],
     'menuType':0,
     'vs': {
+      'opt':{},
       'dropDown': function(btn, box) {
         //var btn= $(btn);
         //console.log(btn);
@@ -138,6 +139,35 @@ window.onerror = function (message, url, line, column, error) {
         vs.from('dropdn', btn)
           .br()
           .addText('sdff');*/
+      },
+      'addOptionsFor': function(idd, opts) {
+        this.opt[idd] = opts;
+      },
+      'showOptionsFor': function(idd, box, ra) {
+        if(!(idd in this.opt)) {
+          return;
+        }
+        for(var i in this.opt[idd]) {
+          this.boxOpt(ra, this.opt[idd][i], i);
+        }
+      },
+      'clearOptionsFor': function(idd) {
+        delete this.opt[idd];
+      },
+      'boxOpt': function(ra, opt, i) {
+        
+        ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed;')
+                .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                .addText('Option '+ (i+1))
+                .up()
+                .container('media text-muted pt-2')
+                .container('media-body ml-2 mb-0 small lh-125', 'p')
+                .container('d-block text-light', 'strong')
+                .addText(opt.text)
+                .up()
+                .addText(opt.description)
+                .br()
+                .br();
       }
     },
     'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
@@ -348,9 +378,19 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
-        'crafterRecepie': function(btn, box) {
+        'crafterRecepie': function(idd, box) {
           //console.log(box)
-          gam2.vs.dropDown(btn, {});
+          //gam2.vs.dropDown(btn, {});
+          if(!(idd in gam2.vs.opt)) {
+            gam2.vs.addOptionsFor(idd, [{
+              'text': 'Res1',
+              'description': 'Resource 1'
+            }]);
+          } else {
+            gam2.vs.clearOptionsFor(idd);
+          }
+          ra.clear();
+          gam2.show();
         }
       },
       'show': function () {
@@ -425,7 +465,7 @@ window.onerror = function (message, url, line, column, error) {
         } else if (box.title==='Crafter') {
           ra2.br().br().br().br()
             .addButton('Recepie', 
-           (function(box) { return function(e) { gam2.actions.crafterRecepie( this, box) };})(box),
+           (function(box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(box),
             'btn-warning button');
         
         } else if (box.title==='Storage') {
@@ -465,6 +505,7 @@ window.onerror = function (message, url, line, column, error) {
 
           }
         }
+         this.vs.showOptionsFor('util'+m, box, ra);
         }
         if(this.menu.length==0) {
                 ra.container('m-2 p-3 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
