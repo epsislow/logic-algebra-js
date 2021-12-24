@@ -99,8 +99,8 @@ window.onerror = function (message, url, line, column, error) {
 
   window.gam2 = {
     'money': 0,
-    'power': 3,
-    'powerUsage':2,
+    'power': 50,
+    'powerUsage':30,
     'res': [],
     'building': [],
     'util': [],
@@ -114,6 +114,8 @@ window.onerror = function (message, url, line, column, error) {
           level: 1,
           amount: amount,
           unitValue: unitValue,
+          cost:1500,
+          powerUsage:15,
         });
     },
     'addCraft': function (to, name, resMax = 1, ques=1) {
@@ -123,6 +125,8 @@ window.onerror = function (message, url, line, column, error) {
         description:  'Craft items',
         resMax: resMax,
         queues: ques,
+        cost:5000,
+        powerUsage:15,
       });
     },
     'addSmelt': function (to, name, ques=1) {
@@ -131,6 +135,8 @@ window.onerror = function (message, url, line, column, error) {
         name: name,
         description:  'Smelt items',
         queues: ques,
+        cost:2500,
+        powerUsage:10
       });
     },
     'addPower': function (to, name, lvl=1) {
@@ -141,6 +147,8 @@ window.onerror = function (message, url, line, column, error) {
         level: 1,
         generated: 0,
         max:5,
+        cost:1500,
+        powerUsage:0,
       });
     },
     
@@ -152,6 +160,8 @@ window.onerror = function (message, url, line, column, error) {
         slots: new Array(slots),
         max: max,
         level: 1,
+        cost:650,
+        powerUsage:3,
       });
     },
     'addStorage': function (to, name, slots=5, max=20) {
@@ -162,6 +172,8 @@ window.onerror = function (message, url, line, column, error) {
         slots: new Array(slots),
         max: max,
         level: 1,
+        cost: 500,
+        powerUsage:5,
       });
     },
     'addMenu': function(name) {
@@ -195,6 +207,9 @@ window.onerror = function (message, url, line, column, error) {
         },
         'sell': function (resId, amount = -1) {
           amount = amount<0? gam2.res[resId].amount: amount;
+          if(amount> gam2.res[resId].amount) {
+            return;
+          }
           gam2.res[resId].amount-= amount;
           gam2.money+=gam2.res[resId].unitValue * amount;
           //console.log('sell' + resId + ' ' +  amount);
@@ -345,7 +360,7 @@ window.onerror = function (message, url, line, column, error) {
         } else {
           for(var m in this.menu) {
             box= this.menu[m];
-            ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+            var ra0= ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
             .container('border-bottom border-gray pb-2 mb-0', 'h6')
             .addText(box.title)
             .up()
@@ -356,13 +371,22 @@ window.onerror = function (message, url, line, column, error) {
             .up()
             .addText(box.description)
             .br()
+            .addText('Cost: '+box.cost)
             .br()
-            .br()
-            .addButton('Select',
+            .addText('Power Usage: '+box.powerUsage)
+            .br();
+            if(gam2.money < box.cost) {
+              ra0
+                .container('d-block text-danger')
+                .addText('Low money');
+              
+            } else {
+              ra0.addButton('Select',
               (function(to,w) { return function() { gam2.actions.selectMenu(to,w) };})(gam2[gam2.menuType], box),
               'btn-light button'
             )
             ;
+            }
           }
           ra.container('m-2 p-3 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
           .container('border-bottom border-gray pb-2 mb-0', 'h6')
