@@ -395,25 +395,28 @@ window.onerror = function (message, url, line, column, error) {
         .container('media text-muted pt-2')
         .container('media-body ml-2 mb-0 small lh-125', 'p')
         .container('d-block text-light', 'strong')
-        .addText(box.name)
+        //.addText(' ')
         .up()
-        .addText(box.description)
+        
+        //.addText(box.description)
         ;
         if(box.title==='Smelter') {
-          ra2.br().br().br()
+          ra2
+            .addText('No resource')
+            .br().br().br().br()
             .addButton('Resource', false, 'btn-warning button');
         
         } else if (box.title==='Crafter') {
-          ra2.br().br().br()
+          ra2.br().br().br().br()
             .addButton('Recepie', false, 'btn-warning button');
         
         } else if (box.title==='Storage') {
-          ra2.br().br().br()
+          ra2.br().br().br().br()
             .addButton('Level', false, 'btn-success button')
             .addButton('Clear', false, 'btn-warning button');
             
         } else if (box.title==='Silo') {
-          ra2.br().br().br()
+          ra2.br().br().br().br()
             .addButton('Level', false, 'btn-success button')
             .addButton('Clear', false, 'btn-warning button');
           
@@ -422,7 +425,7 @@ window.onerror = function (message, url, line, column, error) {
             .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
             .br()
             .addText('Generated: ' + box.generated +' / '+ box.level * 5)
-            .br();
+            .br().br();
           if(box.generated === 0) {
             ra3
             .addButton('On', 
