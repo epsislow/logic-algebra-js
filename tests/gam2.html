@@ -29,6 +29,9 @@
     .bg-util {
       background-color: #552d17;
     }
+    .bg-back {
+      background-color: mediumslateblue;
+    }
 
   </style>
 </head>
@@ -208,9 +211,15 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
+        'cancel': function() {
+          gam2.menu=[];
+          gam2.menuType=0;
+          ra.clear();
+          gam2.show();
+        },
         'selectMenu': function(to, util) {
           to.push(util);
-          console.log(util)
+          //console.log(util)
           gam2.menu= [];
           gam2.menuType=0;
           ra.clear();
@@ -355,6 +364,20 @@ window.onerror = function (message, url, line, column, error) {
             )
             ;
           }
+          ra.container('m-2 p-3 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+          .container('border-bottom border-gray pb-2 mb-0', 'h6')
+          .addText('Back')
+          .up()
+          .container('media text-muted pt-2')
+          .container('media-body ml-2 mb-0 small lh-125', 'p')
+          .container('d-block text-light', 'strong')
+          .addText('Go to previous grid')
+          .up()
+          .br()
+          .br()
+          .br()
+          .addButton('Cancel', gam2.actions.cancel, 'btn-light button')
+          ;
         }
       }
   };
