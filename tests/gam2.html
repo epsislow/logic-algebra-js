@@ -552,40 +552,52 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('Out: '+ box.resource+' bar')
                .up()
                .addText('In: '+box.resource).br()
-               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue)
+               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue).br()
+               .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
                ;
           } else {
-            ra2.addText('No resource').br().br();
+            ra2.addText('No resource').br().br().br();
           }
-          ra2.up().br().br()
+          ra2.up().br()
             .addButton('Resource', 
            (function(box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(box),
             'btn-warning button');
+          if (gam2.money > box.levelCost) {
+            ra2.up().addButton('Lvl up',
+              (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
+              'btn-success button');
+          }
         
         } else if (box.title==='Crafter') {
           if(box.recepie) {
             ra2.addText('Out: '+ box.recepie+' liquid')
                .up()
                .addText('In: '+box.recepie+' bar').br()
-               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue)
+               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue).br()
+               .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
                ;
           } else {
-            ra2.addText('No recepie').br().br();
+            ra2.addText('No recepie').br().br().br();
           }
-          ra2.up().br().br()
+          ra2.up().br()
             .addButton('Recepie', 
            (function(box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(box),
             'btn-warning button');
         
+          if (gam2.money > box.levelCost) {
+            ra2.up().addButton('Lvl up',
+              (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
+              'btn-success button');
+          }
         } else if (box.title==='Storage') {
           ra2.up().br().br().br().br()
-            .addButton('Level', false, 'btn-success button')
-            .addButton('Clear', false, 'btn-warning button');
+            .addButton('Lvl up', false, 'btn-success button')
+            .addButton('Sell *', false, 'btn-warning button');
             
         } else if (box.title==='Silo') {
           ra2.up().br().br().br().br()
-            .addButton('Level', false, 'btn-success button')
-            .addButton('Clear', false, 'btn-warning button');
+            .addButton('Lvl up', false, 'btn-success button')
+            .addButton('Sell *', false, 'btn-warning button');
           
         } else if (box.title=='Power') {
           var ra3= ra2.up().br()
