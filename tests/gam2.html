@@ -163,8 +163,8 @@ window.onerror = function (message, url, line, column, error) {
         delete this.opt[idd];
         delete this.iddfn[idd];
       },
-      'selectOption': function(idd, i, box) {
-        this.iddfn[idd].apply(gam2, [idd,i,box]);
+      'selectOption': function(idd, opt, box) {
+        this.iddfn[idd].apply(gam2, [idd, opt, box]);
       },
       'boxOpt': function(ra, opt, i, idd, box) {
         
@@ -182,7 +182,7 @@ window.onerror = function (message, url, line, column, error) {
                 .br();
                 
           ra0.addButton('Select',
-                (function(i, j, w) { return function() { gam2.vs.selectOption(i, j, w) }; })(idd, i, box),
+                (function(i, j, w) { return function() { gam2.vs.selectOption(i, j, w) }; })(idd, opt, box),
                 'btn-light button'
             )
       }
@@ -340,10 +340,26 @@ window.onerror = function (message, url, line, column, error) {
               }
               gam2.event.tim['util'+u]=0;
               
+              var maxAmount=0;
+              var boxSrc;
               if(box.title=='Smelter') {
-                box.amount+= box.level;
+                if(!box.resource) {
+                  continue;
+                }
+                //console.log(box.source)
+                //continue;
+                boxSrc = gam2[box.source[0]][box.source[1]];
+                maxAmount = box.level> boxSrc.amount? boxSrc.amount: box.level;
+                boxSrc.amount -= maxAmount;
+                box.amount+= maxAmount;
               } else if (box.title == 'Crafter') {
-                box.amount += box.level;
+                if (!box.resource) {
+                  continue;
+                }
+                boxSrc = gam2[box.source[0]][box.source[1]];
+                maxAmount = box.level > boxSrc.amount ? boxSrc.amount: box.level;
+                boxSrc.amount -= maxAmount;
+                box.amount += maxAmount;
               }
             }
           }
@@ -427,27 +443,30 @@ window.onerror = function (message, url, line, column, error) {
         'smelterResource': function(idd, box) {
         //console.log(box)
         if(!(idd in gam2.vs.opt)) {
-        var options=[];
-        for(var i in gam2.res) {
-        options.push({
-        'text': 'Out: ' + gam2.res[i].name +' bar',
-        'description': 'In: ' + gam2.res[i].name
-        });
-        }
-        gam2.vs.addOptionsFor(idd, options, gam2.actions.smelterResourceSelect);
-        
+          var options=[];
+          for(var i in gam2.res) {
+            options.push({
+              'text': 'Out: ' + gam2.res[i].name +' bar',
+              'description': 'In: ' + gam2.res[i].name,
+              'src':'res',
+              'id': i,
+            });
+          }
+          gam2.vs.addOptionsFor(idd, options, gam2.actions.smelterResourceSelect);
         } else {
-        gam2.vs.clearOptionsFor(idd);
+          gam2.vs.clearOptionsFor(idd);
         }
         ra.clear();
         gam2.show();
           
         },
-        'smelterResourceSelect': function(idd, i, box) {
-        console.log('option:'+ i, box);
+        'smelterResourceSelect': function(idd, opt, box) {
+        //console.log('option:'+ i, box);
+        var i = opt.id;
         box.resource=gam2.res[i].name;
         box.amount=0;
         box.unitValue=gam2.res[i].unitValue*10;
+        box.source = [opt.src, i];
         
         gam2.vs.clearOptionsFor(idd);
         ra.clear();
@@ -487,6 +506,8 @@ window.onerror = function (message, url, line, column, error) {
           box.recepie=gam2.res[i].name;
           box.amount=0;
           box.unitValue=gam2.res[i].unitValue*10;
+          var o= gam2.vs.opt[idd];
+          box.source = o.src;
           
           gam2.vs.clearOptionsFor(idd);
           ra.clear();
