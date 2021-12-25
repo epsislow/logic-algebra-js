@@ -512,47 +512,51 @@ window.onerror = function (message, url, line, column, error) {
         .container('media-body ml-2 mb-0 small lh-125', 'p')
         .container('d-block text-light', 'strong')
         //.addText(' ')
-        .up()
+        //.up()
         
         //.addText(box.description)
         ;
         if(box.title==='Smelter') {
           
           if(box.resource) {
-            ra2.addText('In: '+box.resource).br()
-               .addText('Out: '+ box.resource+' bar').br();
+            ra2.addText('Out: '+ box.resource+' bar')
+               .up()
+               .addText('In: '+box.resource).br()
+               ;
           } else {
             ra2.addText('No resource').br().br();
           }
-          ra2.br().br()
+          ra2.up().br().br()
             .addButton('Resource', 
            (function(box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(box),
             'btn-warning button');
         
         } else if (box.title==='Crafter') {
           if(box.recepie) {
-            ra2.addText('In: '+box.recepie).br()
-               .addText('Out: '+ box.recepie+' bar').br();
+            ra2.addText('Out: '+ box.recepie+' liquid')
+               .up()
+               .addText('In: '+box.recepie+' bar').br()
+               ;
           } else {
             ra2.addText('No recepie').br().br();
           }
-          ra2.br().br()
+          ra2.up().br().br()
             .addButton('Recepie', 
            (function(box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(box),
             'btn-warning button');
         
         } else if (box.title==='Storage') {
-          ra2.br().br().br().br()
+          ra2.up().br().br().br().br()
             .addButton('Level', false, 'btn-success button')
             .addButton('Clear', false, 'btn-warning button');
             
         } else if (box.title==='Silo') {
-          ra2.br().br().br().br()
+          ra2.up().br().br().br().br()
             .addButton('Level', false, 'btn-success button')
             .addButton('Clear', false, 'btn-warning button');
           
         } else if (box.title=='Power') {
-          var ra3= ra2.br()
+          var ra3= ra2.up().br()
             .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
             .br()
             .addText('Generated: ' + box.generated +' / '+ box.level * 5)
