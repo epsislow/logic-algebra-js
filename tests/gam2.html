@@ -130,6 +130,7 @@ window.onerror = function (message, url, line, column, error) {
     'menuType':0,
     'vs': {
       'opt':{},
+      'iddfn': {},
       'dropDown': function(btn, box) {
         //var btn= $(btn);
         //console.log(btn);
@@ -140,21 +141,26 @@ window.onerror = function (message, url, line, column, error) {
           .br()
           .addText('sdff');*/
       },
-      'addOptionsFor': function(idd, opts) {
+      'addOptionsFor': function(idd, opts, fn) {
         this.opt[idd] = opts;
+        this.iddfn[idd] = fn;
       },
       'showOptionsFor': function(idd, box, ra) {
         if(!(idd in this.opt)) {
           return;
         }
         for(var i in this.opt[idd]) {
-          this.boxOpt(ra, this.opt[idd][i], i);
+          this.boxOpt(ra, this.opt[idd][i], i, idd, box);
         }
       },
       'clearOptionsFor': function(idd) {
         delete this.opt[idd];
+        delete this.iddfn[idd];
       },
-      'boxOpt': function(ra, opt, i) {
+      'selectOption': function(idd, i, box) {
+        this.iddfn[idd].apply(gam2, [idd,i,box]);
+      },
+      'boxOpt': function(ra, opt, i, idd, box) {
         
         var ra0= ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed;')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
@@ -168,10 +174,11 @@ window.onerror = function (message, url, line, column, error) {
                 .addText(opt.description)
                 .br()
                 .br();
-          //ra0.addButton('Select',
-          //        (function(to, w) { return function() { gam2.actions.selectOption(i, w) }; })(gam2[gam2.menuType], box),
-          //        'btn-light button'
-         //       )
+                
+          ra0.addButton('Select',
+                (function(i, j, w) { return function() { gam2.vs.selectOption(i, j, w) }; })(idd, i, box),
+                'btn-light button'
+            )
       }
     },
     'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
@@ -289,6 +296,7 @@ window.onerror = function (message, url, line, column, error) {
       this.menuType=name;
     },
       'init': function () {
+    
         this.addRes(this.res,'Galvinum', 10, 5,2);
         this.addRes(this.res,'Soltzis', 25, 10,2);
         this.show();
@@ -386,13 +394,26 @@ window.onerror = function (message, url, line, column, error) {
           //console.log(box)
           //gam2.vs.dropDown(btn, {});
           if(!(idd in gam2.vs.opt)) {
-            gam2.vs.addOptionsFor(idd, [{
-              'text': 'Res1',
-              'description': 'Resource 1'
-            }]);
+            var options=[];
+            for(var i in gam2.res) {
+              options.push({
+                'text': 'In: ' + gam2.res[i].name,
+                'description': 'Out: ' + gam2.res[i].name +' bar'
+              });
+            }
+            gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
+            
           } else {
             gam2.vs.clearOptionsFor(idd);
           }
+          ra.clear();
+          gam2.show();
+        },
+        'crafterRecepieSelect': function(idd, i, box) {
+          console.log('option:'+ i);
+          box.recepie=gam2.res[i].name;
+          
+          gam2.vs.clearOptionsFor(idd);
           ra.clear();
           gam2.show();
         }
@@ -467,7 +488,13 @@ window.onerror = function (message, url, line, column, error) {
             .addButton('Resource', false, 'btn-warning button');
         
         } else if (box.title==='Crafter') {
-          ra2.br().br().br().br()
+          if(box.recepie) {
+            ra2.addText('In: '+box.recepie).br()
+               .addText('Out: '+ box.recepie+' bar').br();
+          } else {
+            ra2.addText('No recepie').br().br();
+          }
+          ra2.br().br()
             .addButton('Recepie', 
            (function(box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(box),
             'btn-warning button');
