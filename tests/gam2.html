@@ -208,6 +208,7 @@ window.onerror = function (message, url, line, column, error) {
         description:  'Craft items',
         resMax: resMax,
         queues: ques,
+        recepie: 0,
         cost:5000,
         powerUsage:15,
         level:1,
@@ -235,6 +236,7 @@ window.onerror = function (message, url, line, column, error) {
         name: name,
         description:  'Smelt items',
         queues: ques,
+        resource:0,
         cost:2500,
         powerUsage:10,
         level:1,
@@ -396,9 +398,36 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
+        'smelterResource': function(idd, box) {
+        //console.log(box)
+        if(!(idd in gam2.vs.opt)) {
+        var options=[];
+        for(var i in gam2.res) {
+        options.push({
+        'text': 'In: ' + gam2.res[i].name,
+        'description': 'Out: ' + gam2.res[i].name +' bar'
+        });
+        }
+        gam2.vs.addOptionsFor(idd, options, gam2.actions.smelterResourceSelect);
+        
+        } else {
+        gam2.vs.clearOptionsFor(idd);
+        }
+        ra.clear();
+        gam2.show();
+          
+        },
+        'smelterResourceSelect': function(idd, i, box) {
+        console.log('option:'+ i);
+        box.resource=gam2.res[i].name;
+        
+        gam2.vs.clearOptionsFor(idd);
+        ra.clear();
+        gam2.show();
+          
+        },
         'crafterRecepie': function(idd, box) {
           //console.log(box)
-          //gam2.vs.dropDown(btn, {});
           if(!(idd in gam2.vs.opt)) {
             var options=[];
             for(var i in gam2.res) {
@@ -488,10 +517,17 @@ window.onerror = function (message, url, line, column, error) {
         //.addText(box.description)
         ;
         if(box.title==='Smelter') {
-          ra2
-            .addText('No resource')
-            .br().br().br().br()
-            .addButton('Resource', false, 'btn-warning button');
+          
+          if(box.resource) {
+            ra2.addText('In: '+box.resource).br()
+               .addText('Out: '+ box.resource+' bar').br();
+          } else {
+            ra2.addText('No resource').br().br();
+          }
+          ra2.br().br()
+            .addButton('Resource', 
+           (function(box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(box),
+            'btn-warning button');
         
         } else if (box.title==='Crafter') {
           if(box.recepie) {
