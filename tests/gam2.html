@@ -303,8 +303,8 @@ window.onerror = function (message, url, line, column, error) {
         this.addAsmb(this.menu, 'Assambler 1');
         
       } else if(name==='res') {
-        this.addRes(this.menu, this.rd.getResName(), 0, 7);
-        this.addRes(this.menu, this.rd.getResName(), 0, 15);
+        this.addRes(this.menu, this.rd.getResName(), 0, 2+4*gam2.res.length);
+        this.addRes(this.menu, this.rd.getResName(), 0, 2+4*(gam2.res.length+1));
         
       }
       this.menuType=name;
