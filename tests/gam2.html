@@ -444,7 +444,7 @@ window.onerror = function (message, url, line, column, error) {
           
         },
         'smelterResourceSelect': function(idd, i, box) {
-        console.log('option:'+ i);
+        console.log('option:'+ i, box);
         box.resource=gam2.res[i].name;
         box.amount=0;
         box.unitValue=gam2.res[i].unitValue*10;
@@ -560,7 +560,7 @@ window.onerror = function (message, url, line, column, error) {
           }
           ra2.up().br()
             .addButton('Resource', 
-           (function(box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(box),
+           (function(m, box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(m,box),
             'btn-warning button');
           if (gam2.money > box.levelCost) {
             ra2.up().addButton('Lvl up',
@@ -581,7 +581,7 @@ window.onerror = function (message, url, line, column, error) {
           }
           ra2.up().br()
             .addButton('Recepie', 
-           (function(box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(box),
+           (function(m,box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(m, box),
             'btn-warning button');
         
           if (gam2.money > box.levelCost) {
