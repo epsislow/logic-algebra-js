@@ -156,9 +156,9 @@ window.onerror = function (message, url, line, column, error) {
       },
       'boxOpt': function(ra, opt, i) {
         
-        ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed;')
+        var ra0= ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed;')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                .addText('Option '+ (i+1))
+                .addText('Option '+ (parseInt(i)+1))
                 .up()
                 .container('media text-muted pt-2')
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
@@ -168,6 +168,10 @@ window.onerror = function (message, url, line, column, error) {
                 .addText(opt.description)
                 .br()
                 .br();
+          //ra0.addButton('Select',
+          //        (function(to, w) { return function() { gam2.actions.selectOption(i, w) }; })(gam2[gam2.menuType], box),
+          //        'btn-light button'
+         //       )
       }
     },
     'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
