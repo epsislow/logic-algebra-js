@@ -131,7 +131,7 @@ window.onerror = function (message, url, line, column, error) {
     'rd': {
       'getResName': function() {
         var suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-        return rd.randomName(rd.rand(3,8),0,suf);
+        return rd.randomName(rd.rand(2,4),0,suf);
       },
     },
     'vs': {
@@ -570,9 +570,6 @@ window.onerror = function (message, url, line, column, error) {
               ra3.addButton('Lvl up',
               (function(box) { return function() { gam2.actions.levelUp(box) };})(box),
              'btn-success button');
-           //  } else {
-             //  ra3.container('text-danger d-block','strong')
-            //   .addText('$'+ box.levelCost )
              }
           } else {
              ra3
