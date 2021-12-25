@@ -130,8 +130,8 @@ window.onerror = function (message, url, line, column, error) {
     'menuType':0,
     'rd': {
       'getResName': function() {
-        var suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-        return rd.randomName(rd.rand(2,4),0,suf);
+        var suf = rd.randomBytes(0,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
+        return rd.randomName(rd.rand(3,4),0,suf);
       },
     },
     'vs': {
@@ -209,6 +209,9 @@ window.onerror = function (message, url, line, column, error) {
         resMax: resMax,
         queues: ques,
         recepie: 0,
+        amount:0,
+        unitValue:0,
+        everySec:3,
         cost:5000,
         powerUsage:15,
         level:1,
@@ -237,6 +240,9 @@ window.onerror = function (message, url, line, column, error) {
         description:  'Smelt items',
         queues: ques,
         resource:0,
+        amount: 0,
+        unitValue:0,
+        everySec:2,
         cost:2500,
         powerUsage:10,
         level:1,
@@ -314,11 +320,31 @@ window.onerror = function (message, url, line, column, error) {
         setInterval(this.event.everySec, 1000);
       },
       'event': {
+        'tim': {},
         'everySec': function() {
           for(let r in gam2.res) {
             var box = gam2.res[r];
             if(box) {
               gam2.actions.mine(r,0);
+            }
+          }
+          for(let u in gam2.util) {
+            var box = gam2.util[u];
+            if(box && box.everySec) {
+              if(!('util'+u in gam2.event.tim)) {
+                gam2.event.tim['util'+u]=0;
+              }
+              gam2.event.tim['util'+u]++;
+              if(gam2.event.tim['util'+u] !== box.everySec) {
+                continue;
+              }
+              gam2.event.tim['util'+u]=0;
+              
+              if(box.title=='Smelter') {
+                box.amount+= box.level;
+              } else if (box.title == 'Crafter') {
+                box.amount += box.level;
+              }
             }
           }
           gam2.actions.show();
@@ -420,6 +446,8 @@ window.onerror = function (message, url, line, column, error) {
         'smelterResourceSelect': function(idd, i, box) {
         console.log('option:'+ i);
         box.resource=gam2.res[i].name;
+        box.amount=0;
+        box.unitValue=gam2.res[i].unitValue*10;
         
         gam2.vs.clearOptionsFor(idd);
         ra.clear();
@@ -447,6 +475,8 @@ window.onerror = function (message, url, line, column, error) {
         'crafterRecepieSelect': function(idd, i, box) {
           console.log('option:'+ i);
           box.recepie=gam2.res[i].name;
+          box.amount=0;
+          box.unitValue=gam2.res[i].unitValue*10;
           
           gam2.vs.clearOptionsFor(idd);
           ra.clear();
@@ -522,6 +552,7 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('Out: '+ box.resource+' bar')
                .up()
                .addText('In: '+box.resource).br()
+               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue)
                ;
           } else {
             ra2.addText('No resource').br().br();
@@ -536,6 +567,7 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('Out: '+ box.recepie+' liquid')
                .up()
                .addText('In: '+box.recepie+' bar').br()
+               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue)
                ;
           } else {
             ra2.addText('No recepie').br().br();
