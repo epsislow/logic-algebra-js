@@ -353,11 +353,11 @@ window.onerror = function (message, url, line, column, error) {
                 boxSrc.amount -= maxAmount;
                 box.amount+= maxAmount;
               } else if (box.title == 'Crafter') {
-                if (!box.resource) {
+                if (!box.recepie) {
                   continue;
                 }
                 boxSrc = gam2[box.source[0]][box.source[1]];
-                maxAmount = box.level > boxSrc.amount ? boxSrc.amount: box.level;
+                maxAmount = box.level> boxSrc.amount ? boxSrc.amount: box.level;
                 boxSrc.amount -= maxAmount;
                 box.amount += maxAmount;
               }
@@ -490,7 +490,9 @@ window.onerror = function (message, url, line, column, error) {
             for(var i in gam2.res) {
               options.push({
                 'text': 'Out: ' + gam2.res[i].name + ' liquid',
-                'description': 'In: ' + gam2.res[i].name +' bar'
+                'description': 'In: ' + gam2.res[i].name +' bar',
+                'src':'res',
+                'id': i,
               });
             }
             gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
@@ -501,13 +503,13 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
-        'crafterRecepieSelect': function(idd, i, box) {
+        'crafterRecepieSelect': function(idd, opt, box) {
+          var i = opt.id;
           console.log('option:'+ i);
           box.recepie=gam2.res[i].name;
           box.amount=0;
           box.unitValue=gam2.res[i].unitValue*10;
-          var o= gam2.vs.opt[idd];
-          box.source = o.src;
+          box.source = [opt.src, i];
           
           gam2.vs.clearOptionsFor(idd);
           ra.clear();
