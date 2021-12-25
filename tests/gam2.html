@@ -454,6 +454,16 @@ window.onerror = function (message, url, line, column, error) {
         gam2.show();
           
         },
+        'crafterSell': function(m, box) {
+          var amount = box.amount;
+          gam2.money += box.unitValue * amount;
+          box.amount=0;
+          //console.log('sell' + resId + ' ' +  amount);
+          if (1) {
+            ra.clear();
+            gam2.show();
+          }
+        },
         'crafterRecepie': function(idd, box) {
           //console.log(box)
           if(!(idd in gam2.vs.opt)) {
@@ -580,9 +590,15 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('No recepie').br().br().br();
           }
           ra2.up().br()
-            .addButton('Recepie', 
+            .addButton('Select', 
            (function(m,box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(m, box),
             'btn-warning button');
+            
+          if (box.recepie) {
+            ra2.up().addButton('Sell *', 
+            (function(m, box) { return function() {gam2.actions.crafterSell(m, box)};})(m, box),
+            'btn-danger button')
+          }
         
           if (gam2.money > box.levelCost) {
             ra2.up().addButton('Lvl up',
