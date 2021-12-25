@@ -404,8 +404,8 @@ window.onerror = function (message, url, line, column, error) {
         var options=[];
         for(var i in gam2.res) {
         options.push({
-        'text': 'In: ' + gam2.res[i].name,
-        'description': 'Out: ' + gam2.res[i].name +' bar'
+        'text': 'Out: ' + gam2.res[i].name +' bar',
+        'description': 'In: ' + gam2.res[i].name
         });
         }
         gam2.vs.addOptionsFor(idd, options, gam2.actions.smelterResourceSelect);
@@ -432,8 +432,8 @@ window.onerror = function (message, url, line, column, error) {
             var options=[];
             for(var i in gam2.res) {
               options.push({
-                'text': 'In: ' + gam2.res[i].name,
-                'description': 'Out: ' + gam2.res[i].name +' bar'
+                'text': 'Out: ' + gam2.res[i].name + ' liquid',
+                'description': 'In: ' + gam2.res[i].name +' bar'
               });
             }
             gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
