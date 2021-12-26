@@ -440,6 +440,16 @@ window.onerror = function (message, url, line, column, error) {
           ra.clear();
           gam2.show();
         },
+        'smelterSell': function(m, box) {
+          var amount = box.amount;
+          gam2.money += box.unitValue * amount;
+          box.amount=0;
+          //console.log('sell' + resId + ' ' +  amount);
+          if (1) {
+            ra.clear();
+            gam2.show();
+          }
+        },
         'smelterResource': function(idd, box) {
         //console.log(box)
         if(!(idd in gam2.vs.opt)) {
@@ -592,9 +602,16 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('No resource').br().br().br();
           }
           ra2.up().br()
-            .addButton('Resource', 
+            .addButton('Select', 
            (function(m, box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(m,box),
             'btn-warning button');
+            
+          if (box.resource) {
+            ra2.up().addButton('Sell *', 
+            (function(m, box) { return function() {gam2.actions.smelterSell(m, box)};})(m, box),
+            'btn-danger button')
+          }
+
           if (gam2.money > box.levelCost) {
             ra2.up().addButton('Lvl up',
               (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
@@ -617,7 +634,7 @@ window.onerror = function (message, url, line, column, error) {
            (function(m,box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(m, box),
             'btn-warning button');
             
-          if (box.recepie) {
+         if (box.recepie) {
             ra2.up().addButton('Sell *', 
             (function(m, box) { return function() {gam2.actions.crafterSell(m, box)};})(m, box),
             'btn-danger button')
