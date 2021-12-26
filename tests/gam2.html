@@ -280,18 +280,22 @@ window.onerror = function (message, url, line, column, error) {
         color:'silo',
       });
     },
-    'addStorage': function (to, name, slots=5, max=20) {
+    'addStorage': function (to, name, slots=5, max=100) {
       to.push({
         title: 'Storage',
         name: name,
         description:  'Storage for items',
-        slots: new Array(slots),
-        max: max,
+        slot: {},
+        slotsMax: slots,
+        cargo:0,
+        cargoMax: max,
         level: 1,
         cost: 500,
         powerUsage:5,
         levelCost: 250,
         color:'storage',
+        page:1,
+        pageMax: Math.ceil(slots/3),
       });
     },
     'addMenu': function(name) {
@@ -530,6 +534,14 @@ window.onerror = function (message, url, line, column, error) {
           gam2.vs.clearOptionsFor(idd);
           ra.clear();
           gam2.show();
+        },
+        'storagePage': function(box) {
+          box.page++;
+          if(box.page > box.pageMax) {
+          box.page = 1;
+          }
+          ra.clear();
+          gam2.show();
         }
       },
       'show': function () {
@@ -652,9 +664,37 @@ window.onerror = function (message, url, line, column, error) {
               'btn-success button');
           }
         } else if (box.title==='Storage') {
-          ra2.up().br().br().br().br()
-            .addButton('Lvl up', false, 'btn-success button')
-            .addButton('Sell *', false, 'btn-warning button');
+          var ra3 = ra2
+            .addText('Page: '+ box.page +' / '+ box.pageMax)
+            .up();
+            var s=0;
+            var perPage= 3;
+            var pag=1;
+            for(var i in box.slot) {
+              s++;
+              if(pag == box.page) {
+                ra3.addText('s'+i+': '+ box.slot[i].amount + ' $'+(box.slot[i].amount * box.slot[i].unitValue))
+                 .br();
+              }
+              pag= Math.floor(s/perPage)+1;
+            }
+            if(s<box.slotsMax) {
+              for(var i=s;i<box.slotsMax;i++) {
+                s++;
+                if(pag == box.page) {
+                  ra3.addText('s'+i+': None')
+                  .br();
+                }
+                pag= Math.floor(s/perPage)+1;
+              }
+            }
+            
+            ra3
+            .addButton('Page', 
+              (function(box) { return function() { gam2.actions.storagePage(box) };})(box),
+              'btn-light button')
+            .addButton('Sell X', false, 'btn-warning button')
+            .addButton('Lvl up', false, 'btn-success button');
             
         } else if (box.title==='Silo') {
           ra2.up().br().br().br().br()
