@@ -364,7 +364,13 @@ window.onerror = function (message, url, line, column, error) {
                 boxSrc = gam2[box.source[0]][box.source[1]];
                 maxAmount = box.level> boxSrc.amount ? boxSrc.amount: box.level;
                 boxSrc.amount -= maxAmount;
-                box.amount += maxAmount;
+                if(box.dest) {
+                  var bbox= gam2[box.dest[0]][box.dest[1]];
+                  bbox.slot[box.recepie].amount += maxAmount;
+                  
+                } else {
+                  box.amount += maxAmount;
+                }
               }
             }
           }
@@ -718,7 +724,7 @@ window.onerror = function (message, url, line, column, error) {
               s++;
               if(pag == box.page) {
                 b++;
-                ra3.addText('s'+i+': '+ box.slot[i].amount + ' $'+(box.slot[i].amount * box.slot[i].unitValue))
+                ra3.addText(i+': '+ box.slot[i].amount + ' $'+(box.slot[i].amount * box.slot[i].unitValue))
                  .br();
               }
               pag= Math.floor(s/perPage)+1;
