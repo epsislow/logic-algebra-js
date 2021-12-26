@@ -128,6 +128,7 @@ window.onerror = function (message, url, line, column, error) {
     'util': [],
     'menu':[],
     'menuType':0,
+    'item':{},
     'rd': {
       'getResName': function() {
         var suf = rd.randomBytes(0,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
@@ -497,13 +498,18 @@ window.onerror = function (message, url, line, column, error) {
           //console.log(box)
           if(!(idd in gam2.vs.opt)) {
             var options=[];
-            for(var i in gam2.res) {
+            for(var i in gam2.util) {
+              var b= gam2.util[i];
+              
+              if(b.title=='Smelter') {
+                
               options.push({
-                'text': 'Out: ' + gam2.res[i].name + ' liquid',
-                'description': 'In: ' + gam2.res[i].name +' bar',
-                'src':'res',
+                'text': 'Out: ' + b.resource + ' liquid',
+                'description': 'In: ' + b.name +' bar',
+                'src':'util',
                 'id': i,
               });
+              }
             }
             gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
             
@@ -518,7 +524,7 @@ window.onerror = function (message, url, line, column, error) {
           console.log('option:'+ i);
           box.recepie=gam2.res[i].name;
           box.amount=0;
-          box.unitValue=gam2.res[i].unitValue*10;
+          box.unitValue=gam2[opt.src][i].unitValue*10;
           box.source = [opt.src, i];
           
           gam2.vs.clearOptionsFor(idd);
