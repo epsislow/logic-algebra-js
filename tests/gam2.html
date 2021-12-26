@@ -120,8 +120,8 @@ window.onerror = function (message, url, line, column, error) {
   });
 
   window.gam2 = {
-    'money': 10000,
-    'power': 50,
+    'money': 100000,
+    'power': 500,
     'powerUsage':30,
     'res': [],
     'building': [],
@@ -500,21 +500,52 @@ window.onerror = function (message, url, line, column, error) {
         },
         'crafterRecepie': function(idd, box) {
           //console.log(box)
+          var outOpts=[];
           if(!(idd in gam2.vs.opt)) {
             var options=[];
             for(var i in gam2.util) {
               var b= gam2.util[i];
               
-              if(b.title=='Smelter') {
-                
+              if(b.title==='Smelter') {
+                if(!b.resource) {
+                  continue;
+                }
               options.push({
                 'text': 'Out: ' + b.resource + ' liquid',
                 'description': 'In: ' + b.name +' bar',
                 'src':'util',
                 'id': i,
               });
+              } else if(b.title==='Crafter' && idd!=='util'+i) {
+                if(!b.recepie) {
+                  continue;
+                }
+                console.log('b'+'util'+i+' '+idd);
+                options.push({
+                  'text': 'Out: '+ b.recepie + ' barrel',
+                  'description': 'In: '+ b.recepie + 'x2',
+                  'src': 'util',
+                  'id': i,
+                });
+              } else if(b.title==='Storage') {
+                //continue;
+                if(!box.recepie) {
+                  continue;
+                }
+                if(b.slotsMax > Object.keys(b.slot).length) {
+                  options.push({
+                    'text': 'To: '+ b.title +'('+b.level+')',
+                    'description':'Store to storage',
+                    'dest': 'util',
+                    'id': i,
+                    'item': box.recepie,
+                    'unitValue': box.unitValue,
+                  });
+                  console.log('testt');
+                }
               }
             }
+            //options.concat(outOpts);
             gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
             
           } else {
@@ -526,10 +557,22 @@ window.onerror = function (message, url, line, column, error) {
         'crafterRecepieSelect': function(idd, opt, box) {
           var i = opt.id;
           console.log('option:'+ i);
+          if(opt.dest) {
+            box.dest = [opt.dest, i];
+            var bbox= gam2[opt.dest][i];
+            if(!(opt.item in bbox.slot)) {
+            bbox.slot[opt.item]={
+              'amount':0,
+              'unitValue': opt.unitValue,
+            };
+            }
+            //gam2.actions.store(opt.item)
+          } else {
           box.recepie=gam2.res[i].name;
           box.amount=0;
           box.unitValue=gam2[opt.src][i].unitValue*10;
           box.source = [opt.src, i];
+          }
           
           gam2.vs.clearOptionsFor(idd);
           ra.clear();
