@@ -670,9 +670,11 @@ window.onerror = function (message, url, line, column, error) {
             var s=0;
             var perPage= 3;
             var pag=1;
+            var b=0;
             for(var i in box.slot) {
               s++;
               if(pag == box.page) {
+                b++;
                 ra3.addText('s'+i+': '+ box.slot[i].amount + ' $'+(box.slot[i].amount * box.slot[i].unitValue))
                  .br();
               }
@@ -682,10 +684,16 @@ window.onerror = function (message, url, line, column, error) {
               for(var i=s;i<box.slotsMax;i++) {
                 s++;
                 if(pag == box.page) {
+                  b++;
                   ra3.addText('s'+i+': None')
                   .br();
                 }
                 pag= Math.floor(s/perPage)+1;
+              }
+            }
+            if(b < 3) {
+              for(var i=b;b < 3;b++){
+                ra3.br();
               }
             }
             
