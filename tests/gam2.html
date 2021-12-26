@@ -55,7 +55,7 @@
       background-color: #553333;
     }
     .text-white {
-      color:#fff;
+      color:#bbb !important;
     }
 
   </style>
@@ -123,7 +123,7 @@ window.onerror = function (message, url, line, column, error) {
   });
 
   window.gam2 = {
-    'money': 100000,
+    'money': 90000,
     'power': 500,
     'powerUsage':30,
     'res': [],
@@ -131,7 +131,59 @@ window.onerror = function (message, url, line, column, error) {
     'util': [],
     'menu':[],
     'menuType':0,
-    'item':{},
+    'hum': {
+      'val': function(val) {
+        if(val<= 9000) {
+          return val;
+        }
+        var t= ['','k','m','b','t','G','T'];//,'P','V','R','X','Z'];
+        var i=0;
+        var v=val;
+        while (v>9000){
+          v=Math.round(v/1000);
+          i++;
+        };
+        return v+t[i];
+      }
+    },
+    'slot':{
+      'add': function() {
+        var pub={
+          'item':null,
+          'amount':0,
+          'addItem': function(item, amount, unitValue) {
+        
+          },
+          'addAmount': function(amount) {
+        
+          },
+          'drop': function() {
+        
+          },
+          'next': null,
+          'prev':null,
+          'first': this,
+          'last': this,
+          'chain': function(slot) {
+            this.findLastSlot().next =slot;
+            this.last=slot;
+          },
+          'findLastSlot': function() {
+            if(this.next) {
+              return this.next.findLastSlot();
+            }
+            return this;
+          },
+          'findItemSlot': function(item) {
+            if(this.item !== item) {
+              return this.next.findItemSlot(item);
+            }
+            return this;
+          }
+        };
+        return pub;
+      },
+    },
     'rd': {
       'getResName': function() {
         var suf = rd.randomBytes(0,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
@@ -607,7 +659,7 @@ window.onerror = function (message, url, line, column, error) {
                 .container('d-block text-light', 'strong')
                 .addText('Money')
                 .up()
-                .addText('Amount: $' + this.money)
+                .addText('Amount: $' + this.hum.val(this.money))
                 .br()
                 .addText('Power: '+ this.powerUsage +' / '+ this.power)
                 .br();
@@ -623,9 +675,9 @@ window.onerror = function (message, url, line, column, error) {
                   .container('d-block text-light', 'strong')
                   .addText(box.name)
                   .up()
-                  .addText('Amount: ' + box.amount+' $'+  box.unitValue * box.amount)
+                  .addText('Amount: ' + box.amount+' $'+gam2.hum.val(box.unitValue * box.amount))
                   .br()
-                  .addText('Level: ' + box.level + ' ($'+box.levelCost+')')
+                  .addText('Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')')
                   .br()
                   .br();
 
@@ -665,8 +717,8 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('Out: '+ box.resource+' bar')
                .up()
                .addText('In: '+box.resource).br()
-               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue).br()
-               .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
+               .addText('Amount: '+ box.amount+' $'+ gam2.hum.val(box.amount* box.unitValue)).br()
+               .addText('Level: '+ box.level+ ' (Next: $'+gam2.hum.val(box.levelCost)+')')
                ;
           } else {
             ra2.addText('No resource').br().br().br();
@@ -693,8 +745,8 @@ window.onerror = function (message, url, line, column, error) {
             ra2.addText('Out: '+ box.recepie+' liquid')
                .up()
                .addText('In: '+box.recepie+' bar').br()
-               .addText('Amount: '+ box.amount+' $'+ box.amount* box.unitValue).br()
-               .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
+               .addText('Amount: '+ box.amount+' $'+ gam2.hum.val(box.amount* box.unitValue)).br()
+               .addText('Level: '+ box.level+ ' (Next: $'+gam2.hum.val(box.levelCost)+')')
                ;
           } else {
             ra2.addText('No recepie').br().br().br();
@@ -727,7 +779,7 @@ window.onerror = function (message, url, line, column, error) {
               s++;
               if(pag == box.page) {
                 b++;
-                ra3.addText(i+': '+ box.slot[i].amount + ' $'+(box.slot[i].amount * box.slot[i].unitValue))
+                ra3.addText(i+': '+ box.slot[i].amount + ' $'+gam2.hum.val(box.slot[i].amount * box.slot[i].unitValue))
                  .br();
               }
               pag= Math.floor(s/perPage)+1;
@@ -763,7 +815,7 @@ window.onerror = function (message, url, line, column, error) {
           
         } else if (box.title=='Power') {
           var ra3= ra2.up().br()
-            .addText('Level: '+ box.level+ ' (Next: $'+box.levelCost+')')
+            .addText('Level: '+ box.level+ ' (Next: $'+gam2.hum.val(box.levelCost)+')')
             .br()
             .addText('Generated: ' + box.generated +' / '+ box.level * 5)
             .br().br();
