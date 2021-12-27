@@ -133,7 +133,8 @@ window.onerror = function (message, url, line, column, error) {
     'menuType':0,
     'itemStates': {
       'x': [{'bar':2},{'gas':4}],
-      'bar':[{'liquid':2},{'stone':5}],
+      'bar':[{'liquid':2},{'stone':5},{'plate':2},{'wire':10}],
+      'plate': [{'gear':3}],
       'liquid': {'barrel': 50},
       'gas': {'tank':1000},
       'stone':{'dense':500},
@@ -141,6 +142,8 @@ window.onerror = function (message, url, line, column, error) {
       'barrel':[{'tank':200},{'fuel': 10}],
     },
     'itemCrafts':{
+      'case':{'plate':10,'wire':2},
+      'lcase': {'plate':20,'liquid':5,'wire':10},
       'dym': {'dense': 5, 'tank':5},
       'vry': {'bar':100, 'barrel':50},
       'ccr': {'dym':5},
@@ -151,6 +154,7 @@ window.onerror = function (message, url, line, column, error) {
     'itemRecepies': {
       'bell': [{'bar':2},{'stone':2}],
       'trix':[{'barrel':2},{'gas':10},{'liquid':5}],
+      
     },
     'hum': {
       'val': function(val) {
