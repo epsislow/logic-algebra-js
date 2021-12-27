@@ -57,7 +57,17 @@
     .text-white {
       color:#bbb !important;
     }
-
+    
+    .bg-card {
+       float:left;
+       width: 170px;
+       height: 160px;
+       border: 1px solid #fff;
+    }
+    
+    .bg-dashed {
+      border-style: dotted;
+    }
   </style>
 </head>
 
@@ -201,9 +211,9 @@ window.onerror = function (message, url, line, column, error) {
             }
             return this;
           },
-          'findItemSlot': function(item) {
-            if(this.item !== item) {
-              return this.next.findItemSlot(item);
+          'findItemSlot': function(item, form) {
+            if(this.item !== item && this.form !== form) {
+              return this.next.findItemSlot(item, form);
             }
             return this;
           }
@@ -675,50 +685,60 @@ window.onerror = function (message, url, line, column, error) {
           gam2.show();
         }
       },
-      'show': function () {
-        var box;
-        ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff')
-                .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                .addText('$')
-                .up()
-                .container('media text-white pt-2')
-                .container('media-body ml-2 mb-0 small lh-125', 'p')
-                .container('d-block text-light', 'strong')
-                .addText('Money')
-                .up()
-                .addText('Amount: $' + this.hum.val(this.money))
-                .br()
-                .addText('Power: '+ this.powerUsage +' / '+ this.power)
-                .br();
-
-        for(var r in this.res) {
-          box = this.res[r];
-          var ra2 = ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
+      'showCard': function(color='black', dashed=0, title='$', head='Money', texts= [], buttons= []) {
+          var ra3= ra.container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '')
                   .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                  .addText(box.title+' '+box.level)
+                  .addText(title)
                   .up()
                   .container('media text-white pt-2')
                   .container('media-body ml-2 mb-0 small lh-125', 'p')
                   .container('d-block text-light', 'strong')
-                  .addText(box.name)
-                  .up()
-                  .addText('Amount: ' + box.amount+' $'+gam2.hum.val(box.unitValue * box.amount))
-                  .br()
-                  .addText('Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')')
-                  .br()
-                  .br();
+                  .addText(head)
+                  .up();
+          while (texts.length < 3) {
+            texts.push(0);
+          }
+          for(var t in texts) {
+            if(texts[t]) {
+              ra3.addText(texts[t]);
+            }
+            ra3.br();
+          }
+          
+          for(var b in buttons) {
+            var bt= buttons[b];
+            ra3.addButton(bt[0], bt[1], 'button '+ bt[2]);
+          }
+          
+      },
+      'show': function () {
+        var box;
+        this.showCard('black', 0, '$', 'Money', [
+          'Amount: $' + this.hum.val(this.money),
+          'Power: '+ this.powerUsage +' / '+ this.power
+          ]);
+          
 
-
+        for(var r in this.res) {
+          box = this.res[r];
+          var btns = [];
           if (box.title === 'Resource') {
-            ra2 //.addButton('Mine', (function(opt) { return function() { gam2.actions.mine(opt) };})(r), 'btn-success button')
-                .addButton('Sell 1', (function(opt) { return function() { gam2.actions.sell(opt,1) };})(r), 'btn-warning button')
-                .addButton('Sell *', (function(opt) { return function() { gam2.actions.sell(opt) };})(r), 'btn-danger button');
-            if(gam2.money > box.levelCost) {
-              ra2.addButton('Lvl up',
-            (function(box) { return function() { gam2.actions.levelUp(box) };})(box),
-            'btn-success button');
+            btns.push(['Sell 1', (function(opt) { return function() { gam2.actions.sell(opt, 1) }; })(r), 'btn-warning button']);
+            btns.push(['Sell *', (function(opt) { return function() { gam2.actions.sell(opt) }; })(r), 'btn-danger button']);
+            if (gam2.money > box.levelCost) {
+              btns.push(['Lvl up',
+                (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
+                'btn-success button']);
             }
           }
+          this.showCard(
+            box.color,0,
+            box.title+' '+box.level, box.name,
+            [
+              'Amount: ' + box.amount+' $'+gam2.hum.val(box.unitValue * box.amount),
+              'Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')',
+            ], btns
+          );
         }
         
         if(this.menu.length==0) {
