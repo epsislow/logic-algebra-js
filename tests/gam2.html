@@ -132,17 +132,18 @@ window.onerror = function (message, url, line, column, error) {
     'menu':[],
     'menuType':0,
     'itemStates': {
-      'x': [{'bar':2},{'gas':4}],
-      'bar':[{'liquid':2},{'stone':5},{'plate':2},{'wire':10}],
-      'plate': [{'gear':3}],
+      'pure': [{'bar':2},{'gas':4}],
+      'bar':[{'liquid':2},{'cube':5},{'plate':2},{'wire':10}, {'rail': 100}],
+      'plate': [{'gear':1}, {'case':10}, {'pipe':2},{'tube': 20}, {'lgear': 10}, {'bolt':1}],
+      'wire': [{'bobbin': 100}, {'spring': 5}, {'lbobbin': 1000}, {'ring': 2}, {'lring': 20}],
+      'bobbin': [{'lbobbin': 10}],
       'liquid': {'barrel': 50},
       'gas': {'tank':1000},
-      'stone':{'dense':500},
+      'cube':{'dense':500},
       'dense':{'max':20},
-      'barrel':[{'tank':200},{'fuel': 10}],
+      'barrel':[{'ltank':100},{'fuel': 10}],
     },
     'itemCrafts':{
-      'case':{'plate':10,'wire':2},
       'lcase': {'plate':20,'liquid':5,'wire':10},
       'dym': {'dense': 5, 'tank':5},
       'vry': {'bar':100, 'barrel':50},
@@ -152,7 +153,7 @@ window.onerror = function (message, url, line, column, error) {
       'spr': {'tank':2000,'dym':50,'dense':2000},
     },
     'itemRecepies': {
-      'bell': [{'bar':2},{'stone':2}],
+      'bell': [{'bar':2},{'cube':2}],
       'trix':[{'barrel':2},{'gas':10},{'liquid':5}],
       
     },
@@ -175,8 +176,9 @@ window.onerror = function (message, url, line, column, error) {
       'add': function() {
         var pub={
           'item':null,
+          'form': null,
           'amount':0,
-          'addItem': function(item, amount, unitValue) {
+          'addItem': function(item, form,  amount, unitValue) {
         
           },
           'addAmount': function(amount) {
