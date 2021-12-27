@@ -321,7 +321,7 @@ window.onerror = function (message, url, line, column, error) {
           level: 1,
           amount: amount,
           unitValue: unitValue,
-          slot:gam2.slot.add().addItem(name, form, amount, unitValue),
+          slot: gam2.slot.add().addItem(name, form, amount, unitValue),
           cost:1500,
           powerUsage:15,
           levelCost: 500,
@@ -455,9 +455,7 @@ window.onerror = function (message, url, line, column, error) {
         'everySec': function() {
           for(let r in gam2.res) {
             var box = gam2.res[r];
-            if(box) {
-              gam2.actions.mine(r,0);
-            }
+            gam2.actions.mine(box);
           }
           for(let u in gam2.util) {
             var box = gam2.util[u];
@@ -508,15 +506,8 @@ window.onerror = function (message, url, line, column, error) {
             ra.clear();
             gam2.show();
         },
-        'mine': function (resId, show=1) {
-          //console.log('mine' + resId);
-          //setTimeout(function () {
-          gam2.res[resId].amount+= gam2.res[resId].level;
-          if(show) {
-            ra.clear();
-            gam2.show();
-          }
-          //}, 1000);
+        'mine': function (box) {
+          box.slot.add(box.level);
         },
         'sell': function (resId, amount = -1, show=1) {
           amount = amount<0? gam2.res[resId].amount: amount;
