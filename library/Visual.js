@@ -291,7 +291,7 @@ window.vs = (function () {
         classes = 'btn-info';
       }
       classes = 'btn btn-sm '+classes;
-      if(href == false) {
+      if(href === false) {
           a.attr('href', 'javascript:void(0)');
       } else if(typeof(href) === 'function') {
           a.click(href);

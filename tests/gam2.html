@@ -150,7 +150,7 @@ window.onerror = function (message, url, line, column, error) {
     },
     'itemRecepies': {
       'bell': [{'bar':2},{'stone':2}],
-      'trix':[{'barrel':2,{'gas':10},{'liquid':5}}],
+      'trix':[{'barrel':2},{'gas':10},{'liquid':5}],
     },
     'hum': {
       'val': function(val) {
@@ -245,7 +245,7 @@ window.onerror = function (message, url, line, column, error) {
       },
       'boxOpt': function(ra, opt, i, idd, box) {
         
-        var ra0= ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed;')
+        var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('Option '+ (parseInt(i)+1))
                 .up()
@@ -671,7 +671,7 @@ window.onerror = function (message, url, line, column, error) {
       },
       'show': function () {
         var box;
-        ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff')
+        ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('$')
                 .up()
@@ -687,7 +687,7 @@ window.onerror = function (message, url, line, column, error) {
 
         for(var r in this.res) {
           box = this.res[r];
-          var ra2 = ra.container('m-2 p-3 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
+          var ra2 = ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px')
                   .container('border-bottom border-gray pb-2 mb-0', 'h6')
                   .addText(box.title+' '+box.level)
                   .up()
@@ -720,7 +720,7 @@ window.onerror = function (message, url, line, column, error) {
         
         for(var m in this.util) {
         box= this.util[m];
-        let ra2= ra.container('m-2 p-3 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
+        let ra2= ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
         .container('border-bottom border-gray pb-2 mb-0', 'h6')
         .addText(box.title+ ' '+box.level)
         .up()
@@ -861,7 +861,7 @@ window.onerror = function (message, url, line, column, error) {
          this.vs.showOptionsFor('util'+m, box, ra);
         }
         if(this.menu.length==0) {
-                ra.container('m-2 p-3 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+                ra.container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('+1 Resource')
                 .up()
@@ -876,7 +876,7 @@ window.onerror = function (message, url, line, column, error) {
                 .addButton('Search', gam2.actions.search, 'btn-light button')
                 ;
 
-          ra.container('m-2 p-3 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+          ra.container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
           .container('border-bottom border-gray pb-2 mb-0', 'h6')
           .addText('+1 Utility')
           .up()
@@ -894,7 +894,7 @@ window.onerror = function (message, url, line, column, error) {
           var powerLeft = gam2.power - gam2.powerUsage;
           for(var m in this.menu) {
             box= this.menu[m];
-            var ra0= ra.container('m-2 p-3 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+            var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
             .container('border-bottom border-gray pb-2 mb-0', 'h6')
             .addText(box.title)
             .up()
@@ -926,7 +926,7 @@ window.onerror = function (message, url, line, column, error) {
             ;
             }
           }
-          ra.container('m-2 p-3 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed')
+          ra.container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
           .container('border-bottom border-gray pb-2 mb-0', 'h6')
           .addText('Back')
           .up()
