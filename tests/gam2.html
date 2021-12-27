@@ -184,38 +184,71 @@ window.onerror = function (message, url, line, column, error) {
     },
     'slot':{
       'add': function() {
-        var pub={
+        var pub={};
+        pub={
           'item':null,
           'form': null,
           'amount':0,
-          'addItem': function(item, form,  amount, unitValue) {
-        
+          'unitValue':0,
+          'addItem': function(item, form, amount=0, unitValue=0) {
+            pub.item=item;
+            pub.form=form;
+            pub.amount= amount;
+            pub.unitValue= unitValue;
+            return pub;
           },
-          'addAmount': function(amount) {
-        
+          'add': function(amountAdd) {
+            this.amount+=amountAdd;
+            return pub;
           },
           'drop': function() {
-        
+            this.item=null;
+            this.form=null;
+            this.amount=0;
+            this.unitValue=0;
+            return pub;
+          },
+          'moveTo': function(slot, amount) {
+            pub.add(-amount);
+            slot.addItem(pub.item, pub.form, amount, pub.unitValue);
           },
           'next': null,
           'prev':null,
           'first': this,
           'last': this,
           'chain': function(slot) {
-            this.findLastSlot().next =slot;
-            this.last=slot;
+            pub.findLastSlot().next =slot;
+            pub.last=slot;
+            slot.last=slot;
+            slot.first=pub.first;
+            return pub;
           },
           'findLastSlot': function() {
-            if(this.next) {
-              return this.next.findLastSlot();
+            if(pub.next) {
+              pub.last= pub.next.findLastSlot();
+              return pub.last;
             }
-            return this;
+            pub.last= pub;
+            return pub;
           },
           'findItemSlot': function(item, form) {
-            if(this.item !== item && this.form !== form) {
-              return this.next.findItemSlot(item, form);
+            if(pub.item === item && pub.form === form) {
+              return pub;
             }
-            return this;
+            if(!pub.next) {
+              return null;
+            }
+            return this.next.findItemSlot(item, form);
+          },
+          'findSlot4Item': function(item, form) {
+            var r = pub.first.findItemSlot(item, form);
+            if(r) {
+              return r;
+            }
+            return pub.first.findEmpty();
+          },
+          'findEmpty': function() {
+            return pub.findItemSlot(null, null);
           }
         };
         return pub;
@@ -280,7 +313,7 @@ window.onerror = function (message, url, line, column, error) {
             )
       }
     },
-    'addRes': function (to,name, amount = 0, unitValue = 0, lvl=0) {
+    'addRes': function (to,name, form='pure',amount = 0, unitValue = 0, lvl=0) {
         to.push({
           title: 'Resource',
           name: name,
@@ -288,6 +321,7 @@ window.onerror = function (message, url, line, column, error) {
           level: 1,
           amount: amount,
           unitValue: unitValue,
+          slot:gam2.slot.add().addItem(name, form, amount, unitValue),
           cost:1500,
           powerUsage:15,
           levelCost: 500,
@@ -400,16 +434,16 @@ window.onerror = function (message, url, line, column, error) {
         this.addAsmb(this.menu, 'Assambler 1');
         
       } else if(name==='res') {
-        this.addRes(this.menu, this.rd.getResName(), 0, 2+4*gam2.res.length);
-        this.addRes(this.menu, this.rd.getResName(), 0, 2+4*(gam2.res.length+1));
+        this.addRes(this.menu, this.rd.getResName(), 'pure', 0, 2+4*gam2.res.length);
+        this.addRes(this.menu, this.rd.getResName(), 'pure', 0, 2+4*(gam2.res.length+1));
         
       }
       this.menuType=name;
     },
       'init': function () {
         
-        this.addRes(this.res,'Galvinum', 10, 5,2);
-        this.addRes(this.res,'Soltzis', 25, 10,2);
+        this.addRes(this.res, this.rd.getResName(),'pure', 10, 5,2);
+        this.addRes(this.res, this.rd.getResName(),'pure', 25, 10,2);
         this.show();
         this.initEvents();
       },
@@ -735,7 +769,7 @@ window.onerror = function (message, url, line, column, error) {
             box.color,0,
             box.title+' '+box.level, box.name,
             [
-              'Amount: ' + box.amount+' $'+gam2.hum.val(box.unitValue * box.amount),
+              'Amount: ' + box.slot.amount+' $'+gam2.hum.val(box.slot.unitValue * box.slot.amount),
               'Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')',
             ], btns
           );
