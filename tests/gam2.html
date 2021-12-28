@@ -269,6 +269,20 @@ window.onerror = function (message, url, line, column, error) {
         return this.r.randomName(this.r.rand(3,4),0,suf);
       },
     },
+    'loc': {
+      'add': function(name, type) {
+        var pub= {
+          'name': name,
+          'locx': 0,
+          'parent': null,
+          'child': null,
+          'addChild': function (name, loc) {
+            
+          }
+        };
+        return pub;
+      }
+    },
     'vs': {
       'opt':{},
       'iddfn': {},
@@ -764,6 +778,11 @@ window.onerror = function (message, url, line, column, error) {
           'Power: '+ this.powerUsage +' / '+ this.power
           ]);
           
+          
+        this.showCard('empty', 'black', 1, 'Empty', 'place', [], [
+            ['Build', false, 'btn-dark button']
+          ]);
+
 
         for(var r in this.res) {
           box = this.res[r];
