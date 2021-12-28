@@ -66,7 +66,8 @@
     }
     
     .bg-dashed {
-      border-style: dotted;
+      border-style: dashed;
+      border-width: 1px;
     }
   </style>
 </head>
@@ -478,7 +479,7 @@ window.onerror = function (message, url, line, column, error) {
         this.initEvents();
       },
       'initEvents': function() {
-        //setInterval(this.event.everySec, 1000);
+        setInterval(this.event.everySec, 1000);
       },
       'event': {
         'tim': {},
@@ -779,7 +780,7 @@ window.onerror = function (message, url, line, column, error) {
           ]);
           
           
-        this.showCard('empty', 'black', 1, 'Empty', 'place', [], [
+        this.showCard('empty', 'black', 1, 'Empty', '', [], [
             ['Build', false, 'btn-dark button']
           ]);
 
