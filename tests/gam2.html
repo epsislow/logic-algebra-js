@@ -464,7 +464,7 @@ window.onerror = function (message, url, line, column, error) {
         this.initEvents();
       },
       'initEvents': function() {
-        setInterval(this.event.everySec, 1000);
+        //setInterval(this.event.everySec, 1000);
       },
       'event': {
         'tim': {},
@@ -730,8 +730,8 @@ window.onerror = function (message, url, line, column, error) {
           gam2.show();
         }
       },
-      'showCard': function(color='black', dashed=0, title='$', head='Money', texts= [], buttons= []) {
-          var ra3= ra.container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '')
+      'showCard': function(id, color='black', dashed=0, title='$', head='Money', texts= [], buttons= []) {
+          var ra3= ra.container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
                   .container('border-bottom border-gray pb-2 mb-0', 'h6')
                   .addText(title)
                   .up()
@@ -754,11 +754,12 @@ window.onerror = function (message, url, line, column, error) {
             var bt= buttons[b];
             ra3.addButton(bt[0], bt[1], 'button '+ bt[2]);
           }
+          return ra3;
           
       },
       'show': function () {
         var box;
-        this.showCard('black', 0, '$', 'Money', [
+        this.showCard('money', 'black', 0, '$', 'Money', [
           'Amount: $' + this.hum.val(this.money),
           'Power: '+ this.powerUsage +' / '+ this.power
           ]);
@@ -776,7 +777,8 @@ window.onerror = function (message, url, line, column, error) {
                 'btn-success button']);
             }
           }
-          this.showCard(
+          box.vs = this.showCard(
+            'res'+ r,
             box.color,0,
             box.title+' '+box.level, box.name,
             [
@@ -784,9 +786,6 @@ window.onerror = function (message, url, line, column, error) {
               'Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')',
             ], btns
           );
-        }
-        
-        if(this.menu.length==0) {
         }
         
         for(var m in this.util) {
