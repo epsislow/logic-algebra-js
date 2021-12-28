@@ -255,9 +255,18 @@ window.onerror = function (message, url, line, column, error) {
       },
     },
     'rd': {
-      'getResName': function() {
-        var suf = rd.randomBytes(0,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-        return rd.randomName(rd.rand(3,4),0,suf);
+      'seed': 'gam2.random~`!1@#7$4)2&50%*8(93^6',
+      'r': {},
+      'restart': function (seedId, d = 0) {
+          var seedUsed = gam2.rd.seed + seedId;
+          this.r.restartSeed(seedUsed);
+          //console.log('restarted seed:' + seedUsed);
+      },
+      'getName': function(seedId) {
+        var seedUsed = gam2.rd.seed + seedId;
+        this.r.setSeed(seedUsed);
+        var suf = this.r.randomBytes(0,1) + this.r.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
+        return this.r.randomName(this.r.rand(3,4),0,suf);
       },
     },
     'vs': {
@@ -434,16 +443,23 @@ window.onerror = function (message, url, line, column, error) {
         this.addAsmb(this.menu, 'Assambler 1');
         
       } else if(name==='res') {
-        this.addRes(this.menu, this.rd.getResName(), 'pure', 0, 2+4*gam2.res.length);
-        this.addRes(this.menu, this.rd.getResName(), 'pure', 0, 2+4*(gam2.res.length+1));
+        var seedId = 'name' + gam2.res.length;
+        this.rd.restart(seedId, 1 );
+        this.addRes(this.menu, this.rd.getName(seedId), 'pure', 0, 2+4*gam2.res.length);
+        this.addRes(this.menu, this.rd.getName(seedId), 'pure', 0, 2+4*(gam2.res.length+1));
         
       }
       this.menuType=name;
     },
-      'init': function () {
-        
-        this.addRes(this.res, this.rd.getResName(),'pure', 10, 5,2);
-        this.addRes(this.res, this.rd.getResName(),'pure', 25, 10,2);
+      'init': function (seed = 512) {
+        var seedHash = rd.hashCode(gam2.rd.seed + seed);
+
+        this.rd.r = rd.sessionWithSeed(seedHash);
+
+        var seedId = 'name' + gam2.res.length;
+        this.rd.restart(seedId, 1);
+        this.addRes(this.res, this.rd.getName(seedId),'pure', 10, 5,2);
+        this.addRes(this.res, this.rd.getName(seedId),'pure', 25, 10,2);
         this.show();
         this.initEvents();
       },
@@ -509,14 +525,18 @@ window.onerror = function (message, url, line, column, error) {
         'mine': function (box) {
           box.slot.add(box.level);
         },
-        'sell': function (resId, amount = -1, show=1) {
-          amount = amount<0? gam2.res[resId].amount: amount;
-          if(amount> gam2.res[resId].amount) {
+        'sell': function (box, amount = -1, show=1) {
+          amount = amount<0? box.slot.amount: amount;
+          if(amount> box.slot.amount) {
             return;
           }
-          gam2.res[resId].amount-= amount;
-          gam2.money+=gam2.res[resId].unitValue * amount;
-          //console.log('sell' + resId + ' ' +  amount);
+
+          box.slot.add(-amount);
+
+          gam2.money+=box.unitValue * amount;
+
+          console.log('Sold '+  amount + ' '+ box.slot.item + ' ' + (box.slot.form !=='pure'? box.slot.form : '') );
+
           if (show) {
             ra.clear();
             gam2.show();
@@ -748,8 +768,8 @@ window.onerror = function (message, url, line, column, error) {
           box = this.res[r];
           var btns = [];
           if (box.title === 'Resource') {
-            btns.push(['Sell 1', (function(opt) { return function() { gam2.actions.sell(opt, 1) }; })(r), 'btn-warning button']);
-            btns.push(['Sell *', (function(opt) { return function() { gam2.actions.sell(opt) }; })(r), 'btn-danger button']);
+            btns.push(['Sell 1', (function(b) { return function() { gam2.actions.sell(b, 1) }; })(box), 'btn-warning button']);
+            btns.push(['Sell *', (function(b) { return function() { gam2.actions.sell(b) }; })(box), 'btn-danger button']);
             if (gam2.money > box.levelCost) {
               btns.push(['Lvl up',
                 (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),

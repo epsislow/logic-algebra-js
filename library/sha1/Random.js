@@ -14,7 +14,7 @@ var rd = (function () {
 		+(symbols ? ':/,-_=|<>[].' : '');
         var charactersLength = characters.length;
         for (var i = 0; i < length; i++) {
-            result.push(characters.charAt(pub.rand(0,charactersLength)));
+            result.push(characters.charAt(this.rand(0,charactersLength)));
         }
         return result.join('');
     }
@@ -26,9 +26,15 @@ var rd = (function () {
 	    this.seed = seed;
 	    return this;
 	  }
+    pub.restartSeed = function(seed = 0, d = 0) {
+		this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed)());
+		if(d) {
+			console.log('seed '+ seed + ' func added or restarted');
+		}
+	}
 
     pub.rand = function (min, max,seed = 0, alg = 0, d=0, restart = 0) {
-		if (alg == 1) {
+		if (alg === 1) {
 			return Math.floor(Math.random() * (max - min)) + min;
 		}
 		if(!seed) {
@@ -36,10 +42,7 @@ var rd = (function () {
 		}
 
 		if (!(seed in this.randFunc) || restart) {
-			this.randFunc[seed] = this.sfc32(0x9E3779B9, 0x243F6A88, 0xB7E15162, this.xmur(seed)());
-			if(d) {
-			  console.log('seed func added or restarted');
-			}
+			this.restartSeed(seed, d);
 		}
 		if(d) {
 	  	console.log('rd: ' +seed)
@@ -58,7 +61,7 @@ var rd = (function () {
 		return newObj.setSeed(seed);
 	}
 
-    pub.pickOneFrom = function(list, withPop=0) {
+    pub.pickOneFrom = function(list, withPop=0, seed = 0) {
       var pick = this.rand(0,list.length-1);
       if(withPop) {
         return list.splice(pick,1).pop();
