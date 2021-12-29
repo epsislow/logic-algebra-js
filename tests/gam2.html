@@ -94,6 +94,10 @@
       content: "\f0a9";
     }
     
+    .anim-ast {
+      
+    }
+    
     .tik {
       margin: 3px 0;
       height: 10px;
@@ -786,7 +790,7 @@ window.onerror = function (message, url, line, column, error) {
           gam2.show();
         }
       },
-      'showCard': function(id, color='black', dashed=0, title='$', head='Money', texts= [], buttons= []) {
+      'showCard': function(id, color='black', icon='asterisk', dashed=0, title='$', head='Money', texts= [], buttons= []) {
           var ra3= ra
                  // .container('m-2 p-2 bg-'+color+' ffa ffa-envelope fa-bgd fa-5x','div','')
                  //  .addText('ddrr')
@@ -794,7 +798,7 @@ window.onerror = function (message, url, line, column, error) {
 
                   .container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
                   
-                  .container('fa fa-asterisk fa-bgd fa-5x','div','')
+                  .container('fa fa-'+icon+' fa-bgd fa-5x','div','')
                   .up()
 
                   .container('','div','position:relative;top:0px;z-index:997')
@@ -825,13 +829,13 @@ window.onerror = function (message, url, line, column, error) {
       },
       'show': function () {
         var box;
-        this.showCard('money', 'black', 0, '$', 'Money', [
+        this.showCard('money', 'black', '', 0, '$', 'Money', [
           'Amount: $' + this.hum.val(this.money),
           'Power: '+ this.powerUsage +' / '+ this.power
           ]);
           
         
-        this.showCard('empty', 'black', 1, 'Empty', '', [], [
+        this.showCard('empty', 'black', 'plus', 1, 'Empty', '', [], [
             ['Build', false, 'btn-dark button']
           ])
           ;
@@ -851,7 +855,7 @@ window.onerror = function (message, url, line, column, error) {
           }
           box.vs = this.showCard(
             'res'+ r,
-            box.color,0,
+            box.color, 'asterisk anim-ast', 0,
             box.title+' '+box.level, box.name,
             [
               'Amount: ' + box.slot.amount+' $'+gam2.hum.val(box.slot.unitValue * box.slot.amount),
