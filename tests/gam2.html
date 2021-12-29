@@ -73,8 +73,9 @@
        height: 100px;
        color: #555;
        z-index: 1;
-       margin-top:40px;
-       margin-left: 40px;
+       margin-top:30px;
+       margin-left:27px;
+       /*border: 1px solid #fff;*/
     }
     
     .bg-dashed {
@@ -82,21 +83,22 @@
       border-width: 1px;
     }
     
-    .fa-empty {
-      position: relative;
-    }
-    
-    .fa-empty:before {
-      font-family: FontAwesome;
-      top:0;
-      left:-5px;
-      padding-right:10px;
-      content: "\f0a9";
-    }
     
     .anim-ast {
+        animation: rotation 5s infinite linear reverse;
+      }
       
-    }
+      @keyframes rotation {
+        from {
+          transform: rotate(0deg);
+        }
+      
+        to {
+          transform: rotate(359deg);
+        }
+      }
+      
+    
     
     .tik {
       margin: 3px 0;
@@ -798,7 +800,7 @@ window.onerror = function (message, url, line, column, error) {
 
                   .container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
                   
-                  .container('fa fa-'+icon+' fa-bgd fa-5x','div','')
+                  .container('fa fa-'+icon+' fa-bgd fa-7x','div','')
                   .up()
 
                   .container('','div','position:relative;top:0px;z-index:997')
@@ -835,7 +837,7 @@ window.onerror = function (message, url, line, column, error) {
           ]);
           
         
-        this.showCard('empty', 'black', 'plus', 1, 'Empty', '', [], [
+        this.showCard('empty', 'black', 'plus', 1, 'Empty', '', ['','',''], [
             ['Build', false, 'btn-dark button']
           ])
           ;
