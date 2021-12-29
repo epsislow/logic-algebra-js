@@ -74,8 +74,10 @@
        color: #555;
        z-index: 1;
        margin-top:30px;
-       margin-left:27px;
+       margin-left:25px;
+       text-align: center;
        /*border: 1px solid #fff;*/
+       padding: 12px 0;
     }
     
     .bg-dashed {
@@ -85,7 +87,7 @@
     
     
     .anim-ast {
-        animation: rotation 5s infinite linear reverse;
+        animation: rotation 8s infinite linear reverse;
       }
       
       @keyframes rotation {
@@ -800,7 +802,7 @@ window.onerror = function (message, url, line, column, error) {
 
                   .container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
                   
-                  .container('fa fa-'+icon+' fa-bgd fa-7x','div','')
+                  .container('fa fa-'+icon+' fa-bgd fa-5x','div','')
                   .up()
 
                   .container('','div','position:relative;top:0px;z-index:997')
