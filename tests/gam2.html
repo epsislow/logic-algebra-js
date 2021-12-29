@@ -63,11 +63,35 @@
        width: 170px;
        height: 160px;
        border: 1px solid #fff;
+       position: relative;
+       z-index: 20;
+      
+    }
+    .fa-bgd {
+       position: absolute;
+       width: 100px;
+       height: 100px;
+       color: #555;
+       z-index: 1;
+       margin-top:40px;
+       margin-left: 40px;
     }
     
     .bg-dashed {
       border-style: dashed;
       border-width: 1px;
+    }
+    
+    .fa-empty {
+      position: relative;
+    }
+    
+    .fa-empty:before {
+      font-family: FontAwesome;
+      top:0;
+      left:-5px;
+      padding-right:10px;
+      content: "\f0a9";
     }
     
     .tik {
@@ -763,7 +787,17 @@ window.onerror = function (message, url, line, column, error) {
         }
       },
       'showCard': function(id, color='black', dashed=0, title='$', head='Money', texts= [], buttons= []) {
-          var ra3= ra.container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
+          var ra3= ra
+                 // .container('m-2 p-2 bg-'+color+' ffa ffa-envelope fa-bgd fa-5x','div','')
+                 //  .addText('ddrr')
+                 //   .up()
+
+                  .container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
+                  
+                  .container('fa fa-asterisk fa-bgd fa-5x','div','')
+                  .up()
+
+                  .container('','div','position:relative;top:0px;z-index:997')
                   .container('border-bottom border-gray pb-2 mb-0', 'h6')
                   .addText(title)
                   .up()
@@ -796,7 +830,7 @@ window.onerror = function (message, url, line, column, error) {
           'Power: '+ this.powerUsage +' / '+ this.power
           ]);
           
-          
+        
         this.showCard('empty', 'black', 1, 'Empty', '', [], [
             ['Build', false, 'btn-dark button']
           ])
