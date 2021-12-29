@@ -844,7 +844,6 @@ window.onerror = function (message, url, line, column, error) {
           ])
           ;
 
-
         for(var r in this.res) {
           box = this.res[r];
           var btns = [];
@@ -868,7 +867,10 @@ window.onerror = function (message, url, line, column, error) {
           ).container('tik','div');
         }
         
+        var card=0,tikSec=0,title='',icon='',head='',texts=[],btns=[];
+
         for(var m in this.util) {
+          card=0;
         box= this.util[m];
         let ra2= ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
         .container('border-bottom border-gray pb-2 mb-0', 'h6')
@@ -883,8 +885,17 @@ window.onerror = function (message, url, line, column, error) {
         //.addText(box.description)
         ;
         if(box.title==='Smelter') {
+          card=1;
+          title=box.title;
+          icon='envelope i-smelter';
           
           if(box.resource) {
+            head='Out: '+ box.resource+' bar';
+            texts=[
+              'In: ' + box.resource,
+              'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
+              'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
+            ];
             ra2.addText('Out: '+ box.resource+' bar')
                .up()
                .addText('In: '+box.resource).br()
@@ -1018,6 +1029,15 @@ window.onerror = function (message, url, line, column, error) {
           
           ra2.up().container('tik','div','animation-duration:10s');
         }
+        
+        if(card) {
+        var q = this.showCard('util'+m, box.color, icon, 0, title, head, texts, btns);
+        
+        if (tikSec) {
+          q.up().container('tik','div','animation-duration:'+tikSec+'s');
+        }
+        }
+        
          this.vs.showOptionsFor('util'+m, box, ra);
         }
         if(this.menu.length==0) {
