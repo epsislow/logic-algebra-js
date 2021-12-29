@@ -2,151 +2,231 @@
 <html>
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Tester</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Tester</title>
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" rel="stylesheet">
 
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
+    <link href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" rel="stylesheet"/>
 
-  <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
+    <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
 
-  <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
+    <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
 
-  <style>
+    <style>
 
-    .bg-black {
-      background-color: #000;
-    }
-    .button {
-      margin-right: 5px;
-      padding: 2px;
-      color: #fff !important;
-    }
-    .btn-light {
-      color:#000 !important;
-    }
-    .bg-darkcyan {
-      background-color: #005555;
-    }
-    .bg-util {
-      background-color: #552d17;
-    }
-    .bg-back {
-      background-color: mediumslateblue;
-    }
-    .bg-smelter {
-      background-color: #444499;
-    }
-    .bg-crafter {
-      background-color: #773333;
-    }
-    .bg-power {
-      background-color: #224460;
-    }
-    .bg-silo {
-      background-color: #445533;
-    }
-    .bg-storage {
-      background-color: #604460;
-    }
-    .bg-asmb {
-      background-color: #553333;
-    }
-    .text-white {
-      color:#bbb !important;
-    }
-    
-    .bg-card {
-       float:left;
-       width: 170px;
-       height: 170px;
-       border: 1px solid #fff;
-       position: relative;
-       z-index: 20;
-      
-    }
-    .fa-bgd {
-       position: absolute;
-       width: 100px;
-       height: 100px;
-       color: #555;
-       z-index: 1;
-       margin-top:30px;
-       margin-left:25px;
-       text-align: center;
-       /*border: 1px solid #fff;*/
-       padding: 12px 0;
-    }
-    
-    .bg-dashed {
-      border-style: dashed;
-      border-width: 1px;
-    }
+        .bg-black {
+            background-color: #000;
+        }
 
-    .btn-warning {
-      background-color: #dd9107;
-      border-color: #dd9107;
-    }
+        .button {
+            margin-right: 5px;
+            padding: 2px;
+            color: #fff !important;
+        }
 
-    .i-empty { color: #555555; }
-    .i-resource { color: #000000; }
-    .i-smelter { color: #222255; }
-    .i-crafter { color: #552222; }
-    .i-power { color: #112230; }
-    .i-silo { color: #224411; }
-    .i-storage { color: #272227; }
-    .i-asmb { color: #331717; }
-    .i-back { color: #3b28cc; }
-    .i-new-resource { color: #002525; }
-    .i-new-utility { color: #351d07; }
+        .btn-light {
+            color: #000 !important;
+        }
 
-    .anim-stop {
-      animation: none !important;
-    }
+        .bg-money {
+            background-color: #000;
+            border: 1px solid #fff;
+        }
 
-    .anim-smelter {
-      animation: giggle 0.5s infinite ease-in-out alternate-reverse;
-    }
+        .bg-empty {
+            background-color: #000;
+            border-color: #fff;
+        }
 
-    @keyframes giggle {
-      0% {color: #111133; top:5px;}
-      25% {color: #222288; top:3px;}
-      74% {color: #222255; top:5px}
-      100% {color: #222288; top:7px}
-    }
-    .anim-res {
-        animation: rotation 8s infinite linear reverse;
-      }
-      
-      @keyframes rotation {
-        from { transform: rotate(0deg);}
-        to { transform: rotate(359deg); }
-      }
-    
-    .tik {
-      margin: 3px 0;
-      height: 10px;
-      border: 3px darkred;
-      border-radius: 4px;
-      animation-name: mine;
-      animation-duration: 1s;
-      animation-iteration-count: infinite;
-      animation-timing-function: linear;
-      /*animation-play-state: paused;*/
-    }
-    @keyframes mine {
-      0% {width:0; background-color: slategray;}
-      /*50% {width:50%; background-color: greenyellow; }*/
-      100% {width: 135px; background-color: darkseagreen; }
-    }
-  </style>
+        .bg-darkcyan {
+            background-color: #005555;
+        }
+
+        .bg-util {
+            background-color: #552d17;
+        }
+
+        .bg-back {
+            background-color: mediumslateblue;
+        }
+
+        .bg-smelter {
+            background-color: #444499;
+        }
+
+        .bg-crafter {
+            background-color: #773333;
+        }
+
+        .bg-power {
+            background-color: #224460;
+        }
+
+        .bg-silo {
+            background-color: #445533;
+        }
+
+        .bg-storage {
+            background-color: #604460;
+        }
+
+        .bg-asmb {
+            background-color: #553333;
+        }
+
+        .text-white {
+            color: #bbb !important;
+        }
+
+        .bg-card {
+            float: left;
+            width: 170px;
+            height: 170px;
+            /*border: 1px solid #fff;*/
+            position: relative;
+            z-index: 20;
+
+        }
+
+        .fa-bgd {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            color: #555;
+            z-index: 1;
+            margin-top: 30px;
+            margin-left: 25px;
+            text-align: center;
+            /*border: 1px solid #fff;*/
+            padding: 12px 0;
+        }
+
+        .bg-dashed {
+            border-color: #ffffff;
+            border-style: dashed;
+            border-width: 1px !important;
+        }
+
+        .btn-warning {
+            background-color: #dd9107;
+            border-color: #dd9107;
+        }
+
+        .i-empty {
+            color: #555555;
+        }
+
+        .i-resource {
+            color: #000000;
+        }
+
+        .i-smelter {
+            color: #222255;
+        }
+
+        .i-crafter {
+            color: #552222;
+        }
+
+        .i-power {
+            color: #112230;
+        }
+
+        .i-silo {
+            color: #224411;
+        }
+
+        .i-storage {
+            color: #272227;
+        }
+
+        .i-asmb {
+            color: #331717;
+        }
+
+        .i-back {
+            color: #3b28cc;
+        }
+
+        .i-new-resource {
+            color: #002525;
+        }
+
+        .i-new-utility {
+            color: #351d07;
+        }
+
+        .anim-stop {
+            animation: none !important;
+        }
+
+        .anim-smelter {
+            animation: giggle 0.5s infinite ease-in-out alternate-reverse;
+        }
+
+        @keyframes giggle {
+            0% {
+                color: #111133;
+                top: 5px;
+            }
+            25% {
+                color: #222288;
+                top: 3px;
+            }
+            74% {
+                color: #222255;
+                top: 5px
+            }
+            100% {
+                color: #222288;
+                top: 7px
+            }
+        }
+
+        .anim-res {
+            animation: rotation 8s infinite linear reverse;
+        }
+
+        @keyframes rotation {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(359deg);
+            }
+        }
+
+        .tik {
+            margin: 3px 0;
+            height: 10px;
+            border: 3px darkred;
+            border-radius: 4px;
+            animation-name: mine;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            /*animation-play-state: paused;*/
+        }
+
+        @keyframes mine {
+            0% {
+                width: 0;
+                background-color: slategray;
+            }
+            /*50% {width:50%; background-color: greenyellow; }*/
+            100% {
+                width: 135px;
+                background-color: darkseagreen;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-black">
-<main role="main" class="container">
-  Tester
+<main class="container" role="main">
+    Tester
 </main><!-- /.container -->
 
 <!-- Bootstrap core JavaScript
@@ -155,12 +235,13 @@
 <!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
         crossorigin="anonymous"></script-->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+<script crossorigin="anonymous" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f"
+        src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+<script crossorigin="anonymous"
         integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-        crossorigin="anonymous"></script>
+        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
 
 <!--script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script-->
 
@@ -168,982 +249,1027 @@
 
 <!--script src="/ext/bootstrap.4.0.0.js" type="text/javascript"></script-->
 
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+<script crossorigin="anonymous"
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-        crossorigin="anonymous"></script>
+        src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
-<script type="text/javascript" src="/library/Visual.js"></script>
+<script src="/library/Visual.js" type="text/javascript"></script>
 
-<script type="text/javascript" src="/library/sha1/Random.js"></script>
+<script src="/library/sha1/Random.js" type="text/javascript"></script>
 
 <script type="module">
-  import { NBQueue2 } from '/library/modules/NBQueue.js'
+    import {NBQueue2} from '/library/modules/NBQueue.js'
 
-  window.queue = NBQueue2;
-  var ra;
-     
-window.onerror = function (message, url, line, column, error) {
-    console.log(message, url, line, column, error);
-    alert(message+' L'+line+':'+column);
-}
+    window.queue = NBQueue2;
+    var ra;
 
-  $('document').ready(function() {
-
-    if('vs' in window) {
-
-      vs.page('Gam2');
-
-      ra = vs.clearBody()
-              .section('top')
-              .br()
-              .addButton('Index', '/index.html')
-              .br()
-              .container('main','div');
-
-      vs.addSectionsToMain();
-      gam2.init();
+    window.onerror = function (message, url, line, column, error) {
+        console.log(message, url, line, column, error);
+        alert(message + ' L' + line + ':' + column);
     }
-  });
 
-  window.gam2 = {
-    'money': 90000,
-    'power': 500,
-    'powerUsage':30,
-    'res': [],
-    'building': [],
-    'util': [],
-    'menu':[],
-    'menuType':0,
-    'itemStates': {
-      'pure': [{'bar':2},{'gas':4}],
-      'bar':[{'liquid':2},{'cube':5},{'plate':2},{'wire':10}, {'rail': 100}],
-      'plate': [{'gear':1}, {'case':10}, {'pipe':2},{'tube': 20}, {'lgear': 10}, {'bolt':1}],
-      'wire': [{'bobbin': 100}, {'spring': 5}, {'lbobbin': 1000}, {'ring': 2}, {'lring': 20}],
-      'bobbin': [{'lbobbin': 10}],
-      'liquid': {'barrel': 50},
-      'gas': {'tank':1000},
-      'cube':{'dense':500},
-      'dense':{'max':20},
-      'barrel':[{'ltank':100},{'fuel': 10}],
-    },
-    'itemCrafts':{
-      'lcase': {'plate':20,'liquid':5,'wire':10},
-      'dym': {'dense': 5, 'tank':5},
-      'vry': {'bar':100, 'barrel':50},
-      'ccr': {'dym':5},
-      'dff': {'vry':10,'ccr':20},
-      'sup': {'dff':2,'dym':10,'tank':100},
-      'spr': {'tank':2000,'dym':50,'dense':2000},
-    },
-    'itemRecepies': {
-      'bell': [{'bar':2},{'cube':2}],
-      'trix':[{'barrel':2},{'gas':10},{'liquid':5}],
-      
-    },
-    'hum': {
-      'val': function(val) {
-        if(val<= 9000) {
-          return val;
-        }
-        var t= ['','k','m','b','t','G','T'];//,'P','V','R','X','Z'];
-        var i=0;
-        var v=val;
-        while (v>9000){
-          v=Math.round(v/1000);
-          i++;
-        };
-        return v+t[i];
-      }
-    },
-    'slot':{
-      'add': function() {
-        var pub={};
-        pub={
-          'item':null,
-          'form': null,
-          'amount':0,
-          'unitValue':0,
-          'addItem': function(item, form, amount=0, unitValue=0) {
-            pub.item=item;
-            pub.form=form;
-            pub.amount= amount;
-            pub.unitValue= unitValue;
-            return pub;
-          },
-          'add': function(amountAdd) {
-            this.amount+=amountAdd;
-            return pub;
-          },
-          'drop': function() {
-            this.item=null;
-            this.form=null;
-            this.amount=0;
-            this.unitValue=0;
-            return pub;
-          },
-          'moveTo': function(slot, amount) {
-            pub.add(-amount);
-            slot.addItem(pub.item, pub.form, amount, pub.unitValue);
-          },
-          'next': null,
-          'prev':null,
-          'first': this,
-          'last': this,
-          'chain': function(slot) {
-            pub.findLastSlot().next =slot;
-            pub.last=slot;
-            slot.last=slot;
-            slot.first=pub.first;
-            return pub;
-          },
-          'findLastSlot': function() {
-            if(pub.next) {
-              pub.last= pub.next.findLastSlot();
-              return pub.last;
-            }
-            pub.last= pub;
-            return pub;
-          },
-          'findItemSlot': function(item, form) {
-            if(pub.item === item && pub.form === form) {
-              return pub;
-            }
-            if(!pub.next) {
-              return null;
-            }
-            return this.next.findItemSlot(item, form);
-          },
-          'findSlot4Item': function(item, form) {
-            var r = pub.first.findItemSlot(item, form);
-            if(r) {
-              return r;
-            }
-            return pub.first.findEmpty();
-          },
-          'findEmpty': function() {
-            return pub.findItemSlot(null, null);
-          }
-        };
-        return pub;
-      },
-    },
-    'rd': {
-      'seed': 'gam2.random~`!1@#7$4)2&50%*8(93^6',
-      'r': {},
-      'restart': function (seedId, d = 0) {
-          var seedUsed = gam2.rd.seed + seedId;
-          this.r.restartSeed(seedUsed);
-          //console.log('restarted seed:' + seedUsed);
-      },
-      'getName': function(seedId) {
-        var seedUsed = gam2.rd.seed + seedId;
-        this.r.setSeed(seedUsed);
-        var suf = this.r.randomBytes(0,1) + this.r.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-        return this.r.randomName(this.r.rand(3,4),0,suf);
-      },
-    },
-    'loc': {
-      'add': function(name, type) {
-        var pub= {
-          'name': name,
-          'locx': 0,
-          'parent': null,
-          'child': null,
-          'addChild': function (name, loc) {
-            
-          }
-        };
-        return pub;
-      }
-    },
-    'vs': {
-      'opt':{},
-      'iddfn': {},
-      'dropDown': function(btn, box) {
-        //var btn= $(btn);
-        //console.log(btn);
-        $(btn).after($('<div>').html('test'));
-        
-        /*
-        vs.from('dropdn', btn)
-          .br()
-          .addText('sdff');*/
-      },
-      'addOptionsFor': function(idd, opts, fn) {
-        this.opt[idd] = opts;
-        this.iddfn[idd] = fn;
-      },
-      'showOptionsFor': function(idd, box, ra) {
-        if(!(idd in this.opt)) {
-          return;
-        }
-        for(var i in this.opt[idd]) {
-          this.boxOpt(ra, this.opt[idd][i], i, idd, box);
-        }
-      },
-      'clearOptionsFor': function(idd) {
-        delete this.opt[idd];
-        delete this.iddfn[idd];
-      },
-      'selectOption': function(idd, opt, box) {
-        this.iddfn[idd].apply(gam2, [idd, opt, box]);
-      },
-      'boxOpt': function(ra, opt, i, idd, box) {
-        
-        var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
-                .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                .addText('Option '+ (parseInt(i)+1))
-                .up()
-                .container('media text-white pt-2')
-                .container('media-body ml-2 mb-0 small lh-125', 'p')
-                .container('d-block text-light', 'strong')
-                .addText(opt.text)
-                .up()
-                .addText(opt.description)
+    $('document').ready(function () {
+
+        if ('vs' in window) {
+
+            vs.page('Gam2');
+
+            ra = vs.clearBody()
+                .section('top')
                 .br()
-                .br();
-                
-          ra0.addButton('Select',
-                (function(i, j, w) { return function() { gam2.vs.selectOption(i, j, w) }; })(idd, opt, box),
-                'btn-light button'
-            )
-      }
-    },
-    'addRes': function (to,name, form='pure',amount = 0, unitValue = 0, lvl=0) {
-        to.push({
-          title: 'Resource',
-          name: name,
-          description:  'Asteroid resource',
-          level: 1,
-          amount: amount,
-          unitValue: unitValue,
-          slot: gam2.slot.add().addItem(name, form, amount, unitValue),
-          cost:1500,
-          powerUsage:15,
-          levelCost: 500,
-          color:'dark',
-        });
-    },
-    'addCraft': function (to, name, resMax = 1, ques=1) {
-      to.push({
-        title: 'Crafter',
-        name: name,
-        description:  'Craft items',
-        resMax: resMax,
-        queues: ques,
-        recepie: 0,
-        amount:0,
-        unitValue:0,
-        everySec:3,
-        cost:5000,
-        powerUsage:15,
-        level:1,
-        levelCost:100,
-        color:'crafter',
-      });
-    },
-    'addAsmb': function (to, name, resMax = 2, ques=1) {
-      to.push({
-        title: 'Assambler',
-        name: name,
-        description:  'Assamble items',
-        resMax: resMax,
-        queues: ques,
-        cost:10000,
-        powerUsage:5,
-        level: 1,
-        levelCost: 2000,
-        color:'asmb',
-      });
-    },
-    'addSmelt': function (to, name, ques=1) {
-      to.push({
-        title: 'Smelter',
-        name: name,
-        description:  'Smelt items',
-        queues: ques,
-        resource:0,
-        amount: 0,
-        unitValue:0,
-        everySec:2,
-        cost:2500,
-        powerUsage:10,
-        level:1,
-        levelCost:100,
-        color:'smelter',
-      });
-    },
-    'addPower': function (to, name, lvl=1) {
-      to.push({
-        title: 'Power',
-        name: name,
-        description: 'Adds power to the grid',
-        level: 1,
-        generated: 0,
-        max:5,
-        cost:1500,
-        powerUsage:0,
-        levelCost: 200,
-        color:'power',
-      });
-    },
-    
-    'addSilo': function (to, name, slots=1, max=150) {
-      to.push({
-        title: 'Silo',
-        name: name,
-        description:  'Silo for resources',
-        slots: new Array(slots),
-        max: max,
-        level: 1,
-        cost:650,
-        powerUsage:3,
-        levelCost: 100,
-        color:'silo',
-      });
-    },
-    'addStorage': function (to, name, slots=5, max=100) {
-      to.push({
-        title: 'Storage',
-        name: name,
-        description:  'Storage for items',
-        slot: {},
-        slotsMax: slots,
-        cargo:0,
-        cargoMax: max,
-        level: 1,
-        cost: 500,
-        powerUsage:5,
-        levelCost: 250,
-        color:'storage',
-        page:1,
-        pageMax: Math.ceil(slots/3),
-      });
-    },
-    'addMenu': function(name) {
-      if(name==='util') {
-        this.addPower(this.menu, 'Power 1');
-        this.addSmelt(this.menu, 'Smelter 1');
-        this.addCraft(this.menu, 'Crafter 1');
-        this.addStorage(this.menu, 'Storage 1');
-        this.addSilo(this.menu, 'Silo 1')
-        this.addAsmb(this.menu, 'Assambler 1');
-        
-      } else if(name==='res') {
-        var seedId = 'name' + gam2.res.length;
-        this.rd.restart(seedId, 1 );
-        this.addRes(this.menu, this.rd.getName(seedId), 'pure', 0, 2+4*gam2.res.length);
-        this.addRes(this.menu, this.rd.getName(seedId), 'pure', 0, 2+4*(gam2.res.length+1));
-        
-      }
-      this.menuType=name;
-    },
-      'init': function (seed = 512) {
-        var seedHash = rd.hashCode(gam2.rd.seed + seed);
+                .addButton('Index', '/index.html')
+                .br()
+                .container('main', 'div');
 
-        this.rd.r = rd.sessionWithSeed(seedHash);
-
-        var seedId = 'name' + gam2.res.length;
-        this.rd.restart(seedId, 1);
-        this.addRes(this.res, this.rd.getName(seedId),'pure', 10, 5,2);
-        this.addRes(this.res, this.rd.getName(seedId),'pure', 25, 10,2);
-        this.show();
-        this.initEvents();
-      },
-      'initEvents': function() {
-        //setInterval(this.event.everySec, 1000);
-      },
-      'event': {
-        'tim': {},
-        'everySec': function() {
-          for(let r in gam2.res) {
-            var box = gam2.res[r];
-            gam2.actions.mine(box);
-          }
-          for(let u in gam2.util) {
-            var box = gam2.util[u];
-            if(box && box.everySec) {
-              if(!('util'+u in gam2.event.tim)) {
-                gam2.event.tim['util'+u]=0;
-              }
-              gam2.event.tim['util'+u]++;
-              if(gam2.event.tim['util'+u] !== box.everySec) {
-                continue;
-              }
-              gam2.event.tim['util'+u]=0;
-              
-              var maxAmount=0;
-              var boxSrc;
-              if(box.title=='Smelter') {
-                if(!box.resource) {
-                  continue;
-                }
-                //console.log(box.source)
-                //continue;
-                boxSrc = gam2[box.source[0]][box.source[1]];
-                maxAmount = box.level> boxSrc.amount? boxSrc.amount: box.level;
-                boxSrc.amount -= maxAmount;
-                box.amount+= maxAmount;
-              } else if (box.title == 'Crafter') {
-                if (!box.recepie) {
-                  continue;
-                }
-                boxSrc = gam2[box.source[0]][box.source[1]];
-                maxAmount = box.level> boxSrc.amount ? boxSrc.amount: box.level;
-                boxSrc.amount -= maxAmount;
-                if(box.dest) {
-                  var bbox= gam2[box.dest[0]][box.dest[1]];
-                  bbox.slot[box.recepie].amount += maxAmount;
-                  
-                } else {
-                  box.amount += maxAmount;
-                }
-              }
-            }
-          }
-          gam2.actions.show();
+            vs.addSectionsToMain();
+            gam2.init();
         }
-      },
-      'actions': {
-        'show': function() {
-            ra.clear();
-            gam2.show();
-        },
-        'mine': function (box) {
-          box.slot.add(box.level);
-        },
-        'sell': function (box, amount = -1, show=1) {
-          amount = amount<0? box.slot.amount: amount;
-          if(amount> box.slot.amount) {
-            return;
-          }
+    });
 
-          box.slot.add(-amount);
+    window.gam2 = {
+        'money': 90000,
+        'power': 500,
+        'powerUsage': 30,
+        'res': [],
+        'building': [],
+        'util': [],
+        'menu': [],
+        'menuType': 0,
+        'itemStates': {
+            'pure': [{'bar': 2}, {'gas': 4}],
+            'bar': [{'liquid': 2}, {'cube': 5}, {'plate': 2}, {'wire': 10}, {'rail': 100}],
+            'plate': [{'gear': 1}, {'case': 10}, {'pipe': 2}, {'tube': 20}, {'lgear': 10}, {'bolt': 1}],
+            'wire': [{'bobbin': 100}, {'spring': 5}, {'lbobbin': 1000}, {'ring': 2}, {'lring': 20}],
+            'bobbin': [{'lbobbin': 10}],
+            'liquid': {'barrel': 50},
+            'gas': {'tank': 1000},
+            'cube': {'dense': 500},
+            'dense': {'max': 20},
+            'barrel': [{'ltank': 100}, {'fuel': 10}],
+        },
+        'itemCrafts': {
+            'lcase': {'plate': 20, 'liquid': 5, 'wire': 10},
+            'dym': {'dense': 5, 'tank': 5},
+            'vry': {'bar': 100, 'barrel': 50},
+            'ccr': {'dym': 5},
+            'dff': {'vry': 10, 'ccr': 20},
+            'sup': {'dff': 2, 'dym': 10, 'tank': 100},
+            'spr': {'tank': 2000, 'dym': 50, 'dense': 2000},
+        },
+        'itemRecepies': {
+            'bell': [{'bar': 2}, {'cube': 2}],
+            'trix': [{'barrel': 2}, {'gas': 10}, {'liquid': 5}],
 
-          gam2.money+=box.unitValue * amount;
+        },
+        'hum': {
+            'val': function (val) {
+                if (val <= 9000) {
+                    return val;
+                }
+                var t = ['', 'k', 'm', 'b', 't', 'G', 'T'];//,'P','V','R','X','Z'];
+                var i = 0;
+                var v = val;
+                while (v > 9000) {
+                    v = Math.round(v / 1000);
+                    i++;
+                }
+                ;
+                return v + t[i];
+            }
+        },
+        'slot': {
+            'add': function () {
+                var pub = {};
+                pub = {
+                    'item': null,
+                    'form': null,
+                    'amount': 0,
+                    'unitValue': 0,
+                    'addItem': function (item, form, amount = 0, unitValue = 0) {
+                        pub.item = item;
+                        pub.form = form;
+                        pub.amount = amount;
+                        pub.unitValue = unitValue;
+                        return pub;
+                    },
+                    'add': function (amountAdd) {
+                        this.amount += amountAdd;
+                        return pub;
+                    },
+                    'drop': function () {
+                        this.item = null;
+                        this.form = null;
+                        this.amount = 0;
+                        this.unitValue = 0;
+                        return pub;
+                    },
+                    'moveTo': function (slot, amount) {
+                        pub.add(-amount);
+                        slot.addItem(pub.item, pub.form, amount, pub.unitValue);
+                    },
+                    'next': null,
+                    'prev': null,
+                    'first': this,
+                    'last': this,
+                    'chain': function (slot) {
+                        pub.findLastSlot().next = slot;
+                        pub.last = slot;
+                        slot.last = slot;
+                        slot.first = pub.first;
+                        return pub;
+                    },
+                    'findLastSlot': function () {
+                        if (pub.next) {
+                            pub.last = pub.next.findLastSlot();
+                            return pub.last;
+                        }
+                        pub.last = pub;
+                        return pub;
+                    },
+                    'findItemSlot': function (item, form) {
+                        if (pub.item === item && pub.form === form) {
+                            return pub;
+                        }
+                        if (!pub.next) {
+                            return null;
+                        }
+                        return this.next.findItemSlot(item, form);
+                    },
+                    'findSlot4Item': function (item, form) {
+                        var r = pub.first.findItemSlot(item, form);
+                        if (r) {
+                            return r;
+                        }
+                        return pub.first.findEmpty();
+                    },
+                    'findEmpty': function () {
+                        return pub.findItemSlot(null, null);
+                    }
+                };
+                return pub;
+            },
+        },
+        'rd': {
+            'seed': 'gam2.random~`!1@#7$4)2&50%*8(93^6',
+            'r': {},
+            'restart': function (seedId, d = 0) {
+                var seedUsed = gam2.rd.seed + seedId;
+                this.r.restartSeed(seedUsed);
+                //console.log('restarted seed:' + seedUsed);
+            },
+            'getName': function (seedId) {
+                var seedUsed = gam2.rd.seed + seedId;
+                this.r.setSeed(seedUsed);
+                var suf = this.r.randomBytes(0, 1) + this.r.pickOneFrom(['um', 'um', 'is', 'ix', 'us', 'ad', 'am'], 0);
+                return this.r.randomName(this.r.rand(3, 4), 0, suf);
+            },
+        },
+        'loc': {
+            'add': function (name, type) {
+                var pub = {
+                    'name': name,
+                    'locx': 0,
+                    'parent': null,
+                    'child': null,
+                    'addChild': function (name, loc) {
 
-          console.log('Sold '+  amount + ' '+ box.slot.item + ' ' + (box.slot.form !=='pure'? box.slot.form : '') );
+                    }
+                };
+                return pub;
+            }
+        },
+        'vs': {
+            'opt': {},
+            'iddfn': {},
+            'dropDown': function (btn, box) {
+                //var btn= $(btn);
+                //console.log(btn);
+                $(btn).after($('<div>').html('test'));
 
-          if (show) {
-            ra.clear();
-            gam2.show();
-          }
+                /*
+                vs.from('dropdn', btn)
+                  .br()
+                  .addText('sdff');*/
+            },
+            'addOptionsFor': function (idd, opts, fn) {
+                this.opt[idd] = opts;
+                this.iddfn[idd] = fn;
+            },
+            'showOptionsFor': function (idd, box, ra) {
+                if (!(idd in this.opt)) {
+                    return;
+                }
+                for (var i in this.opt[idd]) {
+                    this.boxOpt(ra, this.opt[idd][i], i, idd, box);
+                }
+            },
+            'clearOptionsFor': function (idd) {
+                delete this.opt[idd];
+                delete this.iddfn[idd];
+            },
+            'selectOption': function (idd, opt, box) {
+                this.iddfn[idd].apply(gam2, [idd, opt, box]);
+            },
+            'boxOpt': function (ra, opt, i, idd, box) {
+
+                var ra0 = ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
+                    .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                    .addText('Option ' + (parseInt(i) + 1))
+                    .up()
+                    .container('media text-white pt-2')
+                    .container('media-body ml-2 mb-0 small lh-125', 'p')
+                    .container('d-block text-light', 'strong')
+                    .addText(opt.text)
+                    .up()
+                    .addText(opt.description)
+                    .br()
+                    .br();
+
+                ra0.addButton('Select',
+                    (function (i, j, w) {
+                        return function () {
+                            gam2.vs.selectOption(i, j, w)
+                        };
+                    })(idd, opt, box),
+                    'btn-light button'
+                )
+            }
         },
-        'search':function () {
-          gam2.addMenu('res');
-          ra.clear();
-          gam2.show();
-        },
-        'build':function() {
-          gam2.addMenu('util');
-          ra.clear();
-          gam2.show();
-        },
-        'cancel': function() {
-          gam2.menu=[];
-          gam2.menuType=0;
-          ra.clear();
-          gam2.show();
-        },
-        'selectMenu': function(to, box) {
-          to.push(box);
-          gam2.money -= box.cost;
-          gam2.powerUsage += box.powerUsage;
-          //console.log(util)
-          gam2.menu= [];
-          gam2.menuType=0;
-          ra.clear();
-          gam2.show();
-        },
-        'powerOn': function(box) {
-          box.generated= box.level*5;
-          gam2.power += box.generated;
-          ra.clear();
-          gam2.show();
-        },
-        'powerOff': function(box) {
-          gam2.power -= box.generated;
-          box.generated=0;
-          
-          ra.clear();
-          gam2.show();
-        },
-        'levelUp': function(box) {
-          gam2.money -= box.levelCost;
-          box.level++;
-          box.levelCost += Math.round(box.levelCost*1.5);
-          ra.clear();
-          gam2.show();
-        },
-        'smelterSell': function(m, box) {
-          var amount = box.amount;
-          gam2.money += box.unitValue * amount;
-          box.amount=0;
-          //console.log('sell' + resId + ' ' +  amount);
-          if (1) {
-            ra.clear();
-            gam2.show();
-          }
-        },
-        'smelterResource': function(idd, box) {
-        //console.log(box)
-        if(!(idd in gam2.vs.opt)) {
-          var options=[];
-          for(var i in gam2.res) {
-            options.push({
-              'text': 'Out: ' + gam2.res[i].name +' bar',
-              'description': 'In: ' + gam2.res[i].name,
-              'src':'res',
-              'id': i,
+        'addRes': function (to, name, form = 'pure', amount = 0, unitValue = 0, lvl = 0) {
+            to.push({
+                title: 'Resource',
+                name: name,
+                description: 'Asteroid resource',
+                level: 1,
+                amount: amount,
+                unitValue: unitValue,
+                slot: gam2.slot.add().addItem(name, form, amount, unitValue),
+                cost: 1500,
+                powerUsage: 15,
+                levelCost: 500,
+                color: 'dark',
             });
-          }
-          gam2.vs.addOptionsFor(idd, options, gam2.actions.smelterResourceSelect);
-        } else {
-          gam2.vs.clearOptionsFor(idd);
-        }
-        ra.clear();
-        gam2.show();
-          
         },
-        'smelterResourceSelect': function(idd, opt, box) {
-        //console.log('option:'+ i, box);
-        var i = opt.id;
-        box.resource=gam2.res[i].name;
-        box.amount=0;
-        box.unitValue=gam2.res[i].unitValue*10;
-        box.source = [opt.src, i];
-        
-        gam2.vs.clearOptionsFor(idd);
-        ra.clear();
-        gam2.show();
-          
+        'addCraft': function (to, name, resMax = 1, ques = 1) {
+            to.push({
+                title: 'Crafter',
+                name: name,
+                description: 'Craft items',
+                resMax: resMax,
+                queues: ques,
+                recepie: 0,
+                amount: 0,
+                unitValue: 0,
+                everySec: 3,
+                cost: 5000,
+                powerUsage: 15,
+                level: 1,
+                levelCost: 100,
+                color: 'crafter',
+            });
         },
-        'crafterSell': function(m, box) {
-          var amount = box.amount;
-          gam2.money += box.unitValue * amount;
-          box.amount=0;
-          //console.log('sell' + resId + ' ' +  amount);
-          if (1) {
-            ra.clear();
-            gam2.show();
-          }
+        'addAsmb': function (to, name, resMax = 2, ques = 1) {
+            to.push({
+                title: 'Assambler',
+                name: name,
+                description: 'Assamble items',
+                resMax: resMax,
+                queues: ques,
+                cost: 10000,
+                powerUsage: 5,
+                level: 1,
+                levelCost: 2000,
+                color: 'asmb',
+            });
         },
-        'crafterRecepie': function(idd, box) {
-          //console.log(box)
-          var outOpts=[];
-          if(!(idd in gam2.vs.opt)) {
-            var options=[];
-            for(var i in gam2.util) {
-              var b= gam2.util[i];
-              
-              if(b.title==='Smelter') {
-                if(!b.resource) {
-                  continue;
-                }
-              options.push({
-                'text': 'Out: ' + b.resource + ' liquid',
-                'description': 'In: ' + b.name +' bar',
-                'src':'util',
-                'id': i,
-              });
-              } else if(b.title==='Crafter' && idd!=='util'+i) {
-                if(!b.recepie) {
-                  continue;
-                }
-                console.log('b'+'util'+i+' '+idd);
-                options.push({
-                  'text': 'Out: '+ b.recepie + ' barrel',
-                  'description': 'In: '+ b.recepie + 'x2',
-                  'src': 'util',
-                  'id': i,
-                });
-              } else if(b.title==='Storage') {
-                //continue;
-                if(!box.recepie) {
-                  continue;
-                }
-                if(b.slotsMax > Object.keys(b.slot).length) {
-                  options.push({
-                    'text': 'To: '+ b.title +'('+b.level+')',
-                    'description':'Store to storage',
-                    'dest': 'util',
-                    'id': i,
-                    'item': box.recepie,
-                    'unitValue': box.unitValue,
-                  });
-                  console.log('testt');
-                }
-              }
-            }
-            //options.concat(outOpts);
-            gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
-            
-          } else {
-            gam2.vs.clearOptionsFor(idd);
-          }
-          ra.clear();
-          gam2.show();
+        'addSmelt': function (to, name, ques = 1) {
+            to.push({
+                title: 'Smelter',
+                name: name,
+                description: 'Smelt items',
+                queues: ques,
+                resource: 0,
+                amount: 0,
+                unitValue: 0,
+                everySec: 2,
+                cost: 2500,
+                powerUsage: 10,
+                level: 1,
+                levelCost: 100,
+                color: 'smelter',
+            });
         },
-        'crafterRecepieSelect': function(idd, opt, box) {
-          var i = opt.id;
-          console.log('option:'+ i);
-          if(opt.dest) {
-            box.dest = [opt.dest, i];
-            var bbox= gam2[opt.dest][i];
-            if(!(opt.item in bbox.slot)) {
-            bbox.slot[opt.item]={
-              'amount':0,
-              'unitValue': opt.unitValue,
-            };
-            }
-            //gam2.actions.store(opt.item)
-          } else {
-          box.recepie=gam2.res[i].name;
-          box.amount=0;
-          box.unitValue=gam2[opt.src][i].unitValue*10;
-          box.source = [opt.src, i];
-          }
-          
-          gam2.vs.clearOptionsFor(idd);
-          ra.clear();
-          gam2.show();
+        'addPower': function (to, name, lvl = 1) {
+            to.push({
+                title: 'Power',
+                name: name,
+                description: 'Adds power to the grid',
+                level: 1,
+                generated: 0,
+                max: 5,
+                cost: 1500,
+                powerUsage: 0,
+                levelCost: 200,
+                color: 'power',
+            });
         },
-        'storagePage': function(box) {
-          box.page++;
-          if(box.page > box.pageMax) {
-          box.page = 1;
-          }
-          ra.clear();
-          gam2.show();
-        }
-      },
-      'showCard': function(id, color='black', icon='asterisk', dashed=0, title='$', head='Money', texts= [], buttons= []) {
-          var ra3= ra
-                 // .container('m-2 p-2 bg-'+color+' ffa ffa-envelope fa-bgd fa-5x','div','')
-                 //  .addText('ddrr')
-                 //   .up()
 
-                  .container('m-2 p-2 bg-'+color+' rounded box-shadow text-light bg-card ' + (dashed? 'bg-dashed':''), 'div', '') //, {'id': 'card-'+ id})
-                  
-                  .container('fa fa-'+icon+' fa-bgd fa-5x','div','')
-                  .up()
+        'addSilo': function (to, name, slots = 1, max = 150) {
+            to.push({
+                title: 'Silo',
+                name: name,
+                description: 'Silo for resources',
+                slots: new Array(slots),
+                max: max,
+                level: 1,
+                cost: 650,
+                powerUsage: 3,
+                levelCost: 100,
+                color: 'silo',
+            });
+        },
+        'addStorage': function (to, name, slots = 5, max = 100) {
+            to.push({
+                title: 'Storage',
+                name: name,
+                description: 'Storage for items',
+                slot: {},
+                slotsMax: slots,
+                cargo: 0,
+                cargoMax: max,
+                level: 1,
+                cost: 500,
+                powerUsage: 5,
+                levelCost: 250,
+                color: 'storage',
+                page: 1,
+                pageMax: Math.ceil(slots / 3),
+            });
+        },
+        'addMenu': function (name) {
+            if (name === 'util') {
+                this.addPower(this.menu, 'Power 1');
+                this.addSmelt(this.menu, 'Smelter 1');
+                this.addCraft(this.menu, 'Crafter 1');
+                this.addStorage(this.menu, 'Storage 1');
+                this.addSilo(this.menu, 'Silo 1')
+                this.addAsmb(this.menu, 'Assambler 1');
 
-                  .container('','div','position:relative;top:0px;z-index:997')
-                  .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                  .addText(title)
-                  .up()
-                  .container('media text-white pt-2')
-                  .container('media-body ml-2 mb-0 small lh-125', 'p')
-                  .container('d-block text-light', 'strong')
-                  .addText(head)
-                  .up();
-          while (texts.length < 3) {
-            texts.push(0);
-          }
-          for(var t in texts) {
-            if(texts[t]) {
-              ra3.addText(texts[t]);
+            } else if (name === 'res') {
+                var seedId = 'name' + gam2.res.length;
+                this.rd.restart(seedId, 1);
+                this.addRes(this.menu, this.rd.getName(seedId), 'pure', 0, 2 + 4 * gam2.res.length);
+                this.addRes(this.menu, this.rd.getName(seedId), 'pure', 0, 2 + 4 * (gam2.res.length + 1));
+
             }
-            ra3.br();
-          }
-          
-          for(var b in buttons) {
-            var bt= buttons[b];
-            ra3.addButton(bt[0], bt[1], 'button '+ bt[2]);
-          }
-          return ra3;
-          
-      },
-      'show': function () {
-        var box;
-        this.showCard('money', 'black', '', 0, '$', 'Money', [
-          'Amount: $' + this.hum.val(this.money),
-          'Power: '+ this.powerUsage +' / '+ this.power
-          ]);
-          
-        
-        this.showCard('empty', 'black', 'plus i-empty', 1, 'Empty', '', ['','',''], [
-            ['Build', false, 'btn-dark button']
-          ])
-          ;
+            this.menuType = name;
+        },
+        'init': function (seed = 512) {
+            var seedHash = rd.hashCode(gam2.rd.seed + seed);
 
-        for(var r in this.res) {
-          box = this.res[r];
-          var btns = [];
-          if (box.title === 'Resource') {
-            btns.push(['Sell 1', (function(b) { return function() { gam2.actions.sell(b, 1) }; })(box), 'btn-warning button']);
-            btns.push(['Sell *', (function(b) { return function() { gam2.actions.sell(b) }; })(box), 'btn-danger button']);
-            if (gam2.money > box.levelCost) {
-              btns.push(['Lvl up',
-                (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
-                'btn-success button']);
-            }
-          }
-          box.vs = this.showCard(
-            'res'+ r,
-            box.color, 'asterisk i-resource anim-res anim-stop', 0,
-            box.title+' '+box.level, box.name,
-            [
-              'Amount: ' + box.slot.amount+' $'+gam2.hum.val(box.slot.unitValue * box.slot.amount),
-              'Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')',
-            ], btns
-          ).container('tik','div');
-        }
-        
-        var card=0,tikSec=0,title='',icon='',head='',texts=[],btns=[];
+            this.rd.r = rd.sessionWithSeed(seedHash);
 
-        for(var m in this.util) {
-          card=0;
-        box= this.util[m];
-
-        let ra2= ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px;')
-        .container('border-bottom border-gray pb-2 mb-0', 'h6')
-        .addText(box.title+ ' '+box.level)
-        .up()
-        .container('media text-white pt-2')
-        .container('media-body ml-2 mb-0 small lh-125', 'p')
-        .container('d-block text-light', 'strong')
-        //.addText(' ')
-        //.up()
-        
-        //.addText(box.description)
-
-        if(box.title==='Smelter') {
-          card=1;
-          title=box.title;
-          icon='burn anim-smelter i-smelter anim-stop';
-          
-          if(box.resource) {
-            head='Out: '+ box.resource+' bar';
-            texts=[
-              'In: ' + box.resource,
-              'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
-              'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
-            ];
-          } else {
-            head='No resource';
-          }
-
-          btns=[['Select',
-            (function(m, box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(m,box),
-            'btn-warning button'
-          ]];
-
-          if (box.resource) {
-            btns.push(['Sell *',
-              (function(m, box) { return function() {gam2.actions.smelterSell(m, box)};})(m, box),
-              'btn-danger button']);
-          }
-
-          if (gam2.money > box.levelCost) {
-            btns.push(['Lvl up',
-              (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
-              'btn-success button']);
-          }
-
-          tikSec = 2;
-        
-        } else if (box.title==='Crafter') {
-          if(box.recepie) {
-            ra2.addText('Out: '+ box.recepie+' liquid')
-               .up()
-               .addText('In: '+box.recepie+' bar').br()
-               .addText('Amount: '+ box.amount+' $'+ gam2.hum.val(box.amount* box.unitValue)).br()
-               .addText('Level: '+ box.level+ ' (Next: $'+gam2.hum.val(box.levelCost)+')')
-               ;
-          } else {
-            ra2.addText('No recepie').br().br().br();
-          }
-          ra2.up().br()
-            .addButton('Select', 
-           (function(m,box) { return function(e) { gam2.actions.crafterRecepie( 'util'+m, box) };})(m, box),
-            'btn-warning button');
-            
-         if (box.recepie) {
-            ra2.up().addButton('Sell *', 
-            (function(m, box) { return function() {gam2.actions.crafterSell(m, box)};})(m, box),
-            'btn-danger button')
-          }
-        
-          if (gam2.money > box.levelCost) {
-            ra2.up().addButton('Lvl up',
-              (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
-              'btn-success button');
-          }
-          
-          ra2.up().container('tik','div','animation-duration:3s');
-          
-        } else if (box.title==='Storage') {
-          var ra3 = ra2
-            .addText('Page: '+ box.page +' / '+ box.pageMax)
-            .up();
-            var s=0;
-            var perPage= 3;
-            var pag=1;
-            var b=0;
-            for(var i in box.slot) {
-              s++;
-              if(pag == box.page) {
-                b++;
-                ra3.addText(i+': '+ box.slot[i].amount + ' $'+gam2.hum.val(box.slot[i].amount * box.slot[i].unitValue))
-                 .br();
-              }
-              pag= Math.floor(s/perPage)+1;
-            }
-            if(s<box.slotsMax) {
-              for(var i=s;i<box.slotsMax;i++) {
-                s++;
-                if(pag == box.page) {
-                  b++;
-                  ra3.addText('s'+i+': None')
-                  .br();
+            var seedId = 'name' + gam2.res.length;
+            this.rd.restart(seedId, 1);
+            this.addRes(this.res, this.rd.getName(seedId), 'pure', 10, 5, 2);
+            this.addRes(this.res, this.rd.getName(seedId), 'pure', 25, 10, 2);
+            this.show();
+            this.initEvents();
+        },
+        'initEvents': function () {
+            //setInterval(this.event.everySec, 1000);
+        },
+        'event': {
+            'tim': {},
+            'everySec': function () {
+                for (let r in gam2.res) {
+                    var box = gam2.res[r];
+                    gam2.actions.mine(box);
                 }
-                pag= Math.floor(s/perPage)+1;
-              }
+                for (let u in gam2.util) {
+                    var box = gam2.util[u];
+                    if (box && box.everySec) {
+                        if (!('util' + u in gam2.event.tim)) {
+                            gam2.event.tim['util' + u] = 0;
+                        }
+                        gam2.event.tim['util' + u]++;
+                        if (gam2.event.tim['util' + u] !== box.everySec) {
+                            continue;
+                        }
+                        gam2.event.tim['util' + u] = 0;
+
+                        var maxAmount = 0;
+                        var boxSrc;
+                        if (box.title == 'Smelter') {
+                            if (!box.resource) {
+                                continue;
+                            }
+                            //console.log(box.source)
+                            //continue;
+                            boxSrc = gam2[box.source[0]][box.source[1]];
+                            maxAmount = box.level > boxSrc.amount ? boxSrc.amount : box.level;
+                            boxSrc.amount -= maxAmount;
+                            box.amount += maxAmount;
+                        } else if (box.title == 'Crafter') {
+                            if (!box.recepie) {
+                                continue;
+                            }
+                            boxSrc = gam2[box.source[0]][box.source[1]];
+                            maxAmount = box.level > boxSrc.amount ? boxSrc.amount : box.level;
+                            boxSrc.amount -= maxAmount;
+                            if (box.dest) {
+                                var bbox = gam2[box.dest[0]][box.dest[1]];
+                                bbox.slot[box.recepie].amount += maxAmount;
+
+                            } else {
+                                box.amount += maxAmount;
+                            }
+                        }
+                    }
+                }
+                gam2.actions.show();
             }
-            if(b < 3) {
-              for(var i=b;b < 3;b++){
-                ra3.br();
-              }
+        },
+        'actions': {
+            'show': function () {
+                ra.clear();
+                gam2.show();
+            },
+            'mine': function (box) {
+                box.slot.add(box.level);
+            },
+            'sell': function (box, amount = -1, show = 1) {
+                amount = amount < 0 ? box.slot.amount : amount;
+                if (amount > box.slot.amount) {
+                    return;
+                }
+
+                box.slot.add(-amount);
+
+                gam2.money += box.unitValue * amount;
+
+                console.log('Sold ' + amount + ' ' + box.slot.item + ' ' + (box.slot.form !== 'pure' ? box.slot.form : ''));
+
+                if (show) {
+                    ra.clear();
+                    gam2.show();
+                }
+            },
+            'search': function () {
+                gam2.addMenu('res');
+                ra.clear();
+                gam2.show();
+            },
+            'build': function () {
+                gam2.addMenu('util');
+                ra.clear();
+                gam2.show();
+            },
+            'cancel': function () {
+                gam2.menu = [];
+                gam2.menuType = 0;
+                ra.clear();
+                gam2.show();
+            },
+            'selectMenu': function (to, box) {
+                to.push(box);
+                gam2.money -= box.cost;
+                gam2.powerUsage += box.powerUsage;
+                //console.log(util)
+                gam2.menu = [];
+                gam2.menuType = 0;
+                ra.clear();
+                gam2.show();
+            },
+            'powerOn': function (box) {
+                box.generated = box.level * 5;
+                gam2.power += box.generated;
+                ra.clear();
+                gam2.show();
+            },
+            'powerOff': function (box) {
+                gam2.power -= box.generated;
+                box.generated = 0;
+
+                ra.clear();
+                gam2.show();
+            },
+            'levelUp': function (box) {
+                gam2.money -= box.levelCost;
+                box.level++;
+                box.levelCost += Math.round(box.levelCost * 1.5);
+                ra.clear();
+                gam2.show();
+            },
+            'smelterSell': function (m, box) {
+                var amount = box.amount;
+                gam2.money += box.unitValue * amount;
+                box.amount = 0;
+                //console.log('sell' + resId + ' ' +  amount);
+                if (1) {
+                    ra.clear();
+                    gam2.show();
+                }
+            },
+            'smelterResource': function (idd, box) {
+                //console.log(box)
+                if (!(idd in gam2.vs.opt)) {
+                    var options = [];
+                    for (var i in gam2.res) {
+                        options.push({
+                            'text': 'Out: ' + gam2.res[i].name + ' bar',
+                            'description': 'In: ' + gam2.res[i].name,
+                            'src': 'res',
+                            'id': i,
+                        });
+                    }
+                    gam2.vs.addOptionsFor(idd, options, gam2.actions.smelterResourceSelect);
+                } else {
+                    gam2.vs.clearOptionsFor(idd);
+                }
+                ra.clear();
+                gam2.show();
+
+            },
+            'smelterResourceSelect': function (idd, opt, box) {
+                //console.log('option:'+ i, box);
+                var i = opt.id;
+                box.resource = gam2.res[i].name;
+                box.amount = 0;
+                box.unitValue = gam2.res[i].unitValue * 10;
+                box.source = [opt.src, i];
+
+                gam2.vs.clearOptionsFor(idd);
+                ra.clear();
+                gam2.show();
+
+            },
+            'crafterSell': function (m, box) {
+                var amount = box.amount;
+                gam2.money += box.unitValue * amount;
+                box.amount = 0;
+                //console.log('sell' + resId + ' ' +  amount);
+                if (1) {
+                    ra.clear();
+                    gam2.show();
+                }
+            },
+            'crafterRecepie': function (idd, box) {
+                //console.log(box)
+                var outOpts = [];
+                if (!(idd in gam2.vs.opt)) {
+                    var options = [];
+                    for (var i in gam2.util) {
+                        var b = gam2.util[i];
+
+                        if (b.title === 'Smelter') {
+                            if (!b.resource) {
+                                continue;
+                            }
+                            options.push({
+                                'text': 'Out: ' + b.resource + ' liquid',
+                                'description': 'In: ' + b.name + ' bar',
+                                'src': 'util',
+                                'id': i,
+                            });
+                        } else if (b.title === 'Crafter' && idd !== 'util' + i) {
+                            if (!b.recepie) {
+                                continue;
+                            }
+                            console.log('b' + 'util' + i + ' ' + idd);
+                            options.push({
+                                'text': 'Out: ' + b.recepie + ' barrel',
+                                'description': 'In: ' + b.recepie + 'x2',
+                                'src': 'util',
+                                'id': i,
+                            });
+                        } else if (b.title === 'Storage') {
+                            //continue;
+                            if (!box.recepie) {
+                                continue;
+                            }
+                            if (b.slotsMax > Object.keys(b.slot).length) {
+                                options.push({
+                                    'text': 'To: ' + b.title + '(' + b.level + ')',
+                                    'description': 'Store to storage',
+                                    'dest': 'util',
+                                    'id': i,
+                                    'item': box.recepie,
+                                    'unitValue': box.unitValue,
+                                });
+                                console.log('testt');
+                            }
+                        }
+                    }
+                    //options.concat(outOpts);
+                    gam2.vs.addOptionsFor(idd, options, gam2.actions.crafterRecepieSelect);
+
+                } else {
+                    gam2.vs.clearOptionsFor(idd);
+                }
+                ra.clear();
+                gam2.show();
+            },
+            'crafterRecepieSelect': function (idd, opt, box) {
+                var i = opt.id;
+                console.log('option:' + i);
+                if (opt.dest) {
+                    box.dest = [opt.dest, i];
+                    var bbox = gam2[opt.dest][i];
+                    if (!(opt.item in bbox.slot)) {
+                        bbox.slot[opt.item] = {
+                            'amount': 0,
+                            'unitValue': opt.unitValue,
+                        };
+                    }
+                    //gam2.actions.store(opt.item)
+                } else {
+                    box.recepie = gam2.res[i].name;
+                    box.amount = 0;
+                    box.unitValue = gam2[opt.src][i].unitValue * 10;
+                    box.source = [opt.src, i];
+                }
+
+                gam2.vs.clearOptionsFor(idd);
+                ra.clear();
+                gam2.show();
+            },
+            'storagePage': function (box) {
+                box.page++;
+                if (box.page > box.pageMax) {
+                    box.page = 1;
+                }
+                ra.clear();
+                gam2.show();
             }
-            
-            ra3
-            .addButton('Page', 
-              (function(box) { return function() { gam2.actions.storagePage(box) };})(box),
-              'btn-light button')
-            .addButton('Sell X', false, 'btn-danger button')
-            .addButton('Lvl up', false, 'btn-success button');
+        },
+        'showCard': function (id, color = 'black', icon = 'asterisk', dashed = 0, title = '$', head = 'Money', texts = [], buttons = []) {
+            if (head === '') {
+                head = '&nbsp;';
+            }
+            var ra3 = ra
+                .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card ' + (dashed ? 'bg-dashed' : ''), 'div', '')
 
+                .container('fa fa-' + icon + ' fa-bgd fa-5x', 'div', '')
+                .up()
 
-          tikSec = 5;
-          ra2.up().container('tik','div','animation-duration:5s');
-        } else if (box.title==='Silo') {
-          ra2.up().br().br().br().br()
-            .addButton('Lvl up', false, 'btn-success button')
-            .addButton('Sell *', false, 'btn-warning button');
-
-          tikSec = 5;
-          ra2.up().container('tik','div','animation-duration:5s');
-          
-        } else if (box.title=='Power') {
-          var ra3= ra2.up().br()
-            .addText('Level: '+ box.level+ ' (Next: $'+gam2.hum.val(box.levelCost)+')')
-            .br()
-            .addText('Generated: ' + box.generated +' / '+ box.level * 5)
-            .br().br();
-          if(box.generated === 0) {
-            ra3
-            .addButton('On', 
-            (function(box) { return function() { gam2.actions.powerOn(box) };})(box),
-             'btn-success button');
-             if(gam2.money > box.levelCost) {
-              ra3.addButton('Lvl up',
-              (function(box) { return function() { gam2.actions.levelUp(box) };})(box),
-             'btn-success button');
-             }
-          } else {
-             ra3
-            .addButton('Off', 
-            (function(box) { return function() { gam2.actions.powerOff(box) };})(box),
-             'btn-success button');
-
-          }
-          ra2.up().container('tik','div','animation-duration:10s');
-        }
-        
-        if(card) {
-        var q = this.showCard('util'+m, box.color, icon, 0, title, head, texts, btns);
-        
-        if (tikSec) {
-          q.container('tik','div','animation-duration:'+tikSec+'s');
-        }
-        }
-        
-         this.vs.showOptionsFor('util'+m, box, ra);
-        }
-        if(this.menu.length==0) {
-                ra.container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                .container('', 'div', 'position:relative;top:0px;z-index:997')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
-                .addText('+1 Resource')
+                .addText(title)
                 .up()
                 .container('media text-white pt-2')
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
                 .container('d-block text-light', 'strong')
-                .addText('Up for more?')
-                .up()
-                .br()
-                .br()
-                .br()
-                .addButton('Search', gam2.actions.search, 'btn-light button')
+                .addText(head)
+                .up();
+            while (texts.length < 3) {
+                texts.push(0);
+            }
+            for (var t in texts) {
+                if (texts[t]) {
+                    ra3.addText(texts[t]);
+                }
+                ra3.br();
+            }
+
+            for (var b in buttons) {
+                var bt = buttons[b];
+                ra3.addButton(bt[0], bt[1], 'button ' + bt[2]);
+            }
+            return ra3;
+
+        },
+        'show': function () {
+            var box;
+            this.showCard('money', 'money', '', 0, '$', 'Money', [
+                'Amount: $' + this.hum.val(this.money),
+                'Power: ' + this.powerUsage + ' / ' + this.power
+            ]);
+
+
+            this.showCard('empty', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
+                ['Build', false, 'btn-dark button']
+            ])
+            ;
+
+            for (var r in this.res) {
+                box = this.res[r];
+                var btns = [];
+                if (box.title === 'Resource') {
+                    btns.push(['Sell 1', (function (b) {
+                        return function () {
+                            gam2.actions.sell(b, 1)
+                        };
+                    })(box), 'btn-warning button']);
+                    btns.push(['Sell *', (function (b) {
+                        return function () {
+                            gam2.actions.sell(b)
+                        };
+                    })(box), 'btn-danger button']);
+                    if (gam2.money > box.levelCost) {
+                        btns.push(['Lvl up',
+                            (function (box) {
+                                return function () {
+                                    gam2.actions.levelUp(box)
+                                };
+                            })(box),
+                            'btn-success button']);
+                    }
+                }
+                box.vs = this.showCard(
+                    'res' + r,
+                    box.color, 'asterisk i-resource anim-res anim-stop', 0,
+                    box.title + ' ' + box.level, box.name,
+                    [
+                        'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
+                        'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
+                    ], btns
+                ).container('tik', 'div');
+                //gam2.res[1].vs.parent().parent().parent().parent().clear()
+            }
+
+            var card = 0, tikSec = 0, title = '', icon = '', head = '', texts = [], btns = [];
+
+            for (var m in this.util) {
+                card = 0;
+                tikSec = 0;
+                title = '';
+                icon = '';
+                head = '';
+                texts = [];
+                btns = [];
+
+                box = this.util[m];
+
+                if (box.title === 'Smelter') {
+                    card = 1;
+                    title = box.title + ' ' + box.level;
+                    icon = 'burn anim-smelter i-smelter anim-stop';
+
+                    if (box.resource) {
+                        head = 'Out: ' + box.resource + ' bar';
+                        texts = [
+                            'In: ' + box.resource,
+                            'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
+                            'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
+                        ];
+                    } else {
+                        head = 'No resource';
+                    }
+
+                    btns = [['Select',
+                        (function (m, box) {
+                            return function (e) {
+                                gam2.actions.smelterResource('util' + m, box)
+                            };
+                        })(m, box),
+                        'btn-warning button'
+                    ]];
+
+                    if (box.resource) {
+                        btns.push(['Sell *',
+                            (function (m, box) {
+                                return function () {
+                                    gam2.actions.smelterSell(m, box)
+                                };
+                            })(m, box),
+                            'btn-danger button']);
+                    }
+
+                    if (gam2.money > box.levelCost) {
+                        btns.push(['Lvl up',
+                            (function (box) {
+                                return function () {
+                                    gam2.actions.levelUp(box)
+                                };
+                            })(box),
+                            'btn-success button']);
+                    }
+
+                    tikSec = 2;
+
+                } else if (box.title === 'Crafter') {
+                    card = 1;
+                    title = box.title + ' ' + box.level;
+                    icon = 'cog anim-crafter i-crafter anim-stop';
+
+                    if (box.recepie) {
+                        head = 'Out: ' + box.recepie + ' liquid';
+                        texts = [
+                            'In: ' + box.recepie + ' bar',
+                            'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
+                            'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
+                        ];
+
+                    } else {
+                        head = 'No recepie';
+                    }
+
+                    btns = [['Select', (function (m, box) {
+                        return function (e) {
+                            gam2.actions.crafterRecepie('util' + m, box)
+                        };
+                    })(m, box), 'btn-warning button']];
+
+                    if (box.recepie) {
+                        btns.push(['Sell *', (function (m, box) {
+                            return function () {
+                                gam2.actions.crafterSell(m, box)
+                            };
+                        })(m, box), 'btn-danger button']);
+                    }
+
+                    if (gam2.money > box.levelCost) {
+                        btns.push(['Lvl up', (function (box) {
+                            return function () {
+                                gam2.actions.levelUp(box)
+                            };
+                        })(box), 'btn-success button']);
+                    }
+
+                    tikSec = 3;
+
+                } else if (box.title === 'Storage') {
+                    card = 1;
+                    title = box.title + ' ' + box.level;
+                    icon = 'expand anim-storage i-storage anim-stop';
+                    head = 'Page: ' + box.page + ' / ' + box.pageMax;
+                    texts = [];
+
+                    var s = 0;
+                    var perPage = 3;
+                    var pag = 1;
+                    var b = 0;
+                    for (var i in box.slot) {
+                        s++;
+                        if (pag == box.page) {
+                            b++;
+                            texts.push(i + ': ' + box.slot[i].amount + ' $' + gam2.hum.val(box.slot[i].amount * box.slot[i].unitValue));
+                        }
+                        pag = Math.floor(s / perPage) + 1;
+                    }
+                    if (s < box.slotsMax) {
+                        for (var i = s; i < box.slotsMax; i++) {
+                            s++;
+                            if (pag == box.page) {
+                                b++;
+                                texts.push('s' + i + ': None');
+                            }
+                            pag = Math.floor(s / perPage) + 1;
+                        }
+                    }
+
+                    btns = [
+                        ['Page', (function (box) {
+                            return function () {
+                                gam2.actions.storagePage(box)
+                            };
+                        })(box), 'btn-light button'],
+                        ['Sell X', false, 'btn-danger button'],
+                        ['Lvl up', false, 'btn-success button'],
+                    ];
+
+                    tikSec = 5;
+                } else if (box.title === 'Silo') {
+                    ra2.up().br().br().br().br()
+                        .addButton('Lvl up', false, 'btn-success button')
+                        .addButton('Sell *', false, 'btn-warning button');
+
+                    tikSec = 5;
+                    ra2.up().container('tik', 'div', 'animation-duration:5s');
+
+                } else if (box.title === 'Power') {
+                    card = 1;
+                    title = box.title;
+                    icon = 'layer-group anim-storage i-storage anim-stop';
+                    head = '';
+                    texts = [
+                        'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')',
+                        'Generated: ' + box.generated + ' / ' + box.level * 5
+                    ];
+
+                    if (box.generated === 0) {
+                        btns.push(['On', (function (box) {
+                            return function () {
+                                gam2.actions.powerOn(box)
+                            };
+                        })(box), 'btn-success button']);
+                        if (gam2.money > box.levelCost) {
+                            btns.push(['Lvl up', (function (box) {
+                                return function () {
+                                    gam2.actions.levelUp(box)
+                                };
+                            })(box), 'btn-success button']);
+                        }
+                    } else {
+                        btns.push(['Off', (function (box) {
+                            return function () {
+                                gam2.actions.powerOff(box)
+                            };
+                        })(box), 'btn-success button']);
+                    }
+                    tikSec = 10;
+                }
+
+                if (card) {
+                    var q = this.showCard('util' + m, box.color, icon, 0, title, head, texts, btns);
+
+                    if (tikSec) {
+                        q.container('tik', 'div', 'animation-duration:' + tikSec + 's');
+                    }
+                }
+
+                this.vs.showOptionsFor('util' + m, box, ra);
+            }
+            if (this.menu.length == 0) {
+                ra.container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                    .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                    .addText('+1 Resource')
+                    .up()
+                    .container('media text-white pt-2')
+                    .container('media-body ml-2 mb-0 small lh-125', 'p')
+                    .container('d-block text-light', 'strong')
+                    .addText('Up for more?')
+                    .up()
+                    .br()
+                    .br()
+                    .br()
+                    .addButton('Search', gam2.actions.search, 'btn-light button')
                 ;
 
-          ra.container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
-          .container('border-bottom border-gray pb-2 mb-0', 'h6')
-          .addText('+1 Utility')
-          .up()
-          .container('media text-white pt-2')
-          .container('media-body ml-2 mb-0 small lh-125', 'p')
-          .container('d-block text-light', 'strong')
-          .addText('Need an utility?')
-          .up()
-          .br()
-          .br()
-          .br()
-          .addButton('Build', gam2.actions.build, 'btn-light button')
-          ;
-        } else {
-          var powerLeft = gam2.power - gam2.powerUsage;
-          for(var m in this.menu) {
-            box= this.menu[m];
-            var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
-            .container('border-bottom border-gray pb-2 mb-0', 'h6')
-            .addText(box.title)
-            .up()
-            .container('media text-white pt-2')
-            .container('media-body ml-2 mb-0 small lh-125', 'p')
-            .container('d-block text-light', 'strong')
-            .addText(box.name)
-            .up()
-            .addText(box.description)
-            .br()
-            .addText('Cost: '+box.cost)
-            .br()
-            .addText('Power Usage: '+box.powerUsage)
-            .br();
-            if(gam2.money < box.cost) {
-              ra0
-                .container('d-block text-danger')
-                .addText('Low money');
-            } else if (powerLeft < box.powerUsage ) {  
-              
-              ra0
-                .container('d-block text-danger')
-                .addText('Low power');
+                ra.container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                    .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                    .addText('+1 Utility')
+                    .up()
+                    .container('media text-white pt-2')
+                    .container('media-body ml-2 mb-0 small lh-125', 'p')
+                    .container('d-block text-light', 'strong')
+                    .addText('Need an utility?')
+                    .up()
+                    .br()
+                    .br()
+                    .br()
+                    .addButton('Build', gam2.actions.build, 'btn-light button')
+                ;
             } else {
-              ra0.addButton('Select',
-              (function(to,w) { return function() { gam2.actions.selectMenu(to,w) };})(gam2[gam2.menuType], box),
-              'btn-light button'
-            )
-            ;
+                var powerLeft = gam2.power - gam2.powerUsage;
+                for (var m in this.menu) {
+                    box = this.menu[m];
+                    var ra0 = ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                        .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                        .addText(box.title)
+                        .up()
+                        .container('media text-white pt-2')
+                        .container('media-body ml-2 mb-0 small lh-125', 'p')
+                        .container('d-block text-light', 'strong')
+                        .addText(box.name)
+                        .up()
+                        .addText(box.description)
+                        .br()
+                        .addText('Cost: ' + box.cost)
+                        .br()
+                        .addText('Power Usage: ' + box.powerUsage)
+                        .br();
+                    if (gam2.money < box.cost) {
+                        ra0
+                            .container('d-block text-danger')
+                            .addText('Low money');
+                    } else if (powerLeft < box.powerUsage) {
+
+                        ra0
+                            .container('d-block text-danger')
+                            .addText('Low power');
+                    } else {
+                        ra0.addButton('Select',
+                            (function (to, w) {
+                                return function () {
+                                    gam2.actions.selectMenu(to, w)
+                                };
+                            })(gam2[gam2.menuType], box),
+                            'btn-light button'
+                        )
+                        ;
+                    }
+                }
+                ra.container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                    .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                    .addText('Back')
+                    .up()
+                    .container('media text-white pt-2')
+                    .container('media-body ml-2 mb-0 small lh-125', 'p')
+                    .container('d-block text-light', 'strong')
+                    .addText('Go to previous grid')
+                    .up()
+                    .br()
+                    .br()
+                    .br()
+                    .addButton('Cancel', gam2.actions.cancel, 'btn-light button')
+                ;
             }
-          }
-          ra.container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
-          .container('border-bottom border-gray pb-2 mb-0', 'h6')
-          .addText('Back')
-          .up()
-          .container('media text-white pt-2')
-          .container('media-body ml-2 mb-0 small lh-125', 'p')
-          .container('d-block text-light', 'strong')
-          .addText('Go to previous grid')
-          .up()
-          .br()
-          .br()
-          .br()
-          .addButton('Cancel', gam2.actions.cancel, 'btn-light button')
-          ;
         }
-      }
-  };
+    };
+
+    //https://fontawesome.com/v5.15/icons?d=listing&p=4&s=solid&m=free
 </script>
 </body>
 </html>
