@@ -22,18 +22,30 @@ var TgeFn = function (rd) {
       return v;
     }
     
-    pub.lexer= function (v, type= 1) {
+    pub.lexer= function (v, type= 1, actions = {'main': {'a': function () {},'d': function () {}, 'j': function () {}}, 'j': {'l': function () {},'n': function () {},'p': function () {}}}) {
       var getI = function(v) {
         v++;
-        var s,k;
+        var s,k,v2;
         if (type === 1) {
           s = ['a', 'd', 'j', 'r', 's'];
           k = Math.ceil(v / 25) - 1;//0,1,2,3,4
         } else if (type === 0) {
           s = ['a', 'd', 'j'];
           k = Math.ceil(v / 34) - 1;//0,1,2
+        } else if (type === 2) {
+          s = Object.keys(actions.main);
+          k = Math.ceil(v / Math.ceil(100/s.length)) - 1;//0,1,2, ..
         }
-        var v2 = v % 20;
+        if (type > 1 ) {
+          if (k in actions) {
+            var kl = Object.keys(actions[k]);
+            v2 = Math.ceil(v / Math.ceil(100/kl.length)) - 1;
+
+            return Object.keys(actions[k])[v2 % kl.length];
+          }
+          return s[k];
+        }
+        v2 = v % 20;
         if (k === 2 && v2 % 5 === 1) {
           return 'l';
         } else if (k === 2 && v2 % 5 === 2) {

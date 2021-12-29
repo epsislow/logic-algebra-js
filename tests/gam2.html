@@ -36,11 +36,11 @@
     .bg-back {
       background-color: mediumslateblue;
     }
-    .bg-crafter {
-      background-color: #773333;
-    }
     .bg-smelter {
       background-color: #444499;
+    }
+    .bg-crafter {
+      background-color: #773333;
     }
     .bg-power {
       background-color: #224460;
@@ -61,7 +61,7 @@
     .bg-card {
        float:left;
        width: 170px;
-       height: 160px;
+       height: 170px;
        border: 1px solid #fff;
        position: relative;
        z-index: 20;
@@ -84,23 +84,46 @@
       border-style: dashed;
       border-width: 1px;
     }
-    
-    
-    .anim-ast {
+
+    .btn-warning {
+      background-color: #dd9107;
+      border-color: #dd9107;
+    }
+
+    .i-empty { color: #555555; }
+    .i-resource { color: #000000; }
+    .i-smelter { color: #222255; }
+    .i-crafter { color: #552222; }
+    .i-power { color: #112230; }
+    .i-silo { color: #224411; }
+    .i-storage { color: #272227; }
+    .i-asmb { color: #331717; }
+    .i-back { color: #3b28cc; }
+    .i-new-resource { color: #002525; }
+    .i-new-utility { color: #351d07; }
+
+    .anim-stop {
+      animation: none !important;
+    }
+
+    .anim-smelter {
+      animation: giggle 0.5s infinite ease-in-out alternate-reverse;
+    }
+
+    @keyframes giggle {
+      0% {color: #111133; top:5px;}
+      25% {color: #222288; top:3px;}
+      74% {color: #222255; top:5px}
+      100% {color: #222288; top:7px}
+    }
+    .anim-res {
         animation: rotation 8s infinite linear reverse;
       }
       
       @keyframes rotation {
-        from {
-          transform: rotate(0deg);
-        }
-      
-        to {
-          transform: rotate(359deg);
-        }
+        from { transform: rotate(0deg);}
+        to { transform: rotate(359deg); }
       }
-      
-    
     
     .tik {
       margin: 3px 0;
@@ -114,7 +137,7 @@
       /*animation-play-state: paused;*/
     }
     @keyframes mine {
-      0% {width:0px; background-color: slategray;}
+      0% {width:0; background-color: slategray;}
       /*50% {width:50%; background-color: greenyellow; }*/
       100% {width: 135px; background-color: darkseagreen; }
     }
@@ -367,7 +390,7 @@ window.onerror = function (message, url, line, column, error) {
       },
       'boxOpt': function(ra, opt, i, idd, box) {
         
-        var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
+        var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('Option '+ (parseInt(i)+1))
                 .up()
@@ -839,7 +862,7 @@ window.onerror = function (message, url, line, column, error) {
           ]);
           
         
-        this.showCard('empty', 'black', 'plus', 1, 'Empty', '', ['','',''], [
+        this.showCard('empty', 'black', 'plus i-empty', 1, 'Empty', '', ['','',''], [
             ['Build', false, 'btn-dark button']
           ])
           ;
@@ -858,7 +881,7 @@ window.onerror = function (message, url, line, column, error) {
           }
           box.vs = this.showCard(
             'res'+ r,
-            box.color, 'asterisk anim-ast', 0,
+            box.color, 'asterisk i-resource anim-res anim-stop', 0,
             box.title+' '+box.level, box.name,
             [
               'Amount: ' + box.slot.amount+' $'+gam2.hum.val(box.slot.unitValue * box.slot.amount),
@@ -872,7 +895,8 @@ window.onerror = function (message, url, line, column, error) {
         for(var m in this.util) {
           card=0;
         box= this.util[m];
-        let ra2= ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px;')
+
+        let ra2= ra.container('m-2 p-2 bg-'+box.color+' rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px;')
         .container('border-bottom border-gray pb-2 mb-0', 'h6')
         .addText(box.title+ ' '+box.level)
         .up()
@@ -883,11 +907,11 @@ window.onerror = function (message, url, line, column, error) {
         //.up()
         
         //.addText(box.description)
-        ;
+
         if(box.title==='Smelter') {
           card=1;
           title=box.title;
-          icon='envelope i-smelter';
+          icon='burn anim-smelter i-smelter anim-stop';
           
           if(box.resource) {
             head='Out: '+ box.resource+' bar';
@@ -896,32 +920,28 @@ window.onerror = function (message, url, line, column, error) {
               'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
               'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
             ];
-            ra2.addText('Out: '+ box.resource+' bar')
-               .up()
-               .addText('In: '+box.resource).br()
-               .addText('Amount: '+ box.amount+' $'+ gam2.hum.val(box.amount* box.unitValue)).br()
-               .addText('Level: '+ box.level+ ' (Next: $'+gam2.hum.val(box.levelCost)+')')
-               ;
           } else {
-            ra2.addText('No resource').br().br().br();
+            head='No resource';
           }
-          ra2.up().br()
-            .addButton('Select', 
-           (function(m, box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(m,box),
-            'btn-warning button');
-            
+
+          btns=[['Select',
+            (function(m, box) { return function(e) { gam2.actions.smelterResource( 'util'+m, box) };})(m,box),
+            'btn-warning button'
+          ]];
+
           if (box.resource) {
-            ra2.up().addButton('Sell *', 
-            (function(m, box) { return function() {gam2.actions.smelterSell(m, box)};})(m, box),
-            'btn-danger button')
+            btns.push(['Sell *',
+              (function(m, box) { return function() {gam2.actions.smelterSell(m, box)};})(m, box),
+              'btn-danger button']);
           }
 
           if (gam2.money > box.levelCost) {
-            ra2.up().addButton('Lvl up',
+            btns.push(['Lvl up',
               (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
-              'btn-success button');
+              'btn-success button']);
           }
-          ra2.up().container('tik','div','animation-duration:2s');
+
+          tikSec = 2;
         
         } else if (box.title==='Crafter') {
           if(box.recepie) {
@@ -993,14 +1013,16 @@ window.onerror = function (message, url, line, column, error) {
               'btn-light button')
             .addButton('Sell X', false, 'btn-danger button')
             .addButton('Lvl up', false, 'btn-success button');
-            
-            
+
+
+          tikSec = 5;
           ra2.up().container('tik','div','animation-duration:5s');
         } else if (box.title==='Silo') {
           ra2.up().br().br().br().br()
             .addButton('Lvl up', false, 'btn-success button')
             .addButton('Sell *', false, 'btn-warning button');
-          
+
+          tikSec = 5;
           ra2.up().container('tik','div','animation-duration:5s');
           
         } else if (box.title=='Power') {
@@ -1026,7 +1048,6 @@ window.onerror = function (message, url, line, column, error) {
              'btn-success button');
 
           }
-          
           ra2.up().container('tik','div','animation-duration:10s');
         }
         
@@ -1034,14 +1055,14 @@ window.onerror = function (message, url, line, column, error) {
         var q = this.showCard('util'+m, box.color, icon, 0, title, head, texts, btns);
         
         if (tikSec) {
-          q.up().container('tik','div','animation-duration:'+tikSec+'s');
+          q.container('tik','div','animation-duration:'+tikSec+'s');
         }
         }
         
          this.vs.showOptionsFor('util'+m, box, ra);
         }
         if(this.menu.length==0) {
-                ra.container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
+                ra.container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
                 .container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText('+1 Resource')
                 .up()
@@ -1056,7 +1077,7 @@ window.onerror = function (message, url, line, column, error) {
                 .addButton('Search', gam2.actions.search, 'btn-light button')
                 ;
 
-          ra.container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
+          ra.container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
           .container('border-bottom border-gray pb-2 mb-0', 'h6')
           .addText('+1 Utility')
           .up()
@@ -1074,7 +1095,7 @@ window.onerror = function (message, url, line, column, error) {
           var powerLeft = gam2.power - gam2.powerUsage;
           for(var m in this.menu) {
             box= this.menu[m];
-            var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
+            var ra0= ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
             .container('border-bottom border-gray pb-2 mb-0', 'h6')
             .addText(box.title)
             .up()
@@ -1106,7 +1127,7 @@ window.onerror = function (message, url, line, column, error) {
             ;
             }
           }
-          ra.container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 160px; border-style: dashed; border-width: 1px;')
+          ra.container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
           .container('border-bottom border-gray pb-2 mb-0', 'h6')
           .addText('Back')
           .up()
