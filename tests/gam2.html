@@ -69,6 +69,23 @@
       border-style: dashed;
       border-width: 1px;
     }
+    
+    .tik {
+      margin: 3px 0;
+      height: 10px;
+      border: 3px darkred;
+      border-radius: 4px;
+      animation-name: mine;
+      animation-duration: 1s;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      /*animation-play-state: paused;*/
+    }
+    @keyframes mine {
+      0% {width:0px; background-color: slategray;}
+      /*50% {width:50%; background-color: greenyellow; }*/
+      100% {width: 135px; background-color: darkseagreen; }
+    }
   </style>
 </head>
 
@@ -479,7 +496,7 @@ window.onerror = function (message, url, line, column, error) {
         this.initEvents();
       },
       'initEvents': function() {
-        setInterval(this.event.everySec, 1000);
+        //setInterval(this.event.everySec, 1000);
       },
       'event': {
         'tim': {},
@@ -782,7 +799,8 @@ window.onerror = function (message, url, line, column, error) {
           
         this.showCard('empty', 'black', 1, 'Empty', '', [], [
             ['Build', false, 'btn-dark button']
-          ]);
+          ])
+          ;
 
 
         for(var r in this.res) {
@@ -805,7 +823,7 @@ window.onerror = function (message, url, line, column, error) {
               'Amount: ' + box.slot.amount+' $'+gam2.hum.val(box.slot.unitValue * box.slot.amount),
               'Level: ' + box.level + ' ($'+gam2.hum.val(box.levelCost)+')',
             ], btns
-          );
+          ).container('tik','div');
         }
         
         for(var m in this.util) {
@@ -850,6 +868,7 @@ window.onerror = function (message, url, line, column, error) {
               (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
               'btn-success button');
           }
+          ra2.up().container('tik','div','animation-duration:2s');
         
         } else if (box.title==='Crafter') {
           if(box.recepie) {
@@ -878,6 +897,9 @@ window.onerror = function (message, url, line, column, error) {
               (function(box) { return function() { gam2.actions.levelUp(box) }; })(box),
               'btn-success button');
           }
+          
+          ra2.up().container('tik','div','animation-duration:3s');
+          
         } else if (box.title==='Storage') {
           var ra3 = ra2
             .addText('Page: '+ box.page +' / '+ box.pageMax)
@@ -919,10 +941,14 @@ window.onerror = function (message, url, line, column, error) {
             .addButton('Sell X', false, 'btn-danger button')
             .addButton('Lvl up', false, 'btn-success button');
             
+            
+          ra2.up().container('tik','div','animation-duration:5s');
         } else if (box.title==='Silo') {
           ra2.up().br().br().br().br()
             .addButton('Lvl up', false, 'btn-success button')
             .addButton('Sell *', false, 'btn-warning button');
+          
+          ra2.up().container('tik','div','animation-duration:5s');
           
         } else if (box.title=='Power') {
           var ra3= ra2.up().br()
@@ -947,6 +973,8 @@ window.onerror = function (message, url, line, column, error) {
              'btn-success button');
 
           }
+          
+          ra2.up().container('tik','div','animation-duration:10s');
         }
          this.vs.showOptionsFor('util'+m, box, ra);
         }
