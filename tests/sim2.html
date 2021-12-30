@@ -336,20 +336,34 @@ var actions = {
     'getTypeOptions': function () {
         return this.mem.bases[this.mem.base]['options'];
     },
+    'getMaxConstr': function() {
+      var max=0;
+      for(var b in this.mem.bases) {
+        if (this.mem.bases[b].constrTime > max) {
+          max = this.mem.bases[b].constrTime;
+        }
+      }
+      return max;
+    },
     'getRvals': function () {
+        this.mem.constrTime = this.getMaxConstr();
         return [
             this.mem.cr,
             this.mem.time.constr,
             this.mem.spent,
-            this.mem.time.waste,
-            this.mem.fleets.Recycler + this.mem.fleets.Fighter + this.mem.fleets.Frigate * 2 + this.mem.fleets.Cruiser * 3 + this.mem.fleets.HeavyCruiser * 4,
+            Math.max(0,this.mem.fleets.Fighter - this.mem.hangar),
+            this.mem.fleets.Recycler * 2 
+            + this.mem.fleets.Fighter* 10 
+            + this.mem.fleets.Frigate * 2
+            + this.mem.fleets.Cruiser * 3 
+            + this.mem.fleets.HeavyCruiser * 4,
             this.mem.loops,
-            this.mem.actions,
+            this.mem.constrTime,
         ];
     },
-    'getScore': function (d= 2,importance = [1,15,-1,-2, 5, -0.25, -0.5]) {
+    'getScore': function (d= 2,importance = [1,15,-10,-2, 5, -0.25, -5]) {
         var r = this.getRvals();
-        var q = ['cr', 'hcr', 'spent','timeWaste', 'lvl', 'loops', 'areaEmpty'];
+        var q = ['cr', 'sumConstr', 'spent','timeWaste', 'quality', 'loops', 'maxOfconstrTime'];
         var sc = 0;
         for(var i in r) {
             if (d & 2) {
@@ -360,7 +374,7 @@ var actions = {
         return sc;
     },
     'getScoreImportance': function () {
-        return [1,15,-1,-2, 5, -0.25, -0.5];
+        return [1,15,-1,-2, 5, -0.25, -5];
     },
     'reset': function () {
         this.mem = JSON.parse(defaults);
@@ -461,7 +475,7 @@ window.findScoreFor = function findScoreFor(a, i) {
     //tge.show(inf.b, inf.br, 0);
     tge.interpret(inf.b, 0, {}, actions);
 
-    return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem];
+    return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem, actions.getRvals()];
 }
 m = 50;
 mm = 50;
