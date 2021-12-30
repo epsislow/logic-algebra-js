@@ -120,7 +120,7 @@ var TgeFn = function (rd) {
               I = '';
               br.push(i);
             }
-          } else if (I === 'a' || I === 'd') {
+          } else if (I === 'a' || I === 'b' || I === 'c' || I === 'd') {
             b[i] = Math.ceil(v[i] / 25);
             lvl = 0;
             I = '';
@@ -262,23 +262,50 @@ var TgeFn = function (rd) {
       var ddd = function (instrCr, action, x=1,y=[],z=[],t=0) {
         var t;
         if(action === 'a') {
-          t = actions.getOptions();
+          t = actions.getOptions('a');
           if (d & 1) {
-            console.log(instrCr + '> Assemble ', action + t[x % t.length]);
+            console.log(instrCr + '> A ', action + t[x % t.length]);
           }
           end = actions.doOption(1, t[x % t.length]);
           if (end) {
             return 1;
           }
-        } else if(action === 'd') {
-          t = actions.getOptions();
+        } else if(action === 'b') {
+          t = actions.getOptions('b');
           if (d & 2) {
             console.log('Options:', t);
           }
           if (d & 1) {
-            console.log(instrCr + '> Destroy ', action + t[x % t.length]);
+            console.log(instrCr + '> B ', action + t[x % t.length]);
           }
-          actions.doOption(0, t[x % t.length]);
+          actions.doOption(2, t[x % t.length]);
+          if (end) {
+            return 1;
+          }
+        } else if(action === 'c') {
+          t = actions.getOptions('c');
+          if (d & 2) {
+            console.log('Options:', t);
+          }
+          if (d & 1) {
+            console.log(instrCr + '> C ', action + t[x % t.length]);
+          }
+          actions.doOption(3, t[x % t.length]);
+          if (end) {
+            return 1;
+          }
+        } else if(action === 'd') {
+          t = actions.getOptions('d');
+          if (d & 2) {
+            console.log('Options:', t);
+          }
+          if (d & 1) {
+            console.log(instrCr + '> D ', action + t[x % t.length]);
+          }
+          actions.doOption(4, t[x % t.length]);
+          if (end) {
+            return 1;
+          }
         } else if(action === 's') {
           if (d & 1) {
             console.log(instrCr + '> Loop Start x', x);
@@ -355,6 +382,8 @@ var TgeFn = function (rd) {
         var adv= 1;
         switch(b[cr]) {
           case 'd':
+          case 'c':
+          case 'b':
           case 'a':
             X = b[cr+1];
             ddd(cr+1, b[cr], X);

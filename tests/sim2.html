@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Tester</title>
+    <title>Tester2</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
       
@@ -74,16 +74,212 @@ window.inf= inf;
 function show(descr = '', a, inf=0) {
   console.log(descr+':');
   if(!inf) {
-    inf = tge.lexer(a);
+    inf = tge.lexer(a, 2, actions.genExpr);
   }
   tge.show(inf.b, inf.br);
   return inf;
 }
 
+var defaults = JSON.stringify({
+    'bases': {
+        'Calidar': {
+            'prodh': 80,
+            'options': ['Fighter','Frigate','Carrier','Cruiser','HeavyCruiser','Recycler'],
+            'constr': [],
+            'fleet': 0,
+            'constrTime':0,
+        },
+        'Sierra': {
+            'prodh': 128,
+            'options': ['Fighter','Frigate','Carrier','FleetCarrier','Cruiser','HeavyCruiser','Recycler'],
+            'constr': [],
+            'fleet': 0,
+            'constrTime':0,
+        },
+        'Nervo': {
+            'prodh': 92,
+            'options': ['Fighter','Frigate','Carrier','Cruiser','HeavyCruiser','Recycler'],
+            'constr': [],
+            'fleet': 0,
+            'constrTime':0,
+        },
+        'Osiris': {
+            'prodh': 93,
+            'options': ['Fighter','Frigate','Carrier','FleetCarrier','Cruiser','HeavyCruiser','Recycler'],
+            'constr': [],
+            'fleet': 0,
+            'constrTime':0,
+        },
+        'Canyon': {
+            'prodh': 63,
+            'options': ['Fighter','Recycler'],
+            'constr': [],
+            'fleet': 0,
+            'constrTime':0,
+        },
+        'Mira': {
+            'prodh': 38,
+            'options': ['Fighter','Frigate','Recycler'],
+            'constr': [],
+            'fleet': 0,
+            'constrTime':0,
+        },
+    },
+    'options': {
+        'Fighter': {
+            'cost': 5,
+            'hangar': 0,
+        },
+        'Frigate': {
+            'cost': 80,
+            'hangar':4,
+        },
+        'Carrier': {
+            'cost': 400,
+            'hangar': 80,
+        },
+        'FleetCarrier': {
+            'cost': 2500,
+            'hangar':500,
+        },
+        'Cruiser': {
+            'cost': 200,
+            'hangar':4,
+        },
+        'HeavyCruiser': {
+            'cost': 500,
+            'hangar':8,
+        },
+        'Recycler': {
+            'cost': 30,
+            'hangar':0,
+        },
+    },
+    'base': 'Mira',
+    'type': 'Fighter',
+    'fleets': {
+        'Fighter' : 0,
+        'Frigate': 0,
+        'Carrier': 0,
+        'FleetCarrier': 0,
+        'Cruiser': 0,
+        'HeavyCruiser': 0,
+        'Recycler': 0,
+    },
+    'hangar': 0,
+    'hcr': 500,
+    'cr': 0,
+    'loops':0,
+    'time': {'waste': 0, 'constr':0},
+    'actions': 10,
+    'spent': 0,
+    'maxActions': 250,
+});
+//'Fighter':0,'Corvette':0,'C':0,'D':0, 'hcr': 500, 'cr': 0, 'loops':0, 'timeWaste': 0, 'timeMoved': 0, 'spent': 0, 'actions': 240, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100}
+
 var actions = {
-    'mem': {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'loops':0, 'timeWaste': 0, 'spent': 0, 'area': 100, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100},
+    'mem': JSON.parse(defaults),
+    'calcCost2Time': function (cost, hcr) {
+        return Math.floor(cost*1000/hcr)/1000;
+    },
+    'genExpr': {
+        'main': {'a': 1,'b': 2, 'c':3, 'd':4, 'j': 3},
+        'a':{'Fighter': 1, 'Frigate': 2, 'Carrier': 3, 'HeavyCruiser': 4, 'Recycler':5},
+        'b': {'Mira': -1, 'Recycler':5, 'FleetCarrier': 6, 'Cruiser': 7},
+        'c': {'Calidar': -2, 'Sierra': -3, 'Nervo': -4, 'Osiris': -5, 'Canyon': -6},
+        'd': {'1x': 1, '5x': 5, '10x': 10, '50x': 50, '100x': 100},
+        'j': {'j':3, 'l': 4,'n': 5,'p': 6}
+    },
+    'setBase': function (opt) {
+        this.mem.base = opt;
+    },
+    'setFighter': function (opt) {
+        this.mem.type = opt;
+    },
+    'doConstrSize': function (opt) {
+        var opts = this.mem.options;
+        var bases = this.mem.bases;
+        var g = this.genExpr;
+        var base = this.mem.base;
+        var type = this.mem.type;
+
+        var cost = opts[type].cost*opt;
+
+        if (cost > this.mem.cr) {
+            if (this.mem.hcr === 0) {
+                //console.log('-- Stop --');
+                return;
+            }
+            var times= Math.ceil(cost / this.mem.hcr);
+            this.mem.time.waste += times; // * hrs
+            this.mem.cr = this.mem.cr + this.mem.hcr*times - cost;
+        } else {
+            this.mem.cr -= cost;
+        }
+        this.mem.spent += cost;
+
+        var constrTime = this.calcCost2Time(cost, this.mem.hcr);
+
+        this.mem.bases[base]['constr'].push({
+            'type': type,
+            'count': opt,
+            'cost': cost,
+            'timeConstr': constrTime,
+        });
+        this.mem.bases[base].fleet += cost;
+        this.mem.bases[base].constrTime += constrTime;
+        this.mem.fleets[type] += opt;
+        this.mem.hangar += this.mem.options[type].hangar;
+
+        this.mem.time.constr += constrTime; // * hrs
+
+        //this.mem[opt]++;
+        this.mem.actions--;
+
+    },
     'doOption' : function (isA, opt) {
-        if (isA===1) {
+        var keys = [];
+        var option = 0;
+        var g = this.genExpr;
+
+        //console.log('do:', isA, opt);
+
+        if (isA === 1 ) {
+            keys = Object.keys(g['a']);
+            option = g['a'][opt];
+            if (option < 0) {
+                //console.log('1base =' + opt, keys, option);
+                this.setBase(opt);
+            } else {
+                //console.log('1type =' + opt, keys, option);
+                this.setFighter(opt);
+            }
+        } else if (isA === 2) {
+            keys = Object.keys(g['b']);
+            option = g['b'][opt];
+            if (option < 0) {
+                //console.log('2base =' + opt, keys, option);
+                this.setBase(opt);
+            } else {
+                //console.log('2type =' + opt, keys, option);
+                this.setFighter(opt);
+            }
+        } else if (isA === 3) {
+            keys = Object.keys(g['c']);
+            option = g['c'][opt];
+            if (option < 0) {
+                //console.log('3base =' + opt, keys, option);
+                this.setBase(opt);
+            } else {
+                //console.log('3type =' + opt, keys, option);
+                this.setFighter(opt);
+            }
+
+        } else if (isA === 4) {
+            //console.log('construct:'+ opt);
+            this.doConstrSize(opt);
+        }
+/*
             if (this.mem.costs[opt] > this.mem.cr) {
                 if (this.mem.hcr === 0) {
                     //console.log('-- Stop --');
@@ -126,30 +322,29 @@ var actions = {
                 console.log('here', isA, opt);
             }
         }
-        return (this.mem.area === 0);
+
+ */
+
+        return (this.mem.actions === 0);
     },
-    'getOptions': function () {
-        var t = ['A'];
-        if (this.mem.A> 5) {
-            t.push('B');
+    'getOptions': function (t) {
+        if (t === 'd') {
+            return Object.values(this.genExpr[t]);
         }
-        if (this.mem.A> 10 && this.mem.B> 10) {
-            t.push('C');
-        }
-        if (this.mem.B> 20) {
-            t.push('D');
-        }
-        return t;
+        return Object.keys(this.genExpr[t]);
+    },
+    'getTypeOptions': function () {
+        return this.mem.bases[this.mem.base]['options'];
     },
     'getRvals': function () {
         return [
             this.mem.cr,
-            this.mem.hcr,
+            this.mem.time.constr,
             this.mem.spent,
-            this.mem.timeWaste,
-            this.mem.A + this.mem.B * 2 + this.mem.C * 3 + this.mem.D * 4,
+            this.mem.time.waste,
+            this.mem.fleets.Recycler + this.mem.fleets.Fighter + this.mem.fleets.Frigate * 2 + this.mem.fleets.Cruiser * 3 + this.mem.fleets.HeavyCruiser * 4,
             this.mem.loops,
-            this.mem.area,
+            this.mem.actions,
         ];
     },
     'getScore': function (d= 2,importance = [1,15,-1,-2, 5, -0.25, -0.5]) {
@@ -168,7 +363,7 @@ var actions = {
         return [1,15,-1,-2, 5, -0.25, -0.5];
     },
     'reset': function () {
-        this.mem =  {'A':0,'B':0,'C':0,'D':0, 'hcr': 0, 'cr': 10, 'loops':0, 'timeWaste': 0, 'spent': 0, 'area': 100, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100};
+        this.mem = JSON.parse(defaults);
     },
     'setLoops': function (loops) {
         this.mem.loops = loops;
@@ -262,7 +457,8 @@ mm = 50;
 tge.gen(2, m, 1);
 
 window.findScoreFor = function findScoreFor(a, i) {
-    var inf = tge.lexer(a);
+    var inf = tge.lexer(a, 2, actions.genExpr);
+    //tge.show(inf.b, inf.br, 0);
     tge.interpret(inf.b, 0, {}, actions);
 
     return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem];
@@ -330,10 +526,12 @@ window.epoch = function (max=10) {
     var show=getFirst(scores, 3);
     console.table(show);
 }
+//console.table(getFirst(scores, 3));
 //epoch(20);
 //epoch(10);
-epoch(230);
-//epoch(200);
+//epoch(1);
+epoch(200);
+//findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
 </script>
 </body>
 </html>
