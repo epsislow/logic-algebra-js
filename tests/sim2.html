@@ -359,7 +359,7 @@ var actions = {
     'getRvals': function () {
         this.mem.minConstrTime = this.getMinConstr();
         return [
-            this.mem.cr,
+            this.mem.hangar,
             this.mem.time.constr,
             this.mem.spent,
             Math.max(0,this.mem.fleets.Fighter - this.mem.hangar),
@@ -382,7 +382,7 @@ var actions = {
           importance = this.getScoreImportance();
         }
         var r = this.getRvals();
-        var q = ['1cr', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','minmax'];
+        var q = ['1hangar', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','minmax'];
         var sc = 0;
         var scs = {};
         for(var i in r) {
@@ -401,7 +401,7 @@ var actions = {
         return sc;
     },
     'getScoreImportance': function () {
-        return [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, -10];
+        return [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, 0];
     },
     'reset': function () {
         this.mem = JSON.parse(defaults);
@@ -571,7 +571,7 @@ window.epoch = function (max=10) {
 //epoch(20);
 //epoch(10);
 //epoch(1);
-epoch(200);
+epoch(100);
 //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
 </script>
 </body>
