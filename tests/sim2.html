@@ -244,6 +244,7 @@ var actions = {
         //this.mem[opt]++;
         this.mem.actions--;
 
+        return (this.mem.actions <= 0);
     },
     'doOption' : function (isA, opt) {
         var keys = [];
@@ -285,7 +286,7 @@ var actions = {
 
         } else if (isA === 4) {
             //console.log('construct:'+ opt);
-            this.doConstrSize(opt);
+            return this.doConstrSize(opt);
         }
 /*
             if (this.mem.costs[opt] > this.mem.cr) {
@@ -333,7 +334,7 @@ var actions = {
 
  */
 
-        return (this.mem.actions === 0);
+        return (this.mem.actions <= 0);
     },
     'getOptions': function (t) {
         if (t === 'd') {
@@ -360,10 +361,12 @@ var actions = {
             this.mem.time.constr,
             this.mem.spent,
             Math.max(0,this.mem.fleets.Fighter - this.mem.hangar),
-            this.mem.fleets.Recycler * 2 
-            + this.mem.fleets.Fighter* 10 
-            + this.mem.fleets.Frigate * 2
-            + this.mem.fleets.Cruiser * 3 
+            this.mem.fleets.Recycler * 3 
+            + this.mem.fleets.Fighter * 5 
+            + this.mem.fleets.Frigate * 6
+            + this.mem.fleets.Cruiser * 4
+            + this.mem.fleets.Carrier * 3
+            + this.mem.fleets.FleetCarrier * 2
             + this.mem.fleets.HeavyCruiser * 4,
             this.mem.loops,
             this.mem.maxConstrTime,
@@ -383,7 +386,7 @@ var actions = {
                 console.log(q[i] + ':', r[i], ' x ', importance[i], '=', r[i] * importance[i]);
             }
             if(arr) {
-              scs[q[i] + ' '+ importance[i]] = r[i] * importance[i];
+              scs[q[i] + ' x'+ importance[i]] = r[i] * importance[i];
               continue;
             }
             sc += r[i]*importance[i];
@@ -394,7 +397,7 @@ var actions = {
         return sc;
     },
     'getScoreImportance': function () {
-        return [0,-15, 1, 0, 5, -0.25, -5,500];
+        return [0,-15, 0, 0, 5, -0.25, -5,500];
     },
     'reset': function () {
         this.mem = JSON.parse(defaults);
