@@ -172,6 +172,7 @@ var defaults = JSON.stringify({
     'loops':0,
     'goodConstr':0,
     'maxConstrTime':0,
+    'minConstrTime':0,
     'time': {'waste': 0, 'constr':0},
     'actions': 10,
     'spent': 0,
@@ -234,6 +235,7 @@ var actions = {
         this.mem.hangar += this.mem.options[type].hangar;
 
         this.mem.time.constr += constrTime; // * hrs
+        
         
         if (this.mem.bases[base].constrTime > this.mem.maxConstrTime) {
           this.mem.maxConstrTime = this.mem.bases[base].constrTime;
@@ -345,17 +347,17 @@ var actions = {
     'getTypeOptions': function () {
         return this.mem.bases[this.mem.base]['options'];
     },
-    'getMaxConstr': function() {
-      var max=0;
+    'getMinConstr': function() {
+      var min=999;
       for(var b in this.mem.bases) {
-        if (this.mem.bases[b].constrTime > max) {
-          max = this.mem.bases[b].constrTime;
+        if (this.mem.bases[b].constrTime < min) {
+          min = this.mem.bases[b].constrTime;
         }
       }
-      return max;
+      return min;
     },
     'getRvals': function () {
-        this.mem.maxConstrTime = this.getMaxConstr();
+        this.mem.minConstrTime = this.getMinConstr();
         return [
             this.mem.cr,
             this.mem.time.constr,
@@ -371,6 +373,8 @@ var actions = {
             this.mem.loops,
             this.mem.maxConstrTime,
             this.mem.goodConstr,
+            this.mem.minConstrTime,
+            this.mem.maxConstrTime - this.mem.minConstrTime,
         ];
     },
     'getScore': function (d= 2, importance = 0, arr=0) {
@@ -378,7 +382,7 @@ var actions = {
           importance = this.getScoreImportance();
         }
         var r = this.getRvals();
-        var q = ['cr', 'sumConstr', 'spent','timeWaste', 'quality', 'loops', 'maxOfconstrTime','goodConstr'];
+        var q = ['1cr', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','minmax'];
         var sc = 0;
         var scs = {};
         for(var i in r) {
@@ -397,7 +401,7 @@ var actions = {
         return sc;
     },
     'getScoreImportance': function () {
-        return [0,-15, 0, 0, 5, -0.25, -5,500];
+        return [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, -10];
     },
     'reset': function () {
         this.mem = JSON.parse(defaults);
