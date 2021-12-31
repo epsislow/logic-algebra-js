@@ -571,7 +571,7 @@ var Empires = (function (constants) {
 				$('#prodq tbody').prev()
 					.append(
 						$('<tr>')
-							.append($('<td>').html('Name: <input name="name" class="edit"/>'))
+							.append($('<td>').html('N: <input name="name" class="edit"/>'))
 							.append($('<td>').html('Lvl: <input name="level" class="edit"/>'))
 							.append($('<td>').html('Cap/h: <input name="cap" class="edit"/>'))
 							.append($('<td>').html(''))
@@ -634,9 +634,9 @@ var Empires = (function (constants) {
 				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
 				var type = $('#base'+baseId+'ty').val();
 				var timeh = (val*costs[type])/bases[baseId].cap;
-				$($(this).parent().parent().find('td').get(5)).html(convertSec(Math.round(timeh * 3600)));
+				$($(this).parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
 
-				console.log('base:', baseId);
+			//	console.log('base:', baseId);
 			};
 			var calcBaseForTime = function () {
 				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
