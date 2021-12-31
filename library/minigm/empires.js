@@ -126,7 +126,7 @@ var EmpiresConstants = {
 			'technologies': {'Cybernetics': 2},
 			'resources': {'Credits': -10000, 'Energy': -12, 'Economy': 2, 'Production': 8,'Population': -1},
 		},
-		'SP': {
+		'SC': {
 			'name': 'Spaceports',
 			'description': 'Increases bases economy by 2 and allows trade routes.',
 			'technologies': {'Computer': 2},
@@ -398,8 +398,11 @@ var Empires = (function (constants) {
 		},
 		start: function (sort = 1) {
 			this.planetsSort(sort);
+
+			this.showProductionQueueHelper();
 			
 			empires.constants.galaxyMaps.getMap(25);
+
 			console.log(empires.constants.galaxyMaps.maps);
 		},
 		planetsSort: function(sort = 1) {
@@ -481,12 +484,186 @@ var Empires = (function (constants) {
 		  
 		  this.showTableRes(q, sortCols);
 		},
-		
+		showProductionQueueHelper: function () {
+			function componentToHex(c) {
+				var hex = c.toString(16);
+				return hex.length === 1 ? "0" + hex : hex;
+			}
+
+			function rgbToHex(r, g, b) {
+				return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+			}
+
+			var main = $('main');
+
+			main.html('<table id="prodq"><thead></thead><tbody></tbody></table>'+ main.html());
+
+			$('#prodq thead').append(
+				$('<tr>')
+					.append($('<th>').html('Production').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Base').addClass('large'))
+					.append($('<th>').html('Shipyard').addClass('med'))
+					.append($('<th>').html('Capacities').addClass('large'))
+					.append($('<th>').html('Queue').addClass('large'))
+					.append($('<th>').html('Time'))
+					.append($('<th>').html('Actions'))
+			)
+
+			$('#prodq tbody')
+				/*.append(
+					$('<tr>')
+						.append($('<td>').html('Sierra'))
+						.append($('<td>').html('Lvl 10'))
+						.append($('<td>').html('102/h'))
+						.append($('<td>').html('<select class="type" id="base1ty"><option>Select</option></select> <input type="text" class="qty" id="base1sy" value=""/>'))
+						.append($('<td>').html(''))
+						.append($('<td>').html('<button id="remove"> - </button>'))
+				)*/
+				.append(
+					$('<tr>')
+					.append(
+						$('<td>').html('<button id="addbase">Add Base</button> All queue: <select class="type" id="totalty"><option>Fighter</option></select> <input type="text" class="qty" id="totalsy" value=""/> h:<input type="text" class="tty" id="totaltime" value=""/>').attr('colspan', 6)
+					)
+				);
+
+			var bases = {};
+			window.bases = bases;
+
+			var types = {
+				'Fighters' : 1,
+				'Bombers': 2,
+				'Corvette': 4,
+				'Recycler': 5,
+				'Destroyer': 6,
+				'Frigate': 8,
+				'Cruiser': 10,
+				'HeavyCruiser': 12,
+				'Carrier': 12,
+				'FleetCarrier': 16,
+				'Battleship': 16,
+			};
+
+			var costs = {
+				'Fighters' : 5,
+				'Bombers': 10,
+				'Corvette': 20,
+				'Recycler': 30,
+				'Destroyer': 40,
+				'Frigate': 80,
+				'Cruiser': 200,
+				'HeavyCruiser': 500,
+				'Carrier': 400,
+				'FleetCarrier': 2500,
+				'Battleship': 2000,
+			};
+
+			var selector = $('#totalty');
+
+			for(var t in types) {
+				selector.append($('<option>', {'value': t, text: t}));
+			}
+
+			$('#addbase').click(function () {
+
+				var confirmbtn = $('<button>').html('confirm').attr('id','confirm');
+				$('#prodq tbody').prev()
+					.append(
+						$('<tr>')
+							.append($('<td>').html('Name: <input name="name" class="edit"/>'))
+							.append($('<td>').html('Lvl: <input name="level" class="edit"/>'))
+							.append($('<td>').html('Cap/h: <input name="cap" class="edit"/>'))
+							.append($('<td>').html(''))
+							.append($('<td>').html(''))
+							.append($('<td>').append(confirmbtn))
+					);
+
+				confirmbtn.click(function (e) {
+					var removebtn = $('<button>').html(' - ').attr('id','remove');
+					var vals = $(this).parent().parent().find('input').map(function(){return $(this).val();}).get();
+					var td = $(this).parent().parent().find('td');
+					var newBaseId = Object.keys(bases).length;
+
+					var lvl = parseInt(vals[1]) || 0;
+					var cap = parseInt(vals[2]) || 0;
+
+					var base = bases[newBaseId] = {
+						'id': newBaseId,
+						'name': vals[0],
+						'lvl': lvl,
+						'cap': cap,
+					};
+
+					$(td[0]).html(vals[0]);
+					$(td[1]).html('Lvl '+ lvl);
+					$(td[2]).html(cap+ '/h');
+					$(td[3]).html('<input type="hidden" class="baseId" value="'+newBaseId+'"/><select class="type" id="base'+newBaseId+'ty"></select> <input type="text" class="qty" id="base'+newBaseId+'sy" value=""/> h:<input type="text" class="tty" id="base'+newBaseId+'time" value=""/>');
+					$(td[4]).html('');
+					$(td[5]).html('').append(removebtn);
+
+					removebtn.click(function () {
+						delete bases[newBaseId];
+						$(this).parent().parent().remove();
+					});
+
+					var selector = $('#base'+newBaseId+'ty');
+
+					for(var t in types) {
+						if (parseInt(vals[1]) >= types[t]) {
+							selector.append($('<option>', {'value': t, text: t}));
+						}
+					}
+
+					$('#base'+newBaseId+'sy').keyup(calcBaseForQty).change(calcBaseForQty);
+					$('#base'+newBaseId+'time').keyup(calcBaseForTime).change(calcBaseForQty);
+				});
+
+				$('#totalsy').keyup(calcQueuesForQty).change(calcQueuesForQty);
+				$('#totaltime').keyup(calcQueuesForTime).change(calcQueuesForTime);
+			});
+
+			var calcQueuesForQty = function () {
+
+			};
+			var calcQueuesForTime = function () {
+
+			};
+			var calcBaseForQty = function () {
+				var val = $(this).val();
+				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
+				var type = $('#base'+baseId+'ty').val();
+				var timeh = (val*costs[type])/bases[baseId].cap;
+				$($(this).parent().parent().find('td').get(5)).html(convertSec(Math.round(timeh * 3600)));
+
+				console.log('base:', baseId);
+			};
+			var calcBaseForTime = function () {
+				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
+				console.log('base:', baseId);
+			};
+			var convertSec = function (s) {
+				return new Date(s * 1000).toISOString().substr(11, 8);
+				/*
+				var num = s;
+				var hours = (num / 60);
+				var rhours = Math.floor(hours);
+				var minutes = (hours - rhours) * 60;
+				var rminutes = Math.round(minutes);
+				return num + " minutes = " + rhours + " hour(s) and " + rminutes + " minute(s).";
+				 */
+			}
+
+
+			$('#remove').click(function () {
+				$(this).parent().parent().remove();
+			});
+		},
 		showTableRes: function(tb, sortCols) {
 			
 		function componentToHex(c) {
 		  var hex = c.toString(16);
-		  return hex.length == 1 ? "0" + hex : hex;
+		  return hex.length === 1 ? "0" + hex : hex;
 		}
 		
 		function rgbToHex(r, g, b) {
