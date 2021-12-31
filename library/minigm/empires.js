@@ -506,7 +506,7 @@ var Empires = (function (constants) {
 					.append($('<th>').html('Base').addClass('large'))
 					.append($('<th>').html('Shipyard').addClass('med'))
 					.append($('<th>').html('Capacities').addClass('large'))
-					.append($('<th>').html('Queue').addClass('large'))
+					.append($('<th>').html('Queue').addClass('large').attr('style','width:200px'))
 					.append($('<th>').html('Time'))
 					.append($('<th>').html('Actions'))
 			)
