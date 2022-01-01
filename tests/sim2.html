@@ -378,9 +378,9 @@ var actions = {
       return [
         this.mem.hangarNeed,
         this.mem.hangar,
-        this.mem.hangar- this.mem.hangarNeed,
+        Math.abs(this.mem.hangar- this.mem.hangarNeed),
         this.mem.spent,
-        this.mem.time.constr - this.mem.maxConstrTime
+        this.mem.time.constr - this.mem.maxConstrTime,
         ];
     },
     'getRvals0': function () {
