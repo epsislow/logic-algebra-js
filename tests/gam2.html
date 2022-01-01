@@ -535,6 +535,7 @@
                 resMax: resMax,
                 queues: ques,
                 recepie: 0,
+                slot: gam2.slot.add(),
                 amount: 0,
                 unitValue: 0,
                 everySec: 3,
@@ -566,6 +567,7 @@
                 description: 'Smelt items',
                 queues: ques,
                 resource: 0,
+                slot: gam2.slot.add(),
                 amount: 0,
                 unitValue: 0,
                 everySec: 2,
@@ -658,11 +660,11 @@
         },
         'event': {
             'tim': {},
-            'everySec': function() {
+            'everySec1': function() {
               gam2.resTick()
               gam2.utilTick()
             },
-            'everySec0': function () {
+            'everySec': function () {
                 for (let r in gam2.res) {
                     var box = gam2.res[r];
                     gam2.actions.mine(box);
@@ -688,27 +690,27 @@
                             //console.log(box.source)
                             //continue;
                             boxSrc = gam2[box.source[0]][box.source[1]];
-                            maxAmount = box.level > boxSrc.amount ? boxSrc.amount : box.level;
-                            boxSrc.amount -= maxAmount;
-                            box.amount += maxAmount;
+                            maxAmount = box.level > boxSrc.slot.amount ? boxSrc.slot.amount : box.level;
+                            boxSrc.slot.amount -= maxAmount;
+                            box.slot.amount += maxAmount;
                         } else if (box.title == 'Crafter') {
                             if (!box.recepie) {
                                 continue;
                             }
                             boxSrc = gam2[box.source[0]][box.source[1]];
-                            maxAmount = box.level > boxSrc.amount ? boxSrc.amount : box.level;
-                            boxSrc.amount -= maxAmount;
+                            maxAmount = box.level > boxSrc.slot.amount ? boxSrc.slot.amount : box.level;
+                            boxSrc.slot.amount -= maxAmount;
                             if (box.dest) {
                                 var bbox = gam2[box.dest[0]][box.dest[1]];
                                 bbox.slot[box.recepie].amount += maxAmount;
 
                             } else {
-                                box.amount += maxAmount;
+                                box.slot.amount += maxAmount;
                             }
                         }
                     }
                 }
-                gam2.actions.show(1);
+                gam2.actions.show();
             }
         },
         'actions': {
@@ -789,9 +791,9 @@
                 gam2.show();
             },
             'smelterSell': function (m, box) {
-                var amount = box.amount;
-                gam2.money += box.unitValue * amount;
-                box.amount = 0;
+                var amount = box.slot.amount;
+                gam2.money += box.slot.unitValue * amount;
+                box.slot.amount = 0;
                 //console.log('sell' + resId + ' ' +  amount);
                 if (1) {
                     ra.clear();
@@ -822,8 +824,9 @@
                 //console.log('option:'+ i, box);
                 var i = opt.id;
                 box.resource = gam2.res[i].name;
-                box.amount = 0;
-                box.unitValue = gam2.res[i].unitValue * 10;
+                box.slot.addItem(box.resource, 'bar', 0, gam2.res[i].unitValue * 10)
+                //box.slamount = 0;
+               // box.unitValue = gam2.res[i].unitValue * 10;
                 box.source = [opt.src, i];
 
                 gam2.vs.clearOptionsFor(idd);
@@ -832,9 +835,9 @@
 
             },
             'crafterSell': function (m, box) {
-                var amount = box.amount;
-                gam2.money += box.unitValue * amount;
-                box.amount = 0;
+                var amount = box.slot.amount;
+                gam2.money += box.slot.unitValue * amount;
+                box.slot.amount = 0;
                 //console.log('sell' + resId + ' ' +  amount);
                 if (1) {
                     ra.clear();
@@ -912,8 +915,9 @@
                     //gam2.actions.store(opt.item)
                 } else {
                     box.recepie = gam2.res[i].name;
-                    box.amount = 0;
-                    box.unitValue = gam2[opt.src][i].unitValue * 10;
+                    box.slot.addItem(box.recepie, 'liquid', 0,gam2[opt.src][i].slot.unitValue * 10)
+                  
+                    //box.unitValue = gam2[opt.src][i].unitValue * 10;
                     box.source = [opt.src, i];
                 }
 
@@ -1069,16 +1073,17 @@
                 if (box.title === 'Smelter') {
                     card = 1;
                     title = box.title + ' ' + box.level;
-                    icon = 'burn anim-smelter i-smelter anim-stop';
+                    icon = 'burn anim-smelter i-smelter';
 
                     if (box.resource) {
                         head = 'Out: ' + box.resource + ' bar';
                         texts = [
                             'In: ' + box.resource,
-                            'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
+                            'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.amount * box.slot.unitValue),
                             'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
                         ];
                     } else {
+                        icon += ' anim-stop';
                         head = 'No resource';
                     }
 
@@ -1116,17 +1121,18 @@
                 } else if (box.title === 'Crafter') {
                     card = 1;
                     title = box.title + ' ' + box.level;
-                    icon = 'cog anim-crafter i-crafter anim-stop';
+                    icon = 'cog anim-res i-crafter';
 
                     if (box.recepie) {
-                        head = 'Out: ' + box.recepie + ' liquid';
+                        head = 'Out: ' + box.recepie + ' '+box.slot.form;
                         texts = [
                             'In: ' + box.recepie + ' bar',
-                            'Amount: ' + box.amount + ' $' + gam2.hum.val(box.amount * box.unitValue),
+                            'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.amount * box.slot.unitValue),
                             'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
                         ];
 
                     } else {
+                      icon+=' anim-stop'
                         head = 'No recepie';
                     }
 
