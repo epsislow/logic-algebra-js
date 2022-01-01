@@ -88,7 +88,7 @@ var defaults = JSON.stringify({
             'constr': [],
             'fleet': 0,
             'constrTime':0,
-            'passedTime':0,
+            'wastedTime':0,
         },
         'Sierra': {
             'prodh': 128,
@@ -96,7 +96,7 @@ var defaults = JSON.stringify({
             'constr': [],
             'fleet': 0,
             'constrTime':0,
-            'passedTime':0
+            'wastedTime':0
         },
         'Nervo': {
             'prodh': 92,
@@ -104,7 +104,7 @@ var defaults = JSON.stringify({
             'constr': [],
             'fleet': 0,
             'constrTime':0,
-            'passedTime': 0
+            'wastedTime': 0
         },
         'Osiris': {
             'prodh': 93,
@@ -112,7 +112,7 @@ var defaults = JSON.stringify({
             'constr': [],
             'fleet': 0,
             'constrTime':0,
-            'passedTime': 0
+            'wastedTime': 0
         },
         'Canyon': {
             'prodh': 63,
@@ -120,7 +120,7 @@ var defaults = JSON.stringify({
             'constr': [],
             'fleet': 0,
             'constrTime':0,
-            'passedTime': 0
+            'wastedTime': 0
         },
         'Mira': {
             'prodh': 38,
@@ -128,7 +128,7 @@ var defaults = JSON.stringify({
             'constr': [],
             'fleet': 0,
             'constrTime':0,
-            'passedTime': 0
+            'wastedTime': 0
         },
     },
     'options': {
@@ -179,7 +179,7 @@ var defaults = JSON.stringify({
     'goodConstr':0,
     'maxConstrTime':0,
     'minConstrTime':0,
-    'time': {'waste': 0, 'constr':0},
+    'time': {'waste': 0, 'constr':0,'passed':0},
     'actions': 10,
     'spent': 0,
     'maxActions': 250,
@@ -236,6 +236,12 @@ var actions = {
             'timeConstr': constrTime,
         });
         this.mem.bases[base].fleet += cost;
+        this.mem.wastedTime=0;
+      
+        //subtract wasted from other bases
+        //if wasted > then the value then add the difference
+        
+        
         this.mem.bases[base].constrTime += constrTime;
         this.mem.fleets[type] += opt;
         this.mem.hangar += this.mem.options[type].hangar;
