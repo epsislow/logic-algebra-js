@@ -933,6 +933,36 @@
         'showResCard': function(idx) {
           var ra5= gam2.card['res'+idx];
           
+          var box= gam2.res[idx];
+          var buttons= [], texts= [];
+          var title = box.title +' '+ box.level;
+          var head= box.name;
+          
+          //ra5.up().addText('ghdgghgg');
+          
+          ra5.container('border-bottom border-gray pb-2 mb-0', 'h6')
+                .addText(title)
+                .up()
+                .container('media text-white pt-2')
+                .container('media-body ml-2 mb-0 small lh-125', 'p')
+                .container('d-block text-light', 'strong')
+                .addText(head)
+                .up();
+            while (texts.length < 3) {
+                texts.push(0);
+            }
+            for (var t in texts) {
+                if (texts[t]) {
+                    ra5.addText(texts[t]);
+                }
+                ra5.br();
+            }
+
+            for (var b in buttons) {
+                var bt = buttons[b];
+                ra5.addButton(bt[0], bt[1], 'button ' + bt[2]);
+            }
+
         },
         'showCard': function (id, color = 'black', icon = 'asterisk', dashed = 0, title = '$', head = 'Money', texts = [], buttons = []) {
             if (head === '') {
@@ -1013,7 +1043,7 @@
                 }
                 box.vs = this.showCard(
                     'res' + r,
-                    box.color, 'asterisk i-resource anim-res anim-stop', 0,
+                    box.color, 'asterisk i-resource anim-res', 0,
                     box.title + ' ' + box.level, box.name,
                     [
                         'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
