@@ -702,7 +702,11 @@
                             boxSrc.slot.amount -= maxAmount;
                             if (box.dest) {
                                 var bbox = gam2[box.dest[0]][box.dest[1]];
-                                bbox.slot[box.recepie].amount += maxAmount;
+                                var name = boxSrc.recepie +' ' + boxSrc.slot.form;
+                                if(!(name in bbox.slot)) {
+                                  bbox.slot[boxSrc.recepie] = gam2.slot.add().addItem(boxSrc.slot.name, boxSrc.slot.form, 0, boxSrc.slot.unitValue)
+                                }
+                                bbox.slot[boxSrc.recepie].amount += maxAmount;
 
                             } else {
                                 box.slot.amount += maxAmount;
@@ -884,8 +888,8 @@
                                     'description': 'Store to storage',
                                     'dest': 'util',
                                     'id': i,
-                                    'item': box.recepie,
-                                    'unitValue': box.unitValue,
+                                    'item': box.slot.name+ ' ' + box.slot.form,
+                                    'unitValue': box.slot.unitValue,
                                 });
                                 console.log('testt');
                             }
@@ -907,15 +911,15 @@
                     box.dest = [opt.dest, i];
                     var bbox = gam2[opt.dest][i];
                     if (!(opt.item in bbox.slot)) {
-                        bbox.slot[opt.item] = {
-                            'amount': 0,
-                            'unitValue': opt.unitValue,
-                        };
+                        
+                        bbox.slot[opt.item] = gam2.slot.add()
+                        .addItem(box.slot.name, box.slot.form, 0, box.slot.unitValue)
+                        
                     }
                     //gam2.actions.store(opt.item)
                 } else {
                     box.recepie = gam2.res[i].name;
-                    box.slot.addItem(box.recepie, 'liquid', 0,gam2[opt.src][i].slot.unitValue * 10)
+                    box.slot.addItem(box.recepie, 'liquid', 0, gam2[opt.src][i].slot.unitValue * 10)
                   
                     //box.unitValue = gam2[opt.src][i].unitValue * 10;
                     box.source = [opt.src, i];
@@ -1175,7 +1179,7 @@
                         s++;
                         if (pag == box.page) {
                             b++;
-                            texts.push(i + ': ' + box.slot[i].amount + ' $' + gam2.hum.val(box.slot[i].amount * box.slot[i].unitValue));
+                            texts.push(box.slot[i].name +' '+box.slot[i].form + ': ' + box.slot[i].amount) //+ ' $' + gam2.hum.val(box.slot[i].amount * box.slot[i].unitValue));
                         }
                         pag = Math.floor(s / perPage) + 1;
                     }
