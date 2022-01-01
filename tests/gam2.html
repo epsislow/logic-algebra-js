@@ -438,6 +438,23 @@
                 return pub;
             }
         },
+        'card': {},
+        'resTick': function() {
+          for (let r in gam2.res) {
+            var box = gam2.res[r];
+            gam2.actions.mine(box);
+            gam2.clearCard('res'+r);
+            gam2.showResCard(r);
+          }
+        },
+        'utilTick': function() {
+          for (let u in gam2.util) {
+            var box = gam2.util[r];
+            
+            gam2.clearCard('util' + r);
+       //     gam2.showUtilCard(r);
+          }
+        },
         'vs': {
             'opt': {},
             'iddfn': {},
@@ -641,7 +658,11 @@
         },
         'event': {
             'tim': {},
-            'everySec': function () {
+            'everySec': function() {
+              gam2.resTick()
+              gam2.utilTick()
+            },
+            'everySec0': function () {
                 for (let r in gam2.res) {
                     var box = gam2.res[r];
                     gam2.actions.mine(box);
@@ -687,11 +708,17 @@
                         }
                     }
                 }
-                gam2.actions.show();
+                gam2.actions.show(1);
             }
         },
         'actions': {
-            'show': function () {
+            'show': function (refresh=0) {
+              if(refresh) {
+                for(var c in gam2.card) {
+                  gam2.clearCard(c);
+                }
+                return;
+              }
                 ra.clear();
                 gam2.show();
             },
@@ -903,6 +930,10 @@
                 gam2.show();
             }
         },
+        'showResCard': function(idx) {
+          var ra5= gam2.card['res'+idx];
+          
+        },
         'showCard': function (id, color = 'black', icon = 'asterisk', dashed = 0, title = '$', head = 'Money', texts = [], buttons = []) {
             if (head === '') {
                 head = '&nbsp;';
@@ -936,8 +967,12 @@
                 var bt = buttons[b];
                 ra3.addButton(bt[0], bt[1], 'button ' + bt[2]);
             }
+            gam2.card[id]=ra3;
             return ra3;
-
+        },
+        'clearCard': function(id) {
+          var ra4= gam2.card[id];
+          ra4.parent().parent().clear();
         },
         'show': function () {
             var box;
@@ -947,7 +982,7 @@
             ]);
 
 
-            this.showCard('empty', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
+            this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
                 ['Build', false, 'btn-dark button']
             ])
             ;
