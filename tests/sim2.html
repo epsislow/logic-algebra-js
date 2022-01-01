@@ -134,7 +134,7 @@ var defaults = JSON.stringify({
     'options': {
         'Fighter': {
             'cost': 5,
-            'hangar': 0,
+            'hangar': -1,
         },
         'Frigate': {
             'cost': 80,
@@ -172,6 +172,7 @@ var defaults = JSON.stringify({
         'HeavyCruiser': 0,
         'Recycler': 0,
     },
+    'hangarNeed':0,
     'hangar': 0,
     'hcr': 500,
     'cr': 0,
@@ -244,7 +245,12 @@ var actions = {
         
         this.mem.bases[base].constrTime += constrTime;
         this.mem.fleets[type] += opt;
-        this.mem.hangar += this.mem.options[type].hangar;
+        var hg= this.mem.options[type].hangar;
+        if (hg <0) {
+        this.mem.hangarNeed+= -hg*opt;
+        } else {
+        this.mem.hangar += hg*opt;
+        }
 
         this.mem.time.constr += constrTime; // * hrs
         
@@ -368,7 +374,16 @@ var actions = {
       }
       return min;
     },
-    'getRvals': function () {
+    'getRvals': function() {
+      return [
+        this.mem.hangarNeed,
+        this.mem.hangar,
+        this.mem.hangar- this.mem.hangarNeed,
+        this.mem.spent,
+        this.mem.time.constr - this.mem.maxConstrTime
+        ];
+    },
+    'getRvals0': function () {
         this.mem.minConstrTime = this.getMinConstr();
         return [
             this.mem.hangar,
@@ -394,10 +409,19 @@ var actions = {
           importance = this.getScoreImportance();
         }
         var r = this.getRvals();
-        var q = ['1hangar', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','10minmax'];
+        //var q = ['1hangar', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','10minmax'];
+        var q= [
+          '1hgNeed',
+          '2hgSum',
+          '3dHg',
+          '4spent',
+          '5dtimConstr',
+          ];
         var sc = 0;
         var scs = {};
+        //console.log(r)
         for(var i in r) {
+          // console.log(i, r[i])
             if (d & 2) {
                 console.log(q[i] + ':', r[i], ' x ', importance[i], '=', r[i] * importance[i]);
             }
@@ -407,13 +431,15 @@ var actions = {
             }
             sc += r[i]*importance[i];
         }
+       // console.log(sc)
         if(arr) {
           return scs;
         }
         return sc;
     },
     'getScoreImportance': function () {
-        return [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, 0];
+        return [5,2,-10,0.005,2];
+        //  [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, 0];
     },
     'reset': function () {
         this.mem = JSON.parse(defaults);
