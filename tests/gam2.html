@@ -87,7 +87,14 @@
             /*border: 1px solid #fff;*/
             position: relative;
             z-index: 20;
-
+        }
+        .bg-card-x2 {
+          float: left;
+          width: 170px;
+          height: 340px;
+          /*border: 1px solid #fff;*/
+          position: relative;
+          z-index: 20;
         }
 
         .fa-bgd {
@@ -972,12 +979,12 @@
             }
 
         },
-        'showCard': function (id, color = 'black', icon = 'asterisk', dashed = 0, title = '$', head = 'Money', texts = [], buttons = []) {
+        'showCard': function (id, color = 'black', icon = 'asterisk', dashed = 0, title = '$', head = 'Money', texts = [], buttons = [],x2=0) {
             if (head === '') {
                 head = '&nbsp;';
             }
             var ra3 = ra
-                .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card ' + (dashed ? 'bg-dashed' : ''), 'div', '')
+                .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light '+(!x2?'bg-card':'bg-card-x2')+' ' + (dashed ? 'bg-dashed' : ''), 'div', '')
 
                 .container('fa fa-' + icon + ' fa-bgd fa-5x', 'div', '')
                 .up()
@@ -1061,7 +1068,7 @@
                 //gam2.res[1].vs.parent().parent().parent().parent().clear()
             }
 
-            var card = 0, tikSec = 0, title = '', icon = '', head = '', texts = [], btns = [];
+            var card = 0, x2=0,tikSec = 0, title = '', icon = '', head = '', texts = [], btns = [];
 
             for (var m in this.util) {
                 card = 0;
@@ -1071,6 +1078,7 @@
                 head = '';
                 texts = [];
                 btns = [];
+                x2=0;
 
                 box = this.util[m];
 
@@ -1205,6 +1213,14 @@
                     ];
 
                     tikSec = 5;
+                } else if (box.title === 'Assambler') {
+                  card=1;
+                  title = box.title + ' ' + box.level;
+                    icon = 'globe anim-asmb i-asmb anim-stop';
+                    head = 'No recepie';
+                    texts = [];
+                    x2=1;
+                    tikSec=20;
                 } else if (box.title === 'Silo') {
                     ra2.up().br().br().br().br()
                         .addButton('Lvl up', false, 'btn-success button')
@@ -1247,7 +1263,7 @@
                 }
 
                 if (card) {
-                    var q = this.showCard('util' + m, box.color, icon, 0, title, head, texts, btns);
+                    var q = this.showCard('util' + m, box.color, icon, 0, title, head, texts, btns,x2);
 
                     if (tikSec) {
                         q.container('tik', 'div', 'animation-duration:' + tikSec + 's');
