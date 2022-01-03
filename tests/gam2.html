@@ -248,6 +248,16 @@
                 background-color: darkseagreen;
             }
         }
+        
+        .topbar {
+          color:#ff0;
+        }
+        .topbar .s-money,
+        .topbar .s-power,
+        .topbar .s-employs
+        {
+          margin: 0 10px;
+        }
     </style>
 </head>
 
@@ -307,14 +317,22 @@
                 .addButton('Index', '/index.html')
                 .container('topbar','div', 'float:right')
                 .addText(' ')
+                
                 .container('fa fa-donate','i')
                 .up()
-                .container('money','span')
+                .container('s-money','span')
                 .addText('0')
                 .up()
+                
                 .container('fa fa-plug','i')
                 .up()
-                .container('power','span')
+                .container('s-power','span')
+                .addText('0')
+                .up()
+                
+                .container('fa fa-child','i')
+                .up()
+                .container('s-employs','span')
                 .addText('0')
                 .up()
                 .up()
@@ -1081,15 +1099,21 @@
         },
         'show': function () {
             var box;
+            /*
             this.showCard('money', 'money', '', 0, '$', 'Money', [
                 'Amount: $' + this.hum.val(this.money),
                 'Power: ' + this.powerUsage + ' / ' + this.power
-            ]);
+            ]);*/
             
-            this.showCard('ship', 'ship', 'ship i-empty', 0, 'Ship','');
+            $('.s-money').html( this.hum.val(this.money))
+            $('.s-power').html( this.hum.val(this.powerUsage) +' / '+ this.hum.val(this.power))
+            $('.s-people').html( this.hum.val(this.people))
+            
+            this.showCard('ship', 'ship', 'paper-plane i-empty', 0, 'Ship','');
+            this.showCard('miner', 'crafter', 'qrcode i-crafter', 0, 'Miner','');
             
             
-            for(var r=0; r<4; r++) {
+            for(var r=0; r<1; r++) {
             this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
                 ['Build', false, 'btn-dark button']
             ]);
