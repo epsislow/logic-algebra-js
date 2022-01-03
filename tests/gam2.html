@@ -39,6 +39,11 @@
             background-color: #000;
             border-color: #fff;
         }
+        
+        .bg-ship {
+            background-color: 000;
+            border-color: 000;
+        }
 
         .bg-darkcyan {
             background-color: #005555;
@@ -544,7 +549,7 @@
           // cargo ship
           // docker
           // research center
-          // reseaech lab
+          // research lab
           // communication rellay
           // antenna 
           // radar
@@ -1067,7 +1072,8 @@
                 'Amount: $' + this.hum.val(this.money),
                 'Power: ' + this.powerUsage + ' / ' + this.power
             ]);
-
+            
+            this.showCard('ship', 'ship', 'ship i-empty', 0, 'Ship','');
 
             this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
                 ['Build', false, 'btn-dark button']
