@@ -305,6 +305,14 @@
                 .section('top')
                 .br()
                 .addButton('Index', '/index.html')
+               // .container('topbar','div')
+                .addText(' ')
+                .container('fa fa-coins','i')
+                .up()
+                .addText('113 ')
+                .container('fa fa-lemon','i')
+                .up()
+                .addText('30')
                 .br()
                 .container('main', 'div');
 
@@ -1074,11 +1082,14 @@
             ]);
             
             this.showCard('ship', 'ship', 'ship i-empty', 0, 'Ship','');
-
+            
+            
+            for(var r=0; r<4; r++) {
             this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
                 ['Build', false, 'btn-dark button']
-            ])
-            ;
+            ]);
+            
+            }
 
             for (var r in this.res) {
                 box = this.res[r];
