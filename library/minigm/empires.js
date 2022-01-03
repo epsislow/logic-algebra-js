@@ -400,6 +400,8 @@ var Empires = (function (constants) {
 			this.planetsSort(sort);
 
 			this.showProductionQueueHelper();
+
+			this.showPlayerLevelCalculator();
 			
 			empires.constants.galaxyMaps.getMap(25);
 
@@ -483,6 +485,122 @@ var Empires = (function (constants) {
 		  //var q2=q.slice(18,27);
 		  
 		  this.showTableRes(q, sortCols);
+		},
+		showPlayerLevelCalculator: function () {
+			//e= 575; ft = 18125 + 82518 + 1900;  p= Math.pow(e * 100 + ft, 0.25)
+			var main = $('main');
+
+			main.prepend('<table id="playerlvl"><thead></thead><tbody></tbody></table>');
+
+			$('#playerlvl thead').append(
+				$('<tr>')
+					.append($('<th>').html('Player Level <sup>(economy x 100 + fleet + technology) ^ 0.25</sup>').attr('colspan', 4))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Level').addClass('med'))
+					.append($('<th>').html('Economy').addClass('med'))
+					.append($('<th>').html('Technology').addClass('med'))
+					.append($('<th>').html('Fleet').addClass('med'))
+			);
+
+			const lvl = $('<input>').attr('id', 'pllvl').addClass('qty');
+			const econ = $('<input>').attr('id', 'plecon').addClass('qty').val(575);
+			const tech = $('<input>').attr('id', 'pltech').addClass('bigqty').val(18125);
+			const fleet = $('<input>').attr('id', 'plfleet').addClass('bigqty').val(82518);
+
+			const deltalvl= $('<span>').addClass('delta').html(0);
+			const deltaecon= $('<span>').addClass('delta').html(0);
+			const deltatech= $('<span>').addClass('delta').html(0);
+			const deltafleet= $('<span>').addClass('delta').html(0);
+
+			$('#playerlvl tbody')
+				.append(
+					$('<tr>')
+					.append($('<td>').html(lvl))
+					.append($('<td>').html(econ))
+					.append($('<td>').html(tech))
+					.append($('<td>').html(fleet))
+			).append(
+				$('<tr>')
+					.append($('<td>').html(deltalvl))
+					.append($('<td>').html(deltaecon))
+					.append($('<td>').html(deltatech))
+					.append($('<td>').html(deltafleet))
+			);
+
+			var oldlvlval = 0;
+			var oldlvlecon = 0;
+			var oldlvltech = 0;
+			var oldlvlfleet = 0;
+
+			deltalvl.attr('style','margin-right:40px').before($('<button>').addClass('tnyl').html('0').attr('style','margin-right:20px').click(resetCalc));
+
+			econ.after($('<button>').addClass('tnyl').html('-').click(function () {
+				econ.val((parseInt(econ.val()) |0) - 1);
+				calcLvl();
+				deltaecon.html((parseInt(deltaecon.html()) | 0) - 1);
+			})).before($('<button>').addClass('tnyr').html('+').click(function () {
+				econ.val((parseInt(econ.val()) |0) + 1);
+				calcLvl();
+				deltaecon.html((parseInt(deltaecon.html()) | 0) + 1);
+			}));
+			tech.after($('<button>').addClass('tnyl').html('-').click(function () {
+				tech.val((parseInt(tech.val()) |0) - 500);
+				calcLvl();
+				deltatech.html((parseInt(deltatech.html()) | 0) - 500);
+			})).before($('<button>').addClass('tnyr').html('+').click(function () {
+				tech.val((parseInt(tech.val()) |0) + 500);
+				calcLvl();
+				deltatech.html((parseInt(deltatech.html()) | 0) + 500);
+			}));
+			fleet.after($('<button>').addClass('tnyl').html('-').click(function () {
+				fleet.val((parseInt(fleet.val()) |0) - 500);
+				calcLvl();
+				deltafleet.html((parseInt(deltafleet.html()) | 0) - 500);
+			})).before($('<button>').addClass('tnyr').html('+').click(function () {
+				fleet.val((parseInt(fleet.val()) |0) + 500);
+				calcLvl();
+				deltafleet.html((parseInt(deltafleet.html()) | 0) + 500);
+			}));
+
+			function calcLvl() {
+				const econval = parseInt(econ.val());
+				const techval = parseInt(tech.val() | 0);
+				const fleetval = parseInt(fleet.val() | 0);
+
+				const lvlval = Math.pow(econval * 100 + techval + fleetval, 0.25);
+
+				lvl.val(Math.round(lvlval *100)/100 );
+				deltalvl.html(Math.round((lvlval - oldlvlval)*100)/100);
+			}
+
+			function resetCalc() {
+				deltalvl.html(0);
+				deltaecon.html(0);
+				deltatech.html(0);
+				deltafleet.html(0);
+				oldlvlval = lvl.val();
+				oldlvlecon = econ.val();
+				oldlvltech = tech.val();
+				oldlvlfleet = fleet.val();
+			}
+
+			lvl.keyup(function () {
+
+			});
+			econ.keyup(function () {
+				oldlvlecon = econ.val();
+				calcLvl();
+			});
+			tech.keyup(function () {
+				calcLvl();
+			});
+			fleet.keyup(function () {
+				calcLvl();
+			});
+
+			calcLvl();
+			resetCalc();
 		},
 		showProductionQueueHelper: function () {
 			function componentToHex(c) {
