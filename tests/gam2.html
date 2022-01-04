@@ -250,11 +250,12 @@
         }
         
         .topbar {
-          color:#ff0;
+          color:#fff;
+          font-size: 20px;
         }
         .topbar .s-money,
         .topbar .s-power,
-        .topbar .s-employs
+        .topbar .s-people
         {
           margin: 0 10px;
         }
@@ -332,7 +333,7 @@
                 
                 .container('fa fa-child','i')
                 .up()
-                .container('s-employs','span')
+                .container('s-people','span')
                 .addText('0')
                 .up()
                 .up()
@@ -348,6 +349,8 @@
         'money': 90000,
         'power': 500,
         'powerUsage': 30,
+        'people':10,
+        'peopleUsage':7,
         'res': [],
         'building': [],
         'util': [],
@@ -1107,7 +1110,7 @@
             
             $('.s-money').html( this.hum.val(this.money))
             $('.s-power').html( this.hum.val(this.powerUsage) +' / '+ this.hum.val(this.power))
-            $('.s-people').html( this.hum.val(this.people))
+            $('.s-people').html( this.hum.val(this.peopleUsage) +' / '+ this.hum.val(this.people))
             
             this.showCard('ship', 'ship', 'paper-plane i-empty', 0, 'Ship','');
             this.showCard('miner', 'crafter', 'qrcode i-crafter', 0, 'Miner','');
