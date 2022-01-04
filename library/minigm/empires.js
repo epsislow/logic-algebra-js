@@ -638,6 +638,8 @@ var Empires = (function (constants) {
 
 			$('#totaladd').parent().click(checkAllBases);
 
+			var bases = {};
+
 			$('#prodq tbody')
 				/*.append(
 					$('<tr>')
@@ -650,12 +652,23 @@ var Empires = (function (constants) {
 				)*/
 				.append(
 					$('<tr>')
-					.append(
-						$('<td>').html('<button id="addbase">Add Base</button> All queue: <select class="type" id="totalty"></select> <input type="text" class="qty" id="totalsy" value=""/> h:<input type="text" class="tty" id="totaltime" value=""/>').attr('colspan', 6)
-					)
+						.append(
+							$('<td>').html('<button id="addbase">Add Base</button> All queue: <select class="type" id="totalty"></select> <input type="text" class="qty" id="totalsy" value=""/> h:<input type="text" class="tty" id="totaltime" value=""/>').attr('colspan', 6)
+								.append($('<button>').html('0').addClass('rst').click(function() {
+									//reset button
+									for(var id in bases) {
+										if (!bases[id].chk) {
+											return;
+										}
+										$('#base'+id+'sy').val('');
+										$('#base'+id+'ty').get(0).selectedIndex = 0;
+										$('.totalspan').html('');
+										$('#base'+id+'sy').parent().next().html('');
+									}
+								}))
+								.append($('<span>').addClass('totalspan'))
+						)
 				);
-
-			var bases = {};
 			window.bases = bases;
 
 			var types = {
@@ -695,10 +708,9 @@ var Empires = (function (constants) {
 			for(var t in types) {
 				selector.append($('<option>', {'value': t, text: t}));
 			}
-
 			function checkAllBases() {
 				var isChecked = $('#totaladd').prop("checked");
-				console.log('tt');
+
 				if ($(this).attr('id') !== 'totaladd') {
 					isChecked = !isChecked;
 					$('#totaladd').prop("checked", isChecked);
@@ -824,7 +836,7 @@ var Empires = (function (constants) {
 					if (val < 1) {
 						return ;
 					}
-					console.log('calc for '+val + ' ' + type);
+					//console.log('calc for '+val + ' ' + type);
 
                 	var total = 0;
 					for(var id in bases) {
@@ -834,23 +846,26 @@ var Empires = (function (constants) {
 						total += bases[id].cap;
 					}
 					if (!total) {
-						console.log('No cap for this type:'+ type);
+						//console.log('No cap for this type:'+ type);
 						return;
 					}
 					var timeh = 0;
 					var newval = 0;
 
-
+					var all = 0;
 					for(var id in bases) {
 						if (!(bases[id].types.includes(type)) || !bases[id].chk) {
 							continue;
 						}
 						newval = Math.round(val * bases[id].cap/total);
+						all +=newval;
 						$('#base'+id+'ty').val(type);
 						timeh = (newval*costs[type])/bases[id].cap;
 						$('#base'+id+'sy').val(newval)
 						$($('#base'+id+'sy').parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
 					}
+
+					$('.totalspan').html(all);
                 };
                 var calcQueuesForTime = function () {
 
