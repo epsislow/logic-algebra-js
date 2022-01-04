@@ -251,13 +251,19 @@
         
         .topbar {
           color:#fff;
-          font-size: 20px;
+          font-size: 17px;
+          float: right;
+          margin-top: 4px;
         }
         .topbar .s-money,
         .topbar .s-power,
         .topbar .s-people
         {
-          margin: 0 10px;
+          margin-left: 2px;
+          margin-right: 10px;
+        }
+        .topbar .s-peopl4e {
+          margin-left: 2px;
         }
     </style>
 </head>
@@ -316,7 +322,7 @@
                 .section('top')
                 .br()
                 .addButton('Index', '/index.html')
-                .container('topbar','div', 'float:right')
+                .container('topbar','div')
                 .addText(' ')
                 
                 .container('fa fa-donate','i')
@@ -346,7 +352,7 @@
     });
 
     window.gam2 = {
-        'money': 90000,
+        'money': 700000,
         'power': 500,
         'powerUsage': 30,
         'people':10,
