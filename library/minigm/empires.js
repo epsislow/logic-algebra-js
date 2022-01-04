@@ -663,10 +663,12 @@ var Empires = (function (constants) {
 										$('#base'+id+'sy').val('');
 										$('#base'+id+'ty').get(0).selectedIndex = 0;
 										$('.totalspan').html('');
+										$('.costspan').html('');
 										$('#base'+id+'sy').parent().next().html('');
 									}
 								}))
 								.append($('<span>').addClass('totalspan'))
+								.append($('<span>').addClass('costspan'))
 						)
 				);
 			window.bases = bases;
@@ -683,6 +685,20 @@ var Empires = (function (constants) {
 				'Carrier': 12,
 				'FleetCarrier': 16,
 				'Battleship': 16,
+			};
+
+			var hangar = {
+				'Fighters' : -1,
+				'Bombers': -1,
+				'Corvette': 0,
+				'Recycler': 0,
+				'Destroyer': 0,
+				'Frigate': 4,
+				'Cruiser': 4,
+				'HeavyCruiser': 8,
+				'Carrier': 80,
+				'FleetCarrier': 500,
+				'Battleship': 40,
 			};
 
 			window.types = types;
@@ -865,7 +881,10 @@ var Empires = (function (constants) {
 						$($('#base'+id+'sy').parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
 					}
 
-					$('.totalspan').html(all);
+					var hg = hangar[type] * all;
+
+					$('.totalspan').html(all + ' ('+hg+')');
+					$('.costspan').html(all * costs[type]);
                 };
 
                 var calcTimeToQtyForBase = function (id, type, time) {
@@ -882,8 +901,12 @@ var Empires = (function (constants) {
 
                 var calcQueuesForTime = function () {
 					var val = parseFloat($(this).val());
-					console.log(val);
+
 					var type = $('#totalty').val();
+
+					if (isNaN(val)) {
+						val = 0;
+					}
 					if (val < 0) {
 						return ;
 					}
@@ -895,7 +918,10 @@ var Empires = (function (constants) {
 						}
 						all += calcTimeToQtyForBase(id, type, val);
 					}
-					$('.totalspan').html(all);
+					var hg = hangar[type] * all;
+
+					$('.totalspan').html(all + ' ('+hg+')');
+					$('.costspan').html(all * costs[type]);
                 };
 
                 var calcBaseForQty = function () {
