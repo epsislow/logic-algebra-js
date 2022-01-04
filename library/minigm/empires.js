@@ -867,9 +867,37 @@ var Empires = (function (constants) {
 
 					$('.totalspan').html(all);
                 };
-                var calcQueuesForTime = function () {
 
+                var calcTimeToQtyForBase = function (id, type, time) {
+                	var newval = Math.floor(((time/3600)*bases[id].cap)/costs[type]);
+					$('#base'+id+'ty').val(type);
+					$('#base'+id+'sy').val(newval);
+
+					var timeh = (newval*costs[type])/bases[id].cap;
+
+					$($('#base'+id+'sy').parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
+
+                	return newval;
+				}
+
+                var calcQueuesForTime = function () {
+					var val = parseFloat($(this).val());
+					console.log(val);
+					var type = $('#totalty').val();
+					if (val < 0) {
+						return ;
+					}
+					val = Math.round(val * 3600);
+					var all = 0;
+					for(var id in bases) {
+						if (!(bases[id].types.includes(type)) || !bases[id].chk) {
+							continue;
+						}
+						all += calcTimeToQtyForBase(id, type, val);
+					}
+					$('.totalspan').html(all);
                 };
+
                 var calcBaseForQty = function () {
                     var val = $(this).val();
                     var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
