@@ -614,7 +614,10 @@ var Empires = (function (constants) {
 
 			var main = $('main');
 
-			main.html('<table id="prodq"><thead></thead><tbody></tbody></table>'+ main.html());
+			main.prepend('<table id="prodq"><thead></thead><tbody></tbody></table>');
+
+
+			//main.html('<table id="prodq"><thead></thead><tbody></tbody></table>'+ main.html());
 
 			$('#prodq thead').append(
 				$('<tr>')
@@ -624,10 +627,16 @@ var Empires = (function (constants) {
 					.append($('<th>').html('Base').addClass('med'))
 					.append($('<th>').html('Shipyard').addClass('med'))
 					.append($('<th>').html('Capacities').addClass('med'))
-					.append($('<th>').html('Queue').addClass('large').attr('style','width:200px'))
-					.append($('<th>').html('Time').addClass('med'))
+					.append(
+						$('<th>').html('<input type="checkbox" id="totaladd" class="chkt" checked/> Queue')
+							.addClass('large')
+							.attr('style','width:200px')
+					)
+					.append($('<th>').html('Time').addClass('large'))
 					.append($('<th>').html('Actions').addClass('med'))
 			)
+
+			$('#totaladd').parent().click(checkAllBases);
 
 			$('#prodq tbody')
 				/*.append(
@@ -642,7 +651,7 @@ var Empires = (function (constants) {
 				.append(
 					$('<tr>')
 					.append(
-						$('<td>').html('<button id="addbase">Add Base</button> All queue: <select class="type" id="totalty"><option>Fighter</option></select> <input type="text" class="qty" id="totalsy" value=""/> h:<input type="text" class="tty" id="totaltime" value=""/>').attr('colspan', 6)
+						$('<td>').html('<button id="addbase">Add Base</button> All queue: <select class="type" id="totalty"></select> <input type="text" class="qty" id="totalsy" value=""/> h:<input type="text" class="tty" id="totaltime" value=""/>').attr('colspan', 6)
 					)
 				);
 
@@ -663,6 +672,8 @@ var Empires = (function (constants) {
 				'Battleship': 16,
 			};
 
+			window.types = types;
+
 			var costs = {
 				'Fighters' : 5,
 				'Bombers': 10,
@@ -677,13 +688,86 @@ var Empires = (function (constants) {
 				'Battleship': 2000,
 			};
 
+			window.costs = costs;
+
 			var selector = $('#totalty');
 
 			for(var t in types) {
 				selector.append($('<option>', {'value': t, text: t}));
 			}
 
+			function checkAllBases() {
+				var isChecked = $('#totaladd').prop("checked");
+				console.log('tt');
+				if ($(this).attr('id') !== 'totaladd') {
+					isChecked = !isChecked;
+					$('#totaladd').prop("checked", isChecked);
+				}
+				$('#prodq .chk').prop( "checked", isChecked);
+			}
+
+			function checkOnBase() {
+				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
+				bases[baseId].chk = $(this).prop("checked");
+			}
+
+			function addBase(id, name, lvl, cap, chk = 1) {
+				var base=  bases[id] = {
+					'id': id,
+					'name': name,
+					'lvl': lvl,
+					'cap': cap,
+					'types': [],
+					'chk': chk,
+				};
+
+
+				for(var t in types) {
+					if (parseInt(lvl) >= types[t]) {
+						base.types.push(t);
+					}
+				}
+
+				return base;
+			}
+
+			function appendBase(name, lvl, cap, chk = 1) {
+				var id = Object.keys(bases).length;
+
+				addBase(id,name,lvl,cap, chk);
+
+				$('#prodq tbody').prev()
+					.append(
+						$('<tr>')
+							.append($('<td>').html(name))
+							.append($('<td>').html('Lvl '+lvl))
+							.append($('<td>').html(cap +'/h'))
+							.append($('<td>').html('<input type="hidden" class="baseId" value="'+id+'"/> <input type="checkbox" id="base'+id+'add" class="chk" checked/> <select class="type" id="base'+id+'ty"></select> <input type="text" class="qty" id="base'+id+'sy" value=""/>'))
+							.append($('<td>').html(''))
+							.append($('<td>').html('<button id="remove"> - </button>').click(function () {
+									delete bases[id];
+									$(this).parent().parent().remove();
+								})
+							)
+					);
+
+				var selector = $('#base'+id+'ty');
+
+				for(var t in types) {
+					if (parseInt(lvl) >= types[t]) {
+						selector.append($('<option>', {'value': t, text: t}));
+					}
+				}
+
+				$('#base'+id+'sy').keyup(calcBaseForQty).change(calcBaseForQty);
+				$('#base'+id+'time').keyup(calcBaseForTime).change(calcBaseForQty);
+				$('#base'+id+'add').change(checkOnBase);
+			}
+
 			$('#addbase').click(function () {
+
+				$('#totalsy').keyup(calcQueuesForQty).change(calcQueuesForQty);
+				$('#totaltime').keyup(calcQueuesForTime).change(calcQueuesForTime);
 
 				var confirmbtn = $('<button>').html('confirm').attr('id','confirm');
 				$('#prodq tbody').prev()
@@ -697,85 +781,144 @@ var Empires = (function (constants) {
 							.append($('<td>').append(confirmbtn))
 					);
 
-				confirmbtn.click(function (e) {
-					var removebtn = $('<button>').html(' - ').attr('id','remove');
-					var vals = $(this).parent().parent().find('input').map(function(){return $(this).val();}).get();
-					var td = $(this).parent().parent().find('td');
-					var newBaseId = Object.keys(bases).length;
+                    confirmbtn.click(function (e) {
+                        var removebtn = $('<button>').html(' - ').attr('id','remove');
+                        var vals = $(this).parent().parent().find('input').map(function(){return $(this).val();}).get();
+                        var td = $(this).parent().parent().find('td');
+                        var newBaseId = Object.keys(bases).length;
 
-					var lvl = parseInt(vals[1]) || 0;
-					var cap = parseInt(vals[2]) || 0;
+                        var lvl = parseInt(vals[1]) || 0;
+                        var cap = parseInt(vals[2]) || 0;
 
-					var base = bases[newBaseId] = {
-						'id': newBaseId,
-						'name': vals[0],
-						'lvl': lvl,
-						'cap': cap,
-					};
+                        var base = addBase(newBaseId, vals[0], lvl, cap);
 
-					$(td[0]).html(vals[0]);
-					$(td[1]).html('Lvl '+ lvl);
-					$(td[2]).html(cap+ '/h');
-					$(td[3]).html('<input type="hidden" class="baseId" value="'+newBaseId+'"/><select class="type" id="base'+newBaseId+'ty"></select> <input type="text" class="qty" id="base'+newBaseId+'sy" value=""/> h:<input type="text" class="tty" id="base'+newBaseId+'time" value=""/>');
-					$(td[4]).html('');
-					$(td[5]).html('').append(removebtn);
+                        $(td[0]).html(vals[0]);
+                        $(td[1]).html('Lvl '+ lvl);
+                        $(td[2]).html(cap+ '/h');
+                        $(td[3]).html('<input type="hidden" class="baseId" value="'+newBaseId+'"/><input type="checkbox" id="base'+newBaseId+'add" class="chk" checked/> <select class="type" id="base'+newBaseId+'ty"></select> <input type="text" class="qty" id="base'+newBaseId+'sy" value=""/> h:<input type="text" class="tty" id="base'+newBaseId+'time" value=""/>');
+                        $(td[4]).html('');
+                        $(td[5]).html('').append(removebtn);
 
-					removebtn.click(function () {
-						delete bases[newBaseId];
-						$(this).parent().parent().remove();
-					});
+                        removebtn.click(function () {
+                            delete bases[newBaseId];
+                            $(this).parent().parent().remove();
+                        });
 
-					var selector = $('#base'+newBaseId+'ty');
+                        var selector = $('#base'+newBaseId+'ty');
 
-					for(var t in types) {
-						if (parseInt(vals[1]) >= types[t]) {
-							selector.append($('<option>', {'value': t, text: t}));
+                        for(var t in types) {
+                            if (parseInt(vals[1]) >= types[t]) {
+                                selector.append($('<option>', {'value': t, text: t}));
+                            }
+                        }
+
+                        $('#base'+newBaseId+'sy').keyup(calcBaseForQty).change(calcBaseForQty);
+                        $('#base'+newBaseId+'time').keyup(calcBaseForTime).change(calcBaseForQty);
+                    });
+
+                });
+
+                var calcQueuesForQty = function () {
+					var val = parseInt($(this).val()) | 0;
+					var type = $('#totalty').val();
+					if (val < 1) {
+						return ;
+					}
+					console.log('calc for '+val + ' ' + type);
+
+                	var total = 0;
+					for(var id in bases) {
+						if (!(bases[id].types.includes(type)) || !bases[id].chk) {
+							continue;
 						}
+						total += bases[id].cap;
+					}
+					if (!total) {
+						console.log('No cap for this type:'+ type);
+						return;
+					}
+					var timeh = 0;
+					var newval = 0;
+
+
+					for(var id in bases) {
+						if (!(bases[id].types.includes(type)) || !bases[id].chk) {
+							continue;
+						}
+						newval = Math.round(val * bases[id].cap/total);
+						$('#base'+id+'ty').val(type);
+						timeh = (newval*costs[type])/bases[id].cap;
+						$('#base'+id+'sy').val(newval)
+						$($('#base'+id+'sy').parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
+					}
+                };
+                var calcQueuesForTime = function () {
+
+                };
+                var calcBaseForQty = function () {
+                    var val = $(this).val();
+                    var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
+                    var type = $('#base'+baseId+'ty').val();
+                    var timeh = (val*costs[type])/bases[baseId].cap;
+                    console.log(val,' ',type, ' ( ', costs[type], ')' , ' = ', val * costs[type] ,' time in sec: ', timeh);
+                    $($(this).parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
+
+                //	console.log('base:', baseId);
+                };
+                var calcBaseForTime = function () {
+                    var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
+                    console.log('base:', baseId);
+                };
+                var convertSec = function (sec) {
+                	//console.log(sec);
+                    //return new Date(s * 1000).toISOString().substr(11, 8);
+					var s = "";
+					var rsec = (sec % 60);
+					var mins = Math.floor(sec / 60);
+					var rmins = (mins % 60);
+					var hours = Math.floor(mins / 60);
+					var rhours = (hours % 24);
+
+					var days = Math.floor(hours / 24);
+					var rdays = (days % 7);
+
+					var weeks = Math.floor(days / 7);
+
+					if (rsec) {
+						s = rsec + "s" + s;
+					}
+					if (rmins) {
+						s = rmins + "m " + s;
+					}
+					if (rhours) {
+						s = rhours + "h " + s;
+					}
+					if (rdays) {
+						s = rdays + "d " + s;
+					}
+					if (weeks) {
+						s = weeks + "w " + s;
 					}
 
-					$('#base'+newBaseId+'sy').keyup(calcBaseForQty).change(calcBaseForQty);
-					$('#base'+newBaseId+'time').keyup(calcBaseForTime).change(calcBaseForQty);
-				});
-
-				$('#totalsy').keyup(calcQueuesForQty).change(calcQueuesForQty);
-				$('#totaltime').keyup(calcQueuesForTime).change(calcQueuesForTime);
-			});
-
-			var calcQueuesForQty = function () {
-
-			};
-			var calcQueuesForTime = function () {
-
-			};
-			var calcBaseForQty = function () {
-				var val = $(this).val();
-				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
-				var type = $('#base'+baseId+'ty').val();
-				var timeh = (val*costs[type])/bases[baseId].cap;
-				$($(this).parent().parent().find('td').get(4)).html(convertSec(Math.round(timeh * 3600)));
-
-			//	console.log('base:', baseId);
-			};
-			var calcBaseForTime = function () {
-				var baseId = $($(this).parent().parent().find('input.baseId').get(0)).val();
-				console.log('base:', baseId);
-			};
-			var convertSec = function (s) {
-				return new Date(s * 1000).toISOString().substr(11, 8);
-				/*
-				var num = s;
-				var hours = (num / 60);
-				var rhours = Math.floor(hours);
-				var minutes = (hours - rhours) * 60;
-				var rminutes = Math.round(minutes);
-				return num + " minutes = " + rhours + " hour(s) and " + rminutes + " minute(s).";
-				 */
+					return s;
 			}
 
+			$('#totalsy').keyup(calcQueuesForQty).change(calcQueuesForQty);
+			$('#totaltime').keyup(calcQueuesForTime).change(calcQueuesForTime);
 
 			$('#remove').click(function () {
 				$(this).parent().parent().remove();
 			});
+
+			appendBase('Calidar', 12, 80);
+			appendBase('Sierra', 16, 156 );
+			appendBase('Nervo', 16, 96);
+			appendBase('Osiris', 16, 125);
+			appendBase('Canyon', 5, 63 );
+			appendBase('Mira', 8, 38 );
+			appendBase('Cirus', 12, 96 );
+			appendBase('Arrak', 14, 104 )
+			appendBase('Kordova', 2, 28 );
 		},
 		showTableRes: function(tb, sortCols) {
 			
