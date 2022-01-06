@@ -493,16 +493,66 @@
         },
         'loc': {
             'add': function (name, type) {
-                var pub = {
-                    'name': name,
-                    'locx': 0,
+                var pub;
+
+                pub = {
+                    'prop': {
+                        'name': name,
+                        'type': type,
+                        'locx': 0,
+                        'cardType': 'empty',
+                    },
                     'parent': null,
                     'child': null,
-                    'addChild': function (name, loc) {
-
+                    'next': null,
+                    'prev': null,
+                    'first': null,
+                    'addChild': function (child) {
+                        child.parent = this;
+                        this.child = child;
+                        return this;
+                    },
+                    'nextChild': function (child) {
+                        child.prev = this;
+                        child.first = this.first;
+                        this.next = child;
+                        return child;
                     }
                 };
+                pub.first = pub;
                 return pub;
+            },
+            'showLoc': function (child) {
+                var start = child.first;
+                if(!start) {
+                    console.log('No child here');
+                }
+                do {
+                    console.log('Now:', start.prop.name, start.prop.type);
+                    this.showChild(start);
+                    start = start.next;
+                } while (start !== null);
+            },
+            'showChild': function (child) {
+                if(!child) {
+                    console.log('No child here');
+                    return;
+                }
+                gam2.showCard('loc-' + child.prop.type + '-' + child.prop.name, child.prop.cardType, 'qrcode i-power', 0, child.prop.type, child.prop.name);
+            },
+            'init': function () {
+                //L = gam2.loc.init(); gam2.loc.showLoc(L)
+                var imax =  gam2.rd.r.rand(10,20);
+
+                var types = ['planet','empty','empty','moon','asteroid','sun','asteroid belt'];
+                var t = 0;
+                var L = gam2.loc.add('sys1', 'solarsys');
+                for(var i = 0; i< imax; i++) {
+                    t = gam2.rd.r.rand(0,100);
+                    L = L.nextChild(gam2.loc.add('L0:'+i, types[t % types.length]));
+                }
+                gam2.loc.showLoc(L);
+                return L;
             }
         },
         'card': {},
