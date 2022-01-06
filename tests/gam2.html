@@ -542,14 +542,17 @@
             },
             'init': function () {
                 //L = gam2.loc.init(); gam2.loc.showLoc(L)
-                var imax =  gam2.rd.r.rand(10,20);
+                var imax =  gam2.rd.r.rand(10,40);
 
-                var types = ['planet','empty','empty','moon','asteroid','sun','asteroid belt'];
+                var types = ['planet','empty','empty','empty','moon','asteroid','sun','asteroid belt'];
+                var seenAs = ['asmb', 'empty','empty','empty','storage','power','crafter','smelter',];
                 var t = 0;
                 var L = gam2.loc.add('sys1', 'solarsys');
+                
                 for(var i = 0; i< imax; i++) {
                     t = gam2.rd.r.rand(0,100);
                     L = L.nextChild(gam2.loc.add('L0:'+i, types[t % types.length]));
+                    L.prop.cardType = seenAs[t % types.length];
                 }
                 gam2.loc.showLoc(L);
                 return L;
@@ -810,7 +813,8 @@
             this.initEvents();
         },
         'initEvents': function () {
-            setInterval(this.event.everySec, 1000);
+          gam2.loc.init();
+            //setInterval(this.event.everySec, 1000);
         },
         'event': {
             'tim': {},
