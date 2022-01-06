@@ -84,6 +84,15 @@
         .text-white {
             color: #bbb !important;
         }
+        
+        .bg-card-xs {
+            float: left;
+            width: 170px;
+            height: 85px;
+            /*border: 1px solid #fff;*/
+            position: relative;
+            z-index: 20;
+        }
 
         .bg-card {
             float: left;
@@ -128,6 +137,19 @@
             text-align: center;
             /*border: 1px solid #fff;*/
             padding: 12px 0;
+        }
+        
+        .fa-bgd-xs {
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          color: #555;
+          z-index: 1;
+          margin-top: 0px;
+          margin-left: 25px;
+          text-align: center;
+          /*border: 1px solid #fff;*/
+          padding: 0px 0;
         }
 
         .bg-dashed {
@@ -538,7 +560,9 @@
                     console.log('No child here');
                     return;
                 }
-                gam2.showCard('loc-' + child.prop.type + '-' + child.prop.name, child.prop.cardType, 'qrcode i-power', 0, child.prop.type, child.prop.name);
+                gam2.showCard('loc-' + child.prop.type + '-' + child.prop.name, child.prop.cardType,
+                'qrcode i-power', 0, child.prop.type, child.prop.name,
+                [], [], '-xs');
             },
             'init': function () {
                 //L = gam2.loc.init(); gam2.loc.showLoc(L)
@@ -1142,7 +1166,7 @@
             var ra3 = ra
                 .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '')
 
-                .container('fa fa-' + icon + ' fa-bgd fa-5x', 'div', '')
+                .container('fa fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
                 .up()
 
                 .container('', 'div', 'position:relative;top:0px;z-index:997')
