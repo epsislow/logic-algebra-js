@@ -547,11 +547,16 @@
                 var types = ['planet','empty','empty','empty','moon','asteroid','sun','asteroid belt'];
                 var seenAs = ['asmb', 'empty','empty','empty','storage','power','crafter','smelter',];
                 var t = 0;
-                var L = gam2.loc.add('sys1', 'solarsys');
-                
+                var L = null;//gam2.loc.add('L0:0', 'solarss');
+                var child = null;
                 for(var i = 0; i< imax; i++) {
                     t = gam2.rd.r.rand(0,100);
-                    L = L.nextChild(gam2.loc.add('L0:'+i, types[t % types.length]));
+                    child = gam2.loc.add('L0:'+i, types[t % types.length]);
+                    if(L === null ) {
+                      L = child;
+                    } else {
+                      L = L.nextChild(child);
+                    }
                     L.prop.cardType = seenAs[t % types.length];
                 }
                 gam2.loc.showLoc(L);
