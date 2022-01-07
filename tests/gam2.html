@@ -624,6 +624,9 @@
 
                 return L;
             },
+            'findChildsFor': function(lvl = 0, Loc) {
+              
+            },
             'init': function () {
                 //L = gam2.loc.init(); gam2.loc.showLoc(L)
                 var imax = gam2.rd.r.rand(10,40);
@@ -632,6 +635,7 @@
                 var seenAs = ['empty'];
                 var icon = ['adjust', 'moon fa-med', 'circle fa-sml', 'braille'];
                 var t = 0, r = 0;
+                
                 var L = gam2.loc.add('L0:0', 'sun');
                 L.prop.icon = 'sun i-sun';
                 L.prop.cardType = 'empty';
@@ -659,7 +663,7 @@
                 var kmax = 10;
                 var types3 = ['mountain', 'river', 'fields', 'ice-fields', 'iceberg', 'crater', 'vulcano'];
                 var seenAs3 = ['asmb', 'storage','power','smelter', 'power'];
-                var icon3 = ['mountain fa-med', 'water fa-med', 'minus fa-med', 'grip-lines fa-med', 'mountain fa-med', 'circle-notch fa-med', 'mountain fa-med'];
+                var icon3 = ['mountain fa-med', 'water', 'square', 'grip-lines', 'mountain fa-med', 'circle-notch fa-med', 'mountain fa-med'];
 
                 for(var k = 0; k< kmax; k++) {
                     r = gam2.rd.r.rand(0,100);
