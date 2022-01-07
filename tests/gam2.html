@@ -8,7 +8,7 @@
     <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" rel="stylesheet">
 
-    <link href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" rel="stylesheet"/>
+    <link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" rel="stylesheet"/>
 
     <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
 
@@ -88,10 +88,11 @@
         .bg-card-xs {
             float: left;
             width: 170px;
-            height: 85px;
+            height: 78px;
             /*border: 1px solid #fff;*/
             position: relative;
             z-index: 20;
+            overflow: hidden;
         }
 
         .bg-card {
@@ -101,6 +102,7 @@
             /*border: 1px solid #fff;*/
             position: relative;
             z-index: 20;
+            overflow: hidden;
         }
         .bg-card-x2 {
           float: left;
@@ -109,6 +111,7 @@
           /*border: 1px solid #fff;*/
           position: relative;
           z-index: 20;
+            overflow: hidden;
         }
         
         .bg-card-y2 {
@@ -117,6 +120,7 @@
           height: 170px;
           position: relative;
           z-index: 20;
+            overflow: hidden;
         }
         .bg-card-xy2 {
           float: left;
@@ -124,9 +128,15 @@
           height: 355px;
           position: relative;
           z-index: 20;
+            overflow: hidden;
+        }
+        .fa-sml {
+          font-size:25px;
+          margin-top: 30px !important;
         }
         .fa-med {
           font-size:40px;
+          margin-top: 30px !important;
         }
         .fa-bgd {
             position: absolute;
@@ -147,15 +157,15 @@
           height: 100px;
           color: #555;
           z-index: 1;
-          margin-top: 0px;
-          margin-left: 25px;
+          margin-top: 24px;
+          margin-left: 20px;
           text-align: center;
           /*border: 1px solid #fff;*/
           padding: 0px 0;
         }
 
         .bg-dashed {
-            border-color: #ffffff;
+            border-color: #234;
             border-style: dashed;
             border-width: 1px !important;
         }
@@ -165,18 +175,33 @@
             border-color: #dd9107;
         }
         
-        .i-planet {
-          color: #446699;
+        .i-clr0 {
+          color: #446699 !important;
+        }
+
+        .i-clr1 {
+            color: #996644 !important;
+        }
+
+        .i-clr2 {
+            color: #994466 !important;
+        }
+
+        .i-clr3 {
+            color: #449966 !important;
+        }
+
+        .i-clr4 {
+            color: #669944 !important;
         }
         
         .i-moon {
-          color: #555;
+          color: #555 !important;
         }
         
         .i-sun {
-          color:#997722;
+          color:#997722 !important;
         }
-        
 
         .i-empty {
             color: #555555;
@@ -577,31 +602,72 @@
                 }
               
                 gam2.showCard('loc-' + child.prop.type + '-' + child.prop.name, child.prop.cardType,
-                child.prop.icon, 0, child.prop.type, child.prop.name,
+                child.prop.icon, 1, child.prop.type, '',
                 [], [], '-xs');
+            },
+            'addRandomChild': function (L, r, t, loc, types = ['empty'], icon  = ['empty'], seenAs = ['empty']) {
+                var type= types[t];
+                var child = gam2.loc.add(loc, type);
+
+                if(L === null ) {
+                    L = child;
+                } else {
+                    L = L.nextChild(child);
+                }
+
+                if (type !== 'sun') {
+                    L.prop.icon = icon[t] + ' i-clr' + (r % 4);
+                } else {
+                    L.prop.icon = icon[t] + ' i-'+ type;
+                }
+                L.prop.cardType = seenAs[t % seenAs.length];
+
+                return L;
             },
             'init': function () {
                 //L = gam2.loc.init(); gam2.loc.showLoc(L)
-                var imax =  gam2.rd.r.rand(10,40);
+                var imax = gam2.rd.r.rand(10,40);
 
-                var types = ['planet','empty','empty','empty','moon','asteroid','sun','asteroid-belt'];
-                var seenAs = ['asmb', 'empty','empty','empty','storage','power','crafter','smelter'];
-                var icon = ['adjust', '', '', '', 'moon', 'dot-circle fa-med', 'sun', 'braille']
-                var t = 0;
-                var L = null;//gam2.loc.add('L0:0', 'solarss');
-                var child = null, type='';
-                for(var i = 0; i< imax; i++) {
+                var types = ['planet','moon','asteroid','asteroid-belt'];
+                var seenAs = ['empty'];
+                var icon = ['adjust', 'moon fa-med', 'circle fa-sml', 'braille'];
+                var t = 0, r = 0;
+                var L = gam2.loc.add('L0:0', 'sun');
+                L.prop.icon = 'sun i-sun';
+                L.prop.cardType = 'empty';
+
+                for(var i = 1; i< imax; i++) {
+                    r = gam2.rd.r.rand(0,100);
                     t = gam2.rd.r.rand(0,100) % types.length;
-                    type = types[t];
-                    child = gam2.loc.add('L0:'+i, type);
-                    if(L === null ) {
-                      L = child;
-                    } else {
-                      L = L.nextChild(child);
-                    }
-                    L.prop.icon = icon[t];
-                    L.prop.cardType = 'empty i-'+ type ; //seenAs[t];
+
+                    L = gam2.loc.addRandomChild(L, r, t, 'L1:'+i, types, icon, seenAs);
                 }
+
+                var jmax = gam2.rd.r.rand(10,40);
+
+                var types2 = ['research st.', 'storage st.', 'trade st.', 'asteroid st.', 'jump gate'];
+                var seenAs2 = ['empty'];
+                var icon2 = ['hockey-puck fa-med', 'memory  fa-med', 'toggle-on fa-med', 'cubes fa-med', 'circle-notch fa-med'];
+
+                for(var j = 1; j< jmax; j++) {
+                    r = gam2.rd.r.rand(0,100);
+                    t = gam2.rd.r.rand(0,100) % types2.length;
+
+                    L = gam2.loc.addRandomChild(L, r, t, 'L2:'+j, types2, icon2, seenAs2);
+                }
+
+                var kmax = 10;
+                var types3 = ['mountain', 'river', 'fields', 'ice-fields', 'iceberg', 'crater', 'vulcano'];
+                var seenAs3 = ['asmb', 'storage','power','smelter', 'power'];
+                var icon3 = ['mountain fa-med', 'water fa-med', 'minus fa-med', 'grip-lines fa-med', 'mountain fa-med', 'circle-notch fa-med', 'mountain fa-med'];
+
+                for(var k = 0; k< kmax; k++) {
+                    r = gam2.rd.r.rand(0,100);
+                    t = gam2.rd.r.rand(0,100) % types2.length;
+
+                    L = gam2.loc.addRandomChild(L, r, t, 'L3:'+k, types3, icon3, seenAs3);
+                }
+
                 gam2.loc.showLoc(L);
                 return L;
             }
@@ -710,6 +776,17 @@
           // moon
           // asteroids belt
           // asteroid
+
+        // shipyard
+        // transporter
+        // cargo ship
+        // ship
+        // jump gate
+        // communication relay
+        // trade station
+        // asteroid station
+        // research station
+        // storage station
           
           to.push({
             title: type,
@@ -1185,11 +1262,11 @@
             var ra3 = ra
                 .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '')
 
-                .container('fa fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
+                .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
                 .up()
 
                 .container('', 'div', 'position:relative;top:0px;z-index:997')
-                .container('border-bottom border-gray pb-2 mb-0', 'h6')
+                .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
                 .addText(title)
                 .up()
                 .container('media text-white pt-2')
