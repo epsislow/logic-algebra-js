@@ -561,7 +561,8 @@
                     'prop': {
                         'name': name,
                         'type': type,
-                        'locx': 0,
+                        'lvl': 0,
+                        'pos': 0,
                         'cardType': 'empty',
                     },
                     'parent': null,
@@ -624,7 +625,7 @@
 
                 return L;
             },
-            'findChildsFor': function(lvl = 0, Loc) {
+            'addChildsFor': function(Loc, rand) {
               
             },
             'init': function () {
