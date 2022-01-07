@@ -125,7 +125,9 @@
           position: relative;
           z-index: 20;
         }
-
+        .fa-med {
+          font-size:40px;
+        }
         .fa-bgd {
             position: absolute;
             width: 100px;
@@ -162,6 +164,19 @@
             background-color: #dd9107;
             border-color: #dd9107;
         }
+        
+        .i-planet {
+          color: #446699;
+        }
+        
+        .i-moon {
+          color: #555;
+        }
+        
+        .i-sun {
+          color:#997722;
+        }
+        
 
         .i-empty {
             color: #555555;
@@ -560,28 +575,32 @@
                     console.log('No child here');
                     return;
                 }
+              
                 gam2.showCard('loc-' + child.prop.type + '-' + child.prop.name, child.prop.cardType,
-                'qrcode i-power', 0, child.prop.type, child.prop.name,
+                child.prop.icon, 0, child.prop.type, child.prop.name,
                 [], [], '-xs');
             },
             'init': function () {
                 //L = gam2.loc.init(); gam2.loc.showLoc(L)
                 var imax =  gam2.rd.r.rand(10,40);
 
-                var types = ['planet','empty','empty','empty','moon','asteroid','sun','asteroid belt'];
-                var seenAs = ['asmb', 'empty','empty','empty','storage','power','crafter','smelter',];
+                var types = ['planet','empty','empty','empty','moon','asteroid','sun','asteroid-belt'];
+                var seenAs = ['asmb', 'empty','empty','empty','storage','power','crafter','smelter'];
+                var icon = ['adjust', '', '', '', 'moon', 'dot-circle fa-med', 'sun', 'braille']
                 var t = 0;
                 var L = null;//gam2.loc.add('L0:0', 'solarss');
-                var child = null;
+                var child = null, type='';
                 for(var i = 0; i< imax; i++) {
-                    t = gam2.rd.r.rand(0,100);
-                    child = gam2.loc.add('L0:'+i, types[t % types.length]);
+                    t = gam2.rd.r.rand(0,100) % types.length;
+                    type = types[t];
+                    child = gam2.loc.add('L0:'+i, type);
                     if(L === null ) {
                       L = child;
                     } else {
                       L = L.nextChild(child);
                     }
-                    L.prop.cardType = seenAs[t % types.length];
+                    L.prop.icon = icon[t];
+                    L.prop.cardType = 'empty i-'+ type ; //seenAs[t];
                 }
                 gam2.loc.showLoc(L);
                 return L;
@@ -1422,7 +1441,7 @@
                 } else if (box.title === 'Power') {
                     card = 1;
                     title = box.title;
-                    icon = 'lemon anim-storage i-storage anim-stop';
+                    icon = 'bolt anim-storage i-storage anim-stop';
                     head = '';
                     texts = [
                         'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')',
