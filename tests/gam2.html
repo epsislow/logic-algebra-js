@@ -580,10 +580,49 @@
                         child.first = this.first;
                         this.next = child;
                         return child;
-                    }
+                    },
                 };
                 pub.first = pub;
                 return pub;
+            },
+            'orderListByProp': function(l, propName, isAsc = 1) {
+             // var l = Loc.first;
+              var propList = [l.prop[propName]];
+              do {
+                l = l.next;
+                if (!l) {
+                  break;
+                }
+                propList.push({
+                  'p': propName,
+                  'v': l.prop[propName],
+                  'l': l,
+                })
+              } while (null !== l);
+            
+              propList.sort(function(a, b) {
+                if (a[propName] == b[propName]) {
+                  return 0;
+                }
+                var c = isAsc ? a[propName] < b[propName] :
+                  a[propName] > b[propName];
+                return c ? 1 : -1;
+              });
+              l = l.first;
+              var p, op, f;
+              for (var k in propList) {
+                op = p;
+                p = propList[k];
+                if (k === 0) {
+                  f = p.l;
+                  continue;
+                }
+                p.prev = op;
+                op.next = p;
+                p.next = null;
+                p.first = f;
+                op.first = f;
+              }
             },
             'showLoc': function (child) {
                 var start = child.first;
@@ -672,6 +711,8 @@
 
                     L = gam2.loc.addRandomChild(L, r, t, 'L3:'+k, types3, icon3, seenAs3);
                 }
+                
+                gam2.loc.orderListByProp(L.prev,'pos',1);
 
                 gam2.loc.showLoc(L);
                 return L;
@@ -943,7 +984,7 @@
             this.initEvents();
         },
         'initEvents': function () {
-          gam2.loc.init();
+          var L = gam2.loc.init();
             //setInterval(this.event.everySec, 1000);
         },
         'event': {
