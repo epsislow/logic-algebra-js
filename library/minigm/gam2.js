@@ -227,15 +227,17 @@ $('document').ready(function () {
                 l = l.next;
               } while (null !== l);
             
-              propList.sort(function(a, b) {
-                if (a[propName] == b[propName]) {
+             propList.sort(function(a, b) {
+                
+                if (a.v === b.v) {
                   return 0;
                 }
-                var c = isAsc ? a[propName] < b[propName] :
-                  a[propName] > b[propName];
+
+                var c = !isAsc ? a.v < b.v :
+                  a.v > b.v;
                 return c ? 1 : -1;
               });
-              console.log(propList);
+             // console.table(propList);
               l = l.first;
               var p=null, op =null, f=null;
               for (var k in propList) {
