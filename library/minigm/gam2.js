@@ -236,7 +236,7 @@ $('document').ready(function () {
                 return c ? 1 : -1;
               });
               l = l.first;
-              var p, op, f;
+              var p=null, op =null, f=null;
               for (var k in propList) {
                 op = p;
                 p = propList[k].l;
@@ -245,10 +245,14 @@ $('document').ready(function () {
                   continue;
                 }
                 p.prev = op;
+                if(op) {
                 op.next = p;
+                }
                 p.next = null;
                 p.first = f;
+                if(op) {
                 op.first = f;
+                }
               }
             },
             'showLoc': function (child) {
