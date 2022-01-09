@@ -44,7 +44,7 @@ $('document').ready(function () {
         'money': 700000,
         'power': 500,
         'powerUsage': 30,
-        'people':5,
+        'people':2,
         'peopleUsage':2,
         'res': [],
         'building': [],
@@ -529,6 +529,7 @@ $('document').ready(function () {
             powerUsage: 0,
             peopleUsage: 0,
             everySec: 10,
+            timer: 0,
             color:'power',
           });
         },
@@ -544,6 +545,7 @@ $('document').ready(function () {
                 amount: 0,
                 unitValue: 0,
                 everySec: 3,
+                timer:0,
                 cost: 5000,
                 powerUsage: 15,
                 peopleUsage: 3,
@@ -578,6 +580,7 @@ $('document').ready(function () {
                 amount: 0,
                 unitValue: 0,
                 everySec: 2,
+                timer:0,
                 cost: 2500,
                 powerUsage: 10,
                 peopleUsage: 2,
@@ -690,11 +693,16 @@ $('document').ready(function () {
                         if (!('util' + u in gam2.event.tim)) {
                             gam2.event.tim['util' + u] = 0;
                         }
+                            
                         gam2.event.tim['util' + u]++;
+                        box.timer = gam2.event.tim['util' + u];
+                        
                         if (gam2.event.tim['util' + u] !== box.everySec) {
                             continue;
                         }
                         gam2.event.tim['util' + u] = 0;
+                        box.timer = gam2.event.tim['util' + u];
+                        
 
                         var maxAmount = 0;
                         var boxSrc;
@@ -730,6 +738,10 @@ $('document').ready(function () {
                           if (box.capacity > box.usage) {
                             box.usage++;
                             gam2.people++;
+                            
+                           // gam2.card['util'+u].addText()clear();
+                           //var tikk= $('#util'+u).find('.tik').get(0);
+                          // tikk.parent()
                           }
                         }
                     }
@@ -942,7 +954,8 @@ $('document').ready(function () {
                     }
                     //gam2.actions.store(opt.item)
                 } else {
-                    box.recepie = gam2.res[i].name;
+                    console.log(gam2[opt.src][i].slot)
+                    box.recepie = gam2[opt.src][i].slot.item;
                     box.slot.addItem(box.recepie, 'liquid', 0, gam2[opt.src][i].slot.unitValue * 10)
                   
                     //box.unitValue = gam2[opt.src][i].unitValue * 10;
@@ -1001,7 +1014,7 @@ $('document').ready(function () {
                 head = '&nbsp;';
             }
             var ra3 = ra
-                .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '')
+                .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
                 .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
                 .up()
@@ -1095,12 +1108,13 @@ $('document').ready(function () {
                 //gam2.res[1].vs.parent().parent().parent().parent().clear()
             }
 
-            var card = 0, x2='',tikSec = 0, title = '', icon = '', head = '', texts = [], btns = [];
+            var card = 0, x2='',tikSec = 0, tikDelay= 0, title = '', icon = '', head = '', texts = [], btns = [];
 
             for (var m in this.util) {
                 card = 0;
                 tikSec = 0;
                 title = '';
+                tikDelay =0;
                 icon = '';
                 head = '';
                 texts = [];
@@ -1108,6 +1122,10 @@ $('document').ready(function () {
                 x2='';
 
                 box = this.util[m];
+                
+                if(box.timer) {
+                  tikDelay = -box.timer;
+                }
 
                 if (box.title === 'Smelter') {
                     card = 1;
@@ -1273,6 +1291,7 @@ $('document').ready(function () {
                        x2 = '';
                        
                     tikSec = 10;
+                  //  tikDelay = - box.timer;
                 
                 } else if (box.title === 'Silo') {
                     ra2.up().br().br().br().br()
@@ -1319,7 +1338,7 @@ $('document').ready(function () {
                     var q = this.showCard('util' + m, box.color, icon, 0, title, head, texts, btns,x2);
 
                     if (tikSec) {
-                        q.container('tik', 'div', 'animation-duration:' + tikSec + 's');
+                        q.container('tik', 'div', 'animation-duration:' + tikSec + 's; animation-delay: '+ tikDelay +'s');
                     }
                 }
 
