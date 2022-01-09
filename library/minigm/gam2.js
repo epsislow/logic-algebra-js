@@ -954,9 +954,9 @@ $('document').ready(function () {
                     }
                     //gam2.actions.store(opt.item)
                 } else {
-                    console.log(gam2[opt.src][i].slot)
-                    box.recepie = gam2[opt.src][i].slot.item;
-                    box.slot.addItem(box.recepie, 'liquid', 0, gam2[opt.src][i].slot.unitValue * 10)
+                    var slot = gam2[opt.src][i].slot;
+                    box.recepie = slot.item;
+                    box.slot.addItem(box.recepie, 'liquid', 0, slot.unitValue * 10)
                   
                     //box.unitValue = gam2[opt.src][i].unitValue * 10;
                     box.source = [opt.src, i];
