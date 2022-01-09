@@ -292,10 +292,9 @@ $('document').ready(function () {
                 child.prop.icon, 1, child.prop.type, '',
                 [], [], '-xs');
             },
-            'addRandomChild': function (L, r, t, loc, types = ['empty'], icon  = ['empty'], seenAs = ['empty']) {
+            'addRandomChild': function (L, r, bg=0,t, lvl, loc, types = ['empty'], icon  = ['empty'], seenAs = ['empty']) {
                 var type= types[t];
                 var child = gam2.loc.add(loc, type);
-                
 
                 if(L === null ) {
                     L = child;
@@ -304,12 +303,18 @@ $('document').ready(function () {
                 }
 
                 if (type !== 'sun') {
+                  if(bg) {
+                    L.prop.icon = icon[t] + ' b-clr' + (r % 4) + ' i-'+type;
+                  } else {
                     L.prop.icon = icon[t] + ' i-clr' + (r % 4);
+                    
+                  }
                 } else {
                     L.prop.icon = icon[t] + ' i-'+ type;
                 }
                 L.prop.cardType = seenAs[t % seenAs.length];
-                L.prop.pos = r;
+                L.prop.pos = r+t + lvl * 1000;
+                L.prop.lvl = lvl;
                 
                 return L;
             },
@@ -333,7 +338,7 @@ $('document').ready(function () {
                     r = gam2.rd.r.rand(0,100);
                     t = gam2.rd.r.rand(0,100) % types.length;
 
-                    L = gam2.loc.addRandomChild(L, r, t, 'L1:'+i, types, icon, seenAs);
+                    L = gam2.loc.addRandomChild(L, r, 0, t, 1, 'L1:'+i, types, icon, seenAs);
                 }
 
                 var jmax = gam2.rd.r.rand(10,40);
@@ -346,19 +351,19 @@ $('document').ready(function () {
                     r = gam2.rd.r.rand(0,100);
                     t = gam2.rd.r.rand(0,100) % types2.length;
 
-                    L = gam2.loc.addRandomChild(L, r, t, 'L2:'+j, types2, icon2, seenAs2);
+                    L = gam2.loc.addRandomChild(L, r,0, t, 2, 'L2:'+j, types2, icon2, seenAs2);
                 }
 
                 var kmax = 10;
-                var types3 = ['mountain', 'river', 'fields', 'ice-fields', 'iceberg', 'crater', 'vulcano'];
+                var types3 = ['mountain', 'water', 'fields', 'ice', 'iceberg', 'crater', 'vulcano'];
                 var seenAs3 = ['asmb', 'storage','power','smelter', 'power'];
-                var icon3 = ['mountain fa-med', 'water', 'square', 'grip-lines', 'mountain fa-med', 'circle-notch fa-med', 'mountain fa-med'];
+                var icon3 = ['mountain fa-med', 'water', 'square', 'grip-lines', 'mountain fa-med', 'circle-notch', 'mountain fa-med'];
 
                 for(var k = 0; k< kmax; k++) {
                     r = gam2.rd.r.rand(0,100);
-                    t = gam2.rd.r.rand(0,100) % types2.length;
+                    t = gam2.rd.r.rand(0,100) % types3.length;
 
-                    L = gam2.loc.addRandomChild(L, r, t, 'L3:'+k, types3, icon3, seenAs3);
+                    L = gam2.loc.addRandomChild(L, r, 1, t, 3, 'L3:'+k, types3, icon3, seenAs3);
                 }
                 
                 L = gam2.loc.orderListByProp(L.first,'pos',1);
