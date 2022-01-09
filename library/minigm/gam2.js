@@ -517,6 +517,8 @@ $('document').ready(function () {
             description: 'Dwellings for employees',
             level: 1,
             cost: 10000,
+            powerCost: 4,
+            peopleUsage: 0,
             levelCost: 500,
             usage: usage,
             capacity:5,
@@ -1247,6 +1249,7 @@ $('document').ready(function () {
                              return function() {
                                gam2.actions.levelUp(box);
                                gam2.people++;
+                               box.capacity++;
                              };
                            })(box),
                                                    'btn-success button']);
@@ -1366,7 +1369,7 @@ $('document').ready(function () {
 
                         ra0
                             .container('d-block text-danger')
-                            .addText('Low power');
+                            .addText('Low people');
                     
                     } else if (powerLeft < box.powerUsage) {
 
