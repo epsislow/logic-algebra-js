@@ -505,6 +505,7 @@ $('document').ready(function () {
                 slot: gam2.slot.add().addItem(name, form, amount, unitValue),
                 cost: 1500,
                 powerUsage: 15,
+                peopleUsage: 1,
                 levelCost: 500,
                 color: 'dark',
             });
@@ -536,6 +537,7 @@ $('document').ready(function () {
                 everySec: 3,
                 cost: 5000,
                 powerUsage: 15,
+                peopleUsage: 2,
                 level: 1,
                 levelCost: 100,
                 color: 'crafter',
@@ -550,6 +552,7 @@ $('document').ready(function () {
                 queues: ques,
                 cost: 10000,
                 powerUsage: 5,
+                peopleUsage: 3,
                 level: 1,
                 levelCost: 2000,
                 color: 'asmb',
@@ -568,6 +571,7 @@ $('document').ready(function () {
                 everySec: 2,
                 cost: 2500,
                 powerUsage: 10,
+                peopleUsage: 1,
                 level: 1,
                 levelCost: 100,
                 color: 'smelter',
@@ -583,6 +587,7 @@ $('document').ready(function () {
                 max: 5,
                 cost: 1500,
                 powerUsage: 0,
+                peopleUsage: 1,
                 levelCost: 200,
                 color: 'power',
             });
@@ -598,6 +603,7 @@ $('document').ready(function () {
                 level: 1,
                 cost: 650,
                 powerUsage: 3,
+                peopleUsage: 1,
                 levelCost: 100,
                 color: 'silo',
             });
@@ -614,6 +620,7 @@ $('document').ready(function () {
                 level: 1,
                 cost: 500,
                 powerUsage: 5,
+                peopleUsage: 2,
                 levelCost: 250,
                 color: 'storage',
                 page: 1,
@@ -767,6 +774,7 @@ $('document').ready(function () {
                 to.push(box);
                 gam2.money -= box.cost;
                 gam2.powerUsage += box.powerUsage;
+                gam2.peopleUsage += box.peopleUsage;
                 //console.log(util)
                 gam2.menu = [];
                 gam2.menuType = 0;
@@ -1234,7 +1242,16 @@ $('document').ready(function () {
                        texts = [
                          'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
                        ];
-                       btns.push(['Lvl up', false, 'btn-success button'])
+                       if (gam2.money > box.levelCost) {
+                         btns.push(['Lvl up', (function(box) {
+                             return function() {
+                               gam2.actions.levelUp(box);
+                               gam2.people++;
+                             };
+                           })(box),
+                                                   'btn-success button']);
+                       }
+                      // btns.push(['Lvl up', false, 'btn-success button'])
                        x2 = '';
                        
                     tikSec = 10;
@@ -1322,6 +1339,8 @@ $('document').ready(function () {
                 ;
             } else {
                 var powerLeft = gam2.power - gam2.powerUsage;
+                var peopleLeft = gam2.people - gam2.peopleUsage;
+                
                 for (var m in this.menu) {
                     box = this.menu[m];
                     var ra0 = ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
@@ -1333,7 +1352,7 @@ $('document').ready(function () {
                         .container('d-block text-light', 'strong')
                         .addText(box.name)
                         .up()
-                        .addText(box.description)
+                        .addText('Ppl cost:' + box.peopleUsage)
                         .br()
                         .addText('Cost: ' + box.cost)
                         .br()
@@ -1343,6 +1362,12 @@ $('document').ready(function () {
                         ra0
                             .container('d-block text-danger')
                             .addText('Low money');
+                    } else if (peopleLeft < box.peopleUsage) {
+
+                        ra0
+                            .container('d-block text-danger')
+                            .addText('Low power');
+                    
                     } else if (powerLeft < box.powerUsage) {
 
                         ra0
