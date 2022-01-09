@@ -235,15 +235,15 @@ $('document').ready(function () {
                   a[propName] > b[propName];
                 return c ? 1 : -1;
               });
+              console.log(propList);
               l = l.first;
               var p=null, op =null, f=null;
               for (var k in propList) {
                 op = p;
-                p = propList[k].l;
-                if (k === 0) {
-                  f = p.l;
-                  continue;
+                if(p===null) {
+                  f = propList[k].l;
                 }
+                p = propList[k].l;
                 p.prev = op;
                 if(op) {
                 op.next = p;
@@ -254,14 +254,28 @@ $('document').ready(function () {
                 op.first = f;
                 }
               }
+              return f;
+            },
+            'dbgLoc': function(l) {
+              var s =l.first;
+              if(!s) {
+                console.log('No child here0');
+                return 0;
+              }
+              do {
+                console.log('> ', s.prop.name + '%'+ s.prop.pos);
+                s = s.next;
+              } while (s !== null);
+              return 1;
             },
             'showLoc': function (child) {
                 var start = child.first;
                 if(!start) {
                     console.log('No child here');
+                    return;
                 }
                 do {
-                    console.log('Now:', start.prop.name, start.prop.type);
+                    //console.log('Now:', start.prop.name, start.prop.type, start.prop.pos);
                     this.showChild(start);
                     start = start.next;
                 } while (start !== null);
@@ -279,6 +293,7 @@ $('document').ready(function () {
             'addRandomChild': function (L, r, t, loc, types = ['empty'], icon  = ['empty'], seenAs = ['empty']) {
                 var type= types[t];
                 var child = gam2.loc.add(loc, type);
+                
 
                 if(L === null ) {
                     L = child;
@@ -292,7 +307,8 @@ $('document').ready(function () {
                     L.prop.icon = icon[t] + ' i-'+ type;
                 }
                 L.prop.cardType = seenAs[t % seenAs.length];
-
+                L.prop.pos = r;
+                
                 return L;
             },
             'addChildsFor': function(Loc, rand) {
@@ -343,8 +359,8 @@ $('document').ready(function () {
                     L = gam2.loc.addRandomChild(L, r, t, 'L3:'+k, types3, icon3, seenAs3);
                 }
                 
-                gam2.loc.orderListByProp(L.prev,'pos',1);
-
+                L = gam2.loc.orderListByProp(L.first,'pos',1);
+                //gam2.loc.dbgLoc(L);
                 gam2.loc.showLoc(L);
                 return L;
             }
