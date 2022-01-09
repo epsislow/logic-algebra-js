@@ -476,6 +476,10 @@ $('document').ready(function () {
           // moon
           // asteroids belt
           // asteroid
+          // pump jack
+          // oxigenator
+          // oil refinary
+          // chemical plant
 
         // shipyard
         // transporter
@@ -522,6 +526,9 @@ $('document').ready(function () {
             levelCost: 500,
             usage: usage,
             capacity:5,
+            powerUsage: 0,
+            peopleUsage: 0,
+            everySec: 10,
             color:'power',
           });
         },
@@ -539,7 +546,7 @@ $('document').ready(function () {
                 everySec: 3,
                 cost: 5000,
                 powerUsage: 15,
-                peopleUsage: 2,
+                peopleUsage: 3,
                 level: 1,
                 levelCost: 100,
                 color: 'crafter',
@@ -554,7 +561,7 @@ $('document').ready(function () {
                 queues: ques,
                 cost: 10000,
                 powerUsage: 5,
-                peopleUsage: 3,
+                peopleUsage: 4,
                 level: 1,
                 levelCost: 2000,
                 color: 'asmb',
@@ -573,7 +580,7 @@ $('document').ready(function () {
                 everySec: 2,
                 cost: 2500,
                 powerUsage: 10,
-                peopleUsage: 1,
+                peopleUsage: 2,
                 level: 1,
                 levelCost: 100,
                 color: 'smelter',
@@ -622,7 +629,7 @@ $('document').ready(function () {
                 level: 1,
                 cost: 500,
                 powerUsage: 5,
-                peopleUsage: 2,
+                peopleUsage: 4,
                 levelCost: 250,
                 color: 'storage',
                 page: 1,
@@ -719,10 +726,15 @@ $('document').ready(function () {
                             } else {
                                 box.slot.amount += maxAmount;
                             }
+                        } else if (box.title == 'Dwelling') {
+                          if (box.capacity > box.usage) {
+                            box.usage++;
+                            gam2.people++;
+                          }
                         }
                     }
                 }
-                //gam2.actions.show();
+                gam2.actions.show();
             }
         },
         'actions': {
@@ -777,6 +789,9 @@ $('document').ready(function () {
                 gam2.money -= box.cost;
                 gam2.powerUsage += box.powerUsage;
                 gam2.peopleUsage += box.peopleUsage;
+                if(box.title === 'Dwelling') {
+                  gam2.people+= box.usage;
+                }
                 //console.log(util)
                 gam2.menu = [];
                 gam2.menuType = 0;
@@ -1247,9 +1262,9 @@ $('document').ready(function () {
                        if (gam2.money > box.levelCost) {
                          btns.push(['Lvl up', (function(box) {
                              return function() {
-                               gam2.actions.levelUp(box);
-                               gam2.people++;
                                box.capacity++;
+                               gam2.actions.levelUp(box);
+                              
                              };
                            })(box),
                                                    'btn-success button']);
@@ -1364,18 +1379,18 @@ $('document').ready(function () {
                     if (gam2.money < box.cost) {
                         ra0
                             .container('d-block text-danger')
-                            .addText('Low money');
+                            .addText('Low money:' + (gam2.hum.val(gam2.money - box.cost)));
                     } else if (peopleLeft < box.peopleUsage) {
 
                         ra0
                             .container('d-block text-danger')
-                            .addText('Low people');
+                            .addText('Low people:' + (gam2.hum.val(peopleLeft - box.peopleUsage)));
                     
                     } else if (powerLeft < box.powerUsage) {
 
                         ra0
                             .container('d-block text-danger')
-                            .addText('Low power');
+                            .addText('Low power:' + (gam2.hum.val(powerLeft - box.powerUsage)));
                     } else {
                         ra0.addButton('Select',
                             (function (to, w) {
