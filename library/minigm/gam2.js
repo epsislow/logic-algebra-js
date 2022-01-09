@@ -44,8 +44,8 @@ $('document').ready(function () {
         'money': 700000,
         'power': 500,
         'powerUsage': 30,
-        'people':10,
-        'peopleUsage':7,
+        'people':5,
+        'peopleUsage':2,
         'res': [],
         'building': [],
         'util': [],
@@ -509,6 +509,19 @@ $('document').ready(function () {
                 color: 'dark',
             });
         },
+        'addDwelling': function (to, name, usage =0) {
+          to.push({
+            title: 'Dwelling',
+            name: name,
+            description: 'Dwellings for employees',
+            level: 1,
+            cost: 10000,
+            levelCost: 500,
+            usage: usage,
+            capacity:5,
+            color:'power',
+          });
+        },
         'addCraft': function (to, name, resMax = 1, ques = 1) {
             to.push({
                 title: 'Crafter',
@@ -615,6 +628,8 @@ $('document').ready(function () {
                 this.addStorage(this.menu, 'Storage 1');
                 this.addSilo(this.menu, 'Silo 1')
                 this.addAsmb(this.menu, 'Assambler 1');
+                this.addDwelling(this.menu, 'dw', 2);
+            
 
             } else if (name === 'res') {
                 var seedId = 'name' + gam2.res.length;
@@ -634,12 +649,13 @@ $('document').ready(function () {
             this.rd.restart(seedId, 1);
             this.addRes(this.res, this.rd.getName(seedId), 'pure', 10, 5, 2);
             this.addRes(this.res, this.rd.getName(seedId), 'pure', 25, 10, 2);
+            this.addDwelling(this.util, 'dw', 2)
             this.show();
             this.initEvents();
         },
         'initEvents': function () {
-          var L = gam2.loc.init();
-            //setInterval(this.event.everySec, 1000);
+          //var L = gam2.loc.init();
+          setInterval(this.event.everySec, 1000);
         },
         'event': {
             'tim': {},
@@ -697,7 +713,7 @@ $('document').ready(function () {
                         }
                     }
                 }
-                gam2.actions.show();
+                //gam2.actions.show();
             }
         },
         'actions': {
@@ -1207,13 +1223,29 @@ $('document').ready(function () {
                     texts = [];
                     x2='';
                     tikSec=20;
+                } else if (box.title === 'Dwelling') {
+                 //   ra2.up().br().br().br().br()
+                  //      .addButton('Lvl up', false, 'btn-success button')
+                       // .addButton('Sell *', false, 'btn-warning button');
+                       card = 1;
+                       title = box.title + ' ' + box.level;
+                       icon = 'cube anim-asmb i-asmb anim-stop';
+                       head = 'Cap: ' + box.usage +' / '+ box.capacity;
+                       texts = [
+                         'Level: ' + box.level + ' (Next: $' + gam2.hum.val(box.levelCost) + ')'
+                       ];
+                       btns.push(['Lvl up', false, 'btn-success button'])
+                       x2 = '';
+                       
+                    tikSec = 10;
+                
                 } else if (box.title === 'Silo') {
                     ra2.up().br().br().br().br()
                         .addButton('Lvl up', false, 'btn-success button')
                         .addButton('Sell *', false, 'btn-warning button');
 
                     tikSec = 5;
-                    ra2.up().container('tik', 'div', 'animation-duration:5s');
+                   // ra2.up().container('tik', 'div', 'animation-duration:5s');
 
                 } else if (box.title === 'Power') {
                     card = 1;
