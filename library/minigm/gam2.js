@@ -810,7 +810,8 @@ $('document').ready(function () {
                 if (show) {
                    // ra.clear();
                     //gam2.show();
-                    box.repaint=1;
+                    //box.repaint=1;
+                    //gam2.repaintUtil.res();
                 }
             },
             'search': function () {
@@ -1100,23 +1101,26 @@ $('document').ready(function () {
             if(!btns) {
               btns = [];
               if (box.title === 'Resource') {
-                btns.push(['Sell 1', (function(b) {
+                btns.push(['Sell 1', (function(b,r) {
                   return function() {
-                    gam2.actions.sell(b, 1)
+                    gam2.actions.sell(b, 1);
+                    gam2.repaintUtil.res(r);
                   };
-                })(box), 'btn-warning button']);
-                btns.push(['Sell *', (function(b) {
+                })(box,r), 'btn-warning button']);
+                btns.push(['Sell *', (function(b,r) {
                   return function() {
-                    gam2.actions.sell(b)
+                    gam2.actions.sell(b);
+                    gam2.repaintUtil.res(r);
                   };
-                })(box), 'btn-danger button']);
+                })(box,r), 'btn-danger button']);
                 if (gam2.money > box.levelCost) {
                   btns.push(['Lvl up',
-                                          (function(box) {
+                                          (function(box,r) {
                       return function() {
-                        gam2.actions.levelUp(box)
+                        gam2.actions.levelUp(box);
+                        gam2.repaintUtil.res(r);
                       };
-                    })(box),
+                    })(box,r),
                   'btn-success button']);
                 }
               }
@@ -1167,23 +1171,26 @@ $('document').ready(function () {
                 box = this.res[r];
                 var btns = [];
                 if (box.title === 'Resource') {
-                    btns.push(['Sell 1', (function (b) {
+                    btns.push(['Sell 1', (function (b,r) {
                         return function () {
-                            gam2.actions.sell(b, 1)
+                            gam2.actions.sell(b, 1);
+                            gam2.repaintUtil.res(r);
                         };
-                    })(box), 'btn-warning button']);
-                    btns.push(['Sell *', (function (b) {
+                    })(box,r), 'btn-warning button']);
+                    btns.push(['Sell *', (function (b,r) {
                         return function () {
-                            gam2.actions.sell(b)
+                            gam2.actions.sell(b);
+                            gam2.repaintUtil.res(r);
                         };
-                    })(box), 'btn-danger button']);
+                    })(box,r), 'btn-danger button']);
                     if (gam2.money > box.levelCost) {
                         btns.push(['Lvl up',
-                            (function (box) {
+                            (function (box,r) {
                                 return function () {
-                                    gam2.actions.levelUp(box)
+                                    gam2.actions.levelUp(box);
+                                    gam2.repaintUtil.res(r);
                                 };
-                            })(box),
+                            })(box,r),
                             'btn-success button']);
                     }
                 }
