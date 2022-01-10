@@ -760,7 +760,8 @@ $('document').ready(function () {
                     }
                 }
                 //gam2.actions.repaint();
-                gam2.actions.show(1);
+               // gam2.actions.show(1);
+                gam2.show(1);
             }
         },
         'actions': {
@@ -1091,7 +1092,7 @@ $('document').ready(function () {
           var ra4= gam2.card[id];
           ra4.parent().parent().clear();
         },
-        'show': function (repaint = 1) {
+        'show': function (repaint = 0) {
             var box;
             /*
             this.showCard('money', 'money', '', 0, '$', 'Money', [
@@ -1099,20 +1100,21 @@ $('document').ready(function () {
                 'Power: ' + this.powerUsage + ' / ' + this.power
             ]);*/
             
-            $('.s-money').html( this.hum.val(this.money))
-            $('.s-power').html( this.hum.val(this.powerUsage) +' / '+ this.hum.val(this.power))
-            $('.s-people').html( this.hum.val(this.peopleUsage) +' / '+ this.hum.val(this.people))
+          if(!repaint) {
+              $('.s-money').html( this.hum.val(this.money))
+              $('.s-power').html( this.hum.val(this.powerUsage) +' / '+ this.hum.val(this.power))
+              $('.s-people').html( this.hum.val(this.peopleUsage) +' / '+ this.hum.val(this.people))
             
-            this.showCard('ship', 'ship', 'paper-plane i-empty', 0, 'Ship','');
-            this.showCard('miner', 'crafter', 'qrcode i-crafter', 0, 'Miner','');
+              this.showCard('ship', 'ship', 'paper-plane i-empty', 0, 'Ship','');
+              this.showCard('miner', 'crafter', 'qrcode i-crafter', 0, 'Miner','');
             
             
             for(var r=0; r<1; r++) {
-            this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
+              this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
                 ['Build', false, 'btn-dark button']
-            ]);
-            
+              ]);
             }
+          }
 
             for (var r in this.res) {
                 box = this.res[r];
@@ -1140,11 +1142,20 @@ $('document').ready(function () {
                 }
                 if (repaint && box.repaint) {
                     box.repaint = 0;
+                    
+                    gam2.card['res' + r]
+                      .parent(1)
+                      .parent(1)
+                      .clear();
+                    
+                    
+                    gam2.card['res'+r] = 
                     this.repaintCard(gam2.card['res'+r], box.title + ' ' + box.level, box.name,
                         [
                             'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
                             'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
                         ], btns).container('tik', 'div');
+                        
                     continue;
                 }
                 box.vs = this.showCard(
@@ -1157,6 +1168,10 @@ $('document').ready(function () {
                     ], btns
                 ).container('tik', 'div');
                 //gam2.res[1].vs.parent().parent().parent().parent().clear()
+            }
+            
+            if(repaint) {
+              return;
             }
 
             var card = 0, x2='',tikSec = 0, tikDelay= 0, title = '', icon = '', head = '', texts = [], btns = [];
