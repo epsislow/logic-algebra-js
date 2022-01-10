@@ -675,6 +675,7 @@ $('document').ready(function () {
             var seedId = 'name' + gam2.res.length;
             this.rd.restart(seedId, 1);
             this.addRes(this.res, this.rd.getName(seedId), 'pure', 10, 5, 2);
+
             this.addRes(this.res, this.rd.getName(seedId), 'pure', 25, 10, 2);
             this.addDwelling(this.util, 'dw', 2)
             this.show();
@@ -694,6 +695,7 @@ $('document').ready(function () {
                 for (let r in gam2.res) {
                     var box = gam2.res[r];
                     gam2.actions.mine(box);
+                    box.repaint = 1;
                 }
                 for (let u in gam2.util) {
                     var box = gam2.util[u];
@@ -724,6 +726,7 @@ $('document').ready(function () {
                             maxAmount = box.level > boxSrc.slot.amount ? boxSrc.slot.amount : box.level;
                             boxSrc.slot.amount -= maxAmount;
                             box.slot.amount += maxAmount;
+                            box.repaint = 1;
                         } else if (box.title == 'Crafter') {
                             if (!box.recepie) {
                                 continue;
@@ -742,6 +745,7 @@ $('document').ready(function () {
                             } else {
                                 box.slot.amount += maxAmount;
                             }
+                            box.repaint = 1;
                         } else if (box.title == 'Dwelling') {
                           if (box.capacity > box.usage) {
                             box.usage++;
@@ -750,14 +754,33 @@ $('document').ready(function () {
                            // gam2.card['util'+u].addText()clear();
                            //var tikk= $('#util'+u).find('.tik').get(0);
                           // tikk.parent()
+                              box.repaint = 1;
                           }
                         }
                     }
                 }
-                gam2.actions.show();
+                //gam2.actions.repaint();
+                gam2.actions.show(1);
             }
         },
         'actions': {
+            'repaint': function () {
+                var box;
+                for(var r in gam2.res) {
+                    box = gam2.res[r];
+                    if (!box.repaint) {
+                        continue;
+                    }
+                    gam2.card['res' + r].clear();
+                }
+                for(var u in gam2.util) {
+                    box = gam2.util[u];
+                    if (!box.repaint) {
+                        continue;
+                    }
+                    gam2.card['util' + u].clear();
+                }
+            },
             'show': function (refresh=0) {
               if(refresh) {
                 for(var c in gam2.card) {
@@ -1018,7 +1041,7 @@ $('document').ready(function () {
 
         },
         'repaintCard': function(rca, title='', head='', texts = [], buttons = []) {
-              rca
+            rca = rca
                 //.container('', 'div', 'position:relative;top:0px;z-index:997')
                // .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
                 .addText(title)
@@ -1048,51 +1071,27 @@ $('document').ready(function () {
             if (head === '') {
                 head = '&nbsp;';
             }
+
             var ra3 = ra
                 .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
                 .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
                 .up()
+
                 .container('tt', 'div', 'position:relative;top:0px;z-index:997')
                 .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
-               
-              // ;
-             //  ra3
-               
-                
-                .addText(title)
-                .up(10)
-                .container('media text-white pt-2')
-                .container('media-body ml-2 mb-0 small lh-125', 'p')
-                .container('d-block text-light', 'strong')
-                .addText(head)
-                .up(11);
-            while (texts.length < 3) {
-                texts.push(0);
-            }
-            for (var t in texts) {
-                if (texts[t]) {
-                    ra3.addText(texts[t]);
-                }
-                ra3.br();
-            }
-
-            for (var b in buttons) {
-                var bt = buttons[b];
-                ra3.addButton(bt[0], bt[1], 'button ' + bt[2]);
-            }
+                ;
             
-            
-           // ra3=this.repaintCard(ra3, title, head, texts, buttons);
+            ra3=this.repaintCard(ra3, title, head, texts, buttons);
             gam2.card[id]=ra3;
-            
+
             return ra3;
         },
         'clearCard': function(id) {
           var ra4= gam2.card[id];
           ra4.parent().parent().clear();
         },
-        'show': function () {
+        'show': function (repaint = 1) {
             var box;
             /*
             this.showCard('money', 'money', '', 0, '$', 'Money', [
@@ -1138,6 +1137,15 @@ $('document').ready(function () {
                             })(box),
                             'btn-success button']);
                     }
+                }
+                if (repaint && box.repaint) {
+                    box.repaint = 0;
+                    this.repaintCard(gam2.card['res'+r], box.title + ' ' + box.level, box.name,
+                        [
+                            'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
+                            'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
+                        ], btns).container('tik', 'div');
+                    continue;
                 }
                 box.vs = this.showCard(
                     'res' + r,

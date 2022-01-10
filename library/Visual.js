@@ -3,7 +3,7 @@ $('document').ready(function(document){
 console.log('Visual v0.3.0 [vs]');
 
 window.vs = (function () {
-  var controls = {};
+  var controls = {'el': {}};
   var page = {
     id:'',
     section: {},
@@ -39,14 +39,13 @@ window.vs = (function () {
 	  }
   };
   
-  function getControlsFor(type) {
-    if (type in controls) {
-      return controls[type];
-    }
-    var pub = controls[type];
+  function getControlsFor(type, name = '') {
     switch(type) {
       case 'main':
         pub = controlsForMain();
+        break;
+    case 'el':
+        pub = controls['el'][name];
         break;
       default:
         throw 'Unkn. control type '+ type;
@@ -64,6 +63,12 @@ window.vs = (function () {
       page.id = id;
       return pub;
     }
+
+    pub.parentEl = null;
+    pub.setParentEl= function(jqElement) {
+          this.parentEl= jqElement;
+    }
+
     pub.css = function(name, href, integrity=false) {
       if(name in page.css) {
         return pub;
@@ -178,7 +183,7 @@ window.vs = (function () {
     }
     pub.section = function (name, classes) {
       if(name in page.section) {
-         return page.getControlsFor('section', name);
+         return getControlsFor('section', name);
       }
     
       var content = $('<div>')
@@ -191,13 +196,14 @@ window.vs = (function () {
     
     pub.from = function(name, jsEl) {
       if(name in page.section) {
-         return page.getControlsFor('section', name);
+         return getControlsFor('el', name);
       }
       
       page.section[name] = jsEl;
-      
-      //return pub;
-      return controlsForContainer(name, jsEl, pub);
+
+      controls['el'][name] = controlsForContainer(name, jsEl);
+
+      return controls['el'][name];
     }
     
     pub.addSectionsToMain = function() {
@@ -228,22 +234,47 @@ window.vs = (function () {
 	
     pub.lib = lib;
     pub.parentEl = parent;
+
     pub.setParentEl= function(jqElement) {
       parent = jqElement;
-      this.parentEl= parent;
+      this.parentEl = parent;
+    }
+
+  pub.from = function(name, jsEl) {
+      if(name in page.section) {
+          return getControlsFor('el', name);
+      }
+
+      page.section['el'] = jsEl;
+
+      controls['el'][name] = controlsForContainer(name, jsEl);
+
+      return controls['el'][name];
+  }
+
+    pub.getParent = function() {
+        return parent;
     }
 	
     pub.up =
     pub.back =
-    pub.parent = function (d=0) {
-      if(!parentControls.parentEl || d) {
-        parentControls.setParentEl(
-          parent.parent()
-        );
+    pub.parent = function (forceParentExistance=0) {
+        if (forceParentExistance) {
+            console.log(forceParentExistance);
+        }
+
+      if(!parentControls || !parentControls.parentEl || forceParentExistance) {
+          if (!parent.parent()) {
+              return controlsForMain();
+          }
+          if (parentControls) {
+              parentControls.setParentEl(
+                  parent.parent()
+              );
+          }
       }
       
-      if(d) {
-      
+      if(forceParentExistance) {
        // alert(parentControls.parentEl.attr('class'));
       }
       if(parentControls) {
@@ -252,6 +283,11 @@ window.vs = (function () {
       if (pub.parentControls) {
         return pub.parentControls;
       }
+      if (!parentControls) {
+          var pub = pub.from(name, parentControls.parentEl);
+          return pub;
+      }
+        console.log('horror2');
       return controlsForMain();
     }
     pub.top=
@@ -291,9 +327,11 @@ window.vs = (function () {
 	  if (style) {
 		  content.attr('style', style);
 	  }
-      
-      parent.append(content);
-      return controlsForContainer(name, content, this);
+
+        this.parentEl.append(content);
+
+      pub = controlsForContainer(name, content, this);
+      return pub;
     }
     
     pub.br = function(num = 1) {
@@ -325,6 +363,7 @@ window.vs = (function () {
       parent.append(a);
       return pub;
     }
+
     pub.addText = function (text, wSpan= false, classes=false, attrs=false) {
       var txt = text;
       if (wSpan) {
@@ -336,8 +375,8 @@ window.vs = (function () {
           a.attr(attrs);
         }
       }
-      
-      parent.append(txt);
+
+      this.parentEl.append(txt);
       return pub;
     }
     pub.span = function (classes=false,attrs=false) {
@@ -369,7 +408,6 @@ window.vs = (function () {
        
       parent.append(s);
     }
-  
     return pub;
   }
   return getControlsFor('main');
