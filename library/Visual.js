@@ -227,12 +227,30 @@ window.vs = (function () {
     var pub= {};
 	
     pub.lib = lib;
+    pub.parentEl = parent;
+    pub.setParentEl= function(jqElement) {
+      parent = jqElement;
+      this.parentEl= parent;
+    }
 	
     pub.up =
     pub.back =
-    pub.parent = function () {
+    pub.parent = function (d=0) {
+      if(!parentControls.parentEl || d) {
+        parentControls.setParentEl(
+          parent.parent()
+        );
+      }
+      
+      if(d) {
+      
+       // alert(parentControls.parentEl.attr('class'));
+      }
       if(parentControls) {
         return parentControls;
+      }
+      if (pub.parentControls) {
+        return pub.parentControls;
       }
       return controlsForMain();
     }

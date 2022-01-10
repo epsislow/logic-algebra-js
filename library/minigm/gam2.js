@@ -512,6 +512,7 @@ $('document').ready(function () {
                 peopleUsage: 1,
                 levelCost: 500,
                 color: 'dark',
+                repaint:0,
             });
         },
         'addDwelling': function (to, name, usage =0) {
@@ -531,6 +532,7 @@ $('document').ready(function () {
             everySec: 10,
             timer: 0,
             color:'power',
+            repaint:0,
           });
         },
         'addCraft': function (to, name, resMax = 1, ques = 1) {
@@ -552,6 +554,7 @@ $('document').ready(function () {
                 level: 1,
                 levelCost: 100,
                 color: 'crafter',
+                repaint:0,
             });
         },
         'addAsmb': function (to, name, resMax = 2, ques = 1) {
@@ -567,6 +570,7 @@ $('document').ready(function () {
                 level: 1,
                 levelCost: 2000,
                 color: 'asmb',
+                repaint:0,
             });
         },
         'addSmelt': function (to, name, ques = 1) {
@@ -587,6 +591,7 @@ $('document').ready(function () {
                 level: 1,
                 levelCost: 100,
                 color: 'smelter',
+                repaint:0,
             });
         },
         'addPower': function (to, name, lvl = 1) {
@@ -602,6 +607,7 @@ $('document').ready(function () {
                 peopleUsage: 1,
                 levelCost: 200,
                 color: 'power',
+                repaint:0,
             });
         },
 
@@ -618,6 +624,7 @@ $('document').ready(function () {
                 peopleUsage: 1,
                 levelCost: 100,
                 color: 'silo',
+                repaint:0,
             });
         },
         'addStorage': function (to, name, slots = 5, max = 100) {
@@ -635,6 +642,7 @@ $('document').ready(function () {
                 peopleUsage: 4,
                 levelCost: 250,
                 color: 'storage',
+                repaint:0,
                 page: 1,
                 pageMax: Math.ceil(slots / 3),
             });
@@ -1009,6 +1017,33 @@ $('document').ready(function () {
             }
 
         },
+        'repaintCard': function(rca, title='', head='', texts = [], buttons = []) {
+              rca
+                //.container('', 'div', 'position:relative;top:0px;z-index:997')
+               // .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
+                .addText(title)
+                .up()
+                .container('media text-white pt-2')
+                .container('media-body ml-2 mb-0 small lh-125', 'p')
+                .container('d-block text-light', 'strong')
+                .addText(head)
+                .up();
+              while (texts.length < 3) {
+                texts.push(0);
+              }
+              for (var t in texts) {
+                if (texts[t]) {
+                  rca.addText(texts[t]);
+                }
+                rca.br();
+              }
+          
+              for (var b in buttons) {
+                var bt = buttons[b];
+                rca.addButton(bt[0], bt[1], 'button ' + bt[2]);
+              }
+              return rca;
+        },
         'showCard': function (id, color = 'black', icon = 'asterisk', dashed = 0, title = '$', head = 'Money', texts = [], buttons = [],x2='') {
             if (head === '') {
                 head = '&nbsp;';
@@ -1018,16 +1053,20 @@ $('document').ready(function () {
 
                 .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
                 .up()
-
-                .container('', 'div', 'position:relative;top:0px;z-index:997')
+                .container('tt', 'div', 'position:relative;top:0px;z-index:997')
                 .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
+               
+              // ;
+             //  ra3
+               
+                
                 .addText(title)
-                .up()
+                .up(10)
                 .container('media text-white pt-2')
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
                 .container('d-block text-light', 'strong')
                 .addText(head)
-                .up();
+                .up(11);
             while (texts.length < 3) {
                 texts.push(0);
             }
@@ -1042,7 +1081,11 @@ $('document').ready(function () {
                 var bt = buttons[b];
                 ra3.addButton(bt[0], bt[1], 'button ' + bt[2]);
             }
+            
+            
+           // ra3=this.repaintCard(ra3, title, head, texts, buttons);
             gam2.card[id]=ra3;
+            
             return ra3;
         },
         'clearCard': function(id) {
