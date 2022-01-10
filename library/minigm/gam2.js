@@ -808,8 +808,9 @@ $('document').ready(function () {
                 console.log('Sold ' + amount + ' ' + box.slot.item + ' ' + (box.slot.form !== 'pure' ? box.slot.form : ''));
 
                 if (show) {
-                    ra.clear();
-                    gam2.show();
+                   // ra.clear();
+                    //gam2.show();
+                    box.repaint=1;
                 }
             },
             'search': function () {
@@ -1092,6 +1093,52 @@ $('document').ready(function () {
           var ra4= gam2.card[id];
           ra4.parent().parent().clear();
         },
+        'repaintUtil': {
+          'res': function(r, btns=0) {
+            var box = gam2.res[r];
+            
+            if(!btns) {
+              btns = [];
+              if (box.title === 'Resource') {
+                btns.push(['Sell 1', (function(b) {
+                  return function() {
+                    gam2.actions.sell(b, 1)
+                  };
+                })(box), 'btn-warning button']);
+                btns.push(['Sell *', (function(b) {
+                  return function() {
+                    gam2.actions.sell(b)
+                  };
+                })(box), 'btn-danger button']);
+                if (gam2.money > box.levelCost) {
+                  btns.push(['Lvl up',
+                                          (function(box) {
+                      return function() {
+                        gam2.actions.levelUp(box)
+                      };
+                    })(box),
+                  'btn-success button']);
+                }
+              }
+            }
+            
+                    gam2.card['res' + r] =
+                    gam2.card['res' + r]
+                      .parent(1)
+                      .parent(1)
+                      .clear()
+                      .container('tt', 'div', 'position:relative;top:0px;z-index:997')
+                      .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6');
+                      
+                    gam2.card['res'+r] = 
+                    gam2.repaintCard(gam2.card['res'+r], box.title + ' ' + box.level, box.name,
+                        [
+                            'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
+                            'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
+                        ], btns).container('tik', 'div').up();
+                    
+          },
+        },
         'show': function (repaint = 0) {
             var box;
             /*
@@ -1142,23 +1189,7 @@ $('document').ready(function () {
                 }
                 if (repaint && box.repaint) {
                     box.repaint = 0;
-                    
-                     
-                    gam2.card['res'+ r] =
-                    gam2.card['res' + r]
-                      .parent(1)
-                      .parent(1)
-                   //   .parent(1)
-                      //.parent(1)
-                      .clear();
-                    
-                    gam2.card['res'+r] = 
-                    this.repaintCard(gam2.card['res'+r], box.title + ' ' + box.level, box.name,
-                        [
-                            'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
-                            'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
-                        ], btns).container('tik', 'div');
-                        
+                    gam2.repaintUtil.res(r, btns);
                     continue;
                 }
                 box.vs = this.showCard(
