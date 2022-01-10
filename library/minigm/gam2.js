@@ -1143,11 +1143,14 @@ $('document').ready(function () {
                 if (repaint && box.repaint) {
                     box.repaint = 0;
                     
+                     
+                    gam2.card['res'+ r] =
                     gam2.card['res' + r]
                       .parent(1)
                       .parent(1)
+                   //   .parent(1)
+                      //.parent(1)
                       .clear();
-                    
                     
                     gam2.card['res'+r] = 
                     this.repaintCard(gam2.card['res'+r], box.title + ' ' + box.level, box.name,
