@@ -83,6 +83,12 @@ var gam2 = {
       },
       'drawBox': function(redrawAll=1) {
         
+      },
+      'updateLoc': function() {
+        
+      },
+      'updateBox': function() {
+        
       }
     },
     'model': {
