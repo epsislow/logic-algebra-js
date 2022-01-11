@@ -259,10 +259,6 @@ window.vs = (function () {
     pub.up =
     pub.back =
     pub.parent = function (forceParentExistance=0) {
-        if (forceParentExistance) {
-            console.log(forceParentExistance);
-        }
-
       if(!parentControls || !parentControls.parentEl || forceParentExistance) {
           if (!parent.parent()) {
               return controlsForMain();

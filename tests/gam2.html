@@ -375,7 +375,26 @@
         alert(message + ' L' + line + ':' + column);
     }
 
-    import { gam2 } from '/library/minigm/gam2.js'
+    import { gam2 } from '/library/minigm/gam2b.js'
+
+    $('document').ready(function () {
+
+        if ('vs' in window) {
+
+            vs.page('Gam2');
+
+            ra = vs.clearBody()
+                .section('top')
+                .br()
+                .addButton('Index', '/index.html')
+                .container('topbar', 'div')
+                .addText(' ');
+
+            vs.addSectionsToMain();
+            gam2.start(ra, vs, rd);
+        }
+    });
+
 
     window.gam2 = gam2;
 
