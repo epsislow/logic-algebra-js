@@ -17,13 +17,21 @@ var gam2 = {
         'boot': function() {
           
           var loc = 
-            this.model.constr.addLoc()
-              .chain.nextObj()
-              .chain.nextObj().chain.prev;
+            this.model.constr.addLoc({pos:1,card:'asteroid'})
+              .nextObj(
+            this.model.constr.addLoc({pos:2,card:'asteroid'})
+              )
+              .nextObj(
+            this.model.constr.addLoc({pos:3,card:'asteroid'})
+              );
             
-          this.model.loc.list = loc.chain.first;
+          this.model.loc.list = loc.first;
           
-          this.model.loc.current = loc;
+          var cr = loc.prev;
+          this.model.loc.current = cr;
+          console.log(cr.first);
+          
+          
         },
         'topBar': function (ra) {
             this.view.topBar = ra.container('topbar','div')
@@ -65,27 +73,30 @@ var gam2 = {
                 var defaults = JSON.parse(JSON.stringify(defaultProp));
 
                 return function (prop) {
-                    var pub = {...defaults, ...prop};
-
-                    pub.chain = {
+                    var pub = {
+                        'p':{...defaults, ...prop},
                         'parent': null,
                         'child': null,
                         'next': null,
                         'prev': null,
                         'first': null,
+                        'firstParent': null,
                         'addChildObj': function (obj) {
-                            obj.chain.parent = this;
+                            obj.parent = this;
+                            obj.firstParent = this.firstParent;
                             this.child = obj;
-                            return this;
+                            return obj;
                         },
                         'nextObj': function (obj) {
-                            obj.chain.prev = this;
-                            obj.chain.first = this.first;
+                            obj.prev = this;
+                            obj.first = this.first;
+                            obj.firstParent = this.firstParent;
                             this.next = obj;
                             return obj;
                         },
                     };
-                    pub.chain.first = pub;
+                    pub.first = pub;
+                    pub.firstParent = pub;
 
                     return pub;
                 }
@@ -96,7 +107,7 @@ var gam2 = {
                     'type': '',
                     'lvl': 0,
                     'pos': 0,
-                    'cardType': 'empty',
+                    'card': 'empty',
                 });
 
                 this.addSlot = this.getAddFunc({
