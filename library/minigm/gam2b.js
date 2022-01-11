@@ -1,18 +1,29 @@
 
 var gam2 = {
     'start': function (ra, vs, rd) {
-        this.init.parents.apply(gam2.init);
-        this.init.parents.apply(gam2.model);
-        this.init.parents.apply(gam2.view);
-        this.init.parents.apply(gam2.action);
+        for(var i of ['init','model','view','action']) {
+          this.init.parents.apply(gam2[i]);
+        }
         this.model.constr.init();
         this.init.topBar(ra);
+        this.init.boot();
     },
     'init': {
         'parents': function () {
-            this.view = gam2.view;
-            this.model = gam2.model;
-            this.action = gam2.action;
+          this.view = gam2.view;
+          this.model = gam2.model;
+          this.action = gam2.action;
+        },
+        'boot': function() {
+          
+          var loc = 
+            this.model.constr.addLoc()
+              .chain.nextObj()
+              .chain.nextObj().chain.prev;
+            
+          this.model.loc.list = loc.chain.first;
+          
+          this.model.loc.current = loc;
         },
         'topBar': function (ra) {
             this.view.topBar = ra.container('topbar','div')
@@ -43,6 +54,12 @@ var gam2 = {
     },
     'view': {},
     'model': {
+        'loc': {
+          'list': null,
+        },
+        'box': {
+          'list': null,
+        },
         'constr': {
             'getAddFunc': function (defaultProp) {
                 var defaults = JSON.parse(JSON.stringify(defaultProp));
@@ -100,6 +117,11 @@ var gam2 = {
             'addLoc': function (prop) {},
             'addSlot': function (prop) {},
             'addBox': function (prop) {},
+        },
+        'prop': {
+          'asteroid': {
+            'type': 'asteroid',
+          },
         }
     },
     'action': {},
