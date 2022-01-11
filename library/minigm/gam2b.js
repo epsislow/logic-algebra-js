@@ -7,6 +7,7 @@ var gam2 = {
         this.model.constr.init();
         this.init.topBar(ra);
         this.init.boot();
+        this.view.draw();
     },
     'init': {
         'parents': function () {
@@ -15,22 +16,34 @@ var gam2 = {
           this.action = gam2.action;
         },
         'boot': function() {
-          
+          var cr;
           var loc = 
-            this.model.constr.addLoc({pos:1,card:'asteroid'})
+            this.model.constr.addLoc({pos:1, card:'asteroid-belt', lvl:1, name: 'Icarus'})
+          .addChildObj(
+            cr = this.model.constr.addLoc({pos:1, card:'asteroid', lvl:2, name: 'C5'})
               .nextObj(
-            this.model.constr.addLoc({pos:2,card:'asteroid'})
+            this.model.constr.addLoc({pos:2, card:'asteroid', lvl:2, name: 'B2'})
               )
               .nextObj(
-            this.model.constr.addLoc({pos:3,card:'asteroid'})
-              );
+            this.model.constr.addLoc({pos:3, card:'asteroid', lvl:2, name: 'E11'})
+              )
+          );
             
           this.model.loc.list = loc.first;
           
-          var cr = loc.prev;
+          cr = cr.prev;
           this.model.loc.current = cr;
-          console.log(cr.first);
+          //console.log(cr);
           
+          var blist = this.model.constr.addBox({type:'Miner', level:1, levelCost:10})
+            .nextObj(
+              this.model.constr.addBox({type:'Dwellings', level:1, levelCost:100, capacity: 5, usage: 2})
+            )
+          
+          this.model.box.list= {
+            'L2:2': blist
+          };
+          console.log(blist.first)
           
         },
         'topBar': function (ra) {
@@ -60,7 +73,18 @@ var gam2 = {
 
         }
     },
-    'view': {},
+    'view': {
+      'draw':function() {
+        this.drawLoc(1);
+        this.drawBox(1);
+      },
+      'drawLoc': function(redrawAll=1) {
+        
+      },
+      'drawBox': function(redrawAll=1) {
+        
+      }
+    },
     'model': {
         'loc': {
           'list': null,
