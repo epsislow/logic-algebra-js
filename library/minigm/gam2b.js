@@ -43,7 +43,8 @@ var gam2 = {
           this.model.box.list= {
             'L2:2': blist
           };
-          console.log(blist.first)
+
+          gam2.model.constr.logPropList(gam2.model.box.list['L2:2'])
           
         },
         'topBar': function (ra) {
