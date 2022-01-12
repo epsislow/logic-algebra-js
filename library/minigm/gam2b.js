@@ -18,14 +18,14 @@ var gam2 = {
         'boot': function() {
           var cr;
           var loc = 
-            this.model.constr.addLoc({pos:1, card:'asteroid-belt', lvl:1, name: 'Icarus'})
+            this.model.constr.addLoc({pos:1, card:'asteroid-belt', lvl:1, name: 'Icarus', loc: 'L1:1'})
           .addChildObj(
-            cr = this.model.constr.addLoc({pos:1, card:'asteroid', lvl:2, name: 'C5'})
+            cr = this.model.constr.addLoc({pos:1, card:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
               .nextObj(
-            this.model.constr.addLoc({pos:2, card:'asteroid', lvl:2, name: 'B2'})
+            this.model.constr.addLoc({pos:2, card:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
               )
               .nextObj(
-            this.model.constr.addLoc({pos:3, card:'asteroid', lvl:2, name: 'E11'})
+            this.model.constr.addLoc({pos:3, card:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
               )
           );
             
@@ -44,8 +44,8 @@ var gam2 = {
             'L2:2': blist.first
           };
 
-          gam2.model.constr.logPropList(gam2.model.box.list['L2:2'])
-          
+          var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
+          console.log(p);
         },
         'topBar': function (ra) {
             this.view.topBar = ra.container('topbar','div')
