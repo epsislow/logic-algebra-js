@@ -33,7 +33,7 @@ var gam2 = {
           
           cr = cr.prev;
           this.model.loc.current = cr;
-          //console.log(cr);
+          console.log(cr);
           
           var blist = this.model.constr.addBox({type:'Miner', level:1, levelCost:10})
             .nextObj(
@@ -80,7 +80,10 @@ var gam2 = {
         this.drawBox(1);
       },
       'drawLoc': function(redrawAll=1) {
+        var cr= this.model.loc.current;
         
+        var p = gam2.model.constr.getPropList(cr,1,1);
+        console.log(p);
       },
       'drawBox': function(redrawAll=1) {
         
@@ -159,7 +162,7 @@ var gam2 = {
             'addLoc': function (prop) {},
             'addSlot': function (prop) {},
             'addBox': function (prop) {},
-            'walkList': function(obj, walkerCb) {
+            'walkList': function(obj, walkerCb, parentWalkInstead = 0) {
                 if (typeof walkerCb !== 'function') {
                     throw "walker is not a function!";
                 }
@@ -170,7 +173,11 @@ var gam2 = {
                 do {
                     r = walkerCb(s, r);
                     if(++i >= 10000) break;
-                    s = s.next;
+                    if(parentWalkInstead) {
+                      s = s.parent;
+                    } else {
+                      s = s.next;
+                    }
                 } while (null !== s)
                 if (i >= 10000) {
                     throw "Max iterations of walker reached. Check for loops in list!";
@@ -180,10 +187,11 @@ var gam2 = {
             'logPropList': function (obj) {
                 this.walkList(obj, function(obj) { console.log(obj.p); return 1})
             },
-            'getPropList': function (obj, detachResult = 0) {
+            'getPropList': function (obj, detachResult = 0, parentWalkInstead = 0) {
                 return this.walkList(obj, (detachResult)?
                     function(obj,r) { if(!r) { r= [];} r.push({...obj.p}); return r;}:
-                    function(obj,r) { if(!r) { r= [];} r.push(obj.p); return r;}
+                    function(obj,r) { if(!r) { r= [];} r.push(obj.p); return r;},
+                    parentWalkInstead
             );
             }
         },
