@@ -159,6 +159,12 @@ var gam2 = {
             'addSlot': function (prop) {},
             'addBox': function (prop) {},
         },
+        'getPropList': function(obj) {
+          var s= obj.first;
+          //do {
+            
+          //} while (s) 
+        },
         'prop': {
           'asteroid': {
             'type': 'asteroid',
