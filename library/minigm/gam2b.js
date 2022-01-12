@@ -41,7 +41,7 @@ var gam2 = {
             )
           
           this.model.box.list= {
-            'L2:2': blist
+            'L2:2': blist.first
           };
 
           gam2.model.constr.logPropList(gam2.model.box.list['L2:2'])
@@ -166,16 +166,25 @@ var gam2 = {
                 let s= obj.first;
                 let exit = false;
                 let i = 0;
+                var r = 0;
                 do {
-                    if(++i >= 10000 || !walkerCb(s)) break;
+                    r = walkerCb(s, r);
+                    if(++i >= 10000) break;
                     s = s.next;
                 } while (null !== s)
                 if (i >= 10000) {
                     throw "Max iterations of walker reached. Check for loops in list!";
                 }
+                return r;
             },
             'logPropList': function (obj) {
-                this.walkList(obj, function(s) { console.log(obj.p); return 1})
+                this.walkList(obj, function(obj) { console.log(obj.p); return 1})
+            },
+            'getPropList': function (obj, detachResult = 0) {
+                return this.walkList(obj, (detachResult)?
+                    function(obj,r) { if(!r) { r= [];} r.push({...obj.p}); return r;}:
+                    function(obj,r) { if(!r) { r= [];} r.push(obj.p); return r;}
+            );
             }
         },
         'prop': {
