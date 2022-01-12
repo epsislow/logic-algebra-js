@@ -33,7 +33,7 @@ var gam2 = {
           cr = loc;
           cr = cr.prev;
           this.model.loc.current = cr;
-          console.log(cr);
+          //console.log(cr);
           
           var blist = this.model.constr.addBox({type:'Miner', level:1, levelCost:10})
             .nextObj(
