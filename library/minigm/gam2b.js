@@ -82,8 +82,8 @@ var gam2 = {
       'drawLoc': function(redrawAll=1) {
         var cr= this.model.loc.current;
         
-      //  var p = gam2.model.constr.getPropList(cr,0,1);
-      // console.log(cr);
+       var p = gam2.model.constr.getPropList(cr,0,1);
+       console.log(p,cr);
       },
       'drawBox': function(redrawAll=1) {
         
@@ -125,6 +125,7 @@ var gam2 = {
                             obj.prev = this;
                             obj.first = this.first;
                             obj.firstParent = this.firstParent;
+                            obj.parent = this.parent;
                             this.next = obj;
                             return obj;
                         },
