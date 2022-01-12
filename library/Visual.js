@@ -310,6 +310,8 @@ window.vs = (function () {
         parent.append(content);
         return pub;
     }
+    
+    
 	
     pub.container = function (classes, element='div', style = false, attrs = false) {
 	
@@ -359,7 +361,12 @@ window.vs = (function () {
       parent.append(a);
       return pub;
     }
-
+    pub.html = function(txy) {
+      this.parentEl.html(txt);
+      
+      return pub;
+    }
+    
     pub.addText = function (text, wSpan= false, classes=false, attrs=false) {
       var txt = text;
       if (wSpan) {

@@ -5,7 +5,10 @@ var gam2 = {
           this.init.parents.apply(gam2[i]);
         }
         this.model.constr.init();
-        this.init.topBar(ra);
+        
+        this.view.topBar = ra.container('topbar','div');
+            
+        this.init.topBar();
         this.init.boot();
         this.view.draw();
     },
@@ -47,8 +50,10 @@ var gam2 = {
           var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
           console.log(p);
         },
-        'topBar': function (ra) {
-            this.view.topBar = ra.container('topbar','div')
+        'topBar': function () {
+            
+            this.view.topBar
+                .clear()
                 .addText(' ')
 
                 .container('fa fa-donate','i')
@@ -71,7 +76,6 @@ var gam2 = {
                 .up()
                 .br()
                 .container('main', 'div');
-
         }
     },
     'view': {
@@ -84,6 +88,7 @@ var gam2 = {
         
        var p = gam2.model.constr.getPropList(cr,0,1);
        console.log(p,cr);
+       
       },
       'drawBox': function(redrawAll=1) {
         
