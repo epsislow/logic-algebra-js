@@ -20,17 +20,17 @@ var gam2 = {
           var loc = 
             this.model.constr.addLoc({pos:1, card:'asteroid-belt', lvl:1, name: 'Icarus', loc: 'L1:1'})
           .addChildObj(
-            cr = this.model.constr.addLoc({pos:1, card:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
-              .nextObj(
+            this.model.constr.addLoc({pos:1, card:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
+          )
+          .nextObj(
             this.model.constr.addLoc({pos:2, card:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
-              )
-              .nextObj(
+            )
+          .nextObj(
             this.model.constr.addLoc({pos:3, card:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
-              )
           );
             
           this.model.loc.list = loc.first;
-          
+          cr = loc;
           cr = cr.prev;
           this.model.loc.current = cr;
           console.log(cr);
@@ -82,8 +82,8 @@ var gam2 = {
       'drawLoc': function(redrawAll=1) {
         var cr= this.model.loc.current;
         
-        var p = gam2.model.constr.getPropList(cr,1,1);
-        console.log(p);
+      //  var p = gam2.model.constr.getPropList(cr,0,1);
+      // console.log(cr);
       },
       'drawBox': function(redrawAll=1) {
         
