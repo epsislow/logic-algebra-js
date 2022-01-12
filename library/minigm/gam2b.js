@@ -158,12 +158,24 @@ var gam2 = {
             'addLoc': function (prop) {},
             'addSlot': function (prop) {},
             'addBox': function (prop) {},
-        },
-        'getPropList': function(obj) {
-          var s= obj.first;
-          //do {
-            
-          //} while (s) 
+            'walkList': function(obj, walkerCb) {
+                if (typeof walkerCb !== 'function') {
+                    throw "walker is not a function!";
+                }
+                let s= obj.first;
+                let exit = false;
+                let i = 0;
+                do {
+                    if(++i >= 10000 || !walkerCb(s)) break;
+                    s = s.next;
+                } while (null !== s)
+                if (i >= 10000) {
+                    throw "Max iterations of walker reached. Check for loops in list!";
+                }
+            },
+            'logPropList': function (obj) {
+                this.walkList(obj, function(s) { console.log(obj.p); return 1})
+            }
         },
         'prop': {
           'asteroid': {
