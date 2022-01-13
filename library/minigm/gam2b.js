@@ -5,10 +5,10 @@ var gam2 = {
           this.init.parents.apply(gam2[i]);
         }
         this.model.constr.init();
-        
         this.view.topBar = ra.container('topbar','div');
             
         this.init.topBar();
+        this.view.content = ra.container('content','div');
         this.init.boot();
         this.view.draw();
     },
@@ -21,15 +21,15 @@ var gam2 = {
         'boot': function() {
           var cr;
           var loc = 
-            this.model.constr.addLoc({pos:1, card:'asteroid-belt', lvl:1, name: 'Icarus', loc: 'L1:1'})
+            this.model.constr.addLoc({pos:1, type:'asteroid-belt', lvl:1, name: 'Icarus', loc: 'L1:1'})
           .addChildObj(
-            this.model.constr.addLoc({pos:1, card:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
+            this.model.constr.addLoc({pos:1, type:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
           )
           .nextObj(
-            this.model.constr.addLoc({pos:2, card:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
+            this.model.constr.addLoc({pos:2, type:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
             )
           .nextObj(
-            this.model.constr.addLoc({pos:3, card:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
+            this.model.constr.addLoc({pos:3, type:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
           );
             
           this.model.loc.list = loc.first;
@@ -51,7 +51,6 @@ var gam2 = {
           console.log(p);
         },
         'topBar': function () {
-            
             this.view.topBar
                 .clear()
                 .addText(' ')
@@ -74,11 +73,13 @@ var gam2 = {
                 .addText('0')
                 .up()
                 .up()
-                .br()
-                .container('main', 'div');
+                .br();
         }
     },
-    'view': {
+    'view':{
+      'topBar': null,
+      'content': null,
+      'card': [],
       'draw':function() {
         this.drawLoc(1);
         this.drawBox(1);
@@ -87,11 +88,33 @@ var gam2 = {
         var cr= this.model.loc.current;
         
        var p = gam2.model.constr.getPropList(cr,0,1);
-       console.log(p,cr);
-       
+       if (p.length) {
+           p = p.reverse();
+
+           for(const i in p) {
+               this.drawCard('loc'+ p[i].loc, p[i]);
+           }
+       }
+       console.log(p);
+
       },
       'drawBox': function(redrawAll=1) {
-        
+      },
+      'drawCard': function(id, box, redrawAll=1) {
+          var x2 = '-xs', color = 'sun', dashed = 1;
+
+          var icon ="sun b-clr i-sun ";
+
+        this.card[id] = this.view.content
+            .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
+
+            .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
+            .up()
+
+            .container('tt', 'div', 'position:relative;top:0px;z-index:997')
+            .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
+            .addText(box.name)
+        ;;
       },
       'updateLoc': function() {
         
