@@ -112,7 +112,7 @@ var gam2 = {
           var crd= this.model.cards[box.type];
           var x2 = '-xs', color = crd.bg, dashed = crd.dashed;
 
-          var icon = crd.icon+ " b-clr i-"+ crd.icon;
+          var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
 
         this.card[id] = this.view.content
             .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
