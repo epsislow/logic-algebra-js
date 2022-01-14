@@ -34,16 +34,17 @@ var gam2 = {
             .nextObj(
               this.model.constr.addLoc({pos:3, type:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
             )
-      //      .addChildObj(
-     //         this.model.constr.addLoc({pos:1, type:'mine', lvl:3, name: 'Balder', loc: 'L3:1'})
-     //       )
+            .prev
+            .addChildObj(
+              this.model.constr.addLoc({pos:1, type:'mine-st', lvl:3, name: 'Balder', loc: 'L3:1'})
+            )
      ;
             
-          this.model.loc.list = loc.first;
+          this.model.loc.list = loc;
           cr = loc;
-          cr = cr.prev;
           this.model.loc.current = cr;
-          console.log(cr);
+          window.cr = cr;
+         // console.log(cr);
           
           var blist = this.model.constr.addBox({type:'Miner', level:1, levelCost:10})
             .nextObj(
@@ -51,7 +52,7 @@ var gam2 = {
             )
           
           this.model.box.list= {
-            'L2:2': blist.first
+            'L3:1': blist.first
           };
 
           var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
@@ -155,6 +156,16 @@ var gam2 = {
           },
           'planet': {
             'icon':'adjust',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'mine-st': {
+            'icon': 'toggle-on fa-med',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'research-st': {
+            'icon': 'ring fa-med',
             'bg':'empty',
             'dashed':1,
           }
