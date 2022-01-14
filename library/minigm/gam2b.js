@@ -21,22 +21,29 @@ var gam2 = {
         'boot': function() {
           var cr;
           var loc = 
-            this.model.constr.addLoc({pos:1, type:'asteroid-belt', lvl:1, name: 'Icarus', loc: 'L1:1'})
-          .addChildObj(
-            this.model.constr.addLoc({pos:1, type:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
-          )
-          .nextObj(
-            this.model.constr.addLoc({pos:2, type:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
+            this.model.constr.addLoc({pos:1, type:'sun', lvl:0, name: 'Icarus', loc: 'L0:1'})
+            .addChildObj(
+              this.model.constr.addLoc({pos:1, type:'asteroid-belt', lvl:1, name: 'Cloud A1', loc: 'L1:1'})
             )
-          .nextObj(
-            this.model.constr.addLoc({pos:3, type:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
-          );
+            .addChildObj(
+              this.model.constr.addLoc({pos:1, type:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
+            )
+            .nextObj(
+              this.model.constr.addLoc({pos:2, type:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
+            )
+            .nextObj(
+              this.model.constr.addLoc({pos:3, type:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
+            )
+      //      .addChildObj(
+     //         this.model.constr.addLoc({pos:1, type:'mine', lvl:3, name: 'Balder', loc: 'L3:1'})
+     //       )
+     ;
             
           this.model.loc.list = loc.first;
           cr = loc;
           cr = cr.prev;
           this.model.loc.current = cr;
-          //console.log(cr);
+          console.log(cr);
           
           var blist = this.model.constr.addBox({type:'Miner', level:1, levelCost:10})
             .nextObj(
@@ -101,9 +108,10 @@ var gam2 = {
       'drawBox': function(redrawAll=1) {
       },
       'drawCard': function(id, box, redrawAll=1) {
-          var x2 = '-xs', color = 'sun', dashed = 1;
+          var crd= this.model.cards[box.type];
+          var x2 = '-xs', color = crd.bg, dashed = crd.dashed;
 
-          var icon ="sun b-clr i-sun ";
+          var icon = crd.icon+ " b-clr i-"+ crd.icon;
 
         this.card[id] = this.view.content
             .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
@@ -114,7 +122,7 @@ var gam2 = {
             .container('tt', 'div', 'position:relative;top:0px;z-index:997')
             .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
             .addText(box.name)
-        ;;
+        ;
       },
       'updateLoc': function() {
         
@@ -124,8 +132,47 @@ var gam2 = {
       }
     },
     'model': {
+        'cards': {
+          'sun': {
+            'icon': 'sun',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'asteroid-belt': {
+            'icon':'braille',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'asteroid': {
+            'icon':'circle fa-sml',
+            'bg':'empty',
+            'dashed':1
+          },
+          'moon': {
+            'icon':'moon fa-med',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'planet': {
+            'icon':'adjust',
+            'bg':'empty',
+            'dashed':1,
+          }
+        },
         'loc': {
           'list': null,
+          'nn': {
+            /*
+            var types = ['planet','moon','asteroid','asteroid-belt'];
+                var seenAs = ['empty'];
+                var icon = ['adjust', 'moon fa-med', 'circle fa-sml', 'braille'];
+                
+            */
+            'sun': {
+              'icon': 'sun',
+              
+            }
+          },
         },
         'box': {
           'list': null,
