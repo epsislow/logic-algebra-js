@@ -36,7 +36,7 @@ var gam2 = {
             )
             .prev
             .addChildObj(
-              this.model.constr.addLoc({pos:1, type:'mine-st', lvl:3, name: 'Balder', loc: 'L3:1'})
+              this.model.constr.addLoc({pos:1, type:'asteroid-st', lvl:3, name: 'Balder', loc: 'L3:1'})
             )
      ;
             
@@ -159,8 +159,8 @@ var gam2 = {
             'bg':'empty',
             'dashed':1,
           },
-          'mine-st': {
-            'icon': 'toggle-on fa-med',
+          'asteroid-st': {
+            'icon': 'toggle-on',
             'bg':'empty',
             'dashed':1,
           },
