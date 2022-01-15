@@ -1,4 +1,22 @@
 
+ $('document').ready(function () {
+
+        if ('vs' in window) {
+
+            vs.page('Gam2');
+
+            ra = vs.clearBody()
+                .section('top')
+                .br()
+                .addButton('Index', '/index.html')
+                .addText(' ');
+
+            vs.addSectionsToMain();
+            gam2.start(ra, vs, rd);
+        }
+    });
+
+
 var gam2 = {
     'start': function (ra, vs, rd) {
         for(var i of ['init','model','view','action']) {

@@ -1156,15 +1156,15 @@ $('document').ready(function () {
               $('.s-power').html( this.hum.val(this.powerUsage) +' / '+ this.hum.val(this.power))
               $('.s-people').html( this.hum.val(this.peopleUsage) +' / '+ this.hum.val(this.people))
             
-              this.showCard('ship', 'ship', 'paper-plane i-empty', 0, 'Ship','');
-              this.showCard('miner', 'crafter', 'qrcode i-crafter', 0, 'Miner','');
+           //   this.showCard('ship', 'ship', 'paper-plane i-empty', 0, 'Ship','');
+           //   this.showCard('miner', 'crafter', 'qrcode i-crafter', 0, 'Miner','');
             
             
-            for(var r=0; r<1; r++) {
+          /*  for(var r=0; r<1; r++) {
               this.showCard('empty0', 'empty', 'plus i-empty', 1, 'Empty', '', ['', '', ''], [
                 ['Build', false, 'btn-dark button']
               ]);
-            }
+            }*/
           }
 
             for (var r in this.res) {
