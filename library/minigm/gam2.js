@@ -507,7 +507,7 @@ $('document').ready(function () {
                 amount: amount,
                 unitValue: unitValue,
                 slot: gam2.slot.add().addItem(name, form, amount, unitValue),
-                cost: 1500,
+                cost: Math.round(1000* gam2.res.length*1.5),
                 powerUsage: 15,
                 peopleUsage: 1,
                 levelCost: 500,
@@ -861,8 +861,9 @@ $('document').ready(function () {
                 gam2.money -= box.levelCost;
                 box.level++;
                 box.levelCost += Math.round(box.levelCost * 1.5);
-                ra.clear();
-                gam2.show();
+                box.repaint =1;
+                //ra.clear();
+                //gam2.show();
             },
             'smelterSell': function (m, box) {
                 var amount = box.slot.amount;
