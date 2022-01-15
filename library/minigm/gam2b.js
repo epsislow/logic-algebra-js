@@ -46,17 +46,16 @@ var gam2 = {
           window.cr = cr;
          // console.log(cr);
           
-          var blist = this.model.constr.addBox({type:'Miner', level:1, levelCost:10})
+          var blist = this.model.constr.addBox({type:'miner', pos:1, level:1, levelCost:10})
             .nextObj(
-              this.model.constr.addBox({type:'Dwellings', level:1, levelCost:100, capacity: 5, usage: 2})
+              this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
           
           this.model.box.list= {
             'L3:1': blist.first
           };
 
-          var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
-          console.log(p);
+          //console.log(p);
         },
         'topBar': function () {
             this.view.topBar
@@ -103,16 +102,31 @@ var gam2 = {
                this.drawCard('loc'+ p[i].loc, p[i]);
            }
        }
-       console.log(p);
+      // console.log(p);
 
       },
       'drawBox': function(redrawAll=1) {
+        var cr = this.model.loc.current;
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
+          
+        
+        //var p = gam2.model.constr.getPropList(cr, 0, 1);
+        if (p.length) {
+          p = p.reverse();
+        
+          for (const i in p) {
+            this.drawCard('ast' + p[i].pos, p[i]);
+          }
+        }
+        console.log(p);
       },
       'drawCard': function(id, box, redrawAll=1) {
           var crd= this.model.cards[box.type];
-          var x2 = '-xs', color = crd.bg, dashed = crd.dashed;
+          var x2 = box.is=='loc'?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
           var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
+          
+          var title = box.is=='loc'? box.name:box.type;
 
         this.card[id] = this.view.content
             .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
@@ -122,7 +136,7 @@ var gam2 = {
 
             .container('tt', 'div', 'position:relative;top:0px;z-index:997')
             .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
-            .addText(box.name)
+            .addText(title)
         ;
       },
       'updateLoc': function() {
@@ -168,22 +182,20 @@ var gam2 = {
             'icon': 'ring fa-med',
             'bg':'empty',
             'dashed':1,
+          },
+          'miner': {
+            'icon': 'cog',
+            'bg':'dark',
+            'dashed':0,
+          },
+          'dwellings': {
+            'icon':'cubes',
+            'bg':'power',
+            'dashed':0,
           }
         },
         'loc': {
           'list': null,
-          'nn': {
-            /*
-            var types = ['planet','moon','asteroid','asteroid-belt'];
-                var seenAs = ['empty'];
-                var icon = ['adjust', 'moon fa-med', 'circle fa-sml', 'braille'];
-                
-            */
-            'sun': {
-              'icon': 'sun',
-              
-            }
-          },
         },
         'box': {
           'list': null,
@@ -229,21 +241,25 @@ var gam2 = {
                     'lvl': 0,
                     'pos': 0,
                     'card': 'empty',
+                    'is':'loc',
                 });
 
                 this.addSlot = this.getAddFunc({
                     'item': 0,
                     'amount': 0,
                     'unitValue': 0,
+                    'is':'slot',
                 });
 
                 this.addBox = this.getAddFunc({
                     'type': 0,
+                    'pos':1,
                     'level': 0,
                     'levelCost': 0,
                     'moneyCost': 0,
                     'peopleCost': 0,
                     'powerCost': 0,
+                    'is':'box',
                 });
             },
             'addLoc': function (prop) {},
