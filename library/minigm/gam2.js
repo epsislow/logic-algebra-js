@@ -51,6 +51,15 @@ $('document').ready(function () {
         'util': [],
         'menu': [],
         'menuType': 0,
+        'itemTypes': {
+          'chemA': [],
+          'flowing': [],
+          'alloy': [],
+          'strong': [],
+          'strong2': [],
+          'dust': [],
+          'oil': ['pure','liquid','gas','tank','barrel','ltank','fuel']
+        },
         'itemStates': {
             'pure': [{'bar': 2}, {'gas': 4}],
             'bar': [{'liquid': 2}, {'cube': 5}, {'plate': 2}, {'wire': 10}, {'rail': 100}],
@@ -75,7 +84,6 @@ $('document').ready(function () {
         'itemRecepies': {
             'bell': [{'bar': 2}, {'cube': 2}],
             'trix': [{'barrel': 2}, {'gas': 10}, {'liquid': 5}],
-
         },
         'hum': {
             'val': function (val) {
@@ -871,8 +879,9 @@ $('document').ready(function () {
                 box.slot.amount = 0;
                 //console.log('sell' + resId + ' ' +  amount);
                 if (1) {
-                    ra.clear();
-                    gam2.show();
+                  box.repaint=1;
+                   // ra.clear();
+                    //gam2.show();
                 }
             },
             'smelterResource': function (idd, box) {
