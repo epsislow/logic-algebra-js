@@ -33,6 +33,7 @@ $('document').ready(function () {
                 .up()
                 .up()
                 .br()
+                .up()
                 .container('main', 'div');
 
             vs.addSectionsToMain();
