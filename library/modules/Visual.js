@@ -160,6 +160,15 @@ var Vs = (function () {
         return pub;
     }
 
+    function getControlsFor(el, prevCtrl = null) {
+      var ctrl=pub;
+      ctrl.el = el;
+      ctrl.prev = function() {
+        return prevCtrl;
+      }
+      return ctrl;
+    }
+    
     pub.get =
     pub.from =
     pub.changeEl = function (jqEl) {
