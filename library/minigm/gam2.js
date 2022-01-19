@@ -4,7 +4,6 @@ var ra;
 $('document').ready(function () {
 
         if ('vs' in window) {
-
             vs.page('Gam2');
 
             ra = vs.clearBody()

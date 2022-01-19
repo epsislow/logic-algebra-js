@@ -504,9 +504,12 @@ var Empires = (function (constants) {
 			);
 
 			const lvl = $('<input>').attr('id', 'pllvl').addClass('qty');
-			const econ = $('<input>').attr('id', 'plecon').addClass('qty').val(575);
-			const tech = $('<input>').attr('id', 'pltech').addClass('bigqty').val(18125);
-			const fleet = $('<input>').attr('id', 'plfleet').addClass('bigqty').val(82518);
+			const econ = $('<input>').attr('id', 'plecon').addClass('qty')
+				.val(1284); //575
+			const tech = $('<input>').attr('id', 'pltech').addClass('bigqty')
+				.val(75040); //18125
+			const fleet = $('<input>').attr('id', 'plfleet').addClass('bigqty')
+				.val(160626); //82518
 
 			const deltalvl= $('<span>').addClass('delta').html(0);
 			const deltaecon= $('<span>').addClass('delta').html(0);
@@ -545,13 +548,13 @@ var Empires = (function (constants) {
 				deltaecon.html((parseInt(deltaecon.html()) | 0) + 1);
 			}));
 			tech.after($('<button>').addClass('tnyl').html('-').click(function () {
-				tech.val((parseInt(tech.val()) |0) - 500);
+				tech.val((parseInt(tech.val()) |0) - 5000);
 				calcLvl();
-				deltatech.html((parseInt(deltatech.html()) | 0) - 500);
+				deltatech.html((parseInt(deltatech.html()) | 0) - 5000);
 			})).before($('<button>').addClass('tnyr').html('+').click(function () {
-				tech.val((parseInt(tech.val()) |0) + 500);
+				tech.val((parseInt(tech.val()) |0) + 5000);
 				calcLvl();
-				deltatech.html((parseInt(deltatech.html()) | 0) + 500);
+				deltatech.html((parseInt(deltatech.html()) | 0) + 5000);
 			}));
 			fleet.after($('<button>').addClass('tnyl').html('-').click(function () {
 				fleet.val((parseInt(fleet.val()) |0) - 500);
