@@ -56,7 +56,6 @@ function __bindMainControlsFromRoot(pub, root) {
 }
 
 function __addMainControls(pub) {
-
     pub.root = function () {
         return this;
     }
