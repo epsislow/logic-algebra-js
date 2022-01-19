@@ -392,6 +392,7 @@ function __construct(pub2, isRoot = 0) {
     return pub2;
 }
 //s = vs.f.sim($('body'), {n:'n'}, vs.f.cstr({})); t = s.f.sim($('.topbar'), s, {});
+//s = vs.root();
 
     return __construct(pub, 1);
 })();
