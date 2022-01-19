@@ -1,12 +1,17 @@
-var ra;
+var rael = {};
 
+var r = function(el) {
+  return vs.from(el);
+}
 
 $('document').ready(function () {
 
         if ('vs' in window) {
             vs.page('Gam2');
+            
+            vs.useSimilarCtrl(false);
 
-            ra = vs.clearBody()
+            rael.top = vs.clearBody()
                 .section('top')
                 .br()
                 .addButton('Index', '/index.html')
@@ -33,7 +38,7 @@ $('document').ready(function () {
                 .up()
                 .br()
                 .up()
-                .container('main', 'div');
+                .container('main', 'div').el;
 
             vs.addSectionsToMain();
             gam2.init();
@@ -431,7 +436,7 @@ $('document').ready(function () {
             },
             'boxOpt': function (ra, opt, i, idd, box) {
 
-                var ra0 = ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
+                var ra0 = r(ra).container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border: 1px solid #fff; border-style: dashed; border-width: 1px;;')
                     .container('border-bottom border-gray pb-2 mb-0', 'h6')
                     .addText('Option ' + (parseInt(i) + 1))
                     .up()
@@ -442,9 +447,10 @@ $('document').ready(function () {
                     .up()
                     .addText(opt.description)
                     .br()
-                    .br();
+                    .br()
+                    .el;
 
-                ra0.addButton('Select',
+                r(ra0).addButton('Select',
                     (function (i, j, w) {
                         return function () {
                             gam2.vs.selectOption(i, j, w)
@@ -824,18 +830,18 @@ $('document').ready(function () {
             },
             'search': function () {
                 gam2.addMenu('res');
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'build': function () {
                 gam2.addMenu('util');
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'cancel': function () {
                 gam2.menu = [];
                 gam2.menuType = 0;
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'selectMenu': function (to, box) {
@@ -849,20 +855,20 @@ $('document').ready(function () {
                 //console.log(util)
                 gam2.menu = [];
                 gam2.menuType = 0;
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'powerOn': function (box) {
                 box.generated = box.level * 5;
                 gam2.power += box.generated;
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'powerOff': function (box) {
                 gam2.power -= box.generated;
                 box.generated = 0;
 
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'levelUp': function (box) {
@@ -900,7 +906,7 @@ $('document').ready(function () {
                 } else {
                     gam2.vs.clearOptionsFor(idd);
                 }
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
 
             },
@@ -914,7 +920,7 @@ $('document').ready(function () {
                 box.source = [opt.src, i];
 
                 gam2.vs.clearOptionsFor(idd);
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
 
             },
@@ -924,7 +930,7 @@ $('document').ready(function () {
                 box.slot.amount = 0;
                 //console.log('sell' + resId + ' ' +  amount);
                 if (1) {
-                    ra.clear();
+                    r(rael.top).clear();
                     gam2.show();
                 }
             },
@@ -971,7 +977,7 @@ $('document').ready(function () {
                                     'item': box.slot.name+ ' ' + box.slot.form,
                                     'unitValue': box.slot.unitValue,
                                 });
-                                console.log('testt');
+                                //console.log('testt');
                             }
                         }
                     }
@@ -981,7 +987,7 @@ $('document').ready(function () {
                 } else {
                     gam2.vs.clearOptionsFor(idd);
                 }
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'crafterRecepieSelect': function (idd, opt, box) {
@@ -1007,7 +1013,7 @@ $('document').ready(function () {
                 }
 
                 gam2.vs.clearOptionsFor(idd);
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             },
             'storagePage': function (box) {
@@ -1015,7 +1021,7 @@ $('document').ready(function () {
                 if (box.page > box.pageMax) {
                     box.page = 1;
                 }
-                ra.clear();
+                r(rael.top).clear();
                 gam2.show();
             }
         },
@@ -1029,7 +1035,7 @@ $('document').ready(function () {
           
           //ra5.up().addText('ghdgghgg');
           
-          ra5.container('border-bottom border-gray pb-2 mb-0', 'h6')
+          r(ra5).container('border-bottom border-gray pb-2 mb-0', 'h6')
                 .addText(title)
                 .up()
                 .container('media text-white pt-2')
@@ -1042,19 +1048,19 @@ $('document').ready(function () {
             }
             for (var t in texts) {
                 if (texts[t]) {
-                    ra5.addText(texts[t]);
+                    r(ra5).addText(texts[t]);
                 }
-                ra5.br();
+                r(ra5).br();
             }
 
             for (var b in buttons) {
                 var bt = buttons[b];
-                ra5.addButton(bt[0], bt[1], 'button ' + bt[2]);
+                r(ra5).addButton(bt[0], bt[1], 'button ' + bt[2]);
             }
 
         },
         'repaintCard': function(rca, title='', head='', texts = [], buttons = []) {
-            rca = rca
+            rca = r(rca)
                 //.container('', 'div', 'position:relative;top:0px;z-index:997')
                // .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
                 .addText(title)
@@ -1063,20 +1069,20 @@ $('document').ready(function () {
                 .container('media-body ml-2 mb-0 small lh-125', 'p')
                 .container('d-block text-light', 'strong')
                 .addText(head)
-                .up();
+                .up().el;
               while (texts.length < 3) {
                 texts.push(0);
               }
               for (var t in texts) {
                 if (texts[t]) {
-                  rca.addText(texts[t]);
+                  r(rca).addText(texts[t]);
                 }
-                rca.br();
+                r(rca).br();
               }
           
               for (var b in buttons) {
                 var bt = buttons[b];
-                rca.addButton(bt[0], bt[1], 'button ' + bt[2]);
+                r(rca).addButton(bt[0], bt[1], 'button ' + bt[2]);
               }
               return rca;
         },
@@ -1085,7 +1091,7 @@ $('document').ready(function () {
                 head = '&nbsp;';
             }
 
-            var ra3 = ra
+            var ra3 = r(rael.top)
                 .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
                 .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
@@ -1093,7 +1099,8 @@ $('document').ready(function () {
 
                 .container('tt', 'div', 'position:relative;top:0px;z-index:997')
                 .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
-                ;
+                .el;
+                
             
             ra3=this.repaintCard(ra3, title, head, texts, buttons);
             gam2.card[id]=ra3;
@@ -1102,54 +1109,55 @@ $('document').ready(function () {
         },
         'clearCard': function(id) {
           var ra4= gam2.card[id];
-          ra4.parent().parent().clear();
+          r(ra4).parent().parent().clear();
         },
         'repaintUtil': {
-          'res': function(r, btns=0) {
-            var box = gam2.res[r];
+          'res': function(rs, btns=0) {
+            var box = gam2.res[rs];
             
             if(!btns) {
               btns = [];
               if (box.title === 'Resource') {
-                btns.push(['Sell 1', (function(b,r) {
+                btns.push(['Sell 1', (function(b,rs) {
                   return function() {
                     gam2.actions.sell(b, 1);
-                    gam2.repaintUtil.res(r);
+                    gam2.repaintUtil.res(rs);
                   };
-                })(box,r), 'btn-warning button']);
+                })(box,rs), 'btn-warning button']);
                 btns.push(['Sell *', (function(b,r) {
                   return function() {
                     gam2.actions.sell(b);
-                    gam2.repaintUtil.res(r);
+                    gam2.repaintUtil.res(rs);
                   };
-                })(box,r), 'btn-danger button']);
+                })(box,rs), 'btn-danger button']);
                 if (gam2.money > box.levelCost) {
                   btns.push(['Lvl up',
-                                          (function(box,r) {
+                                          (function(box,rs) {
                       return function() {
                         gam2.actions.levelUp(box);
-                        gam2.repaintUtil.res(r);
+                        gam2.repaintUtil.res(rs);
                       };
-                    })(box,r),
+                    })(box,rs),
                   'btn-success button']);
                 }
               }
             }
             
-                    gam2.card['res' + r] =
-                    gam2.card['res' + r]
-                      .parent(1)
-                      .parent(1)
+                    gam2.card['res' + rs] =
+                    r(gam2.card['res' + rs])
+                      .up(1)
+                      .up(1)
                       .clear()
                       .container('tt', 'div', 'position:relative;top:0px;z-index:997')
-                      .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6');
+                      .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
+                      .el;
                       
-                    gam2.card['res'+r] = 
-                    gam2.repaintCard(gam2.card['res'+r], box.title + ' ' + box.level, box.name,
+                    gam2.card['res'+rs] = 
+                    r(gam2.repaintCard(gam2.card['res'+rs], box.title + ' ' + box.level, box.name,
                         [
                             'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
                             'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
-                        ], btns).container('tik', 'div').up();
+                        ], btns)).container('tik', 'div').up().el;
                     
           },
         },
@@ -1177,47 +1185,47 @@ $('document').ready(function () {
             }*/
           }
 
-            for (var r in this.res) {
-                box = this.res[r];
+            for (var rs in this.res) {
+                box = this.res[rs];
                 var btns = [];
                 if (box.title === 'Resource') {
-                    btns.push(['Sell 1', (function (b,r) {
+                    btns.push(['Sell 1', (function (b,rs) {
                         return function () {
                             gam2.actions.sell(b, 1);
-                            gam2.repaintUtil.res(r);
+                            gam2.repaintUtil.res(rs);
                         };
-                    })(box,r), 'btn-warning button']);
-                    btns.push(['Sell *', (function (b,r) {
+                    })(box,rs), 'btn-warning button']);
+                    btns.push(['Sell *', (function (b,rs) {
                         return function () {
                             gam2.actions.sell(b);
-                            gam2.repaintUtil.res(r);
+                            gam2.repaintUtil.res(rs);
                         };
-                    })(box,r), 'btn-danger button']);
+                    })(box,rs), 'btn-danger button']);
                     if (gam2.money > box.levelCost) {
                         btns.push(['Lvl up',
-                            (function (box,r) {
+                            (function (box,rs) {
                                 return function () {
                                     gam2.actions.levelUp(box);
-                                    gam2.repaintUtil.res(r);
+                                    gam2.repaintUtil.res(rs);
                                 };
-                            })(box,r),
+                            })(box,rs),
                             'btn-success button']);
                     }
                 }
                 if (repaint && box.repaint) {
                     box.repaint = 0;
-                    gam2.repaintUtil.res(r, btns);
+                    gam2.repaintUtil.res(rs, btns);
                     continue;
                 }
-                box.vs = this.showCard(
-                    'res' + r,
+                box.vs = r(this.showCard(
+                    'res' + rs,
                     box.color, 'asterisk i-resource anim-res', 0,
                     box.title + ' ' + box.level, box.name,
                     [
                         'Amount: ' + box.slot.amount + ' $' + gam2.hum.val(box.slot.unitValue * box.slot.amount),
                         'Level: ' + box.level + ' ($' + gam2.hum.val(box.levelCost) + ')',
                     ], btns
-                ).container('tik', 'div');
+                )).container('tik', 'div');
                 //gam2.res[1].vs.parent().parent().parent().parent().clear()
             }
             
@@ -1455,14 +1463,14 @@ $('document').ready(function () {
                     var q = this.showCard('util' + m, box.color, icon, 0, title, head, texts, btns,x2);
 
                     if (tikSec) {
-                        q.container('tik', 'div', 'animation-duration:' + tikSec + 's; animation-delay: '+ tikDelay +'s');
+                        r(q).container('tik', 'div', 'animation-duration:' + tikSec + 's; animation-delay: '+ tikDelay +'s');
                     }
                 }
 
-                this.vs.showOptionsFor('util' + m, box, ra);
+                this.vs.showOptionsFor('util' + m, box, rael.top);
             }
             if (this.menu.length == 0) {
-                ra.container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                r(rael.top).container('m-2 p-2 bg-darkcyan rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
                     .container('border-bottom border-gray pb-2 mb-0', 'h6')
                     .addText('+1 Resource')
                     .up()
@@ -1477,7 +1485,7 @@ $('document').ready(function () {
                     .addButton('Search', gam2.actions.search, 'btn-light button')
                 ;
 
-                ra.container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                r(rael.top).container('m-2 p-2 bg-util rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
                     .container('border-bottom border-gray pb-2 mb-0', 'h6')
                     .addText('+1 Utility')
                     .up()
@@ -1497,7 +1505,7 @@ $('document').ready(function () {
                 
                 for (var m in this.menu) {
                     box = this.menu[m];
-                    var ra0 = ra.container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                    var ra0 = r(rael.top).container('m-2 p-2 bg-black rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
                         .container('border-bottom border-gray pb-2 mb-0', 'h6')
                         .addText(box.title)
                         .up()
@@ -1511,24 +1519,25 @@ $('document').ready(function () {
                         .addText('Cost: ' + box.cost)
                         .br()
                         .addText('Power Usage: ' + box.powerUsage)
-                        .br();
+                        .br()
+                        .el;
                     if (gam2.money < box.cost) {
-                        ra0
+                        r(ra0)
                             .container('d-block text-danger')
                             .addText('Low money:' + (gam2.hum.val(gam2.money - box.cost)));
                     } else if (peopleLeft < box.peopleUsage) {
 
-                        ra0
+                        r(ra0)
                             .container('d-block text-danger')
                             .addText('Low people:' + (gam2.hum.val(peopleLeft - box.peopleUsage)));
                     
                     } else if (powerLeft < box.powerUsage) {
 
-                        ra0
+                        r(ra0)
                             .container('d-block text-danger')
                             .addText('Low power:' + (gam2.hum.val(powerLeft - box.powerUsage)));
                     } else {
-                        ra0.addButton('Select',
+                        r(ra0).addButton('Select',
                             (function (to, w) {
                                 return function () {
                                     gam2.actions.selectMenu(to, w)
@@ -1539,7 +1548,7 @@ $('document').ready(function () {
                         ;
                     }
                 }
-                ra.container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
+                r(rael.top).container('m-2 p-2 bg-back rounded box-shadow text-light', 'div', 'float:left;width:170px; height: 170px; border-style: dashed; border-width: 1px;')
                     .container('border-bottom border-gray pb-2 mb-0', 'h6')
                     .addText('Back')
                     .up()
