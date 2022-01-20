@@ -88,7 +88,7 @@
         .bg-card-xs {
             float: left;
             width: 170px;
-            height: 78px;
+            height: 77px;
             /*border: 1px solid #fff;*/
             position: relative;
             z-index: 20;
@@ -102,7 +102,7 @@
             /*border: 1px solid #fff;*/
             position: relative;
             z-index: 20;
-            /*overflow: hidden;*/
+            overflow: hidden;
         }
         .bg-card-x2 {
           float: left;
@@ -326,6 +326,37 @@
         }
         .topbar .s-peopl4e {
           margin-left: 2px;
+        }
+
+        .bg-card .locked:hover {
+            border-style: solid;
+            border-color: #f44;
+        }
+        .bg-card .locked:hover .fas{
+            color: #f44 !important;
+        }
+        .bg-card .locked:hover .tt h6{
+            color: #f44;
+            text-decoration: underline;
+        }
+
+        .bg-card .unlock .tt .h6-left{
+            color: #449966;
+        }
+
+        .bg-card .unlock:hover {
+            border-style: solid;
+            border-color: #aaf;
+        }
+        .bg-card .unlock:hover .fas{
+            color: white !important;
+        }
+        .bg-card .unlock:hover .tt h6{
+            color: white;
+            display:inline;
+        }
+        .bg-card .unlock .h6-right {
+            display:none;
         }
     </style>
 </head>

@@ -127,7 +127,7 @@ var gam2 = {
            for(const i in p) {
                if (i % 2 === 0) {
                    containerDiv = r(this.view.content)
-                       .container('mr-2 bg-card', 'div', '')
+                       .container('m-2 bg-card', 'div', '')
                        .el;
                }
                this.drawCard('loc'+ p[i].loc, p[i], containerDiv);
@@ -158,16 +158,21 @@ var gam2 = {
           var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
           
           var title = (box.is==='loc')? box.name:box.type;
+          var topRight = (box.is==='loc') ? box.loc: box.level;
 
         this.card[id] = r(container ? container: this.view.content)
-            .container( 'm-2 p-2  bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
+            .container( (box.is==='loc'? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
 
             .container('tt', 'div', 'position:relative;top:0px;z-index:997')
-            .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
+            .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
             .addText(title)
+            .up()
+            .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
+            .addText(topRight)
+            .up()
         ;
       },
       'updateLoc': function() {
