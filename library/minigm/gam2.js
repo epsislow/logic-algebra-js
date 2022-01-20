@@ -1148,7 +1148,6 @@ $('document').ready(function () {
                       .up(1)
                       .up(1)
                       .clear()
-                      .container('tt', 'div', 'position:relative;top:0px;z-index:997')
                       .container('border-bot4tom bor4der-gray pb-2 mb-0', 'h6')
                       .el;
                       
