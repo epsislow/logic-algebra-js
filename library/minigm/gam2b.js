@@ -1,32 +1,36 @@
 
+let r = function(el) {
+    return vs.from(el);
+}
+
  $('document').ready(function () {
+    if ('vs' in window) {
+        vs.page('Gam2');
 
-        if ('vs' in window) {
+        var ra = vs.clearBody()
+            .section('top')
+            .br()
+            .addButton('Index', '/index.html')
+            .addText(' ').el;
 
-            vs.page('Gam2');
-
-            ra = vs.clearBody()
-                .section('top')
-                .br()
-                .addButton('Index', '/index.html')
-                .addText(' ');
-
-            vs.addSectionsToMain();
-            gam2.start(ra, vs, rd);
-        }
-    });
-
+        vs.addSectionsToMain();
+        gam2.start(ra, vs, rd);
+    }
+});
 
 var gam2 = {
     'start': function (ra, vs, rd) {
+        this.view.main = ra;
+        this.view.vs = vs;
+
         for(var i of ['init','model','view','action']) {
           this.init.parents.apply(gam2[i]);
         }
         this.model.constr.init();
-        this.view.topBar = ra.container('topbar','div');
+        this.view.topBar = r(ra).container('topbar','div').el;
             
         this.init.topBar();
-        this.view.content = ra.container('content','div');
+        this.view.content = r(ra).container('content','div').el;
         this.init.boot();
         this.view.draw();
     },
@@ -76,7 +80,7 @@ var gam2 = {
           //console.log(p);
         },
         'topBar': function () {
-            this.view.topBar
+            r(this.view.topBar)
                 .clear()
                 .addText(' ')
 
@@ -102,6 +106,8 @@ var gam2 = {
         }
     },
     'view':{
+      'vs': null,
+      'main': null,
       'topBar': null,
       'content': null,
       'card': [],
@@ -116,8 +122,15 @@ var gam2 = {
        if (p.length) {
            p = p.reverse();
 
+           var containerDiv;
+
            for(const i in p) {
-               this.drawCard('loc'+ p[i].loc, p[i]);
+               if (i % 2 === 0) {
+                   containerDiv = r(this.view.content)
+                       .container('mr-2 bg-card', 'div', '')
+                       .el;
+               }
+               this.drawCard('loc'+ p[i].loc, p[i], containerDiv);
            }
        }
       // console.log(p);
@@ -138,16 +151,16 @@ var gam2 = {
         }
         console.log(p);
       },
-      'drawCard': function(id, box, redrawAll=1) {
+      'drawCard': function(id, box, container = null,  redrawAll=1) {
           var crd= this.model.cards[box.type];
-          var x2 = box.is=='loc'?'-xs':'', color = crd.bg, dashed = crd.dashed;
+          var x2 = (box.is==='loc')?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
           var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
           
-          var title = box.is=='loc'? box.name:box.type;
+          var title = (box.is==='loc')? box.name:box.type;
 
-        this.card[id] = this.view.content
-            .container('m-2 p-2 bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
+        this.card[id] = r(container ? container: this.view.content)
+            .container( 'm-2 p-2  bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
@@ -290,9 +303,9 @@ var gam2 = {
                 let s= obj.first;
                 let exit = false;
                 let i = 0;
-                var r = 0;
+                var rr = 0;
                 do {
-                    r = walkerCb(s, r);
+                    rr = walkerCb(s, rr);
                     if(++i >= 10000) break;
                     if(parentWalkInstead) {
                       s = s.parent;
@@ -303,15 +316,15 @@ var gam2 = {
                 if (i >= 10000) {
                     throw "Max iterations of walker reached. Check for loops in list!";
                 }
-                return r;
+                return rr;
             },
             'logPropList': function (obj) {
                 this.walkList(obj, function(obj) { console.log(obj.p); return 1})
             },
             'getPropList': function (obj, detachResult = 0, parentWalkInstead = 0) {
                 return this.walkList(obj, (detachResult)?
-                    function(obj,r) { if(!r) { r= [];} r.push({...obj.p}); return r;}:
-                    function(obj,r) { if(!r) { r= [];} r.push(obj.p); return r;},
+                    function(obj,rr) { if(!rr) { rr= [];} rr.push({...obj.p}); return rr;}:
+                    function(obj,rr) { if(!rr) { rr= [];} rr.push(obj.p); return rr;},
                     parentWalkInstead
             );
             }
