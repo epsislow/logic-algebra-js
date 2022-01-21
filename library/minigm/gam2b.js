@@ -29,7 +29,10 @@ var gam2 = {
 
         this.model.rand.rd = rd;
 
-        this.model.rand.seed.loc = rd.hashCode(seed + 'loc', rd.rand(127, 65536));
+        this.model.rand.seed.loc0 = rd.hashCode(seed + 'loc0', rd.rand(127, 65536));
+        this.model.rand.seed.loc1 = rd.hashCode(seed + 'loc1', rd.rand(127, 65536));
+        this.model.rand.seed.loc2 = rd.hashCode(seed + 'loc2', rd.rand(127, 65536));
+        this.model.rand.seed.loc3 = rd.hashCode(seed + 'loc3', rd.rand(127, 65536));
         this.model.rand.seed.res = rd.hashCode(seed + 'res', rd.rand(127, 65536));
         this.model.rand.seed.box = rd.hashCode(seed + 'box', rd.rand(127, 65536));
 
@@ -55,7 +58,7 @@ var gam2 = {
           let rd = this.model.rand.rd;
           let rdChr =  this.model.rand.rdChr;
 
-          let seedLoc = this.model.rand.seed.loc;
+          let seedLoc = this.model.rand.seed.loc0;
           let seedRes = this.model.rand.seed.res;
           let seedBox = this.model.rand.seed.box;
 
@@ -225,11 +228,56 @@ var gam2 = {
       'updateBox': function() {
         
       },
+      'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0) {
+        let rd = this.model.rand.rd;
+        let seedLoc = this.model.rand.seed['loc'+lvl];
+        let seedLocId = rd.hashCode(seedLoc+p0+'.'+p1+'.'+p2+'.'+p3, lvl);
+        let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
+        let cstr = this.model.constr;
+        const maxPos = lvl === 3? 3: 10;
+        let cob, ccr;
+        let types = [
+          ['sun'],
+          ['planet','asteroid-belt','gas-planet','ice-planet'],
+          ['asteroid','moon'],
+          ['asteroid-st','research-st','trade-st','storage-st']
+        ];
+        let type, posch=[],pops= [80,90,40, 40];
+        let pop = Math.round(maxPos*pops[lvl]/100)
+        if(1) {
+          var q=1,p=0;
+          for(let i=0; i<pop; i++) {
+            p= ((q+
+              rd.rand(1, maxPos-i-1, seedLocId))
+              %maxPos)+1;
+
+            posch.push(p );
+            q=p % maxPos;
+          }
+        }
+        for(let pos = 1; pos <= maxPos; pos++ ) {
+          type = 'empty';
+          if(posch.includes(pos)) {
+            type = types[lvl][rd.rand(0, types[lvl].length-1, seedLocId)];
+          }
+          cob = this.model.constr.addLoc(
+            cstr.locProps(
+              pos, type, lvl,
+              rdChr(seedLoc, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1))
+          );
+          if(!ccr) {
+            ccr= cob;
+            continue;
+          }
+          ccr = ccr.nextObj(cob);
+        }
+        return ccr.first;
+      },
       'showLocOptions': function (removedBox) {
         console.log(removedBox);
         var cr = this.model.loc.current;
-        let rdChr =  this.model.rand.rdChr;
-        let seedLoc = this.model.rand.seed.loc;
+        let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
+        let seedLoc = this.model.rand.seed.loc0;
         var ccr = cr;
         var cob;
         for(let pos = cr.p.pos; pos < 21; pos++ ) {
@@ -449,7 +497,12 @@ var gam2 = {
             'unlockLoc': function (el, box) {
                 el.unbind('click');
                 var card = r(el).remove().el;
-                gam2.view.showLocOptions(box);
+                
+                var xr = gam2.view.genLocs(box.lvl,0,1,2,3);
+                var p = gam2.model.constr.getPropList(xr.first,1,0);
+                console.table(p);
+        
+                //gam2.view.showLocOptions(box);
             }
         }
     },
