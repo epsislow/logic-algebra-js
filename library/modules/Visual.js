@@ -218,7 +218,6 @@ function __addContainerControls(pub) {
                 return this;
             }
 
-
     pub.up =
         pub.parent = function () {
             this.el = this.el.parent();
@@ -233,8 +232,29 @@ function __addContainerControls(pub) {
         return this;
     }
 
-    pub.append = function (jqEl) {
+
+
+    pub.append = function (jqEl, returnEl = 0) {
         this.el.append(jqEl);
+        if (returnEl) {
+            this.el = jqEl;
+        }
+        return this;
+    }
+
+    pub.before = function (jqEl, returnEl = 0) {
+        this.el.before(jqEl);
+        if (returnEl) {
+            this.el = jqEl;
+        }
+        return this;
+    }
+
+    pub.after = function (jqEl, returnEl = 0) {
+        this.el.after(jqEl);
+        if (returnEl) {
+            this.el = jqEl;
+        }
         return this;
     }
 
@@ -349,6 +369,15 @@ function __addContainerControls(pub) {
     pub.clear = function () {
         this.el.html('');
         return this;
+    }
+
+    pub.remove = function (returnUpEl = 1) {
+        let preEl;
+        if (returnUpEl) {
+            preEl = this.el.parent();
+        }
+        this.el.remove();
+        return returnUpEl? this.from(preEl) : this;
     }
 
     pub.addIcon = function (icon, classes = false, attrs = false) {

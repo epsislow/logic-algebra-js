@@ -110,6 +110,7 @@ var gam2 = {
       'main': null,
       'topBar': null,
       'content': null,
+      'locEnd': null,
       'card': [],
       'draw':function() {
         this.drawLoc(1);
@@ -123,15 +124,22 @@ var gam2 = {
            p = p.reverse();
 
            var containerDiv;
+           var el;
 
            for(const i in p) {
+               if(!p.hasOwnProperty(i)) {
+                   continue;
+               }
                if (i % 2 === 0) {
                    containerDiv = r(this.view.content)
                        .container('m-2 bg-card', 'div', '')
                        .el;
                }
-               this.drawCard('loc'+ p[i].loc, p[i], containerDiv);
+               el = this.drawCard('loc'+ p[i].loc, p[i], containerDiv);
+
+               el.click((function (el, box) {return function () { gam2.action.loc.unlockLoc(el, box); }})(el, p[i]));
            }
+           this.view.locEnd = r(el).up().el;
        }
       // console.log(p);
 
@@ -144,9 +152,11 @@ var gam2 = {
         //var p = gam2.model.constr.getPropList(cr, 0, 1);
         if (p.length) {
           p = p.reverse();
+
+          var el;
         
           for (const i in p) {
-            this.drawCard('ast' + p[i].pos, p[i]);
+            el = this.drawCard('ast' + p[i].pos, p[i]);
           }
         }
         console.log(p);
@@ -173,13 +183,19 @@ var gam2 = {
             .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
             .addText(topRight)
             .up()
+            .up().el
         ;
+        return this.card[id];
       },
       'updateLoc': function() {
         
       },
       'updateBox': function() {
         
+      },
+      'showLocOptions': function (removedBox) {
+        console.log(removedBox);
+        //r(this.view.locEnd).after();
       }
     },
     'model': {
@@ -340,7 +356,15 @@ var gam2 = {
           },
         }
     },
-    'action': {},
+    'action': {
+        'loc': {
+            'unlockLoc': function (el, box) {
+                el.unbind('click');
+                var card = r(el).remove().el;
+                gam2.view.showLocOptions(box);
+            }
+        }
+    },
 }
 
 
