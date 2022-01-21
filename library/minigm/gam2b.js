@@ -233,6 +233,7 @@ var gam2 = {
         let seedLoc = this.model.rand.seed['loc'+lvl];
         let seedLocId = rd.hashCode(seedLoc+p0+'.'+p1+'.'+p2+'.'+p3, lvl);
         let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
+        let rdNam = this.model.rand.rdNam.bind(this.model.rand);
         let cstr = this.model.constr;
         const maxPos = lvl === 3? 3: 10;
         let cob, ccr;
@@ -263,7 +264,11 @@ var gam2 = {
           cob = this.model.constr.addLoc(
             cstr.locProps(
               pos, type, lvl,
-              rdChr(seedLoc, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1))
+              type ==='empty'?'':(
+              (lvl === 3) ?
+              rdChr(seedLoc, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
+              : rdNam(seedLoc)
+              ))
           );
           if(!ccr) {
             ccr= cob;
@@ -366,6 +371,11 @@ var gam2 = {
             'rd': null,
             'rdChr': function (seed, letter = 1, number = 1) {
                 return gam2.model.rand.rd.randomBytes(1, letter ? 3:0, number, 0, '', seed);
+            },
+            'rdNam': function(seed) {
+                var rd = gam2.model.rand.rd;
+                var suf = rd.randomBytes(0, 1,0,0,'',seed) + rd.pickOneFrom(['um', 'um', 'is', 'ix', 'us', 'ad', 'am'], 0);
+                return rd.randomName(rd.rand(3, 4, seed), 0, suf);
             },
             'seed': {
                 'main': null
