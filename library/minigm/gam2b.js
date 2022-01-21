@@ -64,32 +64,31 @@ var gam2 = {
 
           var loc = 
             this.model.constr.addLoc(
-                locProps(rd.rand(0,20, seedLoc), 'sun', 0, 'Icarus')
+                locProps(rd.rand(1,10, seedLoc), 'sun', 0, 'Icarus')
             )
             .addChildObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(0,20, seedLoc), 'asteroid-belt', 1, 'Cloud '+ rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(rd.rand(1,10, seedLoc), 'asteroid-belt', 1, 'Cloud '+ rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
             )
             .addChildObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(0,20, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(rd.rand(1,10, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
             )
             .nextObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(0,20, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(rd.rand(1,10, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
             )
-            .nextObj(
+            /*.nextObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(0,20, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(rd.rand(1,10, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
-            )
-            .prev
+            )*/
             .addChildObj(
               this.model.constr.addLoc(
-                  locProps(rd.rand(0,20, seedLoc), 'asteroid-st', 3, 'Balder')
+                  locProps(rd.rand(0,2, seedLoc), 'asteroid-st', 3, 'Balder')
             //{pos:1, type:'asteroid-st', lvl:3, name: 'Balder', loc: 'L3:1'}
                   )
             )
