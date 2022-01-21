@@ -19,9 +19,19 @@ let r = function(el) {
 });
 
 var gam2 = {
-    'start': function (ra, vs, rd) {
+    'start': function (ra, vs, rand) {
         this.view.main = ra;
         this.view.vs = vs;
+
+        const seed = 'gam2b5xBxhe$X54B8sd';
+        this.model.rand.seed.main = rand.hashCode(seed + seed, 23131);
+        let rd = rand.sessionWithSeed(rand.hashCode(seed + seed));
+
+        this.model.rand.rd = rd;
+
+        this.model.rand.seed.loc = rd.hashCode(seed + 'loc', rd.rand(127, 65536));
+        this.model.rand.seed.res = rd.hashCode(seed + 'res', rd.rand(127, 65536));
+        this.model.rand.seed.box = rd.hashCode(seed + 'box', rd.rand(127, 65536));
 
         for(var i of ['init','model','view','action']) {
           this.init.parents.apply(gam2[i]);
@@ -41,24 +51,47 @@ var gam2 = {
           this.action = gam2.action;
         },
         'boot': function() {
-          var cr;
+          let cr;
+          let rd = this.model.rand.rd;
+          let rdChr =  this.model.rand.rdChr;
+
+          let seedLoc = this.model.rand.seed.loc;
+          let seedRes = this.model.rand.seed.res;
+          let seedBox = this.model.rand.seed.box;
+
+          let locProps = gam2.model.constr.locProps;
+
+
           var loc = 
-            this.model.constr.addLoc({pos:1, type:'sun', lvl:0, name: 'Icarus', loc: 'L0:1'})
-            .addChildObj(
-              this.model.constr.addLoc({pos:1, type:'asteroid-belt', lvl:1, name: 'Cloud A1', loc: 'L1:1'})
+            this.model.constr.addLoc(
+                locProps(rd.rand(0,20, seedLoc), 'sun', 0, 'Icarus')
             )
             .addChildObj(
-              this.model.constr.addLoc({pos:1, type:'asteroid', lvl:2, name: 'C5', loc: 'L2:1'})
+              this.model.constr.addLoc(
+                locProps(rd.rand(0,20, seedLoc), 'asteroid-belt', 1, 'Cloud '+ rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+              )
+            )
+            .addChildObj(
+              this.model.constr.addLoc(
+                locProps(rd.rand(0,20, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+              )
             )
             .nextObj(
-              this.model.constr.addLoc({pos:2, type:'asteroid', lvl:2, name: 'B2', loc: 'L2:2'})
+              this.model.constr.addLoc(
+                locProps(rd.rand(0,20, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+              )
             )
             .nextObj(
-              this.model.constr.addLoc({pos:3, type:'asteroid', lvl:2, name: 'E11', loc: 'L2:3'})
+              this.model.constr.addLoc(
+                locProps(rd.rand(0,20, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+              )
             )
             .prev
             .addChildObj(
-              this.model.constr.addLoc({pos:1, type:'asteroid-st', lvl:3, name: 'Balder', loc: 'L3:1'})
+              this.model.constr.addLoc(
+                  locProps(rd.rand(0,20, seedLoc), 'asteroid-st', 3, 'Balder')
+            //{pos:1, type:'asteroid-st', lvl:3, name: 'Balder', loc: 'L3:1'}
+                  )
             )
      ;
             
@@ -66,16 +99,16 @@ var gam2 = {
           cr = loc;
           this.model.loc.current = cr;
           window.cr = cr;
-         // console.log(cr);
+          //console.log(cr);
           
           var blist = this.model.constr.addBox({type:'miner', pos:1, level:1, levelCost:10})
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
           
-          this.model.box.list= {
-            'L3:1': blist.first
-          };
+          this.model.box.list= {};
+
+          this.model.box.list[cr.p.loc] = blist.first;
 
           //console.log(p);
         },
@@ -195,6 +228,36 @@ var gam2 = {
       },
       'showLocOptions': function (removedBox) {
         console.log(removedBox);
+        var cr = this.model.loc.current;
+        let rdChr =  this.model.rand.rdChr;
+        let seedLoc = this.model.rand.seed.loc;
+        var ccr = cr;
+        var cob;
+        for(let pos = cr.p.pos; pos < 21; pos++ ) {
+            if (cr.p.pos === pos) {
+                continue;
+            }
+            cob = this.model.constr.addLoc(
+                this.model.constr.locProps(pos, 'asteroid', cr.p.lvl, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+            );
+            if (cob) {
+                ccr = ccr.nextObj(cob);
+            }
+        }
+        ccr = cr;
+          for(let pos = cr.p.pos; pos > 0; pos-- ) {
+              if (cr.p.pos === pos) {
+                  continue;
+              }
+              cob = this.model.constr.addLoc(
+                  this.model.constr.locProps(pos, 'asteroid', cr.p.lvl, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+              );
+              if (cob) {
+                  ccr = ccr.prevObj(cob);
+              }
+          }
+        var p = gam2.model.constr.getPropList(cr.first,1,0);
+        console.log(p);
         //r(this.view.locEnd).after();
       }
     },
@@ -252,6 +315,15 @@ var gam2 = {
         'box': {
           'list': null,
         },
+        'rand': {
+            'rd': null,
+            'rdChr': function (seed, letter = 1, number = 1) {
+                return gam2.model.rand.rd.randomBytes(1, letter ? 3:0, number, 0, '', seed);
+            },
+            'seed': {
+                'main': null
+            },
+        },
         'constr': {
             'getAddFunc': function (defaultProp) {
                 var defaults = JSON.parse(JSON.stringify(defaultProp));
@@ -269,6 +341,14 @@ var gam2 = {
                             obj.parent = this;
                             obj.firstParent = this.firstParent;
                             this.child = obj;
+                            return obj;
+                        },
+                        'prevObj': function (obj) {
+                            obj.next = this;
+                            this.first = obj.first;
+                            obj.firstParent = this.firstParent;
+                            obj.parent = this.parent;
+                            this.prev = obj;
                             return obj;
                         },
                         'nextObj': function (obj) {
@@ -313,6 +393,15 @@ var gam2 = {
                     'powerCost': 0,
                     'is':'box',
                 });
+            },
+            'locProps': function ( pos,type, lvl, name) {
+                return {
+                    pos: pos,
+                    type: type,
+                    lvl: lvl,
+                    name: name,
+                    loc: 'L' + lvl + ':' + ((pos< 10)? '0': '') + pos
+                };
             },
             'addLoc': function (prop) {},
             'addSlot': function (prop) {},

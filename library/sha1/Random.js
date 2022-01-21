@@ -3,7 +3,7 @@ console.log('Random v0.1.0 [rd]');
 var rd = (function () {
     var pub = {};
 
-    pub.randomBytes = function (length, letters = 3, num = false, symbols = false, pick='') {
+    pub.randomBytes = function (length, letters = 3, num = false, symbols = false, pick='', seed = 0) {
         var result = [];
 
         var characters =
@@ -14,7 +14,7 @@ var rd = (function () {
 		+(symbols ? ':/,-_=|<>[].' : '');
         var charactersLength = characters.length;
         for (var i = 0; i < length; i++) {
-            result.push(characters.charAt(this.rand(0,charactersLength)));
+            result.push(characters.charAt(this.rand(0,charactersLength, seed)));
         }
         return result.join('');
     }

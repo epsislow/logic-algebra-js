@@ -215,6 +215,12 @@ $('document').ready(function () {
                         this.child = child;
                         return this;
                     },
+                    'prevChild': function (child) {
+                        child.next = this;
+                        child.first = this.first;
+                        this.prev = child;
+                        return child;
+                    },
                     'nextChild': function (child) {
                         child.prev = this;
                         child.first = this.first;
@@ -542,7 +548,6 @@ $('document').ready(function () {
             usage: usage,
             capacity:5,
             powerUsage: 0,
-            peopleUsage: 0,
             everySec: 10,
             timer: 0,
             color:'power',
