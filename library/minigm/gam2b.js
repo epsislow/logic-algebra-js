@@ -67,17 +67,29 @@ var gam2 = {
           let p0 = rd.rand(1,10,seedLoc);
           let p1 = rd.rand(1,10,seedLoc);
           let p2 = rd.rand(1,10,seedLoc);
-          let p3 = rd.rand(1,10,seedLoc);
+          let p3 = rd.rand(1,2,seedLoc);
+          console.log(p0+','+p1+','+p2+','+p3)
 
-          var xr = gam2.view.genLocs(0, p0, 0, 0, 0);
-         /* var loc = xr.addChildObj(
-            gam2.view.genLocs(1, p1, p2, 0, 0)
-          )*/
+          var xr = gam2.view.genLocs(0, p0, 0, 0, 0, p0);
+          var loc = xr.first.get(p0)
+          
+          .addChildObj(
+            gam2.view.genLocs(1, p0, p1, 0, 0, p1).get(p1)
+          )
+          .addChildObj(
+            gam2.view.genLocs(2, p0, p1, p2, 0, p2).get(p2)
+          )
+          .addChildObj(
+            gam2.view.genLocs(3, p0, p1, p2, p3, p3).get(p3)
+          )
+          
+          loc.p = locProps(loc.p.pos, 'asteroid-st', 3, 'Balder');
+          
           
           var p = gam2.model.constr.getPropList(xr.first, 1, 0);
           console.table(p);
           
-          var loc = 
+          var logc = 
             this.model.constr.addLoc(
                 locProps(p0, 'sun', 0, 'Icarus')
             )
@@ -113,7 +125,7 @@ var gam2 = {
           cr = loc;
           this.model.loc.current = cr;
           window.cr = cr;
-          //console.log(cr);
+          console.log('cr', cr);
           
           var blist = this.model.constr.addBox({type:'miner', pos:1, level:1, levelCost:10})
             .nextObj(
@@ -123,8 +135,9 @@ var gam2 = {
           this.model.box.list= {};
 
           this.model.box.list[cr.p.loc] = blist.first;
-
-          //console.log(p);
+          p = gam2.model.constr.getPropList(cr, 1, 1);
+          
+          console.log(p);
         },
         'topBar': function () {
             r(this.view.topBar)
@@ -243,7 +256,7 @@ var gam2 = {
       'getLocPs': function(box) {
         return [box.pos,0,0,0];
       },
-      'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0) {
+      'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0, forceAtPos=0) {
         let rd = this.model.rand.rd;
         let seedLoc = this.model.rand.seed['loc'+lvl];
         let seedLocId = rd.hashCode(seedLoc+p0+'.'+p1+'.'+p2+'.'+p3, lvl);
@@ -252,10 +265,6 @@ var gam2 = {
         let rdNam = this.model.rand.rdNam.bind(this.model.rand);
         let cstr = this.model.constr;
         rd.restartSeed(seedLocId);
-        let forceAtPos = 0;
-        if( p0>0 && p1===0 && p2===0 && p3===0) {
-          forceAtPos= p0;
-        }
 
         const maxPos = lvl === 3? 3: 10;
         let cob, ccr;
@@ -445,6 +454,15 @@ var gam2 = {
                             this.next = obj;
                             return obj;
                         },
+                        'get': function(num) {
+                          var c= this.first;
+                          var i=1;
+                          while (i < num) {
+                            c = c.next;
+                            i++;
+                          }
+                          return c;
+                        }
                     };
                     pub.first = pub;
                     pub.firstParent = pub;
@@ -482,6 +500,8 @@ var gam2 = {
             },
             'locProps': function ( pos,type, lvl, name) {
                 return {
+                    card:'empty',
+                  is:'loc',
                     pos: pos,
                     type: type,
                     lvl: lvl,
@@ -496,7 +516,12 @@ var gam2 = {
                 if (typeof walkerCb !== 'function') {
                     throw "walker is not a function!";
                 }
-                let s= obj.first;
+                let s;
+                if(parentWalkInstead) {
+                  s=obj;
+                } else {
+                  s=obj.first;
+                }
                 let exit = false;
                 let i = 0;
                 var rr = 0;
