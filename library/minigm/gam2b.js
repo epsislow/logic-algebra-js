@@ -236,6 +236,7 @@ var gam2 = {
         let rd = this.model.rand.rd;
         let seedLoc = this.model.rand.seed['loc'+lvl];
         let seedLocId = rd.hashCode(seedLoc+p0+'.'+p1+'.'+p2+'.'+p3, lvl);
+        //console.log(seedLocId);
         let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
         let rdNam = this.model.rand.rdNam.bind(this.model.rand);
         let cstr = this.model.constr;
@@ -272,8 +273,8 @@ var gam2 = {
               pos, type, lvl,
               type ==='empty'?'':(
               (lvl === 3) ?
-              rdChr(seedLoc, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
-              : rdNam(seedLoc)
+              rdChr(seedLocId, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
+              : rdNam(seedLocId)
               ))
           );
           if(!ccr) {
