@@ -62,7 +62,7 @@ var rd = (function () {
 	}
 
     pub.pickOneFrom = function(list, withPop=0, seed = 0) {
-      var pick = this.rand(0,list.length-1);
+      var pick = this.rand(0,list.length-1, seed);
       if(withPop) {
         return list.splice(pick,1).pop();
       } else {
@@ -88,17 +88,17 @@ var rd = (function () {
       return ret.join('');
     }
     
-    pub.randomName= function (len,pre=0,suf=0, allowNearVocals = 0) {
-      var nam = this.randomBytes(len, 1);
+    pub.randomName= function (len,pre=0,suf=0, allowNearVocals = 0, seed=0) {
+      var nam = this.randomBytes(len, 1, 0, 0, '', seed);
       
       nam = this.addEveryNcharsFromBuffer(nam,
-        this.randomBytes(len*2, 2).split(''),
+        this.randomBytes(len*2, 2, 0, 0, '', seed).split(''),
 		
 		(allowNearVocals ? 
-			this.randomBytes(len*2,0,0,0,'12') :
+			this.randomBytes(len*2,0,0,0,'12', seed) :
 			this.addEveryNcharsFromBuffer(
-				this.randomBytes(len*2,0,0,0,'12'),
-				'0', this.randomBytes(len*2,0,0,0,'1234').split('')
+				this.randomBytes(len*2,0,0,0,'12', seed),
+				'0', this.randomBytes(len*2,0,0,0,'1234', seed).split('')
 			)
 		).split('')
         );
