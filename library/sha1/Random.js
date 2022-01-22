@@ -13,8 +13,14 @@ var rd = (function () {
 		+(pick) 
 		+(symbols ? ':/,-_=|<>[].' : '');
         var charactersLength = characters.length;
+        var ch=0, lastCh = -1;
         for (var i = 0; i < length; i++) {
-            result.push(characters.charAt(this.rand(0,charactersLength, seed)));
+            ch = this.rand(0,charactersLength, seed);
+            if (ch === lastCh) {
+              ch = (ch + ch + ch) % charactersLength;
+            }
+            lastCh = ch;
+            result.push(characters.charAt(ch));
         }
         return result.join('');
     }

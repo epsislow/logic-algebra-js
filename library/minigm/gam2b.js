@@ -64,7 +64,7 @@ var gam2 = {
 
           let locProps = gam2.model.constr.locProps;
 
-          var xr = gam2.view.genLocs(0, 0, 1, 2, 3);
+          var xr = gam2.view.genLocs(0, 4, 1, 2, 2);
           
           var p = gam2.model.constr.getPropList(xr.first, 1, 0);
           console.table(p);
@@ -231,6 +231,9 @@ var gam2 = {
       },
       'updateBox': function() {
         
+      },
+      'getLocPs': function(box) {
+        return [4,1,2,2];
       },
       'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0) {
         let rd = this.model.rand.rd;
@@ -518,8 +521,11 @@ var gam2 = {
             'unlockLoc': function (el, box) {
                // el.unbind('click');
                // var card = r(el).remove().el;
+               var p0,p1,p2,p3;
+               [p0, p1, p2, p3] = gam2.view.getLocPs(box);
+               
                 
-                var xr = gam2.view.genLocs(box.lvl,0,1,2,3);
+                var xr = gam2.view.genLocs(box.lvl,p0,p1,p2,p3);
                 var p = gam2.model.constr.getPropList(xr.first,1,0);
                 console.table(p);
         
