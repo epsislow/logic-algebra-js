@@ -63,29 +63,37 @@ var gam2 = {
           let seedBox = this.model.rand.seed.box;
 
           let locProps = gam2.model.constr.locProps;
+          
+          let p0 = rd.rand(1,10,seedLoc);
+          let p1 = rd.rand(1,10,seedLoc);
+          let p2 = rd.rand(1,10,seedLoc);
+          let p3 = rd.rand(1,10,seedLoc);
 
-          var xr = gam2.view.genLocs(0, 4, 1, 2, 2);
+          var xr = gam2.view.genLocs(0, p0, 0, 0, 0);
+         /* var loc = xr.addChildObj(
+            gam2.view.genLocs(1, p1, p2, 0, 0)
+          )*/
           
           var p = gam2.model.constr.getPropList(xr.first, 1, 0);
           console.table(p);
           
           var loc = 
             this.model.constr.addLoc(
-                locProps(rd.rand(1,10, seedLoc), 'sun', 0, 'Icarus')
+                locProps(p0, 'sun', 0, 'Icarus')
             )
             .addChildObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(1,10, seedLoc), 'asteroid-belt', 1, 'Cloud '+ rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(p1, 'asteroid-belt', 1, 'Cloud '+ rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
             )
             .addChildObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(1,10, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(p2-1, 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
             )
             .nextObj(
               this.model.constr.addLoc(
-                locProps(rd.rand(1,10, seedLoc), 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
+                locProps(p2, 'asteroid', 2, rdChr(seedLoc,1, 0).toUpperCase() +  rdChr(seedLoc,0, 1))
               )
             )
             /*.nextObj(
@@ -95,7 +103,7 @@ var gam2 = {
             )*/
             .addChildObj(
               this.model.constr.addLoc(
-                  locProps(rd.rand(0,2, seedLoc), 'asteroid-st', 3, 'Balder')
+                  locProps(p3, 'asteroid-st', 3, 'Balder')
             //{pos:1, type:'asteroid-st', lvl:3, name: 'Balder', loc: 'L3:1'}
                   )
             )
@@ -233,7 +241,7 @@ var gam2 = {
         
       },
       'getLocPs': function(box) {
-        return [4,1,2,2];
+        return [box.pos,0,0,0];
       },
       'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0) {
         let rd = this.model.rand.rd;
@@ -244,6 +252,10 @@ var gam2 = {
         let rdNam = this.model.rand.rdNam.bind(this.model.rand);
         let cstr = this.model.constr;
         rd.restartSeed(seedLocId);
+        let forceAtPos = 0;
+        if( p0>0 && p1===0 && p2===0 && p3===0) {
+          forceAtPos= p0;
+        }
 
         const maxPos = lvl === 3? 3: 10;
         let cob, ccr;
@@ -254,6 +266,9 @@ var gam2 = {
           ['asteroid-st','research-st','trade-st','storage-st']
         ];
         let type, posch=[],pops= [80,90,40, 40];
+        if(forceAtPos) {
+          posch.push(forceAtPos);
+        }
         let pop = Math.round(maxPos*pops[lvl]/100)
         if(1) {
           var q=1,p=0;
