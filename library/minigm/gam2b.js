@@ -64,7 +64,11 @@ var gam2 = {
 
           let locProps = gam2.model.constr.locProps;
 
-
+          var xr = gam2.view.genLocs(0, 0, 1, 2, 3);
+          
+          var p = gam2.model.constr.getPropList(xr.first, 1, 0);
+          console.table(p);
+          
           var loc = 
             this.model.constr.addLoc(
                 locProps(rd.rand(1,10, seedLoc), 'sun', 0, 'Icarus')
@@ -235,6 +239,8 @@ var gam2 = {
         let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
         let rdNam = this.model.rand.rdNam.bind(this.model.rand);
         let cstr = this.model.constr;
+        rd.restartSeed(seedLocId);
+
         const maxPos = lvl === 3? 3: 10;
         let cob, ccr;
         let types = [
@@ -278,7 +284,10 @@ var gam2 = {
         }
         return ccr.first;
       },
-      'showLocOptions': function (removedBox) {
+      'showLocOptions': function(removedBox) {
+        console.log(removedBox);
+      },
+      'testLocOptions': function (removedBox) {
         console.log(removedBox);
         var cr = this.model.loc.current;
         let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
