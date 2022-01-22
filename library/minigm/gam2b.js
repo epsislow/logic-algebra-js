@@ -197,7 +197,7 @@ var gam2 = {
                }
                el = this.drawCard('loc'+ p[i].loc, p[i], containerDiv);
 
-               el.click((function (el, box) {return function () { gam2.action.loc.unlockLoc(el, box); }})(el, p[i]));
+               el.click((function (el, box, plist) {return function () { gam2.action.loc.unlockLoc(el, box, plist); }})(el, p[i], p));
            }
            this.view.locEnd = r(el).up().el;
        }
@@ -558,12 +558,18 @@ var gam2 = {
     },
     'action': {
         'loc': {
-            'unlockLoc': function (el, box) {
+            'unlockLoc': function (el, box, plist) {
                // el.unbind('click');
                // var card = r(el).remove().el;
-               var p0,p1,p2,p3;
-               [p0, p1, p2, p3] = gam2.view.getLocPs(box);
                
+               var p0,p1,p2,p3;
+               p0= box.lvl<=0?0:plist[0].pos;
+               p1= box.lvl<=1?0:plist[1].pos;
+               p2= box.lvl<=2?0:plist[2].pos;
+               p3= box.lvl<=3?0:plist[3].pos;
+               
+              // [p0, p1, p2, p3] = gam2.view.getLocPs(box);
+               console.log(p0,p1,p2,p3);
                 
                 var xr = gam2.view.genLocs(box.lvl,p0,p1,p2,p3);
                 var p = gam2.model.constr.getPropList(xr.first,1,0);
