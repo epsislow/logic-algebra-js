@@ -229,7 +229,11 @@ var gam2 = {
         console.log(p);
       },
       'drawCard': function(id, box, container = null,  redrawAll=1) {
+          if(!(box.type in this.model.cards)) {
+            throw Error(box.type+ ' not found')
+          }
           var crd= this.model.cards[box.type];
+          
           var x2 = (box.is==='loc')?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
           var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
@@ -274,10 +278,11 @@ var gam2 = {
         let cstr = this.model.constr;
         rd.restartSeed(seedLocId);
         
+        // 00
         var pkey=[0].join('.');
         if(pkey in pmap) {
-          console.log(pmap[pkey])
-         // mergeLocsP= pmap[pkey];
+          console.log(pmap[pkey]);
+          mergeLocsP= pmap[pkey];
         }
 
         const maxPos = lvl === 3? 3: 10;
@@ -403,6 +408,11 @@ var gam2 = {
             'icon': 'ring fa-med',
             'bg':'empty',
             'dashed':1,
+          },
+          'storage-st': {
+            'icon': 'ring fa-med',
+            'bg': 'empty',
+            'dashed': 1,
           },
           'miner': {
             'icon': 'cog',
