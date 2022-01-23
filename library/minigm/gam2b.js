@@ -71,11 +71,13 @@ var gam2 = {
           console.log(p0+','+p1+','+p2+','+p3);
           
           gam2.model.loc.pmap = {
-            [[0].join('.')]: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
-            [[p0,0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud A2')},
-            [[p0,p1,0].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis')},
-            [[p0,p1,p2,0].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder')},
+            0: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
+            [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud A2')},
+            [[p0,p1].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis')},
+            [[p0,p1,p2].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder')},
           }
+          
+          console.log(gam2.model.loc.pmap);
 
           var xr = gam2.view.genLocs(0, p0, 0, 0, 0, 0, {[p0]: locProps(p0, 'sun', 0, 'Icarus')});
           var loc = xr.first.get(p0)
