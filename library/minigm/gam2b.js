@@ -79,17 +79,17 @@ var gam2 = {
           
           console.log(gam2.model.loc.pmap);
 
-          var xr = gam2.view.genLocs(0, p0, 0, 0, 0, 0, {[p0]: locProps(p0, 'sun', 0, 'Icarus')});
+          var xr = gam2.view.genLocs(0, 0, 0, 0, 0, 0, {[p0]: locProps(p0, 'sun', 0, 'Icarus')});
           var loc = xr.first.get(p0)
           
           .addChildObj(
-            gam2.view.genLocs(1, p0, p1, 0, 0, p1, {[p1]: locProps(p1, 'asteroid-belt', 1, 'Cloud A2' )}).get(p1)
+            gam2.view.genLocs(1, p0, 0, 0, 0, p1, {[p1]: locProps(p1, 'asteroid-belt', 1, 'Cloud A2' )}).get(p1)
           )
           .addChildObj(
-            gam2.view.genLocs(2, p0, p1, p2, 0, p2, {[p2]: locProps(p2, 'asteroid', 1, 'Jadvis')}).get(p2)
+            gam2.view.genLocs(2, p0, p1, 0, 0, p2, {[p2]: locProps(p2, 'asteroid', 1, 'Jadvis')}).get(p2)
           )
           .addChildObj(
-            gam2.view.genLocs(3, p0, p1, p2, p3, p3, {[p3]: locProps(p3, 'asteroid-st', 1, 'Balder')}).get(p3)
+            gam2.view.genLocs(3, p0, p1, p2, 0, p3, {[p3]: locProps(p3, 'asteroid-st', 1, 'Balder')}).get(p3)
           )
           
           //loc.p = locProps(loc.p.pos, 'asteroid-st', 3, 'Balder');
@@ -285,13 +285,13 @@ var gam2 = {
         if(p0 === 0) {
           pkeys = [0];
         } else if (p0> 0 && p1 ===0) {
-          pkeys = [0];
-        } else if(p1 >0 && p2 ===0) {
           pkeys = [p0];
-        } else if (p2 >0 && p3 ===0) {
+        } else if(p1 >0 && p2 ===0) {
           pkeys = [p0,p1];
-        } else {
+        } else if (p2 >0 && p3 ===0) {
           pkeys = [p0,p1,p2];
+        } else {
+          pkeys = [p0,p1,p2,p3];
         }
         
         var pkey=pkeys.join('.');
