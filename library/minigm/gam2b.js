@@ -280,10 +280,24 @@ var gam2 = {
         let cstr = this.model.constr;
         rd.restartSeed(seedLocId);
         
-        // 00
-        var pkey=[0].join('.');
+        var pkeys;
+        console.log('bf pk',p0,p1,p2,p3);
+        if(p0 === 0) {
+          pkeys = [0];
+        } else if (p0> 0 && p1 ===0) {
+          pkeys = [0];
+        } else if(p1 >0 && p2 ===0) {
+          pkeys = [p0];
+        } else if (p2 >0 && p3 ===0) {
+          pkeys = [p0,p1];
+        } else {
+          pkeys = [p0,p1,p2];
+        }
+        
+        var pkey=pkeys.join('.');
+        console.log('pkey '+pkey);
         if(pkey in pmap) {
-          console.log(pmap[pkey]);
+          console.log('pmp ',pmap[pkey]);
           mergeLocsP= pmap[pkey];
         }
 
