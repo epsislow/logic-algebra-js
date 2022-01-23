@@ -68,22 +68,29 @@ var gam2 = {
           let p1 = rd.rand(1,10,seedLoc);
           let p2 = rd.rand(1,10,seedLoc);
           let p3 = rd.rand(1,2,seedLoc);
-          console.log(p0+','+p1+','+p2+','+p3)
+          console.log(p0+','+p1+','+p2+','+p3);
+          
+          gam2.model.loc.pmap = {
+            [[p0,0,0,0].join('.')]: locProps(p0, 'sun', 0, 'Icarus'),
+            [[p0,p1,0,0].join('.')]: locProps(p1, 'asteroid-belt', 1, 'Cloud A2'),
+            [[p0,p1,p2,0].join('.')]: locProps(p2, 'asteroid', 2, 'Jadvis'),
+            [[p0,p1,p2,p3].join('.')]: locProps(p3, 'asteroid-st', 3, 'Balder'),
+          }
 
-          var xr = gam2.view.genLocs(0, p0, 0, 0, 0, p0);
+          var xr = gam2.view.genLocs(0, p0, 0, 0, 0, 0, {[p0]: locProps(p0, 'sun', 0, 'Icarus')});
           var loc = xr.first.get(p0)
           
           .addChildObj(
-            gam2.view.genLocs(1, p0, p1, 0, 0, p1).get(p1)
+            gam2.view.genLocs(1, p0, p1, 0, 0, p1, {[p1]: locProps(p1, 'asteroid-belt', 1, 'Cloud A2' )}).get(p1)
           )
           .addChildObj(
-            gam2.view.genLocs(2, p0, p1, p2, 0, p2).get(p2)
+            gam2.view.genLocs(2, p0, p1, p2, 0, p2, {[p2]: locProps(p2, 'asteroid', 1, 'Jadvis')}).get(p2)
           )
           .addChildObj(
-            gam2.view.genLocs(3, p0, p1, p2, p3, p3).get(p3)
+            gam2.view.genLocs(3, p0, p1, p2, p3, p3, {[p3]: locProps(p3, 'asteroid-st', 1, 'Balder')}).get(p3)
           )
           
-          loc.p = locProps(loc.p.pos, 'asteroid-st', 3, 'Balder');
+          //loc.p = locProps(loc.p.pos, 'asteroid-st', 3, 'Balder');
           
           
           var p = gam2.model.constr.getPropList(xr.first, 1, 0);
@@ -256,7 +263,7 @@ var gam2 = {
       'getLocPs': function(box) {
         return [box.pos,0,0,0];
       },
-      'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0, forceAtPos=0) {
+      'genLocs': function(lvl, p0= 0, p1= 0, p2= 0, p3= 0, forceAtPos=0, mergeLocsP = 0) {
         let rd = this.model.rand.rd;
         let seedLoc = this.model.rand.seed['loc'+lvl];
         let seedLocId = rd.hashCode(seedLoc+p0+'.'+p1+'.'+p2+'.'+p3, lvl);
@@ -304,6 +311,9 @@ var gam2 = {
               : rdNam(seedLocId)
               ))
           );
+          if(mergeLocsP && (pos in mergeLocsP)) {
+            cob.p= mergeLocsP[pos];
+          }
           if(!ccr) {
             ccr= cob;
             continue;
