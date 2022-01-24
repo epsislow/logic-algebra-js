@@ -181,6 +181,8 @@ var gam2 = {
       'content': null,
       'locEnd': null,
       'card': [],
+      'cardOpt': [],
+      'cardMenu': [],
       'draw':function() {
         this.drawLoc(1);
         this.drawBox(1);
@@ -243,8 +245,8 @@ var gam2 = {
           var title = (box.is==='loc')? box.name:box.type;
           var topRight = (box.is==='loc') ? box.loc: box.level;
 
-        this.card[id] = r(container ? container: this.view.content)
-            .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
+        var cel = r(container ? container: this.view.content)
+            .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + (opt?' option':'')+' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
@@ -258,7 +260,12 @@ var gam2 = {
             .up()
             .up().el
         ;
-        return this.card[id];
+        if(opt) {
+          this.cardOpt[id] = cel;
+        } else {
+          this.card[id] = cel;
+        }
+        return cel;
       },
       'updateLoc': function() {
         
@@ -350,8 +357,18 @@ var gam2 = {
         }
         return ccr.first;
       },
+      'deleteCardOpt': function() {
+        var cardOpt = gam2.view.cardOpt;
+        for (const i in cardOpt) {
+          if (!cardOpt.hasOwnProperty(i)) {
+            continue;
+          }
+          r(cardOpt[i]).remove();
+          delete cardOpt[i];
+        }
+      },
       'showLocOptions': function(p) {
-        
+        gam2.view.deleteCardOpt();
         var containerDiv;
         var el;
         
@@ -362,15 +379,10 @@ var gam2 = {
           if(p[i].type==='empty') {
             continue;
           }
-          /*
-          if (i % 2 === 0) {
-            containerDiv = r(this.view.content)
-              .container('m-2 bg-card', 'div', '')
-              .el;
-          }*/
+          
           el = this.drawCard('opt' + i, p[i], null, 1);
         
-         // el.click((function(el, bi, plist) { return function() { gam2.action.loc.unlockLoc(el, bi, plist); } })(el, i, p));
+          el.click((function(i, p) { return function() { gam2.action.loc.selectLoc(i, p); } })(i, p));
         }
        // console.log(removedBox);
       },
@@ -637,6 +649,10 @@ var gam2 = {
     },
     'action': {
         'loc': {
+            'selectLoc': function(bi, p) {
+              gam2.view.deleteCardOpt();
+              
+            },
             'unlockLoc': function (el, bi, plist) {
                
                var box= plist[bi];
@@ -655,16 +671,17 @@ var gam2 = {
                    r(card['loc1']).clear();
                  } else {
                    r(card['loc1']).remove();
+                   delete card['loc1'];
                  }
-                 delete card['loc1'];
+                 
                }
                if(box.lvl <= 2 && ('loc2' in card)) {
                  if(box.lvl===2) {
                    r(card['loc2']).clear();
                  } else {
                    r(card['loc2']).remove();
+                   delete card['loc2'];
                  }
-                 delete card['loc2'];
                }
                if(box.lvl <= 3 && ('loc3' in card)) {
                  el.unbind('click');
@@ -672,8 +689,8 @@ var gam2 = {
                    r(card['loc3']).clear();
                  } else {
                    r(card['loc3']).remove();
+                   delete card['loc3'];
                  }
-                 delete card['loc3'];
                }var containerDiv;
                var el;
                
