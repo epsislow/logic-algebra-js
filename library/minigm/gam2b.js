@@ -72,7 +72,7 @@ var gam2 = {
           
           gam2.model.loc.pmap = {
             0: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
-            [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud A2')},
+            [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud Rupler')},
             [[p0,p1].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis')},
             [[p0,p1,p2].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder')},
           }
@@ -305,7 +305,7 @@ var gam2 = {
         let cob, ccr;
         let types = [
           ['sun'],
-          ['planet','asteroid-belt','gas-planet','ice-planet'],
+          ['planet','asteroid-belt','asteroid-belt','asteroid-belt','gas-planet','ice-planet','arid-planet'],
           ['asteroid','moon'],
           ['asteroid-st','research-st','trade-st','storage-st']
         ];
@@ -336,7 +336,7 @@ var gam2 = {
               type ==='empty'?'':(
               (lvl === 3) ?
               rdChr(seedLocId, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
-              : rdNam(seedLocId)
+              : (type ==='asteroid-belt'?'Cloud ':'') +rdNam(seedLocId)
               ))
           );
           if(mergeLocsP && (pos in mergeLocsP)) {
@@ -411,6 +411,21 @@ var gam2 = {
             'dashed':1,
           },
           'planet': {
+            'icon':'adjust',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'gas-planet': {
+            'icon':'adjust',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'ice-planet': {
+            'icon':'adjust',
+            'bg':'empty',
+            'dashed':1,
+          },
+          'arid-planet': {
             'icon':'adjust',
             'bg':'empty',
             'dashed':1,
