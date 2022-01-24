@@ -495,12 +495,12 @@ var gam2 = {
             'dashed':1,
           },
           'trade-st': {
-            'icon': 'ring fa-med',
+            'icon': 'ring',
             'bg': 'empty',
             'dashed': 1,
           },
           'storage-st': {
-            'icon': 'ring fa-med',
+            'icon': 'square',
             'bg': 'empty',
             'dashed': 1,
           },
@@ -685,10 +685,21 @@ var gam2 = {
         'loc': {
             'selectLoc': function(bi, p,p0,p1,p2,p3) {
               gam2.view.deleteCardOpt();
-              gam2.view.locEnd.prev().remove();
-              gam2.view.locEnd.remove();
+              //gam2.view.locEnd.first().next().remove();
+             // gam2.view.locEnd.first().remove();
+          
               var lvl = p[bi].lvl;
               var pos = p[bi].pos;
+              if(lvl >=2){
+                gam2.view.locEnd.prev().remove();
+                gam2.view.locEnd.remove();
+              
+              } else {
+                gam2.view.locEnd.prev().remove();
+                gam2.view.locEnd.remove();
+             //   gam2.view.locEnd.first().remove();
+                //gam2.view.locEnd.first().next().remove();
+              }
               var cr = gam2.model.loc.current;
               console.log('crr', cr.p);
               console.log('pbi',p[bi], 'pos'+pos+','+bi);
@@ -806,6 +817,9 @@ var gam2 = {
                
                  el.click((function(el, bi, plist) { return function() { gam2.action.loc.unlockLoc(el, bi, plist); } })(el, i, p));
                }
+               
+          // gam2.view.locEnd = r(el).up().el.next();
+               
                
               // [p0, p1, p2, p3] = gam2.view.getLocPs(box);
                console.log(p0,p1,p2,p3);
