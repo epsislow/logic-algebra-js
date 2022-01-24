@@ -357,6 +357,12 @@ var gam2 = {
         }
         return ccr.first;
       },
+      'addLocSelected': function(containerDiv, i, a, b, c) {
+        
+               el = this.drawCard('loc'+ i, p[i], containerDiv);
+
+               el.click((function (el, bi, plist) {return function () { gam2.action.loc.unlockLoc(el, bi, plist); }})(el, i, p));
+      },
       'deleteCardOpt': function() {
         var cardOpt = gam2.view.cardOpt;
         for (const i in cardOpt) {
