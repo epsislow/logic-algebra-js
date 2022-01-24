@@ -388,7 +388,7 @@ var gam2 = {
           delete cardOpt[i];
         }
       },
-      'showLocOptions': function(p) {
+      'showLocOptions': function(p,p0,p1,p2,p3) {
         gam2.view.deleteCardOpt();
         var containerDiv;
         var el;
@@ -403,7 +403,7 @@ var gam2 = {
           
           el = this.drawCard('opt' + i, p[i], null, 1);
         
-          el.click((function(i, p) { return function() { gam2.action.loc.selectLoc(i, p); } })(i, p));
+          el.click((function(i, p,p0,p1,p2,p3) { return function() { gam2.action.loc.selectLoc(i, p,p0,p1,p2,p3); } })(i, p,p0,p1,p2,p3));
         }
        // console.log(removedBox);
       },
@@ -493,6 +493,11 @@ var gam2 = {
             'icon': 'ring fa-med',
             'bg':'empty',
             'dashed':1,
+          },
+          'trade-st': {
+            'icon': 'ring fa-med',
+            'bg': 'empty',
+            'dashed': 1,
           },
           'storage-st': {
             'icon': 'ring fa-med',
@@ -678,7 +683,7 @@ var gam2 = {
     },
     'action': {
         'loc': {
-            'selectLoc': function(bi, p) {
+            'selectLoc': function(bi, p,p0,p1,p2,p3) {
               gam2.view.deleteCardOpt();
               gam2.view.locEnd.prev().remove();
               gam2.view.locEnd.remove();
@@ -694,17 +699,25 @@ var gam2 = {
               
               console.log(p[bi]);
               gam2.view.drawLoc();
+              //console.log('aaaa',cr.p,' ??')
               
-              if(cr.lvl < 3 && 0) {
-                console.log(p0,p1,p2,p3);
+              if(cr.p.lvl < 3) {
+                if(lvl === 1) {
+                  p1= pos;
+                } else if(lvl === 2) {
+                  p2= pos;
+                } else if(lvl === 3) {
+                  p3= pos;
+                }
+                console.log('sssf',p0,p1,p2,p3);
                 
-                var xr = gam2.view.genLocs(cr.lvl,p0,p1,p2,p3);
+                var xr = gam2.view.genLocs(cr.p.lvl+1,p0,p1,p2,p3);
                 var pp = gam2.model.constr.getPropList(xr.first,1,0);
-                ncr.child = xr;
-                xr.setParentObj(ncr);
+                cr.child = xr;
+                xr.setParentObj(cr);
                 console.table(pp);
                 
-                gam2.view.showLocOptions(p);
+                gam2.view.showLocOptions(pp);
               }
             },
             'unlockLoc': function (el, bi, plist) {
@@ -776,7 +789,7 @@ var gam2 = {
                  ncr = null;
                }*/
                gam2.model.loc.current = ncr;
-               console.log('new-cr', ncr.p);
+               //console.log('new-cr', ncr.p);
                var containerDiv;
                var el;
                
@@ -799,11 +812,15 @@ var gam2 = {
                 
                 var xr = gam2.view.genLocs(box.lvl,p0,p1,p2,p3);
                 var p = gam2.model.constr.getPropList(xr.first,1,0);
-                ncr.child = xr;
-                xr.setParentObj(ncr);
+                if(ncr) {
+                  ncr.child = xr;
+                  xr.setParentObj(ncr);
+                } else {
+                 ncr = xr;
+                }
                 console.table(p);
                 
-                gam2.view.showLocOptions(p);
+                gam2.view.showLocOptions(p,p0,p1,p2,p3);
                 
             },
             
