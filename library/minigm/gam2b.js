@@ -373,8 +373,7 @@ var gam2 = {
         }
         return ccr.first;
       },
-      'addLocSelected': function(containerDiv, i, a, b, c) {
-        
+      'addLocSelected': function(containerDiv, i, a) {
                el = this.drawCard('loc'+ i, p[i], containerDiv);
 
                el.click((function (el, bi, plist) {return function () { gam2.action.loc.unlockLoc(el, bi, plist); }})(el, i, p));
@@ -677,8 +676,12 @@ var gam2 = {
               gam2.view.locEnd.remove();
               var lvl = p[bi].lvl;
               var pos = p[bi].pos;
-              
-              
+              var cr = gam2.model.loc.current;
+              console.log('crr', cr.p);
+              console.log('pbi',p[bi], 'pos'+pos+','+bi);
+              cr = cr.child.first.get(pos);
+              console.log('=',cr);
+              gam2.model.loc.current= cr;
               
               console.log(p[bi]);
               gam2.view.drawLoc();
@@ -753,6 +756,7 @@ var gam2 = {
                  ncr = null;
                }*/
                gam2.model.loc.current = ncr;
+               console.log('new-cr', ncr.p);
                var containerDiv;
                var el;
                
