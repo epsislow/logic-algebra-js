@@ -566,6 +566,14 @@ var gam2 = {
                             this.next = obj;
                             return obj;
                         },
+                        'setParentObj': function(obj) {
+                          this.parent = obj;
+                          obj.child = this.first;
+                          var n = this;
+                          while(n= n.next) {
+                            n.parent = obj;
+                          }
+                        },
                         'get': function(num) {
                           var c= this.first;
                           var i=1;
@@ -687,6 +695,17 @@ var gam2 = {
               console.log(p[bi]);
               gam2.view.drawLoc();
               
+              if(cr.lvl < 3 && 0) {
+                console.log(p0,p1,p2,p3);
+                
+                var xr = gam2.view.genLocs(cr.lvl,p0,p1,p2,p3);
+                var pp = gam2.model.constr.getPropList(xr.first,1,0);
+                ncr.child = xr;
+                xr.setParentObj(ncr);
+                console.table(pp);
+                
+                gam2.view.showLocOptions(p);
+              }
             },
             'unlockLoc': function (el, bi, plist) {
                
@@ -780,12 +799,14 @@ var gam2 = {
                 
                 var xr = gam2.view.genLocs(box.lvl,p0,p1,p2,p3);
                 var p = gam2.model.constr.getPropList(xr.first,1,0);
+                ncr.child = xr;
+                xr.setParentObj(ncr);
                 console.table(p);
                 
-                
-                
                 gam2.view.showLocOptions(p);
-            }
+                
+            },
+            
         }
     },
 }
