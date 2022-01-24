@@ -204,9 +204,9 @@ var gam2 = {
                        .container('m-2 bg-card', 'div', '')
                        .el;
                }
-               el = this.drawCard('loc'+ p[i].loc, p[i], containerDiv);
+               el = this.drawCard('loc'+ i, p[i], containerDiv);
 
-               el.click((function (el, box, plist) {return function () { gam2.action.loc.unlockLoc(el, box, plist); }})(el, p[i], p));
+               el.click((function (el, bi, plist) {return function () { gam2.action.loc.unlockLoc(el, bi, plist); }})(el, i, p));
            }
            this.view.locEnd = r(el).up().el;
        }
@@ -230,13 +230,13 @@ var gam2 = {
         }
         console.log(p);
       },
-      'drawCard': function(id, box, container = null,  redrawAll=1) {
+      'drawCard': function(id, box, container = null, opt=0,redrawAll=1) {
           if(!(box.type in this.model.cards)) {
             throw Error(box.type+ ' not found')
           }
           var crd= this.model.cards[box.type];
           
-          var x2 = (box.is==='loc')?'-xs':'', color = crd.bg, dashed = crd.dashed;
+          var x2 = (box.is==='loc' && !opt)?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
           var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
           
@@ -244,7 +244,7 @@ var gam2 = {
           var topRight = (box.is==='loc') ? box.loc: box.level;
 
         this.card[id] = r(container ? container: this.view.content)
-            .container( (box.is==='loc'? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
+            .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + ' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
@@ -350,8 +350,29 @@ var gam2 = {
         }
         return ccr.first;
       },
-      'showLocOptions': function(removedBox) {
-        console.log(removedBox);
+      'showLocOptions': function(p) {
+        
+        var containerDiv;
+        var el;
+        
+        for (const i in p) {
+          if (!p.hasOwnProperty(i)) {
+            continue;
+          }
+          if(p[i].type==='empty') {
+            continue;
+          }
+          /*
+          if (i % 2 === 0) {
+            containerDiv = r(this.view.content)
+              .container('m-2 bg-card', 'div', '')
+              .el;
+          }*/
+          el = this.drawCard('opt' + i, p[i], null, 1);
+        
+         // el.click((function(el, bi, plist) { return function() { gam2.action.loc.unlockLoc(el, bi, plist); } })(el, i, p));
+        }
+       // console.log(removedBox);
       },
       'testLocOptions': function (removedBox) {
         console.log(removedBox);
@@ -616,15 +637,59 @@ var gam2 = {
     },
     'action': {
         'loc': {
-            'unlockLoc': function (el, box, plist) {
-               // el.unbind('click');
-               // var card = r(el).remove().el;
+            'unlockLoc': function (el, bi, plist) {
                
+               var box= plist[bi];
+               var card = gam2.view.card;
                var p0,p1,p2,p3;
                p0= box.lvl<=0?0:plist[0].pos;
                p1= box.lvl<=1?0:plist[1].pos;
                p2= box.lvl<=2?0:plist[2].pos;
                p3= box.lvl<=3?0:plist[3].pos;
+               if(box.lvl === 0 && ('loc0' in card)) {
+                 r(card['loc0']).clear();
+                 delete card['loc0'];
+               }
+               if(box.lvl <= 1 && ('loc1' in card)) {
+                 if(box.lvl===1) {
+                   r(card['loc1']).clear();
+                 } else {
+                   r(card['loc1']).remove();
+                 }
+                 delete card['loc1'];
+               }
+               if(box.lvl <= 2 && ('loc2' in card)) {
+                 if(box.lvl===2) {
+                   r(card['loc2']).clear();
+                 } else {
+                   r(card['loc2']).remove();
+                 }
+                 delete card['loc2'];
+               }
+               if(box.lvl <= 3 && ('loc3' in card)) {
+                 el.unbind('click');
+                 if(box.lvl===3) {
+                   r(card['loc3']).clear();
+                 } else {
+                   r(card['loc3']).remove();
+                 }
+                 delete card['loc3'];
+               }var containerDiv;
+               var el;
+               
+               for (const i in p) {
+                 if (!p.hasOwnProperty(i)) {
+                   continue;
+                 }
+                 if (i % 2 === 0) {
+                   containerDiv = r(this.view.content)
+                     .container('m-2 bg-card', 'div', '')
+                     .el;
+                 }
+                 el = this.drawCard('loc' + i, p[i], containerDiv);
+               
+                 el.click((function(el, bi, plist) { return function() { gam2.action.loc.unlockLoc(el, bi, plist); } })(el, i, p));
+               }
                
               // [p0, p1, p2, p3] = gam2.view.getLocPs(box);
                console.log(p0,p1,p2,p3);
@@ -632,8 +697,8 @@ var gam2 = {
                 var xr = gam2.view.genLocs(box.lvl,p0,p1,p2,p3);
                 var p = gam2.model.constr.getPropList(xr.first,1,0);
                 console.table(p);
-        
-                //gam2.view.showLocOptions(box);
+      
+                gam2.view.showLocOptions(p);
             }
         }
     },
