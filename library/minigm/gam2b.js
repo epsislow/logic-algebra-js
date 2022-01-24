@@ -189,12 +189,7 @@ var gam2 = {
       },
       'drawLoc': function(redrawAll=1) {
         var cr= this.model.loc.current;
-        
-       var p = gam2.model.constr.getPropList(cr,0,1);
-       if (p.length) {
-           p = p.reverse();
-           
-           var divs = [
+        var divs = [
              r(this.view.content)
                .container('m-2 bg-card', 'div', '', 0, 1)
                .el,
@@ -203,6 +198,14 @@ var gam2 = {
                .el
            ].reverse();
 
+        if(cr=== null) {
+          return;
+        }
+       var p = gam2.model.constr.getPropList(cr,0,1);
+       if (p.length) {
+           p = p.reverse();
+           
+           
            var containerDiv;
            var el;
 
@@ -729,6 +732,14 @@ var gam2 = {
                }
                var 
                ncr = cr;
+               if(box.lvl === 0) {
+                 ncr = null;
+               } else {
+               do {
+                 ncr = ncr.parent;
+               } while (ncr.p.lvl >= box.lvl);
+               }
+               /*
                if (box.lvl <= 3) {
                  ncr = ncr.parent;
                }
@@ -740,7 +751,7 @@ var gam2 = {
                }
                if (box.lvl === 0) {
                  ncr = null;
-               }
+               }*/
                gam2.model.loc.current = ncr;
                var containerDiv;
                var el;
