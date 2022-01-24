@@ -679,6 +679,7 @@ var gam2 = {
               var cr = gam2.model.loc.current;
               console.log('crr', cr.p);
               console.log('pbi',p[bi], 'pos'+pos+','+bi);
+              
               cr = cr.child.first.get(pos);
               console.log('=',cr);
               gam2.model.loc.current= cr;
