@@ -193,6 +193,15 @@ var gam2 = {
        var p = gam2.model.constr.getPropList(cr,0,1);
        if (p.length) {
            p = p.reverse();
+           
+           var divs = [
+             r(this.view.content)
+               .container('m-2 bg-card', 'div', '', 0, 1)
+               .el,
+             r(this.view.content)
+               .container('m-2 bg-card', 'div', '', 0, 1)
+               .el
+           ].reverse();
 
            var containerDiv;
            var el;
@@ -202,9 +211,13 @@ var gam2 = {
                    continue;
                }
                if (i % 2 === 0) {
-                   containerDiv = r(this.view.content)
-                       .container('m-2 bg-card', 'div', '')
-                       .el;
+                   containerDiv = 
+                      divs[Math.floor(i/2)];
+                      
+                      /*r(this.view.content)
+                       .container('m-2 bg-card', 'div', '',0, 0)
+                       .el;*/
+                   
                }
                el = this.drawCard('loc'+ i, p[i], containerDiv);
 
@@ -657,12 +670,26 @@ var gam2 = {
         'loc': {
             'selectLoc': function(bi, p) {
               gam2.view.deleteCardOpt();
+              gam2.view.locEnd.prev().remove();
+              gam2.view.locEnd.remove();
+              var lvl = p[bi].lvl;
+              var pos = p[bi].pos;
+              
+              
+              
+              console.log(p[bi]);
+              gam2.view.drawLoc();
               
             },
             'unlockLoc': function (el, bi, plist) {
                
                var box= plist[bi];
                var card = gam2.view.card;
+               var cr = gam2.model.loc.current;
+               if(cr.lvl === 3) {
+                 gam2.model.loc.oldCurrentComplet = cr;
+               }
+
                var p0,p1,p2,p3;
                p0= box.lvl<=0?0:plist[0].pos;
                p1= box.lvl<=1?0:plist[1].pos;
@@ -671,6 +698,7 @@ var gam2 = {
                if(box.lvl === 0 && ('loc0' in card)) {
                  r(card['loc0']).clear();
                  delete card['loc0'];
+                 
                }
                if(box.lvl <= 1 && ('loc1' in card)) {
                  if(box.lvl===1) {
@@ -697,7 +725,24 @@ var gam2 = {
                    r(card['loc3']).remove();
                    delete card['loc3'];
                  }
-               }var containerDiv;
+      
+               }
+               var 
+               ncr = cr;
+               if (box.lvl <= 3) {
+                 ncr = ncr.parent;
+               }
+               if(box.lvl <= 2) {
+                 ncr = ncr.parent;
+               }
+               if (box.lvl <= 1) {
+                 ncr = ncr.parent;
+               }
+               if (box.lvl === 0) {
+                 ncr = null;
+               }
+               gam2.model.loc.current = ncr;
+               var containerDiv;
                var el;
                
                for (const i in p) {
@@ -720,7 +765,9 @@ var gam2 = {
                 var xr = gam2.view.genLocs(box.lvl,p0,p1,p2,p3);
                 var p = gam2.model.constr.getPropList(xr.first,1,0);
                 console.table(p);
-      
+                
+                
+                
                 gam2.view.showLocOptions(p);
             }
         }

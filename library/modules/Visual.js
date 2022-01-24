@@ -274,7 +274,7 @@ function __addContainerControls(pub) {
         return this;
     }
 
-    pub.container = function (classes, element = 'div', style = false, attrs = false) {
+    pub.container = function (classes, element = 'div', style = false, attrs = false, prepend = false, detached = false) {
         var content = $('<' + element + '>')
             .addClass(classes);
 
@@ -285,8 +285,13 @@ function __addContainerControls(pub) {
         if (style) {
             content.attr('style', style);
         }
-
-        this.el.append(content);
+        if (!detached) {
+          if(prepend) {
+            this.el.prepend(content)
+          } else {
+            this.el.append(content);
+          }
+        }
 
         //this.el = content;
 
