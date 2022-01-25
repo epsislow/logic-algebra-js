@@ -478,17 +478,17 @@ var gam2 = {
             'dashed':1,
           },
           'gas-planet': {
-            'icon':'adjust',
+            'icon':'moon',
             'bg':'empty',
             'dashed':1,
           },
           'ice-planet': {
-            'icon':'adjust',
+            'icon':'bowling-ball',
             'bg':'empty',
             'dashed':1,
           },
           'arid-planet': {
-            'icon':'adjust',
+            'icon':'cookie',
             'bg':'empty',
             'dashed':1,
           },
@@ -503,7 +503,7 @@ var gam2 = {
             'dashed':1,
           },
           'trade-st': {
-            'icon': 'ring',
+            'icon': 'table fa-med',
             'bg': 'empty',
             'dashed': 1,
           },
