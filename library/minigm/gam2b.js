@@ -68,7 +68,7 @@ var gam2 = {
           let p1 = rd.rand(1,10,seedLoc);
           let p2 = rd.rand(1,10,seedLoc);
           let p3 = rd.rand(1,2,seedLoc);
-          console.log(p0+','+p1+','+p2+','+p3);
+         // console.log(p0+','+p1+','+p2+','+p3);
           
           gam2.model.loc.pmap = {
             0: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
@@ -77,7 +77,7 @@ var gam2 = {
             [[p0,p1,p2].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder')},
           }
           
-          console.log(gam2.model.loc.pmap);
+         // console.log(gam2.model.loc.pmap);
 
           var xr = gam2.view.genLocs(0, 0, 0, 0, 0, 0, {[p0]: locProps(p0, 'sun', 0, 'Icarus')});
           var loc = xr.first.get(p0)
@@ -96,7 +96,7 @@ var gam2 = {
           
           
           var p = gam2.model.constr.getPropList(xr.first, 1, 0);
-          console.table(p);
+          //console.table(p);
           
           var logc = 
             this.model.constr.addLoc(
@@ -136,7 +136,7 @@ var gam2 = {
           this.model.loc.currentPos= [p0,p1,p2,p3].join('.');
         
           window.cr = cr;
-          console.log('cr', cr);
+         // console.log('cr', cr);
           
           var blist = this.model.constr.addBox({type:'miner', pos:1, level:1, levelCost:10})
             .nextObj(
@@ -148,7 +148,7 @@ var gam2 = {
           this.model.box.list[[p0,p1,p2,p3].join('.')] = blist.first;
           p = gam2.model.constr.getPropList(cr, 1, 1);
           
-          console.log(p);
+         // console.log(p);
         },
         'topBar': function () {
             r(this.view.topBar)
@@ -209,7 +209,6 @@ var gam2 = {
        if (p.length) {
            p = p.reverse();
            
-           
            var containerDiv;
            var el;
 
@@ -233,18 +232,16 @@ var gam2 = {
            this.view.locEnd = divs[1];
        }
       // console.log(p);
-
       },
       'drawBox': function(redrawAll=1) {
         var cr = this.model.loc.current;
         var cpos = gam2.model.loc.currentPos;
-        console.log('Cpos', cpos)
+        //console.log('Cpos', cpos)
         if(!(cpos in gam2.model.box.list)) {
           return;
         }
         var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
           
-        
         //var p = gam2.model.constr.getPropList(cr, 0, 1);
         if (p.length) {
           p = p.reverse();
@@ -255,7 +252,7 @@ var gam2 = {
             el = this.drawCard('ast' + p[i].pos, p[i]);
           }
         }
-        console.log(p);
+        //console.log(p);
       },
       'drawCard': function(id, box, container = null, opt=0, redrawAll=1) {
           if(!(box.type in this.model.cards)) {
@@ -273,7 +270,7 @@ var gam2 = {
           var cel;
 
           cel = r(container ? container: this.view.content)
-            .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + (opt?' option':'')+' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
+            .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + (opt?' option'+(box.locWithBuilds?'-bl':''):'')+' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
@@ -310,14 +307,14 @@ var gam2 = {
         let pmap = gam2.model.loc.pmap;
         let seedLoc = this.model.rand.seed['loc'+lvl];
         let seedLocId = rd.hashCode(seedLoc+p0+'.'+p1+'.'+p2+'.'+p3, lvl);
-        console.log(seedLocId);
+       // console.log(seedLocId);
         let rdChr =  this.model.rand.rdChr.bind(this.model.rand);
         let rdNam = this.model.rand.rdNam.bind(this.model.rand);
         let cstr = this.model.constr;
         rd.restartSeed(seedLocId);
         
         var pkeys;
-        console.log('bf pk',p0,p1,p2,p3);
+        //console.log('bf pk',p0,p1,p2,p3);
         if(p0 === 0) {
           pkeys = [0];
         } else if (p0> 0 && p1 ===0) {
@@ -331,9 +328,9 @@ var gam2 = {
         }
         
         var pkey=pkeys.join('.');
-        console.log('pkey '+pkey);
+      //  console.log('pkey '+pkey);
         if(pkey in pmap) {
-          console.log('pmp ',pmap[pkey]);
+          //console.log('pmp ',pmap[pkey]);
           mergeLocsP= pmap[pkey];
         }
 
@@ -401,7 +398,7 @@ var gam2 = {
         }
       },
       'showLocOptions': function(p,p0,p1,p2,p3) {
-          console.log('showLocOptions '+ p0,p1,p2,p3);
+          //console.log('showLocOptions '+ p0,p1,p2,p3);
         gam2.view.deleteEls(gam2.view.cardOpt);
         var containerDiv;
         var el;
@@ -413,12 +410,45 @@ var gam2 = {
           if(p[i].type==='empty') {
             continue;
           }
+          p[i].locWithBuilds = this.findLocWithBuilds(i,p[i],p0,p1,p2,p3);
           
           el = this.drawCard('opt' + i, p[i], null, 1);
         
           el.click((function(i, p,p0,p1,p2,p3) { return function() { gam2.action.loc.selectLoc(i, p,p0,p1,p2,p3); } })(i, p,p0,p1,p2,p3));
         }
-      }
+      },
+      'findLocWithBuilds': function (i,loc,p0,p1,p2,p3) {
+        var lvl = loc.lvl;
+        if(lvl === 0) {
+          p0=loc.pos;
+        } else if(lvl ===1) {
+          p1=loc.pos;
+        } else if(lvl ===2) {
+          p2=loc.pos;
+        } else if(lvl ===3) {
+          p3=loc.pos;
+        };
+        var ps=[p0];
+        if(p1!==0) {
+          ps.push(p1);
+        }
+        if (p2!== 0) {
+          ps.push(p2);
+        }
+        if (p3!== 0) {
+          ps.push(p3);
+        }
+        var bl= gam2.model.box.list;
+        var c= ps.join('.');
+        var bkeys = Object.keys(bl);
+        const found = bkeys.find(el => {
+          if (el.includes(c)) {
+            return true;
+          }
+          
+        });
+        return (found!==undefined);
+      },
     },
     'model': {
         'cards': {
@@ -664,7 +694,7 @@ var gam2 = {
     'action': {
         'loc': {
             'selectLoc': function(bi, p,p0,p1,p2,p3) {
-                console.log('selectLoc '+ p0,p1,p2,p3);
+               // console.log('selectLoc '+ p0,p1,p2,p3);
 
               gam2.view.deleteEls(gam2.view.cardOpt);
               //gam2.view.locEnd.first().next().remove();
@@ -717,7 +747,7 @@ var gam2 = {
                   } else if (lvl === 3) {
                       p3 = pos;
                   }
-                  console.log('sssf', p0, p1, p2, p3);
+                 // console.log('sssf', p0, p1, p2, p3);
 
                   xr = gam2.view.genLocs(cr.p.lvl + 1, p0, p1, p2, p3);
                   pp = gam2.model.constr.getPropList(xr.first, 1, 0);
@@ -822,7 +852,7 @@ var gam2 = {
                     ncr = xr;
                     gam2.model.loc.list = ncr;
                 }
-                console.table(p);
+                //console.table(p);
                 
                 gam2.view.showLocOptions(p,p0,p1,p2,p3);
             },
