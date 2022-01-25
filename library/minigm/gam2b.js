@@ -133,6 +133,8 @@ var gam2 = {
           this.model.loc.list = loc;
           cr = loc;
           this.model.loc.current = cr;
+          this.model.loc.currentPos= [p0,p1,p2,p3].join('.');
+        
           window.cr = cr;
           console.log('cr', cr);
           
@@ -143,7 +145,7 @@ var gam2 = {
           
           this.model.box.list= {};
 
-          this.model.box.list[cr.p.loc] = blist.first;
+          this.model.box.list[[p0,p1,p2,p3].join('.')] = blist.first;
           p = gam2.model.constr.getPropList(cr, 1, 1);
           
           console.log(p);
@@ -235,10 +237,12 @@ var gam2 = {
       },
       'drawBox': function(redrawAll=1) {
         var cr = this.model.loc.current;
-        if(!(cr.p.loc in gam2.model.box.list)) {
+        var cpos = gam2.model.loc.currentPos;
+        console.log('Cpos', cpos)
+        if(!(cpos in gam2.model.box.list)) {
           return;
         }
-        var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
           
         
         //var p = gam2.model.constr.getPropList(cr, 0, 1);
@@ -491,6 +495,8 @@ var gam2 = {
         },
         'loc': {
           'list': null,
+          'current': null,
+          'currentPos':'0.0.0.0',
         },
         'box': {
           'list': null,
@@ -690,10 +696,8 @@ var gam2 = {
                   return;*/
 
               gam2.model.loc.current= cr;
-
-              gam2.view.drawLoc();
               
-              gam2.view.drawBox();
+              gam2.view.drawLoc();
               
               
               if (cr.p.lvl === 0) {
@@ -720,8 +724,15 @@ var gam2 = {
                   cr.child = xr;
                   xr.setParentObj(cr);
                   //console.table(pp);
+              } else {
+                p3 = pos;
               }
-
+              
+              gam2.model.loc.currentPos = [p0,p1,p2,p3].join('.');
+              
+              gam2.view.drawBox();
+              
+              
 
                 gam2.view.showLocOptions(pp, p0, p1, p2, p3);
             },
@@ -796,6 +807,7 @@ var gam2 = {
                  ncr = null;
                }*/
                gam2.model.loc.current = ncr;
+               gam2.model.loc.currentPos = [p0,p1,p2,p3].join('.')
                //console.log('new-cr', ncr.p);
 
               // gam2.view.locEnd = r(el).up().el.next();
