@@ -463,7 +463,7 @@ var gam2 = {
             'dashed':1,
           },
           'asteroid': {
-            'icon':'circle fa-sml',
+            'icon':'cookie-bite fa-sml',
             'bg':'empty',
             'dashed':1
           },
