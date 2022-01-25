@@ -185,7 +185,7 @@ var gam2 = {
       'cardMenu': [],
       'draw':function() {
         this.drawLoc(1);
-        this.drawBox(1);
+        //this.drawBox(1);
       },
       'drawLoc': function(redrawAll=1) {
         var cr= this.model.loc.current;
