@@ -182,10 +182,11 @@ var gam2 = {
       'locEnd': null,
       'card': [],
       'cardOpt': [],
+      'cardBox': [],
       'cardMenu': [],
       'draw':function() {
         this.drawLoc(1);
-        //this.drawBox(1);
+        this.drawBox(1);
       },
       'drawLoc': function(redrawAll=1) {
         var cr= this.model.loc.current;
@@ -196,11 +197,12 @@ var gam2 = {
              r(this.view.content)
                .container('m-2 bg-card', 'div', '', 0, 1)
                .el
-           ].reverse();
+        ].reverse();
 
         if(cr=== null) {
           return;
         }
+        
        var p = gam2.model.constr.getPropList(cr,0,1);
        if (p.length) {
            p = p.reverse();
@@ -233,6 +235,9 @@ var gam2 = {
       },
       'drawBox': function(redrawAll=1) {
         var cr = this.model.loc.current;
+        if(!(cr.p.loc in gam2.model.box.list)) {
+          return;
+        }
         var p = gam2.model.constr.getPropList(gam2.model.box.list[cr.p.loc])
           
         
@@ -280,6 +285,8 @@ var gam2 = {
         ;
         if(opt) {
           this.cardOpt[id] = cel;
+        } else if(box.is=='box') {
+          this.cardBox[id] = cel
         } else {
           this.card[id] = cel;
         }
@@ -380,19 +387,18 @@ var gam2 = {
 
                el.click((function (el, bi, plist) {return function () { gam2.action.loc.unlockLoc(el, bi, plist); }})(el, i, p));
       },
-      'deleteCardOpt': function() {
-        var cardOpt = gam2.view.cardOpt;
-        for (const i in cardOpt) {
-          if (!cardOpt.hasOwnProperty(i)) {
+      'deleteEls': function(els) {
+        for (const i in els) {
+          if (!els.hasOwnProperty(i)) {
             continue;
           }
-          r(cardOpt[i]).remove();
-          delete cardOpt[i];
+          r(els[i]).remove();
+          delete els[i];
         }
       },
       'showLocOptions': function(p,p0,p1,p2,p3) {
           console.log('showLocOptions '+ p0,p1,p2,p3);
-        gam2.view.deleteCardOpt();
+        gam2.view.deleteEls(gam2.view.cardOpt);
         var containerDiv;
         var el;
         
@@ -654,7 +660,7 @@ var gam2 = {
             'selectLoc': function(bi, p,p0,p1,p2,p3) {
                 console.log('selectLoc '+ p0,p1,p2,p3);
 
-              gam2.view.deleteCardOpt();
+              gam2.view.deleteEls(gam2.view.cardOpt);
               //gam2.view.locEnd.first().next().remove();
              // gam2.view.locEnd.first().remove();
           
@@ -687,6 +693,9 @@ var gam2 = {
 
               gam2.view.drawLoc();
               
+              gam2.view.drawBox();
+              
+              
               if (cr.p.lvl === 0) {
                   xr = gam2.view.genLocs(lvl+1,pos,0,0,0);
                   pp = gam2.model.constr.getPropList(xr.first,1,0);
@@ -717,7 +726,9 @@ var gam2 = {
                 gam2.view.showLocOptions(pp, p0, p1, p2, p3);
             },
             'unlockLoc': function (el, bi, plist) {
-               
+               if(Object.keys(gam2.view.cardBox).length) {
+                 gam2.view.deleteEls(gam2.view.cardBox);
+               }
                var box= plist[bi];
                var card = gam2.view.card;
                var cr = gam2.model.loc.current;
