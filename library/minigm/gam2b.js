@@ -287,7 +287,7 @@ var gam2 = {
             .up()
             .container('bottom'+x2, 'div')
                 .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
-                .addText(x2==='-xs'?'':box.type)
+                .addText((!opt || x2==='-xs')?'':box.type)
                 .up()
             .up()
             .up().el
