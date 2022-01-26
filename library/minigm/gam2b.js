@@ -276,18 +276,26 @@ var gam2 = {
             .up()
 
             .container('tt', 'div', 'position:relative;top:0px;z-index:997')
-            .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
-            .addText(title)
+            .container('top', 'div')
+                .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
+                .addText(title)
+                .up()
+
+                .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
+                .addText(topRight)
+                .up()
             .up()
-            .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
-            .addText(topRight)
+            .container('bottom'+x2, 'div')
+                .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
+                .addText(box.type)
+                .up()
             .up()
             .up().el
         ;
         if(opt) {
           this.cardOpt[id] = cel;
-        } else if(box.is=='box') {
-          this.cardBox[id] = cel
+        } else if(box.is==='box') {
+          this.cardBox[id] = cel;
         } else {
           this.card[id] = cel;
         }
