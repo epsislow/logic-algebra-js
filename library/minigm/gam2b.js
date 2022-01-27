@@ -312,10 +312,22 @@ var gam2 = {
         }
         return cel;
       },
-      'paintBox': function(id, box) {
+      'paintBox': function(id, options = {}) {
           if (!(id in this.cardBox)) {
               return;
           }
+
+          var title = options.title | 0;
+          var lvl = options.lvl | 0;
+          var texts = options.texts | 0;
+
+          if (title) {
+              r(this.cardBox[id]).in('.h6-left').clear().addText(title);
+          }
+          if (lvl) {
+              r(this.cardBox[id]).in('.h6-right').clear().addText(lvl);
+          }
+
           var content = r(this.cardBox[id]).in('.content').clear();
           content.addText('hhh');
           var btn = r(this.cardBox[id]).in('.btns').clear();
