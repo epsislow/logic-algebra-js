@@ -251,7 +251,7 @@ var gam2 = {
           }
         }
       },
-      'drawCard': function(id, box, container = null, opt=0, redrawAll=1) {
+      'drawCard': function(id, box, container = null, opt=0, wTikSec = 0, redrawAll=1) {
           if(!(box.type in this.model.cards)) {
             throw Error(box.type+ ' not found')
           }
@@ -291,7 +291,7 @@ var gam2 = {
                   .up()
                   .container('btns', 'div')
                   .up()
-                  .container('ticbox', 'div')
+                  .container('tik', 'div', !wTikSec ? 'animation:none': 'animation-duration:' + wTikSec + 's')
                   .up()
           } else {
               cel = cel
@@ -316,10 +316,24 @@ var gam2 = {
           if (!(id in this.cardBox)) {
               return;
           }
+          options = Object.assign({}, {
+              'title': 0,
+              'lvl': 0,
+              'texts': 0,
+              'btns':0,
+              'tikUp': -1,
+              'tikSec': 0,
+              'tikDelay': 0,
+          }, options);
 
-          var title = options.title | 0;
-          var lvl = options.lvl | 0;
-          var texts = options.texts | 0;
+          let title = options.title;
+          let lvl = options.lvl;
+          let texts = options.texts;
+          let buttons = options.btns;
+          let tikUp = options.tikUp;
+          let tikSec = options.tikSec;
+          let tikDelay = options.tikDelay;
+          let bt, style;
 
           if (title) {
               r(this.cardBox[id]).in('.h6-left').clear().addText(title);
@@ -328,12 +342,40 @@ var gam2 = {
               r(this.cardBox[id]).in('.h6-right').clear().addText(lvl);
           }
 
-          var content = r(this.cardBox[id]).in('.content').clear();
-          content.addText('hhh');
-          var btn = r(this.cardBox[id]).in('.btns').clear();
-          btn.addButton('test');
-          var tick = r(this.cardBox[id]).in('.ticbox').clear();
-          tick.addText('hh');
+          let content = r(this.cardBox[id]).in('.content').clear();
+          if (texts) {
+              for (var t in texts) {
+                  if (texts[t]) {
+                      content.addText(texts[t]).br();
+                  }
+              }
+          }
+          let btn = r(this.cardBox[id]).in('.btns').clear();
+
+          if (buttons) {
+              for (var b in buttons) {
+                  if(!buttons.hasOwnProperty(b)) {
+                      continue;
+                  }
+                  bt = buttons[b];
+                  btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
+              }
+          }
+
+          let tick = r(this.cardBox[id]).in('.tik').clear();
+
+          if (tikUp === false) {
+              tick.el.attr('style', 'animation:none');
+          } else if (tikUp === true && tikSec > 0) {
+              style = 'animation-duration:' + tikSec + 's';
+              if (tikDelay) {
+                  style += ';animation-delay: '+ tikDelay +'s';
+              }
+              tick.el.attr('style', 'animation:none');
+              tick.el.get(0).offsetWidth;
+              tick.el.attr('style', style);
+              //gam2.view.paintBox('b2', {'lvl': 3, 'tikSec': 5, 'tikUp': true, 'tikDelay': -1})
+          }
       },
       'getLocPs': function(box) {
         return [box.pos,0,0,0];
