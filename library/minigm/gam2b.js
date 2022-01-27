@@ -3,6 +3,8 @@ let r = function(el) {
     return vs.from(el);
 }
 
+window.r = r;
+
  $('document').ready(function () {
     if ('vs' in window) {
         vs.page('Gam2');
@@ -182,10 +184,10 @@ var gam2 = {
       'topBar': null,
       'content': null,
       'locEnd': null,
-      'card': [],
-      'cardOpt': [],
-      'cardBox': [],
-      'cardMenu': [],
+      'card': {},
+      'cardOpt': {},
+      'cardBox': {},
+      'cardMenu': {},
       'draw':function() {
         this.drawLoc(1);
         this.drawBox(1);
@@ -236,23 +238,18 @@ var gam2 = {
       'drawBox': function(redrawAll=1) {
         var cr = this.model.loc.current;
         var cpos = gam2.model.loc.currentPos;
-        //console.log('Cpos', cpos)
+
         if(!(cpos in gam2.model.box.list)) {
           return;
         }
         var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
-          
-        //var p = gam2.model.constr.getPropList(cr, 0, 1);
         if (p.length) {
-          p = p.reverse();
-
           var el;
         
           for (const i in p) {
-            el = this.drawCard('ast' + p[i].pos, p[i]);
+            el = this.drawCard('b' + p[i].pos, p[i]);
           }
         }
-        //console.log(p);
       },
       'drawCard': function(id, box, container = null, opt=0, redrawAll=1) {
           if(!(box.type in this.model.cards)) {
@@ -266,6 +263,8 @@ var gam2 = {
           
           var title = (box.is==='loc')? box.name:box.type;
           var topRight = (box.is==='loc') ? box.loc: box.level;
+
+          title = title.charAt(0).toUpperCase() + title.slice(1);
 
           var cel;
 
@@ -284,13 +283,25 @@ var gam2 = {
                 .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
                 .addText(topRight)
                 .up()
-            .up()
-            .container('bottom'+x2, 'div')
-                .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
-                .addText((!opt || x2==='-xs')?'':box.type)
-                .up()
-            .up()
-            .up().el
+            .up();
+
+          if (box.is === 'box') {
+              cel = cel
+                  .container('content', 'div')
+                  .up()
+                  .container('btns', 'div')
+                  .up()
+                  .container('ticbox', 'div')
+                  .up()
+          } else {
+              cel = cel
+                  .container('bottom' + x2, 'div')
+                  .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
+                  .addText((!opt || x2 === '-xs') ? '' : box.type)
+                  .up()
+                  .up()
+          }
+           cel = cel.up().el
         ;
         if(opt) {
           this.cardOpt[id] = cel;
@@ -301,11 +312,16 @@ var gam2 = {
         }
         return cel;
       },
-      'updateLoc': function() {
-        
-      },
-      'updateBox': function() {
-        
+      'paintBox': function(id, box) {
+          if (!(id in this.cardBox)) {
+              return;
+          }
+          var content = r(this.cardBox[id]).in('.content').clear();
+          content.addText('hhh');
+          var btn = r(this.cardBox[id]).in('.btns').clear();
+          btn.addButton('test');
+          var tick = r(this.cardBox[id]).in('.ticbox').clear();
+          tick.addText('hh');
       },
       'getLocPs': function(box) {
         return [box.pos,0,0,0];
