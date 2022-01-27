@@ -786,6 +786,13 @@ var gam2 = {
         }
     },
     'action': {
+        'hdl': {
+          'ref':function (object, method) {
+            return function() {
+              return method.apply(object, arguments);
+            };
+          },
+        },
         'loc': {
             'selectLoc': function(bi, p,p0,p1,p2,p3) {
                // console.log('selectLoc '+ p0,p1,p2,p3);
