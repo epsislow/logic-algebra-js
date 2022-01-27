@@ -149,7 +149,6 @@ var gam2 = {
           this.model.box.list[[p0,p1,p2,p3].join('.')] = blist.first;
           p = gam2.model.constr.getPropList(cr, 1, 1);
           
-          
          // console.log(p);
         },
         'topBar': function () {
@@ -188,14 +187,11 @@ var gam2 = {
       'cardOpt': {},
       'cardBox': {},
       'cardMenu': {},
-      'repaint': function() {
-        
-      },
       'draw':function() {
         this.drawLoc(1);
         this.drawBox(1);
       },
-      'drawLoc': function(redrawAll=1) {
+      'drawLoc': function() {
         var cr= this.model.loc.current;
         var divs = [
              r(this.view.content)
@@ -238,7 +234,7 @@ var gam2 = {
        }
       // console.log(p);
       },
-      'drawBox': function(redrawAll=1) {
+      'drawBox': function(repaint=0) {
         var cr = this.model.loc.current;
         var cpos = gam2.model.loc.currentPos;
 
@@ -251,8 +247,12 @@ var gam2 = {
         
           for (const i in p) {
             el = this.drawCard('b' + p[i].pos, p[i]);
+            if(repaint) {
+              this.paint('b'+p[i].pos, p[i]);
+            }
           }
         }
+        
       },
       'drawCard': function(id, box, container = null, opt=0, wTikSec = 0, redrawAll=1) {
           if(!(box.type in this.model.cards)) {
@@ -314,6 +314,19 @@ var gam2 = {
           this.card[id] = cel;
         }
         return cel;
+      },
+      'paint': function(id, box) {
+        var opt = {btns:[['Lvl up', false, 'btn-success']]};
+        if(box.type=='miner') {
+          opt.tikUp = true;
+          opt.tikSec = 1;
+          //opt.texts= ['1/2 xxxxxxxx','2/2'];
+        } else {
+          opt.tikUp = true;
+          opt.tikSec = 15;
+          opt.texts= [1,2,3];
+        }
+        this.paintBox(id, opt);
       },
       'paintBox': function(id, options = {}) {
           if (!(id in this.cardBox)) {
@@ -841,7 +854,7 @@ var gam2 = {
               
               gam2.model.loc.currentPos = [p0,p1,p2,p3].join('.');
               
-              gam2.view.drawBox();
+              gam2.view.drawBox(1);
               
               
 
