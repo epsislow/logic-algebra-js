@@ -129,8 +129,7 @@ var gam2 = {
                   locProps(p3, 'asteroid-st', 3, 'Balder')
             //{pos:1, type:'asteroid-st', lvl:3, name: 'Balder', loc: 'L3:1'}
                   )
-            )
-     ;
+            );
             
           this.model.loc.list = loc;
           cr = loc;
@@ -149,6 +148,7 @@ var gam2 = {
 
           this.model.box.list[[p0,p1,p2,p3].join('.')] = blist.first;
           p = gam2.model.constr.getPropList(cr, 1, 1);
+          
           
          // console.log(p);
         },
@@ -188,6 +188,9 @@ var gam2 = {
       'cardOpt': {},
       'cardBox': {},
       'cardMenu': {},
+      'repaint': function() {
+        
+      },
       'draw':function() {
         this.drawLoc(1);
         this.drawBox(1);
