@@ -43,7 +43,7 @@ var gam2 = {
         }
         this.model.constr.init();
         this.view.topBar = r(ra).container('topbar','div').el;
-            
+        
         this.init.topBar();
         this.view.content = r(ra).container('content','div').el;
         this.init.boot();
@@ -157,13 +157,14 @@ var gam2 = {
             'ppl':[4,20],
             'power':[5,50],
           }
+          
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
-            if(!this.view.topBarVals) {
+            if(!this.view.topBarVals && power===0) {
               return;
             }
-            this.view.topBarVals = (power!==0)
+            this.view.topBarVals = (power!==0);
             r(this.view.topBar)
                 .clear()
                 .addText(' ')
@@ -193,7 +194,7 @@ var gam2 = {
       'vs': null,
       'main': null,
       'topBar': null,
-      'topBarVals': -1,
+      'topBarVals': 0,
       'content': null,
       'locEnd': null,
       'card': {},
