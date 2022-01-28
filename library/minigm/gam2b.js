@@ -144,7 +144,7 @@ var gam2 = {
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo',pos:2, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'cargo',pos:3, level:1, levelCost: 10})
             )
             
           var crkey = [p0,p1,p2,p3].join('.')
