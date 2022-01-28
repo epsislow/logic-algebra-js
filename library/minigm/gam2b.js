@@ -160,6 +160,10 @@ var gam2 = {
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
+            if(!this.view.topBarVals) {
+              return;
+            }
+            this.view.topBarVals = (power!==0)
             r(this.view.topBar)
                 .clear()
                 .addText(' ')
@@ -189,6 +193,7 @@ var gam2 = {
       'vs': null,
       'main': null,
       'topBar': null,
+      'topBarVals': -1,
       'content': null,
       'locEnd': null,
       'card': {},
