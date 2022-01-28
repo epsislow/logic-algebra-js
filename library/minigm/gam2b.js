@@ -143,15 +143,23 @@ var gam2 = {
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
+            
+          var crkey = [p0,p1,p2,p3].join('.')
           
           this.model.box.list= {};
-
-          this.model.box.list[[p0,p1,p2,p3].join('.')] = blist.first;
+          
+          this.model.box.list[crkey] = blist.first;
           p = gam2.model.constr.getPropList(cr, 1, 1);
           
+          this.model.box.coins= {};
+          this.model.box.coins[crkey] = {
+            'money':100,
+            'ppl':[4,20],
+            'power':[5,50],
+          }
          // console.log(p);
         },
-        'topBar': function () {
+        'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
             r(this.view.topBar)
                 .clear()
                 .addText(' ')
@@ -159,19 +167,19 @@ var gam2 = {
                 .container('fa fa-donate','i')
                 .up()
                 .container('s-money','span')
-                .addText('0')
+                .addText(money)
                 .up()
 
                 .container('fa fa-plug','i')
                 .up()
                 .container('s-power','span')
-                .addText('0')
+                .addText(powerUsg+' / '+power)
                 .up()
 
                 .container('fa fa-child','i')
                 .up()
                 .container('s-people','span')
-                .addText('0')
+                .addText(pplUsg + ' / '+ ppl)
                 .up()
                 .up()
                 .br();
@@ -234,12 +242,24 @@ var gam2 = {
        }
       // console.log(p);
       },
+      'paintTopBar': function(coins) {
+        gam2.init.topBar(
+          coins.money,
+          coins.ppl[0], coins.ppl[1],
+          coins.power[0], coins.power[1]
+        )
+      },
       'drawBox': function(repaint=0) {
         var cr = this.model.loc.current;
         var cpos = gam2.model.loc.currentPos;
 
         if(!(cpos in gam2.model.box.list)) {
           return;
+        }
+        if(cpos in gam2.model.box.coins) {
+          this.paintTopBar(gam2.model.box.coins[cpos])
+        } else {
+          gam2.init.topBar();
         }
         var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
         if (p.length) {
@@ -624,6 +644,7 @@ var gam2 = {
         },
         'box': {
           'list': null,
+          'coins': {},
         },
         'rand': {
             'rd': null,
@@ -870,7 +891,9 @@ var gam2 = {
             'unlockLoc': function (el, bi, plist) {
                if(Object.keys(gam2.view.cardBox).length) {
                  gam2.view.deleteEls(gam2.view.cardBox);
+                 gam2.init.topBar();
                }
+              
                var box= plist[bi];
                var card = gam2.view.card;
                var cr = gam2.model.loc.current;
