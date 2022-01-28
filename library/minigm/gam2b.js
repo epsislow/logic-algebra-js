@@ -294,7 +294,7 @@ var gam2 = {
 //crd.icon = (box.type==='cargo')?'empty':'empty';
 color='empty';
 dashed=1;
-var clr=(box.is=='loc')?3:1;
+var clr=(box.is=='loc')?3:5;
           var icon = crd.icon+ " b-clr i-clr"+clr+" "+ crd.icon;
           
           var title = (box.is==='loc')? box.name:box.type;
