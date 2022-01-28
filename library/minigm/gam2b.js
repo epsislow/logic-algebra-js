@@ -365,6 +365,8 @@ var gam2 = {
           opt.texts= [1,2,3];
         }
         this.paintBox(id, opt);
+          gam2.model.res.gen(55)
+        //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
       },
       'paintBox': function(id, options = {}) {
           if (!(id in this.cardBox)) {
@@ -695,6 +697,38 @@ var gam2 = {
         'box': {
           'list': null,
           'coins': {},
+        },
+        'res': {
+            'icoList':['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','ethetnet','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore'],
+            'colorList':["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
+            'reg':[],
+            'add': function (name, ico=0, color='light') {
+                var id=this.reg.length;
+                this.reg[id] = {
+                    name: name,
+                    value: 0,
+                    ico: ico,
+                    color: color
+                }
+                return id;
+            },
+            'gen': function (num) {
+                let rd = gam2.model.rand.rd;
+                let ico = rd.pickOneFrom(this.icoList,1);
+                let suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
+                let name = rd.randomName(rd.rand(3,8),0,suf);
+                let color = rd.pickOneFrom(this.colorList,0);
+
+                for(let i=0;i<num;i++) {
+                    this.add(name, ico, color);
+                }
+            },
+            'getResIco': function (id) {
+                var res = this.reg[id];
+                return $('<i>').addClass('fas')
+                    .addClass('fa-'+res.ico)
+                    .attr('style', 'color:'+res.color);
+            }
         },
         'rand': {
             'rd': null,
