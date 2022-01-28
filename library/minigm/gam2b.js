@@ -291,7 +291,11 @@ var gam2 = {
           
           var x2 = (box.is==='loc' && !opt)?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
-          var icon = crd.icon+ " b-clr i-clr3 "+ crd.icon;
+//crd.icon = (box.type==='cargo')?'empty':'empty';
+color='empty';
+dashed=1;
+var clr=(box.is=='loc')?3:1;
+          var icon = crd.icon+ " b-clr i-clr"+clr+" "+ crd.icon;
           
           var title = (box.is==='loc')? box.name:box.type;
           var topRight = (box.is==='loc') ? box.loc: box.level;
