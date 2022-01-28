@@ -317,6 +317,17 @@ var gam2 = {
           if (box.is === 'box') {
               cel = cel
                   .container('content', 'div')
+                  .container('media text-white')
+                  .container('media-body ml-2 mb-0 small lh-125', 'p')
+                  .container('d-block text-light', 'strong')
+                  .up()
+                  .container('d-text', 'div')
+                  .br()
+                  .br()
+                  .br()
+                  .up()
+                  .up()
+                  .up()
                   .up()
                   .container('btns', 'div')
                   .up()
@@ -342,14 +353,15 @@ var gam2 = {
         return cel;
       },
       'paint': function(id, box) {
-        var opt = {btns:[['Lvl up', false, 'btn-success']]};
-        if(box.type=='miner') {
+        var opt = {btns:{'add':[['Lvl up', false, 'btn-success']]}};
+        if(box.type==='miner') {
           opt.tikUp = true;
           opt.tikSec = 1;
-          //opt.texts= ['1/2 xxxxxxxx','2/2'];
+          opt.texts= ['1/2 xxxxxxxx','2/2 xxxxxxxx', '  xxxxxxxx'];
         } else {
           opt.tikUp = true;
           opt.tikSec = 15;
+          opt.strong = "test";
           opt.texts= [1,2,3];
         }
         this.paintBox(id, opt);
@@ -361,6 +373,7 @@ var gam2 = {
           options = Object.assign({}, {
               'title': 0,
               'lvl': 0,
+              'strong': 0,
               'texts': 0,
               'btns':0,
               'tikUp': -1,
@@ -370,6 +383,7 @@ var gam2 = {
 
           let title = options.title;
           let lvl = options.lvl;
+          let strong = options.strong;
           let texts = options.texts;
           let buttons = options.btns;
           let tikUp = options.tikUp;
@@ -384,22 +398,52 @@ var gam2 = {
               r(this.cardBox[id]).in('.h6-right').clear().addText(lvl);
           }
 
-          let content = r(this.cardBox[id]).in('.content').clear();
+          if(strong) {
+              let dBlock = r(this.cardBox[id]).in('.content .d-block');
+              if (strong === -1) {
+                  dBlock.clear();
+              } else {
+                  dBlock.clear().addText(strong);
+              }
+          }
+
           if (texts) {
-              for (var t in texts) {
-                  if (texts[t]) {
-                      content.addText(texts[t]).br();
+              let dText = r(this.cardBox[id]).in('.content .d-text');
+              if (texts === -1) {
+                  dText.clear();
+              } else {
+                  dText.clear();
+                  for (let t in texts) {
+                      if (!texts.hasOwnProperty(t)) {
+                          continue;
+                      }
+                      dText.addText(texts[t]).br();
                   }
               }
           }
-          let btn = r(this.cardBox[id]).in('.btns').clear();
 
           if (buttons) {
-              for (var b in buttons) {
-                  if(!buttons.hasOwnProperty(b)) {
+              buttons = Object.assign({}, {clr: 0, upd: {}, add:[]}, buttons);
+
+              let btn = r(this.cardBox[id]).in('.btns');
+              let b;
+
+              if (buttons.clr) {
+                  btn.clear();
+              }
+              for (b in buttons.upd) {
+                  if(!buttons.upd.hasOwnProperty(b)) {
                       continue;
                   }
-                  bt = buttons[b];
+                  bt = buttons.upd[b];
+                  btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
+              }
+
+              for (b in buttons.add) {
+                  if(!buttons.add.hasOwnProperty(b)) {
+                      continue;
+                  }
+                  bt = buttons.add[b];
                   btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
               }
           }
