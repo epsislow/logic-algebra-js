@@ -143,6 +143,9 @@ var gam2 = {
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
+            .nextObj(
+              this.model.constr.addBox({type:'cargo',pos:2, level:1, levelCost: 10})
+            )
             
           var crkey = [p0,p1,p2,p3].join('.')
           
@@ -358,6 +361,12 @@ var gam2 = {
           opt.tikUp = true;
           opt.tikSec = 1;
           opt.texts= ['1/2 xxxxxxxx','2/2 xxxxxxxx', '  xxxxxxxx'];
+        } else if(box.type=='cargo') {
+          opt.tikUp=true;
+         opt.tikSec=4;
+          opt.strong='3/10'
+          opt.texts =['111']
+        
         } else {
           opt.tikUp = true;
           opt.tikSec = 15;
@@ -687,6 +696,21 @@ var gam2 = {
             'icon':'cubes',
             'bg':'power',
             'dashed':0,
+          },
+          'transport': {
+            'icon': 'circle',
+            'bg': 'crafter',
+            'dashed':0
+          },
+          'cargo': {
+            'icon':'play',
+            'bg': 'crafter',
+            'dashed': 0,
+          },
+          'airliner': {
+            'icon': 'square',
+            'bg':'crafter',
+            'dashed': 0,
           }
         },
         'loc': {
