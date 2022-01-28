@@ -139,7 +139,7 @@ var gam2 = {
           window.cr = cr;
          // console.log('cr', cr);
           
-          var blist = this.model.constr.addBox({type:'miner', pos:1, level:1, levelCost:10})
+          var blist = this.model.constr.addBox({type:'miner', slot: {}, pos:1, level:1, levelCost:10})
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
@@ -322,12 +322,33 @@ var clr=(box.is=='loc')?3:5;
             .up();
 
           if (box.is === 'box') {
+            
               cel = cel
                   .container('content', 'div')
                   .container('media text-white')
                   .container('media-body ml-2 mb-0 small lh-125', 'p')
                   .container('d-block text-light', 'strong')
-                  .up()
+                  .up();
+                  
+                  
+                if(box.slot) {
+                    cel = cel
+                      .container('slot', 'div')
+                      .up()
+                      .container('slot', 'div')
+                      .up()
+                      .container('slot', 'div')
+                      .up()
+                      .container('slot', 'div')
+                      .up()
+                      .container('slot', 'div')
+                      .up()
+                      .container('slot', 'div')
+                      .up();
+                   
+                }
+                  
+              cel = cel
                   .container('d-text', 'div')
                   .br()
                   .br()
