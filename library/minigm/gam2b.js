@@ -331,7 +331,7 @@ var clr=(box.is=='loc')?3:5;
                   .container('d-block text-light', 'strong')
                   .up();
                   
-                var gi=1;
+                var gi=0;
                 if(box.slot) {
                     cel = cel
                       .container('slot', 'div')
