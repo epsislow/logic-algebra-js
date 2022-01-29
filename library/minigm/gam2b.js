@@ -139,12 +139,12 @@ var gam2 = {
           window.cr = cr;
          // console.log('cr', cr);
           
-          var blist = this.model.constr.addBox({type:'miner', slot: {}, pos:1, level:1, levelCost:10})
+          var blist = this.model.constr.addBox({type:'miner', sloti:0, slots:6, slot: {}, pos:1, level:1, levelCost:10})
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo',pos:3, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'cargo', sloti:10, slots: 3, slot: {}, pos:3, level:1, levelCost: 10})
             )
             
           var crkey = [p0,p1,p2,p3].join('.')
@@ -331,15 +331,19 @@ var clr=(box.is=='loc')?3:5;
                   .container('d-block text-light', 'strong')
                   .up();
                   
-                var gi=0;
-                if(box.slot) {
+                if(box.slot && ('sloti' in box)) {
+                  var gi=box.sloti;
+                  
+                  for(let s= 0; s< box.slots;s++){
+                
                     cel = cel
                       .container('slot', 'div')
-                      .addJqEl(gam2.model.res.getResIco(gi))
+                      .addJqEl(gam2.model.res.getResIco(gi+s))
                         .container('amount','div')
                         .addText(50)
                         .up()
-                      .up()
+                      .up();
+                  }/*
                       .container('slot', 'div')
                       .addJqEl(gam2.model.res.getResIco(gi+1))
                       .container('amount', 'div')
@@ -365,7 +369,7 @@ var clr=(box.is=='loc')?3:5;
                         .up()
                       .up()
                       .container('slot', 'div')
-                      .up();
+                      .up();*/
                    
                 }
                   
