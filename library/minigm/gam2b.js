@@ -74,9 +74,9 @@ var gam2 = {
           
           gam2.model.loc.pmap = {
             0: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
-            [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud Rupler')},
-            [[p0,p1].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis')},
-            [[p0,p1,p2].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder')},
+            [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud Rupler',p0)},
+            [[p0,p1].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis', p0+'.'+p1)},
+            [[p0,p1,p2].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder', p0+'.'+p1+'.'+p2)},
           }
           
          // console.log(gam2.model.loc.pmap);
@@ -139,19 +139,24 @@ var gam2 = {
           window.cr = cr;
          // console.log('cr', cr);
           
-          var blist = this.model.constr.addBox({type:'miner', sloti:0, slots:6, slot: {}, pos:1, level:1, levelCost:10})
+          var blist = this.model.constr.addBox({type:'miner', sloti:0, slots:8, slot: {}, pos:1, level:1, levelCost:10})
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo', sloti:16, slots: 6, slot: {}, pos:3, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
+            )
+            .nextObj(
+              this.model.constr.addBox({type:'cargo', sloti:24, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             
-          var crkey = [p0,p1,p2,p3].join('.')
+          var crkey = [p0,p1,p2,p3].join('.');
+          
           
           this.model.box.list= {};
           
           this.model.box.list[crkey] = blist.first;
+          
           p = gam2.model.constr.getPropList(cr, 1, 1);
           
           this.model.box.coins= {};
@@ -908,7 +913,7 @@ var clr=(box.is=='loc')?3:5;
                     'is':'box',
                 });
             },
-            'locProps': function ( pos,type, lvl, name) {
+            'locProps': function ( pos,type, lvl, name, crkey='') {
                 return {
                     card:'empty',
                   is:'loc',
@@ -916,7 +921,8 @@ var clr=(box.is=='loc')?3:5;
                     type: type,
                     lvl: lvl,
                     name: name,
-                    loc: 'L' + lvl + ':' + ((pos< 10)? '0': '') + pos
+                    loc: 'L' + lvl + ':' + ((pos< 10)? '0': '') + pos,
+                    crkey: crkey+'.'+pos
                 };
             },
             'addLoc': function (prop) {},
