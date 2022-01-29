@@ -144,7 +144,7 @@ var gam2 = {
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo', sloti:16, slots: 3, slot: {}, pos:3, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'cargo', sloti:16, slots: 6, slot: {}, pos:3, level:1, levelCost: 10})
             )
             
           var crkey = [p0,p1,p2,p3].join('.')
@@ -293,8 +293,8 @@ var gam2 = {
           var x2 = (box.is==='loc' && !opt)?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
 //crd.icon = (box.type==='cargo')?'empty':'empty';
-    color='empty';
-    dashed=1;
+    //color='empty';
+   // dashed=1;
 var clr=(box.is=='loc')?3:5;
           var icon = crd.icon+ " b-clr i-clr"+clr+" "+ crd.icon;
           
@@ -374,7 +374,8 @@ var clr=(box.is=='loc')?3:5;
                 }
                   
               cel = cel
-                  .container('d-text', 'div')
+                  
+                  .container('d-text', 'div','clear: both')
                   .br()
                   .br()
                   .br()
@@ -414,8 +415,8 @@ var clr=(box.is=='loc')?3:5;
         } else if(box.type=='cargo') {
           opt.tikUp=true;
          opt.tikSec=4;
-          opt.strong='3/10'
-          opt.texts =['111']
+         // opt.strong='3 / 3'
+         // opt.texts =['3 / 6']
         
         } else {
           opt.tikUp = true;
