@@ -800,10 +800,13 @@ var clr=(box.is=='loc')?3:5;
                 let rd = gam2.model.rand.rd;
                 let ico, suf, name, color;
                 let seed = gam2.model.rand.seed.res;
-                var icoList = [];
+                var icoList = [], colorList= [];
                 for(let i=0;i<num;i++) {
                     if(!icoList.length) {
                       icoList = [...this.icoList];
+                    }
+                    if (!colorList.length) {
+                      colorList = [...this.colorList];
                     }
                     ico = rd.pickOneFrom(icoList,1, seed);
                     suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0, seed);
