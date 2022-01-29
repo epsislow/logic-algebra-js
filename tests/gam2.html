@@ -435,11 +435,28 @@
           overflow: hidden;
           float: left;
           margin: 2px;
+          text-align: center;
+          padding-top: 5px;
+          position: relative;
+        }
+        
+        .slot .amount {
+          color: #fff;
+          font-size: 15px;
+          width: 16px;
+          height: 15px;
+          position: absolute;
+          bottom: 0px;
+          text-shadow: 0 0 2px #000,  0 0 2px #000; /*  0 0 2px #000;*/
         }
         
         .slot:hover {
           background: #225;
-          border-color: #19f
+          border-color: #1ff;
+        }
+        
+        .slot .amount:hover {
+          color:#fff;
         }
     </style>
 </head>

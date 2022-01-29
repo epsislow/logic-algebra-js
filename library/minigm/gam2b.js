@@ -161,6 +161,7 @@ var gam2 = {
             'power':[5,50],
           }
           
+          gam2.model.res.gen(55);
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
@@ -330,18 +331,38 @@ var clr=(box.is=='loc')?3:5;
                   .container('d-block text-light', 'strong')
                   .up();
                   
-                  
+                var gi=1;
                 if(box.slot) {
                     cel = cel
                       .container('slot', 'div')
+                      .addJqEl(gam2.model.res.getResIco(gi))
+                        .container('amount','div')
+                        .addText(50)
+                        .up()
                       .up()
                       .container('slot', 'div')
+                      .addJqEl(gam2.model.res.getResIco(gi+1))
+                      .container('amount', 'div')
+                        .addText(50)
+                        .up()
                       .up()
                       .container('slot', 'div')
+                      .addJqEl(gam2.model.res.getResIco(gi+2))
+                      .container('amount', 'div')
+                        .addText(50)
+                        .up()
                       .up()
                       .container('slot', 'div')
+                      .addJqEl(gam2.model.res.getResIco(gi+3))
+                      .container('amount', 'div')
+                        .addText(50)
+                        .up()
                       .up()
                       .container('slot', 'div')
+                      .addJqEl(gam2.model.res.getResIco(gi+4))
+                      .container('amount', 'div')
+                        .addText(50)
+                        .up()
                       .up()
                       .container('slot', 'div')
                       .up();
@@ -385,7 +406,7 @@ var clr=(box.is=='loc')?3:5;
         if(box.type==='miner') {
           opt.tikUp = true;
           opt.tikSec = 1;
-          opt.texts= ['1/2 xxxxxxxx','2/2 xxxxxxxx', '  xxxxxxxx'];
+    //      opt.texts= ['1/2 xxxxxxxx','2/2 xxxxxxxx', '  xxxxxxxx'];
         } else if(box.type=='cargo') {
           opt.tikUp=true;
          opt.tikSec=4;
@@ -399,7 +420,6 @@ var clr=(box.is=='loc')?3:5;
           opt.texts= [1,2,3];
         }
         this.paintBox(id, opt);
-          gam2.model.res.gen(55)
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
       },
       'paintBox': function(id, options = {}) {
@@ -763,20 +783,22 @@ var clr=(box.is=='loc')?3:5;
             },
             'gen': function (num) {
                 let rd = gam2.model.rand.rd;
-                let ico = rd.pickOneFrom(this.icoList,1);
-                let suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0);
-                let name = rd.randomName(rd.rand(3,8),0,suf);
-                let color = rd.pickOneFrom(this.colorList,0);
-
+                let ico, suf, name, color;
+                let seed = gam2.model.rand.seed.res;
                 for(let i=0;i<num;i++) {
+                    ico = rd.pickOneFrom(this.icoList,1, seed);
+                    suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0, seed);
+                    name = rd.randomName(rd.rand(3,8),0,suf, 0, seed);
+                    color = rd.pickOneFrom(this.colorList,0, seed);
                     this.add(name, ico, color);
                 }
             },
             'getResIco': function (id) {
                 var res = this.reg[id];
+               // console.log(res, this.reg[id+1])
                 return $('<i>').addClass('fas')
                     .addClass('fa-'+res.ico)
-                    .attr('style', 'color:'+res.color);
+                    .attr('style', 'font-size: 24px;color:'+res.color);
             }
         },
         'rand': {

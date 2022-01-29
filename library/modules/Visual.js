@@ -257,7 +257,11 @@ function __addContainerControls(pub) {
         }
         return this;
     }
-
+    pub.addJqEl = function(jqEl) {
+      this.el.append(jqEl);
+      return this;
+    }
+    
     pub.addEl = function (element, attrs = false, classes = '', value = false) {
         var content = $('<' + element + '>')
             .addClass(classes);
