@@ -149,7 +149,12 @@ var gam2 = {
             .nextObj(
               this.model.constr.addBox({type:'cargo', sloti:24, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
-            
+            .nextObj(
+              this.model.constr.addBox({ type: 'cargo', sloti: 32, slots: 8, slot: {}, pos: 3, level: 1, levelCost: 10 })
+            )
+            .nextObj(
+              this.model.constr.addBox({ type: 'cargo', sloti: 40, slots: 8, slot: {}, pos: 3, level: 1, levelCost: 10 })
+            )
           var crkey = [p0,p1,p2,p3].join('.');
           
           
@@ -166,7 +171,7 @@ var gam2 = {
             'power':[5,50],
           }
           
-          gam2.model.res.gen(55);
+          gam2.model.res.gen(105);
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
@@ -795,8 +800,12 @@ var clr=(box.is=='loc')?3:5;
                 let rd = gam2.model.rand.rd;
                 let ico, suf, name, color;
                 let seed = gam2.model.rand.seed.res;
+                var icoList = [];
                 for(let i=0;i<num;i++) {
-                    ico = rd.pickOneFrom(this.icoList,1, seed);
+                    if(!icoList.length) {
+                      icoList = [...this.icoList];
+                    }
+                    ico = rd.pickOneFrom(icoList,1, seed);
                     suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0, seed);
                     name = rd.randomName(rd.rand(3,8),0,suf, 0, seed);
                     color = rd.pickOneFrom(this.colorList,0, seed);
