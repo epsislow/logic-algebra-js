@@ -46,6 +46,7 @@ var gam2 = {
         
         this.init.topBar();
         this.view.content = r(ra).container('content','div').el;
+        this.model.res.init();
         this.init.boot();
         this.view.draw();
     },
@@ -144,16 +145,16 @@ var gam2 = {
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo', sloti:24, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:4, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({ type: 'cargo', sloti: 32, slots: 8, slot: {}, pos: 3, level: 1, levelCost: 10 })
+              this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
             )
             .nextObj(
-              this.model.constr.addBox({ type: 'cargo', sloti: 40, slots: 8, slot: {}, pos: 3, level: 1, levelCost: 10 })
+              this.model.constr.addBox({ type: 'cargo', sloti: 36, slots: 8, slot: {}, pos: 6, level: 1, levelCost: 10 })
             )
           var crkey = [p0,p1,p2,p3].join('.');
           
@@ -417,7 +418,7 @@ var clr=(box.is=='loc')?3:5;
         return cel;
       },
       'paint': function(id, box) {
-        var opt = {btns:{'add':[['Lvl up', false, 'btn-success']]}};
+        var opt = {btns:{'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]}};
         if(box.type==='miner') {
           opt.tikUp = true;
           opt.tikSec = 1;
@@ -788,6 +789,18 @@ var clr=(box.is=='loc')?3:5;
             'colorList2': ['cyan','pink','yellow','white', 'lightblue','red'],
             'colorUni': {},
             'reg':[],
+            'init': function() {
+              this.add('money','donate','white');
+              this.add('money','donate','yellow');
+              this.add('moneyK','donate','greenyellow');
+              this.add('moneyG','donate','aquamarine');
+              this.add('moneyT','donate','lightblue');
+              this.add('moneyM','donate','lightviolet');
+              this.add('moneyR','donate','pink');
+              
+              this.add('power','battery-full','greenyellow');
+              this.add('child','child','lightgreen');
+            },
             'add': function (name, ico=0, color='light') {
                 var id=this.reg.length;
                 this.reg[id] = {
@@ -1032,6 +1045,23 @@ var clr=(box.is=='loc')?3:5;
         }
     },
     'action': {
+      'lvlUp': function (box) {
+        var cr= this.model.loc.current;
+        if(!(cr.p.crkey in gam2.model.box.list)) {
+          return;
+        }
+        var b = this.model.box.list[cr.p.crkey];
+        
+        console.log(cr.p.crkey);
+        do{
+          if('sloti' in b.p) {
+            b.p.sloti++;
+          }
+        } while(b= b.next);
+        //gam2.view.deleteEls(gam2.view.cardBox);
+        gam2.view.deleteEls(gam2.view.cardBox);
+        gam2.view.drawBox(1);
+      },
         'hdl': {
           'ref':function (object, method) {
             return function() {
