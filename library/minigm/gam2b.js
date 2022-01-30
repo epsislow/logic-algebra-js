@@ -786,7 +786,8 @@ var clr=(box.is=='loc')?3:5;
         'res': {
             'icoList':['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore'],
             'colorList':["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
-            'colorList2': ['cyan','pink','yellow','white', 'lightblue','red'],
+            'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
+            'colorList3': ['grape','grape'],
             'colorUni': {},
             'reg':[],
             'init': function() {
@@ -821,10 +822,13 @@ var clr=(box.is=='loc')?3:5;
                       icoList = [...this.icoList];
                     }
                     ico = rd.pickOneFrom(icoList,1, seed);
+                    if(ico in this.colorUni && !this.colorUni[ico].length) {
+                      ico = rd.pickOneFrom(icoList,1, seed);
+                    }
                     suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0, seed);
                     name = rd.randomName(rd.rand(3,8),0,suf, 0, seed);
                     if(!(ico in this.colorUni)) {
-                      this.colorUni[ico] = [...this.colorList];
+                      this.colorUni[ico] = [...this.colorList2];
                     }
                     /*if (!colorList.length) {
                       colorList = [...this.colorUni[ico]];
