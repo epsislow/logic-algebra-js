@@ -370,8 +370,8 @@ var clr=(box.is=='loc')?3:5;
                     //console.log('y')
                       cel = cel
                       //.addText('ggg')
-                        .container('slot', 'div')
-                        .addJqEl(gam2.model.res.getResIco( s))
+                        .container('slot slot-output', 'div')
+                        .addJqEl(gam2.model.res.getResIco(gi+ s +5))
                         .container('amount', 'div')
                         .addText(30)
                         .up()
