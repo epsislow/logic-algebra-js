@@ -164,7 +164,7 @@ var gam2 = {
                   this.model.constr.addBox({ type: 'storage', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
               )
               .nextObj(
-                  this.model.constr.addBox({ type: 'trader', sloti: 36, slots: 8, slot: {}, pos: 9, level: 1, levelCost: 10 })
+                  this.model.constr.addBox({ type: 'seller', sloti: 36, slotsOut: 4, slot: {}, pos: 9, level: 1, levelCost: 10 })
               )
 
           var crkey = [p0,p1,p2,p3].join('.');
@@ -807,7 +807,7 @@ var clr=(box.is=='loc')?3:5;
                 'bg': 'dark',
                 'dashed': 0,
             },
-            'trader': {
+            'seller': {
                 'icon':'play',
                 'bg': 'dark',
                 'dashed': 0,
