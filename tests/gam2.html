@@ -427,7 +427,7 @@
         
         .slot {
           display: block;
-          background: #020425;
+          background: #000;
           border: 1px solid #159;
           width: 35px;
           height: 35px;
@@ -441,11 +441,11 @@
         
         .slot-output {
           background: #000;
-          border-color: #fff;
+          border-color: #7a7;
         }
 
         .slot-req-no-qty {
-            border-color: #f44 !important;
+            border-color: #f44;
         }
         
         .slot .amount {
@@ -468,13 +468,25 @@
         }
         
         .slot:hover {
-          background: #225;
-          border-color: #1ff;
+          background: #228;
+          border-color: #fff;
         }
+
+        .slot-output:hover {
+            background: #282;
+            border-color: #fff;
+        }
+
+        .slot-req-no-qty:hover {
+            background: #822;
+            border-color: #fff;
+        }
+
         
-        .slot .amount:hover {
+        .slot:hover .amount {
           color:#fff;
         }
+
         .slot-spc {
           display: block;
           float: left;
