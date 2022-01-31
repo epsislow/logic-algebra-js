@@ -148,11 +148,11 @@ var gam2 = {
               this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({type:'crafter', sloti:2, slots: 2, slot: {}, pos:4, level:3, levelCost: 10})
+              this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, pos:4, level:3, levelCost: 10})
               //this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:4, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slotsOut: 4, slot: {}, pos: 5, level: 1, levelCost: 10 })
+              this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
             )
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 36, slots: 8, slot: {}, pos: 6, level: 1, levelCost: 10 })
@@ -359,20 +359,13 @@ var clr=(box.is=='loc')?3:5;
                   
                   if(box.slot && ('slotsOut' in box)) {
                     
+                    /*
                     
-                    for (let s = 0; s < 1; s++) {
+                    }*/
                     
-                      cel = cel
-                        .container('slot', 'div')
-                        .addJqEl(gam2.model.res.getResIco(gi + s))
-                        .container('amount', 'div')
-                        .addText(50)
-                        .up()
-                        .up();
-                    }
-                    
-                    //cel = cel.addText('&nbsp;');
-                    console.log('ggg', box.slotsOut)
+                    cel = cel
+                    .container('slot-spc','div').up();
+                  
                     for (let s = 0; s < box.slotsOut; s++) {
                     //console.log('y')
                       cel = cel
@@ -806,7 +799,7 @@ var clr=(box.is=='loc')?3:5;
           },
           'crafter':{
             'icon':'',
-            'bg':'empty',
+            'bg':'smelter',
             'dashed': 1,
           }
         },
