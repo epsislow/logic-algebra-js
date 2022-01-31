@@ -212,8 +212,7 @@ var gam2 = {
                 .container('s-people','span')
                 .addText(pplUsg + ' / '+ ppl)
                 .up()
-                .up()
-                .br();
+                .up();
         }
     },
     'view':{
