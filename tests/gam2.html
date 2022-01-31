@@ -429,7 +429,6 @@
           display: block;
           background: #020425;
           border: 1px solid #159;
-          /*border-radius: 3px;*/
           width: 35px;
           height: 35px;
           overflow: hidden;
@@ -444,15 +443,28 @@
           background: #000;
           border-color: #fff;
         }
+
+        .slot-req-no-qty {
+            border-color: #f44 !important;
+        }
         
         .slot .amount {
           color: #fff;
-          font-size: 15px;
+          font-size: 13px;
           width: 16px;
           height: 15px;
           position: absolute;
-          bottom: 0px;
-          text-shadow: 0 0 2px #000,  0 0 2px #000; /*  0 0 2px #000;*/
+          bottom: 0;
+          text-shadow: 0 0 2px #000,  0 0 2px #000, 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+        }
+        .slot .req-amount {
+            color: #f88;
+            font-size: 13px;
+            width: 16px;
+            height: 15px;
+            position: absolute;
+            bottom: 0;
+            text-shadow: 0 0 2px #000,  0 0 2px #000, 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
         }
         
         .slot:hover {

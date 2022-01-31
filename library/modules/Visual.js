@@ -306,7 +306,7 @@ function __addContainerControls(pub) {
 
     pub.br = function (num = 1) {
         for (let i = 0; i < num; i++) {
-            this.el.append($('<br>'));
+            this.el.append($('<br>').attr('style','clear:both'));
         }
         return this;
     }

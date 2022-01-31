@@ -140,7 +140,7 @@ var gam2 = {
           window.cr = cr;
          // console.log('cr', cr);
           
-          var blist = this.model.constr.addBox({type:'miner', sloti:0, slots:8, slot: {}, pos:1, level:1, levelCost:10})
+          var blist = this.model.constr.addBox({type:'miner', sloti:0, slots:1, slot: {}, pos:1, level:1, levelCost:10})
             .nextObj(
               this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
@@ -157,6 +157,16 @@ var gam2 = {
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 36, slots: 8, slot: {}, pos: 6, level: 1, levelCost: 10 })
             )
+            .nextObj(
+              this.model.constr.addBox({ type: 'assembler', sloti: 2, slots: 2, slotsOut:1, slot: {}, pos: 7, level: 1, levelCost: 10 })
+            )
+              .nextObj(
+                  this.model.constr.addBox({ type: 'storage', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
+              )
+              .nextObj(
+                  this.model.constr.addBox({ type: 'trader', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
+              )
+
           var crkey = [p0,p1,p2,p3].join('.');
           
           
@@ -363,16 +373,16 @@ var clr=(box.is=='loc')?3:5;
                     
                     }*/
                     
-                    cel = cel
-                    .container('slot-spc','div').up();
+                    cel = cel.br();
+                    //.container('slot-spc','div').up();
                   
                     for (let s = 0; s < box.slotsOut; s++) {
                     //console.log('y')
                       cel = cel
                       //.addText('ggg')
-                        .container('slot slot-output', 'div')
+                        .container('slot slot-output slot-req-no-qty', 'div')
                         .addJqEl(gam2.model.res.getResIco(gi+ s +5))
-                        .container('amount', 'div')
+                        .container('req-amount', 'div')
                         .addText(30)
                         .up()
                         .up();
@@ -782,6 +792,26 @@ var clr=(box.is=='loc')?3:5;
             'bg':'power',
             'dashed':0,
           },
+            'assembler': {
+                'icon':'play',
+                'bg': 'silo',
+                'dashed': 0,
+            },
+            'storage': {
+                'icon':'play',
+                'bg': 'silo',
+                'dashed': 0,
+            },
+            'launch-pad': {
+                'icon':'play',
+                'bg': 'dark',
+                'dashed': 0,
+            },
+            'trader': {
+                'icon':'play',
+                'bg': 'dark',
+                'dashed': 0,
+            },
           'transport': {
             'icon': 'circle',
             'bg': 'crafter',
