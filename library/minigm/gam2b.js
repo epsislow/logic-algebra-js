@@ -148,10 +148,11 @@ var gam2 = {
               this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:4, level:1, levelCost: 10})
+              this.model.constr.addBox({type:'crafter', sloti:2, slots: 2, slot: {}, pos:4, level:3, levelCost: 10})
+              //this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:4, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
+              this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slotsOut: 4, slot: {}, pos: 5, level: 1, levelCost: 10 })
             )
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 36, slots: 8, slot: {}, pos: 6, level: 1, levelCost: 10 })
@@ -354,7 +355,37 @@ var clr=(box.is=='loc')?3:5;
                         .addText(50)
                         .up()
                       .up();
-                  }/*
+                  }
+                  
+                  if(box.slot && ('slotsOut' in box)) {
+                    
+                    
+                    for (let s = 0; s < 1; s++) {
+                    
+                      cel = cel
+                        .container('slot', 'div')
+                        .addJqEl(gam2.model.res.getResIco(gi + s))
+                        .container('amount', 'div')
+                        .addText(50)
+                        .up()
+                        .up();
+                    }
+                    
+                    //cel = cel.addText('&nbsp;');
+                    console.log('ggg', box.slotsOut)
+                    for (let s = 0; s < box.slotsOut; s++) {
+                    //console.log('y')
+                      cel = cel
+                      //.addText('ggg')
+                        .container('slot', 'div')
+                        .addJqEl(gam2.model.res.getResIco( s))
+                        .container('amount', 'div')
+                        .addText(30)
+                        .up()
+                        .up();
+                    }
+                  }
+                  /*
                       .container('slot', 'div')
                       .addJqEl(gam2.model.res.getResIco(gi+1))
                       .container('amount', 'div')
@@ -432,8 +463,8 @@ var clr=(box.is=='loc')?3:5;
         } else {
           opt.tikUp = true;
           opt.tikSec = 15;
-          opt.strong = "test";
-          opt.texts= [1,2,3];
+          //opt.strong = "test";
+          //opt.texts= [1,2,3];
         }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
@@ -772,6 +803,11 @@ var clr=(box.is=='loc')?3:5;
             'icon': 'square',
             'bg':'crafter',
             'dashed': 0,
+          },
+          'crafter':{
+            'icon':'',
+            'bg':'empty',
+            'dashed': 1,
           }
         },
         'loc': {
@@ -782,6 +818,43 @@ var clr=(box.is=='loc')?3:5;
         'box': {
           'list': null,
           'coins': {},
+          'coin': {
+            'units': ['', 'K', 'M','G','T','R','S'],
+            'add': function(a, b) {
+                var r = {};
+                if (b.u === a.u) {
+                  r = {...a};
+                  r.n = a.n + b.n;
+                } else {
+                  r.u= this.biggestU(a.u, b.u);
+                  r.n= a.u? a.n: b.n;
+                }
+                return r;
+            },
+            'sub': function(a, b) {
+              var r = {};
+              if (b.u === a.u) {
+                r = { ...a };
+                r.n = a.n - b.n;
+              } else {
+                r.u = this.biggestU(a.u, b.u);
+                r.n = a.u ? a.n : b.n;
+              }
+              return r;
+            },
+            'biggestU': function(a, b) {
+              return this.units.indexOf(a)>this.units.indexOf(b)? a:b;
+            },
+            'lastU': function(u, n) {
+              var r = [];
+              var i = this.units.indexOf(u);
+              do {
+                r.push(this.units[i]);
+                i--;
+              } while(i>=0);
+              return r;
+            }
+          }
         },
         'res': {
             'icoList':['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore'],
@@ -792,12 +865,12 @@ var clr=(box.is=='loc')?3:5;
             'reg':[],
             'init': function() {
               this.add('money','donate','white');
-              this.add('money','donate','yellow');
-              this.add('moneyK','donate','greenyellow');
+              this.add('moneyK','donate','yellow');
+              this.add('moneyM','donate','greenyellow');
               this.add('moneyG','donate','aquamarine');
               this.add('moneyT','donate','lightblue');
-              this.add('moneyM','donate','lightviolet');
-              this.add('moneyR','donate','pink');
+              this.add('moneyR','donate','lightviolet');
+              this.add('moneyS','donate','pink');
               
               this.add('power','battery-full','greenyellow');
               this.add('child','child','lightgreen');
