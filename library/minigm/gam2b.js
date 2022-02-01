@@ -433,7 +433,7 @@ var clr=(box.is=='loc')?3:5;
                   .up()
                   .container('tik', 'div', !wTikSec ? 'animation:none': 'animation-duration:' + wTikSec + 's')
                   .up()
-                  .container('timer','span')
+                  .container('timer','div', 'line-height: 14px')
                   .addText('13:07')
                   .up()
           } else {
@@ -960,10 +960,10 @@ var clr=(box.is=='loc')?3:5;
                       console.log('no for '+ico)
                     }
                 }
-                console.log(this.reg)
+                //console.log(this.reg)
             },
             'getResIco': function (id) {
-                var res = this.reg[id];
+                var res = this.reg[id % this.reg.length];
                // console.log(res, this.reg[id+1])
                 return $('<i>').addClass('fas')
                     .addClass('fa-'+res.ico)
