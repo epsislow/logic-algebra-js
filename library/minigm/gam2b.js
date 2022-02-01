@@ -477,7 +477,12 @@ var clr=(box.is=='loc')?3:5;
           opt.texts =-1;
         }
         if(box.everySec) {
-          opt.timer=box.everySec- ('timer' in box? box.timer : 0)
+          opt.timer=box.everySec- ('timer' in box? box.timer : 0);
+          if(opt.timer) {
+            opt.tikDelay = -box.timer;
+          }
+          opt.tikSec= box.everySec;
+          opt.tikUp=true;
         }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
