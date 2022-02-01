@@ -364,6 +364,10 @@ var clr=(box.is=='loc')?3:5;
                   for(let p=0; p< box.pads;p++) {
                     cel = cel
                       .container('pad', 'div')
+                         .container('fas fa-location-arrow fa-4x p-2','div')
+                         //.container('fas fa-box fa-3x p-3', 'div', "transform: translateX(0px) rotate(45deg)")
+                         //.container('fas fa-brush fa-4x p-1', 'div', "transform: translateX(15px) rotate(-135deg)")
+                        .up()
                       .up();
                   }
                 }
@@ -854,9 +858,9 @@ var clr=(box.is=='loc')?3:5;
             'dashed':0
           },
           'cargo': {
-            'icon':'play',
-            'bg': 'crafter',
-            'dashed': 0,
+            'icon':'location-arrow',
+            'bg': 'empty',
+            'dashed': 1,
           },
           'airliner': {
             'icon': 'square',
