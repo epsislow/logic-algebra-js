@@ -170,6 +170,9 @@ var gam2 = {
               .nextObj(
                   this.model.constr.addBox({ type: 'seller', sloti: 36, slotsOut: 4, slot: {}, pos: 9, level: 1, levelCost: 10 })
               )
+              .nextObj(
+                  this.model.constr.addBox({ type: 'launch-pad', pads: 2, pad: {}, pos: 10, level: 1, levelCost: 10 })
+              )
 
           var crkey = [p0,p1,p2,p3].join('.');
           
@@ -355,7 +358,15 @@ var clr=(box.is=='loc')?3:5;
                   .container('media-body ml-2 mb-0 small lh-125', 'p')
                   .container('d-block text-light', 'strong')
                   .up();
-                  
+                
+                
+                if(box.pad && ('pads' in box)) {
+                  for(let p=0; p< box.pads;p++) {
+                    cel = cel
+                      .container('pad', 'div')
+                      .up();
+                  }
+                }
                 if(box.slot && ('sloti' in box)) {
                   var gi=box.sloti;
                   
@@ -826,6 +837,11 @@ var clr=(box.is=='loc')?3:5;
                 'icon':'play',
                 'bg': 'dark',
                 'dashed': 0,
+            },
+            'docker': {
+              'icon': 'play',
+              'bg': 'dark',
+              'dashed': 0,
             },
             'seller': {
                 'icon':'play',
