@@ -1222,8 +1222,7 @@ var clr=(box.is=='loc')?3:5;
           return;
         }
         var b = this.model.box.list[cr.p.crkey];
-        
-        console.log(cr.p.crkey);
+
         do{
           if('sloti' in b.p) {
             b.p.sloti++;
