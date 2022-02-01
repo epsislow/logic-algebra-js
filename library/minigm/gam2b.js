@@ -49,12 +49,16 @@ var gam2 = {
         this.model.res.init();
         this.init.boot();
         this.view.draw();
+        this.init.events();
     },
     'init': {
         'parents': function () {
           this.view = gam2.view;
           this.model = gam2.model;
           this.action = gam2.action;
+        },
+        'events': function() {
+          setInterval(gam2.action.everySec.bind(gam2.action), 1000);
         },
         'boot': function() {
           let cr;
@@ -140,9 +144,9 @@ var gam2 = {
           window.cr = cr;
          // console.log('cr', cr);
           
-          var blist = this.model.constr.addBox({type:'miner', sloti:0, slots:1, slot: {}, pos:1, level:1, levelCost:10})
+          var blist = this.model.constr.addBox({type:'miner', everySec: 1, sloti:0, slots:1, slot: {}, pos:1, level:1, levelCost:10})
             .nextObj(
-              this.model.constr.addBox({type:'dwellings', pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
+              this.model.constr.addBox({type:'dwellings', everySec: 15, pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
               this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
@@ -368,9 +372,7 @@ var clr=(box.is=='loc')?3:5;
                   
                   if(box.slot && ('slotsOut' in box)) {
                     
-                    /*
                     
-                    }*/
                     
                     cel = cel.br();
                     //.container('slot-spc','div').up();
@@ -431,6 +433,9 @@ var clr=(box.is=='loc')?3:5;
                   .up()
                   .container('tik', 'div', !wTikSec ? 'animation:none': 'animation-duration:' + wTikSec + 's')
                   .up()
+                  .container('timer','span')
+                  .addText('13:07')
+                  .up()
           } else {
               cel = cel
                   .container('bottom' + x2, 'div')
@@ -468,6 +473,7 @@ var clr=(box.is=='loc')?3:5;
           //opt.strong = "test";
           //opt.texts= [1,2,3];
         }
+        opt.lvl = box.level;
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
       },
@@ -812,7 +818,7 @@ var clr=(box.is=='loc')?3:5;
                 'dashed': 0,
             },
           'transport': {
-            'icon': 'circle',
+            'icon': 'location-arrow',
             'bg': 'crafter',
             'dashed':0
           },
@@ -1144,6 +1150,48 @@ var clr=(box.is=='loc')?3:5;
         }
     },
     'action': {
+      'box': {
+        'miner': {
+          'tick': function(box) {
+            box.sloti++;
+            box.level++;
+        //    console.log(box)
+            gam2.view.paint('b'+box.pos, box);
+            
+          }
+        }
+      },
+      'everySec': function() {
+        
+        var cpos = gam2.model.loc.currentPos;
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+        if (!p.length) {
+          return;
+        }
+        
+         for (let u in p) {
+                    var box = p[u];
+                    if (box && box.everySec) {
+                        if (!('timer' in box)) {
+                            box.timer = 0;
+                        }
+                            
+                        box.timer++;
+                        
+                        if (box.timer !== box.everySec) {
+                            continue;
+                        }
+                        box.timer = 0;
+                    }
+                    if(!(box.type in gam2.action.box)) {
+                      continue;
+                    }
+                    if(!('tick' in gam2.action.box[box.type])) {
+                      continue;
+                    }
+                    gam2.action.box[box.type].tick(box);
+         }
+      },
       'lvlUp': function (box) {
         var cr= this.model.loc.current;
         if(!(cr.p.crkey in gam2.model.box.list)) {
