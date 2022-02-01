@@ -371,9 +371,6 @@ var clr=(box.is=='loc')?3:5;
                   }
                   
                   if(box.slot && ('slotsOut' in box)) {
-                    
-                    
-                    
                     cel = cel.br();
                     //.container('slot-spc','div').up();
                   
@@ -1184,14 +1181,11 @@ var clr=(box.is=='loc')?3:5;
         }
       },
       'everySec': function() {
+      var cpos = gam2.model.loc.currentPos;
         
-        var cpos = gam2.model.loc.currentPos;
-
-        if (!(cpos in gam2.model.box.list) || !gam2.model.box.list[cpos]) {
-            return;
-        }
-
-        var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+      for(let pos in gam2.model.box.list)
+      {
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
         if (!p.length) {
           return;
         }
@@ -1204,9 +1198,9 @@ var clr=(box.is=='loc')?3:5;
                         }
                             
                         box.timer++;
-                        
-                        gam2.view.paint('b'+box.pos, box,1);
-                        
+                        if(pos === cpos) {
+                          gam2.view.paint('b'+box.pos, box,1);
+                        }
                         if (box.timer !== box.everySec) {
                             continue;
                         }
@@ -1220,6 +1214,7 @@ var clr=(box.is=='loc')?3:5;
                     }
                     gam2.action.box[box.type].tick(box);
          }
+      }
       },
       'lvlUp': function (box) {
         var cr= this.model.loc.current;
