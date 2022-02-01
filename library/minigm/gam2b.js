@@ -476,7 +476,11 @@ var clr=(box.is=='loc')?3:5;
         opt.lvl = box.level;
         if(clear) {
           opt.btns.clr =1;
+          opt.tikUp =0
           opt.texts =-1;
+        }
+        if(box.everySec) {
+          opt.timer=box.everySec- ('timer' in box? box.timer : 0)
         }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
@@ -494,6 +498,7 @@ var clr=(box.is=='loc')?3:5;
               'tikUp': -1,
               'tikSec': 0,
               'tikDelay': 0,
+              'timer': 0,
           }, options);
 
           let title = options.title;
@@ -504,6 +509,7 @@ var clr=(box.is=='loc')?3:5;
           let tikUp = options.tikUp;
           let tikSec = options.tikSec;
           let tikDelay = options.tikDelay;
+          let timer= options.timer;
           let bt, style;
 
           if (title) {
@@ -511,6 +517,9 @@ var clr=(box.is=='loc')?3:5;
           }
           if (lvl) {
               r(this.cardBox[id]).in('.h6-right').clear().addText(lvl);
+          }
+          if (timer) {
+            r(this.cardBox[id]).in('.timer').clear().addText(timer+'s');
           }
 
           if(strong) {
@@ -1159,10 +1168,19 @@ var clr=(box.is=='loc')?3:5;
           'tick': function(box) {
             box.sloti++;
             box.level++;
-        //    console.log(box)
             gam2.view.paint('b'+box.pos, box,1);
             
           }
+          
+        },
+        'dwellings': {
+          'tick': function(box) {
+           // box.sloti++;
+            box.level++;
+            gam2.view.paint('b' + box.pos, box, 1);
+        
+          }
+        
         }
       },
       'everySec': function() {
@@ -1181,6 +1199,8 @@ var clr=(box.is=='loc')?3:5;
                         }
                             
                         box.timer++;
+                        
+                        gam2.view.paint('b'+box.pos, box,1);
                         
                         if (box.timer !== box.everySec) {
                             continue;
