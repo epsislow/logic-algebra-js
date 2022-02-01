@@ -455,7 +455,7 @@ var clr=(box.is=='loc')?3:5;
         }
         return cel;
       },
-      'paint': function(id, box) {
+      'paint': function(id, box, clear=0) {
         var opt = {btns:{'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]}};
         if(box.type==='miner') {
           opt.tikUp = true;
@@ -474,6 +474,10 @@ var clr=(box.is=='loc')?3:5;
           //opt.texts= [1,2,3];
         }
         opt.lvl = box.level;
+        if(clear) {
+          opt.btns.clr =1;
+          opt.texts =-1;
+        }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
       },
@@ -1156,7 +1160,7 @@ var clr=(box.is=='loc')?3:5;
             box.sloti++;
             box.level++;
         //    console.log(box)
-            gam2.view.paint('b'+box.pos, box);
+            gam2.view.paint('b'+box.pos, box,1);
             
           }
         }
