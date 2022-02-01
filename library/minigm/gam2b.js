@@ -1186,6 +1186,11 @@ var clr=(box.is=='loc')?3:5;
       'everySec': function() {
         
         var cpos = gam2.model.loc.currentPos;
+
+        if (!(cpos in gam2.model.box.list) || !gam2.model.box.list[cpos]) {
+            return;
+        }
+
         var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
         if (!p.length) {
           return;
