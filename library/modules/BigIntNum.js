@@ -78,6 +78,9 @@ var BigIntNum = (function () {
         pub.add = function (b) {
             check(b,1);
 
+            //b = BigIntNum.from(234, 4); c = BigIntNum.from(234, 4); b.toString() + c.toString();
+            //b.add(BigIntNum.from(100,17)); // not working because many errors
+
             //console.log(this.toString());
 
             if (this.exp === b.exp) {
