@@ -89,7 +89,6 @@ var BigIntNum = (function () {
             } else if (this.exp < b.exp) {
                 //console.log('<' + this.num + ' ' +  b.numToExp(this.exp));
                 this.num += b.numToExp(this.exp);
-                this.exp = b.exp;
             } else { // >
                 //console.log('>' + this.numToExp(b.exp) + ' ' + b.num);
                 this.num = this.numToExp(b.exp) + b.num;
