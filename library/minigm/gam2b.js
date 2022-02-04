@@ -237,6 +237,7 @@ var gam2 = {
           'miner': {
               'paint': function (id, box) {
                   return {
+                      lvl: box.level,
                       btns: {clr: 1,'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]},
                       content: [
                           {type: 'slot', res: 20+ box.sloti, amount: 20},
@@ -247,9 +248,22 @@ var gam2 = {
                   };
               }
           },
+          'dwellings':{
+            'paint': function(id, box) {
+              return {
+                lvl: box.level,
+                timerClear: 1,
+                btns: { clr: 1, addSpacer: 1 },
+                content: [
+                    {type: 'slot', res: 8, amount: 3},
+                  ],
+              };
+            }
+          },
           'cargo': {
               'paint': function (id, box) {
                   return {
+                      lvl: box.level,
                       timerClear: 1,
                       btns:{clr: 1, addSpacer:1},
                       content: [
@@ -527,6 +541,7 @@ var clr=(box.is=='loc')?3:5;
             opt.tikDelay = -box.timer;
           }
           opt.tikSec= box.everySec;
+          
           opt.tikUp=true;
         }
         this.paintBox(id, opt);
@@ -1226,6 +1241,7 @@ var clr=(box.is=='loc')?3:5;
                     'powerCost': 0,
                     'is':'box',
                     'repaint': 0,
+                    'timer':0, 
                 });
             },
             'locProps': function ( pos,type, lvl, name, crkey='') {
@@ -1316,27 +1332,31 @@ var clr=(box.is=='loc')?3:5;
         
          for (let u in p) {
                     var box = p[u];
-                    if (box && box.everySec) {
+                    if(!box || ! box.everySec) {
+                      continue;
+                    }
+                    
                         if (!('timer' in box)) {
                             box.timer = 0;
                         }
                             
                         box.timer++;
-                        if(pos === cpos) {
-                          gam2.view.paint('b'+box.pos, box,1);
-                        }
+                        
                         if (box.timer !== box.everySec) {
+                          if (pos === cpos) {
+                            gam2.view.paint('b' + box.pos, box, 1);
+                          }
                             continue;
                         }
                         box.timer = 0;
+                    
+                    if(box.type in gam2.action.box && ('tick' in gam2.action.box[box.type])) {
+                      gam2.action.box[box.type].tick(box);
+                      
                     }
-                    if(!(box.type in gam2.action.box)) {
-                      continue;
+                    if (pos === cpos) {
+                      gam2.view.paint('b' + box.pos, box, 1);
                     }
-                    if(!('tick' in gam2.action.box[box.type])) {
-                      continue;
-                    }
-                    gam2.action.box[box.type].tick(box);
          }
       }
       },
