@@ -263,6 +263,25 @@ var gam2 = {
               };
             }
           },
+          'storage':{
+            'paint': function(id, box) {
+            return {
+              lvl: box.level,
+              timerClear: 1,
+              btns: { clr: 1, addSpacer: 1 },
+              content: [
+                { type: 'slot', res: 20 + box.sloti, amount: 20 },
+                { type: 'slot', res: 21 + box.sloti, amount: 20 },
+                { type: 'slot', res: 22 + box.sloti, amount: 20 },
+                { type: 'slot', res: 23 + box.sloti, amount: 20 },
+                { type: 'slot', res: 24 + box.sloti, amount: 20 },
+                { type: 'slot', res: 25 + box.sloti, amount: 20 },
+                { type: 'slot', res: 26 + box.sloti, amount: 20 },
+                { type: 'slot', res: 27 + box.sloti, amount: 20 },
+              ],
+            };
+          }
+          },
           'cargo': {
               'paint': function (id, box) {
                   return {
@@ -274,10 +293,6 @@ var gam2 = {
                           {type: 'slot', res: 21+ box.sloti, amount: 20},
                           {type: 'slot', res: 22+ box.sloti, amount: 20},
                           {type: 'slot', res: 23+ box.sloti, amount: 20},
-                          {type: 'slot', res: 24+ box.sloti, amount: 20},
-                          {type: 'slot', res: 25+ box.sloti, amount: 20},
-                          {type: 'slot', res: 26+ box.sloti, amount: 20},
-                          {type: 'slot', res: 27+ box.sloti, amount: 20},
                       ],
                   };
               }
@@ -293,6 +308,24 @@ var gam2 = {
                   };
               }
           },
+          'crafter': {
+            'paint': function(id, box) {
+              var res = gam2.model.res.reg;
+              return {
+                lvl: box.level,
+                btns: { clr: 1, 'add': [['Lvl up', (function(box) { return function() { gam2.action.lvlUp(box) } })(box), 'btn-success']] },
+                content: [
+                  {type: 'slot', res: 20+ box.sloti, amount: 20},
+                  {type: 'slot', res: 21+ box.sloti, amount: 20},
+                  {type: 'br'},
+                  { type: 'slot-out', res: 30 + box.sloti, amount: 20, missing: 1 },
+                //  { type: 'br' },
+                 // { type: 'text', text: 'Resource: ' + res[(30 + box.sloti) % res.length].name }
+                                ],
+              };
+            }
+          },
+          
       },
       'draw':function() {
         this.drawLoc(1);
