@@ -233,6 +233,50 @@ var gam2 = {
       'cardOpt': {},
       'cardBox': {},
       'cardMenu': {},
+      'box': {
+          'miner': {
+              'paint': function (id, box) {
+                  return {
+                      btns: {clr: 1,'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]},
+                      content: [
+                          {type: 'slot', res: 20+ box.sloti, amount: 20},
+                          {type: 'slot', res: 21+ box.sloti, amount: 20},
+                          {type: 'br'},
+                          {type: 'slot-out', res: 30+ box.sloti, amount: 20, missing: 1},
+                      ],
+                  };
+              }
+          },
+          'cargo': {
+              'paint': function (id, box) {
+                  return {
+                      timerClear: 1,
+                      btns:{clr: 1, addSpacer:1},
+                      content: [
+                          {type: 'slot', res: 20+ box.sloti, amount: 20},
+                          {type: 'slot', res: 21+ box.sloti, amount: 20},
+                          {type: 'slot', res: 22+ box.sloti, amount: 20},
+                          {type: 'slot', res: 23+ box.sloti, amount: 20},
+                          {type: 'slot', res: 24+ box.sloti, amount: 20},
+                          {type: 'slot', res: 25+ box.sloti, amount: 20},
+                          {type: 'slot', res: 26+ box.sloti, amount: 20},
+                          {type: 'slot', res: 27+ box.sloti, amount: 20},
+                      ],
+                  };
+              }
+          },
+          'launch-pad': {
+              'paint': function (id, box) {
+                  return {
+                      btns:{clr: 1, addSpacer:1},
+                      content: [
+                          {type: 'pad', ship: 'airliner'},
+                          {type: 'pad', ship: 'transporter'},
+                      ],
+                  };
+              }
+          },
+      },
       'draw':function() {
         this.drawLoc(1);
         this.drawBox(1);
@@ -287,8 +331,7 @@ var gam2 = {
           coins.power[0], coins.power[1]
         )
       },
-      'drawBox': function(repaint=0) {
-        var cr = this.model.loc.current;
+      'drawBox': function(repaintAll=0) {
         var cpos = gam2.model.loc.currentPos;
 
         if(!(cpos in gam2.model.box.list)) {
@@ -304,9 +347,11 @@ var gam2 = {
           var el;
         
           for (const i in p) {
-            el = this.drawCard('b' + p[i].pos, p[i]);
-            if(repaint) {
-              this.paint('b'+p[i].pos, p[i]);
+            if(repaintAll) {
+                el = this.drawCard('b' + p[i].pos, p[i]);
+            }
+            if (repaintAll || p[i].repaint) {
+                this.paint('b'+p[i].pos, p[i], p[i].repaint);
             }
           }
         }
@@ -359,7 +404,7 @@ var clr=(box.is=='loc')?3:5;
                   .container('d-block text-light', 'strong')
                   .up();
                 
-                
+                /*
                 if(box.pad && ('pads' in box)) {
                   for(let p=0; p< box.pads;p++) {
                     cel = cel
@@ -390,9 +435,7 @@ var clr=(box.is=='loc')?3:5;
                     //.container('slot-spc','div').up();
                   
                     for (let s = 0; s < box.slotsOut; s++) {
-                    //console.log('y')
                       cel = cel
-                      //.addText('ggg')
                         .container('slot slot-output slot-req-no-qty', 'div')
                         .addJqEl(gam2.model.res.getResIco(gi+ s +5))
                         .container('req-amount', 'div')
@@ -401,36 +444,8 @@ var clr=(box.is=='loc')?3:5;
                         .up();
                     }
                   }
-                  /*
-                      .container('slot', 'div')
-                      .addJqEl(gam2.model.res.getResIco(gi+1))
-                      .container('amount', 'div')
-                        .addText(50)
-                        .up()
-                      .up()
-                      .container('slot', 'div')
-                      .addJqEl(gam2.model.res.getResIco(gi+2))
-                      .container('amount', 'div')
-                        .addText(50)
-                        .up()
-                      .up()
-                      .container('slot', 'div')
-                      .addJqEl(gam2.model.res.getResIco(gi+3))
-                      .container('amount', 'div')
-                        .addText(50)
-                        .up()
-                      .up()
-                      .container('slot', 'div')
-                      .addJqEl(gam2.model.res.getResIco(gi+4))
-                      .container('amount', 'div')
-                        .addText(50)
-                        .up()
-                      .up()
-                      .container('slot', 'div')
-                      .up();*/
-                   
                 }
-                  
+                  */
               cel = cel
                   
                   .container('d-text', 'div','clear: both')
@@ -446,7 +461,7 @@ var clr=(box.is=='loc')?3:5;
                   .container('tik', 'div', !wTikSec ? 'animation:none': 'animation-duration:' + wTikSec + 's')
                   .up()
                   .container('timer','div', 'line-height: 14px')
-                  .addText('13:07')
+                  .addText('')
                   .up()
           } else {
               cel = cel
@@ -468,7 +483,21 @@ var clr=(box.is=='loc')?3:5;
         return cel;
       },
       'paint': function(id, box, clear=0) {
-        var opt = {btns:{'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]}};
+        var opt= {'btns': {}}; // = {btns:{'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]}};
+
+        if(clear) {
+          opt.btns.clr =1;
+          opt.btns.addSpacer =1;
+          opt.tikUp =0
+          opt.texts =-1;
+          opt.contentClear = 1;
+          opt.timerClear = 1;
+        }
+
+        if((box.type in gam2.view.box) && ('paint' in gam2.view.box[box.type])) {
+          opt = gam2.view.box[box.type].paint(id, box, clear);
+        }
+/*
         if(box.type==='miner') {
           opt.tikUp = true;
           opt.tikSec = 1;
@@ -491,6 +520,7 @@ var clr=(box.is=='loc')?3:5;
           opt.tikUp =0
           opt.texts =-1;
         }
+        */
         if(box.everySec) {
           opt.timer=box.everySec- ('timer' in box? box.timer : 0);
           if(opt.timer) {
@@ -516,6 +546,9 @@ var clr=(box.is=='loc')?3:5;
               'tikSec': 0,
               'tikDelay': 0,
               'timer': 0,
+              'timerClear': 0,
+              'contentClear': 0,
+              'content': [],
           }, options);
 
           let title = options.title;
@@ -527,6 +560,7 @@ var clr=(box.is=='loc')?3:5;
           let tikSec = options.tikSec;
           let tikDelay = options.tikDelay;
           let timer= options.timer;
+          let timerClear= options.timerClear;
           let bt, style;
 
           if (title) {
@@ -535,12 +569,16 @@ var clr=(box.is=='loc')?3:5;
           if (lvl) {
               r(this.cardBox[id]).in('.h6-right').clear().addText(lvl);
           }
+          if (timerClear) {
+              r(this.cardBox[id]).in('.timer').clear();
+          }
           if (timer) {
-            r(this.cardBox[id]).in('.timer').clear().addText(timer+'s');
+              r(this.cardBox[id]).in('.timer').clear().addText(timer+'s');
           }
 
+          let dBlock = r(this.cardBox[id]).in('.content .d-block');
+          let dText = r(this.cardBox[id]).in('.content .d-text');
           if(strong) {
-              let dBlock = r(this.cardBox[id]).in('.content .d-block');
               if (strong === -1) {
                   dBlock.clear();
               } else {
@@ -549,7 +587,6 @@ var clr=(box.is=='loc')?3:5;
           }
 
           if (texts) {
-              let dText = r(this.cardBox[id]).in('.content .d-text');
               if (texts === -1) {
                   dText.clear();
               } else {
@@ -563,14 +600,79 @@ var clr=(box.is=='loc')?3:5;
               }
           }
 
+          if (options.contentClear) {
+              dBlock.clear();
+              dText.clear();
+          }
+          if (options.content) {
+              dText.clear();
+              for(let i in options.content) {
+                  dText = r(this.cardBox[id]).in('.content .d-text');
+
+                  let elem = options.content[i];
+                  if (elem.type === 'slot') {
+                      dText = dText.container('slot', 'div');
+
+                      if (elem.res) {
+                          dText
+                              .addJqEl(gam2.model.res.getResIco(elem.res))
+                              .container('amount', 'div')
+                              .addText(elem.amount)
+                              .up();
+                      }
+                      dText = dText.up();
+                  } else if (elem.type === 'slot-out') {
+                      dText = dText
+                          .container('slot slot-output' + (elem.missing? ' slot-req-no-qty': ''), 'div');
+
+                      if (elem.res) {
+                          dText = dText
+                              .addJqEl(gam2.model.res.getResIco(elem.res))
+                              .container(elem.missing ? 'req-amount':'amount', 'div')
+                              .addText(elem.amount)
+                              .up()
+                      }
+                      dText = dText.up();
+                  } else if (elem.type === 'pad') {
+                      let icoClass = 'ico ', icoStyle = '';
+                      if (elem.ship === 'airliner') {
+                          icoClass += 'fas fa-location-arrow fa-4x p-2';
+                      } else if (elem.ship === 'cargo') {
+                          icoClass += 'fas fa-box fa-3x p-3';
+                          icoStyle = "transform: translateX(0px) rotate(45deg)";
+                      } else if (elem.ship === 'transporter') {
+                          icoClass += 'fas fa-brush fa-4x p-1';
+                          icoStyle = "transform: translateX(15px) rotate(-135deg)";
+                      } else {
+                          dText.container('pad', 'div').up();
+                          continue;
+                      }
+                      dText
+                          .container('pad', 'div')
+                          .container(icoClass,'div', icoStyle)
+                          .up()
+                          .up();
+
+                  } else if (elem.type === 'text') {
+                      dText.addText(elem.text).br();
+                  } else if (elem.type === 'br') {
+                      dText.br(('count' in elem)? elem.count: 1);
+                  }
+
+              }
+          }
+
           if (buttons) {
-              buttons = Object.assign({}, {clr: 0, upd: {}, add:[]}, buttons);
+              buttons = Object.assign({}, {'clr': 0, 'addSpacer': 0, 'upd': {}, 'add':[]}, buttons);
 
               let btn = r(this.cardBox[id]).in('.btns');
               let b;
 
               if (buttons.clr) {
                   btn.clear();
+                  if(buttons.addSpacer) {
+                      btn.container('spacer', 'div', 'height:27px;display:block;');
+                  }
               }
               for (b in buttons.upd) {
                   if(!buttons.upd.hasOwnProperty(b)) {
@@ -1123,6 +1225,7 @@ var clr=(box.is=='loc')?3:5;
                     'peopleCost': 0,
                     'powerCost': 0,
                     'is':'box',
+                    'repaint': 0,
                 });
             },
             'locProps': function ( pos,type, lvl, name, crkey='') {
@@ -1190,17 +1293,13 @@ var clr=(box.is=='loc')?3:5;
           'tick': function(box) {
             box.sloti++;
             box.level++;
-            gam2.view.paint('b'+box.pos, box,1);
-            
-          }
-          
+            box.repaint = 1;
+          },
         },
         'dwellings': {
           'tick': function(box) {
-           // box.sloti++;
             box.level++;
-            gam2.view.paint('b' + box.pos, box, 1);
-        
+            box.repaint = 1;
           }
         
         }
@@ -1251,11 +1350,13 @@ var clr=(box.is=='loc')?3:5;
         do{
           if('sloti' in b.p) {
             b.p.sloti++;
+            b.p.repaint = 1;
           }
-        } while(b= b.next);
+        } while(b = b.next);
         //gam2.view.deleteEls(gam2.view.cardBox);
-        gam2.view.deleteEls(gam2.view.cardBox);
-        gam2.view.drawBox(1);
+        //gam2.view.deleteEls(gam2.view.cardBox);
+
+        gam2.view.drawBox();
       },
         'hdl': {
           'ref':function (object, method) {
@@ -1333,10 +1434,7 @@ var clr=(box.is=='loc')?3:5;
               gam2.model.loc.currentPos = [p0,p1,p2,p3].join('.');
               
               gam2.view.drawBox(1);
-              
-              
-
-                gam2.view.showLocOptions(pp, p0, p1, p2, p3);
+              gam2.view.showLocOptions(pp, p0, p1, p2, p3);
             },
             'unlockLoc': function (el, bi, plist) {
                if(Object.keys(gam2.view.cardBox).length) {

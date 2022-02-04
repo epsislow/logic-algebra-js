@@ -402,6 +402,8 @@ var Empires = (function (constants) {
 			this.showProductionQueueHelper();
 
 			this.showPlayerLevelCalculator();
+
+			this.showFleetSizeMaintenanceCalculator();
 			
 			empires.constants.galaxyMaps.getMap(25);
 
@@ -485,6 +487,131 @@ var Empires = (function (constants) {
 		  //var q2=q.slice(18,27);
 		  
 		  this.showTableRes(q, sortCols);
+		},
+		showFleetSizeMaintenanceCalculator: function () {
+			var main = $('main');
+			main.prepend('<table id="fleetsizemaintenance"><thead></thead><tbody></tbody></table><br/>');
+
+			$('#fleetsizemaintenance thead').append(
+				$('<tr>')
+					.append($('<th>').html('Fleet Size Maintenance Calculator').attr('colspan', 5))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Economy').addClass('med'))
+					.append($('<th>').html('Fleet size').addClass('med'))
+					.append($('<th>').html('Free supported <sup>fleet size</sup>').addClass('med'))
+					.append($('<th>').html('Above supported <sup>fleet size</sup>').addClass('med'))
+					.append($('<th>').html('Maintenance cost <sup>cred/h</sup>').addClass('med'))
+			);
+
+			const econ = $('<input>').attr('id', 'fsmecon').addClass('qty').val(1393);
+			const fleet = $('<input>').attr('id', 'fsmfleet').addClass('bigqty').val(114625);
+			const freesup = $('<input>').attr('id', 'fsmfreesup').addClass('bigqty').val(111809);
+			const abovesup = $('<input>').attr('id', 'fsmabovesup').addClass('bigqty').val(114625-111809);
+			const cost = $('<input>').attr('id', 'fsmcost').addClass('bigqty').val(9);
+
+			const deltaecon= $('<span>').addClass('delta').html(0);
+			const deltafleet= $('<span>').addClass('delta').html(0);
+			const deltafreesup= $('<span>').addClass('delta').html(0);
+			const deltaabovesup= $('<span>').addClass('delta').html(0);
+			const deltacost= $('<span>').addClass('delta').html(0);
+
+
+			$('#fleetsizemaintenance tbody')
+				.append(
+					$('<tr>')
+						.append($('<td>').html(econ))
+						.append($('<td>').html(fleet))
+						.append($('<td>').html(freesup))
+						.append($('<td>').html(abovesup))
+						.append($('<td>').html(cost))
+				).append(
+				$('<tr>')
+					.append($('<td>').html(deltaecon))
+					.append($('<td>').html(deltafleet))
+					.append($('<td>').html(deltafreesup))
+					.append($('<td>').html(deltaabovesup))
+					.append($('<td>').html(deltacost))
+			);
+
+			var oldecon = 0;
+			var oldfleet = 0;
+			var oldfreesup = 0;
+			var oldabovesup = 0;
+			var oldcost = 0;
+
+			deltaecon.attr('style','margin-right:40px').before($('<button>').addClass('tnyl').html('0').attr('style','margin-right:20px').click(resetCalc));
+
+			econ.after($('<button>').addClass('tnyl').html('-').click(function () {
+				econ.val((parseInt(econ.val()) |0) - 1);
+				calcFsm();
+				deltaecon.html((parseInt(deltaecon.html()) | 0) - 1);
+			})).before($('<button>').addClass('tnyr').html('+').click(function () {
+				econ.val((parseInt(econ.val()) |0) + 1);
+				calcFsm();
+				deltaecon.html((parseInt(deltaecon.html()) | 0) + 1);
+			}));
+
+			fleet.after($('<button>').addClass('tnyl').html('-').click(function () {
+				fleet.val((parseInt(fleet.val()) |0) - 500);
+				calcFsm();
+				deltafleet.html((parseInt(deltafleet.html()) | 0) - 500);
+			})).before($('<button>').addClass('tnyr').html('+').click(function () {
+				fleet.val((parseInt(fleet.val()) |0) + 500);
+				calcFsm();
+				deltafleet.html((parseInt(deltafleet.html()) | 0) + 500);
+			}));
+
+			function calcFsm() {
+				const econval = parseInt(econ.val());
+				const fleetval = parseInt(fleet.val() | 0);
+
+				var freesupval = Math.trunc(Math.pow(econval, 1.6) + Math.pow(econval/100, 3.2));
+				var abovesupval = fleetval - freesupval;
+				var costval = 0;
+
+				if (abovesupval <= 0) {
+					abovesupval = 0;
+					costval = 0;
+				} else {
+					costval = Math.round(Math.pow(abovesupval/125, 0.7));
+				}
+
+				freesup.val(freesupval);
+				abovesup.val(abovesupval);
+				cost.val(costval);
+
+				deltafreesup.html(Math.round((freesupval - oldfreesup)*100)/100);
+				deltaabovesup.html(Math.round((abovesupval - oldabovesup)*100)/100);
+				deltacost.html(Math.round((costval - oldcost)*100)/100);
+			}
+
+			function resetCalc() {
+				deltaecon.html(0);
+				deltafleet.html(0);
+				deltafreesup.html(0);
+				deltaabovesup.html(0);
+				deltacost.html(0);
+
+				oldecon = econ.val();
+				oldfleet = fleet.val();
+				oldfreesup = freesup.val();
+				oldabovesup = abovesup.val();
+				oldcost = cost.val();
+			}
+
+			econ.keyup(function () {
+				oldecon = econ.val();
+				calcFsm();
+			});
+
+			fleet.keyup(function () {
+				oldfleet = fleet.val();
+				calcFsm();
+			});
+
+			calcFsm();
+			resetCalc();
 		},
 		showPlayerLevelCalculator: function () {
 			//e= 575; ft = 18125 + 82518 + 1900;  p= Math.pow(e * 100 + ft, 0.25)
