@@ -236,14 +236,17 @@ var gam2 = {
       'box': {
           'miner': {
               'paint': function (id, box) {
+                var res = gam2.model.res.reg;
                   return {
                       lvl: box.level,
                       btns: {clr: 1,'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]},
                       content: [
-                          {type: 'slot', res: 20+ box.sloti, amount: 20},
+                          /*{type: 'slot', res: 20+ box.sloti, amount: 20},
                           {type: 'slot', res: 21+ box.sloti, amount: 20},
-                          {type: 'br'},
+                          {type: 'br'},*/
                           {type: 'slot-out', res: 30+ box.sloti, amount: 20, missing: 1},
+                          {type: 'br'},
+                          {type: 'text', text: 'Resource: '+ res[(30 +box.sloti) % res.length].name}
                       ],
                   };
               }
