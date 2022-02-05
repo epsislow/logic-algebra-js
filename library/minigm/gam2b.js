@@ -253,10 +253,10 @@ var gam2 = {
           },
           'dwellings':{
             'paint': function(id, box, clear = 0) {
-              /*if(!clear) {
-                return {};
-              }*/
-              //console.log('tt')
+              if(!clear) {
+            //    return {};
+              }
+              //console.log(clear)
               return {
                 lvl: box.level,
                 timerClear: 1,
@@ -1284,7 +1284,7 @@ var clr=(box.is=='loc')?3:5;
                     'peopleCost': 0,
                     'powerCost': 0,
                     'is':'box',
-                    'repaint': 0,
+                    'repaint': 1,
                     'timer':0, 
                 });
             },
@@ -1388,6 +1388,7 @@ var clr=(box.is=='loc')?3:5;
                         
                         if (box.timer !== box.everySec) {
                           if (pos === cpos) {
+                            
                             gam2.view.paint('b' + box.pos, box, box.repaint);
                           }
                           continue;
