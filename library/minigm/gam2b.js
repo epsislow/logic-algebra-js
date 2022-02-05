@@ -235,7 +235,7 @@ var gam2 = {
       'cardMenu': {},
       'box': {
           'miner': {
-              'paint': function (id, box) {
+              'paint': function (id, box, clear=0) {
                 var res = gam2.model.res.reg;
                   return {
                       lvl: box.level,
@@ -252,7 +252,11 @@ var gam2 = {
               }
           },
           'dwellings':{
-            'paint': function(id, box) {
+            'paint': function(id, box, clear = 0) {
+              /*if(!clear) {
+                return {};
+              }*/
+              //console.log('tt')
               return {
                 lvl: box.level,
                 timerClear: 1,
@@ -533,6 +537,8 @@ var clr=(box.is=='loc')?3:5;
         return cel;
       },
       'paint': function(id, box, clear=0) {
+        box.repaint = 0;
+                
         var opt= {'btns': {}}; // = {btns:{'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]}};
 
         if(clear) {
@@ -1382,18 +1388,21 @@ var clr=(box.is=='loc')?3:5;
                         
                         if (box.timer !== box.everySec) {
                           if (pos === cpos) {
-                            gam2.view.paint('b' + box.pos, box, 1);
+                            gam2.view.paint('b' + box.pos, box, box.repaint);
                           }
-                            continue;
+                          continue;
                         }
                         box.timer = 0;
                     
                     if(box.type in gam2.action.box && ('tick' in gam2.action.box[box.type])) {
                       gam2.action.box[box.type].tick(box);
-                      
                     }
                     if (pos === cpos) {
-                      gam2.view.paint('b' + box.pos, box, 1);
+                      if(box.type==='dwellings') {
+                        console.log(box.repaint);
+                      }
+                      //console.log(box.type);
+                      gam2.view.paint('b' + box.pos, box, box.repaint);
                     }
          }
       }
