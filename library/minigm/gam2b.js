@@ -50,6 +50,7 @@ var gam2 = {
         this.init.boot();
         this.view.draw();
         this.init.events();
+        console.log(gam2.model.box.list);
     },
     'init': {
         'parents': function () {
@@ -1271,6 +1272,8 @@ var clr=(box.is=='loc')?3:5;
                 });
 
                 this.addSlot = this.getAddFunc({
+                    'posi':-1,
+                    'poso':-1,
                     'item': 0,
                     'amount': 0,
                     'unitValue': 0,
@@ -1294,13 +1297,33 @@ var clr=(box.is=='loc')?3:5;
                   if(!('slot' in pub.p)) {
                     return;
                   }
-                  pub.p.slot = gam2.model.constr.addSlot();
+                  pub.p.slot = gam2.model.constr.addSlot({'posi':0});
+                  
+                  let slots = pub.p.slots | 1;
+                  if(slots > 1) {
+                    let sl= pub.p.slot;
+                    for(let i=0; i<slots-1;i++) {
+                      sl = sl.nextObj(
+                        gam2.model.constr.addSlot({'posi':i+1})
+                      )
+                    }
+                  }
                   
                   if(!('slotOut' in pub.p)) {
                     return;
                   }
                   
-                  pub.p.slotOut = gam2.model.constr.addSlot();
+                  pub.p.slotOut = gam2.model.constr.addSlot({'poso':0});
+                  let slotsOut = pub.p.slotsOut | 1;
+                  if (slotsOut > 1) {
+                    let sl = pub.p.slotOut;
+                    for (let i = 0; i < slotsOut-1; i++) {
+                      sl = sl.nextObj(
+                        gam2.model.constr.addSlot({'poso':i+1})
+                      )
+                    }
+                  }
+                  
                 });
             },
             'locProps': function ( pos,type, lvl, name, crkey='') {
