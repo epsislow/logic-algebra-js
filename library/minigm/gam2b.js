@@ -153,7 +153,7 @@ var gam2 = {
               this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, pos:4, level:3, levelCost: 10})
+              this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10})
               //this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:4, level:1, levelCost: 10})
             )
             .nextObj(
@@ -1326,7 +1326,8 @@ var clr=(box.is=='loc')?3:5;
                   let slotsOut = pub.p.slotsOut | 1;
                   if (slotsOut > 1) {
                     let sl = pub.p.slotOut;
-                    for (let i = 0; i < slotsOut-1; i++) {
+                    console.log(pub.p);
+                    for (let i = 0; i < slotsOut-2; i++) {
                       sl = sl.nextObj(
                         gam2.model.constr.addSlot({'poso':i+1})
                       )
