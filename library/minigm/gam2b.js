@@ -1387,8 +1387,8 @@ var clr=(box.is=='loc')?3:5;
                         box.timer++;
                         
                         if (box.timer !== box.everySec) {
-                          if (pos === cpos) {
-                            
+                          if (pos === cpos &&box.repaint) {
+                            box.repaint=0;
                             gam2.view.paint('b' + box.pos, box, box.repaint);
                           }
                           continue;
@@ -1398,10 +1398,8 @@ var clr=(box.is=='loc')?3:5;
                     if(box.type in gam2.action.box && ('tick' in gam2.action.box[box.type])) {
                       gam2.action.box[box.type].tick(box);
                     }
-                    if (pos === cpos) {
-                      if(box.type==='dwellings') {
-                        console.log(box.repaint);
-                      }
+                    if (pos === cpos && box.repaint) {
+                      box.repaint=0;
                       //console.log(box.type);
                       gam2.view.paint('b' + box.pos, box, box.repaint);
                     }
