@@ -289,16 +289,24 @@ var gam2 = {
           },
           'cargo': {
               'paint': function (id, box) {
+                  var sl = gam2.model.constr.getPropList(box.slot);
+                  var content=[];
+                  for(let i=0; i<sl.length;i++) {
+                    content.push(
+                      {type: 'slot', res: 20+i+ box.sloti, amount: i},
+                    );
+                  }
                   return {
                       lvl: box.level,
                       timerClear: 1,
                       btns:{clr: 1, addSpacer:1},
-                      content: [
+                    /*  content: [
                           {type: 'slot', res: 20+ box.sloti, amount: 20},
                           {type: 'slot', res: 21+ box.sloti, amount: 20},
                           {type: 'slot', res: 22+ box.sloti, amount: 20},
                           {type: 'slot', res: 23+ box.sloti, amount: 20},
-                      ],
+                      ],*/
+                      content:content,
                   };
               }
           },
@@ -1302,7 +1310,8 @@ var clr=(box.is=='loc')?3:5;
                   let slots = pub.p.slots | 1;
                   if(slots > 1) {
                     let sl= pub.p.slot;
-                    for(let i=0; i<slots-1;i++) {
+                   // console.log(pub.p);
+                    for(let i=0; i<slots-2;i++) {
                       sl = sl.nextObj(
                         gam2.model.constr.addSlot({'posi':i+1})
                       )
