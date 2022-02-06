@@ -154,7 +154,6 @@ var gam2 = {
             )
             .nextObj(
               this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10})
-              //this.model.constr.addBox({type:'cargo', sloti:16, slots: 8, slot: {}, pos:4, level:1, levelCost: 10})
             )
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
@@ -255,7 +254,7 @@ var gam2 = {
           'dwellings':{
             'paint': function(id, box, clear = 0) {
               if(!clear) {
-            //    return {};
+                return {timerClear:1};
               }
               //console.log(clear)
               return {
@@ -670,7 +669,7 @@ var clr=(box.is=='loc')?3:5;
               dBlock.clear();
               dText.clear();
           }
-          if (options.content) {
+          if (options.content.length) {
               dText.clear();
               for(let i in options.content) {
                   dText = r(this.cardBox[id]).in('.content .d-text');
@@ -1435,7 +1434,7 @@ var clr=(box.is=='loc')?3:5;
                         box.timer++;
                         
                         if (box.timer !== box.everySec) {
-                          if (pos === cpos &&box.repaint) {
+                          if (pos === cpos) {
                             box.repaint=0;
                             gam2.view.paint('b' + box.pos, box, box.repaint);
                           }
