@@ -262,7 +262,7 @@ var gam2 = {
                 timerClear: 1,
                 btns: { clr: 1, addSpacer: 1 },
                 content: [
-                    {type: 'slot', res: 8, amount: 3},
+                    {type: 'slot', res: 8, amount: 3, missing:1},
                   ],
               };
             }
@@ -673,7 +673,7 @@ var clr=(box.is=='loc')?3:5;
                       if (elem.res) {
                           dText
                               .addJqEl(gam2.model.res.getResIco(elem.res))
-                              .container('amount', 'div')
+                              .container(elem.missing ? 'req-amount':'amount', 'div')
                               .addText(elem.amount)
                               .up();
                       }
@@ -1199,10 +1199,11 @@ var clr=(box.is=='loc')?3:5;
             },
         },
         'constr': {
-            'getAddFunc': function (defaultProp) {
+            'getAddFunc': function (defaultProp, callback=0) {
                 var defaults = JSON.parse(JSON.stringify(defaultProp));
 
-                return function (prop) {
+                return (function(callback) {
+                  return function (prop) {
                     var pub = {
                         'p':{...defaults, ...prop},
                         'parent': null,
@@ -1253,9 +1254,11 @@ var clr=(box.is=='loc')?3:5;
                     };
                     pub.first = pub;
                     pub.firstParent = pub;
-
+                    if(typeof callback === 'function') {
+                      callback.apply(null, [pub]);
+                    }
                     return pub;
-                }
+                }})(callback);
             },
             'init': function () {
                 this.addLoc = this.getAddFunc({
@@ -1273,6 +1276,7 @@ var clr=(box.is=='loc')?3:5;
                     'unitValue': 0,
                     'form':'',
                     'is':'slot',
+                    'requireAmount': 0,
                 });
 
                 this.addBox = this.getAddFunc({
@@ -1286,6 +1290,17 @@ var clr=(box.is=='loc')?3:5;
                     'is':'box',
                     'repaint': 1,
                     'timer':0, 
+                }, function(pub) {
+                  if(!('slot' in pub.p)) {
+                    return;
+                  }
+                  pub.p.slot = gam2.model.constr.addSlot();
+                  
+                  if(!('slotOut' in pub.p)) {
+                    return;
+                  }
+                  
+                  pub.p.slotOut = gam2.model.constr.addSlot();
                 });
             },
             'locProps': function ( pos,type, lvl, name, crkey='') {
