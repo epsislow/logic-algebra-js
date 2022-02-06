@@ -268,7 +268,8 @@ var gam2 = {
             }
           },
           'storage':{
-            'paint': function(id, box) {
+            'paint': function(id, box, clear=0) {
+              
             return {
               lvl: box.level,
               timerClear: 1,
@@ -295,16 +296,11 @@ var gam2 = {
                       {type: 'slot', res: 20+i+ box.sloti, amount: i},
                     );
                   }
+                  
                   return {
                       lvl: box.level,
                       timerClear: 1,
                       btns:{clr: 1, addSpacer:1},
-                    /*  content: [
-                          {type: 'slot', res: 20+ box.sloti, amount: 20},
-                          {type: 'slot', res: 21+ box.sloti, amount: 20},
-                          {type: 'slot', res: 22+ box.sloti, amount: 20},
-                          {type: 'slot', res: 23+ box.sloti, amount: 20},
-                      ],*/
                       content:content,
                   };
               }
