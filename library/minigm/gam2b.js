@@ -145,7 +145,8 @@ var gam2 = {
           window.cr = cr;
          // console.log('cr', cr);
           
-          var blist = this.model.constr.addBox({type:'miner', everySec: 1, sloti:0, slots:1, slot: {}, pos:1, level:1, levelCost:10})
+          var blist = this.model.constr.addBox(
+              this.action.box.miner.defaults({type:'miner', pos:1}))
             .nextObj(
               this.model.constr.addBox({type:'dwellings', everySec: 15, pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
@@ -236,19 +237,34 @@ var gam2 = {
       'box': {
           'miner': {
               'paint': function (id, box, clear=0) {
-                var res = gam2.model.res.reg;
-                  return {
-                      lvl: box.level,
-                      btns: {clr: 1,'add':[['Lvl up', (function(box) { return function() {gam2.action.lvlUp(box)}})(box), 'btn-success']]},
-                      content: [
-                          /*{type: 'slot', res: 20+ box.sloti, amount: 20},
-                          {type: 'slot', res: 21+ box.sloti, amount: 20},
-                          {type: 'br'},*/
-                          {type: 'slot-out', res: 30+ box.sloti, amount: 20, missing: 1},
-                          {type: 'br'},
-                          {type: 'text', text: 'Resource: '+ res[(30 +box.sloti) % res.length].name}
-                      ],
-                  };
+                  let opt = {};
+                  let act = gam2.action.box.miner;
+
+                  let state = gam2.action.box.miner.state(box);
+
+                  let btns = {};
+
+                  if(clear) {
+                      btns.clr = 1;
+                      btns.add = state.actions();
+                  } else {
+                      btns.add = state.actionsUpdate();
+                  }
+
+                  opt.lvl = box.level;
+
+                  opt.btns = btns;
+                  let clearTikOpt = state.clearTikOpt();
+                  if (clearTikOpt === 1) {
+                      opt.tikUp = true;
+                  }
+                  if (clearTikOpt === -1) {
+                      opt.tikUp = false
+                      opt.timerClear = 1;
+                  }
+                  opt.content = state.content();
+
+                  return opt;
               }
           },
           'dwellings':{
@@ -318,7 +334,6 @@ var gam2 = {
           },
           'crafter': {
             'paint': function(id, box) {
-              var res = gam2.model.res.reg;
               return {
                 lvl: box.level,
                 btns: { clr: 1, 'add': [['Lvl up', (function(box) { return function() { gam2.action.lvlUp(box) } })(box), 'btn-success']] },
@@ -337,7 +352,7 @@ var gam2 = {
       },
       'draw':function() {
         this.drawLoc(1);
-        this.drawBox(1);
+        this.drawBoxes(1);
       },
       'drawLoc': function() {
         var cr= this.model.loc.current;
@@ -380,7 +395,6 @@ var gam2 = {
            }
            this.view.locEnd = divs[1];
        }
-      // console.log(p);
       },
       'paintTopBar': function(coins) {
         gam2.init.topBar(
@@ -389,7 +403,14 @@ var gam2 = {
           coins.power[0], coins.power[1]
         )
       },
-      'drawBox': function(repaintAll=0) {
+      'drawBox': function(box, paintAll = 0) {
+          let id = 'b' + box.pos;
+          if(paintAll) {
+              this.drawCard(id, box);
+          }
+          this.paint(id, box,paintAll || box.repaint);
+      },
+      'drawBoxes': function(paintAll=0) {
         var cpos = gam2.model.loc.currentPos;
 
         if(!(cpos in gam2.model.box.list)) {
@@ -400,18 +421,16 @@ var gam2 = {
         } else {
           gam2.init.topBar();
         }
-        var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
-        if (p.length) {
-          var el;
+        let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+        if (!p.length) {
+            return;
+        }
         
-          for (const i in p) {
-            if(repaintAll) {
-                el = this.drawCard('b' + p[i].pos, p[i]);
+        for (const i in p) {
+            if(!p.hasOwnProperty(i)) {
+                continue;
             }
-            if (repaintAll || p[i].repaint) {
-                this.paint('b'+p[i].pos, p[i], p[i].repaint);
-            }
-          }
+            this.drawBox(p[i], paintAll);
         }
         
       },
@@ -461,49 +480,7 @@ var clr=(box.is=='loc')?3:5;
                   .container('media-body ml-2 mb-0 small lh-125', 'p')
                   .container('d-block text-light', 'strong')
                   .up();
-                
-                /*
-                if(box.pad && ('pads' in box)) {
-                  for(let p=0; p< box.pads;p++) {
-                    cel = cel
-                      .container('pad', 'div')
-                         .container('ico fas fa-location-arrow fa-4x p-2','div')
-                         //.container('fas fa-box fa-3x p-3', 'div', "transform: translateX(0px) rotate(45deg)")
-                         //.container('fas fa-brush fa-4x p-1', 'div', "transform: translateX(15px) rotate(-135deg)")
-                        .up()
-                      .up();
-                  }
-                }
-                if(box.slot && ('sloti' in box)) {
-                  var gi=box.sloti;
-                  
-                  for(let s= 0; s< box.slots;s++){
-                
-                    cel = cel
-                      .container('slot', 'div')
-                      .addJqEl(gam2.model.res.getResIco(gi+s))
-                        .container('amount','div')
-                        .addText(50)
-                        .up()
-                      .up();
-                  }
-                  
-                  if(box.slot && ('slotsOut' in box)) {
-                    cel = cel.br();
-                    //.container('slot-spc','div').up();
-                  
-                    for (let s = 0; s < box.slotsOut; s++) {
-                      cel = cel
-                        .container('slot slot-output slot-req-no-qty', 'div')
-                        .addJqEl(gam2.model.res.getResIco(gi+ s +5))
-                        .container('req-amount', 'div')
-                        .addText(30)
-                        .up()
-                        .up();
-                    }
-                  }
-                }
-                  */
+
               cel = cel
                   
                   .container('d-text', 'div','clear: both')
@@ -587,8 +564,6 @@ var clr=(box.is=='loc')?3:5;
             opt.tikDelay = -box.timer;
           }
           opt.tikSec= box.everySec;
-          
-          opt.tikUp=true;
         }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
@@ -596,6 +571,9 @@ var clr=(box.is=='loc')?3:5;
       'paintBox': function(id, options = {}) {
           if (!(id in this.cardBox)) {
               return;
+          }
+          if (id === 'b1') {
+              //console.log(options);
           }
           options = Object.assign({}, {
               'title': 0,
@@ -1042,6 +1020,39 @@ var clr=(box.is=='loc')?3:5;
           'currentPos':'0.0.0.0',
         },
         'box': {
+            'addSlotsFor': function (box) {
+                if(!('slot' in box)) {
+                    return;
+                }
+                box.slot = gam2.model.constr.addSlot({'posi':0});
+
+                let slots = box.slots | 1;
+                if(slots > 1) {
+                    let sl= box.slot;
+                    // console.log(pub.p);
+                    for(let i=0; i<slots-2;i++) {
+                        sl = sl.nextObj(
+                            gam2.model.constr.addSlot({'posi':i+1})
+                        )
+                    }
+                }
+            },
+            'addSlotOutsFor': function (box) {
+                if(!('slotOut' in box)) {
+                    return;
+                }
+
+                box.slotOut = gam2.model.constr.addSlot({'poso':0});
+                let slotsOut = box.slotsOut | 1;
+                if (slotsOut > 1) {
+                    let sl = box.slotOut;
+                    for (let i = 0; i < slotsOut-2; i++) {
+                        sl = sl.nextObj(
+                            gam2.model.constr.addSlot({'poso':i+1})
+                        )
+                    }
+                }
+            },
           'list': null,
           'coins': {},
           'coin': {
@@ -1265,7 +1276,7 @@ var clr=(box.is=='loc')?3:5;
                 }})(callback);
             },
             'init': function () {
-                this.addLoc = this.getAddFunc({
+                this.addLoc= this.getAddFunc({
                     'name': '',
                     'type': '',
                     'lvl': 0,
@@ -1274,7 +1285,7 @@ var clr=(box.is=='loc')?3:5;
                     'is':'loc',
                 });
 
-                this.addSlot = this.getAddFunc({
+                this.addSlot= this.getAddFunc({
                     'posi':-1,
                     'poso':-1,
                     'item': 0,
@@ -1285,7 +1296,7 @@ var clr=(box.is=='loc')?3:5;
                     'requireAmount': 0,
                 });
 
-                this.addBox = this.getAddFunc({
+                this.addBox= this.getAddFunc({
                     'type': 0,
                     'pos':1,
                     'level': 0,
@@ -1295,39 +1306,10 @@ var clr=(box.is=='loc')?3:5;
                     'powerCost': 0,
                     'is':'box',
                     'repaint': 1,
-                    'timer':0, 
+                    'timer':0,
                 }, function(pub) {
-                  if(!('slot' in pub.p)) {
-                    return;
-                  }
-                  pub.p.slot = gam2.model.constr.addSlot({'posi':0});
-                  
-                  let slots = pub.p.slots | 1;
-                  if(slots > 1) {
-                    let sl= pub.p.slot;
-                   // console.log(pub.p);
-                    for(let i=0; i<slots-2;i++) {
-                      sl = sl.nextObj(
-                        gam2.model.constr.addSlot({'posi':i+1})
-                      )
-                    }
-                  }
-                  
-                  if(!('slotOut' in pub.p)) {
-                    return;
-                  }
-                  
-                  pub.p.slotOut = gam2.model.constr.addSlot({'poso':0});
-                  let slotsOut = pub.p.slotsOut | 1;
-                  if (slotsOut > 1) {
-                    let sl = pub.p.slotOut;
-                    console.log(pub.p);
-                    for (let i = 0; i < slotsOut-2; i++) {
-                      sl = sl.nextObj(
-                        gam2.model.constr.addSlot({'poso':i+1})
-                      )
-                    }
-                  }
+                    gam2.model.box.addSlotsFor(pub.p);
+                    gam2.model.box.addSlotOutsFor(pub.p);
                   
                 });
             },
@@ -1391,21 +1373,176 @@ var clr=(box.is=='loc')?3:5;
         }
     },
     'action': {
+        'getCoins': function () {
+            var cpos = gam2.model.loc.currentPos;
+
+            if (!(cpos in gam2.model.box.coins)) {
+                gam2.model.box.coins[cpos] = {
+                    'money': 0,
+                    'ppl': [0, 0],
+                    'power': [0, 0],
+                };
+            }
+
+            return gam2.model.box.coins[cpos];
+        },
       'box': {
         'miner': {
           'tick': function(box) {
-            box.sloti++;
-            box.level++;
+            if (box.outputId) {
+                gam2.action.box.miner.mine(box);
+            }
             box.repaint = 1;
+            box.clearTik = 1;
           },
+          'mine': function (box) {
+              if (!box.outputId) {
+                  return;
+              }
+              let slot = box.slotOut.p;
+              if (slot.item !== box.outputId) {
+                  let res = gam2.model.res.reg;
+                  slot.item = box.outputId;
+                  slot.unitValue = box.outputId - 5;
+                  slot.amount = 0;
+              }
+              if (slot.amount > box.maxAmount) {
+                    //nothing to do, all is done
+              } else if (box.maxAmount - slot.amount > box.tickAmount ) {
+                  slot.amount += box.tickAmount;
+              } else {
+                  slot.amount = box.maxAmount;
+              }
+          },
+          'defaults': function (box) {
+              box.level = 1;
+              box.levelCost = 10;
+              box.tickAmount = 1;
+              box.maxTickAmount = 50;
+              box.maxAmount = 100;
+              box.outputId = 0;
+              box.everySec = 0;
+              box.slotOut = {};
+              box.slotsOut = 1;
+              box.clearTik = 0;
+              return box;
+          },
+          'lvlUp': function (box) {
+              box.level++;
+              box.tickAmount++;
+              box.maxAmount += 100;
+
+              box.repaint = 1;
+              gam2.view.drawBox(box,0);
+          },
+          'stopMine': function (box) {
+              box.outputId = 0;
+              box.everySec = 0;
+              box.clearTik = -1;
+
+              box.repaint = 1;
+              gam2.view.drawBox(box,0);
+          },
+          'sellAll': function (box) {
+              let slot = box.slotOut.p;
+              if (!slot.amount) {
+                  return;
+              }
+              let coins = gam2.action.getCoins();
+              coins.money += slot.amount * slot.unitValue;
+
+              slot.amount = 0;
+
+              box.repaint = 1;
+              gam2.view.paintTopBar(coins);
+              gam2.view.drawBox(box,0);
+          },
+          'prospect': function (box) {
+              box.outputId = 10;
+              box.everySec = 1;
+              box.clearTik = -1;
+
+              box.repaint = 1;
+              gam2.view.drawBox(box,0);
+          },
+          'change': function (box) {
+              box.outputId++;
+              if (box.outputId > 15) {
+                  box.outputId = 10;
+              }
+
+              let slot = box.slotOut.p;
+              if (slot.item !== box.outputId) {
+                  let res = gam2.model.res.reg;
+                  slot.item = box.outputId;
+                  slot.unitValue = box.outputId - 5;
+                  slot.amount = 0;
+              }
+
+              box.repaint = 1;
+              gam2.view.drawBox(box,0);
+          },
+          'state': function (box) {
+              let state = {};
+              let slot = box.slotOut.p;
+
+              state.actions = function () {
+                  let acts = [];
+
+                  if (box.tickAmount < box.maxTickAmount) {
+                      acts.push(['Lvl up', (function(box) { return function() {gam2.action.box.miner.lvlUp(box)}})(box), 'btn-success']);
+                  }
+
+                  if (!box.outputId) {
+                      acts.push(['Prospect', (function(box) { return function() {gam2.action.box.miner.prospect(box)}})(box), 'btn-info']);
+                  }
+                  if (box.outputId) {
+                      acts.push(['>', (function(box) { return function() {gam2.action.box.miner.change(box)}})(box), 'btn-success']);
+                      acts.push(['Stop', (function(box) { return function() {gam2.action.box.miner.stopMine(box)}})(box), 'btn-danger']);
+                  }
+                  if (slot.amount) {
+                      acts.push(['Sell*', (function(box) { return function() {gam2.action.box.miner.sellAll(box)}})(box), 'btn-warning']);
+                  }
+
+
+                  return acts;
+              }
+
+              state.content = function () {
+                  let conts = {};
+                  let missing = 1;
+
+                  if (slot.item > 0) {
+                      missing = 0;
+                  }
+
+                  conts = [
+                      {type: 'slot-out', res: slot.item, amount: slot.amount, missing: missing},
+                      {type: 'br'},
+                      /*  {type: 'text', text: 'Resource: '+ res[(30 + box.outputId) % res.length].name}*/
+                  ]
+
+                  return conts;
+              }
+
+              state.clearTikOpt = function () {
+                  if (!box.clearTik) {
+                      return false;
+                  }
+                  let clearTik = box.clearTik;
+                  box.clearTik = 0;
+                  return clearTik;
+              }
+
+              return state;
+          }
         },
         'dwellings': {
           'tick': function(box) {
             box.level++;
             box.repaint = 1;
-          }
-        
-        }
+          },
+        },
       },
       'everySec': function() {
       var cpos = gam2.model.loc.currentPos;
@@ -1442,8 +1579,6 @@ var clr=(box.is=='loc')?3:5;
                       gam2.action.box[box.type].tick(box);
                     }
                     if (pos === cpos && box.repaint) {
-                      box.repaint=0;
-                      //console.log(box.type);
                       gam2.view.paint('b' + box.pos, box, box.repaint);
                     }
          }
@@ -1465,7 +1600,7 @@ var clr=(box.is=='loc')?3:5;
         //gam2.view.deleteEls(gam2.view.cardBox);
         //gam2.view.deleteEls(gam2.view.cardBox);
 
-        gam2.view.drawBox();
+        gam2.view.drawBoxes();
       },
         'hdl': {
           'ref':function (object, method) {
@@ -1542,7 +1677,7 @@ var clr=(box.is=='loc')?3:5;
               
               gam2.model.loc.currentPos = [p0,p1,p2,p3].join('.');
               
-              gam2.view.drawBox(1);
+              gam2.view.drawBoxes(1);
               gam2.view.showLocOptions(pp, p0, p1, p2, p3);
             },
             'unlockLoc': function (el, bi, plist) {
