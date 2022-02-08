@@ -52,6 +52,27 @@ var gam2 = {
         this.init.events();
         console.log(gam2.model.box.list);
     },
+    'mem': {
+        'saveBox': function () {
+            let cpos = gam2.model.loc.currentPos;
+            let c = JSON.stringify(gam2.model.box.toObj(gam2.model.box.list[cpos].p));
+            console.log(c);
+
+            //c = gam2.model.box.toObj(gam2.model.box.list['7.5.7.2'].p); JSON.stringify(c);
+
+        },
+        'loadBox': function () {
+            let c = "{\"type\":\"miner\",\"pos\":1,\"level\":4,\"levelCost\":158,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":4,\"maxTickAmount\":50,\"maxAmount\":3100,\"outputId\":13,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":13,\"amount\":201,\"unitValue\":8,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"clearTik\":0}";
+
+            let cpos = gam2.model.loc.currentPos;
+
+            gam2.model.box.list[cpos].p = gam2.model.box.fromObj(JSON.parse(c));
+            gam2.model.box.list[cpos].p.clearTik = 1;
+
+            //gam2.model.box.fromObj(JSON.parse(c))
+            gam2.view.drawBoxes();
+        }
+    },
     'init': {
         'parents': function () {
           this.view = gam2.view;
@@ -1057,6 +1078,60 @@ var clr=(box.is=='loc')?3:5;
                     }
                 }
             },
+            'fromObj': function (pub) {
+                let box = {};
+                for(let b in pub) {
+                    if (!pub.hasOwnProperty(b)) {
+                        continue;
+                    }
+                    if (Array.isArray(pub[b])) {
+                        if(!pub[b].length) {
+                            continue;
+                        }
+                        let first = pub[b][0];
+                        if (typeof first !== 'object' && !('is' in first)) {
+                            continue;
+                        }
+                        let chain = null;
+                        let idx = 0;
+                        for(let f in pub[b]) {
+                            if (!pub[b].hasOwnProperty(f)) {
+                                continue;
+                            }
+                            if (first.is === 'slot') {
+                                if (idx === 0) {
+                                    chain = gam2.model.constr.addSlot(pub[b][f]);
+                                } else {
+                                    chain.nextObj(
+                                        gam2.model.constr.addSlot(pub[b][f])
+                                    );
+                                }
+                            }
+                            idx++;
+                        }
+                        box[b] = chain;
+                    } else {
+                        box[b] = pub[b];
+                    }
+                }
+
+                return box;
+            },
+            'toObj': function (box) {
+                let pub = {};
+                for(let b in box) {
+                    if (!box.hasOwnProperty(b)) {
+                        continue;
+                    }
+                    if (typeof box[b] === 'object' &&  ('p' in box[b])) {
+                        pub[b] = gam2.model.constr.getPropList(box[b].first, 1 ,0);
+                    } else {
+                        pub[b] = box[b];
+                    }
+                }
+
+                return pub;
+            },
           'list': null,
           'coins': {},
           'coin': {
@@ -1314,7 +1389,6 @@ var clr=(box.is=='loc')?3:5;
                 }, function(pub) {
                     gam2.model.box.addSlotsFor(pub.p);
                     gam2.model.box.addSlotOutsFor(pub.p);
-                  
                 });
             },
             'locProps': function ( pos,type, lvl, name, crkey='') {
@@ -1442,13 +1516,15 @@ var clr=(box.is=='loc')?3:5;
 
               box.level++;
               box.tickAmount++;
-              box.maxAmount += 100;
+              box.maxAmount += 1000;
 
               box.repaint = 1;
               gam2.view.paintTopBar(coins);
               gam2.view.drawBox(box,0);
           },
           'stopMine': function (box) {
+              let bonusAmount = [2, 1, 1, 0, 0];
+              box.tickAmount -= bonusAmount[(box.outputId - 10)];
               box.outputId = 0;
               box.everySec = 0;
               box.clearTik = -1;
@@ -1472,6 +1548,9 @@ var clr=(box.is=='loc')?3:5;
           },
           'prospect': function (box) {
               box.outputId = 10;
+              let bonusAmount = [2, 1, 1, 0, 0];
+              box.tickAmount += bonusAmount[(box.outputId - 10)];
+
               let slot = box.slotOut.p;
               if(slot.item === 0) {
                   slot.item = box.outputId;
@@ -1485,10 +1564,19 @@ var clr=(box.is=='loc')?3:5;
               gam2.view.drawBox(box,0);
           },
           'change': function (box) {
+              //   0  1  2  3  4
+              //  10 11 12 13 14
+              //   3  2  2  1  1
+              let bonusAmount = [2, 1, 1, 0, 0];
+              box.tickAmount -= bonusAmount[(box.outputId - 10)];
+
               box.outputId++;
-              if (box.outputId > 15) {
+
+              if (box.outputId > 14) {
                   box.outputId = 10;
               }
+
+              box.tickAmount += bonusAmount[(box.outputId - 10)];
 
               let slot = box.slotOut.p;
               if (slot.item !== box.outputId) {
@@ -1546,6 +1634,8 @@ var clr=(box.is=='loc')?3:5;
                   if (box.level < 50) {
                       conts.push({type: 'text', text: 'Next Lvl: $'+ box.levelCost});
                   }
+
+                  conts.push({type: 'text', text: 'Mine +'+ box.tickAmount + ' $'+ box.tickAmount * slot.unitValue});
 
                   return conts;
               }
