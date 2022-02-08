@@ -172,7 +172,10 @@ var gam2 = {
               this.model.constr.addBox({type:'dwellings', everySec: 15, pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
             )
             .nextObj(
-              this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
+              this.model.constr.addBox(
+                this.action.box.miner.defaults({ type: 'miner', pos: 3 })
+              ) 
+              //this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             .nextObj(
               this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10})
