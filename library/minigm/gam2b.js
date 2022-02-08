@@ -259,9 +259,13 @@ var gam2 = {
                       opt.tikUp = true;
                   }
                   if (clearTikOpt === -1) {
-                      opt.tikUp = false
+                      opt.tikUp = false;
                       opt.timerClear = 1;
                   }
+                  // if (!clear && box.everySec) {
+                  //     opt.tikUp = true;
+                  //     opt.timerClear = 1;
+                  // }
                   opt.content = state.content();
 
                   return opt;
@@ -1392,8 +1396,8 @@ var clr=(box.is=='loc')?3:5;
             if (box.outputId) {
                 gam2.action.box.miner.mine(box);
             }
-            box.repaint = 1;
             box.clearTik = 1;
+            box.repaint = 1;
           },
           'mine': function (box) {
               if (!box.outputId) {
@@ -1428,11 +1432,20 @@ var clr=(box.is=='loc')?3:5;
               return box;
           },
           'lvlUp': function (box) {
+              let coins = gam2.action.getCoins();
+
+              if (coins.money < box.levelCost) {
+                  return;
+              }
+              coins.money -= box.levelCost;
+              box.levelCost += Math.round(box.levelCost * 1.5);
+
               box.level++;
               box.tickAmount++;
               box.maxAmount += 100;
 
               box.repaint = 1;
+              gam2.view.paintTopBar(coins);
               gam2.view.drawBox(box,0);
           },
           'stopMine': function (box) {
@@ -1459,8 +1472,8 @@ var clr=(box.is=='loc')?3:5;
           },
           'prospect': function (box) {
               box.outputId = 10;
-              box.everySec = 1;
-              box.clearTik = -1;
+              box.everySec = 5;
+              box.clearTik = 1;
 
               box.repaint = 1;
               gam2.view.drawBox(box,0);
@@ -1486,11 +1499,13 @@ var clr=(box.is=='loc')?3:5;
               let state = {};
               let slot = box.slotOut.p;
 
+
               state.actions = function () {
                   let acts = [];
+                  let coins = gam2.action.getCoins();
 
                   if (box.tickAmount < box.maxTickAmount) {
-                      acts.push(['Lvl up', (function(box) { return function() {gam2.action.box.miner.lvlUp(box)}})(box), 'btn-success']);
+                      acts.push(['Lvl up', (function(box) { return function() {gam2.action.box.miner.lvlUp(box)}})(box), (coins.money >= box.levelCost) ? 'btn-success': 'btn-danger']);
                   }
 
                   if (!box.outputId) {
@@ -1504,8 +1519,11 @@ var clr=(box.is=='loc')?3:5;
                       acts.push(['Sell*', (function(box) { return function() {gam2.action.box.miner.sellAll(box)}})(box), 'btn-warning']);
                   }
 
-
                   return acts;
+              }
+
+              state.actionsUpdate = function () {
+                  return [];
               }
 
               state.content = function () {
@@ -1517,9 +1535,8 @@ var clr=(box.is=='loc')?3:5;
                   }
 
                   conts = [
-                      {type: 'slot-out', res: slot.item, amount: slot.amount, missing: missing},
-                      {type: 'br'},
-                      /*  {type: 'text', text: 'Resource: '+ res[(30 + box.outputId) % res.length].name}*/
+                      {type: 'slot-out', res: slot.item, amount: slot.amount, missing: missing},{type: 'br'},
+                      {type: 'text', text: 'Next Lvl: $'+ box.levelCost},
                   ]
 
                   return conts;
