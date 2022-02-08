@@ -1792,6 +1792,7 @@ var clr=(box.is=='loc')?3:5;
             box.maxAmount = 1000;
             box.slot = {};
             box.clearTik = 0;
+            box.tickPaint=1;
             return box;
           },
           'tick': function(box) {
@@ -1897,7 +1898,19 @@ var clr=(box.is=='loc')?3:5;
         
          for (let u in p) {
                     var box = p[u];
-                    if(!box || ! box.everySec) {
+                    if(!box) {
+                      continue;
+                    }
+                    
+                    if (box.tickPaint) {
+                      if (pos === cpos) {
+                            box.repaint=0;
+                            gam2.view.paint('b' + box.pos, box, box.repaint);
+                      }
+                      continue;
+                    }
+                    
+                    if(! box.everySec) {
                       continue;
                     }
                     
