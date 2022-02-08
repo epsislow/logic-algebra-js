@@ -1141,7 +1141,7 @@ var clr=(box.is=='loc')?3:5;
                       ico = rd.pickOneFrom(icoList,1, seed);
                     }
                     suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0, seed);
-                    name = rd.randomName(rd.rand(3,8),0,suf, 0, seed);
+                    name = rd.randomName(rd.rand(2,4),0,suf, 0, seed);
                     if(!(ico in this.colorUni)) {
                       this.colorUni[ico] = [...this.colorList2];
                     }
@@ -1472,6 +1472,12 @@ var clr=(box.is=='loc')?3:5;
           },
           'prospect': function (box) {
               box.outputId = 10;
+              let slot = box.slotOut.p;
+              if(slot.item === 0) {
+                  slot.item = box.outputId;
+                  slot.unitValue = box.outputId - 5;
+                  slot.amount = 0;
+              }
               box.everySec = 5;
               box.clearTik = 1;
 
@@ -1527,17 +1533,19 @@ var clr=(box.is=='loc')?3:5;
               }
 
               state.content = function () {
-                  let conts = {};
-                  let missing = 1;
+                  let conts;
+                  conts = [
+                      {type: 'slot-out', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)},{type: 'br'},
+                  ];
 
                   if (slot.item > 0) {
-                      missing = 0;
+                      let res = gam2.model.res.reg[slot.item];
+                      conts.push({type: 'text', text: 'Res: '+ res.name + ' $'+ slot.amount * slot.unitValue});
                   }
 
-                  conts = [
-                      {type: 'slot-out', res: slot.item, amount: slot.amount, missing: missing},{type: 'br'},
-                      {type: 'text', text: 'Next Lvl: $'+ box.levelCost},
-                  ]
+                  if (box.level < 50) {
+                      conts.push({type: 'text', text: 'Next Lvl: $'+ box.levelCost});
+                  }
 
                   return conts;
               }
