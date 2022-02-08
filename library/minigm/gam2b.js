@@ -341,7 +341,10 @@ var gam2 = {
               if (clearTikOpt === 1) {
                 opt.tikUp = true;
               }
-              opt.content = state.content();
+              
+              if(clear) {
+                opt.content = state.content();
+              }
               
               return opt;
               /*
