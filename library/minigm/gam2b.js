@@ -1798,7 +1798,24 @@ var clr=(box.is=='loc')?3:5;
           'tick': function(box) {
           },
           'sellAll': function(box) {
+            var slots = gam2.model.constr.getPropList(box.slot)
             
+            let coins = gam2.action.getCoins();
+              
+            for(let i in slots) {
+              let sl = slots[i];
+              
+              if (!sl.item || !sl.amount) {
+                  continue;
+              }
+              coins.money += sl.amount * sl.unitValue;
+
+              slot.amount = 0;
+            }
+            
+              box.repaint = 1;
+              gam2.view.paintTopBar(coins);
+              gam2.view.drawBox(box,0);
           },
           'lvlUp': function (box) {
               let coins = gam2.action.getCoins();
@@ -1836,9 +1853,9 @@ var clr=(box.is=='loc')?3:5;
                 acts.push(['Lvl up', (function(box) { return function() { gam2.action.box.storage.lvlUp(box) } })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
               }
               
-              //if (slot.amount) {
-                acts.push(['Sell*', (function(box) { return function() { gam2.action.box.miner.sellAll(box) } })(box), 'btn-warning']);
-              //}
+              
+                acts.push(['Sell*', (function(box) { return function() { gam2.action.box.storage.sellAll(box) } })(box), 'btn-warning']);
+              
           
               return acts;
             }
