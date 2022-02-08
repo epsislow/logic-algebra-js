@@ -176,7 +176,7 @@ var gam2 = {
                 this.action.box.miner.defaults({ type: 'miner', pos: 3 })
               ) 
               //this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
-            )
+            )/*
             .nextObj(
               this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10})
             )
@@ -188,10 +188,13 @@ var gam2 = {
             )
             .nextObj(
               this.model.constr.addBox({ type: 'assembler', sloti: 2, slots: 2, slotsOut:1, slot: {}, pos: 7, level: 1, levelCost: 10 })
-            )
+            )*/
               .nextObj(
-                  this.model.constr.addBox({ type: 'storage', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
-              )
+                  this.model.constr.addBox( // { type: 'storage', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
+                    this.action.box.storage.defaults({ type: 'storage', pos: 8 })
+                  )
+              ) 
+              
               .nextObj(
                   this.model.constr.addBox({ type: 'seller', sloti: 36, slotsOut: 4, slot: {}, pos: 9, level: 1, levelCost: 10 })
               )
@@ -314,13 +317,41 @@ var gam2 = {
           'storage':{
             'paint': function(id, box, clear=0) {
               
+              let opt = {};
+              let act = gam2.action.box.storage;
+              
+              let state = gam2.action.box.storage.state(box);
+              
+              let btns = {};
+              
+              if (clear) {
+                btns.clr = 1;
+                btns.add = state.actions();
+              } else {
+                //btns.add = state.actionsUpdate();
+                
+                btns.clr = 1;
+                btns.add = state.actions();
+              }
+              
+              opt.lvl = box.level;
+              
+              opt.btns = btns;
+              let clearTikOpt = state.clearTikOpt();
+              if (clearTikOpt === 1) {
+                opt.tikUp = true;
+              }
+              opt.content = state.content();
+              
+              return opt;
+              /*
             return {
               lvl: box.level,
               timerClear: 1,
               btns: { clr: 1, addSpacer: 1 },
               content: [
                 { type: 'slot', res: 20 + box.sloti, amount: 20 },
-                { type: 'slot', res: 21 + box.sloti, amount: 20 },
+                { type: 'slot', res: 21 , amount: 20 },
                 { type: 'slot', res: 22 + box.sloti, amount: 20 },
                 { type: 'slot', res: 23 + box.sloti, amount: 20 },
                 { type: 'slot', res: 24 + box.sloti, amount: 20 },
@@ -328,7 +359,7 @@ var gam2 = {
                 { type: 'slot', res: 26 + box.sloti, amount: 20 },
                 { type: 'slot', res: 27 + box.sloti, amount: 20 },
               ],
-            };
+            };*/
           }
           },
           'cargo': {
@@ -1003,7 +1034,7 @@ var clr=(box.is=='loc')?3:5;
             },
             'storage': {
                 'icon':'play',
-                'bg': 'silo',
+                'bg': 'power',
                 'dashed': 0,
             },
             'launch-pad': {
@@ -1047,6 +1078,90 @@ var clr=(box.is=='loc')?3:5;
           'current': null,
           'currentPos':'0.0.0.0',
         },
+        'slot': {
+          'addItemToSlots': function(box, item, amount) {
+          var slots = gam2.model.constr.getPropList(box.slot)
+          if (!slots.length) {
+            return false;
+          }
+          let slotItem = this.findSlotNonFullWithItem(slots, box, item);
+          if (!slotItem) {
+            slotItem = this.findNextEmptySlot(slots);
+          }
+          if (!slotItem) {
+            return 0;
+          }
+          let reminder = slotItem.amount + amount - box.maxAmount;
+        
+          if (reminder > 0) {
+            slotItem.amount = box.maxAmount;
+            return this.addItemToSlots(box, item, reminder)
+          }
+          slotItem.amount += amount;
+        
+          return 1;
+        },
+        'subItemFromSlots': function(box, item, amount) {
+          var slots = gam2.model.constr.getPropList(box.slot)
+          if (!slots.length) {
+            return false;
+          }
+          let slotItem = this.findSlotNonFullWithItem(slots, box, item);
+          if (!slotItem) {
+            return 0;
+          }
+          let reminder = amount - slotItem.amount;
+          if (reminder > 0) {
+            slotItem.amount = 0;
+            return this.subItemFromSlots(box, item, reminder);
+          }
+          slotItem.amount -= amount;
+          return 1;
+        },
+        'amountExistsInSlots': function(box, item, amount) {
+          var slots = gam2.model.constr.getPropList(box.slot)
+          if (!slots.length) {
+            return false;
+          }
+          let sum = 0;
+          for (let i in slots) {
+            if (slots[i].item === item && slots[i].amount > 0) {
+              sum += slots[i].amount;
+            }
+          }
+          return (amount > sum) ? 0 : 1;
+        },
+        'emptyAmountExistsInSlots': function(box, item, amount) {
+          var slots = gam2.model.constr.getPropList(box.slot)
+          if (!slots.length) {
+            return false;
+          }
+          let sumEmpty = 0;
+          for (let i in slots) {
+            if (slots[i].item === item && slots[i].amount < box.maxAmount) {
+              sum += box.maxAmount - slots[i].amount;
+            } else if (slots[i].item === 0)
+              sum = box.maxAmount;
+          }
+          return (amount > sum) ? 0 : 1;
+        },
+        'findSlotNonFullWithItem': function(slots, box, item) {
+          for (let i in slots) {
+            if (slots[i].item === item && slots[i].amount < box.maxAmount) {
+              return slots[i];
+            }
+          }
+          return 0;
+        },
+        'findNextEmptySlot': function(slots) {
+          for (let i in slots) {
+            if (slots[i].item === 0) {
+              return slots[i];
+            }
+          }
+          return 0;
+        },
+    },
         'box': {
             'addSlotsFor': function (box) {
                 if(!('slot' in box)) {
@@ -1347,6 +1462,15 @@ var clr=(box.is=='loc')?3:5;
                             i++;
                           }
                           return c;
+                        },
+                        'last': function() {
+                          var c= this;
+                          let i=0, imax=1000;
+                          while((c.next) && (i < 1000)) {
+                            c= c.next;
+                            i++;
+                          }
+                          return c;
                         }
                     };
                     pub.first = pub;
@@ -1596,7 +1720,6 @@ var clr=(box.is=='loc')?3:5;
               let state = {};
               let slot = box.slotOut.p;
 
-
               state.actions = function () {
                   let acts = [];
                   let coins = gam2.action.getCoins();
@@ -1661,6 +1784,106 @@ var clr=(box.is=='loc')?3:5;
             box.repaint = 1;
           },
         },
+        'storage': {
+          'defaults': function(box) {
+            box.level = 1;
+            box.levelCost = 3;
+            box.slots = 4;
+            box.maxAmount = 1000;
+            box.slot = {};
+            box.clearTik = 0;
+            return box;
+          },
+          'tick': function(box) {
+          },
+          'sellAll': function(box) {
+            
+          },
+          'lvlUp': function (box) {
+              let coins = gam2.action.getCoins();
+
+              if (coins.money < box.levelCost) {
+                  return;
+              }
+              coins.money -= box.levelCost;
+              box.levelCost += Math.round(box.levelCost * 1.25);
+
+              box.level++;
+              if(box.level%10===0 && box.level !== 50) {
+                box.slots++;
+                let last = box.slot.last();
+                last.nextObj(
+                  gam2.model.constr.addSlot({'posi': last.p.posi +1})
+                )
+              } else {
+                box.maxAmount += 250;
+              }
+
+              box.repaint = 1;
+              gam2.view.paintTopBar(coins);
+              gam2.view.drawBox(box,0);
+          },
+          'state': function(box) {
+            let state = {};
+            let slot = box.slot.p;
+          
+            state.actions = function() {
+              let acts = [];
+              let coins = gam2.action.getCoins();
+          
+              if (box.level < 50) {
+                acts.push(['Lvl up', (function(box) { return function() { gam2.action.box.storage.lvlUp(box) } })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
+              }
+              
+              //if (slot.amount) {
+                acts.push(['Sell*', (function(box) { return function() { gam2.action.box.miner.sellAll(box) } })(box), 'btn-warning']);
+              //}
+          
+              return acts;
+            }
+          
+            state.actionsUpdate = function() {
+              return [];
+            }
+          
+            state.content = function() {
+              let conts = [];
+              
+              var slots = gam2.model.constr.getPropList(box.slot)
+          
+              for(let i=0; i<slots.length;i++) {
+                conts.push(
+                  { type: 'slot', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0 : 1) },
+                );
+              }
+          
+            /*  if (slot.item > 0) {
+                let res = gam2.model.res.reg[slot.item];
+                conts.push({ type: 'text', text: 'Res: ' + res.name + ' $' + slot.amount * slot.unitValue });
+              }*/
+          
+              if (box.level < 50) {
+                conts.push({type: 'br'});
+                conts.push({ type: 'text', text: 'Next Lvl: $' + box.levelCost });
+              }
+          
+            //  conts.push({ type: 'text', text: 'Mine +' + box.tickAmount + ' $' + box.tickAmount * slot.unitValue });
+          
+              return conts;
+            }
+          
+            state.clearTikOpt = function() {
+              if (!box.clearTik) {
+                return false;
+              }
+              let clearTik = box.clearTik;
+              box.clearTik = 0;
+              return clearTik;
+            }
+          
+            return state;
+          }
+        }
       },
       'everySec': function() {
       var cpos = gam2.model.loc.currentPos;
