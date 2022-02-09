@@ -1946,7 +1946,8 @@ var clr=(box.is=='loc')?3:5;
           
               if (box.level < 50) {
                 conts.push({type: 'br'});
-                conts.push({ type: 'text', text: 'Next Lvl: $' + box.levelCost });
+                conts.push({ type: 'text', text: 'Max: ' + box.maxAmount});
+                conts.push({ type: 'text', text: 'Next Lvl: $' + box.levelCost});
               }
           
             //  conts.push({ type: 'text', text: 'Mine +' + box.tickAmount + ' $' + box.tickAmount * slot.unitValue });
