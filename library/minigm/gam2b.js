@@ -1634,7 +1634,7 @@ var clr=(box.is=='loc')?3:5;
           },
           'defaults': function (box) {
               box.level = 1;
-              box.levelCost = 10;
+              box.levelCost = 1;
               box.tickAmount = 1;
               box.maxTickAmount = 50;
               box.maxAmount = 100;
@@ -1946,8 +1946,9 @@ var clr=(box.is=='loc')?3:5;
           
               if (box.level < 50) {
                 conts.push({type: 'br'});
-                conts.push({ type: 'text', text: 'Max: ' + box.maxAmount});
                 conts.push({ type: 'text', text: 'Next Lvl: $' + box.levelCost});
+                conts.push({ type: 'text', text: 'Max: ' + box.maxAmount});
+                
               }
           
             //  conts.push({ type: 'text', text: 'Mine +' + box.tickAmount + ' $' + box.tickAmount * slot.unitValue });
