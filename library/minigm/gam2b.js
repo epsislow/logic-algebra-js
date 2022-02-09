@@ -1848,7 +1848,7 @@ var clr=(box.is=='loc')?3:5;
             box.level = 1;
             box.levelCost = 3;
             box.slots = 4;
-            box.maxAmount = 1000;
+            box.maxAmount = 500;
             box.slot = {};
             box.clearTik = 0;
             box.tickPaint=1;
@@ -1903,7 +1903,6 @@ var clr=(box.is=='loc')?3:5;
           },
           'state': function(box) {
             let state = {};
-            let slot = box.slot.p;
           
             state.actions = function() {
               let acts = [];
@@ -1930,6 +1929,7 @@ var clr=(box.is=='loc')?3:5;
               var slots = gam2.model.constr.getPropList(box.slot)
           
               for(let i=0; i<slots.length;i++) {
+                let slot = slots[i];
                 conts.push(
                   { type: 'slot', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0 : 1) },
                 );
