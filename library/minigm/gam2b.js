@@ -53,13 +53,46 @@ var gam2 = {
         console.log(gam2.model.box.list);
     },
     'mem': {
-        'saveBox': function () {
-            let cpos = gam2.model.loc.currentPos;
-            let c = JSON.stringify(gam2.model.box.toObj(gam2.model.box.list[cpos].p));
-            console.log(c);
-
+        'getData': function () {
+            //let cpos = gam2.model.loc.currentPos;
+            let bx = gam2.model.box;
+            let data = {'cpos': bx.curentPos, 'bxlist': {}};
+            for(let c in bx.list) {
+              let plist = gam2.model.constr.getPropList(bx.list[c]);
+              data.bxlist[c] = [];
+              for(let i in plist) {
+                data.bxlist[c].push(bx.toObj(plist[i]));
+              }
+            }
+            
+            let c = JSON.stringify(data);
+            //console.log(data);
+            return c;
             //c = gam2.model.box.toObj(gam2.model.box.list['7.5.7.2'].p); JSON.stringify(c);
 
+        },
+        'loadData': function (dataText) {
+          let data= JSON.parse(dataText);
+          let bx=gam2.model.box;
+          let cs=gam2.model.constr;
+          if('cpos' in data) {
+            bx.currentPos = data.cpos;
+          }
+          
+          if('bxlist' in data) {
+            for(let c in data.bxlist) {
+              for(let i in data.bxlist[c]) {
+                if(i===0) {
+                  bx.list[c] = cs.addBox(bx.fromObj(data.bxlist[c][i]));
+                } else {
+                  bx.list[c].nextObj(
+                    cs.addBox(bx.fromObj(data.bxlist[c][i]))
+                  );
+                }
+              }
+            }
+          }
+          
         },
         'loadBox': function () {
             let c = "{\"type\":\"miner\",\"pos\":1,\"level\":4,\"levelCost\":158,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":4,\"maxTickAmount\":50,\"maxAmount\":3100,\"outputId\":13,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":13,\"amount\":201,\"unitValue\":8,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"clearTik\":0}";
@@ -1633,6 +1666,7 @@ var clr=(box.is=='loc')?3:5;
               }
           },
           'defaults': function (box) {
+              box.type='miner';
               box.level = 1;
               box.levelCost = 1;
               box.tickAmount = 1;
@@ -1739,7 +1773,7 @@ var clr=(box.is=='loc')?3:5;
             gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
             
             if(cpos === pos) {
-              console.log(p[i]);
+              //console.log(p[i]);
               p[i].repaint=1;
               
               gam2.view.drawBox(p[i],0);
