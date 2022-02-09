@@ -1082,7 +1082,7 @@ var clr=(box.is=='loc')?3:5;
           'currentPos':'0.0.0.0',
         },
         'slot': {
-          'addItemToSlots': function(box, item, amount) {
+          'addItemToSlots': function(box, item, amount, unitValue) {
           var slots = gam2.model.constr.getPropList(box.slot)
           if (!slots.length) {
             return false;
@@ -1096,9 +1096,13 @@ var clr=(box.is=='loc')?3:5;
           }
           let reminder = slotItem.amount + amount - box.maxAmount;
         
+        
+          slotItem.item = item;
+          slotItem.unitValue = unitValue;
+            
           if (reminder > 0) {
             slotItem.amount = box.maxAmount;
-            return this.addItemToSlots(box, item, reminder)
+            return this.addItemToSlots(box, item, reminder, unitValue)
           }
           slotItem.amount += amount;
         
@@ -1600,6 +1604,9 @@ var clr=(box.is=='loc')?3:5;
             if (box.outputId) {
                 gam2.action.box.miner.mine(box);
             }
+            if (box.to) {
+                gam2.action.box.miner.sendTo(box);
+            }
             box.clearTik = 1;
             box.repaint = 1;
           },
@@ -1632,6 +1639,7 @@ var clr=(box.is=='loc')?3:5;
               box.everySec = 0;
               box.slotOut = {};
               box.slotsOut = 1;
+              box.to = 0;
               box.clearTik = 0;
               return box;
           },
@@ -1693,6 +1701,49 @@ var clr=(box.is=='loc')?3:5;
               box.repaint = 1;
               gam2.view.drawBox(box,0);
           },
+          'connectTo': function(box) {
+            var cpos = gam2.model.loc.currentPos;
+        
+            if(!box.to) {
+              box.to = [cpos, 8];
+            } else {
+              box.to = 0;
+            }
+            
+              box.repaint = 1;
+              gam2.view.drawBox(box,0);
+          },
+          'sendTo': function(box) {
+            if(!box.to) {
+              return;
+            }
+            let to, pos;
+            [pos,to]= box.to;
+            
+                  var cpos = gam2.model.loc.currentPos;
+
+      
+              let slot = box.slotOut.p;
+              
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
+        if (!p.length) {
+          return;
+        }
+        for(let i in p) {
+          if(p[i].pos === to) {
+            slot.amount -= box.tickAmount;
+            gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
+            
+            if(cpos === pos) {
+              console.log(p[i]);
+              p[i].repaint=1;
+              
+              gam2.view.drawBox(p[i],0);
+            }
+            return;
+          }
+        }
+          },
           'change': function (box) {
               //   0  1  2  3  4
               //  10 11 12 13 14
@@ -1732,8 +1783,12 @@ var clr=(box.is=='loc')?3:5;
                   }
 
                   if (!box.outputId) {
-                      acts.push(['Prospect', (function(box) { return function() {gam2.action.box.miner.prospect(box)}})(box), 'btn-info']);
+                      acts.push(['Search', (function(box) { return function() {gam2.action.box.miner.prospect(box)}})(box), 'btn-info']);
                   }
+                  if(!box.outputId) {
+                     acts.push(['To', (function(box) { return function() {gam2.action.box.miner.connectTo(box)}})(box), box.to? 'btn-warning':'btn-success']);
+                  }
+                  
                   if (box.outputId) {
                       acts.push(['>', (function(box) { return function() {gam2.action.box.miner.change(box)}})(box), 'btn-success']);
                       acts.push(['Stop', (function(box) { return function() {gam2.action.box.miner.stopMine(box)}})(box), 'btn-danger']);
@@ -1789,6 +1844,7 @@ var clr=(box.is=='loc')?3:5;
         },
         'storage': {
           'defaults': function(box) {
+            box.type='storage';
             box.level = 1;
             box.levelCost = 3;
             box.slots = 4;
@@ -1813,7 +1869,8 @@ var clr=(box.is=='loc')?3:5;
               }
               coins.money += sl.amount * sl.unitValue;
 
-              slot.amount = 0;
+              sl.amount = 0;
+              sl.item = 0;
             }
             
               box.repaint = 1;
