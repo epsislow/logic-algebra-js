@@ -275,7 +275,10 @@ var gam2 = {
                       btns.clr = 1;
                       btns.add = state.actions();
                   } else {
-                      btns.add = state.actionsUpdate();
+                    btns.clr = 1;
+                      btns.add = state.actions();
+                  
+                      //btns.add = state.actionsUpdate();
                   }
 
                   opt.lvl = box.level;
@@ -1641,6 +1644,7 @@ var clr=(box.is=='loc')?3:5;
               box.slotsOut = 1;
               box.to = 0;
               box.clearTik = 0;
+              
               return box;
           },
           'lvlUp': function (box) {
@@ -1650,7 +1654,7 @@ var clr=(box.is=='loc')?3:5;
                   return;
               }
               coins.money -= box.levelCost;
-              box.levelCost += Math.round(box.levelCost * 1.5);
+              box.levelCost += Math.round(box.levelCost * 1.25);
 
               box.level++;
               box.tickAmount++;
@@ -1848,7 +1852,7 @@ var clr=(box.is=='loc')?3:5;
             box.level = 1;
             box.levelCost = 3;
             box.slots = 4;
-            box.maxAmount = 500;
+            box.maxAmount = 250;
             box.slot = {};
             box.clearTik = 0;
             box.tickPaint=1;
