@@ -1,3 +1,4 @@
+import {DbStorageConstr} from "../modules/DbStorage";
 
 let r = function(el) {
     return vs.from(el);
@@ -12,7 +13,10 @@ window.r = r;
         var ra = vs.clearBody()
             .section('top')
             .br()
-            .addButton('Index', '/index.html')
+            .addButton('Index', '/index.html').addText(' ')
+            .addButton('Cache', function () { gam2.mem.loadData(); }).addText(' ')
+            .addButton('Load', function () { gam2.mem.loadSlot(); }).addText(' ')
+            .addButton('Save', function () { gam2.mem.saveSlot(); }).addText(' ')
             .addText(' ').el;
 
         vs.addSectionsToMain();
@@ -21,9 +25,13 @@ window.r = r;
 });
 
 var gam2 = {
+    'dbStorage': {},
     'start': function (ra, vs, rand) {
         this.view.main = ra;
         this.view.vs = vs;
+
+        gam2.dbStorage = DbStorageConstr('gam2db', 'gam2');
+        gam2.dbStorage.storage.initIdxdb();
 
         const seed = this.model.rand.seed.root; //'gam2b5xBxhe$X54B8sd';
         this.model.rand.seed.main = rand.hashCode(seed + seed, 23131);
@@ -53,6 +61,13 @@ var gam2 = {
         console.log(gam2.model.box.list);
     },
     'mem': {
+        'currentSlot': 0,
+        'saveSlot': function () {
+            gam2.dbStorage.save(this.getData(0), 0, this.currentSlot);
+        },
+        'loadSlot': function () {
+            gam2.dbStorage.load(function (data) { gam2.mem.loadData(JSON.stringify(data)); }, function (data) {return 0} , this.currentSlot);
+        },
         'getData': function (asJSON = 1) {
             let cpos = gam2.model.loc.currentPos;
             let bx = gam2.model.box;
