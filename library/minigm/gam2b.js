@@ -1,4 +1,4 @@
-import {DbStorageConstr} from "../modules/DbStorage";
+import {DbStorageConstr} from "/library/modules/DbStorage.js";
 
 let r = function(el) {
     return vs.from(el);
@@ -7,6 +7,8 @@ let r = function(el) {
 window.r = r;
 
  $('document').ready(function () {
+   console.log('begin');
+
     if ('vs' in window) {
         vs.page('Gam2');
 
@@ -21,6 +23,9 @@ window.r = r;
 
         vs.addSectionsToMain();
         gam2.start(ra, vs, rd);
+        
+    } else {
+      console.log('no vs');
     }
 });
 

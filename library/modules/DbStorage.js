@@ -1,4 +1,4 @@
-import {Storage} from "../storage/Storage";
+import {Storage} from "/library/storage/Storage.js";
 
 /*
  Module: DbStorage
