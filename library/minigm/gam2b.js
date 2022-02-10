@@ -25,7 +25,7 @@ var gam2 = {
         this.view.main = ra;
         this.view.vs = vs;
 
-        const seed = 'gam2b5xBxhe$X54B8sd';
+        const seed = this.model.rand.seed.root; //'gam2b5xBxhe$X54B8sd';
         this.model.rand.seed.main = rand.hashCode(seed + seed, 23131);
         let rd = rand.sessionWithSeed(rand.hashCode(seed + seed));
 
@@ -56,7 +56,8 @@ var gam2 = {
         'getData': function () {
             //let cpos = gam2.model.loc.currentPos;
             let bx = gam2.model.box;
-            let data = {'cpos': bx.curentPos, 'bxlist': {}};
+            let data = {'cpos': bx.curentPos, 'bxlist': {}, 'seeds': {}};
+            data.seeds.root = gam2.model.rand.seed.root;
             for(let c in bx.list) {
               let plist = gam2.model.constr.getPropList(bx.list[c]);
               data.bxlist[c] = [];
@@ -75,14 +76,26 @@ var gam2 = {
           let data= JSON.parse(dataText);
           let bx=gam2.model.box;
           let cs=gam2.model.constr;
+          if('seeds' in data) {
+              gam2.model.rand.seed.root = data.seeds.root;
+          }
+
+          gam2.start();
+
           if('cpos' in data) {
             bx.currentPos = data.cpos;
           }
           
           if('bxlist' in data) {
             for(let c in data.bxlist) {
+              if (!data.bxlist.hasOwnProperty(c)) {
+                  continue;
+              }
               for(let i in data.bxlist[c]) {
-                if(i===0) {
+                  if (!data.bxlist[c].hasOwnProperty(i)) {
+                      continue;
+                  }
+                if(!i) {
                   bx.list[c] = cs.addBox(bx.fromObj(data.bxlist[c][i]));
                 } else {
                   bx.list[c].nextObj(
@@ -1450,6 +1463,7 @@ var clr=(box.is=='loc')?3:5;
                 return rd.randomName(rd.rand(3, 4, seed), 0, suf, 0, seed);
             },
             'seed': {
+                'root': 'gam2b5xBxhe$X54B8sd',
                 'main': null
             },
         },
