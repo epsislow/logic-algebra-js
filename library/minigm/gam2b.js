@@ -53,10 +53,10 @@ var gam2 = {
         console.log(gam2.model.box.list);
     },
     'mem': {
-        'getData': function () {
-            //let cpos = gam2.model.loc.currentPos;
+        'getData': function (asJSON = 1) {
+            let cpos = gam2.model.loc.currentPos;
             let bx = gam2.model.box;
-            let data = {'cpos': bx.curentPos, 'bxlist': {}, 'seeds': {}};
+            let data = {'cpos': cpos, 'bxlist': {}, 'seeds': {}};
             data.seeds.root = gam2.model.rand.seed.root;
             for(let c in bx.list) {
               let plist = gam2.model.constr.getPropList(bx.list[c]);
@@ -65,27 +65,33 @@ var gam2 = {
                 data.bxlist[c].push(bx.toObj(plist[i]));
               }
             }
-            
-            let c = JSON.stringify(data);
-            //console.log(data);
-            return c;
+            data.coins = gam2.model.box.coins;
             //c = gam2.model.box.toObj(gam2.model.box.list['7.5.7.2'].p); JSON.stringify(c);
+            //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
 
+            return asJSON? JSON.stringify(data): data;
         },
-        'loadData': function (dataText) {
+        'loadData': function (dataText = 0) {
+          dataText = dataText? dataText:
+              //"{\"cpos\":\"7.5.7.2\",\"bxlist\":{\"7.5.7.2\":[{\"type\":\"miner\",\"pos\":1,\"level\":1,\"levelCost\":1,\"levelCostFloat\":1,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"tickAmount\":1,\"maxTickAmount\":50,\"maxAmount\":100,\"outputId\":0,\"everySec\":0,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":0,\"clearTik\":0},{\"type\":\"dwellings\",\"pos\":2,\"level\":2,\"levelCost\":100,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"everySec\":15,\"capacity\":5,\"usage\":2},{\"type\":\"miner\",\"pos\":3,\"level\":1,\"levelCost\":1,\"levelCostFloat\":1,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"tickAmount\":1,\"maxTickAmount\":50,\"maxAmount\":100,\"outputId\":0,\"everySec\":0,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":0,\"clearTik\":0},{\"type\":\"storage\",\"pos\":8,\"level\":1,\"levelCost\":3,\"levelCostFloat\":3,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"slots\":4,\"maxAmount\":250,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":1,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":2,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":3,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"clearTik\":0,\"tickPaint\":1},{\"type\":\"seller\",\"pos\":9,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"sloti\":36,\"slotsOut\":4,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}]},{\"type\":\"launch-pad\",\"pos\":10,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"pads\":2,\"pad\":{}}]},\"seeds\":{\"root\":\"gam2b5xBxhe$X54B8sd\"},\"coins\":{\"7.5.7.2\":{\"money\":2000000,\"ppl\":[4,20],\"power\":[5,50]}}}";
+              "{\"cpos\":\"7.5.7.2\",\"bxlist\":{\"7.5.7.2\":[{\"type\":\"miner\",\"pos\":1,\"level\":20,\"levelCost\":524288,\"levelCostFloat\":524288,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":20,\"maxTickAmount\":50,\"maxAmount\":19100,\"outputId\":14,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":14,\"amount\":0,\"unitValue\":9,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":[\"7.5.7.2\",8],\"clearTik\":0},{\"type\":\"dwellings\",\"pos\":2,\"level\":4,\"levelCost\":100,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":5,\"everySec\":15,\"capacity\":5,\"usage\":2},{\"type\":\"miner\",\"pos\":3,\"level\":21,\"levelCost\":1048576,\"levelCostFloat\":1048576,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":21,\"maxTickAmount\":50,\"maxAmount\":20100,\"outputId\":14,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":14,\"amount\":0,\"unitValue\":9,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":[\"7.5.7.2\",8],\"clearTik\":0},{\"type\":\"storage\",\"pos\":8,\"level\":9,\"levelCost\":19683,\"levelCostFloat\":19683,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"slots\":4,\"maxAmount\":2250,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":14,\"amount\":41,\"unitValue\":9,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":1,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":2,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":3,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"clearTik\":0,\"tickPaint\":1},{\"type\":\"seller\",\"pos\":9,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"sloti\":36,\"slotsOut\":4,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}]},{\"type\":\"launch-pad\",\"pos\":10,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"pads\":2,\"pad\":{}}]},\"seeds\":{\"root\":\"gam2b5xBxhe$X54B8sd\"},\"coins\":{\"7.5.7.2\":{\"money\":418216,\"ppl\":[4,20],\"power\":[5,50]}}}";
+
           let data= JSON.parse(dataText);
           let bx=gam2.model.box;
           let cs=gam2.model.constr;
+          gam2.model.flags.loading = 1;
+
+          if('coins' in data) {
+              gam2.model.box.coins = {...data.coins};
+          }
           if('seeds' in data) {
               gam2.model.rand.seed.root = data.seeds.root;
           }
-
-          gam2.start();
-
           if('cpos' in data) {
-            bx.currentPos = data.cpos;
+              gam2.model.loc.currentPos = data.cpos;
           }
-          
+
+            gam2.model.box.list = {};
           if('bxlist' in data) {
             for(let c in data.bxlist) {
               if (!data.bxlist.hasOwnProperty(c)) {
@@ -95,17 +101,35 @@ var gam2 = {
                   if (!data.bxlist[c].hasOwnProperty(i)) {
                       continue;
                   }
-                if(!i) {
-                  bx.list[c] = cs.addBox(bx.fromObj(data.bxlist[c][i]));
+                  //console.log('i:',i);
+                if(i==0) {
+                    bx.list[c] = cs.addBox(bx.fromObj(data.bxlist[c][i]));
                 } else {
-                  bx.list[c].nextObj(
+                    bx.list[c] = bx.list[c].nextObj(
                     cs.addBox(bx.fromObj(data.bxlist[c][i]))
                   );
                 }
               }
             }
           }
-          
+            gam2.model.flags.loading = 0;
+            gam2.view.card = {}
+            gam2.view.cardMenu = {};
+            gam2.view.cardBox = {};
+            gam2.view.cardOpt = {};
+            gam2.view.content.html('');
+            gam2.view.topBar.html('');
+
+            /*
+            let p = gam2.model.constr.getPropList(
+                gam2.model.box.list[gam2.model.loc.currentPos]
+                    .first.next.next.next.p.slot
+            );
+            console.log(p);
+            */
+            gam2.view.draw();
+            //
+            //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
         },
         'loadBox': function () {
             let c = "{\"type\":\"miner\",\"pos\":1,\"level\":4,\"levelCost\":158,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":4,\"maxTickAmount\":50,\"maxAmount\":3100,\"outputId\":13,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":13,\"amount\":201,\"unitValue\":8,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"clearTik\":0}";
@@ -1008,6 +1032,9 @@ var clr=(box.is=='loc')?3:5;
       },
     },
     'model': {
+        'flags': {
+            'loading': 0,
+        },
         'cards': {
           'sun': {
             'icon': 'sun',
@@ -1263,7 +1290,8 @@ var clr=(box.is=='loc')?3:5;
                             continue;
                         }
                         let first = pub[b][0];
-                        if (typeof first !== 'object' && !('is' in first)) {
+                        if (typeof first !== 'object' || !('is' in first)) {
+                            box[b] = pub[b];
                             continue;
                         }
                         let chain = null;
@@ -1272,23 +1300,32 @@ var clr=(box.is=='loc')?3:5;
                             if (!pub[b].hasOwnProperty(f)) {
                                 continue;
                             }
+                            let subObj = pub[b][f];
                             if (first.is === 'slot') {
                                 if (idx === 0) {
                                     chain = gam2.model.constr.addSlot(pub[b][f]);
                                 } else {
-                                    chain.nextObj(
+                                    chain = chain.nextObj(
                                         gam2.model.constr.addSlot(pub[b][f])
                                     );
                                 }
                             }
                             idx++;
                         }
-                        box[b] = chain;
+                        /*if (pub.type === 'storage') {
+                            console.log('chain:', gam2.model.constr.getPropList(chain.first));
+                        }*/
+                        box[b] = chain.first;
                     } else {
+                        if (b === 'repaint') {
+                            pub[b] = 1;
+                        }
                         box[b] = pub[b];
+                        /*if (pub.type === 'storage' || box.type === 'miner') {
+                            console.log(b+ ':',box[b]);
+                        }*/
                     }
                 }
-
                 return box;
             },
             'toObj': function (box) {
@@ -1564,6 +1601,7 @@ var clr=(box.is=='loc')?3:5;
                     'pos':1,
                     'level': 0,
                     'levelCost': 0,
+                    'levelCostFloat': 0,
                     'moneyCost': 0,
                     'peopleCost': 0,
                     'powerCost': 0,
@@ -1571,6 +1609,10 @@ var clr=(box.is=='loc')?3:5;
                     'repaint': 1,
                     'timer':0,
                 }, function(pub) {
+                    pub.levelCostFloat = pub.levelCost;
+                    if(gam2.model.flags.loading) {
+                        return;
+                    }
                     gam2.model.box.addSlotsFor(pub.p);
                     gam2.model.box.addSlotOutsFor(pub.p);
                 });
@@ -1683,6 +1725,7 @@ var clr=(box.is=='loc')?3:5;
               box.type='miner';
               box.level = 1;
               box.levelCost = 1;
+              box.levelCostFloat = 1;
               box.tickAmount = 1;
               box.maxTickAmount = 50;
               box.maxAmount = 100;
@@ -1702,7 +1745,9 @@ var clr=(box.is=='loc')?3:5;
                   return;
               }
               coins.money -= box.levelCost;
-              box.levelCost += Math.round(box.levelCost * 1.25);
+
+              box.levelCostFloat *= 2;
+              box.levelCost = Math.round(box.levelCostFloat);
 
               box.level++;
               box.tickAmount++;
@@ -1899,6 +1944,7 @@ var clr=(box.is=='loc')?3:5;
             box.type='storage';
             box.level = 1;
             box.levelCost = 3;
+            box.levelCostFloat = 3;
             box.slots = 4;
             box.maxAmount = 250;
             box.slot = {};
@@ -1936,7 +1982,8 @@ var clr=(box.is=='loc')?3:5;
                   return;
               }
               coins.money -= box.levelCost;
-              box.levelCost += Math.round(box.levelCost * 1.25);
+              box.levelCostFloat *= 3;
+              box.levelCost = Math.round(box.levelCostFloat);
 
               box.level++;
               if(box.level%10===0 && box.level !== 50) {
@@ -1963,10 +2010,8 @@ var clr=(box.is=='loc')?3:5;
               if (box.level < 50) {
                 acts.push(['Lvl up', (function(box) { return function() { gam2.action.box.storage.lvlUp(box) } })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
               }
-              
-              
-                acts.push(['Sell*', (function(box) { return function() { gam2.action.box.storage.sellAll(box) } })(box), 'btn-warning']);
-              
+
+              acts.push(['Sell*', (function(box) { return function() { gam2.action.box.storage.sellAll(box) } })(box), 'btn-warning']);
           
               return acts;
             }
@@ -1978,7 +2023,7 @@ var clr=(box.is=='loc')?3:5;
             state.content = function() {
               let conts = [];
               
-              var slots = gam2.model.constr.getPropList(box.slot)
+              var slots = gam2.model.constr.getPropList(box.slot);
           
               for(let i=0; i<slots.length;i++) {
                 let slot = slots[i];
