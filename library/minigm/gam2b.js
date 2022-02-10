@@ -1697,6 +1697,26 @@ var clr=(box.is=='loc')?3:5;
         }
     },
     'action': {
+      'event': {
+        'list': {},
+        'put': function(name, hdl, ctx) {
+          let L= this.list;
+          if(!(name in L)) {
+            L[name] = [];
+          }
+          L[name].push(hdl.bind(ctx));
+        },
+        'do': function(name, obj = {}) {
+          let L= this.list;
+          
+          if(!(name in L) || !L[name].length) {
+            return;
+          }
+          for(let t in L[name]) {
+            L[name[t]].call(obj);
+          }
+        }
+      },
         'getCoins': function () {
             var cpos = gam2.model.loc.currentPos;
 
@@ -1837,19 +1857,21 @@ var clr=(box.is=='loc')?3:5;
             let to, pos;
             [pos,to]= box.to;
             
-                  var cpos = gam2.model.loc.currentPos;
-
-      
-              let slot = box.slotOut.p;
+            var cpos = gam2.model.loc.currentPos;
+            let slot = box.slotOut.p;
               
         var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
         if (!p.length) {
           return;
         }
+        let ev = gam2.action.event;
+        
         for(let i in p) {
           if(p[i].pos === to) {
             slot.amount -= box.tickAmount;
             gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
+            
+            ev.do('miner.sendTo.post');
             
             if(cpos === pos) {
               //console.log(p[i]);
