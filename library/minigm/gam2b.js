@@ -1953,7 +1953,7 @@ if (buttons2) {
             slot.amount -= box.tickAmount;
             gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
             
-            ev.do('miner.sendTo.post');
+            ev.do('b'+box.pos+'.miner.sendTo', box);
             
             if(cpos === pos) {
               //console.log(p[i]);
