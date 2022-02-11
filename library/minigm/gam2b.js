@@ -680,15 +680,35 @@ var clr=(box.is=='loc')?3:5;
                   .addText(topRight)
                 .up()
             .up()
-            .up()
+            .up();
             
-            //.container('content', 'div')
-          
+            cel = cel
+              .container('content', 'div')
+              .container('media text-white')
+              .container('media-body ml-2 mb-0 small lh-125', 'p')
+              .container('d-block text-light', 'strong')
+              .up();
+            
+            cel = cel
+            
+              .container('d-text', 'div', 'clear: both')
+              .br()
+              .br()
+              .br()
+              .up()
+              .up()
+              .up()
+              .up()
+            
             .container('btns', 'div')
             
             .up()
             
-            
+            .container('tik', 'div', !wTikSec ? 'animation:none' : 'animation-duration:' + wTikSec + 's')
+              .up()
+              .container('timer', 'div', 'line-height: 14px')
+              .addText('')
+              .up()
                   
              
              .up();
@@ -893,6 +913,8 @@ var clr=(box.is=='loc')?3:5;
               buttons = Object.assign({}, {'clr': 0, 'addSpacer': 0, 'upd': {}, 'add':[]}, buttons);
 
               let btn = r(this.cardBox[id]).in('.btns');
+              
+              function rep(btn) {
               let b;
 
               if (buttons.clr) {
@@ -916,6 +938,10 @@ var clr=(box.is=='loc')?3:5;
                   bt = buttons.add[b];
                   btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
               }
+              }
+              
+              rep(btn);
+              rep(r(this.cardBox[id]).in('.btns',1))
           }
 
           let tick = r(this.cardBox[id]).in('.tik').clear();
