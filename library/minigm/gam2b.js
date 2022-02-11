@@ -2044,6 +2044,10 @@ var clr=(box.is=='loc')?3:5;
               gam2.view.paintTopBar(coins);
               gam2.view.drawBox(box,0);
           },
+          'rot3': function(box) {
+            let el=gam2.view.cardBox['b'+box.pos];
+            el.toggleClass('anim-rot3');
+          },
           'state': function(box) {
             let state = {};
           
@@ -2056,6 +2060,7 @@ var clr=(box.is=='loc')?3:5;
               }
 
               acts.push(['Sell*', (function(box) { return function() { gam2.action.box.storage.sellAll(box) } })(box), 'btn-warning']);
+              acts.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
           
               return acts;
             }

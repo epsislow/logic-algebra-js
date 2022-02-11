@@ -525,6 +525,25 @@
         .d-text {
             line-height: 12px;
         }
+        
+        .rot3 {
+          transform: rotate3d(0, 1, 0, 180deg);
+        }
+        .anim-rot3 {
+            border: 1px solid #fff;
+            animation: rot3 8s infinite linear reverse;
+        }
+        
+        @keyframes rot3 {
+            to {
+                transform: transform: rotate3d(0);
+            }
+            from {
+                transform: transform: rotate3d(0, 1, 0, 180deg);
+            }
+        }
+        /*
+        */
     </style>
 </head>
 
