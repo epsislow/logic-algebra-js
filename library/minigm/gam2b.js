@@ -613,7 +613,7 @@ var clr=(box.is=='loc')?3:5;
           cel = r(container ? container: this.view.content)
             .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + (opt?' option'+(box.locWithBuilds?'-bl':''):'')+' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
-            .container('front','div')
+            .container(box.is === 'box'? 'face front': '','div')
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
 
@@ -668,7 +668,7 @@ var clr=(box.is=='loc')?3:5;
            
           if (box.is === 'box') {
              cel = cel
-             .container('back','div')
+             .container('face back','div')
              
              .container('tt', 'div', 'position:relative;top:0px;z-index:997')
             .container('top', 'div')
@@ -681,7 +681,15 @@ var clr=(box.is=='loc')?3:5;
                 .up()
             .up()
             .up()
-
+            
+            //.container('content', 'div')
+          
+            .container('btns', 'div')
+            
+            .up()
+            
+            
+                  
              
              .up();
           }

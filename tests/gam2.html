@@ -104,7 +104,7 @@
             /*border: 1px solid #fff;*/
             position: relative;
             z-index: 20;
-            overflow: hidden;
+            /*overflow: hidden;*/
         }
         .bg-card-x2 {
           float: left;
@@ -526,20 +526,38 @@
             line-height: 12px;
         }
         
-        .rot3 {
+        .bg-card.rot3 {
           /*transition: transform 1s;
           transform-style: preserve-3d;*/
          /* transform: rotate3d(0, 1, 0, 180deg);*/
           transform: rotateY(180deg);
         }
         
-        .bg-card .front,
-        .bg-card .back {
-          backface-visibility: hidden;
+        .bg-card .face {
+          width: 170px;
+          height: 170px;
+            
+          position: absolute;
+          top:0;
+          left:0;
+          
+        /*  width: 100%;
+          height: 100%;*/
+          
+        backface-visibility: hidden;
+          opacity: 1;
+        }
+        
+        .bg-card .front {
+          z-index: 23;
+          transform: rotate(0deg);
+          /*backface-visibility: hidden;*/
+          /*transform: rotateY( 180deg);*/
         }
         
         .bg-card .back {
           transform: rotateY( 180deg);
+          z-index: 22;
         }
         
         /*
@@ -563,6 +581,7 @@
         }
         
         .bg-card {
+         /* position: relative;*/
           transition: transform 0.5s;
           transform-style: preserve-3d;
         }
