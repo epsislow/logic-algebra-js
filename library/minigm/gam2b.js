@@ -359,14 +359,18 @@ var gam2 = {
 
                   let state = gam2.action.box.miner.state(box);
 
-                  let btns = {};
+                  let btns = {}, btns2= {};
 
                   if(clear) {
                       btns.clr = 1;
                       btns.add = state.actions();
+                      btns2.clr=1;
+                      btns2.add = state.actions2();
                   } else {
                     btns.clr = 1;
                       btns.add = state.actions();
+                      btns2.clr=1;
+                      btns2.add = state.actions2();
                   
                       //btns.add = state.actionsUpdate();
                   }
@@ -374,6 +378,7 @@ var gam2 = {
                   opt.lvl = box.level;
 
                   opt.btns = btns;
+                  opt.btns2= btns2;
                   let clearTikOpt = state.clearTikOpt();
                   if (clearTikOpt === 1) {
                       opt.tikUp = true;
@@ -415,21 +420,29 @@ var gam2 = {
               
               let state = gam2.action.box.storage.state(box);
               
-              let btns = {};
+              let btns = {}, btns2= {};
               
               if (clear) {
                 btns.clr = 1;
                 btns.add = state.actions();
+                    btns2.clr=1;
+                      btns2.add = state.actions2();
+                  
               } else {
                 //btns.add = state.actionsUpdate();
                 
                 btns.clr = 1;
                 btns.add = state.actions();
+                    btns2.clr=1;
+                      btns2.add = state.actions2();
+                  
               }
               
               opt.lvl = box.level;
               
               opt.btns = btns;
+              opt.btns2 = btns2;
+              
               let clearTikOpt = state.clearTikOpt();
               if (clearTikOpt === 1) {
                 opt.tikUp = true;
@@ -789,6 +802,7 @@ var clr=(box.is=='loc')?3:5;
               'strong': 0,
               'texts': 0,
               'btns':0,
+              'btns2': 0,
               'tikUp': -1,
               'tikSec': 0,
               'tikDelay': 0,
@@ -803,6 +817,7 @@ var clr=(box.is=='loc')?3:5;
           let strong = options.strong;
           let texts = options.texts;
           let buttons = options.btns;
+          let buttons2 = options.btns2;
           let tikUp = options.tikUp;
           let tikSec = options.tikSec;
           let tikDelay = options.tikDelay;
@@ -909,40 +924,46 @@ var clr=(box.is=='loc')?3:5;
               }
           }
 
+function rep(buttons, btn) {
+  let b;
+
+  if (buttons.clr) {
+    btn.clear();
+    if (buttons.addSpacer) {
+      btn.container('spacer', 'div', 'height:27px;display:block;');
+    }
+  }
+  for (b in buttons.upd) {
+    if (!buttons.upd.hasOwnProperty(b)) {
+      continue;
+    }
+    bt = buttons.upd[b];
+    btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
+  }
+
+  for (b in buttons.add) {
+    if (!buttons.add.hasOwnProperty(b)) {
+      continue;
+    }
+    bt = buttons.add[b];
+    btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
+  }
+}
           if (buttons) {
               buttons = Object.assign({}, {'clr': 0, 'addSpacer': 0, 'upd': {}, 'add':[]}, buttons);
 
               let btn = r(this.cardBox[id]).in('.btns');
               
-              function rep(btn) {
-              let b;
-
-              if (buttons.clr) {
-                  btn.clear();
-                  if(buttons.addSpacer) {
-                      btn.container('spacer', 'div', 'height:27px;display:block;');
-                  }
-              }
-              for (b in buttons.upd) {
-                  if(!buttons.upd.hasOwnProperty(b)) {
-                      continue;
-                  }
-                  bt = buttons.upd[b];
-                  btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
-              }
-
-              for (b in buttons.add) {
-                  if(!buttons.add.hasOwnProperty(b)) {
-                      continue;
-                  }
-                  bt = buttons.add[b];
-                  btn.addButton(bt[0], bt[1], 'button ' + bt[2]);
-              }
-              }
-              
-              rep(btn);
-              rep(r(this.cardBox[id]).in('.btns',1))
+              rep(buttons, btn);
           }
+
+if (buttons2) {
+  buttons2 = Object.assign({}, { 'clr': 0, 'addSpacer': 0, 'upd': {}, 'add': [] }, buttons2);
+
+  let btn = r(this.cardBox[id]).in('.btns');
+
+  rep(buttons2, r(this.cardBox[id]).in('.btns', 1))
+}
 
           let tick = r(this.cardBox[id]).in('.tik').clear();
 
@@ -2001,6 +2022,13 @@ var clr=(box.is=='loc')?3:5;
 
                   return acts;
               }
+              
+              state.actions2 = function() {
+                let acts2 = [];
+                acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+          
+                return acts2;
+              }
 
               state.actionsUpdate = function () {
                   return [];
@@ -2125,7 +2153,14 @@ var clr=(box.is=='loc')?3:5;
           
               return acts;
             }
-          
+            
+            state.actions2 = function() {
+              let acts2 = [];
+              acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+            
+              return acts2;
+            }
+            
             state.actionsUpdate = function() {
               return [];
             }
