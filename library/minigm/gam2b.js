@@ -1839,10 +1839,12 @@ var clr=(box.is=='loc')?3:5;
               gam2.view.drawBox(box,0);
           },
           'connectTo': function(box) {
+            let ev = gam2.action.event;
             var cpos = gam2.model.loc.currentPos;
         
             if(!box.to) {
               box.to = [cpos, 8];
+              //ev.put('b'+box.pos);
             } else {
               box.to = 0;
             }
