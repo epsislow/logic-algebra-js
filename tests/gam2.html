@@ -529,8 +529,8 @@
         .rot3 {
           /*transition: transform 1s;
           transform-style: preserve-3d;*/
-          transform: rotate3d(0, 1, 0, 180deg);
-          
+         /* transform: rotate3d(0, 1, 0, 180deg);*/
+          transform: rotateY(180deg);
         }
         
         .bg-card .front,
@@ -538,10 +538,14 @@
           backface-visibility: hidden;
         }
         
+        .bg-card .back {
+          transform: rotateY( 180deg);
+        }
         
+        /*
         .backhide {
           backface-visibility: hidden;
-        }
+        }*/
         
         .anim-rot3 {
             border: 1px solid #fff;

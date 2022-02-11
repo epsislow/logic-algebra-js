@@ -663,10 +663,30 @@ var clr=(box.is=='loc')?3:5;
                   .up()
           }
            cel = cel.up()
-             .up()
-             .container('back backhide','div')
-             .up()
-             .el
+             .up();
+             
+           
+          if (box.is === 'box') {
+             cel = cel
+             .container('back','div')
+             
+             .container('tt', 'div', 'position:relative;top:0px;z-index:997')
+            .container('top', 'div')
+                .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
+                  .addText(title)
+                .up()
+
+                .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
+                  .addText(topRight)
+                .up()
+            .up()
+            .up()
+
+             
+             .up();
+          }
+          cel = cel
+             .el;
         ;
         if(opt) {
           this.cardOpt[id] = cel;
@@ -1942,6 +1962,8 @@ var clr=(box.is=='loc')?3:5;
                   if (slot.amount) {
                       acts.push(['Sell*', (function(box) { return function() {gam2.action.box.miner.sellAll(box)}})(box), 'btn-warning']);
                   }
+                  acts.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+          
 
                   return acts;
               }
