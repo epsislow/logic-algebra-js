@@ -664,7 +664,7 @@ var clr=(box.is=='loc')?3:5;
           }
            cel = cel.up()
              .up()
-             .container('back','div')
+             .container('back backhide','div')
              .up()
              .el
         ;

@@ -530,7 +530,14 @@
           /*transition: transform 1s;
           transform-style: preserve-3d;*/
           transform: rotate3d(0, 1, 0, 180deg);
+          
         }
+        
+        .bg-card .front,
+        .bg-card .back {
+          backface-visibility: hidden;
+        }
+        
         
         .backhide {
           backface-visibility: hidden;
@@ -547,6 +554,7 @@
             }
             from {
                 transform: transform: rotate3d(0, 1, 0, 180deg);
+                
             }
         }
         
