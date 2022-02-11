@@ -613,6 +613,7 @@ var clr=(box.is=='loc')?3:5;
           cel = r(container ? container: this.view.content)
             .container( (box.is==='loc' &&! opt? 'mb-3':'m-2') + ' p-2 unlock bg-' + color + (opt?' option'+(box.locWithBuilds?'-bl':''):'')+' rounded box-shadow text-light bg-card'+x2+' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id':id})
 
+            .container('front','div')
             .container('fas fa-' + icon + ' fa-bgd'+x2+' fa-5x', 'div', '')
             .up()
 
@@ -661,7 +662,11 @@ var clr=(box.is=='loc')?3:5;
                   .up()
                   .up()
           }
-           cel = cel.up().el
+           cel = cel.up()
+             .up()
+             .container('back','div')
+             .up()
+             .el
         ;
         if(opt) {
           this.cardOpt[id] = cel;
@@ -2046,7 +2051,7 @@ var clr=(box.is=='loc')?3:5;
           },
           'rot3': function(box) {
             let el=gam2.view.cardBox['b'+box.pos];
-            el.toggleClass('anim-rot3');
+            el.toggleClass('rot3');
           },
           'state': function(box) {
             let state = {};

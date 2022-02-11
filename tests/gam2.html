@@ -527,8 +527,15 @@
         }
         
         .rot3 {
+          /*transition: transform 1s;
+          transform-style: preserve-3d;*/
           transform: rotate3d(0, 1, 0, 180deg);
         }
+        
+        .backhide {
+          backface-visibility: hidden;
+        }
+        
         .anim-rot3 {
             border: 1px solid #fff;
             animation: rot3 8s infinite linear reverse;
@@ -541,6 +548,11 @@
             from {
                 transform: transform: rotate3d(0, 1, 0, 180deg);
             }
+        }
+        
+        .bg-card {
+          transition: transform 1s;
+          transform-style: preserve-3d;
         }
         /*
         */
