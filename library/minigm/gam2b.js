@@ -15,10 +15,10 @@ window.r = r;
         var ra = vs.clearBody()
             .section('top')
             .br()
-            .addButton('Index', '/index.html').addText(' ')
-            .addButton('Cache', function () { gam2.mem.loadData(); }).addText(' ')
-            .addButton('Load', function () { gam2.mem.loadSlot(); }).addText(' ')
-            .addButton('Save', function () { gam2.mem.saveSlot(); }).addText(' ')
+            .addButton('Index', '/index.html', 'button btn-info')
+            .addButton('Cache', function () { gam2.mem.loadData(); }, 'button btn-success')
+            .addButton('Load', function () { gam2.mem.loadSlot(); },'button btn-info')
+            .addButton('Save', function () { gam2.mem.saveSlot(); }, 'button btn-danger')
             .addText(' ').el;
 
         vs.addSectionsToMain();
@@ -632,11 +632,11 @@ var clr=(box.is=='loc')?3:5;
 
             .container('tt', 'div', 'position:relative;top:0px;z-index:997')
             .container('top', 'div')
-                .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
+                .container('pb-0 mb-0 h6-left', 'h6', 'float:left')
                 .addText(title)
                 .up()
 
-                .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
+                .container('pb-0 mb-0 h6-right', 'h6', 'float:right')
                 .addText(topRight)
                 .up()
             .up();
