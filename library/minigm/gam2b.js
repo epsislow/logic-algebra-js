@@ -1490,7 +1490,7 @@ if (buttons2) {
           'colorList': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
           'colorUni': {},
           'init': function() {
-            
+            this.add('self','crown','yellow');
           },
           'add': function(name, ico = 0, color = 'light') {
             var id = this.house.length;
