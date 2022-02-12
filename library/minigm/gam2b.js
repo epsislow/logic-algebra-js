@@ -2199,7 +2199,14 @@ if (buttons2) {
           },
           'rot3': function(box) {
             let el=gam2.view.cardBox['b'+box.pos];
-            el.toggleClass('rot3');
+            if(!box.rot) {
+              el.toggleClass('rot3');
+          
+            } else {
+              el.toggleClass('rot3');
+         
+              box.rot=-1;
+            }
             box.rot++;
           },
           'state': function(box) {
