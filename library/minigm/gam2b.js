@@ -2201,10 +2201,8 @@ if (buttons2) {
             let el=gam2.view.cardBox['b'+box.pos];
             if(!box.rot) {
               el.toggleClass('rot3');
-          
             } else {
               el.toggleClass('rot3');
-         
               box.rot=-1;
             }
             box.rot++;
