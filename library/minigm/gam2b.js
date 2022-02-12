@@ -309,7 +309,7 @@ var gam2 = {
           }
           
           gam2.model.res.gen(105);
-         // gam2.model.reputation.genh(10);
+          gam2.model.reputation.genh(10);
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
@@ -1493,7 +1493,7 @@ if (buttons2) {
             
           },
           'add': function(name, ico = 0, color = 'light') {
-            var id = this.reg.length;
+            var id = this.house.length;
             this.house[id] = {
               name: name,
               value: 0,
