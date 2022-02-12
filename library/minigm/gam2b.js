@@ -49,6 +49,7 @@ var gam2 = {
         this.model.rand.seed.loc2 = rd.hashCode(seed + 'loc2', rd.rand(127, 65536));
         this.model.rand.seed.loc3 = rd.hashCode(seed + 'loc3', rd.rand(127, 65536));
         this.model.rand.seed.res = rd.hashCode(seed + 'res', rd.rand(127, 65536));
+        this.model.rand.seed.recepie = rd.hashCode(seed + 'recepie', rd.rand(127, 65536));
         this.model.rand.seed.box = rd.hashCode(seed + 'box', rd.rand(127, 65536));
 
         for(var i of ['init','model','view','action']) {
@@ -266,10 +267,10 @@ var gam2 = {
                 this.action.box.miner.defaults({ type: 'miner', pos: 3 })
               ) 
               //this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
-            )/*
+            )
             .nextObj(
               this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10})
-            )
+            )/*
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
             )
@@ -310,7 +311,9 @@ var gam2 = {
           
           gam2.model.res.gen(105);
           gam2.model.reputation.genh(8);
-         // console.log(p);
+          gam2.model.res.genRecepies();
+          
+          console.log(gam2.model.res.recepies);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
             if(!this.view.topBarVals && power===0) {
@@ -1568,6 +1571,7 @@ if (buttons2) {
             'colorUni': {},
             'mineIcoList': ['tint','shapes','tablets','soap', 'icicles', 'genderless', 'air-freshener','glass-whiskey','water'],
             'reg':[],
+            'recepies': {},
             'init': function() {
               this.add('money','donate','white');
               this.add('moneyK','donate','yellow');
@@ -1632,6 +1636,48 @@ if (buttons2) {
                 return $('<i>').addClass('fas')
                     .addClass('fa-'+res.ico)
                     .attr('style', 'font-size: 24px;color:'+res.color);
+            },
+            'genRecepies': function() {
+                let seed = gam2.model.rand.seed.recepie;
+                let resLength = this.reg.length;
+                let numItems=1;
+                for(let i= 10; i<resLength; i++) {
+                  numItems=1;
+                  if(i > 20) {
+                    numItems++;
+                  }
+                  if(i > 35) {
+                    numItems++;
+                  }
+                  if(i > 55) {
+                    numItems++;
+                  }
+                  
+                  if(i > 75) {
+                    numItems++;
+                  }
+                  
+                  
+                  
+                  this.recepies[i] = 
+                    this.genRecepieFor(i, numItems, i-numItems-1)
+                  
+                }
+            },
+            'genRecepieFor': function(item, numItems, minId=5, opt= {}) {
+                let seed = gam2.model.rand.seed.recepie;
+                let inp={};
+                let rd = gam2.model.rand.rd;
+                
+                for(let i=minId; i< minId + numItems;i++) {
+                  let nItem= i; //rd.rand(minId, maxId, seed);
+                  inp[nItem]= rd.rand(5,10)*Math.pow(10, rd.rand(1,3, seed));
+                }
+              
+                return {
+                  inp: inp,
+                  out: item,
+                }
             },
             'hexToHsl': function(hex) {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
