@@ -1769,6 +1769,7 @@ if (buttons2) {
                     'peopleCost': 0,
                     'powerCost': 0,
                     'is':'box',
+                    'rot':0,
                     'repaint': 1,
                     'timer':0,
                 }, function(pub) {
@@ -2199,6 +2200,7 @@ if (buttons2) {
           'rot3': function(box) {
             let el=gam2.view.cardBox['b'+box.pos];
             el.toggleClass('rot3');
+            box.rot++;
           },
           'state': function(box) {
             let state = {};
