@@ -309,6 +309,7 @@ var gam2 = {
           }
           
           gam2.model.res.gen(105);
+         // gam2.model.reputation.genh(10);
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
@@ -1482,6 +1483,68 @@ if (buttons2) {
               return r;
             }
           }
+        },
+        'reputation':{
+          'house': [],
+          'icoList': ['paw','piggy-bank', 'podcast','poo-storm','sink','square-root-alt','superscript','tori-gate','university','utensils'],
+          'colorList': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
+          'colorUni': {},
+          'init': function() {
+            
+          },
+          'add': function(name, ico = 0, color = 'light') {
+            var id = this.reg.length;
+            this.house[id] = {
+              name: name,
+              value: 0,
+              ico: ico,
+              color: color
+            }
+            return id;
+          },
+          'genh': function (num) {
+                let rd = gam2.model.rand.rd;
+                let ico, suf, name, color;
+                let seed = gam2.model.rand.seed.res;
+                var icoList = [], colorList= [];
+                for(let i=0;i<num;i++) {
+                    if(!icoList.length) {
+                      icoList = [...this.icoList];
+                    }
+                    ico = rd.pickOneFrom(icoList,1, seed);
+                    if(ico in this.colorUni && !this.colorUni[ico].length) {
+                      ico = rd.pickOneFrom(icoList,1, seed);
+                    }
+                    suf = rd.randomBytes(1,1) + rd.pickOneFrom(['um','um','is','ix','us','ad','am'],0, seed);
+                    name = rd.randomName(rd.rand(2,4),0,suf, 0, seed);
+                    if(!(ico in this.colorUni)) {
+                      this.colorUni[ico] = [...this.colorList];
+                    }
+                    /*if (!colorList.length) {
+                      colorList = [...this.colorUni[ico]];
+                    }*/
+                    
+                    color = rd.pickOneFrom(this.colorUni[ico], 1, seed);
+                    this.add(name, ico, color);
+                    
+                    const idx= this.colorUni[ico].indexOf(color);
+            
+                    /*if (idx > -1) {
+                      this.colorUni[ico].splice(idx, 1);
+                    }*/
+                    if(!this.colorUni[ico].length) {
+                      console.log('no for '+ico)
+                    }
+                }
+                //console.log(this.reg)
+            },
+            'getHouseIco': function(id) {
+              var house = this.house[id % this.house.length];
+              // console.log(res, this.reg[id+1])
+              return $('<i>').addClass('fas')
+                .addClass('fa-' + house.ico)
+                .attr('style', 'font-size: 24px;color:' + house.color);
+            },
         },
         'res': {
             'icoList':['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore', 'bong', 'flask','boxes'],
