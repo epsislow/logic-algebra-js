@@ -309,7 +309,7 @@ var gam2 = {
           }
           
           gam2.model.res.gen(105);
-          gam2.model.reputation.genh(10);
+          gam2.model.reputation.genh(8);
          // console.log(p);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
@@ -609,6 +609,7 @@ var gam2 = {
           }
           var crd= this.model.cards[box.type];
           
+          var house =(box.is==='loc')?box.house:0;
           var x2 = (box.is==='loc' && !opt)?'-xs':'', color = crd.bg, dashed = crd.dashed;
 
 //crd.icon = (box.type==='cargo')?'empty':'empty';
@@ -674,6 +675,12 @@ var clr=(box.is=='loc')?3:5;
                   .container('pb-2 mb-0 h6-left', 'h6', 'float:left')
                   .addText((!opt || x2 === '-xs') ? '' : box.type)
                   .up()
+                  .container('pb-2 mb-0 h6-right', 'h6', 'float:right')
+                  
+                  .addJqEl(house?gam2.model.reputation.getHouseIco(box.house):'')
+                    
+                  .up()
+                  
                   .up()
           }
            cel = cel.up()
@@ -1040,11 +1047,18 @@ if (buttons2) {
             q=p % maxPos;
           }
         }
+        let house=0;
         for(let pos = 1; pos <= maxPos; pos++ ) {
+          if (lvl === 3 && 1) {
+            house = rd.rand(2, gam2.model.reputation.house.length, seedLocId);
+          } else {
+            house = 0;
+          }
           type = 'empty';
           if(posch.includes(pos)) {
             type = types[lvl][rd.rand(0, types[lvl].length-1, seedLocId)];
           }
+          
           cob = this.model.constr.addLoc(
             cstr.locProps(
               pos, type, lvl,
@@ -1052,7 +1066,7 @@ if (buttons2) {
               (lvl === 3) ?
               rdChr(seedLocId, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
               : (type ==='asteroid-belt'?'Cloud ':'') +rdNam(seedLocId)
-              ))
+              ),'', house)
           );
           if(mergeLocsP && (pos in mergeLocsP)) {
             cob.p= mergeLocsP[pos];
@@ -1486,7 +1500,7 @@ if (buttons2) {
         },
         'reputation':{
           'house': [],
-          'icoList': ['paw','piggy-bank', 'podcast','poo-storm','sink','square-root-alt','superscript','tori-gate','university','utensils'],
+          'icoList': ['paw','piggy-bank','poo-storm','sink','square-root-alt','superscript','university','utensils'],
           'colorList': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
           'colorUni': {},
           'init': function() {
@@ -1543,7 +1557,7 @@ if (buttons2) {
               // console.log(res, this.reg[id+1])
               return $('<i>').addClass('fas')
                 .addClass('fa-' + house.ico)
-                .attr('style', 'font-size: 24px;color:' + house.color);
+                .attr('style', 'font-size: 24px;color:' + house.color);//.html(house.ico);
             },
         },
         'res': {
@@ -1781,7 +1795,7 @@ if (buttons2) {
                     gam2.model.box.addSlotOutsFor(pub.p);
                 });
             },
-            'locProps': function ( pos,type, lvl, name, crkey='') {
+            'locProps': function ( pos,type, lvl, name, crkey='', house =0) {
                 return {
                     card:'empty',
                   is:'loc',
@@ -1790,7 +1804,8 @@ if (buttons2) {
                     lvl: lvl,
                     name: name,
                     loc: 'L' + lvl + ':' + ((pos< 10)? '0': '') + pos,
-                    crkey: crkey+'.'+pos
+                    crkey: crkey+'.'+pos,
+                    house: house,
                 };
             },
             'addLoc': function (prop) {},
