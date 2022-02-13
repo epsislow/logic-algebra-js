@@ -49,7 +49,7 @@ var gam2 = {
         this.model.rand.seed.loc2 = rd.hashCode(seed + 'loc2', rd.rand(127, 65536));
         this.model.rand.seed.loc3 = rd.hashCode(seed + 'loc3', rd.rand(127, 65536));
         this.model.rand.seed.res = rd.hashCode(seed + 'res', rd.rand(127, 65536));
-        this.model.rand.seed.recepie = rd.hashCode(seed + 'recepie', rd.rand(127, 65536));
+        //this.model.rand.seed.recepie = rd.hashCode(seed + 'recepie', rd.rand(127, 65536));
         this.model.rand.seed.box = rd.hashCode(seed + 'box', rd.rand(127, 65536));
 
         for(var i of ['init','model','view','action']) {
@@ -1641,10 +1641,10 @@ if (buttons2) {
                     .attr('style', 'font-size: 24px;color:'+res.color);
             },
             'genRecepies': function() {
-                let seed = gam2.model.rand.seed.recepie;
+                let seed = gam2.model.rand.seed.res;
                 let resLength = this.reg.length;
                 let numItems=1;
-                for(let i= 10; i<resLength; i++) {
+                for(let i= 15; i<resLength; i++) {
                   numItems=1;
                   if(i > 20) {
                     numItems++;
@@ -1663,12 +1663,12 @@ if (buttons2) {
                   
                   
                   this.recepies[i] = 
-                    this.genRecepieFor(i, numItems, i-numItems-1)
+                    this.genRecepieFor(i, numItems, i-numItems-4)
                   
                 }
             },
             'genRecepieFor': function(item, numItems, minId=5, opt= {}) {
-                let seed = gam2.model.rand.seed.recepie;
+                let seed = gam2.model.rand.seed.res;
                 let inp={};
                 let rd = gam2.model.rand.rd;
                 
