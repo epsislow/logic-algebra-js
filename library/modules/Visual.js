@@ -278,6 +278,10 @@ function __addContainerControls(pub) {
         return this;
     }
     
+    pub.css = function (style) {
+      this.el.attr('style', style);
+      return this;
+    }
 
     pub.container = function (classes, element = 'div', style = false, attrs = false, prepend = false, detached = false) {
         var content = $('<' + element + '>')

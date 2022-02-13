@@ -1646,10 +1646,10 @@ if (buttons2) {
                 let numItems=1;
                 for(let i= 15; i<resLength; i++) {
                   numItems=1;
-                  if(i > 20) {
+                  if(i > 30) {
                     numItems++;
                   }
-                  if(i > 35) {
+                  if(i > 45) {
                     numItems++;
                   }
                   if(i > 55) {
@@ -2394,12 +2394,16 @@ if (buttons2) {
       }
       },
       'recepies': function(box) {
+        r(gam2.view.content).css('position: fixed; height:100%; overflow:hidden');
+        
         let c= r(gam2.view.content)
            .container('popbox', 'div')
            .container('boxclose', 'div')
              .addButton('close', function() {
                r(gam2.view.pbox).remove(0);
                gam2.view.pbox=null;
+               r(gam2.view.content).css('');
+        
              }, 'button btn-danger')
            .up();
            
@@ -2414,7 +2418,10 @@ if (buttons2) {
             .up()
             .up();
             
-         // c = c.container('slot-spacer', 'div', 'width: 20px;');
+            
+            
+         c = c.container('slot-spc', 'div', 'width: 20px;')
+         .up();
             
           for(let j in recp[i].inp) {
             c = c.container('slot', 'div')
