@@ -2411,7 +2411,12 @@ if (buttons2) {
         let recp = gam2.model.res.recepies;
            
         for(let i in recp) {
-          c = c.container('slot slot-output', 'div')
+          let reso= res.reg[recp[i].out];
+          c = c
+            .container('','div','color:white')
+            .addText(reso.name)
+            .up()
+            .container('slot slot-output', 'div')
             .addJqEl(res.getResIco(recp[i].out))
             .container('amount', 'div')
             .addText(1)
