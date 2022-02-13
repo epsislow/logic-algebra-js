@@ -2393,6 +2393,9 @@ if (buttons2) {
          }
       }
       },
+      'selectRecepie': function(box, recepie) {
+        console.log(recepie);
+      },
       'recepies': function(box) {
         r(gam2.view.content).css('position: fixed; height:100%; overflow:hidden');
         
@@ -2412,12 +2415,26 @@ if (buttons2) {
            
         for(let i in recp) {
           let reso= res.reg[recp[i].out];
+          let rec= recp[i];
+          
+          if(Object.keys(rec.inp).length >3) {
+            continue;
+          }
+          
           c = c
+            .br(1)
+            .addButton('select', (function(box) {
+              return function() {
+                gam2.action.selectRecepie(box, rec);
+              }
+            })(box, rec), 'button btn-success', {'style':'float: left'})
+            
             .container('','div','color:white')
             .addText(reso.name)
             .up()
+        
             .container('slot slot-output', 'div')
-            .addJqEl(res.getResIco(recp[i].out))
+            .addJqEl(res.getResIco(rec.out))
             .container('amount', 'div')
             .addText(1)
             .up()
@@ -2428,16 +2445,16 @@ if (buttons2) {
          c = c.container('slot-spc', 'div', 'width: 20px;')
          .up();
             
-          for(let j in recp[i].inp) {
+          for(let j in rec.inp) {
             c = c.container('slot', 'div')
              .addJqEl(res.getResIco(j))
              .container('amount', 'div')
-               .addText(recp[i].inp[j])
+               .addText(rec.inp[j])
              .up()
              .up();
           }
           
-          c = c.br(2);
+          c = c.br(1);
             
           
         }
