@@ -1674,7 +1674,7 @@ if (buttons2) {
                 
                 for(let i=minId; i< minId + numItems;i++) {
                   let nItem= i; //rd.rand(minId, maxId, seed);
-                  inp[nItem]= rd.rand(5,10)*Math.pow(10, rd.rand(1,3, seed));
+                  inp[nItem]= rd.rand(5,10)*Math.pow(10, rd.rand(0,2, seed));
                 }
               
                 return {
