@@ -508,7 +508,10 @@ var gam2 = {
             'paint': function(id, box) {
               return {
                 lvl: box.level,
-                btns: { clr: 1, 'add': [['Lvl up', (function(box) { return function() { gam2.action.lvlUp(box) } })(box), 'btn-success']] },
+                btns: { clr: 1, 'add': [
+                  ['Lvl up', (function(box) { return function() { gam2.action.lvlUp(box) } })(box), 'btn-success'],
+                  ['Recepie', (function(box) { return function() { gam2.action.recepies(box) } })(box), 'btn-light']
+                ] },
                 content: [
                   {type: 'slot', res: 20+ box.sloti, amount: 20},
                   {type: 'slot', res: 21+ box.sloti, amount: 20},
@@ -2389,6 +2392,46 @@ if (buttons2) {
                     }
          }
       }
+      },
+      'recepies': function(box) {
+        let c= r(gam2.view.content)
+           .container('popbox', 'div')
+           .container('boxclose', 'div')
+             .addButton('close', function() {
+               r(gam2.view.pbox).remove(0);
+               gam2.view.pbox=null;
+             }, 'button btn-danger')
+           .up();
+           
+        let res = gam2.model.res;
+        let recp = gam2.model.res.recepies;
+           
+        for(let i in recp) {
+          c = c.container('slot slot-output', 'div')
+            .addJqEl(res.getResIco(recp[i].out))
+            .container('amount', 'div')
+            .addText(1)
+            .up()
+            .up();
+            
+         // c = c.container('slot-spacer', 'div', 'width: 20px;');
+            
+          for(let j in recp[i].inp) {
+            c = c.container('slot', 'div')
+             .addJqEl(res.getResIco(j))
+             .container('amount', 'div')
+               .addText(recp[i].inp[j])
+             .up()
+             .up();
+          }
+          
+          c = c.br(2);
+            
+          
+        }
+        
+        c = c.el;
+        gam2.view.pbox = c;
       },
       'lvlUp': function (box) {
         var cr= this.model.loc.current;
