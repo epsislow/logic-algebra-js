@@ -1587,13 +1587,14 @@ if (buttons2) {
               this.add('power','battery-full','greenyellow');
               this.add('child','child','lightgreen');
             },
-            'add': function (name, ico=0, color='light') {
+            'add': function (name, ico=0, color='light', unitValue=0) {
                 var id=this.reg.length;
                 this.reg[id] = {
                     name: name,
                     value: 0,
                     ico: ico,
-                    color: color
+                    color: color,
+                    unitValue: unitValue
                 }
                 return id;
             },
@@ -1602,7 +1603,11 @@ if (buttons2) {
                 let ico, suf, name, color;
                 let seed = gam2.model.rand.seed.res;
                 var icoList = [], colorList= [];
+                var unitValue =0;
                 for(let i=0;i<num;i++) {
+                    if(i >= 0 && i <= 5) {
+                      unitValue = i + 4;
+                    }
                     if(!icoList.length) {
                       icoList = [...this.icoList];
                     }
@@ -1620,7 +1625,7 @@ if (buttons2) {
                     }*/
                     
                     color = rd.pickOneFrom(this.colorUni[ico], 1, seed);
-                    this.add(name, ico, color);
+                    this.add(name, ico, color, unitValue);
                     
                     const idx= this.colorUni[ico].indexOf(color);
             
@@ -1669,17 +1674,24 @@ if (buttons2) {
             },
             'genRecepieFor': function(item, numItems, minId=5, opt= {}) {
                 let seed = gam2.model.rand.seed.res;
+                let reg = gam2.model.res.reg;
                 let inp={};
                 let rd = gam2.model.rand.rd;
+                let unitValue = 0;
+                //console.log(minId+': '+ reg[minId].unitValue)
                 
                 for(let i=minId; i< minId + numItems;i++) {
                   let nItem= i; //rd.rand(minId, maxId, seed);
                   inp[nItem]= rd.rand(5,10)*Math.pow(10, rd.rand(0,2, seed));
+                  unitValue += inp[nItem]*reg[nItem].unitValue*(11)/(9);
                 }
+                
+                reg[item].unitValue = unitValue;
               
                 return {
                   inp: inp,
                   out: item,
+                  unitValue: Math.ceil(unitValue)
                 }
             },
             'hexToHsl': function(hex) {
