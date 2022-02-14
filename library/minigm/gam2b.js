@@ -2293,14 +2293,13 @@ if (buttons2) {
                 if (!box.recepie) {
                     return;
                 }
+          
+                var slots = gam2.model.constr.getPropList(box.slot)
+            
                 let slotOut = box.slotOut.p;
-                console.log(box.recepie, slotOut);
-                if (slotOut.item !== box.recepie.out) {
-                    let res = gam2.model.res.reg;
-                    slotOut.item = box.recepie.out;
-                    slotOut.unitValue = box.recepie.unitValue;
-                    slotOut.amount = 0;
-                }
+                //console.log(box.recepie, slotOut);
+                
+                
                 if (slotOut.amount > box.maxAmount) {
                     //nothing to do, all is done
                 } else if (box.maxAmount - slotOut.amount > box.tickAmount ) {
@@ -2346,6 +2345,15 @@ if (buttons2) {
                 box.level++;
                 box.tickAmount++;
                 box.maxAmount += 500;
+                if (box.level % 10 === 0 && box.level !== 50) {
+                  box.slots++;
+                  let last = box.slot.last();
+                  last.nextObj(
+                    gam2.model.constr.addSlot({ 'posi': last.p.posi + 1 })
+                  )
+                
+                }
+                
 
                 box.repaint = 1;
                 gam2.view.paintTopBar(coins);
@@ -2419,6 +2427,7 @@ if (buttons2) {
             },
             'state': function (box) {
                 let state = {};
+                var slots = gam2.model.constr.getPropList(box.slot)
                 let slot = box.slotOut.p;
 
                 state.actions = function () {
@@ -2461,10 +2470,18 @@ if (buttons2) {
                 }
 
                 state.content = function () {
-                    let conts;
-                    conts = [
-                        {type: 'slot-out', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)},{type: 'br'},
-                    ];
+                    let conts=[];
+                    for(let i in slots) {
+                      conts.push(
+                        {type: 'slot', res: slots[i].item, amount: slots[i].amount, missing: (slots[0].item > 0 ? 0: 1)}
+                      )
+                    }
+                    conts.push(
+                        {type: 'slot-out', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)}
+                    );
+                    conts.push(
+                        {type: 'br'},
+                    );
 
                     if (slot.item > 0) {
                         let res = gam2.model.res.reg[slot.item];
@@ -2695,6 +2712,32 @@ if (buttons2) {
               box.everySec = 2;
               box.clearTik = -1;
           }
+          
+          var slots = gam2.model.constr.getPropList(box.slot)
+            
+          let slotOut = box.slotOut.p;
+          //console.log(box.recepie, slotOut);
+          
+          if(box.recepie) {
+          
+                
+                if (slotOut.item !== box.recepie.out) {
+                    let res = gam2.model.res.reg;
+                    slotOut.item = box.recepie.out;
+                    slotOut.unitValue = box.recepie.unitValue;
+                    slotOut.amount = 0;
+                    
+                    let i = 0;
+                    for(let ritem in box.recepie.inp) {
+                      slots[i].item = ritem;
+                      slots[i].unitValue = res[ritem].unitValue;
+                      slots[i].reqAmount=box.recepie.inp[ritem];
+                      i++;
+                    }
+                }
+                
+          }
+
 
           box.repaint = 1;
           gam2.view.drawBox(box,0);
@@ -2750,7 +2793,7 @@ if (buttons2) {
           let reso= res.reg[recp[i].out];
           let rec= recp[i];
           
-          if(Object.keys(rec.inp).length >3) {
+          if(Object.keys(rec.inp).length > box.slots) {
             continue;
           }
           
