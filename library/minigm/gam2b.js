@@ -398,6 +398,38 @@ var gam2 = {
                   opt.content = state.content();
 
                   return opt;
+              },
+              'popupTo': function (box) {
+                var cpos = gam2.model.loc.currentPos;
+                
+                gam2.action.popup(box, function(c, box){
+                  let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+                  if (!p.length) {
+                    return;
+                  }
+                  
+                  for (const i in p) {
+                    if (!p.hasOwnProperty(i)) {
+                      continue;
+                    }
+                    if(!('from' in p[i])) {
+                      continue;
+                    }
+                    c = c
+            .br()
+            .addButton('select', (function(box, cpos, pos) {
+              return function() {
+                gam2.action.box.miner.selectTo(box, cpos, pos);
+              }
+            })(box, cpos, p[i].pos), 'button btn-success', {'style':'float: left'})
+            
+            .container('','div','color:white')
+            .addText(p[i].type +' '+ p[i].level + ' P:'+ p[i].pos)
+            .up()
+            .br()
+        
+                  }
+                })
               }
           },
           'dwellings':{
@@ -2063,11 +2095,18 @@ if (buttons2) {
             var cpos = gam2.model.loc.currentPos;
         
             if(!box.to) {
-              box.to = [cpos, 8];
+              gam2.view.box.miner.popupTo(box);
+              //box.to = [cpos, 8];
               //ev.put('b'+box.pos);
             } else {
               box.to = 0;
             }
+            
+              box.repaint = 1;
+              gam2.view.drawBox(box,0);
+          },
+          'selectTo': function(box, cpos, pos) {
+            box.to = [cpos, 8];
             
               box.repaint = 1;
               gam2.view.drawBox(box,0);
@@ -2221,6 +2260,7 @@ if (buttons2) {
             box.slots = 4;
             box.maxAmount = 250;
             box.slot = {};
+            box.from = 1;
             box.clearTik = 0;
             box.tickPaint=1;
             return box;
@@ -2408,7 +2448,7 @@ if (buttons2) {
       'selectRecepie': function(box, recepie) {
         console.log(recepie);
       },
-      'recepies': function(box) {
+      'popup': function(params=0, contentHdlr = 0, closeHdlr = 0) {
         r(gam2.view.content).css('position: fixed; height:100%; overflow:hidden');
         
         let c= r(gam2.view.content)
@@ -2418,11 +2458,19 @@ if (buttons2) {
                r(gam2.view.pbox).remove(0);
                gam2.view.pbox=null;
                r(gam2.view.content).css('');
-        
+               
+               closeHdlr && closeHdlr(params);
              }, 'button btn-danger')
            .up();
            
-        let res = gam2.model.res;
+        contentHdlr && contentHdlr(c, params);
+        
+        c = c.el;
+        gam2.view.pbox = c;
+      },
+      'recepies': function(box) {
+        this.popup(box, function(c, box) {
+          let res = gam2.model.res;
         let recp = gam2.model.res.recepies;
            
         for(let i in recp) {
@@ -2467,12 +2515,10 @@ if (buttons2) {
           }
           
           c = c.br(1);
-            
-          
         }
         
-        c = c.el;
-        gam2.view.pbox = c;
+        });
+        
       },
       'lvlUp': function (box) {
         var cr= this.model.loc.current;
