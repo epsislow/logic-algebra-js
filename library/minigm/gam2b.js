@@ -1341,6 +1341,7 @@ if (buttons2) {
           'addItemToSlots': function(box, item, amount, unitValue) {
           var slots = gam2.model.constr.getPropList(box.slot)
           if (!slots.length) {
+            //console.log('nosl');
             return false;
           }
           let slotItem = this.findSlotNonFullWithItem(slots, box, item);
@@ -1348,6 +1349,7 @@ if (buttons2) {
             slotItem = this.findNextEmptySlot(slots);
           }
           if (!slotItem) {
+            //console.log('nofd');
             return 0;
           }
           let reminder = slotItem.amount + amount - box.maxAmount;
@@ -1361,6 +1363,8 @@ if (buttons2) {
             return this.addItemToSlots(box, item, reminder, unitValue)
           }
           slotItem.amount += amount;
+          
+          //console.log('allgd')
         
           return 1;
         },
@@ -2158,6 +2162,7 @@ if (buttons2) {
               if(p[i].pos === to) {
                 let avl = Math.min(slot.amount,box.tickAmount);
                         if(!avl) {
+                          
                           return;
                         }
                         slot.amount -= avl;
@@ -2167,10 +2172,10 @@ if (buttons2) {
                 slot.amount -= box.tickAmount;
                 gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
 */
-                ev.do('b'+box.pos+'.miner.sendTo', box);
+                //ev.do('b'+box.pos+'.miner.sendTo', box);
 
                 if(cpos === pos) {
-                  //console.log(p[i]);
+                  console.log(p[i].slot.first.p);
                   p[i].repaint=1;
 
                   gam2.view.drawBox(p[i],0);
@@ -2307,23 +2312,31 @@ if (buttons2) {
                 let slotOut = box.slotOut.p;
                 let rinp= box.recepie.inp;
                 //console.log(box.recepie, slotOut);
-                let step=1;
+                let step,t=0;
+            
+            for(t=0; t<box.tickAmount;t++) {
+                step=1;
                 for(let r in rinp) {
-                  step &= gam2.model.slot.amountExistsInSlots(box, r, rinp[r])
+                  step &= gam2.model.slot.amountExistsInSlots(box, parseInt(r), rinp[r])
                 }
                 
                 if(!step) {
-                  return;
+                  break;
                 }
                 
                 for (let r in rinp) {
-                  gam2.model.slot.subItemFromSlots(box, r, rinp[r])
+                  gam2.model.slot.subItemFromSlots(box, parseInt(r), rinp[r])
                 }
+            }
+            
+            if(t===0) {
+              return;
+            }
                 
                 if (slotOut.amount > box.maxAmount) {
                     //nothing to do, all is done
-                } else if (box.maxAmount - slotOut.amount > box.tickAmount ) {
-                    slotOut.amount += box.tickAmount;
+                } else if (box.maxAmount - slotOut.amount > t ) {
+                    slotOut.amount += t;
                 } else {
                     slotOut.amount = box.maxAmount;
                 }
@@ -2438,7 +2451,7 @@ if (buttons2) {
                         slot.amount -= avl;
                         gam2.model.slot.addItemToSlots(p[i], slot.item, avl, slot.unitValue);
 
-                        ev.do('b'+box.pos+'.crafter.sendTo', box);
+                        //ev.do('b'+box.pos+'.crafter.sendTo', box);
 
                         if(cpos === pos) {
                             //console.log(p[i]);
@@ -2734,7 +2747,7 @@ if (buttons2) {
               box.everySec = 0;
               box.clearTik = -1;
           } else {
-              box.everySec = 2;
+              box.everySec = 7;
               box.clearTik = -1;
           }
           
@@ -2748,13 +2761,13 @@ if (buttons2) {
                 
                 if (slotOut.item !== box.recepie.out) {
                     let res = gam2.model.res.reg;
-                    slotOut.item = box.recepie.out;
+                    slotOut.item = parseInt(box.recepie.out);
                     slotOut.unitValue = box.recepie.unitValue;
                     slotOut.amount = 0;
                     
                     let i = 0;
                     for(let ritem in box.recepie.inp) {
-                      slots[i].item = ritem;
+                      slots[i].item = parseInt(ritem);
                       slots[i].unitValue = res[ritem].unitValue;
                       slots[i].reqAmount=box.recepie.inp[ritem];
                       i++;
