@@ -2156,9 +2156,17 @@ if (buttons2) {
 
             for(let i in p) {
               if(p[i].pos === to) {
+                let avl = Math.min(slot.amount,box.tickAmount);
+                        if(!avl) {
+                          return;
+                        }
+                        slot.amount -= avl;
+                        gam2.model.slot.addItemToSlots(p[i], slot.item, avl, slot.unitValue);
+
+                    /*
                 slot.amount -= box.tickAmount;
                 gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
-
+*/
                 ev.do('b'+box.pos+'.miner.sendTo', box);
 
                 if(cpos === pos) {
@@ -2297,8 +2305,20 @@ if (buttons2) {
                 var slots = gam2.model.constr.getPropList(box.slot)
             
                 let slotOut = box.slotOut.p;
+                let rinp= box.recepie.inp;
                 //console.log(box.recepie, slotOut);
+                let step=1;
+                for(let r in rinp) {
+                  step &= gam2.model.slot.amountExistsInSlots(box, r, rinp[r])
+                }
                 
+                if(!step) {
+                  return;
+                }
+                
+                for (let r in rinp) {
+                  gam2.model.slot.subItemFromSlots(box, r, rinp[r])
+                }
                 
                 if (slotOut.amount > box.maxAmount) {
                     //nothing to do, all is done
@@ -2396,6 +2416,7 @@ if (buttons2) {
                 if(!box.to) {
                     return;
                 }
+                
                 let to, pos;
                 [pos,to]= box.to;
 
@@ -2410,8 +2431,12 @@ if (buttons2) {
 
                 for(let i in p) {
                     if(p[i].pos === to) {
-                        slot.amount -= box.tickAmount;
-                        gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
+                        let avl = Math.min(slot.amount,box.tickAmount);
+                        if(!avl) {
+                          return;
+                        }
+                        slot.amount -= avl;
+                        gam2.model.slot.addItemToSlots(p[i], slot.item, avl, slot.unitValue);
 
                         ev.do('b'+box.pos+'.crafter.sendTo', box);
 
