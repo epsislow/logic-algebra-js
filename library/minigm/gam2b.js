@@ -402,7 +402,7 @@ var gam2 = {
               'popupTo': function (box) {
                 var cpos = gam2.model.loc.currentPos;
                 
-                gam2.action.popup(box, function(c, box){
+                gam2.action.popup(box, function(c, onClose, box){
                   let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
                   if (!p.length) {
                     return;
@@ -415,18 +415,18 @@ var gam2 = {
                     if(!('from' in p[i])) {
                       continue;
                     }
-                    c = c
-            .br()
-            .addButton('select', (function(box, cpos, pos) {
-              return function() {
-                gam2.action.box.miner.selectTo(box, cpos, pos);
-              }
-            })(box, cpos, p[i].pos), 'button btn-success', {'style':'float: left'})
-            
-            .container('','div','color:white')
-            .addText(p[i].type +' '+ p[i].level + ' P:'+ p[i].pos)
-            .up()
-            .br()
+                    c = c.br()
+                        .addButton('select', (function(box, cpos, pos) {
+                          return function() {
+                            gam2.action.box.miner.selectTo(box, cpos, pos);
+                            onClose();
+                          }
+                        })(box, cpos, p[i].pos), 'button btn-success', {'style':'float: left'})
+
+                        .container('','div','color:white')
+                        .addText(p[i].type +' '+ p[i].level + ' P:'+ p[i].pos)
+                        .up()
+                        .br()
         
                   }
                 })
@@ -542,7 +542,7 @@ var gam2 = {
                 lvl: box.level,
                 btns: { clr: 1, 'add': [
                   ['Lvl up', (function(box) { return function() { gam2.action.lvlUp(box) } })(box), 'btn-success'],
-                  ['Recepie', (function(box) { return function() { gam2.action.recepies(box) } })(box), 'btn-light']
+                  ['Recepie', (function(box) { return function() { gam2.action.recepies(box) } })(box), (!box.recepie ? 'btn-light': 'btn-info')]
                 ] },
                 content: [
                   {type: 'slot', res: 20+ box.sloti, amount: 20},
@@ -653,7 +653,7 @@ var gam2 = {
 //crd.icon = (box.type==='cargo')?'empty':'empty';
     //color='empty';
    // dashed=1;
-var clr=(box.is=='loc')?3:5;
+var clr=(box.is==='loc')?3:5;
           var icon = crd.icon+ " b-clr i-clr"+clr+" "+ crd.icon;
           
           var title = (box.is==='loc')? box.name:box.type;
@@ -2251,6 +2251,22 @@ if (buttons2) {
             box.repaint = 1;
           },
         },
+        'crafter': {
+            'defaults': function (box) {
+                box.type='crafter';
+                box.level = 1;
+                box.levelCost = 10;
+                box.levelCostFloat = 10;
+                box.slots = 1;
+                box.slot = {};
+                box.slotsOut = 1;
+                box.slotOut = {};
+                box.from = 1;
+                box.to = 0;
+                box.recepie = 0;
+                return box;
+            }
+        },
         'storage': {
           'defaults': function(box) {
             box.type='storage';
@@ -2446,33 +2462,58 @@ if (buttons2) {
       }
       },
       'selectRecepie': function(box, recepie) {
-        console.log(recepie);
+          box.recepie = recepie;
+
+          box.repaint = 1;
+          gam2.view.drawBox(box,0);
       },
       'popup': function(params=0, contentHdlr = 0, closeHdlr = 0) {
-        r(gam2.view.content).css('position: fixed; height:100%; overflow:hidden');
+        //r(gam2.view.content).css('position: fixed; height:100%; overflow:hidden');
+
+          let onClose = (function(closeHdlr) {
+              return function () {
+                  r($('.popbox-over')).remove(0);
+                  r(gam2.view.pbox).remove(0);
+                  gam2.view.pbox = null;
+
+                  closeHdlr && closeHdlr(params);
+              }
+          })(closeHdlr);
         
-        let c= r(gam2.view.content)
-           .container('popbox', 'div')
-           .container('boxclose', 'div')
-             .addButton('close', function() {
-               r(gam2.view.pbox).remove(0);
-               gam2.view.pbox=null;
-               r(gam2.view.content).css('');
-               
-               closeHdlr && closeHdlr(params);
-             }, 'button btn-danger')
-           .up();
+        let c= r(gam2.view.main)
+           .container('popbox-over','div')
+            .up()
+           .container('popcont', 'div')
+               .container('popbox', 'div')
+                   .container('boxclose', 'div')
+                     .addButton('close', onClose , 'button btn-danger')
+                   .up();
            
-        contentHdlr && contentHdlr(c, params);
+        contentHdlr && contentHdlr(c, onClose, params);
         
-        c = c.el;
+        c = c.up().el;
         gam2.view.pbox = c;
       },
       'recepies': function(box) {
-        this.popup(box, function(c, box) {
+        this.popup(box, function(c, onClose, box) {
           let res = gam2.model.res;
         let recp = gam2.model.res.recepies;
-           
+
+
+            c = c
+                .br(1)
+                .addButton('select', (function(box, rec) {
+                    return function() {
+                        gam2.action.selectRecepie(box, rec);
+                        onClose();
+                    }
+                })(box, 0), 'button btn-danger', {'style':'float: left'})
+
+                .container('','div','color:yellow')
+                .addText('Empty')
+                .up();
+
+
         for(let i in recp) {
           let reso= res.reg[recp[i].out];
           let rec= recp[i];
@@ -2483,9 +2524,10 @@ if (buttons2) {
           
           c = c
             .br(1)
-            .addButton('select', (function(box) {
+            .addButton('select', (function(box, rec) {
               return function() {
                 gam2.action.selectRecepie(box, rec);
+                  onClose();
               }
             })(box, rec), 'button btn-success', {'style':'float: left'})
             
@@ -2499,8 +2541,7 @@ if (buttons2) {
             .addText(1)
             .up()
             .up();
-            
-            
+
             
          c = c.container('slot-spc', 'div', 'width: 20px;')
          .up();
@@ -2516,7 +2557,7 @@ if (buttons2) {
           
           c = c.br(1);
         }
-        
+
         });
         
       },
