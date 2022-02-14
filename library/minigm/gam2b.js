@@ -269,7 +269,10 @@ var gam2 = {
               //this.model.constr.addBox({type:'cargo', sloti:8, slots: 8, slot: {}, pos:3, level:1, levelCost: 10})
             )
             .nextObj(
-              this.model.constr.addBox({type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10})
+              this.model.constr.addBox(
+                  //{type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10}
+                    this.action.box.storage.defaults({ type: 'crafter', pos: 4 })
+              )
             )/*
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
@@ -282,7 +285,7 @@ var gam2 = {
             )*/
               .nextObj(
                   this.model.constr.addBox( // { type: 'storage', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
-                    this.action.box.storage.defaults({ type: 'storage', pos: 8 })
+                    this.action.box.crafter.defaults({ type: 'crafter', pos: 8 })
                   )
               ) 
               
@@ -415,6 +418,9 @@ var gam2 = {
                     if(!('from' in p[i])) {
                       continue;
                     }
+                    if (p[i].pos === box.pos) {
+                        continue;
+                    }
                     c = c.br()
                         .addButton('select', (function(box, cpos, pos) {
                           return function() {
@@ -537,22 +543,43 @@ var gam2 = {
               }
           },
           'crafter': {
-            'paint': function(id, box) {
-              return {
-                lvl: box.level,
-                btns: { clr: 1, 'add': [
-                  ['Lvl up', (function(box) { return function() { gam2.action.lvlUp(box) } })(box), 'btn-success'],
-                  ['Recepie', (function(box) { return function() { gam2.action.recepies(box) } })(box), (!box.recepie ? 'btn-light': 'btn-info')]
-                ] },
-                content: [
-                  {type: 'slot', res: 20+ box.sloti, amount: 20},
-                  {type: 'slot', res: 21+ box.sloti, amount: 20},
-                  {type: 'br'},
-                  { type: 'slot-out', res: 30 + box.sloti, amount: 20, missing: 1 },
-                //  { type: 'br' },
-                 // { type: 'text', text: 'Resource: ' + res[(30 + box.sloti) % res.length].name }
-                                ],
-              };
+            'paint': function(id, box, clear=0) {
+                let opt = {};
+                let act = gam2.action.box.miner;
+
+                let state = gam2.action.box.crafter.state(box);
+
+                let btns = {}, btns2= {};
+
+                if(clear) {
+                    btns.clr = 1;
+                    btns.add = state.actions();
+                    btns2.clr=1;
+                    btns2.add = state.actions2();
+                } else {
+                    btns.clr = 1;
+                    btns.add = state.actions();
+                    btns2.clr=1;
+                    btns2.add = state.actions2();
+
+                    //btns.add = state.actionsUpdate();
+                }
+
+                opt.lvl = box.level;
+
+                opt.btns = btns;
+                opt.btns2= btns2;
+                let clearTikOpt = state.clearTikOpt();
+                if (clearTikOpt === 1) {
+                    opt.tikUp = true;
+                }
+                if (clearTikOpt === -1) {
+                    opt.tikUp = false;
+                    opt.timerClear = 1;
+                }
+                opt.content = state.content();
+
+                return opt;
             }
           },
           
@@ -2043,7 +2070,7 @@ if (buttons2) {
 
               box.level++;
               box.tickAmount++;
-              box.maxAmount += 1000;
+              box.maxAmount += 500;
 
               box.repaint = 1;
               gam2.view.paintTopBar(coins);
@@ -2106,7 +2133,7 @@ if (buttons2) {
               gam2.view.drawBox(box,0);
           },
           'selectTo': function(box, cpos, pos) {
-            box.to = [cpos, 8];
+            box.to = [cpos, pos];
             
               box.repaint = 1;
               gam2.view.drawBox(box,0);
@@ -2121,28 +2148,28 @@ if (buttons2) {
             var cpos = gam2.model.loc.currentPos;
             let slot = box.slotOut.p;
               
-        var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
-        if (!p.length) {
-          return;
-        }
-        let ev = gam2.action.event;
-        
-        for(let i in p) {
-          if(p[i].pos === to) {
-            slot.amount -= box.tickAmount;
-            gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
-            
-            ev.do('b'+box.pos+'.miner.sendTo', box);
-            
-            if(cpos === pos) {
-              //console.log(p[i]);
-              p[i].repaint=1;
-              
-              gam2.view.drawBox(p[i],0);
+            var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
+            if (!p.length) {
+              return;
             }
-            return;
-          }
-        }
+            let ev = gam2.action.event;
+
+            for(let i in p) {
+              if(p[i].pos === to) {
+                slot.amount -= box.tickAmount;
+                gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
+
+                ev.do('b'+box.pos+'.miner.sendTo', box);
+
+                if(cpos === pos) {
+                  //console.log(p[i]);
+                  p[i].repaint=1;
+
+                  gam2.view.drawBox(p[i],0);
+                }
+                return;
+              }
+            }
           },
           'change': function (box) {
               //   0  1  2  3  4
@@ -2252,6 +2279,39 @@ if (buttons2) {
           },
         },
         'crafter': {
+            'tick': function(box) {
+                if (box.recepie) {
+                    gam2.action.box.crafter.craft(box);
+                }
+                if (box.to) {
+                    gam2.action.box.crafter.sendTo(box);
+                }
+                box.clearTik = 1;
+                box.repaint = 1;
+            },
+            'craft': function (box) {
+                if (!box.recepie) {
+                    return;
+                }
+                let slotOut = box.slotOut.p;
+                console.log(box.recepie, slotOut);
+                if (slotOut.item !== box.recepie.out) {
+                    let res = gam2.model.res.reg;
+                    slotOut.item = box.recepie.out;
+                    slotOut.unitValue = box.recepie.unitValue;
+                    slotOut.amount = 0;
+                }
+                if (slotOut.amount > box.maxAmount) {
+                    //nothing to do, all is done
+                } else if (box.maxAmount - slotOut.amount > box.tickAmount ) {
+                    slotOut.amount += box.tickAmount;
+                } else {
+                    slotOut.amount = box.maxAmount;
+                }
+            },
+            'stopCraft': function (box) {
+                gam2.action.selectRecepie(box, 0);
+            },
             'defaults': function (box) {
                 box.type='crafter';
                 box.level = 1;
@@ -2260,11 +2320,176 @@ if (buttons2) {
                 box.slots = 1;
                 box.slot = {};
                 box.slotsOut = 1;
+                box.tickAmount = 1;
+                box.maxTickAmount = 50;
+                box.maxAmount = 100;
                 box.slotOut = {};
                 box.from = 1;
                 box.to = 0;
+                box.everySec = 0;
+                box.clearTik = 0;
+
                 box.recepie = 0;
                 return box;
+            },
+            'lvlUp': function (box) {
+                let coins = gam2.action.getCoins();
+
+                if (coins.money < box.levelCost) {
+                    return;
+                }
+                coins.money -= box.levelCost;
+
+                box.levelCostFloat *= 2;
+                box.levelCost = Math.round(box.levelCostFloat);
+
+                box.level++;
+                box.tickAmount++;
+                box.maxAmount += 500;
+
+                box.repaint = 1;
+                gam2.view.paintTopBar(coins);
+                gam2.view.drawBox(box,0);
+            },
+            'sellAll': function (box) {
+                let slotOut = box.slotOut.p;
+                if (!slotOut.amount) {
+                    return;
+                }
+                let coins = gam2.action.getCoins();
+                coins.money += slotOut.amount * slotOut.unitValue;
+
+                slotOut.amount = 0;
+
+                box.repaint = 1;
+                gam2.view.paintTopBar(coins);
+                gam2.view.drawBox(box,0);
+            },
+            'connectTo': function(box) {
+                let ev = gam2.action.event;
+                var cpos = gam2.model.loc.currentPos;
+
+                if(!box.to) {
+                    gam2.view.box.miner.popupTo(box);
+                } else {
+                    box.to = 0;
+                }
+
+                box.repaint = 1;
+                gam2.view.drawBox(box,0);
+            },
+            'selectTo': function(box, cpos, pos) {
+                box.to = [cpos, pos];
+
+                box.repaint = 1;
+                gam2.view.drawBox(box,0);
+            },
+            'sendTo': function(box) {
+                if(!box.to) {
+                    return;
+                }
+                let to, pos;
+                [pos,to]= box.to;
+
+                var cpos = gam2.model.loc.currentPos;
+                let slot = box.slotOut.p;
+
+                var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
+                if (!p.length) {
+                    return;
+                }
+                let ev = gam2.action.event;
+
+                for(let i in p) {
+                    if(p[i].pos === to) {
+                        slot.amount -= box.tickAmount;
+                        gam2.model.slot.addItemToSlots(p[i], slot.item, box.tickAmount, slot.unitValue);
+
+                        ev.do('b'+box.pos+'.crafter.sendTo', box);
+
+                        if(cpos === pos) {
+                            //console.log(p[i]);
+                            p[i].repaint=1;
+
+                            gam2.view.drawBox(p[i],0);
+                        }
+                        return;
+                    }
+                }
+            },
+            'state': function (box) {
+                let state = {};
+                let slot = box.slotOut.p;
+
+                state.actions = function () {
+                    let acts = [];
+                    let coins = gam2.action.getCoins();
+
+                    if (box.tickAmount < box.maxTickAmount) {
+                        acts.push(['Lvl', (function(box) { return function() {gam2.action.box.crafter.lvlUp(box)}})(box), (coins.money >= box.levelCost) ? 'btn-success': 'btn-danger']);
+                    }
+
+                    acts.push(
+                        ['Recp', (function(box) { return function() { gam2.action.recepies(box) } })(box), (!box.recepie ? 'btn-light': 'btn-info')]
+                    );
+
+                    if(!box.recepie) {
+                        acts.push(['To', (function(box) { return function() {gam2.action.box.crafter.connectTo(box)}})(box), box.to? 'btn-warning':'btn-success']);
+                    }
+
+                    if (box.recepie) {
+                        acts.push(['Stop', (function(box) { return function() {gam2.action.box.crafter.stopCraft(box)}})(box), 'btn-danger']);
+                    }
+                    if (slot.amount) {
+                        acts.push(['S', (function(box) { return function() {gam2.action.box.crafter.sellAll(box)}})(box), 'btn-warning']);
+                    }
+                    acts.push(['i', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+
+                    return acts;
+                }
+
+                state.actions2 = function() {
+                    let acts2 = [];
+                    acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+                    return acts2;
+                }
+
+                state.actionsUpdate = function () {
+                    return [];
+                }
+
+                state.content = function () {
+                    let conts;
+                    conts = [
+                        {type: 'slot-out', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)},{type: 'br'},
+                    ];
+
+                    if (slot.item > 0) {
+                        let res = gam2.model.res.reg[slot.item];
+                        conts.push({type: 'text', text: 'Res: '+ res.name + ' $'+ slot.amount * slot.unitValue});
+                    }
+
+                    if (box.level < 50) {
+                        conts.push({type: 'text', text: 'Next Lvl: $'+ box.levelCost});
+                    }
+
+                    conts.push({type: 'text', text: 'Craft +'+ box.tickAmount + ' $'+ box.tickAmount * slot.unitValue});
+
+                    return conts;
+                }
+
+                state.clearTikOpt = function () {
+                    if (!box.clearTik) {
+                        return false;
+                    }
+                    let clearTik = box.clearTik;
+                    box.clearTik = 0;
+                    return clearTik;
+                }
+
+                return state;
             }
         },
         'storage': {
@@ -2463,6 +2688,13 @@ if (buttons2) {
       },
       'selectRecepie': function(box, recepie) {
           box.recepie = recepie;
+          if (!recepie) {
+              box.everySec = 0;
+              box.clearTik = -1;
+          } else {
+              box.everySec = 2;
+              box.clearTik = -1;
+          }
 
           box.repaint = 1;
           gam2.view.drawBox(box,0);
