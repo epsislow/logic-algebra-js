@@ -2038,8 +2038,7 @@ if (buttons2) {
               }
           }
 
-          obj.slot.selected = 1;
-
+          let moved = 0;
           if (oldObj && oldObj.slot.item > 0) {
               if (obj.slot.item !== oldObj.slot.item) {
                   obj.slot.item = oldObj.slot.item;
@@ -2052,7 +2051,8 @@ if (buttons2) {
               oldObj.slot.amount = 0;
               oldObj.slot.unitValue = 0;
 
-              //obj.slot.selected = 0;
+              //
+              moved = 1;
           }
 
           if (oldObj) {
@@ -2060,7 +2060,14 @@ if (buttons2) {
               oldObj.box.repaint = 1;
               gam2.view.drawBox(oldObj.box, 0);
           }
-          this.slotSelectedObj = obj;
+
+          if (!moved) {
+              obj.slot.selected = 1;
+              this.slotSelectedObj = obj;
+          } else {
+              obj.slot.selected = 0;
+              this.slotSelectedObj = 0;
+          }
           console.log(el);
 
 
