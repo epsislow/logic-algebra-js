@@ -676,7 +676,7 @@ var gam2 = {
           if(paintAll) {
               this.drawCard(id, box);
           }
-          this.paint(id, box,paintAll || box.repaint);
+          this.paint(id, box, paintAll || box.repaint);
       },
       'drawBoxes': function(paintAll=0) {
         var cpos = gam2.model.loc.currentPos;
@@ -3004,8 +3004,8 @@ if (buttons2) {
         if (gam2.model.flags.loading) {
           return;
         }
-        gam2.model.box.addSlotsFor(pub.p);
-        gam2.model.box.addSlotOutsFor(pub.p);
+        gam2.model.box.addSlotsFor(pub);
+        gam2.model.box.addSlotOutsFor(pub);
       },
       'selectBuild': function(type, cost, box, cpos, pos) {
         let coins = gam2.action.getCoins();
@@ -3021,11 +3021,11 @@ if (buttons2) {
         
         
         if(type ==='miner') {
-          box = gam2.action.box.miner.defaults({pos: pos});
+          box = gam2.action.box.miner.defaults({type:'miner',pos: pos});
         } else if(type === 'storage') {
-          box = gam2.action.box.storage.defaults({ pos: pos });
+          box = gam2.action.box.storage.defaults({type:'storage', pos: pos });
         } else if(type === 'crafter') {
-          box = gam2.action.box.crafter.defaults({ pos: pos });
+          box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         }
         this.prepareBox(box);
         
@@ -3033,7 +3033,6 @@ if (buttons2) {
         builderbox.repaint=1;
         
         let last = blist.last();
-        
         
         
         last.nextObj(
@@ -3044,8 +3043,12 @@ if (buttons2) {
 
         
                       box.repaint = 1;
+                      //box.clearTik=1;
                       gam2.view.paintTopBar(coins);
-                      gam2.view.drawBox(box, 0);
+                      
+                      r(gam2.view.cardBox['b'+pos]).remove();
+                      delete gam2.view.cardBox['b'+pos];
+                      gam2.view.drawBox(box, 1);
                       gam2.view.drawBox(builderbox, 1);
 
       },
