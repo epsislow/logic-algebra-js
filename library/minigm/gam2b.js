@@ -2151,6 +2151,7 @@ if (buttons2) {
             box.repaint = 1;
           },
           'mine': function (box) {
+          
               if (!box.outputId) {
                   return;
               }
@@ -3021,7 +3022,7 @@ if (buttons2) {
         
         
         if(type ==='miner') {
-          box = gam2.action.box.miner.defaults({type:'miner',pos: pos});
+          box = gam2.action.box.miner.defaults({type:'miner', pos: parseInt(pos)});
         } else if(type === 'storage') {
           box = gam2.action.box.storage.defaults({type:'storage', pos: pos });
         } else if(type === 'crafter') {
@@ -3034,23 +3035,30 @@ if (buttons2) {
         
         let last = blist.last();
         
+        last = last.prev.nextObj(
+          gam2.model.constr.addBox(box)
+        );
+        
+        console.log(last.prev);
+          
         
         last.nextObj(
           gam2.model.constr.addBox(builderbox)
         )
         
-        var b = this.model.box.list[cr.p.crkey];
-
+      
         
-                      box.repaint = 1;
-                      //box.clearTik=1;
+                     // box.repaint = 1;
+                     // box.clearTik=1;
                       gam2.view.paintTopBar(coins);
                       
-                      r(gam2.view.cardBox['b'+pos]).remove();
-                      delete gam2.view.cardBox['b'+pos];
-                      gam2.view.drawBox(box, 1);
+                     // r(gam2.view.cardBox['b'+pos]).remove();
+                     // delete gam2.view.cardBox['b'+pos];
+                  
+                      gam2.view.drawBox(box, 0);
                       gam2.view.drawBox(builderbox, 1);
 
+                      
       },
         'build': function(box) {
             var cpos = gam2.model.loc.currentPos;
