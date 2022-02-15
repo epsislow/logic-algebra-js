@@ -2999,11 +2999,81 @@ if (buttons2) {
         });
         
       },
+      'prepareBox': function(pub) {
+        pub.levelCostFloat = pub.levelCost;
+        if (gam2.model.flags.loading) {
+          return;
+        }
+        gam2.model.box.addSlotsFor(pub.p);
+        gam2.model.box.addSlotOutsFor(pub.p);
+      },
+      'selectBuild': function(type, cost, box, cpos, pos) {
+        let coins = gam2.action.getCoins();
+        
+        coins.money -= cost;
+        
+        if(!(cpos in gam2.model.box.list)) {
+         // gam2.model.box.list[cpos] = ..
+        }
+        let blist = gam2.model.box.list[cpos];
+        
+        var builderbox = box;
+        
+        
+        if(type ==='miner') {
+          box = gam2.action.box.miner.defaults({pos: pos});
+        } else if(type === 'storage') {
+          box = gam2.action.box.storage.defaults({ pos: pos });
+        } else if(type === 'crafter') {
+          box = gam2.action.box.crafter.defaults({ pos: pos });
+        }
+        this.prepareBox(box);
+        
+        builderbox.pos += 1;
+        builderbox.repaint=1;
+        
+        let last = blist.last();
+        
+        
+        
+        last.nextObj(
+          gam2.model.constr.addBox(builderbox)
+        )
+        
+        var b = this.model.box.list[cr.p.crkey];
+
+        
+                      box.repaint = 1;
+                      gam2.view.paintTopBar(coins);
+                      gam2.view.drawBox(box, 0);
+                      gam2.view.drawBox(builderbox, 1);
+
+      },
         'build': function(box) {
             var cpos = gam2.model.loc.currentPos;
-
+            let coins = gam2.action.getCoins();
+          
             gam2.action.popup(box, function(c, onClose, box){
+              let types={
+                'miner': 1000,
+                'crafter':1500,
+                'storage': 2500,
+              }
+              
+              for(let t in types) {
+                 c = c.br()
+                        .addButton('select', (function(type, cost, box, cpos, pos) {
+                          return function() {
+                            gam2.action.selectBuild(type, cost, box, cpos, pos);
+                            onClose();
+                          }
+                        })(t, types[t], box, cpos, box.pos), 'button '+(coins.money >= types[t]?'btn-success':'btn-danger'), {'style':'float: left'})
 
+                        .container('','div','color:white')
+                        .addText(t +' $'+ types[t] +' P:'+ box.pos)
+                        .up()
+                        .br();
+              }
             });
         },
       'lvlUp': function (box) {
