@@ -449,7 +449,7 @@ var gam2 = {
                 timerClear: 1,
                 btns: { clr: 1, addSpacer: 1 },
                 content: [
-                    {type: 'slot', res: 8, amount: 3, missing:1},
+                    {type: 'slot', slotRefs: {slot:{item: 8, amount: 3, unitValue: 0}, box:box}, res: 8, amount: 3, missing:1},
                   ],
               };
             }
@@ -946,14 +946,26 @@ var clr=(box.is==='loc')?3:5;
 
                   let elem = options.content[i];
                   if (elem.type === 'slot') {
-                      dText = dText.container('slot', 'div');
+                      dText = dText.container('slot', 'div')
 
                       if (elem.res) {
                           dText
-                              .addJqEl(gam2.model.res.getResIco(elem.res))
+                              .addJqEl(gam2.model.res.getResIco(elem.res).click((function(elem) {
+                                return function() {
+                                  gam2.action.slotClick(elem.slotRefs,0)
+                                }
+                              })(elem)
+                                ))
                               .container(elem.missing ? 'req-amount':'amount', 'div')
                               .addText(elem.amount)
                               .up();
+                      } else {
+                        dText.el.click((function(elem) {
+                                return function() {
+                                  gam2.action.slotClick(elem.slotRefs,0)
+                                }
+                              })(elem)
+                                );
                       }
                       dText = dText.up();
                   } else if (elem.type === 'slot-out') {
@@ -962,10 +974,22 @@ var clr=(box.is==='loc')?3:5;
 
                       if (elem.res) {
                           dText = dText
-                              .addJqEl(gam2.model.res.getResIco(elem.res))
+                              .addJqEl(gam2.model.res.getResIco(elem.res).click((function(elem) {
+                                return function() {
+                                  gam2.action.slotClick(elem.slotRefs,1)
+                                }
+                              })(elem)
+                                ))
                               .container(elem.missing ? 'req-amount':'amount', 'div')
                               .addText(elem.amount)
                               .up()
+                      } else {
+                        dText.el.click((function(elem) {
+                                return function() {
+                                  gam2.action.slotClick(elem.slotRefs,0)
+                                }
+                              })(elem)
+                                );
                       }
                       dText = dText.up();
                   } else if (elem.type === 'pad') {
@@ -2000,6 +2024,9 @@ if (buttons2) {
           }
         }
       },
+      'slotClick': function(obj, isOut=0) {
+        console.log(obj)
+      },
         'getCoins': function () {
             var cpos = gam2.model.loc.currentPos;
 
@@ -2175,7 +2202,7 @@ if (buttons2) {
                 //ev.do('b'+box.pos+'.miner.sendTo', box);
 
                 if(cpos === pos) {
-                  console.log(p[i].slot.first.p);
+               //   console.log(p[i].slot.first.p);
                   p[i].repaint=1;
 
                   gam2.view.drawBox(p[i],0);
@@ -2256,7 +2283,7 @@ if (buttons2) {
               state.content = function () {
                   let conts;
                   conts = [
-                      {type: 'slot-out', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)},{type: 'br'},
+                      {type: 'slot-out', slotRefs: {slot:slot, box:box}, res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)},{type: 'br'},
                   ];
 
                   if (slot.item > 0) {
@@ -2511,11 +2538,11 @@ if (buttons2) {
                     let conts=[];
                     for(let i in slots) {
                       conts.push(
-                        {type: 'slot', res: slots[i].item, amount: slots[i].amount, missing: (slots[0].item > 0 ? 0: 1)}
+                        {type: 'slot', slotRefs: {slot:slots[i], box:box}, res: slots[i].item, amount: slots[i].amount, missing: (slots[0].item > 0 ? 0: 1)}
                       )
                     }
                     conts.push(
-                        {type: 'slot-out', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)}
+                        {type: 'slot-out', slotRefs: {slot:slot, box:box}, res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0: 1)}
                     );
                     conts.push(
                         {type: 'br'},
@@ -2655,7 +2682,7 @@ if (buttons2) {
               for(let i=0; i<slots.length;i++) {
                 let slot = slots[i];
                 conts.push(
-                  { type: 'slot', res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0 : 1) },
+                  { type: 'slot', slotRefs: {slot:slot, box:box}, res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0 : 1) },
                 );
               }
           
