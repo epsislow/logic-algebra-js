@@ -2028,6 +2028,11 @@ if (buttons2) {
 
               this.slotSelectedObj = 0;
               if (returnAfter) {
+
+                  oldObj.slot.selected = 0;
+                  oldObj.box.repaint = 1;
+                  gam2.view.drawBox(oldObj.box, 0);
+
                   console.log('retAfter');
                   return;
               }
@@ -2035,16 +2040,23 @@ if (buttons2) {
 
           obj.slot.selected = 1;
 
-          if (oldObj) {
-              obj.slot.item = oldObj.slot.item;
-              obj.slot.amount = oldObj.slot.amount;
+          if (oldObj && oldObj.slot.item > 0) {
+              if (obj.slot.item !== oldObj.slot.item) {
+                  obj.slot.item = oldObj.slot.item;
+                  obj.slot.amount = 0;
+              }
+              obj.slot.amount += oldObj.slot.amount;
               obj.slot.unitValue = oldObj.slot.unitValue;
 
               oldObj.slot.item = 0;
               oldObj.slot.amount = 0;
               oldObj.slot.unitValue = 0;
-              oldObj.slot.selected = 0;
 
+              //obj.slot.selected = 0;
+          }
+
+          if (oldObj) {
+              oldObj.slot.selected = 0;
               oldObj.box.repaint = 1;
               gam2.view.drawBox(oldObj.box, 0);
           }
