@@ -296,7 +296,7 @@ var gam2 = {
                   this.model.constr.addBox({ type: 'launch-pad', pads: 2, pad: {}, pos: 10, level: 1, levelCost: 10 })
               )
               .nextObj(
-                  this.model.constr.addBox({ type: 'builder', level: '', levelCost: 10000})
+                  this.model.constr.addBox({ type: 'builder', level: '', levelCost: 10000, pos:11})
               )
 
           var crkey = [p0,p1,p2,p3].join('.');
@@ -2114,7 +2114,7 @@ if (buttons2) {
               obj.slot.selected = 0;
               this.slotSelectedObj = 0;
           }
-          console.log(el);
+          //console.log(el);
 
 
           if (obj.box) {
@@ -2122,8 +2122,8 @@ if (buttons2) {
               gam2.view.drawBox(obj.box, 0);
           }
 
-        console.log('now', obj.slot);
-        console.log('old',oldObj.slot)
+        //console.log('now', obj.slot);
+        //console.log('old',oldObj.slot)
       },
         'getCoins': function () {
             var cpos = gam2.model.loc.currentPos;
