@@ -295,6 +295,9 @@ var gam2 = {
               .nextObj(
                   this.model.constr.addBox({ type: 'launch-pad', pads: 2, pad: {}, pos: 10, level: 1, levelCost: 10 })
               )
+              .nextObj(
+                  this.model.constr.addBox({ type: 'builder', level: '', levelCost: 10000})
+              )
 
           var crkey = [p0,p1,p2,p3].join('.');
           
@@ -541,6 +544,36 @@ var gam2 = {
                           {type: 'pad', ship: 'transporter'},
                       ],
                   };
+              }
+          },
+          'builder': {
+              'paint': function (id, box) {
+                  let btns = {clr:1};
+
+                  if (this.allowBuild()) {
+                      btns.add = [['build', (function(box) { return function() {gam2.action.build(box)}})(box), 'btn-light']];
+                  } else {
+                      btns.addSpacer = 1;
+                  }
+                  return {
+                      btns:btns,
+                      content: [],
+                  };
+              },
+              'allowBuild': function () {
+                  let maxBoxes = gam2.model.loc.current.p.maxBoxes;
+                  var cpos = gam2.model.loc.currentPos;
+
+                  if((cpos in gam2.model.box.list)) {
+                      let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+                      if (!p.length) {
+                          return 0;
+                      }
+
+                      if (p.length < maxBoxes) {
+                          return 1;
+                      }
+                  }
               }
           },
           'crafter': {
@@ -1316,6 +1349,11 @@ if (buttons2) {
                 'bg': 'dark',
                 'dashed': 0,
             },
+            'builder': {
+                'icon':'plus',
+                'bg': 'empty',
+                'dashed': 1,
+            },
             'docker': {
               'icon': 'play',
               'bg': 'dark',
@@ -1351,6 +1389,12 @@ if (buttons2) {
           'list': null,
           'current': null,
           'currentPos':'0.0.0.0',
+          'maxBoxes': {
+              'storage-st': 30,
+              'research-st': 25,
+              'asteroid-st': 20,
+              'trade-st': 15,
+          }
         },
         'slot': {
           'addItemToSlots': function(box, item, amount, unitValue) {
@@ -1934,7 +1978,8 @@ if (buttons2) {
                     gam2.model.box.addSlotOutsFor(pub.p);
                 });
             },
-            'locProps': function ( pos,type, lvl, name, crkey='', house =0) {
+            'locProps': function ( pos, type, lvl, name, crkey='', house =0) {
+                let maxBoxes= (type in gam2.model.loc.maxBoxes) ?gam2.model.loc.maxBoxes[type]: 5;
                 return {
                     card:'empty',
                   is:'loc',
@@ -1945,6 +1990,7 @@ if (buttons2) {
                     loc: 'L' + lvl + ':' + ((pos< 10)? '0': '') + pos,
                     crkey: crkey+'.'+pos,
                     house: house,
+                    maxBoxes: maxBoxes,
                 };
             },
             'addLoc': function (prop) {},
@@ -2953,6 +2999,13 @@ if (buttons2) {
         });
         
       },
+        'build': function(box) {
+            var cpos = gam2.model.loc.currentPos;
+
+            gam2.action.popup(box, function(c, onClose, box){
+
+            });
+        },
       'lvlUp': function (box) {
         var cr= this.model.loc.current;
         if(!(cr.p.crkey in gam2.model.box.list)) {
