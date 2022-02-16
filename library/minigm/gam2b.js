@@ -2364,14 +2364,17 @@ if (buttons2) {
                   if (slot.amount) {
                       acts.push(['Sell*', (function(box) { return function() {gam2.action.box.miner.sellAll(box)}})(box), 'btn-warning']);
                   }
+                  
                   acts.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
-          
+                  
 
                   return acts;
               }
               
               state.actions2 = function() {
                 let acts2 = [];
+                acts2.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
+                
                 acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
           
                 return acts2;
@@ -2626,6 +2629,7 @@ if (buttons2) {
 
                 state.actions2 = function() {
                     let acts2 = [];
+                    acts2.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
                     acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
 
                     return acts2;
@@ -2766,6 +2770,7 @@ if (buttons2) {
             
             state.actions2 = function() {
               let acts2 = [];
+              acts2.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
               acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
             
               return acts2;
@@ -3000,6 +3005,9 @@ if (buttons2) {
         }
 
         });
+        
+      },
+      'dropBox': function(box) {
         
       },
       'prepareBox': function(pub) {
