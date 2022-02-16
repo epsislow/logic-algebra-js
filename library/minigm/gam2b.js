@@ -1911,6 +1911,17 @@ if (buttons2) {
                             n.parent = obj;
                           }
                         },
+                        'getBy': function(prop, val) {
+                          var c = this.first;
+                          var i = 1;
+                          while (!(prop in c.p && c.p[prop] === val)) {
+                            c = c.next;
+                            if(!c) {
+                              return 0;
+                            }
+                          }
+                          return c;
+                        },
                         'get': function(num) {
                           var c= this.first;
                           var i=1;
@@ -3008,6 +3019,33 @@ if (buttons2) {
         
       },
       'dropBox': function(box) {
+        var cpos = gam2.model.loc.currentPos;
+        let coins = gam2.action.getCoins();
+        coins.money += 1000;
+        
+        let blist = gam2.model.box.list[cpos];
+        let op = blist.first.getBy('pos', box.pos);
+        
+        let nx = op.next;
+        let pv = op.prev;
+        if(nx && pv) {
+          pv.nextObj(nx);
+        } else if(nx && !pv) {
+          nx.prev=null;
+          nx.first = nx;
+          gam2.model.box.list[cpos] = nx;
+        } else if(!nx && pv) {
+          pv.next = null;
+        } else if (!nx && !pv) {
+          gam2.model.box.list[cpos] = 
+             gam2.model.constr.addBox({type: 'builder', level: '', levelCost:10000, pos: 1});
+          
+        }
+        
+        gam2.view.paintTopBar(coins);
+        
+        gam2.view.deleteEls(gam2.view.cardBox);
+        gam2.view.drawBoxes(1);
         
       },
       'prepareBox': function(pub) {
