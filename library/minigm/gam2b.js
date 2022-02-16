@@ -310,7 +310,7 @@ var gam2 = {
           
           this.model.box.coins= {};
           this.model.box.coins[crkey] = {
-            'money':100,
+            'money':10000,
             'ppl':[4,20],
             'power':[5,50],
           }
@@ -892,6 +892,9 @@ var clr=(box.is==='loc')?3:5;
             opt.tikDelay = -box.timer;
           }
           opt.tikSec= box.everySec;
+        }
+        if (id === 'b11') {
+            console.log(opt);
         }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
@@ -2151,7 +2154,6 @@ if (buttons2) {
             box.repaint = 1;
           },
           'mine': function (box) {
-          
               if (!box.outputId) {
                   return;
               }
@@ -2820,7 +2822,8 @@ if (buttons2) {
         
       for(let pos in gam2.model.box.list)
       {
-        var p = gam2.model.constr.getPropList(gam2.model.box.list[pos])
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[pos]);
+
         if (!p.length) {
           return;
         }
@@ -2842,14 +2845,13 @@ if (buttons2) {
                     if(! box.everySec) {
                       continue;
                     }
-                    
+
                         if (!('timer' in box)) {
                             box.timer = 0;
                         }
-                            
                         box.timer++;
-                        
-                        if (box.timer !== box.everySec) {
+
+             if (box.timer !== box.everySec) {
                           if (pos === cpos) {
                             box.repaint=0;
                             gam2.view.paint('b' + box.pos, box, box.repaint);
@@ -3028,34 +3030,32 @@ if (buttons2) {
         } else if(type === 'crafter') {
           box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         }
-        this.prepareBox(box);
+        //this.prepareBox(box);
         
         builderbox.pos += 1;
         builderbox.repaint=1;
         
         let last = blist.last();
+
+          box.clearTik = 1;
+
+          let boxn = gam2.model.constr.addBox(box);
+          box = boxn.p;
         
         last = last.prev.nextObj(
-          gam2.model.constr.addBox(box)
+          boxn
         );
-        
-        console.log(last.prev);
-          
-        
+
         last.nextObj(
           gam2.model.constr.addBox(builderbox)
         )
-        
-      
-        
-                     // box.repaint = 1;
-                     // box.clearTik=1;
+                      box.repaint = 1;
                       gam2.view.paintTopBar(coins);
                       
-                     // r(gam2.view.cardBox['b'+pos]).remove();
-                     // delete gam2.view.cardBox['b'+pos];
-                  
-                      gam2.view.drawBox(box, 0);
+                     r(gam2.view.cardBox['b'+pos]).remove();
+                     delete gam2.view.cardBox['b'+pos];
+
+                      gam2.view.drawBox(box, 1);
                       gam2.view.drawBox(builderbox, 1);
 
                       
