@@ -265,19 +265,19 @@ var gam2 = {
 
             var blist =
                 this.model.constr.addBox(
-                    {type: 'dwellings', everySec: 15, pos: 2, level: 1, levelCost: 100, capacity: 5, usage: 2}
+                    {type: 'dwellings', everySec: 15, pos: 1, level: 1, levelCost: 100, capacity: 5, usage: 2}
                 ).nextObj(
                     this.model.constr.addBox(
-                        this.action.box.miner.defaults({type: 'miner', pos: 1})
+                        this.action.box.miner.defaults({type: 'miner', pos: 2})
                     )
                 ).nextObj(
                     this.model.constr.addBox(
-                        this.action.box.storage.defaults({type: 'crafter', pos: 4})
+                        this.action.box.storage.defaults({type: 'crafter', pos: 3})
                     )
                 )
                 .nextObj(
                     this.model.constr.addBox(
-                        {type: 'builder', level: '', levelCost: 10000, pos: 11}
+                        {type: 'builder', level: '', levelCost: 10000, pos: 4}
                     )
                 );
 
@@ -291,10 +291,15 @@ var gam2 = {
                     )
                 )
                 .nextObj(
+                  this.model.constr.addBox(
+                    {type: 'dwellings', everySec: 15, pos: 3, level: 1, levelCost: 100, capacity: 5, usage: 2}
+                  )
+                ).nextObj(
                     this.model.constr.addBox(
-                        {type: 'builder', level: '', levelCost: 10000, pos: 11}
+                        {type: 'builder', level: '', levelCost: 10000, pos: 4}
                     )
                 );
+                
 
               /*
             .nextObj(
@@ -1432,7 +1437,7 @@ if (buttons2) {
           },
             'R&D-center': {
                 'icon':'cubes',
-                'bg':'power',
+                'bg':'silo',
                 'dashed':0,
             },
           'dwellings': {
@@ -1447,7 +1452,7 @@ if (buttons2) {
             },
             'storage': {
                 'icon':'play',
-                'bg': 'power',
+                'bg': 'orange',
                 'dashed': 0,
             },
             'launch-pad': {
@@ -2310,6 +2315,7 @@ if (buttons2) {
                   return;
               }
               coins.money -= box.levelCost;
+              
 
               box.levelCostFloat *= 2;
               box.levelCost = Math.round(box.levelCostFloat);
@@ -3137,6 +3143,7 @@ if (buttons2) {
         var cpos = gam2.model.loc.currentPos;
         let coins = gam2.action.getCoins();
         coins.money += 1000;
+        coins.money = Math.floor(coins.money);
         
         let blist = gam2.model.box.list[cpos];
         let op = blist.first.getBy('pos', box.pos);
