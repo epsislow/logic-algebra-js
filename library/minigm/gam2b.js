@@ -188,16 +188,22 @@ var gam2 = {
           let p1 = rd.rand(1,10,seedLoc);
           let p2 = rd.rand(1,10,seedLoc);
           let p3 = rd.rand(1,2,seedLoc);
+          let p3b = 4;
+          let p3c = 5;
          // console.log(p0+','+p1+','+p2+','+p3);
           
           gam2.model.loc.pmap = {
-            0: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
-            [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud Rupler',p0)},
-            [[p0,p1].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis', p0+'.'+p1)},
-            [[p0,p1,p2].join('.')]: {[p3]: locProps(p3, 'asteroid-st', 3, 'Balder', p0+'.'+p1+'.'+p2)},
+              0: {[p0]:locProps(p0, 'sun', 0, 'Icarus')},
+              [[p0].join('.')]: {[p1]:locProps(p1, 'asteroid-belt', 1, 'Cloud Rupler',p0)},
+              [[p0,p1].join('.')]: {[p2]: locProps(p2, 'asteroid', 2, 'Jadvis', p0+'.'+p1)},
+              [[p0,p1,p2].join('.')]: {
+                  [p3]: locProps(p3, 'asteroid-st', 3, 'Balder', p0+'.'+p1+'.'+p2),
+                  [p3b]: locProps(p3b, 'trade-st', 3, 'L3', p0+'.'+p1+'.'+p2),
+                  [p3c]: locProps(p3c, 'research-st', 3, 'M8', p0+'.'+p1+'.'+p2),
+              },
           }
           
-         // console.log(gam2.model.loc.pmap);
+         console.log(gam2.model.loc.pmap);
 
           var xr = gam2.view.genLocs(0, 0, 0, 0, 0, 0, {[p0]: locProps(p0, 'sun', 0, 'Icarus')});
           var loc = xr.first.get(p0)
@@ -256,12 +262,36 @@ var gam2 = {
         
           window.cr = cr;
          // console.log('cr', cr);
-          
-          var blist = this.model.constr.addBox(
-              this.action.box.miner.defaults({type:'miner', pos:1}))
-            .nextObj(
-              this.model.constr.addBox({type:'dwellings', everySec: 15, pos:2, level:1, levelCost:100, capacity: 5, usage: 2})
-            )
+
+            var blist =
+                this.model.constr.addBox(
+                    {type: 'dwellings', everySec: 15, pos: 2, level: 1, levelCost: 100, capacity: 5, usage: 2}
+                ).nextObj(
+                    this.model.constr.addBox(
+                        this.action.box.miner.defaults({type: 'miner', pos: 1})
+                    )
+                ).nextObj(
+                    this.model.constr.addBox(
+                        this.action.box.storage.defaults({type: 'crafter', pos: 4})
+                    )
+                )
+                .nextObj(
+                    this.model.constr.addBox(
+                        {type: 'builder', level: '', levelCost: 10000, pos: 11}
+                    )
+                );
+
+            var blistc =
+                this.model.constr.addBox(
+                    {type: 'laboratory', everySec: 0, pos: 1, level: 1, levelCost: 200000, researchPoints: 10}
+                )
+                .nextObj(
+                    this.model.constr.addBox(
+                        {type: 'builder', level: '', levelCost: 10000, pos: 11}
+                    )
+                );
+
+              /*
             .nextObj(
               this.model.constr.addBox(
                 this.action.box.miner.defaults({ type: 'miner', pos: 3 })
@@ -273,7 +303,7 @@ var gam2 = {
                   //{type:'crafter', sloti:2, slots: 3, slotsOut:1, slot: {}, slotOut:{}, pos:4, level:3, levelCost: 10}
                     this.action.box.storage.defaults({ type: 'crafter', pos: 4 })
               )
-            )/*
+            )
             .nextObj(
               this.model.constr.addBox({ type: 'cargo', sloti: 24, slots: 8, slot: {}, pos: 5, level: 1, levelCost: 10 })
             )
@@ -282,7 +312,7 @@ var gam2 = {
             )
             .nextObj(
               this.model.constr.addBox({ type: 'assembler', sloti: 2, slots: 2, slotsOut:1, slot: {}, pos: 7, level: 1, levelCost: 10 })
-            )*/
+            )
               .nextObj(
                   this.model.constr.addBox( // { type: 'storage', sloti: 36, slots: 8, slot: {}, pos: 8, level: 1, levelCost: 10 })
                     this.action.box.crafter.defaults({ type: 'crafter', pos: 8 })
@@ -294,10 +324,7 @@ var gam2 = {
               )
               .nextObj(
                   this.model.constr.addBox({ type: 'launch-pad', pads: 2, pad: {}, pos: 10, level: 1, levelCost: 10 })
-              )
-              .nextObj(
-                  this.model.constr.addBox({ type: 'builder', level: '', levelCost: 10000, pos:11})
-              )
+              )*/
 
           var crkey = [p0,p1,p2,p3].join('.');
           
@@ -305,6 +332,9 @@ var gam2 = {
           this.model.box.list= {};
           
           this.model.box.list[crkey] = blist.first;
+
+
+            this.model.box.list[[p0,p1,p2,p3c].join('.')] = blistc.first;
           
           p = gam2.model.constr.getPropList(cr, 1, 1);
           
@@ -441,17 +471,48 @@ var gam2 = {
                 })
               }
           },
+          'laboratory':{
+              'paint': function(id, box, clear = 0) {
+                  if(!clear) {
+                      return {timerClear:1};
+                  }
+
+                  let btns = {clr: 1, add: []}, btns2= {clr: 1, add: []};
+
+                  btns.add.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+                  btns2.add.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
+                  btns2.add.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+                  return {
+                      lvl: box.level,
+                      timerClear: 1,
+                      btns: btns,
+                      btns2: btns2,
+                      content: [
+                          {type: 'slot', slotRefs: {slot:{item: 0, amount: 0, unitValue: 0}, box:box}, selected: 0, res: 8, amount: 3, missing:1},
+                      ],
+                  };
+              }
+          },
           'dwellings':{
             'paint': function(id, box, clear = 0) {
               if(!clear) {
                 return {timerClear:1};
               }
 
-              //console.log(clear)
+              let btns = {clr: 1, add: []}, btns2= {clr: 1, add: []};
+
+                btns.add.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+                btns2.add.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
+                btns2.add.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
               return {
                 lvl: box.level,
                 timerClear: 1,
-                btns: { clr: 1, addSpacer: 1 },
+                  btns: btns,
+                  btns2: btns2,
                 content: [
                     {type: 'slot', slotRefs: {slot:{item: 8, amount: 3, unitValue: 0}, box:box}, selected: 0, res: 8, amount: 3, missing:1},
                   ],
@@ -893,9 +954,6 @@ var clr=(box.is==='loc')?3:5;
           }
           opt.tikSec= box.everySec;
         }
-        if (id === 'b11') {
-            console.log(opt);
-        }
         this.paintBox(id, opt);
         //gam2.view.paintBox('b1', {'texts': [gam2.model.res.getResIco(5)]});
       },
@@ -1139,7 +1197,7 @@ if (buttons2) {
           mergeLocsP= pmap[pkey];
         }
 
-        const maxPos = lvl === 3? 3: 10;
+        const maxPos = lvl === 3? 5: 10;
         let cob, ccr;
         let types = [
           ['sun'],
@@ -1331,6 +1389,11 @@ if (buttons2) {
             'icon': 'cog',
             'bg':'dark',
             'dashed':0,
+          },
+          'laboratory': {
+              'icon':'cubes',
+              'bg':'crafter',
+              'dashed':0,
           },
           'dwellings': {
             'icon':'cubes',
@@ -2433,6 +2496,12 @@ if (buttons2) {
             box.repaint = 1;
           },
         },
+          'laboratory': {
+              'tick': function(box) {
+                  box.level++;
+                  box.repaint = 1;
+              },
+          },
         'crafter': {
             'tick': function(box) {
                 if (box.recepie) {
@@ -3075,6 +3144,10 @@ if (buttons2) {
           box = gam2.action.box.storage.defaults({type:'storage', pos: pos });
         } else if(type === 'crafter') {
           box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+        } else if(type === 'dwellings') {
+            box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+        } else if(type === 'laboratory') {
+            box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         }
         //this.prepareBox(box);
         
@@ -3112,9 +3185,13 @@ if (buttons2) {
           
             gam2.action.popup(box, function(c, onClose, box){
               let types={
-                'miner': 1000,
-                'crafter':1500,
-                'storage': 2500,
+                  'miner': 1000,
+                  'crafter':1500,
+                  'storage': 2500,
+                  'dwellings': 1250,
+                  'seller': 2500,
+                  'launch-pad': 2500,
+                  'laboratory': 100000,
               }
               
               for(let t in types) {
@@ -3128,8 +3205,7 @@ if (buttons2) {
 
                         .container('','div','color:white')
                         .addText(t +' $'+ types[t] +' P:'+ box.pos)
-                        .up()
-                        .br();
+                        .up();
               }
             });
         },
