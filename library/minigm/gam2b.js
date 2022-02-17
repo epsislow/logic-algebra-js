@@ -349,6 +349,12 @@ var gam2 = {
             'ppl':[4,20],
             'power':[5,50],
           }
+
+            this.model.box.coins[[p0,p1,p2,p3c].join('.')] = {
+                'money':500000,
+                'ppl':[100,200],
+                'power':[20,100],
+            }
           
           gam2.model.res.gen(105);
           gam2.model.reputation.genh(8);
@@ -3186,10 +3192,12 @@ if (buttons2) {
           box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         } else if(type === 'dwellings') {
             box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+        } else if(type === 'launch-pad') {
+            box = { type: 'launch-pad', pads: 2, pad: {}, pos: 10, level: 1, levelCost: 10 };
         } else if(type === 'laboratory') {
-            box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+            box = {type: 'laboratory', everySec: 0, pos: pos, level: 1, levelCost: 200000, researchPoints: 10}
         } else if(type === 'R&D-center') {
-            box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+            box = {type: 'R&D-center', everySec: 0, pos: pos, level: 1, levelCost: 200000, researchPoints: 5}
         }
         //this.prepareBox(box);
         
