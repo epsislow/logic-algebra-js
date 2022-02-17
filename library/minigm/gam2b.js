@@ -66,6 +66,31 @@ var gam2 = {
         this.init.events();
         console.log(gam2.model.box.list);
     },
+    'idle': {
+      'calcPos': function(pos) {
+        let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+        if (!p.length) {
+            return;
+        }
+        let prt = {},pb= {};
+        for (const i in p) {
+            if(!p.hasOwnProperty(i)) {
+                continue;
+            }
+            pb[p[i].pos] = p[i];
+            if(p.to) {
+              prt[p.to[1]] = p[i].pos;
+            }
+        }
+        var root = {};
+        for(const i in prt) {
+          if(!(prt[i] in prt)) {
+            root[prt[i]] = {};
+          }
+        }
+        
+      }
+    },
     'mem': {
         'currentSlot': 0,
         'saveSlot': function () {
