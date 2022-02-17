@@ -287,6 +287,11 @@ var gam2 = {
                 )
                 .nextObj(
                     this.model.constr.addBox(
+                    {type: 'R&D-center', everySec: 0, pos: 2, level: 1, levelCost: 200000, researchPoints: 5}
+                    )
+                )
+                .nextObj(
+                    this.model.constr.addBox(
                         {type: 'builder', level: '', levelCost: 10000, pos: 11}
                     )
                 );
@@ -469,6 +474,30 @@ var gam2 = {
         
                   }
                 })
+              }
+          },
+          'R&D-center': {
+              'paint': function(id, box, clear = 0) {
+                  if(!clear) {
+                      return {timerClear:1};
+                  }
+
+                  let btns = {clr: 1, add: []}, btns2= {clr: 1, add: []};
+
+                  btns.add.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+                  btns2.add.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
+                  btns2.add.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+
+                  return {
+                      lvl: box.level,
+                      timerClear: 1,
+                      btns: btns,
+                      btns2: btns2,
+                      content: [
+                          {type: 'slot', slotRefs: {slot:{item: 0, amount: 0, unitValue: 0}, box:box}, selected: 0, res: 8, amount: 3, missing:1},
+                      ],
+                  };
               }
           },
           'laboratory':{
@@ -1395,6 +1424,11 @@ if (buttons2) {
               'bg':'crafter',
               'dashed':0,
           },
+            'R&D-center': {
+                'icon':'cubes',
+                'bg':'power',
+                'dashed':0,
+            },
           'dwellings': {
             'icon':'cubes',
             'bg':'power',
@@ -2502,6 +2536,12 @@ if (buttons2) {
                   box.repaint = 1;
               },
           },
+          'R&D-center': {
+              'tick': function(box) {
+                  box.level++;
+                  box.repaint = 1;
+              },
+          },
         'crafter': {
             'tick': function(box) {
                 if (box.recepie) {
@@ -3148,6 +3188,8 @@ if (buttons2) {
             box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         } else if(type === 'laboratory') {
             box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+        } else if(type === 'R&D-center') {
+            box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         }
         //this.prepareBox(box);
         
@@ -3160,10 +3202,12 @@ if (buttons2) {
 
           let boxn = gam2.model.constr.addBox(box);
           box = boxn.p;
-        
-        last = last.prev.nextObj(
+
+        /*last = last.prev.nextObj(
           boxn
-        );
+        );*/
+
+          last.p = box;
 
         last.nextObj(
           gam2.model.constr.addBox(builderbox)
@@ -3192,6 +3236,7 @@ if (buttons2) {
                   'seller': 2500,
                   'launch-pad': 2500,
                   'laboratory': 100000,
+                  'R&D-center': 50000,
               }
               
               for(let t in types) {
