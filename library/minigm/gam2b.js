@@ -672,6 +672,26 @@ var gam2 = {
                   };
               }
           },
+          'defences': {
+              'paint': function (id, box) {
+                  return {
+                      btns:{clr: 1, addSpacer:1},
+                      content: [
+                          {type: 'defence-pad', subType: 0},
+                      ],
+                  };
+              }
+          },
+          'power': {
+              'paint': function (id, box) {
+                  return {
+                      btns:{clr: 1, addSpacer:1},
+                      content: [
+                          {type: 'power-pad', subType: 0},
+                      ],
+                  };
+              }
+          },
           'builder': {
               'paint': function (id, box) {
                   let btns = {clr:1};
@@ -1142,6 +1162,32 @@ var clr=(box.is==='loc')?3:5;
                               .up()
                       }
                       dText = dText.up();
+                  } else if (elem.type === 'power-pad') {
+                      let icoClass = 'ico ', icoStyle = '';
+                      if (elem.subType === 'gas') {
+                          //icoClass += 'fas fa-location-arrow fa-4x p-2';
+                      } else {
+                          dText.container('power-pad', 'div').up();
+                          continue;
+                      }
+                      dText
+                          .container('power-pad', 'div')
+                          .container(icoClass,'div', icoStyle)
+                          .up()
+                          .up();
+                  } else if (elem.type === 'defence-pad') {
+                      let icoClass = 'ico ', icoStyle = '';
+                      if (elem.subType === 'ion-battery') {
+                          //icoClass += 'fas fa-location-arrow fa-4x p-2';
+                      } else {
+                          dText.container('defence-pad', 'div').up();
+                          continue;
+                      }
+                      dText
+                          .container('defence-pad', 'div')
+                          .container(icoClass,'div', icoStyle)
+                          .up()
+                          .up();
                   } else if (elem.type === 'pad') {
                       let icoClass = 'ico ', icoStyle = '';
                       if (elem.ship === 'airliner') {
@@ -1267,8 +1313,8 @@ if (buttons2) {
         let types = [
           ['sun'],
           ['planet','asteroid-belt','asteroid-belt','asteroid-belt','gas-planet','ice-planet','arid-planet'],
-          ['asteroid','moon'],
-          ['asteroid-st','research-st','trade-st','storage-st']
+          ['region','asteroid','moon'],
+          ['city', 'asteroid-st','research-st','trade-st','storage-st']
         ];
         let type, posch=[],pops= [80,90,40, 40];
         if(forceAtPos) {
@@ -1303,9 +1349,14 @@ if (buttons2) {
               pos, type, lvl,
               type ==='empty'?'':(
               (lvl === 3) ?
-              rdChr(seedLocId, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
+                  (
+                      type ==='city'? rdNam(seedLocId) :
+                      rdChr(seedLocId, 1, 0).toUpperCase() + rdChr(seedLocId, 0, 1)
+                  )
               : (type ==='asteroid-belt'?'Cloud ':'') +rdNam(seedLocId)
-              ),'', house)
+
+              )
+                ,'', house)
           );
           if(mergeLocsP && (pos in mergeLocsP)) {
             cob.p= mergeLocsP[pos];
@@ -1415,6 +1466,16 @@ if (buttons2) {
             'bg':'empty',
             'dashed':1,
           },
+          'region': {
+              'icon':'map',
+              'bg':'empty',
+              'dashed':1,
+          },
+            'city': {
+                'icon':'city',
+                'bg':'empty',
+                'dashed':1,
+            },
           'gas-planet': {
             'icon':'moon',
             'bg':'empty',
@@ -1478,6 +1539,21 @@ if (buttons2) {
             'storage': {
                 'icon':'play',
                 'bg': 'orange',
+                'dashed': 0,
+            },
+            'bank': {
+                'icon':'money-bill-wave',
+                'bg': 'dark',
+                'dashed': 0,
+            },
+            'defences': {
+                'icon':'pallet',
+                'bg': 'dark',
+                'dashed': 0,
+            },
+            'power': {
+                'icon':'plug',
+                'bg': 'power',
                 'dashed': 0,
             },
             'launch-pad': {
@@ -3223,9 +3299,13 @@ if (buttons2) {
         } else if(type === 'crafter') {
           box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
         } else if(type === 'dwellings') {
-            box = gam2.action.box.crafter.defaults({type:'crafter', pos: pos });
+            box = {type: 'dwellings', everySec: 15, pos: pos, level: 1, levelCost: 100, capacity: 5, usage: 2};
+        } else if(type === 'defences') {
+            box = { type: 'defences', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10 };
+        } else if(type === 'power') {
+            box = { type: 'power', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10 };
         } else if(type === 'launch-pad') {
-            box = { type: 'launch-pad', pads: 2, pad: {}, pos: 10, level: 1, levelCost: 10 };
+            box = { type: 'launch-pad', pads: 2, pad: {}, pos: pos, level: 1, levelCost: 10 };
         } else if(type === 'laboratory') {
             box = {type: 'laboratory', everySec: 0, pos: pos, level: 1, levelCost: 200000, researchPoints: 10}
         } else if(type === 'R&D-center') {
@@ -3266,30 +3346,72 @@ if (buttons2) {
         'build': function(box) {
             var cpos = gam2.model.loc.currentPos;
             let coins = gam2.action.getCoins();
+            let cposType = gam2.model.loc.current.p.type;
           
             gam2.action.popup(box, function(c, onClose, box){
               let types={
-                  'miner': 1000,
-                  'crafter':1500,
-                  'storage': 2500,
-                  'dwellings': 1250,
-                  'seller': 2500,
-                  'launch-pad': 2500,
-                  'laboratory': 100000,
-                  'R&D-center': 50000,
-              }
+                  'asteroid-st': {
+                      'miner': 1000,
+                      'crafter':1500,
+                      'storage': 2500,
+                      'dwellings': 1250,
+                      'seller': 2500,
+                      'launch-pad': 2500,
+                      'defences': 10000,
+                      'power': 5000,
+                      'platform': 250000,
+                      'bank': 50000,
+                  },
+                  'research-st': {
+                      'laboratory': 100000,
+                      'R&D-center': 50000,
+                      'dwellings': 1250,
+                      'defences': 10000,
+                      'power': 5000,
+                      'storage': 2500,
+                      'launch-pad': 2500,
+                      'platform': 250000,
+                      'bank': 50000,
+                  },
+                  'trade-st': {
+                      'shipyard': 200000,
+                      'trader': 5000,
+                      'seller': 2500,
+                      'storage': 2500,
+                      'launch-pad': 2500,
+                      'defences': 10000,
+                      'power': 5000,
+                      'platform': 250000,
+                      'bank': 50000,
+                  },
+                  'city': {
+                      'dwellings': 1250,
+                      'platform': 250000,
+                      'shipyard': 200000,
+                      'trader': 5000,
+                      'defences': 10000,
+                      'power': 5000,
+                      'storage': 2500,
+                      'launch-pad': 2500,
+                      'bank': 50000,
+                  }
+
+              };
               
-              for(let t in types) {
+              for(let t in types[cposType]) {
+                 if (!types[cposType].hasOwnProperty(t)) {
+                     continue;
+                 }
                  c = c.br()
                         .addButton('select', (function(type, cost, box, cpos, pos) {
                           return function() {
                             gam2.action.selectBuild(type, cost, box, cpos, pos);
                             onClose();
                           }
-                        })(t, types[t], box, cpos, box.pos), 'button '+(coins.money >= types[t]?'btn-success':'btn-danger'), {'style':'float: left'})
+                        })(t, types[cposType][t], box, cpos, box.pos), 'button '+(coins.money >= types[cposType][t]?'btn-success':'btn-danger'), {'style':'float: left'})
 
                         .container('','div','color:white')
-                        .addText(t +' $'+ types[t] +' P:'+ box.pos)
+                        .addText(t +' $'+ types[cposType][t])
                         .up();
               }
             });
