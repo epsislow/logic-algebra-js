@@ -701,9 +701,19 @@ var gam2 = {
                   } else {
                       btns.addSpacer = 1;
                   }
+                  var cpos = gam2.model.loc.currentPos;
+                  let p
+                  if(!(cpos in gam2.model.box.list)) {
+                      p = [];
+                  } else {
+                      p = gam2.model.constr.getPropList(gam2.model.box.list[cpos]);
+                  }
+                  let totalBoxes = p.length -1;
+                  let ltype = gam2.model.loc.current.p.type;
+                  let maxBoxes= (ltype in gam2.model.loc.maxBoxes) ?gam2.model.loc.maxBoxes[ltype]: 0;
                   return {
                       btns:btns,
-                      content: [],
+                      content: [{type: 'text', text: totalBoxes + ' / '+ maxBoxes}],
                   };
               },
               'allowBuild': function () {
@@ -1602,6 +1612,7 @@ if (buttons2) {
           'current': null,
           'currentPos':'0.0.0.0',
           'maxBoxes': {
+              'city': 50,
               'storage-st': 30,
               'research-st': 25,
               'asteroid-st': 20,
@@ -3350,6 +3361,15 @@ if (buttons2) {
           
             gam2.action.popup(box, function(c, onClose, box){
               let types={
+                  'storage-st': {
+                      'storage': 1000,
+                      'dwellings': 1250,
+                      'defences': 5000,
+                      'launch-pad': 2500,
+                      'power': 5000,
+                      'platform': 250000,
+                      'bank': 50000,
+                  },
                   'asteroid-st': {
                       'miner': 1000,
                       'crafter':1500,
@@ -3395,7 +3415,6 @@ if (buttons2) {
                       'launch-pad': 2500,
                       'bank': 50000,
                   }
-
               };
               
               for(let t in types[cposType]) {
