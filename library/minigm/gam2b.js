@@ -305,6 +305,10 @@ var gam2 = {
                         {type: 'builder', level: '', levelCost: 10000, pos: 4}
                     )
                 );
+                
+            var blistb = this.model.constr.addBox(
+                        {type: 'builder', level: '', levelCost: 10000, pos: 1}
+                    )
 
             var blistc =
                 this.model.constr.addBox(
@@ -369,6 +373,8 @@ var gam2 = {
           this.model.box.list[crkey] = blist.first;
 
 
+            this.model.box.list[[p0,p1,p2,p3b].join('.')] = blistb.first;
+          
             this.model.box.list[[p0,p1,p2,p3c].join('.')] = blistc.first;
           
           p = gam2.model.constr.getPropList(cr, 1, 1);
@@ -386,6 +392,11 @@ var gam2 = {
                 'power':[20,100],
             }
           
+           this.model.box.coins[[p0, p1, p2, p3b].join('.')] = {
+             'money': 10000,
+             'ppl': [0, 20],
+             'power': [0, 50],
+           }
           gam2.model.res.gen(105);
           gam2.model.reputation.genh(8);
           gam2.model.res.genRecepies();
@@ -3364,7 +3375,7 @@ if (buttons2) {
                   'storage-st': {
                       'storage': 1000,
                       'dwellings': 1250,
-                      'defences': 5000,
+                 //     'defences': 5000,
                       'launch-pad': 2500,
                       'power': 5000,
                       'platform': 250000,
@@ -3377,7 +3388,7 @@ if (buttons2) {
                       'dwellings': 1250,
                       'seller': 2500,
                       'launch-pad': 2500,
-                      'defences': 10000,
+                  //    'defences': 10000,
                       'power': 5000,
                       'platform': 250000,
                       'bank': 50000,
@@ -3386,7 +3397,7 @@ if (buttons2) {
                       'laboratory': 100000,
                       'R&D-center': 50000,
                       'dwellings': 1250,
-                      'defences': 10000,
+                    //  'defences': 10000,
                       'power': 5000,
                       'storage': 2500,
                       'launch-pad': 2500,
@@ -3399,7 +3410,7 @@ if (buttons2) {
                       'seller': 2500,
                       'storage': 2500,
                       'launch-pad': 2500,
-                      'defences': 10000,
+                  //    'defences': 10000,
                       'power': 5000,
                       'platform': 250000,
                       'bank': 50000,
@@ -3409,7 +3420,7 @@ if (buttons2) {
                       'platform': 250000,
                       'shipyard': 200000,
                       'trader': 5000,
-                      'defences': 10000,
+                  //    'defences': 10000,
                       'power': 5000,
                       'storage': 2500,
                       'launch-pad': 2500,
