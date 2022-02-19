@@ -82,13 +82,38 @@ var gam2 = {
               prt[p.to[1]] = p[i].pos;
             }
         }
-        var root = {};
+        var root = {}, notAll=0;
         for(const i in prt) {
           if(!(prt[i] in prt)) {
-            root[prt[i]] = {};
+            root.push(prt[i]);
           }
         }
+        // mark pass
+        /*
+        r1=a1/s1
+        rt'=r1*ts
         
+        a= 1/3
+        b= 1/2
+        
+            a   b
+        t0 3/0 0/0
+        t1 3/0 0/0
+        t2 3/0 0/0
+        t3 2/1 1/0
+        t4 2/1 1/0
+        t5 2/1 0/1
+        t6 1/2 1/1
+        t7 1/2 1/1
+        t8 1/2 0/2
+        t9 0/3 1/2
+        t0 0/3 1/2
+        t1 0/3 0/2
+        
+        */
+        if(notAll) {
+          
+        }
       }
     },
     'mem': {
