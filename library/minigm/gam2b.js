@@ -19,7 +19,7 @@ window.r = r;
             .addButton('Cache', function () { gam2.mem.loadData(); }, 'button btn-success')
             .addButton('Load', function () { gam2.mem.loadSlot(); },'button btn-info')
             .addButton('Save', function () { gam2.mem.saveSlot(); }, 'button btn-danger')
-            .addButton('+++', function () { gam2.idle.calcSec(10); console.log('+3600') },'button btn-light')
+            .addButton('+++', function () { gam2.idle.calcSec(3600); console.log('+3600') },'button btn-light')
             .addText(' ').el;
 
         vs.addSectionsToMain();
@@ -77,15 +77,15 @@ var gam2 = {
             
         
         for(let s=0; s<secs; s++) {
-          f(1);
+          f(0);
         }
         
-        gam2.model.flags.calcIdle =1;
+        gam2.model.flags.calcIdle =0;
         gam2.model.loc.currentPos = cpos;
         
-        gam2.view.drawBoxes();
+        //gam2.view.drawBoxes(1);
         
-          /*  gam2.view.card = {}
+           gam2.view.card = {}
             gam2.view.cardMenu = {};
             gam2.view.cardBox = {};
             gam2.view.cardOpt = {};
@@ -94,7 +94,7 @@ var gam2 = {
 
             gam2.view.draw();
             
-        */
+        
       },
       'calcPos': function(pos) {
         let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
@@ -3141,9 +3141,9 @@ if (buttons2) {
           }
         }
       },
-      'everySec': function(d=0) {
+      'everySec': function(t=0) {
       var cpos = gam2.model.loc.currentPos;
-      let ds=0;
+      let ds=0, d=0;
         
       for(let pos in gam2.model.box.list)
       {
@@ -3155,6 +3155,10 @@ if (buttons2) {
         
          for (let u in p) {
                     var box = p[u];
+                    d=0;
+                    if(t && box.type==='miner') {
+                      d=1;
+                    }
                     if(!box) {
                       if(d) {
                         console.log('c1')
@@ -3191,7 +3195,7 @@ if (buttons2) {
                             gam2.view.paint('b' + box.pos, box, box.repaint);
                           }
                           if (d) {
-                            console.log('c4')
+                            console.log('c4'+box.timer+'/'+box.everySec)
                           }
                           continue;
                         }
@@ -3210,7 +3214,7 @@ if (buttons2) {
          }
       }
       
-      if(d) {
+      if(t) {
         console.log('ds '+ds);
       }
       },
