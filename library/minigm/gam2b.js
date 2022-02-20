@@ -96,6 +96,18 @@ var gam2 = {
             
         
       },
+      'getTime': function(secs) { 
+        let s = secs % 60;
+        //s= ((s< 10)?'0':'')+s;
+        let m = Math.floor((secs- s)/60);
+        //m = ((m< 10)?'0':'')+m;
+        let h = Math.floor((secs- m)/3600);
+        return (h?(h+'h '):'')+(m?(m+'m '):'')+(s?(s+'s'):'');
+        return Math.floor(100*secs/3600)/100+'h';
+      },
+      'calcTimeIdle': function(lastTs) {
+        return Math.floor(((new Date()).getTime())/1000 - lastTs);
+      },
       'calcPos': function(pos) {
         let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
         if (!p.length) {
@@ -168,6 +180,7 @@ var gam2 = {
               }
             }
             data.coins = gam2.model.box.coins;
+            data.lastTs = Math.floor(((new Date()).getTime())/1000);
             //c = gam2.model.box.toObj(gam2.model.box.list['7.5.7.2'].p); JSON.stringify(c);
             //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
 
@@ -181,6 +194,7 @@ var gam2 = {
           let data= JSON.parse(dataText);
           let bx=gam2.model.box;
           let cs=gam2.model.constr;
+          let lastTs=0;
           gam2.model.flags.loading = 1;
 
           if('coins' in data) {
@@ -191,6 +205,9 @@ var gam2 = {
           }
           if('cpos' in data) {
               gam2.model.loc.currentPos = data.cpos;
+          }
+          if('lastTs' in data) {
+              lastTs = data.lastTs;
           }
 
             gam2.model.box.list = {};
@@ -230,7 +247,15 @@ var gam2 = {
             console.log(p);
             */
             gam2.view.draw();
-            alert('loaded');
+            
+            let secs=0;
+            
+            if(lastTs) {
+              secs = gam2.idle.calcTimeIdle(lastTs);
+              gam2.idle.calcSec(secs);
+            }
+            
+            alert('Loaded. '+ (lastTs? 'Passed '+ gam2.idle.getTime(secs):''));
             //
             //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
         },
@@ -1985,6 +2010,11 @@ if (buttons2) {
                 .addClass('fa-' + house.ico)
                 .attr('style', 'font-size: 24px;color:' + house.color);//.html(house.ico);
             },
+        },
+        'item': {
+          'icoList': ['cubes','gears'],
+          'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
+          
         },
         'res': {
             'icoList':['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore', 'bong', 'flask','boxes'],
