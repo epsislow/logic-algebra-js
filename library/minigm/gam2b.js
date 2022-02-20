@@ -17,8 +17,8 @@ window.r = r;
             .br()
             .addButton('Index', '/index.html', 'button btn-info')
             .addButton('Cache', function () { gam2.mem.loadData(); }, 'button btn-success')
-            .addButton('Load', function () { gam2.mem.loadSlot(); },'button btn-info')
-            .addButton('Save', function () { gam2.mem.saveSlot(); }, 'button btn-danger')
+            .addButton('Load', function () { if(!confirm('load?')) {return 0}; gam2.mem.loadSlot(); },'button btn-info')
+            .addButton('Save', function () { if(!confirm('save?')) {return 0}; gam2.mem.saveSlot(); }, 'button btn-danger')
             .addButton('+++', function () { gam2.idle.calcSec(3600); console.log('+3600') },'button btn-light')
             .addText(' ').el;
 
