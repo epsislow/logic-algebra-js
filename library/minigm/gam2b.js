@@ -99,7 +99,7 @@ var gam2 = {
       'getTime': function(secs) { 
         let s = secs % 60;
         //s= ((s< 10)?'0':'')+s;
-        let m = Math.floor((secs- s)/60);
+        let m = Math.floor((secs- s)/60) %60;
         //m = ((m< 10)?'0':'')+m;
         let h = Math.floor((secs- m)/3600);
         return (h?(h+'h '):'')+(m?(m+'m '):'')+(s?(s+'s'):'');
@@ -479,7 +479,7 @@ var gam2 = {
              'ppl': [0, 20],
              'power': [0, 50],
            }
-          gam2.model.res.gen(105);
+          gam2.model.res.gen(205);
           gam2.model.reputation.genh(8);
           gam2.model.res.genRecepies();
           
@@ -2099,48 +2099,88 @@ if (buttons2) {
                 let seed = gam2.model.rand.seed.res;
                 let resLength = this.reg.length;
                 let numItems=1;
+                let recp, key, style=0;
                 for(let i= 15; i<resLength; i++) {
                   numItems=1;
-                  if(i > 30) {
+                  if(i > 20) {
+                   // style++;
+                 //   style = style% 2;
+                  }
+                  if(i > Math.floor(30*resLength/100)) {
+                  //  if(i > 30) {
                     numItems++;
                   }
-                  if(i > 45) {
+                  if(i > Math.floor(45*resLength/100)) {
                     numItems++;
                   }
-                  if(i > 55) {
+                  if(i > Math.floor(75*resLength/100)) {
+                  
+                  
                     numItems++;
                   }
                   
-                  if(i > 75) {
+                  if(i > Math.floor(88*resLength/100)) {
                     numItems++;
                   }
                   
+                 // if(style>0) {
+                  // for(let rr=0; rr<rd.rand(1,6, seed); rr++) {
+                  recp =
+                    this.genRecepieFor(style, i, numItems, i-numItems-4)
+           
+                 key = Object.keys(recp.inp).sort().join('.');
                   
+                  if(!(key in this.recepies)) {
+                    this.recepies[key] = recp;
+                    this.reg[recp.out].unitValue = recp.unitValue;
+                  }
                   
-                  this.recepies[i] = 
-                    this.genRecepieFor(i, numItems, i-numItems-4)
+                  //  }
+                 // }
                   
                 }
             },
-            'genRecepieFor': function(item, numItems, minId=5, opt= {}) {
+            
+            'genRecepieFor': function(style=0,item, numItems, minId=5, opt= {}) {
                 let seed = gam2.model.rand.seed.res;
                 let reg = gam2.model.res.reg;
                 let inp={};
                 let rd = gam2.model.rand.rd;
                 let unitValue = 0;
+                let amount=1;
                 //console.log(minId+': '+ reg[minId].unitValue)
                 
+                if(style===0) {
                 for(let i=minId; i< minId + numItems;i++) {
                   let nItem= i; //rd.rand(minId, maxId, seed);
-                  inp[nItem]= rd.rand(5,10)*Math.pow(10, rd.rand(0,2, seed));
+                  inp[nItem]= rd.rand(5,10, seed)*Math.pow(10, rd.rand(0,2, seed));
                   unitValue += inp[nItem]*reg[nItem].unitValue*(11)/(9);
+                  amount=1;
+                }
+                } else if(style===1){
+                  let bmin = 10;
+                  if(numItems===1) {
+                    let nItem= rd.rand(minId, minId+numItems, seed);
+                    inp[nItem]= rd.rand(2,10,seed)*Math.pow(10, rd.rand(0,2, seed));
+                    amount=rd.rand(1,10,seed);
+                    unitValue = Math.ceil((inp[nItem]*reg[nItem].unitValue*(11)/(9))/ amount);
+                  } else {
+                    for (let i = minId; i < minId + numItems; i++) {
+                     let nItem = rd.rand(Math.min(bmin, minId - numItems*3), minId + numItems, seed);
+                     inp[nItem] = rd.rand(2, 10,seed) * Math.pow(10, rd.rand(0, 2, seed));
+                     amount = rd.rand(1, 10,seed);
+                     unitValue += Math.ceil((inp[nItem] * reg[nItem].unitValue * (11) / (9)) / amount);
+                    }
+                  }
+                  
                 }
                 
-                reg[item].unitValue = unitValue;
+              // reg[item].unitValue = unitValue;
               
                 return {
                   inp: inp,
                   out: item,
+                  outAmount: amount,
                   unitValue: Math.ceil(unitValue)
                 }
             },
