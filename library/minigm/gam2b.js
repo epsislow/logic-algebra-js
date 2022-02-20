@@ -19,7 +19,7 @@ window.r = r;
             .addButton('Cache', function () { gam2.mem.loadData(); }, 'button btn-success')
             .addButton('Load', function () { gam2.mem.loadSlot(); },'button btn-info')
             .addButton('Save', function () { gam2.mem.saveSlot(); }, 'button btn-danger')
-            .addButton('+++', function () { gam2.idle.calcSec(3600); console.log('+3600') },'button btn-light')
+            .addButton('+++', function () { gam2.idle.calcSec(10); console.log('+3600') },'button btn-light')
             .addText(' ').el;
 
         vs.addSectionsToMain();
@@ -77,7 +77,7 @@ var gam2 = {
             
         
         for(let s=0; s<secs; s++) {
-          f();
+          f(1);
         }
         
         gam2.model.flags.calcIdle =1;
@@ -3141,8 +3141,9 @@ if (buttons2) {
           }
         }
       },
-      'everySec': function() {
+      'everySec': function(d=0) {
       var cpos = gam2.model.loc.currentPos;
+      let ds=0;
         
       for(let pos in gam2.model.box.list)
       {
@@ -3155,6 +3156,9 @@ if (buttons2) {
          for (let u in p) {
                     var box = p[u];
                     if(!box) {
+                      if(d) {
+                        console.log('c1')
+                      }
                       continue;
                     }
                     
@@ -3163,10 +3167,16 @@ if (buttons2) {
                             box.repaint=0;
                             gam2.view.paint('b' + box.pos, box, box.repaint);
                       }
+                      if (d) {
+                        console.log('c2')
+                      }
                       continue;
                     }
                     
                     if(! box.everySec) {
+                      if (d) {
+                        console.log('c3')
+                      }
                       continue;
                     }
 
@@ -3180,17 +3190,28 @@ if (buttons2) {
                             box.repaint=0;
                             gam2.view.paint('b' + box.pos, box, box.repaint);
                           }
+                          if (d) {
+                            console.log('c4')
+                          }
                           continue;
                         }
                         box.timer = 0;
                     
                     if(box.type in gam2.action.box && ('tick' in gam2.action.box[box.type])) {
                       gam2.action.box[box.type].tick(box);
+                      if(d) {
+                        ds++;
+                      }
+                      
                     }
                     if (pos === cpos && box.repaint) {
                       gam2.view.paint('b' + box.pos, box, box.repaint);
                     }
          }
+      }
+      
+      if(d) {
+        console.log('ds '+ds);
       }
       },
       'selectRecepie': function(box, recepie) {
