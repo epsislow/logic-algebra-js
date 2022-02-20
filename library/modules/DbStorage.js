@@ -133,7 +133,7 @@ var DbStorageConstr = function (dbKey = 'dgldb', storeKey = 'dgl', LZString = 0,
 
             pub.storage.execChain(slotsInfoObj);
         },
-        save: function(data, dataLength = 0, slotId=0, zip=1) {
+        save: function(data, dataLength = 0, slotId=0, zip=1, postSaveFn=0) {
             pub.savedSlots[parseInt(slotId)] = {length: dataLength};
             pub.saveSlotsInfo();
 
@@ -154,9 +154,14 @@ var DbStorageConstr = function (dbKey = 'dgldb', storeKey = 'dgl', LZString = 0,
                 that.storage.set(storeKey + ".data"+slotId, string, that.storage.nextInChain(chainObj))
             });
 
-            chainObj.hdls.push(function () {
+            chainObj.hdls.push((function (postSaveFn) {
+              return function() {
                 console.log('Saved Comps');
-            });
+                if(postSaveFn) {
+                  postSaveFn();
+                }
+              }
+            })(postSaveFn));
 
             pub.storage.execChain(chainObj);
 

@@ -67,11 +67,41 @@ var gam2 = {
         console.log(gam2.model.box.list);
     },
     'idle': {
+      'calcSec': function(secs) {
+        let f= gam2.action.everySec.bind(gam2.action);
+        gam2.model.flags.calcIdle =1;
+        
+        let cpos = gam2.model.loc.currentPos;
+        gam2.model.loc.currentPos = '0.0.0.0';
+            
+        
+        for(let s=0; s<secs; s++) {
+          f();
+        }
+        
+        gam2.model.flags.calcIdle =1;
+        gam2.model.loc.currentPos = cpos;
+        
+        gam2.view.drawBoxes();
+        
+          /*  gam2.view.card = {}
+            gam2.view.cardMenu = {};
+            gam2.view.cardBox = {};
+            gam2.view.cardOpt = {};
+            gam2.view.content.html('');
+            gam2.view.topBar.html('');
+
+            gam2.view.draw();
+            
+        */
+      },
       'calcPos': function(pos) {
         let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
         if (!p.length) {
             return;
         }
+        
+        
         let prt = {},pb= {};
         for (const i in p) {
             if(!p.hasOwnProperty(i)) {
@@ -119,7 +149,7 @@ var gam2 = {
     'mem': {
         'currentSlot': 0,
         'saveSlot': function () {
-            gam2.dbStorage.save(this.getData(0), 0, this.currentSlot);
+            gam2.dbStorage.save(this.getData(0), 0, this.currentSlot,1, function() { alert('Saved')});
         },
         'loadSlot': function () {
             gam2.dbStorage.load(function (data) { gam2.mem.loadData(JSON.stringify(data)); }, function (data) {return 0} , this.currentSlot);
@@ -199,6 +229,7 @@ var gam2 = {
             console.log(p);
             */
             gam2.view.draw();
+            alert('loaded');
             //
             //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
         },
@@ -429,6 +460,9 @@ var gam2 = {
           console.log(gam2.model.res.recepies);
         },
         'topBar': function (money=0,pplUsg=0,ppl=0,powerUsg=0,power=0) {
+            if (gam2.model.flags.calcIdle) {
+              return;
+            }
             if(!this.view.topBarVals && power===0) {
               return;
             }
@@ -864,6 +898,9 @@ var gam2 = {
         )
       },
       'drawBox': function(box, paintAll = 0) {
+        if (gam2.model.flags.calcIdle) {
+          return;
+        }
           let id = 'b' + box.pos;
           if(paintAll) {
               this.drawCard(id, box);
@@ -1485,6 +1522,7 @@ if (buttons2) {
     'model': {
         'flags': {
             'loading': 0,
+            'calcIdle': 0,
         },
         'cards': {
           'sun': {
