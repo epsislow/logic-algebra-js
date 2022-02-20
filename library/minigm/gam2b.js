@@ -2103,10 +2103,10 @@ if (buttons2) {
                 for(let i= 15; i<resLength; i++) {
                   numItems=1;
                   if(i > 20) {
-                   // style++;
-                 //   style = style% 2;
+                   style++;
+                   style = style% 2;
                   }
-                  if(i > Math.floor(30*resLength/100)) {
+                  if(i > Math.floor(15*resLength/100)) {
                   //  if(i > 30) {
                     numItems++;
                   }
@@ -2123,12 +2123,16 @@ if (buttons2) {
                     numItems++;
                   }
                   
+                  if(numItems > 1 && rd.rand(1,3, seed) >1) {
+                    numItems = rd.rand(1, rd.rand(2,3,seed), seed );
+                  }
+                  
                  // if(style>0) {
                   // for(let rr=0; rr<rd.rand(1,6, seed); rr++) {
                   recp =
                     this.genRecepieFor(style, i, numItems, i-numItems-4)
            
-                 key = Object.keys(recp.inp).sort().join('.');
+                 key = recp.out+ ':' +Object.keys(recp.inp).sort().join('.');
                   
                   if(!(key in this.recepies)) {
                     this.recepies[key] = recp;
@@ -2166,7 +2170,7 @@ if (buttons2) {
                     unitValue = Math.ceil((inp[nItem]*reg[nItem].unitValue*(11)/(9))/ amount);
                   } else {
                     for (let i = minId; i < minId + numItems; i++) {
-                     let nItem = rd.rand(Math.min(bmin, minId - numItems*3), minId + numItems, seed);
+                     let nItem = rd.rand(Math.min(bmin, minId - numItems*2), minId + numItems, seed);
                      inp[nItem] = rd.rand(2, 10,seed) * Math.pow(10, rd.rand(0, 2, seed));
                      amount = rd.rand(1, 10,seed);
                      unitValue += Math.ceil((inp[nItem] * reg[nItem].unitValue * (11) / (9)) / amount);
@@ -2852,6 +2856,7 @@ if (buttons2) {
             if(t===0) {
               return;
             }
+                t =  t*box.recepie.outAmount;
                 
                 if (slotOut.amount > box.maxAmount) {
                     //nothing to do, all is done
@@ -3051,7 +3056,7 @@ if (buttons2) {
                         conts.push({type: 'text', text: 'Next Lvl: $'+ box.levelCost});
                     }
 
-                    conts.push({type: 'text', text: 'Craft +'+ box.tickAmount + ' $'+ box.tickAmount * slot.unitValue});
+                    conts.push({type: 'text', text: 'Craft +'+ box.tickAmount*(box.recepie? box.recepie.outAmount: 1) + ' $'+ box.tickAmount *(box.recepie? box.recepie.outAmount: 1)* slot.unitValue});
 
                     return conts;
                 }
@@ -3392,13 +3397,13 @@ if (buttons2) {
             })(box, rec), 'button btn-success', {'style':'float: left'})
             
             .container('','div','color:white')
-            .addText(reso.name)
+            .addText(reso.name + ' '+ rec.out)
             .up()
         
             .container('slot slot-output', 'div')
             .addJqEl(res.getResIco(rec.out))
             .container('amount', 'div')
-            .addText(1)
+            .addText(rec.outAmount)
             .up()
             .up();
 
@@ -3412,7 +3417,8 @@ if (buttons2) {
              .container('amount', 'div')
                .addText(rec.inp[j])
              .up()
-             .up();
+             .up()
+             .addText(j+' ');
           }
           
           c = c.br(1);
