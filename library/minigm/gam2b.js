@@ -2011,16 +2011,12 @@ if (buttons2) {
                 .attr('style', 'font-size: 24px;color:' + house.color);//.html(house.ico);
             },
         },
-        'item': {
-          'icoList': ['cubes','gears'],
-          'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
-          
-        },
         'res': {
             'icoList':['atom','adjust','cheese', 'bars','circle-notch','clone','cubes','cube','columns','glass-whiskey', 'database','dice-d6','dice-d20', 'dot-circle','egg','eject','equals','fire','fire-alt','flask','hockey-puck','grip-vertical','gem','radiation-alt','neuter', 'icicles','mountain','ring','shapes','share-alt-square','square','stop-circle','sun','tint','th-large','th','water','wave-square','window-restore', 'bong', 'flask','boxes'],
             'colorList':["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
             'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
             'colorList3': ['grape','grape'],
+            'itemIcoList': ['cubes','gears'],
             'colorUni': {},
             'mineIcoList': ['tint','shapes','tablets','soap', 'icicles', 'genderless', 'air-freshener','glass-whiskey','water'],
             'reg':[],
@@ -2036,6 +2032,9 @@ if (buttons2) {
               
               this.add('power','battery-full','greenyellow');
               this.add('child','child','lightgreen');
+            },
+            'genItems': function () {
+
             },
             'add': function (name, ico=0, color='light', unitValue=0) {
                 var id=this.reg.length;
@@ -2107,7 +2106,6 @@ if (buttons2) {
                    style = style% 2;
                   }
                   if(i > Math.floor(15*resLength/100)) {
-                  //  if(i > 30) {
                     numItems++;
                   }
                   if(i > Math.floor(45*resLength/100)) {
