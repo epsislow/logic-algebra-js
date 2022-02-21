@@ -2017,6 +2017,46 @@ if (buttons2) {
             'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
             'colorList3': ['grape','grape'],
             'itemIcoList': ['cubes','gears'],
+            'itemTypes': {
+                /*'platform': {
+                    'over':2,
+                    'low':1,
+                    'big':3
+                },
+                'station': {
+                    'asteroid': ['ship.constructor', 'box.builder', 'platform.big'],
+                    'research': ['ship.constructor', 'box.builder', 'platform.big'],
+                    'trade': ['ship.constructor', 'box.builder', 'platform.big']
+                },
+                'box': [
+                    'miner': ['case.frame', 'platform.over', 1],
+                    'crafter',
+                    'laboratory',
+                    'R&D-center',
+                    'seller',
+                    'dwellings',
+                    'platform',
+                    'shipyard',
+                    'trader',
+                    'power',
+                    'storage',
+                    'launch-pad',
+                    'bank',
+                    'builder'
+                ],
+                'case': ['hull', 'cube', 'frame'],
+                'ship': ['airliner','cargo','transporter','constructor'],
+                'slot': ['low','human', 'big', 'credit', 'power'],
+                'defence': ['ion', 'plasma', 'laser', 'inter', 'photon', 'radion'],
+                'power': ['ion', 'plasma', 'laser', 'inter', 'photon', 'radion'],
+                'engine': ['ion', 'plasma', 'laser', 'inter', 'photon', 'radion'],*/
+            },
+            'itemMadeOf': {
+                'station': ['ship.constructor', 'box.builder', 'platform.big'],
+                'box': ['case.frame', 'platform.over', 'res.1'],
+                'case': ['res.3', 'res.2', 'res.1'],
+                'ship': ['case.hull', 'slot.*']
+            },
             'colorUni': {},
             'mineIcoList': ['tint','shapes','tablets','soap', 'icicles', 'genderless', 'air-freshener','glass-whiskey','water'],
             'reg':[],
@@ -2034,7 +2074,7 @@ if (buttons2) {
               this.add('child','child','lightgreen');
             },
             'genItems': function () {
-
+                //
             },
             'add': function (name, ico=0, color='light', unitValue=0) {
                 var id=this.reg.length;
