@@ -482,6 +482,7 @@ var gam2 = {
           gam2.model.res.gen(205);
           gam2.model.reputation.genh(8);
           gam2.model.res.genRecepies();
+          gam2.model.res.genItems();
           
           console.log(gam2.model.res.recepies);
         },
@@ -2018,44 +2019,43 @@ if (buttons2) {
             'colorList3': ['grape','grape'],
             'itemIcoList': ['cubes','gears'],
             'itemTypes': {
-                /*'platform': {
+                'platform': {
                     'over':2,
                     'low':1,
                     'big':3
                 },
                 'station': {
-                    'asteroid': ['ship.constructor', 'box.builder', 'platform.big'],
-                    'research': ['ship.constructor', 'box.builder', 'platform.big'],
-                    'trade': ['ship.constructor', 'box.builder', 'platform.big']
+                    'asteroid': ['ship.construct', 'box.builder', 'platform.low'],
+                    'research': ['ship.construct', 'box.builder', 'platform.over'],
+                    'trade': ['ship.construct', 'box.builder', 'platform.big']
                 },
-                'box': [
-                    'miner': ['case.frame', 'platform.over', 1],
-                    'crafter',
-                    'laboratory',
-                    'R&D-center',
-                    'seller',
-                    'dwellings',
-                    'platform',
-                    'shipyard',
-                    'trader',
-                    'power',
-                    'storage',
-                    'launch-pad',
-                    'bank',
-                    'builder'
-                ],
-                'case': ['hull', 'cube', 'frame'],
-                'ship': ['airliner','cargo','transporter','constructor'],
-                'slot': ['low','human', 'big', 'credit', 'power'],
-                'defence': ['ion', 'plasma', 'laser', 'inter', 'photon', 'radion'],
-                'power': ['ion', 'plasma', 'laser', 'inter', 'photon', 'radion'],
-                'engine': ['ion', 'plasma', 'laser', 'inter', 'photon', 'radion'],*/
-            },
-            'itemMadeOf': {
-                'station': ['ship.constructor', 'box.builder', 'platform.big'],
-                'box': ['case.frame', 'platform.over', 'res.1'],
-                'case': ['res.3', 'res.2', 'res.1'],
-                'ship': ['case.hull', 'slot.*']
+                'box': {
+                    'miner': ['case.frame', 'platform.low','slot.low'],
+                    'crafter': ['case.frame', 'platform.low', 'slot.human'],
+                    'laboratory': ['case.frame', 'platform.low', 'slot.human'],
+                    'R&D-center': ['case.cube', 'platform.over', 'slot.big'],
+                    'seller': ['case.frame', 'platform.over', 'slot.low'],
+                    'dwellings': ['case.frame', 'platform.over', 'slot.human'],
+                    'platform': ['case.cube', 'platform.big', 2],
+                    'shipyard': ['case.cube', 'platform.over', 'slot.big'],
+                    'trader': ['case.frame', 'platform.low', 1],
+                    'power': ['case.frame', 'platform.over', 'slot.power'],
+                    'storage': ['case.frame', 'platform.over', 3],
+                    'launch-pad': ['case.frame', 'platform.low', 1],
+                    'bank': ['case.frame', 'platform.over', 2],
+                    'builder': ['case.frame', 'platform.low', 1],
+                },
+                'case': {'hull': 3, 'cube': 2, 'frame':1},
+                'ship': {
+                  'airliner': ['case.hull', 'slot.human','engine.*'],
+                  'cargo': ['case.hull', 'slot.big','engine.*'],
+                  'transporter': ['case.hull', 'slot.low', 'engine.*'],
+                  'construct': ['case.hull', 'slot.big','engine.*'],
+                },
+                'slot': {'low':['case.frame', 1] ,'human':['case.cube', 1], 'big':['case.cube', 2], 'power':['case.cube',3]},
+                'power': { 'ion':['case.cube',1], 'plasma':['case.cube',1], 'laser':['case.cube',2], 'inter':['case.cube',2], 'photon':['case.cube',3]},
+                'engine': { 'ion':['case.cube',1], 'plasma':['case.frame','case.cube',1], 'laser':['case.cube',2], 'inter':['case.frame','case.cube',2], 'photon':['case.frame','case.cube',3]}
+              //  {'ion':, 'plasma':1, 'laser':2, 'inter':2, 'photon':3}},
             },
             'colorUni': {},
             'mineIcoList': ['tint','shapes','tablets','soap', 'icicles', 'genderless', 'air-freshener','glass-whiskey','water'],
@@ -2074,7 +2074,22 @@ if (buttons2) {
               this.add('child','child','lightgreen');
             },
             'genItems': function () {
-                //
+                let it= this.itemTypes;
+                let rt= this.traverse(it, {});
+                console.log(rt)
+            },
+            'traverse': function(obj, reduceArr, key=0) {
+              let v;
+              for(let i in obj) {
+                v=obj[i];
+                if(Array.isArray(obj[i]) || (typeof obj[i]==='number')) {
+                  reduceArr[key?key+'.'+i:i] = obj[i];
+                  continue;
+                }
+                
+                this.traverse(obj[i], reduceArr, key?key+'.'+i:i);
+              }
+              return reduceArr;
             },
             'add': function (name, ico=0, color='light', unitValue=0) {
                 var id=this.reg.length;
