@@ -2082,21 +2082,82 @@ if (buttons2) {
                 let rd = gam2.model.rand.rd;
                 let seed = gam2.model.rand.seed.res;
                 let rl = Object.keys(recp).length;
-                let rlmin = rl - Object.keys(rt).length;
+                let rlmin = rl - 26;
                 
                 
                 //let tiers = this.getTierIds(3, Object.keys(rt).length)
                 for(let r in rt) {
                   map[r] = this.resolveItem(rlmin, r, rt, map);
                 }
+                let itemIco = {}, itemColor= {};
+                
+                let rId;
                 for(let r in map) {
                   if(Array.isArray(map[r])) {
+                    if(this.isIntArr(map[r])) {
+                      rId= Object.keys(recp).length;
+                      recp[rId] = this.genRecepieFor(2, rId, 0, 5, {items: map[r], amount: 1});
+                      let pr= r.split('.');
+                      if(!(pr[0] in itemIco)) {
+                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
+                      }
+                      if(!(pr[1] in itemColor)) {
+                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
+                      }
+                      
+                      this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
                     
+                      map[r] = rId;
+                    }
                   }
                 }
-                console.log(rt, map)
+                for (let r in map) {
+                  if (Array.isArray(map[r])) {
+                    if (!this.isIntArr(map[r])) {
+                      
+                    map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
+                    if (this.isIntArr(map[r])) {
+                      rId = Object.keys(recp).length;
+                      recp[rId] = this.genRecepieFor(2, rId, 0, 5, { items: map[r], amount: 1 });
+                      let pr= r.split('.');
+                      if(!(pr[0] in itemIco)) {
+                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
+                      }
+                      if(!(pr[1] in itemColor)) {
+                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
+                      }
+                      this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
+                    
+                      map[r] = rId;
+                    }
+                    }
+                  }
+                }
+                for (let r in map) {
+                  if (Array.isArray(map[r])) {
+                    if (!this.isIntArr(map[r])) {
+                
+                      map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
+                      if (this.isIntArr(map[r])) {
+                        rId = Object.keys(recp).length;
+                        recp[rId] = this.genRecepieFor(2, rId, 0, 5, { items: map[r], amount: 1 });
+                        let pr= r.split('.');
+                      if(!(pr[0] in itemIco)) {
+                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
+                      }
+                      if(!(pr[1] in itemColor)) {
+                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
+                      }
+                      this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
+                    
+                      map[r] = rId;
+                      }
+                    }
+                  }
+                }
+                console.log(map, recp, this.reg)
             },
-            'resolveItem': function(rlmin, r, rt, map, ur= {}) {
+            'resolveItem': function(rlmin, r, rt, map, ur= {}, subItems=0) {
               if (this.isInt(rt[r])) {
                 return rlmin - 1 + rt[r];
               } else if (Array.isArray(rt[r])) {
@@ -2107,7 +2168,11 @@ if (buttons2) {
                     mapv.push(rlmin - 1 + q);
                   } else {
                     if (q in map) {
-                      mapv.push(map[q]);
+                      if(subItems && !this.isInt(map[q])) {
+                        mapv.push(q);
+                      } else {
+                        mapv.push(map[q]);
+                      }
                     } else {
                       if(q in ur) {
                         console.log(ur[q], rt[r]);
@@ -2115,9 +2180,12 @@ if (buttons2) {
                       }
                       ur[q]=rt[r];
                       
-                      mapv.push(q);
+                      
+                    
+                        mapv.push(q);
                         this.resolveItem(rlmin, q, rt, map, ur)
-                    //    );
+                     
+                     
                       delete(ur[q])
                     }
                      
@@ -2129,6 +2197,11 @@ if (buttons2) {
             'isInt': function(value) {
               var x;
               return isNaN(value) ? !1 : (x = parseFloat(value), (0 | x) === x);
+            },
+            'isIntArr': function(arr) {
+               return arr.every(element => {
+                 return typeof element === 'number';
+               });
             },
             'traverse': function(obj, reduceArr, key=0) {
               let v;
@@ -2266,6 +2339,13 @@ if (buttons2) {
                   unitValue += inp[nItem]*reg[nItem].unitValue*(11)/(9);
                   amount=1;
                 }
+                } else if(style===2){
+                  for (let i in opt.items) {
+                    let nItem = opt.items[i];
+                    inp[nItem] = rd.rand(1, 5, seed) * Math.pow(10, rd.rand(0, 1, seed));
+                    unitValue += inp[nItem] * reg[nItem].unitValue * (11) / (9);
+                    amount = opt.amount;
+                  }
                 } else if(style===1){
                   let bmin = 10;
                   if(numItems===1) {
@@ -3488,9 +3568,9 @@ if (buttons2) {
           let reso= res.reg[recp[i].out];
           let rec= recp[i];
           
-          if(Object.keys(rec.inp).length > box.slots) {
+        /*  if(Object.keys(rec.inp).length > box.slots) {
             continue;
-          }
+          }*/
           
           c = c
             .br(1)
@@ -3523,7 +3603,7 @@ if (buttons2) {
                .addText(rec.inp[j])
              .up()
              .up()
-             .addText(j+' ');
+           //  .addText(j+' ');
           }
           
           c = c.br(1);
