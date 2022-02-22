@@ -2021,9 +2021,9 @@ if (buttons2) {
             'itemIcoList': ['draw-polygon','stroopwafel','credit-card','money-check','ring','border-none','newspaper','minus-square','gears','box-open','columns','dice-one'],
             'itemTypes': {
                 'platform': {
-                    'over':2,
-                    'low':1,
-                    'big':3
+                    'over':13,
+                    'low':2,
+                    'big':22
                 },
                 'station': {
                     'asteroid': ['ship.construct', 'box.builder', 'platform.low'],
@@ -2037,25 +2037,25 @@ if (buttons2) {
                     'R&D-center': ['case.cube', 'platform.over', 'slot.big'],
                     'seller': ['case.frame', 'platform.over', 'slot.low'],
                     'dwellings': ['case.frame', 'platform.over', 'slot.human'],
-                    'platform': ['case.cube', 'platform.big', 2],
+                    'platform': ['case.cube', 'platform.big', 14],
                     'shipyard': ['case.cube', 'platform.over', 'slot.big'],
-                    'trader': ['case.frame', 'platform.low', 1],
+                    'trader': ['case.frame', 'platform.low', 6],
                     'power': ['case.frame', 'platform.over', 'slot.power'],
-                    'storage': ['case.frame', 'platform.over', 3],
-                    'launch-pad': ['case.frame', 'platform.low', 1],
-                    'bank': ['case.frame', 'platform.over', 2],
-                    'builder': ['case.frame', 'platform.low', 1],
+                    'storage': ['case.frame', 'platform.over', 'engine.laser'],
+                    'launch-pad': ['case.frame', 'platform.low', 8],
+                    'bank': ['case.frame', 'platform.over', 18],
+                    'builder': ['case.frame', 'platform.low', 4],
                 },
-                'case': {'hull': 3, 'cube': 2, 'frame':1},
+                'case': {'hull': 21, 'cube': 12, 'frame':1},
                 'ship': {
-                  'airliner': ['case.hull', 'slot.human','engine.*'],
-                  'cargo': ['case.hull', 'slot.big','engine.*'],
-                  'transporter': ['case.hull', 'slot.low', 'engine.*'],
-                  'construct': ['case.hull', 'slot.big','engine.*'],
+                  'airliner': ['case.hull', 'slot.human','engine.ion'],
+                  'cargo': ['case.hull', 'slot.big','engine.inter'],
+                  'transporter': ['case.hull', 'slot.low', 'engine.plasma'],
+                  'construct': ['case.hull', 'slot.big','engine.photon'],
                 },
-                'slot': {'low':['case.frame', 1] ,'human':['case.cube', 1], 'big':['case.cube', 2], 'power':['case.cube',3]},
-                'power': { 'ion':['case.cube',1], 'plasma':['case.cube',1], 'laser':['case.cube',2], 'inter':['case.cube',2], 'photon':['case.cube',3]},
-                'engine': { 'ion':['case.cube',1], 'plasma':['case.frame','case.cube',1], 'laser':['case.cube',2], 'inter':['case.frame','case.cube',2], 'photon':['case.frame','case.cube',3]}
+                'slot': {'low':['case.frame', 3] ,'human':['case.cube', 9], 'big':['case.cube', 15], 'power':['case.cube',23]},
+                'power': { 'ion':['case.cube',5], 'plasma':['case.cube',10], 'laser':['case.cube',16], 'inter':['case.cube',19], 'photon':['case.cube',24]},
+                'engine': { 'ion':['case.cube',7], 'plasma':['case.frame','case.cube',11], 'laser':['case.cube',17], 'inter':['case.frame','case.cube',20], 'photon':['case.frame','case.cube',25]}
               //  {'ion':, 'plasma':1, 'laser':2, 'inter':2, 'photon':3}},
             },
             'colorUni': {},
@@ -2083,25 +2083,48 @@ if (buttons2) {
                 let seed = gam2.model.rand.seed.res;
                 let rl = Object.keys(recp).length;
                 let rlmin = rl - Object.keys(rt).length;
+                
+                
+                //let tiers = this.getTierIds(3, Object.keys(rt).length)
                 for(let r in rt) {
-                  if (this.isInt(rt[r])) {
-                    map[r] = rd.rand(rlmin, rl, seed);
-                  } else if (Array.isArray(rt[r])) {
-                    let mapv = [];
-                    for(let t in rt[r]) {
-                      let q = rt[r][t];
-                      if(this.isInt(q)) {
-                        mapv.push(rd.rand(rlmin, rl, seed));
-                      } else {
-                        if(q in map) {
-                          mapv.push(map[q]);
-                        }
-                      }
-                    }
-                    map[r] = mapv;
+                  map[r] = this.resolveItem(rlmin, r, rt, map);
+                }
+                for(let r in map) {
+                  if(Array.isArray(map[r])) {
+                    
                   }
                 }
                 console.log(rt, map)
+            },
+            'resolveItem': function(rlmin, r, rt, map, ur= {}) {
+              if (this.isInt(rt[r])) {
+                return rlmin - 1 + rt[r];
+              } else if (Array.isArray(rt[r])) {
+                let mapv = [];
+                for (let t in rt[r]) {
+                  let q = rt[r][t];
+                  if (this.isInt(q)) {
+                    mapv.push(rlmin - 1 + q);
+                  } else {
+                    if (q in map) {
+                      mapv.push(map[q]);
+                    } else {
+                      if(q in ur) {
+                        console.log(ur[q], rt[r]);
+                        throw Error('Trying to resolve '+ q +' second time.');
+                      }
+                      ur[q]=rt[r];
+                      
+                      mapv.push(q);
+                        this.resolveItem(rlmin, q, rt, map, ur)
+                    //    );
+                      delete(ur[q])
+                    }
+                     
+                  }
+                }
+                return mapv;
+              }
             },
             'isInt': function(value) {
               var x;
