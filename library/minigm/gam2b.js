@@ -479,7 +479,7 @@ var gam2 = {
              'ppl': [0, 20],
              'power': [0, 50],
            }
-          gam2.model.res.gen(205);
+          gam2.model.res.gen(55);
           gam2.model.reputation.genh(8);
           gam2.model.res.genRecepies();
           gam2.model.res.genItems();
@@ -2100,7 +2100,9 @@ if (buttons2) {
                         itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
                       }
                       if(!(pr[1] in itemColor)) {
-                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
+                        itemColor[pr[1]] =// this.colorList2[rd.rand(0, this.colorList2.length, seed)];
+                       rd.pickOneFrom(this.colorList2, seed);
+                        
                       }
                       
                       let newRecp = this.genRecepieFor(2, 123, 0, 5, {items: map[r], amount: 1});
@@ -2311,20 +2313,20 @@ if (buttons2) {
                    style++;
                    style = style% 2;
                   }
-                  if(i > Math.floor(15*resLength/100)) {
+                  if(i > 20+ Math.floor(15*resLength/100)) {
                     numItems++;
                   }
-                  if(i > Math.floor(45*resLength/100)) {
+                  if(i > 20+ Math.floor(45*resLength/100)) {
                     numItems++;
                   }
-                  if(i > Math.floor(75*resLength/100)) {
+                  if(i > 20+ Math.floor(75*resLength/100)) {
                   
                   
                     numItems++;
                   }
                   
                   if(i > Math.floor(88*resLength/100)) {
-                    numItems++;
+             //       numItems++;
                   }
                   
                   if(numItems > 1 && rd.rand(1,3, seed) >1) {
