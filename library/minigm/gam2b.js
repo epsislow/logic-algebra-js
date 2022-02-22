@@ -2109,7 +2109,9 @@ if (buttons2) {
                      
                       rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
                       newRecp.out = rId;
-                      recp[rId] = newRecp;
+                      //recp[rId] = newRecp;
+                      recp[rId+':'+map[r].join('.')] = newRecp;
+                      
                       
                       map[r] = rId;
                     }
@@ -2134,7 +2136,9 @@ if (buttons2) {
                       
                       rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
                       newRecp.out = rId;
-                      recp[rId] = newRecp;
+                      //recp[rId] = newRecp;
+                      recp[rId+':'+map[r].join('.')] = newRecp;
+                      
                       
                       map[r] = rId;
                     }
@@ -2147,20 +2151,7 @@ if (buttons2) {
                 
                       map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
                       if (this.isIntArr(map[r])) {
-                        /*
-                        rId = Object.keys(recp).length;
-                        recp[rId] = this.genRecepieFor(2, rId, 0, 5, { items: map[r], amount: 1 });
-                        let pr= r.split('.');
-                      if(!(pr[0] in itemIco)) {
-                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
-                      }
-                      if(!(pr[1] in itemColor)) {
-                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
-                      }
-                      this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
-                    
-                      map[r] = rId;
-                      */
+                        
                       let pr = r.split('.');
                       if (!(pr[0] in itemIco)) {
                         itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
@@ -2173,14 +2164,14 @@ if (buttons2) {
                       
                       rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
                       newRecp.out = rId;
-                      recp[rId] = newRecp;
+                      recp[rId+':'+map[r].join('.')] = newRecp;
                       
                       map[r] = rId;
                       }
                     }
                   }
                 }
-                console.log(map, recp, this.reg)
+                //console.log(map, recp, this.reg)
             },
             'resolveItem': function(rlmin, r, rt, map, ur= {}, subItems=0) {
               if (this.isInt(rt[r])) {
