@@ -2095,8 +2095,6 @@ if (buttons2) {
                 for(let r in map) {
                   if(Array.isArray(map[r])) {
                     if(this.isIntArr(map[r])) {
-                      rId= Object.keys(recp).length;
-                      recp[rId] = this.genRecepieFor(2, rId, 0, 5, {items: map[r], amount: 1});
                       let pr= r.split('.');
                       if(!(pr[0] in itemIco)) {
                         itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
@@ -2105,8 +2103,12 @@ if (buttons2) {
                         itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
                       }
                       
-                      this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
-                    
+                      let newRecp = this.genRecepieFor(2, 123, 0, 5, {items: map[r], amount: 1});
+                     
+                      rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
+                      newRecp.out = rId;
+                      recp[rId] = newRecp;
+                      
                       map[r] = rId;
                     }
                   }
@@ -2117,17 +2119,21 @@ if (buttons2) {
                       
                     map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
                     if (this.isIntArr(map[r])) {
-                      rId = Object.keys(recp).length;
-                      recp[rId] = this.genRecepieFor(2, rId, 0, 5, { items: map[r], amount: 1 });
-                      let pr= r.split('.');
-                      if(!(pr[0] in itemIco)) {
+                    
+                      let pr = r.split('.');
+                      if (!(pr[0] in itemIco)) {
                         itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
                       }
-                      if(!(pr[1] in itemColor)) {
+                      if (!(pr[1] in itemColor)) {
                         itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
                       }
-                      this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
-                    
+                      
+                      let newRecp = this.genRecepieFor(2, 123, 0, 5, { items: map[r], amount: 1 });
+                      
+                      rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
+                      newRecp.out = rId;
+                      recp[rId] = newRecp;
+                      
                       map[r] = rId;
                     }
                     }
@@ -2139,6 +2145,7 @@ if (buttons2) {
                 
                       map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
                       if (this.isIntArr(map[r])) {
+                        /*
                         rId = Object.keys(recp).length;
                         recp[rId] = this.genRecepieFor(2, rId, 0, 5, { items: map[r], amount: 1 });
                         let pr= r.split('.');
@@ -2151,6 +2158,22 @@ if (buttons2) {
                       this.add(r, itemIco[pr[0]], itemColor[pr[1]], recp[rId].unitValue);
                     
                       map[r] = rId;
+                      */
+                      let pr = r.split('.');
+                      if (!(pr[0] in itemIco)) {
+                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
+                      }
+                      if (!(pr[1] in itemColor)) {
+                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
+                      }
+                      
+                      let newRecp = this.genRecepieFor(2, 123, 0, 5, { items: map[r], amount: 1 });
+                      
+                      rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
+                      newRecp.out = rId;
+                      recp[rId] = newRecp;
+                      
+                      map[r] = rId;
                       }
                     }
                   }
@@ -2159,12 +2182,15 @@ if (buttons2) {
             },
             'resolveItem': function(rlmin, r, rt, map, ur= {}, subItems=0) {
               if (this.isInt(rt[r])) {
+                this.reg[rlmin - 1 + rt[r]].name = r;
                 return rlmin - 1 + rt[r];
               } else if (Array.isArray(rt[r])) {
                 let mapv = [];
                 for (let t in rt[r]) {
                   let q = rt[r][t];
                   if (this.isInt(q)) {
+                    //this.reg[rlmin - 1 + q].name = r;
+                
                     mapv.push(rlmin - 1 + q);
                   } else {
                     if (q in map) {
