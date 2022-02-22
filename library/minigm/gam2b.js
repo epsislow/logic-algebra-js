@@ -2017,8 +2017,8 @@ if (buttons2) {
             'colorList':["aliceblue", "antiquewhite", "aqua", "aquamarine", "biege", "bisque", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "coral", "cornflowerblue", "cyan", "darkcyan", "darkgreen", "darkorchid", "darkred", "deeppink", "deepskyblue", "darkslategray", "darkslateblue", "gold", "goldenrod", "gray", "greenyellow", "hotpink", "indianred", "lavender", "lemonchiffon", "lightblue", "lightcyan", "lightcoral", "lightseagreen", "lightskyblue", "lightsteelblue", "lime", "linen", "mediumaquamarine", "mediumseagreen", "mediumcoral", "mediumturquoise", "mediumvioletred", "mistyrose", "olive", "orangered", "orange", "palegoldenrod", "purple", "plum", "pink", "powderblue", "red", "rosybrown", "royalblue", "salmon", "sandybrown", "seagreen", "silver", "seashell", "springgreen", "steelblue", "teal", "tan", "thistle", "turquoise", "violet", "wheat", "white", "yellow", "yellowgreen"],
             'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
             'colorList3': ['grape','grape'],
-            'bioIconList': ['draw-polygon','stroopwafel','leaf','seedling','spa'],
-            'itemIcoList': ['credit-card','money-check','ring','border-none','newspaper','minus-square','gears','box-open','columns','dice-one'],
+            'bioIconList': ['leaf','seedling','spa'],
+            'itemIcoList': ['draw-polygon','stroopwafel','credit-card','money-check','ring','border-none','newspaper','minus-square','gears','box-open','columns','dice-one'],
             'itemTypes': {
                 'platform': {
                     'over':2,
@@ -2077,7 +2077,35 @@ if (buttons2) {
             'genItems': function () {
                 let it= this.itemTypes;
                 let rt= this.traverse(it, {});
-                console.log(rt)
+                let map= {};
+                let recp = this.recepies;
+                let rd = gam2.model.rand.rd;
+                let seed = gam2.model.rand.seed.res;
+                let rl = Object.keys(recp).length;
+                let rlmin = rl - Object.keys(rt).length;
+                for(let r in rt) {
+                  if (this.isInt(rt[r])) {
+                    map[r] = rd.rand(rlmin, rl, seed);
+                  } else if (Array.isArray(rt[r])) {
+                    let mapv = [];
+                    for(let t in rt[r]) {
+                      let q = rt[r][t];
+                      if(this.isInt(q)) {
+                        mapv.push(rd.rand(rlmin, rl, seed));
+                      } else {
+                        if(q in map) {
+                          mapv.push(map[q]);
+                        }
+                      }
+                    }
+                    map[r] = mapv;
+                  }
+                }
+                console.log(rt, map)
+            },
+            'isInt': function(value) {
+              var x;
+              return isNaN(value) ? !1 : (x = parseFloat(value), (0 | x) === x);
             },
             'traverse': function(obj, reduceArr, key=0) {
               let v;
