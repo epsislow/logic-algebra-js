@@ -2359,7 +2359,7 @@ if (buttons2) {
                 if(style===0) {
                 for(let i=minId; i< minId + numItems;i++) {
                   let nItem= i; //rd.rand(minId, maxId, seed);
-                  inp[nItem]= rd.rand(5,10, seed)*Math.pow(10, rd.rand(0,2, seed));
+                  inp[nItem]= rd.rand(5,10, seed)*Math.pow(10, rd.rand(0,1, seed));
                   unitValue += inp[nItem]*reg[nItem].unitValue*(11)/(9);
                   amount=1;
                 }
@@ -2374,13 +2374,13 @@ if (buttons2) {
                   let bmin = 10;
                   if(numItems===1) {
                     let nItem= rd.rand(minId, minId+numItems, seed);
-                    inp[nItem]= rd.rand(2,10,seed)*Math.pow(10, rd.rand(0,2, seed));
+                    inp[nItem]= rd.rand(2,10,seed)*Math.pow(10, rd.rand(0,1, seed));
                     amount=rd.rand(1,10,seed);
                     unitValue = Math.ceil((inp[nItem]*reg[nItem].unitValue*(11)/(9))/ amount);
                   } else {
                     for (let i = minId; i < minId + numItems; i++) {
                      let nItem = rd.rand(Math.min(bmin, minId - numItems*2), minId + numItems, seed);
-                     inp[nItem] = rd.rand(2, 10,seed) * Math.pow(10, rd.rand(0, 2, seed));
+                     inp[nItem] = rd.rand(2, 10,seed) * Math.pow(10, rd.rand(0, 1, seed));
                      amount = rd.rand(1, 10,seed);
                      unitValue += Math.ceil((inp[nItem] * reg[nItem].unitValue * (11) / (9)) / amount);
                     }
