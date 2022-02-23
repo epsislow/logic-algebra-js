@@ -2655,7 +2655,7 @@ if (buttons2) {
       },
       'slotSelectedObj': 0,
       'slotFilterClick': function (el, ress, popupEl, onClose, box) {
-          console.log(el, ress, popupEl);
+         // console.log(el, ress, popupEl);
 
           let c = r(popupEl).clear();
 
@@ -3601,28 +3601,26 @@ if (buttons2) {
               let reso= res.reg[recp[i].out];
               let rec= recp[i];
 
-              if (!(ress === parseInt(i) || (ress in rec.inp))) {
-                  //continue;
-              }
-
-              /*  if(Object.keys(rec.inp).length > box.slots) {
+              if ((ress !== 0) && !(ress === parseInt(i) || (ress in rec.inp))) {
                   continue;
-                }*/
+              }
+              
+              let allowed = !(Object.keys(rec.inp).length > box.slots);
 
               c = c
                   .br(1)
-                  .addButton('select', (function(box, rec) {
+                  .addButton('select', allowed ? (function(box, rec) {
                       return function() {
                           gam2.action.selectRecepie(box, rec);
                           onClose();
                       }
-                  })(box, rec), 'button btn-success', {'style':'float: left'})
+                  })(box, rec) : false, 'button '+(allowed? 'btn-success': 'btn-danger'), {'style':'float: left'})
 
                   .container('','div','color:white')
                   .addText(reso.name + ' '+ rec.out)
                   .up();
 
-              c = c.container('slot slot-output', 'div');
+              c = c.container('slot '+(ress == parseInt(i)? 'slot-selected':'')+' slot-output', 'div');
 
               c.el.click(function (ress, popupEl, onClose, box) {
                   return function () {
@@ -3642,7 +3640,7 @@ if (buttons2) {
                   .up();
 
               for(let j in rec.inp) {
-                  c = c.container('slot', 'div');
+                  c = c.container('slot '+ (ress == j ?'slot-selected':''), 'div');
 
                   c.el.click(function (ress, popupEl, onClose, box) {
                       return function () {
