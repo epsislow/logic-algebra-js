@@ -1479,11 +1479,6 @@ if (buttons2) {
         }
         return ccr.first;
       },
-      'addLocSelected': function(containerDiv, i, a) {
-               el = this.drawCard('loc'+ i, p[i], containerDiv);
-
-               el.click((function (el, bi, plist) {return function () { gam2.action.loc.unlockLoc(el, bi, plist); }})(el, i, p));
-      },
       'deleteEls': function(els) {
         for (const i in els) {
           if (!els.hasOwnProperty(i)) {
@@ -1786,7 +1781,7 @@ if (buttons2) {
           if (!slots.length) {
             return false;
           }
-          let sumEmpty = 0;
+          let sum = 0;
           for (let i in slots) {
             if (slots[i].item === item && slots[i].amount < box.maxAmount) {
               sum += box.maxAmount - slots[i].amount;
@@ -2018,7 +2013,7 @@ if (buttons2) {
             'colorList2': ['cyan','pink','yellow','white', 'seagreen','salmon','lightgreen','lawngreen','orange','deepskyblue','firebrick','mediumvioletred','mediumpurple'],
             'colorList3': ['grape','grape'],
             'bioIconList': ['leaf','seedling','spa'],
-            'itemIcoList': ['draw-polygon','stroopwafel','credit-card','money-check','ring','border-none','newspaper','minus-square','gears','box-open','columns','dice-one'],
+            'itemIcoList': ['draw-polygon','stroopwafel','credit-card','money-check','ring','border-none','newspaper','minus-square','cogs','box-open','columns','dice-one'],
             'itemTypes': {
                 'platform': {
                     'over':13,
@@ -2083,64 +2078,53 @@ if (buttons2) {
                 let seed = gam2.model.rand.seed.res;
                 let rl = Object.keys(recp).length;
                 let rlmin = rl - 26;
-                
-                
-                //let tiers = this.getTierIds(3, Object.keys(rt).length)
-                for(let r in rt) {
-                  map[r] = this.resolveItem(rlmin, r, rt, map);
+
+                let itemIco = {}, itemColor= {}, itemColorList = {};
+                window.itemIco = itemIco;
+
+                let icoFn = function (r) {
+                    let pr = r.split('.');
+
+                    if(!(pr[0] in itemIco)) {
+                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, 1,  seed);
+                    }
+
+                    if(!(pr[0] in itemColorList)) {
+                        itemColorList[pr[0]] = [...this.colorList2];
+                    }
+
+                    if(!(pr[1] in itemColor)) {
+                        if (!itemColorList[pr[0]].length) {
+                            console.log('no more colors for '+ pr[0]);
+                        }
+                        itemColor[pr[1]] =
+                            rd.pickOneFrom(itemColorList[pr[0]], 1, seed);
+                    }
+
+                    return [itemIco[pr[0]], itemColor[pr[1]]];
                 }
-                let itemIco = {}, itemColor= {};
+
+                for(let r in rt) {
+                    if (!rt.hasOwnProperty(r)) {
+                        continue;
+                    }
+                  map[r] = this.resolveItem(rlmin, r, rt, map, {}, 0, icoFn);
+                }
                 
                 let rId;
                 for(let r in map) {
                   if(Array.isArray(map[r])) {
                     if(this.isIntArr(map[r])) {
-                      let pr= r.split('.');
-                      if(!(pr[0] in itemIco)) {
-                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
-                      }
-                      if(!(pr[1] in itemColor)) {
-                        itemColor[pr[1]] =// this.colorList2[rd.rand(0, this.colorList2.length, seed)];
-                       rd.pickOneFrom(this.colorList2, seed);
-                        
-                      }
-                      
-                      let newRecp = this.genRecepieFor(2, 123, 0, 5, {items: map[r], amount: 1});
-                     
-                      rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
-                      newRecp.out = rId;
-                      //recp[rId] = newRecp;
-                      recp[rId+':'+map[r].join('.')] = newRecp;
-                      
-                      
-                      map[r] = rId;
+                        map[r] = this.addItemRecepie(r, map, itemIco, itemColor, itemColorList);
                     }
                   }
                 }
                 for (let r in map) {
                   if (Array.isArray(map[r])) {
                     if (!this.isIntArr(map[r])) {
-                      
-                    map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
+                    map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1, icoFn);
                     if (this.isIntArr(map[r])) {
-                    
-                      let pr = r.split('.');
-                      if (!(pr[0] in itemIco)) {
-                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
-                      }
-                      if (!(pr[1] in itemColor)) {
-                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
-                      }
-                      
-                      let newRecp = this.genRecepieFor(2, 123, 0, 5, { items: map[r], amount: 1 });
-                      
-                      rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
-                      newRecp.out = rId;
-                      //recp[rId] = newRecp;
-                      recp[rId+':'+map[r].join('.')] = newRecp;
-                      
-                      
-                      map[r] = rId;
+                        map[r] = this.addItemRecepie(r, map, itemIco, itemColor, itemColorList);
                     }
                     }
                   }
@@ -2148,34 +2132,55 @@ if (buttons2) {
                 for (let r in map) {
                   if (Array.isArray(map[r])) {
                     if (!this.isIntArr(map[r])) {
-                
-                      map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1);
+                      map[r] = this.resolveItem(rlmin, r, rt, map, {}, 1, icoFn);
                       if (this.isIntArr(map[r])) {
-                        
-                      let pr = r.split('.');
-                      if (!(pr[0] in itemIco)) {
-                        itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, seed);
-                      }
-                      if (!(pr[1] in itemColor)) {
-                        itemColor[pr[1]] = this.colorList2[rd.rand(0, this.colorList2.length, seed)];
-                      }
-                      
-                      let newRecp = this.genRecepieFor(2, 123, 0, 5, { items: map[r], amount: 1 });
-                      
-                      rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
-                      newRecp.out = rId;
-                      recp[rId+':'+map[r].join('.')] = newRecp;
-                      
-                      map[r] = rId;
+                          map[r] = this.addItemRecepie(r, map, itemIco, itemColor, itemColorList);
                       }
                     }
                   }
                 }
                 //console.log(map, recp, this.reg)
             },
-            'resolveItem': function(rlmin, r, rt, map, ur= {}, subItems=0) {
+            'addItemRecepie':function (r, map, itemIco, itemColor, itemColorList) {
+                let recp = this.recepies;
+                let rd = gam2.model.rand.rd;
+                let seed = gam2.model.rand.seed.res;
+
+                let pr= r.split('.');
+                if(!(pr[0] in itemIco)) {
+                    itemIco[pr[0]] = rd.pickOneFrom(this.itemIcoList, 1,  seed);
+                }
+
+                if(!(pr[0] in itemColorList)) {
+                    itemColorList[pr[0]] = [...this.colorList2];
+                }
+
+                if(!(pr[1] in itemColor)) {
+                    if (!itemColorList[pr[0]].length) {
+                        console.log('no more colors for '+ pr[0]);
+                    }
+                    itemColor[pr[1]] =
+                        rd.pickOneFrom(itemColorList[pr[0]], 1, seed);
+                }
+
+                let newRecp = this.genRecepieFor(2, 123, 0, 5, {items: map[r], amount: 1});
+
+                let rId = this.add(r, itemIco[pr[0]], itemColor[pr[1]], newRecp.unitValue);
+                newRecp.out = rId;
+                recp[rId+':'+map[r].join('.')] = newRecp;
+
+                return rId;
+            },
+            'resolveItem': function(rlmin, r, rt, map, ur= {}, subItems=0, icoFn = 0) {
               if (this.isInt(rt[r])) {
                 this.reg[rlmin - 1 + rt[r]].name = r;
+                  if (icoFn) {
+                      let ico, color;
+                      [ico,color] = icoFn.apply(this,[r]);
+                      this.reg[rlmin - 1 + rt[r]].ico = ico;
+                      this.reg[rlmin - 1 + rt[r]].color = color;
+                  }
+
                 return rlmin - 1 + rt[r];
               } else if (Array.isArray(rt[r])) {
                 let mapv = [];
@@ -2202,7 +2207,7 @@ if (buttons2) {
                       
                     
                         mapv.push(q);
-                        this.resolveItem(rlmin, q, rt, map, ur)
+                        this.resolveItem(rlmin, q, rt, map, ur, 0, icoFn )
                      
                      
                       delete(ur[q])
