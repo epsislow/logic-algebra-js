@@ -1236,7 +1236,7 @@ var clr=(box.is==='loc')?3:5;
 
                   let elem = options.content[i];
                   if (elem.type === 'slot') {
-                      dText = dText.container('slot' + (elem.selected ? ' slot-selected': ''), 'div');
+                      dText = dText.container('slot' + (elem.selected ? (elem.selected === 2? ' slot-selected2':' slot-selected'): ''), 'div');
 
                       dText.el.click((function(elem) {
                               return function() {
@@ -1255,7 +1255,7 @@ var clr=(box.is==='loc')?3:5;
                       dText = dText.up();
                   } else if (elem.type === 'slot-out') {
                       dText = dText
-                          .container('slot slot-output' + (elem.missing? ' slot-req-no-qty': '')  + (elem.selected ? ' slot-selected': ''), 'div');
+                          .container('slot slot-output' + (elem.missing? ' slot-req-no-qty': '')  + (elem.selected ? (elem.selected === 2? ' slot-selected2':' slot-selected'): ''), 'div');
 
                       dText.el.click((function(elem) {
                               return function() {
@@ -2653,6 +2653,7 @@ if (buttons2) {
           }
         }
       },
+      'slotSelectHalf':0,
       'slotSelectedObj': 0,
       'slotFilterClick': function (el, ress, popupEl, onClose, box) {
          // console.log(el, ress, popupEl);
@@ -2664,14 +2665,23 @@ if (buttons2) {
       'slotClick': function(el, obj, isOut=0) {
           let oldObj = 0;
           if (this.slotSelectedObj) {
+              oldObj = this.slotSelectedObj;
               let returnAfter = 0;
               if (obj.slot === this.slotSelectedObj.slot) {
+                  this.slotSelectHalf = (this.slotSelectHalf +1) % 2;
+                  if(this.slotSelectHalf) {
+                    oldObj.slot.selected =2;
+                    
+                    oldObj.box.repaint = 1;
+                    gam2.view.drawBox(oldObj.box, 0);
+                    return;
+                  }
                   returnAfter = 1;
               }
 
-              oldObj = this.slotSelectedObj;
 
-              this.slotSelectedObj = 0;
+                this.slotSelectedObj = 0;
+            
               if (returnAfter) {
 
                   oldObj.slot.selected = 0;
@@ -2686,15 +2696,26 @@ if (buttons2) {
           let moved = 0;
           if (oldObj && oldObj.slot.item > 0) {
               if (obj.slot.item !== oldObj.slot.item) {
+              
                   obj.slot.item = oldObj.slot.item;
                   obj.slot.amount = 0;
+            
               }
-              obj.slot.amount += oldObj.slot.amount;
+              let amount = oldObj.slot.amount;
+              if(this.slotSelectHalf) {
+                amount= Math.round(amount/2);
+              }
+            
+              obj.slot.amount += amount;
               obj.slot.unitValue = oldObj.slot.unitValue;
 
-              oldObj.slot.item = 0;
-              oldObj.slot.amount = 0;
-              oldObj.slot.unitValue = 0;
+              oldObj.slot.amount -= amount;
+              if(oldObj.slot.amount <=0){
+                if(oldObj.slot.posi !=-1) {
+                  oldObj.slot.item = 0;
+                }
+                oldObj.slot.unitValue = 0;
+              }
 
               //
               moved = 1;
@@ -2707,9 +2728,11 @@ if (buttons2) {
           }
 
           if (!moved) {
-              obj.slot.selected = 1;
+              obj.slot.selected = this.slotSelectHalf? 2:1;
               this.slotSelectedObj = obj;
           } else {
+            this.slotSelectHalf =0;
+          
               obj.slot.selected = 0;
               this.slotSelectedObj = 0;
           }
