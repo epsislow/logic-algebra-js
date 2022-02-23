@@ -2654,6 +2654,13 @@ if (buttons2) {
         }
       },
       'slotSelectedObj': 0,
+      'slotFilterClick': function (el, ress, popupEl, onClose, box) {
+          console.log(el, ress, popupEl);
+
+          let c = r(popupEl).clear();
+
+          gam2.action.recepiesViewContent(c, onClose, box, ress);
+      },
       'slotClick': function(el, obj, isOut=0) {
           let oldObj = 0;
           if (this.slotSelectedObj) {
@@ -3561,79 +3568,103 @@ if (buttons2) {
                .container('popbox', 'div')
                    .container('boxclose', 'div')
                      .addButton('close', onClose , 'button btn-danger')
-                   .up();
+                   .up()
+            .container('boxcontent', 'div');
            
         contentHdlr && contentHdlr(c, onClose, params);
+
         
-        c = c.up().el;
+        c = c.up().up().el;
         gam2.view.pbox = c;
       },
-      'recepies': function(box) {
-        this.popup(box, function(c, onClose, box) {
+      'recepiesViewContent': function(c, onClose, box, ress=0) {
           let res = gam2.model.res;
-        let recp = gam2.model.res.recepies;
+          let recp = gam2.model.res.recepies;
 
+          let popupEl = c.el;
 
-            c = c
-                .br(1)
-                .addButton('select', (function(box, rec) {
-                    return function() {
-                        gam2.action.selectRecepie(box, rec);
-                        onClose();
-                    }
-                })(box, 0), 'button btn-danger', {'style':'float: left'})
-
-                .container('','div','color:yellow')
-                .addText('Empty')
-                .up();
-
-
-        for(let i in recp) {
-          let reso= res.reg[recp[i].out];
-          let rec= recp[i];
-          
-        /*  if(Object.keys(rec.inp).length > box.slots) {
-            continue;
-          }*/
-          
           c = c
-            .br(1)
-            .addButton('select', (function(box, rec) {
-              return function() {
-                gam2.action.selectRecepie(box, rec);
-                  onClose();
+              .br(1)
+              .addButton('select', (function(box, rec) {
+                  return function() {
+                      gam2.action.selectRecepie(box, rec);
+                      onClose();
+                  }
+              })(box, 0), 'button btn-danger', {'style':'float: left'})
+
+              .container('','div','color:yellow')
+              .addText('Empty')
+              .up();
+
+
+          for(let i in recp) {
+              let reso= res.reg[recp[i].out];
+              let rec= recp[i];
+
+              if (!(ress === parseInt(i) || (ress in rec.inp))) {
+                  //continue;
               }
-            })(box, rec), 'button btn-success', {'style':'float: left'})
-            
-            .container('','div','color:white')
-            .addText(reso.name + ' '+ rec.out)
-            .up()
-        
-            .container('slot slot-output', 'div')
-            .addJqEl(res.getResIco(rec.out))
-            .container('amount', 'div')
-            .addText(rec.outAmount)
-            .up()
-            .up();
 
-            
-         c = c.container('slot-spc', 'div', 'width: 20px;')
-         .up();
-            
-          for(let j in rec.inp) {
-            c = c.container('slot', 'div')
-             .addJqEl(res.getResIco(j))
-             .container('amount', 'div')
-               .addText(rec.inp[j])
-             .up()
-             .up()
-           //  .addText(j+' ');
+              /*  if(Object.keys(rec.inp).length > box.slots) {
+                  continue;
+                }*/
+
+              c = c
+                  .br(1)
+                  .addButton('select', (function(box, rec) {
+                      return function() {
+                          gam2.action.selectRecepie(box, rec);
+                          onClose();
+                      }
+                  })(box, rec), 'button btn-success', {'style':'float: left'})
+
+                  .container('','div','color:white')
+                  .addText(reso.name + ' '+ rec.out)
+                  .up();
+
+              c = c.container('slot slot-output', 'div');
+
+              c.el.click(function (ress, popupEl, onClose, box) {
+                  return function () {
+                      gam2.action.slotFilterClick($(this), ress, popupEl, onClose, box);
+                  }
+              }(parseInt(i) === ress? 0: parseInt(i), popupEl, onClose, box));
+
+              c = c
+                  .addJqEl(res.getResIco(rec.out))
+                  .container('amount', 'div')
+                  .addText(rec.outAmount)
+                  .up()
+                  .up();
+
+
+              c = c.container('slot-spc', 'div', 'width: 20px;')
+                  .up();
+
+              for(let j in rec.inp) {
+                  c = c.container('slot', 'div');
+
+                  c.el.click(function (ress, popupEl, onClose, box) {
+                      return function () {
+                          gam2.action.slotFilterClick($(this), ress, popupEl, onClose, box);
+                      }
+                  }(parseInt(j) === ress? 0: parseInt(j), popupEl, onClose, box));
+
+                  c = c
+                      .addJqEl(res.getResIco(j))
+                      .container('amount', 'div')
+                      .addText(rec.inp[j])
+                      .up()
+                      .up()
+                  //  .addText(j+' ');
+              }
+
+              c = c.br(1);
           }
-          
-          c = c.br(1);
-        }
 
-        });
+      },
+      'recepies': function(box) {
+        this.popup(box, gam2.action.recepiesViewContent);
         
       },
       'dropBox': function(box) {
