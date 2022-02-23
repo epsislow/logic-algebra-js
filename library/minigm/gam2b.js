@@ -823,7 +823,7 @@ var gam2 = {
                           return 0;
                       }
 
-                      if (p.length < maxBoxes) {
+                      if (p.length <= maxBoxes) {
                           return 1;
                       }
                   }
