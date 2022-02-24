@@ -722,22 +722,6 @@ var gam2 = {
               }
               
               return opt;
-              /*
-            return {
-              lvl: box.level,
-              timerClear: 1,
-              btns: { clr: 1, addSpacer: 1 },
-              content: [
-                { type: 'slot', res: 20 + box.sloti, amount: 20 },
-                { type: 'slot', res: 21 , amount: 20 },
-                { type: 'slot', res: 22 + box.sloti, amount: 20 },
-                { type: 'slot', res: 23 + box.sloti, amount: 20 },
-                { type: 'slot', res: 24 + box.sloti, amount: 20 },
-                { type: 'slot', res: 25 + box.sloti, amount: 20 },
-                { type: 'slot', res: 26 + box.sloti, amount: 20 },
-                { type: 'slot', res: 27 + box.sloti, amount: 20 },
-              ],
-            };*/
           }
           },
           'cargo': {
@@ -759,14 +743,28 @@ var gam2 = {
               }
           },
           'launch-pad': {
-              'paint': function (id, box) {
-                  return {
-                      btns:{clr: 1, addSpacer:1},
-                      content: [
-                          {type: 'pad', ship: 'airliner'},
-                          {type: 'pad', ship: 'transporter'},
-                      ],
-                  };
+              'paint': function (id, box, clear) {
+                  let opt = {};
+                  let act = gam2.action.box.storage;
+                  
+                  let state = gam2.action.box['launch-pad'].state(box);
+                  
+                  let btns = {}, btns2 = {};
+                  
+                    btns.clr = 1;
+                    btns.add = state.actions();
+                    btns2.clr = 1;
+                    btns2.add = state.actions2();
+                    
+                  if (clear) {
+                    opt.content = state.content();
+                  }
+                  
+                  opt.lvl = box.level;
+                  opt.btns= btns;
+                  opt.btns2= btns2;
+                  
+                  return opt;
               }
           },
           'defences': {
@@ -3312,6 +3310,102 @@ if (buttons2) {
                 return state;
             }
         },
+        'launch-pad': {
+          'defaults': function(box) {
+            box.type = 'launch-pad';
+            box.level = 1;
+            box.pads=1;
+            box.pad= {};
+            box.levelCost = 5;
+            box.levelCostFloat = 5;
+            box.from = 1;
+            box.to=0;
+            box.clearTik = 0;
+            box.tickPaint = 1;
+            return box;
+          },
+          'rot3': function(box) {
+            let el=gam2.view.cardBox['b'+box.pos];
+            if(!box.rot) {
+              el.toggleClass('rot3');
+            } else {
+              el.toggleClass('rot3');
+              box.rot=-1;
+            }
+            box.rot++;
+          },
+          'lvlUp': function(box) {
+            let coins = gam2.action.getCoins();
+
+              if (coins.money < box.levelCost) {
+                  return;
+              }
+              coins.money -= box.levelCost;
+              box.levelCostFloat *= 1.5;
+              box.levelCost = Math.round(box.levelCostFloat);
+
+              
+            box.level++;
+            if(box.level===10) {
+              box.pads++;
+            }
+            box.repaint=1;
+            gam2.view.paintTopBar(coins);
+            gam2.view.drawBox(box,0);
+          },
+          'state': function(box) {
+            let state = {};
+          
+            state.actions = function() {
+              let acts = [];
+              let coins = gam2.action.getCoins();
+          
+              if (box.level < 50) {
+                acts.push(['Lvl up', (function(box) { return function() { gam2.action.box['launch-pad'].lvlUp(box) } })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
+              }
+
+              acts.push(['Plan', (function(box) { return function() { gam2.action.box.storage.sellAll(box) } })(box), 'btn-warning']);
+              acts.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+          
+              return acts;
+            }
+            
+            state.actions2 = function() {
+              let acts2 = [];
+              acts2.push(['Drop', (function(box) { return function() { gam2.action.dropBox(box) } })(box), 'btn-danger']);
+              acts2.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
+            
+              return acts2;
+            }
+            
+            state.actionsUpdate = function() {
+              return [];
+            }
+          
+            state.content = function() {
+              let conts = [];
+          
+              if (box.level < 50) {
+                for(let i=0; i< box.pads; i++) {
+                  conts.push( {type: 'pad', ship:0});
+                }
+              }
+
+              return conts;
+            }
+          
+            state.clearTikOpt = function() {
+              if (!box.clearTik) {
+                return false;
+              }
+              let clearTik = box.clearTik;
+              box.clearTik = 0;
+              return clearTik;
+            }
+          
+            return state;
+          }
+        },
         'storage': {
           'defaults': function(box) {
             box.type='storage';
@@ -3753,7 +3847,9 @@ if (buttons2) {
         } else if(type === 'power') {
             box = { type: 'power', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10 };
         } else if(type === 'launch-pad') {
-            box = { type: 'launch-pad', pads: 2, pad: {}, pos: pos, level: 1, levelCost: 10 };
+            box = gam2.action.box['launch-pad'].defaults({type:'launch-pad', pos: pos });
+            
+            //{ type: 'launch-pad', pads: 2, pad: {}, pos: pos, level: 1, levelCost: 10 };
         } else if(type === 'laboratory') {
             box = {type: 'laboratory', everySec: 0, pos: pos, level: 1, levelCost: 200000, researchPoints: 10}
         } else if(type === 'R&D-center') {
