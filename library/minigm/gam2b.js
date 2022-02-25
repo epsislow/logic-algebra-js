@@ -3353,6 +3353,9 @@ if (buttons2) {
             gam2.view.paintTopBar(coins);
             gam2.view.drawBox(box,0);
           },
+          'plan': function(box) {
+
+          },
           'state': function(box) {
             let state = {};
           
@@ -3364,7 +3367,7 @@ if (buttons2) {
                 acts.push(['Lvl up', (function(box) { return function() { gam2.action.box['launch-pad'].lvlUp(box) } })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
               }
 
-              acts.push(['Plan', (function(box) { return function() { gam2.action.box.storage.sellAll(box) } })(box), 'btn-warning']);
+              acts.push(['Plan', (function(box) { return function() { gam2.action.box['launch-pad'].plan(box) } })(box), 'btn-warning']);
               acts.push(['inf', (function(box) { return function() { gam2.action.box.storage.rot3(box) } })(box), 'btn-light']);
           
               return acts;
