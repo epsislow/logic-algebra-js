@@ -2591,6 +2591,9 @@ if (buttons2) {
                     throw "walker is not a function!";
                 }
                 let s;
+                if(typeof obj !='object' || !('first' in obj)) {
+                  return [];
+                }
                 if(parentWalkInstead) {
                   s=obj;
                 } else {
@@ -3316,6 +3319,8 @@ if (buttons2) {
             box.level = 1;
             box.pads=1;
             box.pad= {};
+            box.slots=1;
+            box.slot={};
             box.levelCost = 5;
             box.levelCostFloat = 5;
             box.from = 1;
@@ -3341,7 +3346,7 @@ if (buttons2) {
                   return;
               }
               coins.money -= box.levelCost;
-              box.levelCostFloat *= 1.5;
+              box.levelCostFloat *= 3;
               box.levelCost = Math.round(box.levelCostFloat);
 
               
@@ -3349,15 +3354,26 @@ if (buttons2) {
             if(box.level===10) {
               box.pads++;
             }
+            if (box.level % 5 === 0 && box.level <16 ) {
+              box.slots++;
+              let last = box.slot.last();
+              last.nextObj(
+                gam2.model.constr.addSlot({ 'posi': last.p.posi + 1 })
+              )
+            }
+            
             box.repaint=1;
             gam2.view.paintTopBar(coins);
             gam2.view.drawBox(box,0);
           },
+          
           'plan': function(box) {
 
           },
           'state': function(box) {
             let state = {};
+            
+            var slots = gam2.model.constr.getPropList(box.slot)
           
             state.actions = function() {
               let acts = [];
@@ -3392,6 +3408,16 @@ if (buttons2) {
                 for(let i=0; i< box.pads; i++) {
                   conts.push( {type: 'pad', ship:0});
                 }
+              
+              
+                  
+                  for(let i=0; i<slots.length;i++) {
+                let slot = slots[i];
+                conts.push(
+                  { type: 'slot', slotRefs: {slot:slot, box:box}, selected: slot.selected, res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0 : 1) },
+                );
+              }
+                
               }
 
               return conts;
