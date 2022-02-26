@@ -3314,6 +3314,21 @@ if (buttons2) {
             }
         },
         'launch-pad': {
+          'plans': [],
+          'addPlan': function(from=[], to=[], slot={}, everySec=200) {
+            let sr = from.join('/');
+            let t2 = to.join('/');
+            if(!(sr in this.plans)) {
+              this.plans[sr] = [];
+            }
+            this.plans[sr] = {
+              'from': from,
+              'to': to,
+              'timer': 0,
+              'everySec': everySec,
+              'slot': slot
+            }
+          },
           'defaults': function(box) {
             box.type = 'launch-pad';
             box.level = 1;
@@ -3368,7 +3383,28 @@ if (buttons2) {
           },
           
           'plan': function(box) {
-
+                var cpos = gam2.model.loc.currentPos;
+                
+                gam2.action.popup(box, function(c, onClose, box){
+                  let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+                  if (!p.length) {
+                    return;
+                  }
+                  
+                  for (const i in p) {
+                    if (!p.hasOwnProperty(i)) {
+                      continue;
+                    }
+                    if(!(p[i].type==='launch-pad')) {
+                      continue;
+                    }
+                    if (p[i].pos === box.pos) {
+                        continue;
+                    }
+                    
+                    
+                  }
+                });
           },
           'state': function(box) {
             let state = {};
