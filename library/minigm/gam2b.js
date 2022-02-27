@@ -3313,21 +3313,54 @@ if (buttons2) {
                 return state;
             }
         },
+        'bank': {
+          
+        },
         'launch-pad': {
           'plans': [],
-          'addPlan': function(from=[], to=[], slot={}, everySec=200) {
-            let sr = from.join('/');
-            let t2 = to.join('/');
-            if(!(sr in this.plans)) {
-              this.plans[sr] = [];
+          'ships':[],
+          'loans': [],
+          'shipLoan': function(type='cargo', cpos) {
+            let loan = {
+              'id': loans.length,
+              'loanRoutes': 15,
+              'loanPerRoute': 500,
             }
-            this.plans[sr] = {
+            loan.ship = this.addShip(1, type, cpos, loan.id);
+            
+            loans.push(loan);
+          },
+          'addShip': function(slots=1, type='cargo', cpos, loan=0) {
+            let id = this.ships.length;
+            
+            let ship = {
+              'id': id,
+              'type': type,
+              'travel': 0,
+              'slots': slots,
+              'slot': {},
+              'cpos': cpos,
+              'loan': loan,
+            };
+            
+            gam2.model.box.addSlotsFor(ship);
+            
+            this.ships.push(ship);
+            
+            return ship;
+          },
+          'addPlan': function(ship, from=[], to=[], travelTime=200) {
+            let plan = {
+              'ship': ship,
               'from': from,
               'to': to,
               'timer': 0,
-              'everySec': everySec,
-              'slot': slot
-            }
+              'travelTime': travelTime,
+            };
+            
+            this.plans.push(plan);
+            
+            return plan;
           },
           'defaults': function(box) {
             box.type = 'launch-pad';
@@ -3381,30 +3414,50 @@ if (buttons2) {
             gam2.view.paintTopBar(coins);
             gam2.view.drawBox(box,0);
           },
-          
+          'selectLPad': function(c, onClose, box) {
+            var cpos = gam2.model.loc.currentPos;
+            
+            let blist = gam2.model.box.list;
+            
+            for (const ip in blist) {
+              let p = gam2.model.constr.getPropList(blist[ip])
+              if (!p.length) {
+                return;
+              }
+            
+              for (const i in p) {
+                if (!p.hasOwnProperty(i)) {
+                  continue;
+                }
+                if (!(p[i].type === 'launch-pad')) {
+                  continue;
+                }
+                if (p[i].pos === box.pos && ip === cpos) {
+                  continue;
+                }
+            
+                c = c.br()
+                  .addButton('select', (function(box, cpos, pos) {
+                    return function() {
+                      //     gam2.action.box.miner.selectTo(box, cpos, pos);
+                      onClose();
+                    }
+                  })(box, cpos, p[i].pos), 'button btn-success', { 'style': 'float: left' })
+            
+                  .container('', 'div', 'color:white')
+                  .addText('Loc: ' + ip)
+                  .br()
+                  .addText(' ' + p[i].type + ' (' + p[i].level + ') p' + p[i].pos)
+                  .up()
+                  .br()
+              }
+            }
+          },
           'plan': function(box) {
-                var cpos = gam2.model.loc.currentPos;
-                
-                gam2.action.popup(box, function(c, onClose, box){
-                  let p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
-                  if (!p.length) {
-                    return;
-                  }
-                  
-                  for (const i in p) {
-                    if (!p.hasOwnProperty(i)) {
-                      continue;
-                    }
-                    if(!(p[i].type==='launch-pad')) {
-                      continue;
-                    }
-                    if (p[i].pos === box.pos) {
-                        continue;
-                    }
-                    
-                    
-                  }
-                });
+                gam2.action.popup(box, function(c, onClose, box) {
+                  gam2.action.box['launch-pad'].selectLPad(c, onClose, box);
+                }
+              );
           },
           'state': function(box) {
             let state = {};
