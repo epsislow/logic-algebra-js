@@ -3326,11 +3326,11 @@ if (buttons2) {
               'loanRoutes': 15,
               'loanPerRoute': 500,
             }
-            loan.ship = this.addShip(1, type, cpos, loan.id);
+            loan.ship = this.addShip(1, cpos, type, loan.id);
             
             loans.push(loan);
           },
-          'addShip': function(slots=1, type='cargo', cpos, loan=0) {
+          'addShip': function(slots=1, cpos, type='cargo', loan=0) {
             let id = this.ships.length;
             
             let ship = {
@@ -3350,7 +3350,10 @@ if (buttons2) {
             return ship;
           },
           'addPlan': function(ship, from=[], to=[], travelTime=200) {
+            let id = this.plans.length;
+            
             let plan = {
+              'id': id,
               'ship': ship,
               'from': from,
               'to': to,
@@ -3414,12 +3417,15 @@ if (buttons2) {
             gam2.view.paintTopBar(coins);
             gam2.view.drawBox(box,0);
           },
-          'selectLPad': function(c, onClose, box) {
+          'selectLPad': function(forw, c, onClose, box, src=0) {
             var cpos = gam2.model.loc.currentPos;
             
             let blist = gam2.model.box.list;
+            let ii=0;
             
+            c.addText('Chose '+forw+': ').br();
             for (const ip in blist) {
+              
               let p = gam2.model.constr.getPropList(blist[ip])
               if (!p.length) {
                 return;
@@ -3432,17 +3438,37 @@ if (buttons2) {
                 if (!(p[i].type === 'launch-pad')) {
                   continue;
                 }
-                if (p[i].pos === box.pos && ip === cpos) {
+                if (forw==='from' && p[i].pos === box.pos && ip === cpos) {
                   continue;
                 }
+                if (forw!=='from' && p[i].pos === src[1] && ip === src[0]) {
+                  continue;
+                }
+                
+                ii++;
             
                 c = c.br()
                   .addButton('select', (function(box, cpos, pos) {
                     return function() {
+                      let sel=[cpos, pos];
+                      let that= gam2.action.box['launch-pad'];
+                        
+                      if(forw==='from') {
+                        c.clear();
+                        that.selectLPad('to',c, onClose, box, sel);
+                
+                      } else {
+                        let ship= that.addShip(1, cpos);
+                        let plan= that.addPlan(ship, src, sel);
+                        ship.plan=plan;
+                        onClose(); 
+                        console.log(that.plans);
+                        that.plan(box);
+                      }
                       //     gam2.action.box.miner.selectTo(box, cpos, pos);
-                      onClose();
+                     // onClose();
                     }
-                  })(box, cpos, p[i].pos), 'button btn-success', { 'style': 'float: left' })
+                  })(box, ip, p[i].pos), 'button btn-success', { 'style': 'float: left' })
             
                   .container('', 'div', 'color:white')
                   .addText('Loc: ' + ip)
@@ -3452,12 +3478,86 @@ if (buttons2) {
                   .br()
               }
             }
+              if(!ii) {
+                c.container('err','div','color:red')
+                 .addText('Need at least two launch-pads.')
+              }
           },
           'plan': function(box) {
+             let that = this;
                 gam2.action.popup(box, function(c, onClose, box) {
-                  gam2.action.box['launch-pad'].selectLPad(c, onClose, box);
+                  // plans
+                  // 1.
+                  // remove
+                  
+                  // 2.
+                  // remove
+                  
+                  // add plan / remove all
+                  
+                  // add plan:
+                  // chose ship
+                  // chose source
+                  // chose destination
+                  var cpos = gam2.model.loc.currentPos;
+            
+                  let jj=0;
+
+                  c.addText('Plans:').br();
+                  
+                  if(!that.plans.length) {
+                    c.addText('No plans.').br(2);
+                  } else {
+                  for(let i in that.plans) {
+                    let plan= that.plans[i];
+                    if(!plan) {
+                      continue;
+                    }
+                    if(plan.from[0]!==cpos && plan.to[0]!==cpos) {
+                      continue;
+                    }
+                    jj++;
+                    c.addText((parseInt(i)+1)+'.').br()
+                     .addText('From: '+ plan.from.join(' / ')).br()
+                     .addText('To: '+ plan.to.join(' / ')).br()
+                     .addText('Ship: '+ plan.ship.id + ' Type: '+ plan.ship.type).br();
+                     
+                    c.addButton('remove', (function(plan, plans, onClose, that, box) {
+                      return function() {
+                        plans[plan.id]=0;
+                      
+                        console.log(plan)
+                       
+                        onClose();
+                        that.plan(box);
+                        
+                      }
+                    })(plan, that.plans, onClose, that, box),'btn-danger button').br(2);
+                    
+                  }
+                  }
+                  
+                  c.addButton('add plan', (function (that,c, onClose, box) {
+                    return function() {
+                      that.popAddPlan(c, onClose, box);
+                    }
+                    })(that, c, onClose, box),'btn-success button')
+                   
+                  if(jj) {
+                    c.addButton('remove all', false,'btn-danger button').br(2);
+                  }
+                  //gam2.action.box['launch-pad'].selectLPad(c, onClose, box);
+                
+                  c.up();
                 }
               );
+          },
+          'popAddPlan': function(c, onClose, box) {
+            //console.log(box);
+            c.clear()//.addText('gg');
+            this.selectLPad('from', c, onClose, box)
+            //gam2.action.box['launch-pad'].selectLPad(c, onClose, box);
+                
           },
           'state': function(box) {
             let state = {};
