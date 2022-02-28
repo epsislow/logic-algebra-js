@@ -3369,7 +3369,7 @@ if (buttons2) {
               return ship;
           },
           'addPlan': function(ship, from=[], to=[], travelTime=200) {
-              let id = this.plans.length;
+              let id = this.plans.id;
 
               let plan = {
                   'id': id,
@@ -3439,7 +3439,7 @@ if (buttons2) {
           },
             'selectShip': function (c, onClose, box) {
               let is = 0;
-              if (this.ships) {
+              if (Object.keys(this.ships).length> 1) {
                   for (const i in this.ships) {
                       if (!this.ships.hasOwnProperty(i)) {
                           continue;
@@ -3586,20 +3586,22 @@ if (buttons2) {
 
                   c= c.addText('Plans:').br()
                       .container('boxarea', 'div', 'max-height:200px');
-                  
-                  if(!that.plans.length) {
+                    let that = gam2.action.box['launch-pad'];
+
+                  if(Object.keys(that.plans).length === 1) {
                     c.addText('No plans.').br(2);
                   } else {
                       for(let i in that.plans) {
-                        let plan= that.plans[i];
                         if (!that.plans.hasOwnProperty(i)) {
                             continue;
                         }
                         if(i === 'id') {
                           continue;
                         }
-                        if(plan.from[0]!==cpos && plan.to[0]!==cpos) {
-                          continue;
+                        let plan= that.plans[i];
+
+                        if(!(plan.from[0]===cpos || plan.to[0]===cpos)) {
+                          //continue;
                         }
                         jj++;
                         c.addText((parseInt(i)+1)+'.').br()
