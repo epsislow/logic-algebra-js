@@ -257,6 +257,7 @@ var gam2 = {
               gam2.idle.calcSec(secs);
             }
             
+            console.log(gam2.action.box['launch-pad'].plans)
             alert('Loaded. '+ (lastTs? 'Passed '+ gam2.idle.getTime(secs):''));
             //
             //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
@@ -3368,7 +3369,7 @@ if (buttons2) {
 
               return ship;
           },
-          'addPlan': function(ship, from=[], to=[], travelTime=200) {
+          'addPlan': function(ship, from=[], to=[], travelTime=20) {
               let id = this.plans.id;
 
               let plan = {
@@ -3378,6 +3379,7 @@ if (buttons2) {
                   'to': to,
                   'timer': 0,
                   'travelTime': travelTime,
+                  'landed':0,
               };
               this.plans[id] = plan;
 
@@ -3475,15 +3477,20 @@ if (buttons2) {
                    .up();
               }
 
-              c.addButton('Loan a ship', (function () {
+              c.addButton('Loan a ship', (function (c, onClose, box) {
                   return function () {
                       let that = gam2.action.box['launch-pad'];
                       let cpos = gam2.model.loc.currentPos;
                       c.clear();
-                      let ship = that.addShip(1, cpos);
-                      that.selectLPad('from', c, onClose, box, 0, ship);
+                      //let ship = that.addShip(1, cpos);
+                      
+                      that.shipLoan('cargo', cpos);
+                      //onClose();
+                      that.selectShip(c, onClose, box);
+                      
+                      //that.selectLPad('from', c, onClose, box, 0, ship);
                   }
-              })(), 'btn-success button');
+              })(c, onClose, box), 'btn-success button');
 
             },
           'selectLPad': function(forw, c, onClose, box, src=0, ship = 0) {
@@ -3550,16 +3557,21 @@ if (buttons2) {
               if(!ii) {
                 c.container('err','div','color:red')
                  .addText('Need at least two launch-pads.');
+                 return;
               }
-
+              
+              
+              
               c.addButton('Loan a ship', (function (c, onClose, box) {
                   return function() {
                       let that = gam2.action.box['launch-pad'];
                       var cpos = gam2.model.loc.currentPos;
 
-                      that.shipLoan(type, cpos);
-                      onClose();
-                      that.plan(box);
+                      that.shipLoan(cpos);
+                      c.clear();
+                      that.selectShip(c, onClose, box);
+                     // onClose();
+                      //that.plan(box);
                   }
               })(c, onClose, box),'btn-success button');
           },
@@ -3607,7 +3619,13 @@ if (buttons2) {
                         c.addText((parseInt(i)+1)+'.').br()
                          .addText('From: '+ plan.from.join(' / ')).br()
                          .addText('To: '+ plan.to.join(' / ')).br()
-                         .addText('Ship: '+ plan.ship.id + ' Type: '+ plan.ship.type).br();
+                         .addText('Ship: '+ plan.ship.name + ' Type: '+ plan.ship.type)
+                          .container('tik', 'div', !plan.travelTime ? 'animation:none' : 'animation-duration:' + plan.travelTime + 's; animation-delay:'+plan.timer+'s')
+                           .up()
+                           .container('timer', 'div', 'line-height: 14px')
+                           .addText((plan.travelTime- plan.timer)+'s')
+                           .up()
+                          .br();
 
                         c.addButton('remove', (function(plan, plans, onClose, that, box) {
                           return function() {
@@ -3616,7 +3634,8 @@ if (buttons2) {
                             onClose();
                             that.plan(box);
                           }
-                        })(plan, that.plans, onClose, that, box),'btn-danger button').br(2);
+                        })(plan, that.plans, onClose, that, box),'btn-danger button').br(2)
+                          
 
                       }
                   }
@@ -3682,8 +3701,6 @@ if (buttons2) {
                 for(let i=0; i< box.pads; i++) {
                   conts.push( {type: 'pad', ship:0});
                 }
-              
-              
                   
                   for(let i=0; i<slots.length;i++) {
                 let slot = slots[i];
@@ -3925,9 +3942,26 @@ if (buttons2) {
          }
       }
       
-      if(t) {
-        console.log('ds '+ds);
+      let plans= gam2.action.box['launch-pad'].plans;
+      for(let i in plans) {
+        if(!plans.hasOwnProperty(i)){
+          continue;
+        }
+        if(i==='id'){
+          continue;
+        }
+        let plan=plans[i];
+        plan.timer++;
+        if(!plan.landed &&plan.timer===plan.travelTime){
+          plan.landed=1;
+          plan.timer=0;
+        } else if(plan.landed && plan.timer >= 5) {
+          plan.landed=0;
+          plan.timer=0;
+        }
+        
       }
+    
       },
       'selectRecepie': function(box, recepie) {
           box.recepie = recepie;
