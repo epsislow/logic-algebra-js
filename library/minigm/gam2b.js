@@ -1842,6 +1842,23 @@ if (buttons2) {
                     }
                 }
             },
+            'addPadsFor': function(box) {
+              if (!('pad' in box)) {
+                return;
+              }
+              box.pad = gam2.model.constr.addPad({ 'pos': 0 });
+            
+              let pads = box.pads | 1;
+              if (pads > 1) {
+                let pd = box.pad;
+                // console.log(pub.p);
+                for (let i = 0; i < pads - 2; i++) {
+                  pd = pd.nextObj(
+                    gam2.model.constr.addPad({ 'pos': i + 1 })
+                  )
+                }
+              }
+            },
             'fromObj': function (pub) {
                 let box = {};
                 for(let b in pub) {
@@ -2548,6 +2565,13 @@ if (buttons2) {
                     'is':'slot',
                     'requireAmount': 0,
                 });
+                
+                this.addPad = this.getAddFunc({
+                  'pos': -1,
+                  'ship': 0,
+                  'plan': 0,
+                  'is': 'pad',
+                });
 
                 this.addBox= this.getAddFunc({
                     'type': 0,
@@ -2569,6 +2593,7 @@ if (buttons2) {
                     }
                     gam2.model.box.addSlotsFor(pub.p);
                     gam2.model.box.addSlotOutsFor(pub.p);
+                    gam2.model.box.addPadsFor(pub.p);
                 });
             },
             'locProps': function ( pos, type, lvl, name, crkey='', house =0) {
@@ -2588,6 +2613,7 @@ if (buttons2) {
             },
             'addLoc': function (prop) {},
             'addSlot': function (prop) {},
+            'addPad': function (prop) {},
             'addBox': function (prop) {},
             'walkList': function(obj, walkerCb, parentWalkInstead = 0) {
                 if (typeof walkerCb !== 'function') {
@@ -3412,6 +3438,63 @@ if (buttons2) {
             }
             box.rot++;
           },
+          'landPlane': function(plan) {
+            plan.landed=1;
+            let tmp = plan.to;
+            plan.to = plan.from;
+            plan.from= tmp;
+            
+            let tpos = tmp[0], pos=tmp[1];
+            
+            
+            var p = gam2.model.constr.getPropList(gam2.model.box.list[lpos])
+            if (!p.length) {
+              return;
+            }
+            
+            for(let i in p) {
+              if(p[i].pos === pos) {
+                let box= p[i];
+                
+                if(box.type!=='launch-pad') {
+                  return;
+                }
+                
+                var pd = gam2.model.constr.getPropList(box.pad)
+                if (!pd.length) {
+                  return;
+                }
+                for(let d in pd) {
+                  if(!pd[d].plan) {
+                    pd[d].plan = plan;
+                    pd[d].ship = plan.ship;
+                    plan.box= box;
+                  }
+                }
+            
+                
+                if (cpos === lpos) {
+                  //   console.log(p[i].slot.first.p);
+                  box.repaint = 1;
+                  
+                
+                  gam2.view.drawBox(box, 0);
+                }
+                return;
+                
+              }
+            }
+            
+          },
+          'takeOffPlane': function(plan) {
+            plan.landed=0;
+            let box= plan.box;
+            plan.box=0;
+            
+            if(1) {
+              
+            }
+          },
           'lvlUp': function(box) {
             let coins = gam2.action.getCoins();
 
@@ -3942,6 +4025,8 @@ if (buttons2) {
          }
       }
       
+      let bbx= gam2.action.box['launch-pad'].plans;
+      
       let plans= gam2.action.box['launch-pad'].plans;
       for(let i in plans) {
         if(!plans.hasOwnProperty(i)){
@@ -3953,11 +4038,13 @@ if (buttons2) {
         let plan=plans[i];
         plan.timer++;
         if(!plan.landed &&plan.timer===plan.travelTime){
-          plan.landed=1;
+        
           plan.timer=0;
+          bbx.landPlane(plan);
         } else if(plan.landed && plan.timer >= 5) {
-          plan.landed=0;
+    
           plan.timer=0;
+          bbx.takeOffPlane(plan);
         }
         
       }
