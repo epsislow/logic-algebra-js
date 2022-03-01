@@ -3443,10 +3443,10 @@ if (buttons2) {
             let tmp = plan.to;
             plan.to = plan.from;
             plan.from= tmp;
-            
-            let tpos = tmp[0], pos=tmp[1];
-            
-            
+
+            let lpos = tmp[0], pos=tmp[1];
+            let cpos = gam2.model.loc.currentPos;
+
             var p = gam2.model.constr.getPropList(gam2.model.box.list[lpos])
             if (!p.length) {
               return;
@@ -3471,13 +3471,9 @@ if (buttons2) {
                     plan.box= box;
                   }
                 }
-            
-                
+
                 if (cpos === lpos) {
-                  //   console.log(p[i].slot.first.p);
                   box.repaint = 1;
-                  
-                
                   gam2.view.drawBox(box, 0);
                 }
                 return;
@@ -3680,7 +3676,7 @@ if (buttons2) {
                   let jj=0;
 
                   c= c.addText('Plans:').br()
-                      .container('boxarea', 'div', 'max-height:200px');
+                      .container('boxarea plans', 'div', 'max-height:200px');
                     let that = gam2.action.box['launch-pad'];
 
                   if(Object.keys(that.plans).length === 1) {
@@ -3699,15 +3695,17 @@ if (buttons2) {
                           //continue;
                         }
                         jj++;
-                        c.addText((parseInt(i)+1)+'.').br()
+                        c.container('plan-'+ (plan.id))
+                         .addText((parseInt(i)+1)+'.').br()
                          .addText('From: '+ plan.from.join(' / ')).br()
                          .addText('To: '+ plan.to.join(' / ')).br()
                          .addText('Ship: '+ plan.ship.name + ' Type: '+ plan.ship.type)
                           .container('tik', 'div', !plan.travelTime ? 'animation:none' : 'animation-duration:' + plan.travelTime + 's; animation-delay:'+plan.timer+'s')
-                           .up()
-                           .container('timer', 'div', 'line-height: 14px')
-                           .addText((plan.travelTime- plan.timer)+'s')
-                           .up()
+                          .up()
+                          .container('timer', 'div', 'line-height: 14px')
+                            .addText((plan.travelTime- plan.timer)+'s')
+                          .up()
+                         .up()
                           .br();
 
                         c.addButton('remove', (function(plan, plans, onClose, that, box) {
@@ -4025,7 +4023,7 @@ if (buttons2) {
          }
       }
       
-      let bbx= gam2.action.box['launch-pad'].plans;
+      let bbx= gam2.action.box['launch-pad'];
       
       let plans= gam2.action.box['launch-pad'].plans;
       for(let i in plans) {
@@ -4038,15 +4036,35 @@ if (buttons2) {
         let plan=plans[i];
         plan.timer++;
         if(!plan.landed &&plan.timer===plan.travelTime){
-        
           plan.timer=0;
           bbx.landPlane(plan);
         } else if(plan.landed && plan.timer >= 5) {
-    
           plan.timer=0;
           bbx.takeOffPlane(plan);
         }
-        
+          let planJqEl = $('.plan-' + plan.id);
+          if (planJqEl.length) {
+              let animCss = '', txt = '';
+              if (plan.landed) {
+                  txt =  plan.timer;
+                  animCss = !plan.travelTime ? 'animation:none' : 'animation-duration:' + '5s; animation-delay: -'+plan.timer+'s;'
+              } else {
+                  txt = plan.travelTime - plan.timer;
+                  animCss = !plan.travelTime ? 'animation:none' : 'animation-duration:' + plan.travelTime + 's; animation-delay: -'+plan.timer+'s;'
+              }
+              txt += 's';
+              r(planJqEl)
+                  .clear()
+                  .addText((parseInt(i)+1)+'.').br()
+                  .addText('From: '+ plan.from.join(' / ')).br()
+                  .addText('To: '+ plan.to.join(' / ')).br()
+                  .addText('Ship: '+ plan.ship.name + ' Type: '+ plan.ship.type)
+                  .container('tik', 'div', animCss)
+                  .up()
+                  .container('timer', 'div', 'line-height: 14px')
+                  .addText(txt)
+                  .up();
+          }
       }
     
       },
