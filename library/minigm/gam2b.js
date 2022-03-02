@@ -172,7 +172,8 @@ var gam2 = {
         'getData': function (asJSON = 1) {
             let cpos = gam2.model.loc.currentPos;
             let bx = gam2.model.box;
-            let data = {'cpos': cpos, 'bxlist': {}, 'seeds': {}};
+            let lp = gam2.action.box['launch-pad'];
+            let data = {'cpos': cpos, 'bxlist': {}, 'seeds': {},'lp':{}};
             data.seeds.root = gam2.model.rand.seed.root;
             for(let c in bx.list) {
               let plist = gam2.model.constr.getPropList(bx.list[c]);
@@ -181,6 +182,33 @@ var gam2 = {
                 data.bxlist[c].push(bx.toObj(plist[i]));
               }
             }
+            data.lp.plans={};
+            for (let p in lp.plans) {
+              if(typeof lp.plans[p] ==='object') {
+                if(p==='ship') {
+                  data.lp.plans[p+'.id'] = lp.plans[p].ship.id;
+                } else if(p==='box') {
+                  data.lp.plans[p] = lp.plans[p].box;
+                  data.lp.plans[p+'.pos'] = lp.plans[p].box.pos;
+                } else if(p==='loan') {
+                  data.lp.plans[p+'.id'] = lp.plans[p].loan.id;
+                } else {
+                  data.lp.plans[p] = bx.toObj(lp.plans[p]);
+                }
+              } else {
+                data.lp.plans[p] = lp.plans[p];
+              }
+            }
+            console.log(data.lp);
+            /*data.lp.ships={};
+            for (let p in lp.ships) {
+              data.lp.ships[p] = bx.toObj(lp.ships[p]);
+            }
+            data.lp.loans={};
+            for (let p in lp.loans) {
+              data.lp.loans[p] = bx.toObj(lp.loans[p]);
+            }*/
+            
             data.coins = gam2.model.box.coins;
             data.lastTs = Math.floor(((new Date()).getTime())/1000);
             //c = gam2.model.box.toObj(gam2.model.box.list['7.5.7.2'].p); JSON.stringify(c);
@@ -3847,7 +3875,7 @@ if (buttons2) {
                   conts.push( {type: 'pad', ship:shipType});
                 }
                   
-                  for(let i=0; i<slots.length;i++) {
+                for(let i=0; i<slots.length;i++) {
                 let slot = slots[i];
                 conts.push(
                   { type: 'slot', slotRefs: {slot:slot, box:box}, selected: slot.selected, res: slot.item, amount: slot.amount, missing: (slot.item > 0 ? 0 : 1) },
