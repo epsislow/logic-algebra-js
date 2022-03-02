@@ -3452,6 +3452,7 @@ if (buttons2) {
             let tmp = plan.to;
             plan.to = plan.from;
             plan.from= tmp;
+            let ship=plan.ship;
 
             let lpos = tmp[0], pos=tmp[1];
             let cpos = gam2.model.loc.currentPos;
@@ -3477,15 +3478,15 @@ if (buttons2) {
                   if(!pd[d].plan) {
                     pd[d].shipId = plan.ship.id;
                     plan.box= box;
-                    plan.padPos= pad.pos;
+                    plan.padPos= 1;
                   }
                 }
              var sSlots= gam2.model.constr.getPropList(ship.slot)
              for(let s in sSlots) {
-               if(!bSlots.hasOwnProperty(s)){
+               if(!sSlots.hasOwnProperty(s)){
                  continue;
                }
-               let slot= sSlot[s];
+               let slot= sSlots[s];
                let mvd = gam2.model.slot.addItemToSlots(box, slot.item, slot.amount, slot.unitValue);
                if(!mvd) {
                  continue;
@@ -3518,7 +3519,7 @@ if (buttons2) {
             if(plan.padPos) {
               var bPads= gam2.model.constr.getPropList(box.pad)
               for(let p in bPads) {
-                if(!bSlots.hasOwnProperty(s)){
+                if(!bPads.hasOwnProperty(p)){
                  continue;
                }
                let pad= bPads[p];
@@ -3536,7 +3537,7 @@ if (buttons2) {
                if(!bSlots.hasOwnProperty(s)){
                  continue;
                }
-               let slot= bSlot[s];
+               let slot= bSlots[s];
                let mvd = gam2.model.slot.addItemToSlots(ship, slot.item, slot.amount, slot.unitValue);
                if(!mvd) {
                  continue;
