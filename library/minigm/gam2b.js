@@ -3845,7 +3845,7 @@ if (buttons2) {
               let ships= gam2.action.box['launch-pad'].ships;
       
           
-              if (box.level < 50) {
+            //  if (box.level < 50) {
                 for(let i=0; i< box.pads; i++) {
                   let shipType=0;
                   if('get' in box.pad) {
@@ -3862,7 +3862,7 @@ if (buttons2) {
                 );
               }
                 
-              }
+              //}
 
               return conts;
             }
