@@ -3545,16 +3545,11 @@ if (buttons2) {
                slot.amount =0;
                slot.item=0;
                slot.unitValue=0;
-               
              }
-             if (cpos === lpos) {
+             if (cpos === lpos && box) {
                   box.repaint = 1;
                   gam2.view.drawBox(box, 0);
               }
-               
-            
-              
-            
           },
           'lvlUp': function(box) {
             let coins = gam2.action.getCoins();
