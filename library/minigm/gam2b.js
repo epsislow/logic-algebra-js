@@ -1890,6 +1890,15 @@ if (buttons2) {
                                     );
                                 }
                             }
+                            if (first.is === 'pad') {
+                              if (idx === 0) {
+                                chain = gam2.model.constr.addPad(pub[b][f]);
+                              } else {
+                                chain = chain.nextObj(
+                                  gam2.model.constr.addPad(pub[b][f])
+                                );
+                              }
+                            }
                             idx++;
                         }
                         /*if (pub.type === 'storage') {
@@ -2566,9 +2575,9 @@ if (buttons2) {
                     'requireAmount': 0,
                 });
                 
-                this.addPad = this.getAddFunc({
+                this.addPad= this.getAddFunc({
                   'pos': -1,
-                  'ship': 0,
+                  'shipId': 0,
                   'plan': 0,
                   'is': 'pad',
                 });
@@ -3395,7 +3404,7 @@ if (buttons2) {
 
               return ship;
           },
-          'addPlan': function(ship, from=[], to=[], travelTime=20) {
+          'addPlan': function(ship, from=[], to=[], travelTime=10) {
               let id = this.plans.id;
 
               let plan = {
@@ -3466,12 +3475,27 @@ if (buttons2) {
                 }
                 for(let d in pd) {
                   if(!pd[d].plan) {
-                    pd[d].plan = plan;
-                    pd[d].ship = plan.ship;
+                    pd[d].shipId = plan.ship.id;
                     plan.box= box;
+                    plan.padPos= pad.pos;
                   }
                 }
-
+             var sSlots= gam2.model.constr.getPropList(ship.slot)
+             for(let s in sSlots) {
+               if(!bSlots.hasOwnProperty(s)){
+                 continue;
+               }
+               let slot= sSlot[s];
+               let mvd = gam2.model.slot.addItemToSlots(box, slot.item, slot.amount, slot.unitValue);
+               if(!mvd) {
+                 continue;
+               }
+               slot.amount =0;
+               slot.item=0;
+               slot.unitValue=0;
+               
+             }
+             
                 if (cpos === lpos) {
                   box.repaint = 1;
                   gam2.view.drawBox(box, 0);
@@ -3486,10 +3510,50 @@ if (buttons2) {
             plan.landed=0;
             let box= plan.box;
             plan.box=0;
+            let ship=plan.ship;
             
-            if(1) {
-              
+            let lpos= plan.from[0];
+            let cpos = gam2.model.loc.currentPos;
+            
+            if(plan.padPos) {
+              var bPads= gam2.model.constr.getPropList(box.pad)
+              for(let p in bPads) {
+                if(!bSlots.hasOwnProperty(s)){
+                 continue;
+               }
+               let pad= bPads[p];
+               if(pad.shipId === plan.ship.id) {
+                 pad.shipId=0;
+               }
+              }
+              plan.padPos =0;
             }
+            //box.plan=0;
+            //box.ship=0;
+             
+             var bSlots= gam2.model.constr.getPropList(box.slot)
+             for(let s in bSlots) {
+               if(!bSlots.hasOwnProperty(s)){
+                 continue;
+               }
+               let slot= bSlot[s];
+               let mvd = gam2.model.slot.addItemToSlots(ship, slot.item, slot.amount, slot.unitValue);
+               if(!mvd) {
+                 continue;
+               }
+               slot.amount =0;
+               slot.item=0;
+               slot.unitValue=0;
+               
+             }
+             if (cpos === lpos) {
+                  box.repaint = 1;
+                  gam2.view.drawBox(box, 0);
+              }
+               
+            
+              
+            
           },
           'lvlUp': function(box) {
             let coins = gam2.action.getCoins();
@@ -3777,10 +3841,15 @@ if (buttons2) {
           
             state.content = function() {
               let conts = [];
+              let ships= gam2.action.box['launch-pad'].ships;
+      
           
               if (box.level < 50) {
                 for(let i=0; i< box.pads; i++) {
-                  conts.push( {type: 'pad', ship:0});
+                  
+                  let pad=box.pad.get(i).p;
+                  let shipType=!pad.shipId?0:ships[pad.shipId].type;
+                  conts.push( {type: 'pad', ship:shipType});
                 }
                   
                   for(let i=0; i<slots.length;i++) {
@@ -4340,7 +4409,7 @@ if (buttons2) {
                       'storage': 1000,
                       'dwellings': 1250,
                  //     'defences': 5000,
-                      'launch-pad': 2500,
+                      'launch-pad': 25,
                       'power': 5000,
                       'platform': 250000,
                       'bank': 50000,
@@ -4351,7 +4420,7 @@ if (buttons2) {
                       'storage': 2500,
                       'dwellings': 1250,
                       'seller': 2500,
-                      'launch-pad': 2500,
+                      'launch-pad': 25,
                   //    'defences': 10000,
                       'power': 5000,
                       'platform': 250000,
@@ -4364,7 +4433,7 @@ if (buttons2) {
                     //  'defences': 10000,
                       'power': 5000,
                       'storage': 2500,
-                      'launch-pad': 2500,
+                      'launch-pad': 25,
                       'platform': 250000,
                       'bank': 50000,
                   },
@@ -4373,7 +4442,7 @@ if (buttons2) {
                       'trader': 5000,
                       'seller': 2500,
                       'storage': 2500,
-                      'launch-pad': 2500,
+                      'launch-pad': 25,
                   //    'defences': 10000,
                       'power': 5000,
                       'platform': 250000,
@@ -4387,7 +4456,7 @@ if (buttons2) {
                   //    'defences': 10000,
                       'power': 5000,
                       'storage': 2500,
-                      'launch-pad': 2500,
+                      'launch-pad': 25,
                       'bank': 50000,
                   }
               };
