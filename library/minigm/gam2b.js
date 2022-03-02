@@ -185,15 +185,23 @@ var gam2 = {
             data.lp.plans={};
             for (let p in lp.plans) {
               if(typeof lp.plans[p] ==='object') {
-                if(p==='ship') {
-                  data.lp.plans[p+'.id'] = lp.plans[p].ship.id;
-                } else if(p==='box') {
-                  data.lp.plans[p] = lp.plans[p].box;
-                  data.lp.plans[p+'.pos'] = lp.plans[p].box.pos;
-                } else if(p==='loan') {
-                  data.lp.plans[p+'.id'] = lp.plans[p].loan.id;
+                data.lp.plans[p]={};
+                for(let i in lp.plans[p]) {
+                  if(typeof lp.plans[p][i]==='object') {
+              
+                if(i==='ship') {
+                  data.lp.plans[p][i+'.id'] = lp.plans[p].ship.id;
+                } else if(i==='box') {
+                //  data.lp.plans[p][i] = lp.plans[p].box;
+                  data.lp.plans[p][i+'.pos'] = lp.plans[p].box.pos;
+                } else if(i==='loan') {
+                  data.lp.plans[p][i+'.id'] = lp.plans[p].loan.id;
                 } else {
-                  data.lp.plans[p] = bx.toObj(lp.plans[p]);
+                  data.lp.plans[p][i] = bx.toObj(lp.plans[p][i]);
+                }
+                } else {
+                  data.lp.plans[p][i]= lp.plans[p][i];
+                }
                 }
               } else {
                 data.lp.plans[p] = lp.plans[p];
