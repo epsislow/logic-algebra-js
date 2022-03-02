@@ -3847,9 +3847,11 @@ if (buttons2) {
           
               if (box.level < 50) {
                 for(let i=0; i< box.pads; i++) {
-                  
-                  let pad=box.pad.get(i).p;
-                  let shipType=!pad.shipId?0:ships[pad.shipId].type;
+                  let shipType=0;
+                  if('get' in box.pad) {
+                    let pad=box.pad.get(i).p;
+                    shipType=!pad.shipId?0:ships[pad.shipId].type;
+                  }
                   conts.push( {type: 'pad', ship:shipType});
                 }
                   
