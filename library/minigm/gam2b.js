@@ -192,8 +192,7 @@ var gam2 = {
                 if(i==='ship') {
                   data.lp.plans[p][i+'.id'] = lp.plans[p].ship.id;
                 } else if(i==='box') {
-                  data.lp.plans[p][i+'.cpos'] = lp.plans[p].cpos;
-                  data.lp.plans[p][i+'.pos'] = lp.plans[p].box.pos;
+                  data.lp.plans[p][i+'.ref'] = [lp.plans[p].cpos, lp.plans[p].box.pos];
                 } else if(i==='loan') {
                   data.lp.plans[p][i+'.id'] = lp.plans[p].loan.id;
                 } else {
@@ -207,15 +206,15 @@ var gam2 = {
                 data.lp.plans[p] = lp.plans[p];
               }
             }
-            console.log(data.lp);
-            /*data.lp.ships={};
+            
+            data.lp.ships={};
             for (let p in lp.ships) {
               data.lp.ships[p] = bx.toObj(lp.ships[p]);
             }
             data.lp.loans={};
             for (let p in lp.loans) {
               data.lp.loans[p] = bx.toObj(lp.loans[p]);
-            }*/
+            }
             
             data.coins = gam2.model.box.coins;
             data.lastTs = Math.floor(((new Date()).getTime())/1000);
@@ -268,6 +267,9 @@ var gam2 = {
                 }
               }
             }
+          }
+          if('lp' in data) {
+            
           }
             gam2.model.flags.loading = 0;
             gam2.view.card = {}
@@ -3407,7 +3409,7 @@ if (buttons2) {
                   'loanPerRoute': 500,
               }
 
-              loan.ship = this.addShip(1, cpos, type, loan.id);
+              loan.ship = this.addShip(1, cpos, type, loan);
 
               this.loans[id] = loan;
 
@@ -3495,6 +3497,7 @@ if (buttons2) {
             plan.to = plan.from;
             plan.from= tmp;
             let ship=plan.ship;
+            ship.travels++;
 
             let lpos = tmp[0], pos=tmp[1];
             let cpos = gam2.model.loc.currentPos;
