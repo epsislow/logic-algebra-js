@@ -192,7 +192,7 @@ var gam2 = {
                 if(i==='ship') {
                   data.lp.plans[p][i+'.id'] = lp.plans[p].ship.id;
                 } else if(i==='box') {
-                //  data.lp.plans[p][i] = lp.plans[p].box;
+                  data.lp.plans[p][i+'.cpos'] = lp.plans[p].cpos;
                   data.lp.plans[p][i+'.pos'] = lp.plans[p].box.pos;
                 } else if(i==='loan') {
                   data.lp.plans[p][i+'.id'] = lp.plans[p].loan.id;
@@ -3455,6 +3455,8 @@ if (buttons2) {
                   'timer': 0,
                   'travelTime': travelTime,
                   'landed':0,
+                  'cpos':0,
+                  'box':0,
               };
               this.plans[id] = plan;
 
@@ -3518,6 +3520,7 @@ if (buttons2) {
                   if(!pd[d].plan) {
                     pd[d].shipId = plan.ship.id;
                     plan.box= box;
+                    plan.cpos= cpos;
                     plan.padPos= 1;
                   }
                 }
@@ -3551,6 +3554,7 @@ if (buttons2) {
             plan.landed=0;
             let box= plan.box;
             plan.box=0;
+            plan.cpos=0;
             let ship=plan.ship;
             
             let lpos= plan.from[0];
