@@ -2609,6 +2609,10 @@ if (buttons2) {
                     'form':'',
                     'is':'slot',
                     'requireAmount': 0,
+                }, function(pub) {
+                    if(pub.p.item > 0) {
+                        pub.p.unitValue =  gam2.model.res.reg[pub.p.item] ? gam2.model.res.reg[pub.p.item].unitValue: 0;
+                    }
                 });
                 
                 this.addPad= this.getAddFunc({
@@ -2632,7 +2636,7 @@ if (buttons2) {
                     'repaint': 1,
                     'timer':0,
                 }, function(pub) {
-                    pub.levelCostFloat = pub.levelCost;
+                    pub.p.levelCostFloat = pub.p.levelCost;
                     if(gam2.model.flags.loading) {
                         return;
                     }
