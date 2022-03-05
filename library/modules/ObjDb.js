@@ -10,6 +10,16 @@ var ObjDb = (function () {
     pub = {
       'db': {},
       'pre': {'db':0},
+      'types': {
+        'enum': [],
+        'number': 0,
+        'date': 0,
+        'string':0,
+        'else':0,
+      },
+      'cast': {},
+      'index': {},
+      'trans': {},
       'addDb': function(name) {
         this.db[name]={};
         return 1;
