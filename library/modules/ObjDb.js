@@ -77,19 +77,20 @@ var ObjSimple = (function() {
     },
     'addFn': function(o) {
       let f= {};
-      f.addo=function(name, idStart=0) {
+      f.add=function(name, idStart=0) {
         o[name] = {id: idStart};
         return f;
       }
-      f.refo=function(name, id) {
+      f.ref=function(name, id) {
         return [name, id];
       }
-      f.geto=function(ref) {
+      f.get=function(ref) {
         return o[ref[0]][ref[1]];
       }
       
       return {'o':o, 'f': f};
     }
+    
   }
   
   return pub;
