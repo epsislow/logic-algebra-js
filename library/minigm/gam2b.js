@@ -184,23 +184,30 @@ var gam2 = {
             }
             data.lp.plans={};
             for (let p in lp.plans) {
+              if (!lp.plans.hasOwnProperty(p)) {
+                continue;
+              }
               if(typeof lp.plans[p] ==='object') {
                 data.lp.plans[p]={};
                 for(let i in lp.plans[p]) {
+                  if (!lp.plans[p].hasOwnProperty(i)) {
+                    continue;
+                  }
                   if(typeof lp.plans[p][i]==='object') {
-              
-                if(i==='ship') {
-                  data.lp.plans[p][i+'.id'] = lp.plans[p].ship.id;
-                } else if(i==='box') {
-                  data.lp.plans[p][i+'.ref'] = [lp.plans[p].cpos, lp.plans[p].box.pos];
-                } else if(i==='loan') {
-                  data.lp.plans[p][i+'.id'] = lp.plans[p].loan.id;
-                } else {
-                  data.lp.plans[p][i] = bx.toObj(lp.plans[p][i]);
-                }
-                } else {
-                  data.lp.plans[p][i]= lp.plans[p][i];
-                }
+                    if(i==='ship') {
+                      data.lp.plans[p][i+'.id'] = lp.plans[p].ship.id;
+                    } else if(i==='box') {
+                      data.lp.plans[p][i+'.ref'] = [lp.plans[p].cpos, lp.plans[p].box.pos];
+                    } else if(i==='loan') {
+                      data.lp.plans[p][i+'.id'] = lp.plans[p].loan.id;
+                    } else if(Array.isArray(lp.plans[p][i])) {
+                        data.lp.plans[p][i] = lp.plans[p][i];
+                    } else {
+                      data.lp.plans[p][i] = bx.toObj(lp.plans[p][i]);
+                    }
+                  } else {
+                    data.lp.plans[p][i]= lp.plans[p][i];
+                  }
                 }
               } else {
                 data.lp.plans[p] = lp.plans[p];
@@ -209,11 +216,56 @@ var gam2 = {
             
             data.lp.ships={};
             for (let p in lp.ships) {
-              data.lp.ships[p] = bx.toObj(lp.ships[p]);
+                if (!lp.ships.hasOwnProperty(p)) {
+                    continue;
+                }
+                if (typeof lp.ships[p] === 'object') {
+                    data.lp.ships[p] = {};
+                    for (let i in lp.ships[p]) {
+                        if (!lp.ships[p].hasOwnProperty(i)) {
+                            continue;
+                        }
+                        if (typeof lp.ships[p][i] === 'object') {
+                            if (i === 'loan') {
+                                data.lp.ships[p][i + '.id'] = lp.ships[p].loan.id;
+                            } else if (i === 'plan') {
+                                data.lp.ships[p][i + '.id'] = lp.ships[p].plan.id;
+                            } else {
+                                data.lp.ships[p][i] = bx.toObj(lp.ships[p][i]);
+                            }
+                        } else {
+                            data.lp.ships[p][i]= lp.ships[p][i];
+                        }
+                    }
+                } else {
+                    data.lp.ships[p] = lp.ships[p];
+                }
             }
+
             data.lp.loans={};
             for (let p in lp.loans) {
-              data.lp.loans[p] = bx.toObj(lp.loans[p]);
+                if (!lp.loans.hasOwnProperty(p)) {
+                    continue;
+                }
+                if (typeof lp.loans[p] === 'object') {
+                    data.lp.loans[p] = {};
+                    for (let i in lp.loans[p]) {
+                        if (!lp.loans[p].hasOwnProperty(i)) {
+                            continue;
+                        }
+                        if (typeof lp.loans[p][i] === 'object') {
+                            if (i === 'ship') {
+                                data.lp.loans[p][i+'.id'] = lp.loans[p].ship.id;
+                            } else {
+                                data.lp.loans[p][i] = bx.toObj(lp.loans[p][i]);
+                            }
+                        } else {
+                            data.lp.loans[p][i]= lp.loans[p][i];
+                        }
+                    }
+                } else {
+                    data.lp.loans[p] = lp.loans[p];
+                }
             }
             
             data.coins = gam2.model.box.coins;
@@ -232,6 +284,7 @@ var gam2 = {
           let bx=gam2.model.box;
           let cs=gam2.model.constr;
           let lastTs=0;
+          let lp = gam2.action.box['launch-pad'];
           gam2.model.flags.loading = 1;
 
           if('coins' in data) {
@@ -268,9 +321,57 @@ var gam2 = {
               }
             }
           }
+
           if('lp' in data) {
-            
+              let hasAllStruct = ('ships' in data.lp) && ('loans' in data.lp) && ('plans' in data.lp);
+              hasAllStruct = false;
+
+              if (hasAllStruct && ('loans' in data.lp)) {
+                  for (let p in data.lp.loans) {
+                      lp.loans[p] = bx.fromObj(data.lp.loans[p]);
+                  }
+              }
+              if (hasAllStruct && ('plans' in data.lp)) {
+                  for (let p in data.lp.plans) {
+                      if (!data.lp.plans.hasOwnProperty(p)) {
+                          continue;
+                      }
+                      if(typeof data.lp.plans[p] ==='object') {
+                          lp.plans[p] = {};
+                          let cpos, pos;
+                          for(let i in data.lp.plans[p]) {
+                              if (!data.lp.plans[p].hasOwnProperty(i)) {
+                                  continue;
+                              }
+                              if(typeof data.lp.plans[p][i] === 'object') {
+                                  if(i==='ship.id') {
+                                      lp.plans[p].ship = lp.ships[data.lp.plans[p][i]];
+                                  } else if(i==='box.ref') {
+                                      [cpos,pos] = data.lp.plans[p][i];
+                                      lp.plans[p].box = gam2.model.box.findBoxByRef(cpos,pos);
+                                  } else if(i==='loan.id') {
+                                      lp.plans[p].loan = lp.loans[data.lp.plans[p][i]];
+                                  } else if(Array.isArray(data.lp.plans[p][i])) {
+                                      lp.plans[p][i] = lp.plans[p][i];
+                                  } else {
+                                      lp.plans[p][i] = bx.fromObj(data.lp.plans[p][i]);
+                                  }
+                              } else {
+                                  lp.plans[p][i]= data.lp.plans[p][i];
+                              }
+                          }
+                      } else {
+                          lp.plans[p] = data.lp.plans[p];
+                      }
+                  }
+              }
+              if (hasAllStruct && ('ships' in data.lp)) {
+                  for (let p in data.lp.ships) {
+                      lp.ships[p] = bx.fromObj(data.lp.ships[p]);
+                  }
+              }
           }
+
             gam2.model.flags.loading = 0;
             gam2.view.card = {}
             gam2.view.cardMenu = {};
@@ -1847,6 +1948,21 @@ if (buttons2) {
         },
     },
         'box': {
+            'findBoxByRef': function(cpos, pos) {
+                var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+                if (!p.length) {
+                    return 0;
+                }
+                for(let i in p) {
+                    if(!p.hasOwnProperty(i)) {
+                        continue;
+                    }
+                    if(p[i].pos === pos) {
+                        return p[i];
+                    }
+                }
+                return 0;
+            },
             'addSlotsFor': function (box) {
                 if(!('slot' in box)) {
                     return;
@@ -1961,7 +2077,7 @@ if (buttons2) {
                     if (!box.hasOwnProperty(b)) {
                         continue;
                     }
-                    if (typeof box[b] === 'object' &&  ('p' in box[b])) {
+                    if (typeof box[b] === 'object' && (box[b] !== null) &&  ('p' in box[b])) {
                         pub[b] = gam2.model.constr.getPropList(box[b].first, 1 ,0);
                     } else {
                         pub[b] = box[b];
@@ -3890,7 +4006,7 @@ if (buttons2) {
             //  if (box.level < 50) {
                 for(let i=0; i< box.pads; i++) {
                   let pad=box.pad.get(i).p;
-                  let shipType=!pad.shipId?0:ships[pad.shipId].type;
+                  let shipType=!pad.shipId?0: ((pad.shipId in ships)?ships[pad.shipId].type:0);
                   conts.push( {type: 'pad', ship:shipType});
                 }
                   

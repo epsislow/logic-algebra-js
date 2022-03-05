@@ -139,7 +139,13 @@ var DbStorageConstr = function (dbKey = 'dgldb', storeKey = 'dgl', LZString = 0,
 
             slotId = slotId==0? '': slotId;
 
-            var string = JSON.stringify(data);
+            var string;
+            try {
+               string = JSON.stringify(data);
+            } catch (Error) {
+                console.log(data);
+                throw Error;
+            }
 
             if(zip && LZString) {
                 string = LZString
