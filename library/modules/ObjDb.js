@@ -73,13 +73,22 @@ var ObjSimple = (function() {
       return this.use({});
     },
     'use': function(o) {
-      this.addFn(o);
-      return o;
+      return this.addFn(o);
     },
     'addFn': function(o) {
-      o._add=function() {
-        
+      let f= {};
+      f.addo=function(name, idStart=0) {
+        o[name] = {id: idStart};
+        return f;
       }
+      f.refo=function(name, id) {
+        return [name, id];
+      }
+      f.geto=function(ref) {
+        return o[ref[0]][ref[1]];
+      }
+      
+      return {'o':o, 'f': f};
     }
   }
   
