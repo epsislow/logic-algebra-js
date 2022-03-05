@@ -66,5 +66,24 @@ var ObjRef = (function() {
   return pub;
 })();
 
+var ObjSimple = (function() {
+  let pub;
+  pub= {
+    'new': function() {
+      return this.use({});
+    },
+    'use': function(o) {
+      this.addFn(o);
+      return o;
+    },
+    'addFn': function(o) {
+      o._add=function() {
+        
+      }
+    }
+  }
+  
+  return pub;
+})();
 
-export { ObjDb, ObjRef }
+export { ObjDb, ObjRef, ObjSimple }
