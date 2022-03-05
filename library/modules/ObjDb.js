@@ -8,7 +8,7 @@ var ObjDb = (function () {
     let pub;
     pub = {
       'addDb': function() {
-        
+        return 1;
       },
       'addList': function() {
         
