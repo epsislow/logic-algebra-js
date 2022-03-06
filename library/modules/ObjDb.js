@@ -87,7 +87,7 @@ var ObjSimple = (function() {
       f.get=function(ref) {
         return o[ref[0]][ref[1]];
       }
-      f.new=function() {
+      f.new=function(name) {
         let nid= o[name].id++;
         o[name][nid] = {};
         return o[name][nid];
