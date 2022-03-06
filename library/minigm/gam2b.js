@@ -6,6 +6,24 @@ let r = function(el) {
 
 window.r = r;
 
+window.exp= function (circ) {
+  // Note: cache should not be re-used by repeated calls to JSON.stringify.
+  var cache = [];
+  let j = JSON.stringify(circ, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      // Duplicate reference found, discard key
+      let idx = cache.indexOf(value);
+      if (idx >=0) return '*ref['+idx+']`*';
+  
+      // Store value in our collection
+      cache.push(value);
+    }
+    return value;
+  });
+  cache = null; // Enable garbage collection
+  return j;
+}
+
  $('document').ready(function () {
    console.log('begin');
 
@@ -3521,25 +3539,27 @@ if (buttons2) {
 
               let loan = {
                   'id': id,
-                  'loanRoutes': 15,
-                  'loanPerRoute': 500,
+                  'loanTravels': 100,
+                  'loanPerTravel': 200,
               }
 
-              loan.ship = this.addShip(1, cpos, type, loan);
+              let ship = this.addShip(1, cpos, type, loan.id);
+              
+              loan.shipId=ship.id;
 
               this.loans[id] = loan;
 
               this.loans.id++;
           },
-          'addShip': function(slots=1, cpos, type='cargo', loan=0) {
+          'addShip': function(slots=1, cpos, type='cargo', loanId=0) {
               let id = this.ships.id;
 
               let seedShip = gam2.model.rand.seed.ship;
-              let seedShipId = rd.hashCode(seedShip+ slots + cpos + type + (loan? loan.id: 0) );
+              let seedShipId = rd.hashCode(seedShip+ slots + cpos + type + loanId);
 
               let rdNam = gam2.model.rand.rdNam.bind(gam2.model.rand);
 
-              let house = !loan? 1: rd.rand(2, gam2.model.reputation.house.length, seedShipId);
+              let house = !loanId? 1: rd.rand(2, gam2.model.reputation.house.length, seedShipId);
 
               let ship = {
                   'id': id,
@@ -3550,7 +3570,7 @@ if (buttons2) {
                   'slots': slots,
                   'slot': {},
                   'cpos': cpos,
-                  'loan': loan,
+                  'loanId': loanId,
                   'plan': 0,
               }
 
@@ -3562,19 +3582,20 @@ if (buttons2) {
 
               return ship;
           },
-          'addPlan': function(ship, from=[], to=[], travelTime=10) {
+          'addPlan': function(shipId, from=[], to=[], travelTime=10) {
               let id = this.plans.id;
 
               let plan = {
                   'id': id,
-                  'ship': ship,
+                  'shipId': shipId,
                   'from': from,
                   'to': to,
                   'timer': 0,
+                  'travels':0,
                   'travelTime': travelTime,
                   'landed':0,
                   'cpos':0,
-                  'box':0,
+                  'boxId':0,
               };
               this.plans[id] = plan;
 
@@ -3612,10 +3633,12 @@ if (buttons2) {
             let tmp = plan.to;
             plan.to = plan.from;
             plan.from= tmp;
-            let ship=plan.ship;
+            
+            let ship=this.ships[plan.shipId];
             ship.travels++;
 
-            let lpos = tmp[0], pos=tmp[1];
+            let lpos= tmp[0];
+            let pos= tmp[1];
             let cpos = gam2.model.loc.currentPos;
 
             var p = gam2.model.constr.getPropList(gam2.model.box.list[lpos])
@@ -3637,9 +3660,9 @@ if (buttons2) {
                 }
                 for(let d in pd) {
                   if(!pd[d].plan) {
-                    pd[d].shipId = plan.ship.id;
-                    plan.box= box;
-                    plan.cpos= cpos;
+                    pd[d].shipId = ship.id;
+                    plan.boxPos= box.pos;
+                    plan.cpos= lpos;
                     plan.padPos= 1;
                   }
                 }
@@ -3671,10 +3694,10 @@ if (buttons2) {
           },
           'takeOffPlane': function(plan) {
             plan.landed=0;
-            let box= plan.box;
-            plan.box=0;
+            let box = gam2.model.box.findBoxByRef(plan.cpos, plan.boxPos);
+            plan.boxPos=0;
             plan.cpos=0;
-            let ship=plan.ship;
+            let ship=this.ships[plan.shipId];
             
             let lpos= plan.from[0];
             let cpos = gam2.model.loc.currentPos;
@@ -3686,15 +3709,13 @@ if (buttons2) {
                  continue;
                }
                let pad= bPads[p];
-               if(pad.shipId === plan.ship.id) {
+               if(pad.shipId === plan.shipId) {
                  pad.shipId=0;
                }
               }
               plan.padPos =0;
             }
-            //box.plan=0;
-            //box.ship=0;
-             
+            
              var bSlots= gam2.model.constr.getPropList(box.slot)
              for(let s in bSlots) {
                if(!bSlots.hasOwnProperty(s)){
@@ -3784,13 +3805,12 @@ if (buttons2) {
                       let that = gam2.action.box['launch-pad'];
                       let cpos = gam2.model.loc.currentPos;
                       c.clear();
-                      //let ship = that.addShip(1, cpos);
+                  
                       
                       that.shipLoan('cargo', cpos);
-                      //onClose();
+                      
                       that.selectShip(c, onClose, box);
                       
-                      //that.selectLPad('from', c, onClose, box, 0, ship);
                   }
               })(c, onClose, box), 'btn-success button');
 
@@ -3838,7 +3858,8 @@ if (buttons2) {
                         c.clear();
                         that.selectLPad('to', c, onClose, box, sel, ship);
                       } else {
-                        ship.plan = that.addPlan(ship, src, sel);
+                        let plan = that.addPlan(ship.id, src, sel);
+                        ship.planId = plan.id;
                         onClose();
                         console.log(that.plans);
                         that.plan(box);
@@ -3872,8 +3893,7 @@ if (buttons2) {
                       that.shipLoan(cpos);
                       c.clear();
                       that.selectShip(c, onClose, box);
-                     // onClose();
-                      //that.plan(box);
+                     
                   }
               })(c, onClose, box),'btn-success button');
           },
@@ -3913,16 +3933,21 @@ if (buttons2) {
                           continue;
                         }
                         let plan= that.plans[i];
+                        let ship= that.ships[plan.shipId];
 
                         if(!(plan.from[0]===cpos || plan.to[0]===cpos)) {
                           //continue;
+                        }
+                        if(!plan.shipId || !ship) {
+                           throw(exp(plan))
+                          
                         }
                         jj++;
                         c.container('plan-'+ (plan.id))
                          .addText((parseInt(i)+1)+'.').br()
                          .addText('From: '+ plan.from.join(' / ')).br()
                          .addText('To: '+ plan.to.join(' / ')).br()
-                         .addText('Ship: '+ plan.ship.name + ' Type: '+ plan.ship.type)
+                         .addText('Ship: '+ ship.name + ' Type: '+ ship.type)
                           .container('tik', 'div', !plan.travelTime ? 'animation:none' : 'animation-duration:' + plan.travelTime + 's; animation-delay:'+plan.timer+'s')
                           .up()
                           .container('timer', 'div', 'line-height: 14px')
@@ -3952,7 +3977,11 @@ if (buttons2) {
                     })(that, c, onClose, box),'btn-success button');
 
                   if(jj) {
-                    c.addButton('remove all', false,'btn-danger button').br(2);
+                    c.addButton('remove all', (function() {
+                      return function() {
+                        that.plans={id: that.plans.id};
+                      }
+                    })(that), 'btn-danger button').br(2);
                   }
 
                   c = c.up();
@@ -3964,8 +3993,6 @@ if (buttons2) {
 
             this.selectShip(c, onClose, box);
 
-            //gam2.action.box['launch-pad'].selectLPad(c, onClose, box);
-                
           },
           'state': function(box) {
             let state = {};
@@ -4252,7 +4279,7 @@ if (buttons2) {
       
       let bbx= gam2.action.box['launch-pad'];
       
-      let plans= gam2.action.box['launch-pad'].plans;
+      let plans= bbx.plans;
       for(let i in plans) {
         if(!plans.hasOwnProperty(i)){
           continue;
@@ -4280,12 +4307,13 @@ if (buttons2) {
                   animCss = !plan.travelTime ? 'animation:none' : 'animation-duration:' + plan.travelTime + 's; animation-delay: -'+plan.timer+'s;'
               }
               txt += 's';
+              let ship = bbx.ships[plan.shipId];
               r(planJqEl)
                   .clear()
                   .addText((parseInt(i)+1)+'.').br()
                   .addText('From: '+ plan.from.join(' / ')).br()
                   .addText('To: '+ plan.to.join(' / ')).br()
-                  .addText('Ship: '+ plan.ship.name + ' Type: '+ plan.ship.type)
+                  .addText('Ship: '+ ship.name + ' Type: '+ ship.type)
                   .container('tik', 'div', animCss)
                   .up()
                   .container('timer', 'div', 'line-height: 14px')
