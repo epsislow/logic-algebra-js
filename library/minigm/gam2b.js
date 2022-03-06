@@ -3629,10 +3629,8 @@ if (buttons2) {
             box.rot++;
           },
           'landPlane': function(plan) {
-            plan.landed=1;
+            
             let tmp = plan.to;
-            plan.to = plan.from;
-            plan.from= tmp;
             
             let ship=this.ships[plan.shipId];
             ship.travels++;
@@ -3640,32 +3638,41 @@ if (buttons2) {
             let lpos= tmp[0];
             let pos= tmp[1];
             let cpos = gam2.model.loc.currentPos;
-
-            var p = gam2.model.constr.getPropList(gam2.model.box.list[lpos])
-            if (!p.length) {
-              return;
+            
+            let box = gam2.model.box.findBoxByRef(lpos, pos);
+            if(!box) {
+              return 0;
+            }
+            if(box.type!=='launch-pad') {
+                  return 0;
             }
             
-            for(let i in p) {
-              if(p[i].pos === pos) {
-                let box= p[i];
-                
-                if(box.type!=='launch-pad') {
-                  return;
-                }
-                
-                var pd = gam2.model.constr.getPropList(box.pad)
+                var pd = gam2.model.constr.getPropList(box.pad);
                 if (!pd.length) {
-                  return;
+                  return 0;
                 }
+                let landed=0;
                 for(let d in pd) {
-                  if(!pd[d].plan) {
+                  if(!pd[d].shipId) {
                     pd[d].shipId = ship.id;
                     plan.boxPos= box.pos;
                     plan.cpos= lpos;
                     plan.padPos= 1;
+                    landed=1;
                   }
                 }
+               
+                if(!landed) {
+                  plan.landed=0;
+                  plan.timer--;
+                  return 0;
+                } else {
+                  plan.landed=1;
+                  plan.to = plan.from;
+                  plan.from= tmp;
+                }
+                
+                
              var sSlots= gam2.model.constr.getPropList(ship.slot)
              for(let s in sSlots) {
                if(!sSlots.hasOwnProperty(s)){
@@ -3686,11 +3693,8 @@ if (buttons2) {
                   box.repaint = 1;
                   gam2.view.drawBox(box, 0);
                 }
-                return;
                 
-              }
-            }
-            
+            return 1;
           },
           'takeOffPlane': function(plan) {
             plan.landed=0;
@@ -4290,8 +4294,9 @@ if (buttons2) {
         let plan=plans[i];
         plan.timer++;
         if(!plan.landed &&plan.timer===plan.travelTime){
-          plan.timer=0;
-          bbx.landPlane(plan);
+          if(bbx.landPlane(plan)) {
+            plan.timer=0;
+          }
         } else if(plan.landed && plan.timer >= 5) {
           plan.timer=0;
           bbx.takeOffPlane(plan);
