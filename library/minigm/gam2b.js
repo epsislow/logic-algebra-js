@@ -83,10 +83,10 @@ var gam2 = {
     this.model.rand.seed.loc2 = rd.hashCode(seed + 'loc2', rd.rand(127, 65536));
     this.model.rand.seed.loc3 = rd.hashCode(seed + 'loc3', rd.rand(127, 65536));
     this.model.rand.seed.res = rd.hashCode(seed + 'res', rd.rand(127, 65536));
-    this.model.rand.seed.ship = rd.hashCode(seed + 'ship', rd.rand(127, 65536));
 
     //this.model.rand.seed.recepie = rd.hashCode(seed + 'recepie', rd.rand(127, 65536));
     this.model.rand.seed.box = rd.hashCode(seed + 'box', rd.rand(127, 65536));
+    this.model.rand.seed.ship = rd.hashCode(seed + 'ship', 65536/2);
 
     for (var i of ['init', 'model', 'view', 'action']) {
       this.init.parents.apply(gam2[i]);
