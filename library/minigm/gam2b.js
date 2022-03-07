@@ -4300,7 +4300,8 @@ var gam2 = {
               if (!shipType) {
                 pad.shipId = 0;
               }
-              conts.push({type: 'pad', ship: shipType});
+              let shipColor = !pad.shipId ? 0: ((pad.shipId in ships) ? ships[pad.shipId].house : 0);
+              conts.push({type: 'pad', ship: shipType, color: shipColor});
             }
 
             for (let i = 0; i < slots.length; i++) {
