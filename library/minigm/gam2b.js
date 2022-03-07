@@ -1544,15 +1544,23 @@ var gam2 = {
               .up()
               .up();
           } else if (elem.type === 'pad') {
-            let icoClass = 'ico ', icoStyle = '';
+            let icoClass = 'ico ', icoStyle = '', icoPos='';
+            let house= elem.color;
+            elem.ship='transporter';
+            house=3;
+            let houseE= gam2.model.reputation.house[house];
+            icoStyle='color:'+houseE.color+';';
             if (elem.ship === 'airliner') {
+              icoPos='bottom: 5%; left: 40%;';
               icoClass += 'fas fa-location-arrow fa-4x p-2';
             } else if (elem.ship === 'cargo') {
+              icoPos='bottom: 5%; left: 40%;';
               icoClass += 'fas fa-box fa-3x p-3';
-              icoStyle = "transform: translateX(0px) rotate(45deg)";
+              icoStyle += "transform: translateX(0px) rotate(45deg);";
             } else if (elem.ship === 'transporter') {
+              icoPos='bottom: 5%; left: 40%;transform: rotate(90deg);';
               icoClass += 'fas fa-brush fa-4x p-1';
-              icoStyle = "transform: translateX(15px) rotate(-135deg)";
+              icoStyle += "transform: translateX(15px) rotate(-135deg);";
             } else {
               dText.container('pad', 'div').up();
               continue;
@@ -1560,6 +1568,9 @@ var gam2 = {
             dText
               .container('pad', 'div')
               .container(icoClass, 'div', icoStyle)
+              .up()
+              .container('pad-house', 'div', icoStyle+icoPos)
+                .addJqEl(house ? gam2.model.reputation.getHouseIco(house,20,1) : '')
               .up()
               .up();
 
@@ -2291,12 +2302,12 @@ var gam2 = {
         }
         //console.log(this.reg)
       },
-      'getHouseIco': function (id) {
+      'getHouseIco': function (id, size=24, noColor=0) {
         var house = this.house[id % this.house.length];
         // console.log(res, this.reg[id+1])
         return $('<i>').addClass('fas')
           .addClass('fa-' + house.ico)
-          .attr('style', 'font-size: 24px;color:' + house.color);//.html(house.ico);
+          .attr('style', 'font-size: '+size+'px;'+(noColor?'color:white;':('color:' + house.color)));//.html(house.ico);
       },
     },
     'res': {
