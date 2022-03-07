@@ -435,8 +435,11 @@ var gam2 = {
 
       console.log(gam2.action.box['launch-pad'].plans)
       alert('Loaded. ' + (lastTs ? 'Passed ' + gam2.idle.getTime(secs) : ''));
-      //
-      //gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0);
+
+      console.log(
+        'loaded boxes:',
+        gam2.model.constr.getPropList(gam2.model.box.list[gam2.model.loc.currentPos], 1, 0)
+      )
     },
     'loadBox': function () {
       let c = "{\"type\":\"miner\",\"pos\":1,\"level\":4,\"levelCost\":158,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":4,\"maxTickAmount\":50,\"maxAmount\":3100,\"outputId\":13,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":13,\"amount\":201,\"unitValue\":8,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"clearTik\":0}";
@@ -3876,13 +3879,12 @@ var gam2 = {
           }
           let landed = 0;
           for (let d in pd) {
-            if (!pd[d].shipId) {
+            if (!pd[d].shipId || pd[d].shipId === ship.id) {
               pd[d].shipId = ship.id;
               plan.boxPos = box.pos;
               plan.cpos = lpos;
               ship.cpos = lpos;
               ship.pos = box.pos;
-              plan.padPos = 1;
               landed = 1;
             }
           }
@@ -3937,18 +3939,15 @@ var gam2 = {
           let lpos = plan.from[0];
           let cpos = gam2.model.loc.currentPos;
 
-          if (plan.padPos) {
-            var bPads = gam2.model.constr.getPropList(box.pad)
-            for (let p in bPads) {
-              if (!bPads.hasOwnProperty(p)) {
-                continue;
-              }
-              let pad = bPads[p];
-              if (pad.shipId === plan.shipId) {
-                pad.shipId = 0;
-              }
+          var bPads = gam2.model.constr.getPropList(box.pad)
+          for (let p in bPads) {
+            if (!bPads.hasOwnProperty(p)) {
+              continue;
             }
-            plan.padPos = 0;
+            let pad = bPads[p];
+            if (pad.shipId === plan.shipId) {
+              pad.shipId = 0;
+            }
           }
 
           var bSlots = gam2.model.constr.getPropList(box.slot)
@@ -4081,9 +4080,6 @@ var gam2 = {
                 continue;
               }
               if (!(p[i].type === 'launch-pad')) {
-                continue;
-              }
-              if (forw === 'from' && p[i].pos === box.pos && ip === cpos) {
                 continue;
               }
               if (forw !== 'from' && p[i].pos === src[1] && ip === src[0]) {
@@ -4301,6 +4297,9 @@ var gam2 = {
             for (let i = 0; i < box.pads; i++) {
               let pad = box.pad.get(i).p;
               let shipType = !pad.shipId ? 0 : ((pad.shipId in ships) ? ships[pad.shipId].type : 0);
+              if (!shipType) {
+                pad.shipId = 0;
+              }
               conts.push({type: 'pad', ship: shipType});
             }
 
