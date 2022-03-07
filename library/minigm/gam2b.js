@@ -4103,24 +4103,53 @@ if (buttons2) {
           },
           'sellAll': function(box) {
             var slots = gam2.model.constr.getPropList(box.slot)
-            
-            let coins = gam2.action.getCoins();
-              
-            for(let i in slots) {
-              let sl = slots[i];
-              
-              if (!sl.item || !sl.amount) {
-                  continue;
-              }
-              coins.money += sl.amount * sl.unitValue;
 
-              sl.amount = 0;
-              sl.item = 0;
+            let coins = gam2.action.getCoins();
+
+            let sold = 0;
+            if (gam2.action.slotSelectedObj.slot) {
+              for (let i in slots) {
+                if (!slots.hasOwnProperty(i)) {
+                  continue;
+                }
+                let sl = slots[i];
+                if (gam2.action.slotSelectedObj.slot === sl) {
+                  if (!sl.item || !sl.amount) {
+                    continue;
+                  }
+                  let amount= gam2.action.slotSelectHalf? Math.round(sl.amount/2): sl.amount;
+                  coins.money += amount * sl.unitValue;
+                  sold = 1;
+
+                  sl.amount -= amount;
+                  if (sl.amount <= 0) {
+                    sl.amount = 0;
+                    sl.item = 0;
+                  }
+                }
+              }
             }
-            
-              box.repaint = 1;
-              gam2.view.paintTopBar(coins);
-              gam2.view.drawBox(box,0);
+
+            if (!sold) {
+              for (let i in slots) {
+                if (!slots.hasOwnProperty(i)) {
+                  continue;
+                }
+                let sl = slots[i];
+
+                if (!sl.item || !sl.amount) {
+                  continue;
+                }
+                coins.money += sl.amount * sl.unitValue;
+
+                sl.amount = 0;
+                sl.item = 0;
+              }
+            }
+
+            box.repaint = 1;
+            gam2.view.paintTopBar(coins);
+            gam2.view.drawBox(box, 0);
           },
           'lvlUp': function (box) {
               let coins = gam2.action.getCoins();
