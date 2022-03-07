@@ -103,8 +103,6 @@ var gam2 = {
         gam2.model.flags.calcIdle =0;
         gam2.model.loc.currentPos = cpos;
         
-        //gam2.view.drawBoxes(1);
-        
            gam2.view.card = {}
             gam2.view.cardMenu = {};
             gam2.view.cardBox = {};
@@ -3566,10 +3564,12 @@ if (buttons2) {
                   'name': rdNam(seedShipId),
                   'house': house,
                   'type': type,
+                  'landed':0,
                   'travels': 0,
                   'slots': slots,
                   'slot': {},
                   'cpos': cpos,
+                  'pos': 0,
                   'loanId': loanId,
                   'plan': 0,
               }
@@ -3629,7 +3629,6 @@ if (buttons2) {
             box.rot++;
           },
           'landPlane': function(plan) {
-            
             let tmp = plan.to;
             
             let ship=this.ships[plan.shipId];
@@ -3657,6 +3656,8 @@ if (buttons2) {
                     pd[d].shipId = ship.id;
                     plan.boxPos= box.pos;
                     plan.cpos= lpos;
+                    ship.cpos= lpos;
+                    ship.pos= box.pos;
                     plan.padPos= 1;
                     landed=1;
                   }
@@ -3664,10 +3665,14 @@ if (buttons2) {
                
                 if(!landed) {
                   plan.landed=0;
+                  ship.landed=0;
+                  ship.cpos=0;
+                  ship.pos=0;
                   plan.timer--;
                   return 0;
                 } else {
                   plan.landed=1;
+                  ship.landed=1;
                   plan.to = plan.from;
                   plan.from= tmp;
                 }
@@ -3686,7 +3691,6 @@ if (buttons2) {
                slot.amount =0;
                slot.item=0;
                slot.unitValue=0;
-               
              }
              
                 if (cpos === lpos) {
@@ -3702,6 +3706,9 @@ if (buttons2) {
             plan.boxPos=0;
             plan.cpos=0;
             let ship=this.ships[plan.shipId];
+            ship.landed=0;
+            ship.cpos=0;
+            ship.pos=0;
             
             let lpos= plan.from[0];
             let cpos = gam2.model.loc.currentPos;
@@ -3825,6 +3832,15 @@ if (buttons2) {
             let blist = gam2.model.box.list;
             let ii=0;
             
+            if(forw==='from' && ship && ship.landed) {
+              let sel= [ship.cpos, ship.pos];
+              let that= gam2.action.box['launch-pad'];
+              
+              c.clear();
+              that.selectLPad('to', c, onClose, box, sel, ship);
+              return;
+            }
+            
             c.addText('Chose '+forw+': ').br();
             for (const ip in blist) {
               if (!blist.hasOwnProperty(ip)) {
@@ -3864,6 +3880,10 @@ if (buttons2) {
                       } else {
                         let plan = that.addPlan(ship.id, src, sel);
                         ship.planId = plan.id;
+                        if(ship.landed) {
+                          plan.timer = 0;
+                          that.takeOffPlane(plan);
+                        }
                         onClose();
                         console.log(that.plans);
                         that.plan(box);
