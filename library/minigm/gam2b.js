@@ -1548,7 +1548,7 @@ var gam2 = {
             let house= elem.color;
             /*elem.ship='transporter';
             house=3;*/
-            let houseE= gam2.model.reputation.house[id % this.house.length];
+            let houseE= gam2.model.reputation.house[house % gam2.model.reputation.house.length];
             icoStyle='color:'+houseE.color+';';
             if (elem.ship === 'airliner') {
               icoPos='bottom: 0; left: 0; transform: translate(22px, -20px) rotate(45deg);';
@@ -4018,7 +4018,7 @@ var gam2 = {
                 continue;
               }
               let ship = this.ships[i];
-              if (ship.plan) {
+              if (ship.planId) {
                 continue;
               }
               is++;
@@ -4173,7 +4173,7 @@ var gam2 = {
               let jj = 0;
 
               c = c.addText('Plans:').br()
-                .container('boxarea plans', 'div', 'max-height:200px');
+                .container('boxarea plans', 'div', 'max-height:350px');
               let that = gam2.action.box['launch-pad'];
 
               if (Object.keys(that.plans).length === 1) {
