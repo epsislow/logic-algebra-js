@@ -1546,20 +1546,20 @@ var gam2 = {
           } else if (elem.type === 'pad') {
             let icoClass = 'ico ', icoStyle = '', icoPos='';
             let house= elem.color;
-            elem.ship='transporter';
-            house=3;
-            let houseE= gam2.model.reputation.house[house];
+            /*elem.ship='transporter';
+            house=3;*/
+            let houseE= gam2.model.reputation.house[id % this.house.length];
             icoStyle='color:'+houseE.color+';';
             if (elem.ship === 'airliner') {
-              icoPos='bottom: 5%; left: 40%;';
-              icoClass += 'fas fa-location-arrow fa-4x p-2';
+              icoPos='bottom: 0; left: 0; transform: translate(22px, -20px) rotate(45deg);';
+              icoClass += 'fas fa-location-arrow fa-3x p-2';
             } else if (elem.ship === 'cargo') {
-              icoPos='bottom: 5%; left: 40%;';
-              icoClass += 'fas fa-box fa-3x p-3';
+              icoPos='bottom: 0; left: 0; transform: translate(13px, -11px) rotate(45deg)';
+              icoClass += 'fas fa-box fa-3x p-2';
               icoStyle += "transform: translateX(0px) rotate(45deg);";
             } else if (elem.ship === 'transporter') {
-              icoPos='bottom: 5%; left: 40%;transform: rotate(90deg);';
-              icoClass += 'fas fa-brush fa-4x p-1';
+              icoPos='bottom: 0; left: 0; transform: translate(16px, -9px) rotate(45deg);';
+              icoClass += 'fas fa-brush fa-4x p-0';
               icoStyle += "transform: translateX(15px) rotate(-135deg);";
             } else {
               dText.container('pad', 'div').up();
@@ -1569,7 +1569,7 @@ var gam2 = {
               .container('pad', 'div')
               .container(icoClass, 'div', icoStyle)
               .up()
-              .container('pad-house', 'div', icoStyle+icoPos)
+              .container('pad-house', 'div', icoPos)
                 .addJqEl(house ? gam2.model.reputation.getHouseIco(house,20,1) : '')
               .up()
               .up();
