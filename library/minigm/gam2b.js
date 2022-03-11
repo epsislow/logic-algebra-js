@@ -919,11 +919,50 @@ var gam2 = {
           };
         }
       },
+      'belts': {
+        'paint': function (id, box, clear = 0) {
+          let opt = {};
+
+          let state = gam2.action.box.belts.state(box);
+
+          let btns = {}, btns2 = {};
+
+          if (clear) {
+            btns.clr = 1;
+            btns.add = state.actions();
+            btns2.clr = 1;
+            btns2.add = state.actions2();
+
+          } else {
+            //btns.add = state.actionsUpdate();
+
+            btns.clr = 1;
+            btns.add = state.actions();
+            btns2.clr = 1;
+            btns2.add = state.actions2();
+
+          }
+
+          opt.lvl = box.level;
+
+          opt.btns = btns;
+          opt.btns2 = btns2;
+
+          let clearTikOpt = state.clearTikOpt();
+          if (clearTikOpt === 1) {
+            opt.tikUp = true;
+          }
+
+          if (clear) {
+            opt.content = state.content();
+          }
+
+          return opt;
+        }
+      },
       'storage': {
         'paint': function (id, box, clear = 0) {
-
           let opt = {};
-          let act = gam2.action.box.storage;
 
           let state = gam2.action.box.storage.state(box);
 
@@ -1542,6 +1581,45 @@ var gam2 = {
               .container(icoClass, 'div', icoStyle)
               .up()
               .up();
+          } else if (elem.type === 'belt') {
+            if (elem.refs) {
+              dText = dText
+                .container('belt');
+
+              if(elem.from.res) {
+                dText = dText
+                  .container('slot', 'div')
+                  .addJqEl(gam2.model.res.getResIco(elem.from.res))
+                  .container(elem.missing ? 'req-amount' : 'amount', 'div')
+                  .addText(elem.amount)
+                  .up()
+                  .up();
+              } else {
+                dText = dText
+                  .container('slot', 'div')
+                  .up();
+              }
+
+              if(elem.to.res) {
+                dText = dText
+                  .container('slot', 'div')
+                  .addJqEl(gam2.model.res.getResIco(elem.to.res))
+                  .container(elem.missing ? 'req-amount' : 'amount', 'div')
+                  .addText(elem.amount)
+                  .up()
+                  .up();
+              } else {
+                dText = dText
+                  .container('slot', 'div')
+                  .up();
+              }
+              dText = dText.up();
+            } else {
+              dText = dText
+                .container('belt')
+                .addButton('No flow', elem.noFlowAction, 'button btn-info')
+                .up();
+            }
           } else if (elem.type === 'pad') {
             let icoClass = 'ico ', icoStyle = '', icoPos='';
             let house= elem.color;
@@ -1924,8 +2002,8 @@ var gam2 = {
         'dashed': 0,
       },
       'belts': {
-        'icon': 'play',
-        'bg': 'red',
+        'icon': 'pallet',
+        'bg': 'darkcyan',
         'dashed': 0,
       },
       'launch-pad': {
@@ -2933,6 +3011,7 @@ var gam2 = {
           gam2.model.box.addSlotsFor(pub.p);
           gam2.model.box.addSlotOutsFor(pub.p);
           gam2.model.box.addPadsFor(pub.p);
+          gam2.model.box.addBeltsFor(pub.p);
         });
       },
       'locProps': function (pos, type, lvl, name, crkey = '', house = 0) {
@@ -3795,7 +3874,146 @@ var gam2 = {
         }
       },
       'bank': {},
-      'belts': {},
+      'belts': {
+        'defaults': function (box) {
+          box.type = 'belts';
+          box.level = 1;
+          box.belts = 1;
+          box.belt = {};
+          box.levelCost = 5;
+          box.levelCostFloat = 5;
+          box.clearTik = 0;
+          box.tickPaint = 1;
+          return box;
+        },
+        'lvlUp': function (box) {
+          let coins = gam2.action.getCoins();
+
+          if (coins.money < box.levelCost) {
+            return;
+          }
+          coins.money -= box.levelCost;
+          box.levelCostFloat *= 1.5;
+          box.levelCost = Math.round(box.levelCostFloat);
+
+          box.level++;
+
+          if (((box.level - 1) % 6  === 0 && box.level !== 19) && box.level <= 20 || box.level === 20) {
+            box.belts++;
+            let last = box.belt.last();
+            last.nextObj(
+              gam2.model.constr.addBelt({'pos': last.p.pos + 1})
+            )
+          }
+
+          box.repaint = 1;
+          gam2.view.paintTopBar(coins);
+          gam2.view.drawBox(box, 0);
+        },
+        'noFlow': function (belt) {
+
+        },
+        'state': function (box) {
+          let state = {};
+
+          state.actions = function () {
+            let acts = [];
+            let coins = gam2.action.getCoins();
+
+            if (box.belts <= 4) {
+              acts.push(['Lvl up', (function (box) {
+                return function () {
+                  gam2.action.box.belts.lvlUp(box)
+                }
+              })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
+            }
+
+            acts.push(['inf', (function (box) {
+              return function () {
+                gam2.action.box.storage.rot3(box)
+              }
+            })(box), 'btn-light']);
+
+
+            return acts;
+          }
+
+          state.actions2 = function () {
+            let acts2 = [];
+            acts2.push(['Drop', (function (box) {
+              return function () {
+                gam2.action.dropBox(box)
+              }
+            })(box), 'btn-danger']);
+
+            acts2.push(['inf', (function (box) {
+              return function () {
+                gam2.action.box.storage.rot3(box)
+              }
+            })(box), 'btn-light']);
+
+            return acts2;
+          }
+
+          state.actionsUpdate = function () {
+            return [];
+          }
+
+          state.content = function () {
+            let conts = [];
+
+            let belts = gam2.model.constr.getPropList(box.belt);
+
+            for (let i = 0; i < belts.length; i++) {
+              let belt = belts[i];
+              let refs = 0;
+
+              if (!belt.from.length) {
+                refs = 0;
+              } else {
+                let boxFrom = gam2.model.box.findBoxByRef(belt.from[0], belt.from[1]);
+                let slotFrom = boxFrom.slot.get(belt.from[2]).p;
+                let boxTo = gam2.model.box.findBoxByRef(belt.to[0], belt.to[1]);
+                let slotTo = boxTo.slot.get(belt.to[2]).p;
+
+                refs = {from: slotFrom, to: slotTo};
+              }
+
+
+
+              conts.push(
+                {
+                  type: 'belt',
+                  refs: refs,
+                  noFlowAction: (function (belt) {
+                    return function () {
+                      gam2.action.box.belts.noFlow(belt);
+                    }
+                  })(belt)
+                },
+              );
+            }
+
+            if (box.level < 50) {
+              conts.push({type: 'br'});
+              conts.push({type: 'text', text: 'Next Lvl: $' + box.levelCost});
+            }
+
+            return conts;
+          }
+
+          state.clearTikOpt = function () {
+            if (!box.clearTik) {
+              return false;
+            }
+            let clearTik = box.clearTik;
+            box.clearTik = 0;
+            return clearTik;
+          }
+
+          return state;
+        }
+      },
       'launch-pad': {
         'plans': {'id': 1},
         'ships': {'id': 1},
@@ -4915,7 +5133,7 @@ var gam2 = {
       } else if (type === 'power') {
         box = {type: 'power', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10};
       } else if (type === 'belts') {
-        box = {type: 'belts', belts: 2, belt: {}, pos: pos, level: 1, levelCost: 10};
+        box = gam2.action.box.belts.defaults({type: 'belts', pos: pos});
       } else if (type === 'launch-pad') {
         box = gam2.action.box['launch-pad'].defaults({type: 'launch-pad', pos: pos});
 
@@ -4971,6 +5189,7 @@ var gam2 = {
             'launch-pad': 25,
             'power': 5000,
             'platform': 250000,
+            'belts': 200,
             'bank': 50000,
           },
           'asteroid-st': {
@@ -4979,6 +5198,7 @@ var gam2 = {
             'storage': 2500,
             'dwellings': 1250,
             'seller': 2500,
+            'belts': 200,
             'launch-pad': 25,
             //    'defences': 10000,
             'power': 5000,
@@ -4991,6 +5211,7 @@ var gam2 = {
             'dwellings': 1250,
             //  'defences': 10000,
             'power': 5000,
+            'belts': 200,
             'storage': 2500,
             'launch-pad': 25,
             'platform': 250000,
@@ -5004,6 +5225,7 @@ var gam2 = {
             'launch-pad': 25,
             //    'defences': 10000,
             'power': 5000,
+            'belts': 200,
             'platform': 250000,
             'bank': 50000,
           },
@@ -5014,6 +5236,7 @@ var gam2 = {
             'trader': 5000,
             //    'defences': 10000,
             'power': 5000,
+            'belts': 200,
             'storage': 2500,
             'launch-pad': 25,
             'bank': 50000,
