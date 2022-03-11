@@ -314,8 +314,7 @@ var gam2 = {
     },
     'loadData': function (dataText = 0) {
       dataText = dataText ? dataText :
-        //"{\"cpos\":\"7.5.7.2\",\"bxlist\":{\"7.5.7.2\":[{\"type\":\"miner\",\"pos\":1,\"level\":1,\"levelCost\":1,\"levelCostFloat\":1,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"tickAmount\":1,\"maxTickAmount\":50,\"maxAmount\":100,\"outputId\":0,\"everySec\":0,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":0,\"clearTik\":0},{\"type\":\"dwellings\",\"pos\":2,\"level\":2,\"levelCost\":100,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"everySec\":15,\"capacity\":5,\"usage\":2},{\"type\":\"miner\",\"pos\":3,\"level\":1,\"levelCost\":1,\"levelCostFloat\":1,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"tickAmount\":1,\"maxTickAmount\":50,\"maxAmount\":100,\"outputId\":0,\"everySec\":0,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":0,\"clearTik\":0},{\"type\":\"storage\",\"pos\":8,\"level\":1,\"levelCost\":3,\"levelCostFloat\":3,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"slots\":4,\"maxAmount\":250,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":1,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":2,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":3,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"clearTik\":0,\"tickPaint\":1},{\"type\":\"seller\",\"pos\":9,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"sloti\":36,\"slotsOut\":4,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}]},{\"type\":\"launch-pad\",\"pos\":10,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"pads\":2,\"pad\":{}}]},\"seeds\":{\"root\":\"gam2b5xBxhe$X54B8sd\"},\"coins\":{\"7.5.7.2\":{\"money\":2000000,\"ppl\":[4,20],\"power\":[5,50]}}}";
-        "{\"cpos\":\"7.5.7.2\",\"bxlist\":{\"7.5.7.2\":[{\"type\":\"miner\",\"pos\":1,\"level\":20,\"levelCost\":524288,\"levelCostFloat\":524288,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":20,\"maxTickAmount\":50,\"maxAmount\":19100,\"outputId\":14,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":14,\"amount\":0,\"unitValue\":9,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":[\"7.5.7.2\",8],\"clearTik\":0},{\"type\":\"dwellings\",\"pos\":2,\"level\":4,\"levelCost\":100,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":5,\"everySec\":15,\"capacity\":5,\"usage\":2},{\"type\":\"miner\",\"pos\":3,\"level\":21,\"levelCost\":1048576,\"levelCostFloat\":1048576,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":1,\"tickAmount\":21,\"maxTickAmount\":50,\"maxAmount\":20100,\"outputId\":14,\"everySec\":5,\"slotOut\":[{\"posi\":-1,\"poso\":0,\"item\":14,\"amount\":0,\"unitValue\":9,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"slotsOut\":1,\"to\":[\"7.5.7.2\",8],\"clearTik\":0},{\"type\":\"storage\",\"pos\":8,\"level\":9,\"levelCost\":19683,\"levelCostFloat\":19683,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"slots\":4,\"maxAmount\":2250,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":14,\"amount\":41,\"unitValue\":9,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":1,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":2,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0},{\"posi\":3,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}],\"clearTik\":0,\"tickPaint\":1},{\"type\":\"seller\",\"pos\":9,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"sloti\":36,\"slotsOut\":4,\"slot\":[{\"posi\":0,\"poso\":-1,\"item\":0,\"amount\":0,\"unitValue\":0,\"form\":\"\",\"is\":\"slot\",\"requireAmount\":0}]},{\"type\":\"launch-pad\",\"pos\":10,\"level\":1,\"levelCost\":10,\"levelCostFloat\":0,\"moneyCost\":0,\"peopleCost\":0,\"powerCost\":0,\"is\":\"box\",\"repaint\":0,\"timer\":0,\"pads\":2,\"pad\":{}}]},\"seeds\":{\"root\":\"gam2b5xBxhe$X54B8sd\"},\"coins\":{\"7.5.7.2\":{\"money\":418216,\"ppl\":[4,20],\"power\":[5,50]}}}";
+        '{"cpos":"7.5.7.2","bxlist":{"7.5.7.2":[{"type":"dwellings","pos":1,"level":89113,"levelCost":100,"levelCostFloat":100,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":3,"everySec":15,"capacity":5,"usage":2},{"type":"miner","pos":2,"level":17,"levelCost":65536,"levelCostFloat":65536,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":0,"tickAmount":17,"maxTickAmount":50,"maxAmount":8100,"outputId":14,"everySec":5,"slotOut":[{"posi":-1,"poso":0,"item":14,"amount":0,"unitValue":9,"form":"","is":"slot","requireAmount":0}],"slotsOut":1,"to":["7.5.7.2",4],"clearTik":0},{"type":"storage","pos":3,"level":11,"levelCost":177147,"levelCostFloat":177147,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":0,"slots":5,"maxAmount":2500,"slot":[{"posi":0,"poso":-1,"item":23,"amount":2500,"unitValue":2824,"form":"","is":"slot","requireAmount":0,"selected":0},{"posi":1,"poso":-1,"item":23,"amount":2500,"unitValue":2824,"form":"","is":"slot","requireAmount":0,"selected":0},{"posi":2,"poso":-1,"item":23,"amount":2500,"unitValue":2824,"form":"","is":"slot","requireAmount":0},{"posi":3,"poso":-1,"item":23,"amount":2500,"unitValue":2824,"form":"","is":"slot","requireAmount":0},{"posi":4,"poso":-1,"item":23,"amount":2500,"unitValue":2824,"form":"","is":"slot","requireAmount":0}],"from":1,"clearTik":0,"tickPaint":1},{"type":"crafter","pos":4,"level":15,"levelCost":163840,"levelCostFloat":163840,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":2,"slots":2,"slot":[{"posi":0,"poso":-1,"item":14,"amount":34,"unitValue":9,"form":"","is":"slot","requireAmount":0,"reqAmount":70},{"posi":1,"poso":-1,"item":0,"amount":0,"unitValue":0,"form":"","is":"slot","requireAmount":0,"selected":0}],"slotsOut":1,"tickAmount":15,"maxTickAmount":50,"maxAmount":7100,"slotOut":[{"posi":-1,"poso":0,"item":19,"amount":0,"unitValue":770,"form":"","is":"slot","requireAmount":0}],"from":1,"to":["7.5.7.2",5],"everySec":7,"clearTik":0,"recepie":{"inp":{"14":70},"out":19,"outAmount":1,"unitValue":770}},{"type":"crafter","pos":5,"level":14,"levelCost":81920,"levelCostFloat":81920,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":0,"slots":2,"slot":[{"posi":0,"poso":-1,"item":19,"amount":0,"unitValue":770,"form":"","is":"slot","requireAmount":0,"reqAmount":9,"selected":0},{"posi":1,"poso":-1,"item":0,"amount":0,"unitValue":0,"form":"","is":"slot","requireAmount":0}],"slotsOut":1,"tickAmount":14,"maxTickAmount":50,"maxAmount":6600,"slotOut":[{"posi":-1,"poso":0,"item":23,"amount":0,"unitValue":2824,"form":"","is":"slot","requireAmount":0,"selected":0}],"from":1,"to":["7.5.7.2",3],"everySec":7,"clearTik":0,"recepie":{"inp":{"19":9},"out":23,"outAmount":3,"unitValue":2824}},{"type":"crafter","pos":6,"level":1,"levelCost":10,"levelCostFloat":10,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":0,"slots":1,"slot":[{"posi":0,"poso":-1,"item":0,"amount":0,"unitValue":0,"form":"","is":"slot","requireAmount":0}],"slotsOut":1,"tickAmount":1,"maxTickAmount":50,"maxAmount":100,"slotOut":[{"posi":-1,"poso":0,"item":0,"amount":0,"unitValue":0,"form":"","is":"slot","requireAmount":0}],"from":1,"to":0,"everySec":0,"clearTik":0,"recepie":0},{"type":"launch-pad","pos":9,"level":1,"levelCost":5,"levelCostFloat":5,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":0,"pads":1,"pad":[{"pos":0,"shipId":0,"plan":0,"is":"pad"}],"slots":1,"slot":[{"posi":0,"poso":-1,"item":0,"amount":0,"unitValue":0,"form":"","is":"slot","requireAmount":0}],"from":1,"to":0,"clearTik":1,"tickPaint":1},{"type":"builder","pos":10,"level":"","levelCost":10000,"levelCostFloat":10000,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":0,"timer":0}],"7.5.7.4":[{"type":"builder","pos":1,"level":"","levelCost":10000,"levelCostFloat":10000,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":1,"timer":0}],"7.5.7.5":[{"type":"laboratory","pos":1,"level":1,"levelCost":200000,"levelCostFloat":200000,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":1,"timer":0,"everySec":0,"researchPoints":10},{"type":"R&D-center","pos":2,"level":1,"levelCost":200000,"levelCostFloat":200000,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":1,"timer":0,"everySec":0,"researchPoints":5},{"type":"dwellings","pos":3,"level":89113,"levelCost":100,"levelCostFloat":100,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":1,"timer":3,"everySec":15,"capacity":5,"usage":2},{"type":"launch-pad","pos":5,"level":1,"levelCost":5,"levelCostFloat":5,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":1,"timer":0,"pads":1,"pad":[{"pos":0,"shipId":1,"plan":0,"is":"pad"}],"slots":1,"slot":[{"posi":0,"poso":-1,"item":0,"amount":0,"unitValue":0,"form":"","is":"slot","requireAmount":0}],"from":1,"to":0,"clearTik":1,"tickPaint":1},{"type":"builder","pos":6,"level":"","levelCost":10000,"levelCostFloat":10000,"moneyCost":0,"peopleCost":0,"powerCost":0,"is":"box","rot":0,"repaint":1,"timer":0}]},"seeds":{"root":"gam2b5xBxhe$X54B8sd"},"lp":{"plans":{"id":1},"ships":{"id":1},"loans":{"id":1}},"coins":{"7.5.7.2":{"money":75544,"ppl":[4,20],"power":[5,50]},"7.5.7.5":{"money":498475,"ppl":[100,200],"power":[20,100]},"7.5.7.4":{"money":10000,"ppl":[0,20],"power":[0,50]}},"lastTs":1646995499}';
 
       let data = JSON.parse(dataText);
       let bx = gam2.model.box;
@@ -1924,6 +1923,11 @@ var gam2 = {
         'bg': 'power',
         'dashed': 0,
       },
+      'belts': {
+        'icon': 'play',
+        'bg': 'red',
+        'dashed': 0,
+      },
       'launch-pad': {
         'icon': 'play',
         'bg': 'dark',
@@ -2114,6 +2118,22 @@ var gam2 = {
           for (let i = 0; i < slotsOut - 2; i++) {
             sl = sl.nextObj(
               gam2.model.constr.addSlot({'poso': i + 1})
+            )
+          }
+        }
+      },
+      'addBeltsFor': function(box) {
+        if (!('belts' in box)) {
+          return;
+        }
+        box.belt = gam2.model.constr.addBelt({'pos': 0});
+
+        let belts = box.belts | 1;
+        if (belts > 1) {
+          let bl = box.belt;
+          for (let i = 0; i < bl - 2; i++) {
+            bl = bl.nextObj(
+              gam2.model.constr.addBelt({'pos': i + 1})
             )
           }
         }
@@ -2341,6 +2361,7 @@ var gam2 = {
           'power': ['case.frame', 'platform.over', 'slot.power'],
           'storage': ['case.frame', 'platform.over', 'engine.laser'],
           'launch-pad': ['case.frame', 'platform.low', 8],
+          'belts': ['case.frame', 'platform.over', 'engine.inter'],
           'bank': ['case.frame', 'platform.over', 18],
           'builder': ['case.frame', 'platform.low', 4],
         },
@@ -2878,6 +2899,12 @@ var gam2 = {
           }
         });
 
+        this.addBelt = this.getAddFunc({
+          'pos': -1,
+          'from': [],
+          'to': [],
+          'is': 'belt',
+        });
         this.addPad = this.getAddFunc({
           'pos': -1,
           'shipId': 0,
@@ -2928,6 +2955,8 @@ var gam2 = {
       'addSlot': function (prop) {
       },
       'addPad': function (prop) {
+      },
+      'addBelt': function (prop) {
       },
       'addBox': function (prop) {
       },
@@ -3766,6 +3795,7 @@ var gam2 = {
         }
       },
       'bank': {},
+      'belts': {},
       'launch-pad': {
         'plans': {'id': 1},
         'ships': {'id': 1},
@@ -4884,6 +4914,8 @@ var gam2 = {
         box = {type: 'defences', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10};
       } else if (type === 'power') {
         box = {type: 'power', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10};
+      } else if (type === 'belts') {
+        box = {type: 'belts', belts: 2, belt: {}, pos: pos, level: 1, levelCost: 10};
       } else if (type === 'launch-pad') {
         box = gam2.action.box['launch-pad'].defaults({type: 'launch-pad', pos: pos});
 
