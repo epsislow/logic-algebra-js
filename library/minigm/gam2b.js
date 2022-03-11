@@ -3911,7 +3911,10 @@ var gam2 = {
           gam2.view.drawBox(box, 0);
         },
         'noFlow': function (belt) {
-
+          gam2.action.popup(belt, function (c, onClose, belt) {
+            
+          });
+      
         },
         'state': function (box) {
           let state = {};
