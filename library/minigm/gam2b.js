@@ -1257,7 +1257,7 @@ var gam2 = {
       var icon = crd.icon + " b-clr i-clr" + clr + " " + crd.icon;
       if(box.type === 'empty') {
         icon = crd.icon +' i-cnstr';
-        color='dark';
+        //color='dark';
       }
 
       var title = (box.is === 'loc') ? box.name : box.type;
@@ -1268,7 +1268,7 @@ var gam2 = {
       var cel;
 
       cel = r(container ? container : this.view.content)
-        .container((box.is === 'loc' && !opt ? 'mb-3' : 'm-2') + ' p-2 unlock bg-' + color + (opt ? ' option' + (box.locWithBuilds ? '-bl' : '') : '') + ' rounded box-shadow text-light bg-card' + x2 + ' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id': id})
+        .container((box.is === 'loc' && !opt ? 'mb-3' : 'm-2') + ' p-2 unlock bg-' + color + (opt && box.type!=='empty' ? ' option' + (box.locWithBuilds ? '-bl' : '') : '') + ' rounded box-shadow text-light bg-card' + x2 + ' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id': id})
 
         .container(box.is === 'box' ? 'face front m-2' : '', 'div')
         .container('fas fa-' + icon + ' fa-bgd' + x2 + ' fa-5x', 'div', '')
