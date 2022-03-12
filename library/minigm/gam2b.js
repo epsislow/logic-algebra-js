@@ -1257,7 +1257,7 @@ var gam2 = {
       var icon = crd.icon + " b-clr i-clr" + clr + " " + crd.icon;
       if(box.type === 'empty') {
         icon = crd.icon +' i-cnstr';
-       // color='dark';
+        color='dark';
       }
 
       var title = (box.is === 'loc') ? box.name : box.type;
