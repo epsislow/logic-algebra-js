@@ -1255,6 +1255,10 @@ var gam2 = {
       // dashed=1;
       var clr = (box.is === 'loc') ? 3 : 5;
       var icon = crd.icon + " b-clr i-clr" + clr + " " + crd.icon;
+      if(box.type === 'empty') {
+        icon = crd.icon +' i-cnstr';
+       // color='dark';
+      }
 
       var title = (box.is === 'loc') ? box.name : box.type;
       var topRight = (box.is === 'loc') ? box.loc : box.level;
@@ -1827,12 +1831,18 @@ var gam2 = {
       gam2.view.deleteEls(gam2.view.cardOpt);
       var containerDiv;
       var el;
+      let i=0;
 
-      for (const i in p) {
+     for (const i in p) {
+  
         if (!p.hasOwnProperty(i)) {
           continue;
         }
+   
         if (p[i].type === 'empty') {
+          if(p[i].lvl===3) {
+            el = this.drawCard('opt' + i, p[i], null, 1);
+          }
           continue;
         }
         p[i].locWithBuilds = this.findLocWithBuilds(i, p[i], p0, p1, p2, p3);
@@ -1934,6 +1944,11 @@ var gam2 = {
       'arid-planet': {
         'icon': 'cookie',
         'bg': 'empty',
+        'dashed': 1,
+      },
+      'empty': {
+        'icon': 'plus',
+        'bg': 'cnstr',
         'dashed': 1,
       },
       'asteroid-st': {
