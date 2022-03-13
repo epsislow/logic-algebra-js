@@ -3137,6 +3137,8 @@ var gam2 = {
         }
       }
     },
+    'slotSelectType': 'item',
+    'slotSelectAfterFn':0,
     'slotSelectHalf': 0,
     'slotSelectedObj': 0,
     'slotFilterClick': function (el, ress, popupEl, onClose, box) {
@@ -3214,6 +3216,9 @@ var gam2 = {
       if (!moved) {
         obj.slot.selected = this.slotSelectHalf ? 2 : 1;
         this.slotSelectedObj = obj;
+        if(this.slotSelectAfterFn) {
+          this.slotSelectAfterFn(obj.slot);
+        }
       } else {
         this.slotSelectHalf = 0;
 
@@ -3926,9 +3931,30 @@ var gam2 = {
           gam2.view.drawBox(box, 0);
         },
         'noFlow': function (belt) {
+          if(gam2.action.slotSelectType==='item') {
+             gam2.action.slotSelectType='belt.slotIn';
+             
+             let slotOutFn, slotIn, slotOut;
+             let slotInFn = function (slot) {
+               gam2.action.slotSelectType='belt.slotOut';
+               slotIn = slot;
+               gam2.action.slotSelectAfterFn = slotOutFn;
+             }
+             
+              slotOutFn = function(slot) {
+                gam2.action.slotSelectType = 'item';
+                gam2.action.slotSelectAfterFn = 0;
+                if (slot === slotIn) {
+                   return;
+                }
+                slotOut = slot;
+              }
+             
+          }
+          /*
           gam2.action.popup(belt, function (c, onClose, belt) {
             
-          });
+          });*/
       
         },
         'state': function (box) {
