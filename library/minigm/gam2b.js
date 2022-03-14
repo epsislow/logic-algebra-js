@@ -1523,7 +1523,7 @@ var gam2 = {
 
           let elem = options.content[i];
           if (elem.type === 'slot') {
-            dText = dText.container('slot' + (elem.selected ? (elem.selected === 2 ? ' slot-selected2' : ' slot-selected') : ''), 'div');
+            dText = dText.container('slot' + (elem.selected ? (elem.selected > 1 ? ' slot-selected'+elem.selected: ' slot-selected') : ''), 'div');
 
             dText.el.click((function (elem) {
                 return function () {
@@ -3223,7 +3223,7 @@ var gam2 = {
       }
 
       if (!moved) {
-        obj.slot.selected = this.slotSelectHalf ? 2 : 1;
+        obj.slot.selected = this.slotSelectHalf ? 2 : (this.slotSelectType==='item'?1:3);
         this.slotSelectedObj = obj;
         if(this.slotSelectAfterFn) {
           var cpos = gam2.model.loc.currentPos;
@@ -3940,7 +3940,7 @@ var gam2 = {
           gam2.view.paintTopBar(coins);
           gam2.view.drawBox(box, 0);
         },
-        'noFlow': function (belt) {
+        'noFlow': function (box,belt) {
           if(gam2.action.slotSelectType==='item') {
              gam2.action.slotSelectType='belt.slotIn';
              
@@ -3950,6 +3950,9 @@ var gam2 = {
                slotIn = slot;
                let slotPos = slot.posi<0? slot.poso+1: slot.posi+1;
                belt.from = [cpos, pos, slotPos];
+               
+                 gam2.action.slotSelectAfterFn = slotOutFn;
+                           console.log(belt)
              }
              
               slotOutFn = (function() {
@@ -3964,17 +3967,22 @@ var gam2 = {
                 
           box.repaint = 1;
           gam2.view.drawBox(box, 0);
+          console.log(belt)
                 }
               })(belt, slotIn, slotInFn, box);
               
               
              
-             slotInFn = (function() {
+            /* slotInFn = (function() {
                return function() {
-                 slotInFn();
+                 slotOutFn();
                  gam2.action.slotSelectAfterFn = slotOutFn;
+                           console.log(belt)
+
                }
-             }) (belt, slotIn, slotOutFn);
+             }) (belt, slotIn, slotOutFn);*/
+             gam2.action.slotSelectAfterFn = slotInFn;
+                 
           }
           /*
           gam2.action.popup(belt, function (c, onClose, belt) {
@@ -4054,11 +4062,11 @@ var gam2 = {
                 {
                   type: 'belt',
                   refs: refs,
-                  noFlowAction: (function (belt) {
+                  noFlowAction: (function (box, belt) {
                     return function () {
-                      gam2.action.box.belts.noFlow(belt);
+                      gam2.action.box.belts.noFlow(box, belt);
                     }
-                  })(belt)
+                  })(box, belt)
                 },
               );
             }
