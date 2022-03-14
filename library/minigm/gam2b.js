@@ -219,6 +219,7 @@ var gam2 = {
           data.bxlist[c].push(bx.toObj(plist[i]));
         }
       }
+      data.conveyor = gam2.action.box.belts.conveyor;
       data.lp.plans = {};
       for (let p in lp.plans) {
         if (!lp.plans.hasOwnProperty(p)) {
@@ -334,6 +335,9 @@ var gam2 = {
       }
       if ('lastTs' in data) {
         lastTs = data.lastTs;
+      }
+      if ('conveyor' in data) {
+        gam2.action.box.belts.conveyor = data.conveyor;
       }
 
       gam2.model.box.list = {};
@@ -1590,12 +1594,12 @@ var gam2 = {
               dText = dText
                 .container('belt');
 
-              if(elem.from.res) {
+              if(elem.refs.from.res) {
                 dText = dText
                   .container('slot', 'div')
-                  .addJqEl(gam2.model.res.getResIco(elem.from.res))
-                  .container(elem.missing ? 'req-amount' : 'amount', 'div')
-                  .addText(elem.amount)
+                  .addJqEl(gam2.model.res.getResIco(elem.refs.from.item))
+                  .container(elem.refs.from.missing ? 'req-amount' : 'amount', 'div')
+                  .addText(elem.refs.from.amount)
                   .up()
                   .up();
               } else {
@@ -1604,12 +1608,12 @@ var gam2 = {
                   .up();
               }
 
-              if(elem.to.res) {
+              if(elem.refs.to.res) {
                 dText = dText
                   .container('slot', 'div')
-                  .addJqEl(gam2.model.res.getResIco(elem.to.res))
-                  .container(elem.missing ? 'req-amount' : 'amount', 'div')
-                  .addText(elem.amount)
+                  .addJqEl(gam2.model.res.getResIco(elem.refs.to.item))
+                  .container(elem.refs.to.missing ? 'req-amount' : 'amount', 'div')
+                  .addText(elem.refs.to.amount)
                   .up()
                   .up();
               } else {
@@ -3003,9 +3007,13 @@ var gam2 = {
 
         this.addBelt = this.getAddFunc({
           'pos': -1,
-          'from': [],
-          'to': [],
+          'conveyorId': 0,
           'is': 'belt',
+        }, function (pub) {
+          if (!pub.p.conveyorId) {
+            let conveyor = gam2.action.box.belts.addConveyor();
+            pub.p.conveyorId = conveyor.id;
+          }
         });
         this.addPad = this.getAddFunc({
           'pos': -1,
@@ -3905,11 +3913,28 @@ var gam2 = {
       },
       'bank': {},
       'belts': {
+        'conveyor': {'id': 1},
+        'addConveyor': function (from = 0, to = 0) {
+          let id = this.conveyor.id;
+
+          let conveyor = {
+            'id': id,
+            'from': from,
+            'to': to,
+            'timer': 0,
+          };
+          this.conveyor[id] = conveyor;
+
+          this.conveyor.id++;
+
+          return conveyor;
+        },
         'defaults': function (box) {
           box.type = 'belts';
           box.level = 1;
           box.belts = 1;
           box.belt = {};
+          box.conveyorId = 0;
           box.levelCost = 5;
           box.levelCostFloat = 5;
           box.clearTik = 0;
@@ -3949,7 +3974,8 @@ var gam2 = {
                gam2.action.slotSelectType='belt.slotOut';
                slotIn = slot;
                let slotPos = slot.posi<0? slot.poso+1: slot.posi+1;
-               belt.from = [cpos, pos, slotPos];
+               let conveyor = gam2.action.box.belts.conveyor[belt.conveyorId];
+               conveyor.from = [cpos, pos, slotPos];
                
                  gam2.action.slotSelectAfterFn = slotOutFn;
                            console.log(belt)
@@ -3963,7 +3989,8 @@ var gam2 = {
                    return;
                 }
                 let slotPos = slot.posi<0? slot.poso+1: slot.posi+1;
-                belt.to = [cpos, pos, slotPos];
+                let conveyor = gam2.action.box.belts.conveyor[belt.conveyorId];
+                conveyor.to = [cpos, pos, slotPos];
                 
           box.repaint = 1;
           gam2.view.drawBox(box, 0);
@@ -4044,19 +4071,18 @@ var gam2 = {
             for (let i = 0; i < belts.length; i++) {
               let belt = belts[i];
               let refs = 0;
+              let conveyor = gam2.action.box.belts.conveyor[belt.conveyorId];
 
-              if (!belt.from.length) {
+              if (!belt.conveyorId || !conveyor.from.length) {
                 refs = 0;
               } else {
-                let boxFrom = gam2.model.box.findBoxByRef(belt.from[0], belt.from[1]);
-                let slotFrom = boxFrom.slot.get(belt.from[2]).p;
-                let boxTo = gam2.model.box.findBoxByRef(belt.to[0], belt.to[1]);
-                let slotTo = boxTo.slot.get(belt.to[2]).p;
+                let boxFrom = gam2.model.box.findBoxByRef(conveyor.from[0], conveyor.from[1]);
+                let slotFrom = boxFrom.slot.get(conveyor.from[2]).p;
+                let boxTo = gam2.model.box.findBoxByRef(conveyor.to[0], conveyor.to[1]);
+                let slotTo = boxTo.slot.get(conveyor.to[2]).p;
 
                 refs = {from: slotFrom, to: slotTo};
               }
-
-
 
               conts.push(
                 {
