@@ -2288,6 +2288,15 @@ var gam2 = {
                   );
                 }
               }
+              if (first.is === 'belt') {
+                if (idx === 0) {
+                  chain = gam2.model.constr.addBelt(pub[b][f]);
+                } else {
+                  chain = chain.nextObj(
+                    gam2.model.constr.addBelt(pub[b][f])
+                  );
+                }
+              }
               idx++;
             }
             /*if (pub.type === 'storage') {
@@ -3964,7 +3973,7 @@ var gam2 = {
             let acts = [];
             let coins = gam2.action.getCoins();
 
-            if (box.belts <= 4) {
+            if (box.belts < 4) {
               acts.push(['Lvl up', (function (box) {
                 return function () {
                   gam2.action.box.belts.lvlUp(box)
