@@ -351,7 +351,7 @@ var gam2 = {
               continue;
             }
             //console.log('i:',i);
-            if (i == 0) {
+            if (i === "0") {
               bx.list[c] = cs.addBox(bx.fromObj(data.bxlist[c][i]));
             } else {
               bx.list[c] = bx.list[c].nextObj(
@@ -364,11 +364,17 @@ var gam2 = {
 
       if ('lp' in data) {
         let hasAllStruct = ('ships' in data.lp) && ('loans' in data.lp) && ('plans' in data.lp);
-        hasAllStruct = false;
+        //hasAllStruct = false;
 
         if (hasAllStruct && ('loans' in data.lp)) {
           for (let p in data.lp.loans) {
             lp.loans[p] = bx.fromObj(data.lp.loans[p]);
+          }
+        }
+
+        if (hasAllStruct && ('ships' in data.lp)) {
+          for (let p in data.lp.ships) {
+            lp.ships[p] = bx.fromObj(data.lp.ships[p]);
           }
         }
         if (hasAllStruct && ('plans' in data.lp)) {
@@ -392,7 +398,7 @@ var gam2 = {
                   } else if (i === 'loan.id') {
                     lp.plans[p].loan = lp.loans[data.lp.plans[p][i]];
                   } else if (Array.isArray(data.lp.plans[p][i])) {
-                    lp.plans[p][i] = lp.plans[p][i];
+                    lp.plans[p][i] = data.lp.plans[p][i];
                   } else {
                     lp.plans[p][i] = bx.fromObj(data.lp.plans[p][i]);
                   }
@@ -403,11 +409,6 @@ var gam2 = {
             } else {
               lp.plans[p] = data.lp.plans[p];
             }
-          }
-        }
-        if (hasAllStruct && ('ships' in data.lp)) {
-          for (let p in data.lp.ships) {
-            lp.ships[p] = bx.fromObj(data.lp.ships[p]);
           }
         }
       }
@@ -2321,6 +2322,9 @@ var gam2 = {
       },
       'toObj': function (box) {
         let pub = {};
+        if (typeof box === 'object' && (box !== null) && ('p' in box)) {
+          return gam2.model.constr.getPropList(box.first, 1, 0);
+        }
         for (let b in box) {
           if (!box.hasOwnProperty(b)) {
             continue;
@@ -4264,7 +4268,6 @@ var gam2 = {
             plan.to = plan.from;
             plan.from = tmp;
           }
-
 
           var sSlots = gam2.model.constr.getPropList(ship.slot)
           for (let s in sSlots) {
