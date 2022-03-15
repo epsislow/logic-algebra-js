@@ -3170,7 +3170,36 @@ var gam2 = {
       gam2.action.recepiesViewContent(c, onClose, box, ress);
     },
     'slotClick': function (el, obj, isOut = 0) {
+      
       let oldObj = 0;
+      if (this.slotSelectType!=='item') {
+        obj.slot.selected = 3;
+        
+        if (this.slotSelectedObj) {
+          oldObj = this.slotSelectedObj;
+          this.slotSelectedObj = 0;
+        
+            oldObj.slot.selected = 0;
+            oldObj.box.repaint = 1;
+            gam2.view.drawBox(oldObj.box, 0);
+        }
+        this.slotSelectedObj = obj;
+        
+        if (this.slotSelectAfterFn) {
+          var cpos = gam2.model.loc.currentPos;
+          let res = this.slotSelectAfterFn(cpos, obj.box.pos, obj.slot);
+          if(res===1) {
+            this.slotSelectedObj = 0;
+            obj.slot.selected = 0;
+          }
+        }
+        if (obj.box) {
+          obj.box.repaint = 1;
+          gam2.view.drawBox(obj.box, 0);
+        }
+        return;
+      }
+      
       if (this.slotSelectedObj) {
         oldObj = this.slotSelectedObj;
         let returnAfter = 0;
@@ -3235,7 +3264,7 @@ var gam2 = {
       }
 
       if (!moved) {
-        obj.slot.selected = this.slotSelectHalf ? 2 : (this.slotSelectType==='item'?1:3);
+        obj.slot.selected = this.slotSelectHalf ? 2 : 1;
         this.slotSelectedObj = obj;
         if(this.slotSelectAfterFn) {
           var cpos = gam2.model.loc.currentPos;
@@ -3990,7 +4019,8 @@ var gam2 = {
                 gam2.action.slotSelectType = 'item';
                 gam2.action.slotSelectAfterFn = 0;
                 if (slot === slotIn) {
-                   return;
+                   conveyor.from = 0;
+                   return 0;
                 }
                 let slotPos = slot.posi<0? slot.poso+1: slot.posi+1;
                 let conveyor = gam2.action.box.belts.conveyor[belt.conveyorId];
@@ -3999,6 +4029,7 @@ var gam2 = {
           box.repaint = 1;
           gam2.view.drawBox(box, 0);
           console.log(belt)
+                return 1;
                 }
               })(belt, slotIn, slotInFn, box);
               
