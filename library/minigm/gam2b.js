@@ -5001,7 +5001,50 @@ var gam2 = {
           }
         }
       }
-
+      let bbt = gam2.action.box.belts.conveyor;
+      for (let i in bbt) {
+        if (!bbt.hasOwnProperty(i)) {
+          continue;
+        }
+        if (i === 'id') {
+          continue;
+        }
+        
+        
+        let conveyor = bbt[i];
+        conveyor.timer++;
+        if(conveyor.timer < 5) {
+          continue;
+        }
+        conveyor.timer=0;
+        if (!conveyor.from.length) {
+          continue;
+        } else {
+          let boxFrom = gam2.model.box.findBoxByRef(conveyor.from[0], conveyor.from[1]);
+          let slotFrom = boxFrom.slot.get(conveyor.from[2]).p;
+          let boxTo = gam2.model.box.findBoxByRef(conveyor.to[0], conveyor.to[1]);
+          let slotTo = boxTo.slot.get(conveyor.to[2]).p;
+          
+          if(slotFrom.item && slotFrom.amount>0 && (!slotTo.item || slotFrom.item === slotTo.item)) {
+            let avl = Math.min(200, slotFrom.amount);
+            slotFrom.amount -= avl;
+            slotTo.amount += avl;
+            slotTo.item = slotFrom.item;
+            slotTo.unitValue = slotFrom.unitValue;
+            
+            boxFrom.repaint = 1;
+            gam2.view.drawBox(boxFrom, 0);
+            
+            if(boxFrom.pos !== boxTo.pos) {
+              boxTo.repaint = 1;
+              gam2.view.drawBox(boxTo, 0);
+            }
+            
+            //gam2.model.slot.addItemToSlots(slotTo, slotFrom.item, avl, slotFrom.unitValue);
+          }
+        }
+      }
+      
       let bbx = gam2.action.box['launch-pad'];
 
       let plans = bbx.plans;
