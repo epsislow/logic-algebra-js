@@ -1592,37 +1592,59 @@ var gam2 = {
               .up();
           } else if (elem.type === 'belt') {
             if (elem.refs) {
+
+              /*
               dText = dText
                 .container('belt');
 
               if(elem.refs.from.res) {
                 dText = dText
-                  .container('slot', 'div')
-                  .addJqEl(gam2.model.res.getResIco(elem.refs.from.item))
+                  .container('slot', 'div');
+
+                dText.el.click(elem.refs.resetAction);
+
+                dText.addJqEl(gam2.model.res.getResIco(elem.refs.from.item))
                   .container(elem.refs.from.missing ? 'req-amount' : 'amount', 'div')
                   .addText(elem.refs.from.amount)
                   .up()
                   .up();
               } else {
                 dText = dText
-                  .container('slot', 'div')
-                  .up();
+                  .container('slot', 'div');
+
+                dText.el.click(elem.refs.resetAction);
+                dText = dText.up();
               }
 
               if(elem.refs.to.res) {
                 dText = dText
-                  .container('slot', 'div')
-                  .addJqEl(gam2.model.res.getResIco(elem.refs.to.item))
+                  .container('slot', 'div');
+
+                dText.el.click((function () {
+                  console.log('test00');
+                  return elem.refs.resetAction;
+                })());
+
+                dText.addJqEl(gam2.model.res.getResIco(elem.refs.to.item))
                   .container(elem.refs.to.missing ? 'req-amount' : 'amount', 'div')
                   .addText(elem.refs.to.amount)
                   .up()
                   .up();
               } else {
                 dText = dText
-                  .container('slot', 'div')
-                  .up();
+                  .container('slot', 'div');
+
+                dText.el.click(elem.refs.resetAction);
+                dText = dText.up();
               }
               dText = dText.up();
+               */
+              dText = dText
+                .container('belt')
+                .addButton('See', elem.showAction, 'button btn-success')
+                .addButton('x', elem.resetAction, 'button btn-danger')
+                .up();
+
             } else {
               dText = dText
                 .container('belt')
@@ -3170,8 +3192,8 @@ var gam2 = {
       gam2.action.recepiesViewContent(c, onClose, box, ress);
     },
     'slotClick': function (el, obj, isOut = 0) {
-      
       let oldObj = 0;
+      let cpos = gam2.model.loc.currentPos;
       if (this.slotSelectType!=='item') {
         obj.slot.selected = 3;
         
@@ -3186,7 +3208,6 @@ var gam2 = {
         this.slotSelectedObj = obj;
         
         if (this.slotSelectAfterFn) {
-          var cpos = gam2.model.loc.currentPos;
           let res = this.slotSelectAfterFn(cpos, obj.box.pos, obj.slot);
           if(res===1) {
             this.slotSelectedObj = 0;
@@ -3267,7 +3288,6 @@ var gam2 = {
         obj.slot.selected = this.slotSelectHalf ? 2 : 1;
         this.slotSelectedObj = obj;
         if(this.slotSelectAfterFn) {
-          var cpos = gam2.model.loc.currentPos;
           this.slotSelectAfterFn(cpos, obj.box.pos, obj.slot);
         }
       } else {
@@ -3956,6 +3976,7 @@ var gam2 = {
             'to': to,
             'timer': 0,
           };
+
           this.conveyor[id] = conveyor;
 
           this.conveyor.id++;
@@ -3998,6 +4019,45 @@ var gam2 = {
           gam2.view.paintTopBar(coins);
           gam2.view.drawBox(box, 0);
         },
+        'showFlow': function (box, belt) {
+          let cpos = gam2.model.loc.currentPos;
+          let conveyor = gam2.action.box.belts.conveyor[belt.conveyorId];
+
+          if (!belt.conveyorId || !conveyor.from.length) {
+
+          } else {
+            let boxFrom = gam2.model.box.findBoxByRef(conveyor.from[0], conveyor.from[1]);
+            let slotFrom = boxFrom.slot.get(conveyor.from[2]).p;
+            let boxTo = gam2.model.box.findBoxByRef(conveyor.to[0], conveyor.to[1]);
+            let slotTo = boxTo.slot.get(conveyor.to[2]).p;
+            if (slotFrom.selected !== 3 && slotTo.selected !== 3) {
+              slotFrom.selectedOld = slotFrom.selected;
+              slotTo.selectedOld = slotTo.selected;
+              slotFrom.selected = 3;
+              slotTo.selected = 3;
+            } else {
+              slotFrom.selected = slotFrom.selectedOld;
+              slotTo.selected = slotTo.selectedOld;
+            }
+
+            if (cpos === conveyor.from[0]) {
+              boxFrom.repaint = 1;
+              gam2.view.drawBox(boxFrom, 0);
+            }
+
+            if ((boxFrom.pos !== boxTo.pos) && (cpos === conveyor.to[0])) {
+              boxTo.repaint = 1;
+              gam2.view.drawBox(boxTo, 0);
+            }
+          }
+        },
+        'resetFlow': function(box, belt) {
+          let conveyor = gam2.action.box.belts.conveyor[belt.conveyorId];
+          conveyor.from = 0;
+          conveyor.to = 0;
+          box.repaint = 1;
+          gam2.view.drawBox(box, 0);
+        },
         'noFlow': function (box,belt) {
           if(gam2.action.slotSelectType==='item') {
              gam2.action.slotSelectType='belt.slotIn';
@@ -4011,7 +4071,6 @@ var gam2 = {
                conveyor.from = [cpos, pos, slotPos];
                
                  gam2.action.slotSelectAfterFn = slotOutFn;
-                           console.log(belt)
              }
              
               slotOutFn = (function() {
@@ -4028,7 +4087,6 @@ var gam2 = {
                 
           box.repaint = 1;
           gam2.view.drawBox(box, 0);
-          console.log(belt)
                 return 1;
                 }
               })(belt, slotIn, slotInFn, box);
@@ -4116,8 +4174,11 @@ var gam2 = {
                 let boxTo = gam2.model.box.findBoxByRef(conveyor.to[0], conveyor.to[1]);
                 let slotTo = boxTo.slot.get(conveyor.to[2]).p;
 
-                refs = {from: slotFrom, to: slotTo};
-              }
+                refs = {
+                  from: slotFrom,
+                  to: slotTo,
+                };
+            }
 
               conts.push(
                 {
@@ -4127,7 +4188,17 @@ var gam2 = {
                     return function () {
                       gam2.action.box.belts.noFlow(box, belt);
                     }
-                  })(box, belt)
+                  })(box, belt),
+                  resetAction: (function (box, belt) {
+                    return function () {
+                      gam2.action.box.belts.resetFlow(box, belt);
+                    }
+                  })(box, belt),
+                  showAction: (function (box, belt) {
+                    return function () {
+                      gam2.action.box.belts.showFlow(box, belt);
+                    }
+                  })(box, belt),
                 },
               );
             }
@@ -4931,7 +5002,7 @@ var gam2 = {
       }
     },
     'everySec': function (t = 0) {
-      var cpos = gam2.model.loc.currentPos;
+      let cpos = gam2.model.loc.currentPos;
       let ds = 0, d = 0;
 
       for (let pos in gam2.model.box.list) {
@@ -5017,9 +5088,7 @@ var gam2 = {
           continue;
         }
         conveyor.timer=0;
-        if (!conveyor.from.length) {
-          continue;
-        } else {
+        if (conveyor.from.length) {
           let boxFrom = gam2.model.box.findBoxByRef(conveyor.from[0], conveyor.from[1]);
           let slotFrom = boxFrom.slot.get(conveyor.from[2]).p;
           let boxTo = gam2.model.box.findBoxByRef(conveyor.to[0], conveyor.to[1]);
@@ -5031,11 +5100,13 @@ var gam2 = {
             slotTo.amount += avl;
             slotTo.item = slotFrom.item;
             slotTo.unitValue = slotFrom.unitValue;
+
+            if (cpos === conveyor.from[0]) {
+              boxFrom.repaint = 1;
+              gam2.view.drawBox(boxFrom, 0);
+            }
             
-            boxFrom.repaint = 1;
-            gam2.view.drawBox(boxFrom, 0);
-            
-            if(boxFrom.pos !== boxTo.pos) {
+            if((boxFrom.pos !== boxTo.pos) && (cpos === conveyor.to[0])) {
               boxTo.repaint = 1;
               gam2.view.drawBox(boxTo, 0);
             }
