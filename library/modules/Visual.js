@@ -333,7 +333,11 @@ function __addContainerControls(pub) {
         attrs.role = 'button';
 
         a.attr(attrs);
-        a.text(text);
+        if(typeof text==='object') {
+          a.append(text);
+        } else {
+          a.text(text);
+        }
 
         this.el.append(a);
 
@@ -393,8 +397,21 @@ function __addContainerControls(pub) {
         this.el.remove();
         return returnUpEl? this.from(preEl) : this;
     }
+    
+    pub.getIconEl = function(icon, classes = false, attrs = false) {
+      var a = $('<i>')
+        .addClass('fas')
+        .addClass('fa-' + icon);
+      if (classes) {
+        a.addClass(classes);
+      }
+      if (attrs) {
+        a.attr(attrs);
+      }
+      return a;
+    }
 
-    pub.addIcon = function (icon, classes = false, attrs = false) {
+    pub.addIcon = function (icon, click=false, classes = false, attrs = false) {
         var a = $('<i>')
             .addClass('fas')
             .addClass('fa-' + icon);
@@ -404,7 +421,10 @@ function __addContainerControls(pub) {
         if (attrs) {
             a.attr(attrs);
         }
-
+        if(typeof click==='function') {
+          a.click(click);
+        }
+        
         this.el.append(a);
 
         return this;
