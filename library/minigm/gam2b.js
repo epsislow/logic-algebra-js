@@ -1642,7 +1642,7 @@ var gam2 = {
               dText = dText
                 .container('belt')
                 //.addIcon('code', elem.showAction,'button btn-success')
-                .addButton(dText.getIconEl('code'), elem.showAction, 'button btn-success')
+                .addButton(dText.getIconEl('angle-left').append(' ').append(dText.getIconEl('angle-right')), elem.showAction, 'button btn-success')
                 .addButton(dText.getIconEl('times'), elem.resetAction, 'button btn-danger')
                 .up();
 
