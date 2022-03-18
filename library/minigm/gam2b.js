@@ -3067,6 +3067,7 @@ var gam2 = {
           'amount': 0,
           'unitValue': 0,
           'form': '',
+          'type': 'slot',
           'is': 'slot',
           'requireAmount': 0,
         }, function (pub) {
@@ -3238,7 +3239,11 @@ var gam2 = {
     'slotClick': function (el, obj, isOut = 0) {
       let oldObj = 0;
       let cpos = gam2.model.loc.currentPos;
+      
       if (this.slotSelectType!=='item') {
+        if(obj.slot.type!=='slot') {
+          return;
+        }
         obj.slot.selected = 3;
         
         if (this.slotSelectedObj) {
@@ -3297,7 +3302,7 @@ var gam2 = {
       let moved = 0;
       if (oldObj && oldObj.slot.item > 0) {
         if (obj.slot.item !== oldObj.slot.item) {
-
+          
           obj.slot.item = oldObj.slot.item;
           obj.slot.amount = 0;
 
@@ -3306,9 +3311,12 @@ var gam2 = {
         if (this.slotSelectHalf) {
           amount = Math.round(amount / 2);
         }
-
+        
         obj.slot.amount += amount;
         obj.slot.unitValue = oldObj.slot.unitValue;
+        if(amount===0) {
+          obj.slot.item=0;
+        }
 
         oldObj.slot.amount -= amount;
         if (oldObj.slot.amount <= 0) {
@@ -3316,6 +3324,23 @@ var gam2 = {
             oldObj.slot.item = 0;
           }
           oldObj.slot.unitValue = 0;
+        }
+        
+        
+        if (oldObj.slot.type === 'bank' && obj.slot.type==='slot') {
+          let coins = gam2.action.getCoins();
+          let u = gam2.action.box.bank.u;
+            
+          let unit = u[oldObj.slot.item-1];
+          coins.money -= amount* unit;
+          gam2.view.paintTopBar(coins);
+        } else if(obj.slot.type === 'bank' && oldObj.slot.type === 'slot') {
+          let coins = gam2.action.getCoins();
+          let u = gam2.action.box.bank.u;
+        
+          let unit = u[obj.slot.item - 1];
+          coins.money += amount * unit;
+          gam2.view.paintTopBar(coins);
         }
 
         //
@@ -4137,6 +4162,7 @@ var gam2 = {
                     
 
             slotOut.item = 1 + box.unit;
+            slotOut.type='bank';
             
             slotOut.amount = Math.floor(coins.money / u[box.unit]);
             slotOut.amount = slotOut.amount > 10000? 10000: slotOut.amount;
