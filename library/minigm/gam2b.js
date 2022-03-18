@@ -1631,6 +1631,8 @@ var gam2 = {
               .container(icoClass, 'div', icoStyle)
               .up()
               .up();
+          } else if (elem.type === 'btn') {
+            dText.addButton(elem.text, elem.click, 'button btn-'+ elem.color);
           } else if (elem.type === 'belt') {
             if (elem.refs) {
 
@@ -4008,13 +4010,13 @@ var gam2 = {
       },
       'bank': {
         'u':[
-          500,
-          50000,
+          5,
+          5000,
           5000000, 
-          500000000, 
-          50000000000, 
-          5000000000000,
-          500000000000000,
+          5000000000, 
+          5000000000000, 
+          5000000000000000,
+          5000000000000000000,
           ],
         'loans': {'id':1},
         'addLoan': function (loanAmount, interest, periods, periodInterval) {
@@ -4047,6 +4049,7 @@ var gam2 = {
           box.periodInterval = 10;
           box.maxLoans = 10;
           box.canChangeLoan = 0;
+          box.unit=0;
 
           box.levelCost = 100;
           box.levelCostFloat = 5;
@@ -4086,6 +4089,15 @@ var gam2 = {
                 }
               })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
             }
+            
+            acts.push(['>>', (function (box) {
+              return function () {
+                box.unit = (++box.unit)> 5? 0:box.unit;
+                box.repaint=1;
+                
+          gam2.view.drawBox(box, 0);
+              }
+            })(box), 'btn-success']);
 
             acts.push(['inf', (function (box) {
               return function () {
@@ -4121,9 +4133,13 @@ var gam2 = {
             let slot = box.slot.p;
             let slotOut = box.slotOut.p;
             let coins = gam2.action.getCoins();
+            let u = gam2.action.box.bank.u;
+                    
 
-            slotOut.item = 6;
-            slotOut.amount = coins.money;
+            slotOut.item = 1 + box.unit;
+            
+            slotOut.amount = Math.floor(coins.money / u[box.unit]);
+            slotOut.amount = slotOut.amount > 10000? 10000: slotOut.amount;
 
             let conts = [
               {
@@ -4134,6 +4150,8 @@ var gam2 = {
                 amount: slotOut.amount,
                 missing: (slotOut.item > 0 ? 0 : 1)
               },
+              /*{type: 'btn', text: '<', click: false, color:'info'},
+              {type: 'btn', text: '>', click: false, color:'info'},*/
               {type: 'br'},
               {type: 'br'},
               {
@@ -4146,14 +4164,16 @@ var gam2 = {
               }
             ];
 
-            if (slot.item > 0 && slot.item < 10) {
+            if (slot.item > 0 && slot.item < 7) {
               let res = gam2.model.res.reg[slot.item];
-              conts.push({type: 'text', text: 'x' + ' $' });
+              conts.push({type: 'text', text:'= $'+ slot.amount* u[slot.item-1] });
+            } else {
+      
+              conts.push({type: 'br'});
             }
 
 
             if (box.level < 20) {
-              conts.push({type: 'br'});
               conts.push({type: 'text', text: 'Next Lvl: $' + box.levelCost});
 
             }
