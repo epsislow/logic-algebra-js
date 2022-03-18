@@ -3965,7 +3965,32 @@ var gam2 = {
           return state;
         }
       },
-      'bank': {},
+      'bank': {
+        'u':[
+          500,
+          50000,
+          5000000, 
+          500000000, 
+          50000000000, 
+          5000000000000,
+          500000000000000,
+          ],
+        'loan': {'id':1},
+        'defaults': function() {
+          return {
+            'slots': 1,
+            'slot':{},
+            'slotsOut': 1,
+            'slotOut': {},
+            'loanMaxU': 3,
+            'interess': 25,
+            'maxPeriods': 100,
+            'period': 10,
+            'maxLoans':5,
+            'canChangeLoan':0,
+          }
+        }
+      },
       'belts': {
         'conveyor': {'id': 1},
         'addConveyor': function (from = 0, to = 0) {
