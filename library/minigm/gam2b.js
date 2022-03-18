@@ -924,6 +924,47 @@ var gam2 = {
           };
         }
       },
+      'bank': {
+        'paint': function (id, box, clear = 0) {
+          let opt = {};
+
+          let state = gam2.action.box.bank.state(box);
+
+          let btns = {}, btns2 = {};
+
+          if (clear) {
+            btns.clr = 1;
+            btns.add = state.actions();
+            btns2.clr = 1;
+            btns2.add = state.actions2();
+
+          } else {
+            //btns.add = state.actionsUpdate();
+
+            btns.clr = 1;
+            btns.add = state.actions();
+            btns2.clr = 1;
+            btns2.add = state.actions2();
+
+          }
+
+          opt.lvl = box.level;
+
+          opt.btns = btns;
+          opt.btns2 = btns2;
+
+          let clearTikOpt = state.clearTikOpt();
+          if (clearTikOpt === 1) {
+            opt.tikUp = true;
+          }
+
+          if (clear) {
+            opt.content = state.content();
+          }
+
+          return opt;
+        }
+      },
       'belts': {
         'paint': function (id, box, clear = 0) {
           let opt = {};
@@ -3975,21 +4016,162 @@ var gam2 = {
           5000000000000,
           500000000000000,
           ],
-        'loan': {'id':1},
-        'defaults': function() {
-          return {
-            'slots': 1,
-            'slot':{},
-            'slotsOut': 1,
-            'slotOut': {},
-            'loanMaxU': 3,
-            'interess': 25,
-            'maxPeriods': 100,
-            'period': 10,
-            'maxLoans':5,
-            'canChangeLoan':0,
+        'loans': {'id':1},
+        'addLoan': function (loanAmount, interest, periods, periodInterval) {
+          let id = this.loans.id;
+
+          let loan = {
+            'id': id,
+            'loan': loanAmount,
+            'interest': interest,
+            'periods': periods,
+            'periodInterval': periodInterval,
           }
-        }
+
+          this.loans[id] = loan;
+
+          this.loans.id++;
+          return loan;
+        },
+        'defaults': function(box) {
+          box.type = 'bank';
+          box.level = 1;
+          box.slots = 1;
+          box.slot = {};
+          box.slotsOut = 1;
+          box.slotOut = {};
+
+          box.loanMaxU = 3;
+          box.interest = 25;
+          box.maxPeriods = 100;
+          box.periodInterval = 10;
+          box.maxLoans = 10;
+          box.canChangeLoan = 0;
+
+          box.levelCost = 100;
+          box.levelCostFloat = 5;
+          box.clearTik = 0;
+          box.tickPaint = 1;
+
+          return box;
+        },
+        'lvlUp': function (box) {
+          let coins = gam2.action.getCoins();
+
+          if (coins.money < box.levelCost) {
+            return;
+          }
+          coins.money -= box.levelCost;
+
+          box.levelCostFloat *= 2;
+          box.levelCost = Math.round(box.levelCostFloat);
+
+          box.level++;
+
+          box.repaint = 1;
+          gam2.view.paintTopBar(coins);
+          gam2.view.drawBox(box, 0);
+        },
+        'state': function (box) {
+          let state = {};
+
+          state.actions = function () {
+            let acts = [];
+            let coins = gam2.action.getCoins();
+
+            if (box.level < 20) {
+              acts.push(['Lvl up', (function (box) {
+                return function () {
+                  gam2.action.box.bank.lvlUp(box)
+                }
+              })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
+            }
+
+            acts.push(['inf', (function (box) {
+              return function () {
+                gam2.action.box.storage.rot3(box)
+              }
+            })(box), 'btn-light']);
+
+            return acts;
+          }
+
+          state.actions2 = function () {
+            let acts2 = [];
+            acts2.push(['Drop', (function (box) {
+              return function () {
+                gam2.action.dropBox(box)
+              }
+            })(box), 'btn-danger']);
+
+            acts2.push(['inf', (function (box) {
+              return function () {
+                gam2.action.box.storage.rot3(box)
+              }
+            })(box), 'btn-light']);
+
+            return acts2;
+          }
+
+          state.actionsUpdate = function () {
+            return [];
+          }
+
+          state.content = function () {
+            let slot = box.slot.p;
+            let slotOut = box.slotOut.p;
+            let coins = gam2.action.getCoins();
+
+            slotOut.item = 6;
+            slotOut.amount = coins.money;
+
+            let conts = [
+              {
+                type: 'slot-out',
+                slotRefs: {slot: slotOut, box: box},
+                selected: slotOut.selected,
+                res: slotOut.item,
+                amount: slotOut.amount,
+                missing: (slotOut.item > 0 ? 0 : 1)
+              },
+              {type: 'br'},
+              {type: 'br'},
+              {
+                type: 'slot',
+                slotRefs: {slot: slot, box: box},
+                selected: slot.selected,
+                res: slot.item,
+                amount: slot.amount,
+                missing: (slot.item > 0 ? 0 : 1)
+              }
+            ];
+
+            if (slot.item > 0 && slot.item < 10) {
+              let res = gam2.model.res.reg[slot.item];
+              conts.push({type: 'text', text: 'x' + ' $' });
+            }
+
+
+            if (box.level < 20) {
+              conts.push({type: 'br'});
+              conts.push({type: 'text', text: 'Next Lvl: $' + box.levelCost});
+
+            }
+
+            return conts;
+          }
+
+          state.clearTikOpt = function () {
+            if (!box.clearTik) {
+              return false;
+            }
+            let clearTik = box.clearTik;
+            box.clearTik = 0;
+            return clearTik;
+          }
+
+          return state;
+        },
       },
       'belts': {
         'conveyor': {'id': 1},
@@ -5409,6 +5591,8 @@ var gam2 = {
         box = {type: 'defences', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10};
       } else if (type === 'power') {
         box = {type: 'power', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10};
+      } else if (type === 'bank') {
+        box = gam2.action.box.bank.defaults({type: 'bank', pos: pos});
       } else if (type === 'belts') {
         box = gam2.action.box.belts.defaults({type: 'belts', pos: pos});
       } else if (type === 'launch-pad') {
@@ -5467,7 +5651,7 @@ var gam2 = {
             'power': 5000,
             'platform': 250000,
             'belts': 200,
-            'bank': 50000,
+            'bank': 500,
           },
           'asteroid-st': {
             'miner': 1000,
@@ -5480,7 +5664,7 @@ var gam2 = {
             //    'defences': 10000,
             'power': 5000,
             'platform': 250000,
-            'bank': 50000,
+            'bank': 500,
           },
           'research-st': {
             'laboratory': 100000,
@@ -5492,7 +5676,7 @@ var gam2 = {
             'storage': 2500,
             'launch-pad': 25,
             'platform': 250000,
-            'bank': 50000,
+            'bank': 500,
           },
           'trade-st': {
             'shipyard': 200000,
@@ -5504,7 +5688,7 @@ var gam2 = {
             'power': 5000,
             'belts': 200,
             'platform': 250000,
-            'bank': 50000,
+            'bank': 500,
           },
           'city': {
             'dwellings': 1250,
@@ -5516,7 +5700,7 @@ var gam2 = {
             'belts': 200,
             'storage': 2500,
             'launch-pad': 25,
-            'bank': 50000,
+            'bank': 500,
           }
         };
 
