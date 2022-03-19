@@ -2067,6 +2067,16 @@ var gam2 = {
         'bg': 'silo',
         'dashed': 0,
       },
+      'warehouse': {
+        'icon': 'play',
+        'bg': 'green',
+        'dashed': 0,
+      },
+      'spaceport': {
+        'icon': 'play',
+        'bg': 'orange',
+        'dashed': 0,
+      },
       'storage': {
         'icon': 'play',
         'bg': 'orange',
