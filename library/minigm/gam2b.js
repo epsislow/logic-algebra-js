@@ -1251,7 +1251,8 @@ var gam2 = {
         coins.money,
         coins.ppl[0], coins.ppl[1],
         coins.power[0], coins.power[1]
-      )
+      );
+      
     },
     'drawBox': function (box, paintAll = 0) {
       if (gam2.model.flags.calcIdle) {
@@ -2069,12 +2070,12 @@ var gam2 = {
       },
       'warehouse': {
         'icon': 'play',
-        'bg': 'green',
+        'bg': 'gray',
         'dashed': 0,
       },
       'spaceport': {
         'icon': 'play',
-        'bg': 'orange',
+        'bg': 'silo',
         'dashed': 0,
       },
       'storage': {
@@ -4054,6 +4055,22 @@ var gam2 = {
           5000000000000000000,
           ],
         'loans': {'id':1},
+        'banks': {},
+        'register': function(cpos, boxPos) {
+          if(!(cpos in this.banks)) {
+            this.banks[cpos] = {};
+          }
+          this.banks[cpos][boxPos] = boxPos;
+        },
+        'drop': function(cpos, boxPos) {
+          if (!(cpos in this.banks)) {
+            return;
+          }
+          if (!(boxPos in this.banks[cpos])) {
+            return;
+          }
+          delete this.banks[cpos][boxPos];
+        },
         'addLoan': function (loanAmount, interest, periods, periodInterval) {
           let id = this.loans.id;
 
@@ -5649,6 +5666,7 @@ var gam2 = {
         box = {type: 'power', pads: 1, pad: {}, pos: pos, level: 1, levelCost: 10};
       } else if (type === 'bank') {
         box = gam2.action.box.bank.defaults({type: 'bank', pos: pos});
+        gam2.action.box.bank.register(cpos, box.pos);
       } else if (type === 'belts') {
         box = gam2.action.box.belts.defaults({type: 'belts', pos: pos});
       } else if (type === 'launch-pad') {
