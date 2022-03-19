@@ -1252,7 +1252,18 @@ var gam2 = {
         coins.ppl[0], coins.ppl[1],
         coins.power[0], coins.power[1]
       );
-      
+      let b= gam2.action.box.bank.banks;
+      let cpos = gam2.model.loc.currentPos;
+      if(cpos in b) {
+        for(let boxPos in b[cpos]) {
+            let box = gam2.model.box.findBoxByRef(cpos, boxPos);
+            console.log('kk',cpos, boxPos, box);
+            if(box) {
+              box.repaint = 1;
+              gam2.view.drawBox(box, 0);
+            }
+        }
+      }
     },
     'drawBox': function (box, paintAll = 0) {
       if (gam2.model.flags.calcIdle) {
@@ -1271,7 +1282,6 @@ var gam2 = {
         return;
       }
       if (cpos in gam2.model.box.coins) {
-        this.paintTopBar(gam2.model.box.coins[cpos])
       } else {
         gam2.init.topBar();
       }
@@ -2250,7 +2260,7 @@ var gam2 = {
     },
     'box': {
       'findBoxByRef': function (cpos, pos) {
-        var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos])
+        var p = gam2.model.constr.getPropList(gam2.model.box.list[cpos]);
         if (!p.length) {
           return 0;
         }
@@ -2258,7 +2268,7 @@ var gam2 = {
           if (!p.hasOwnProperty(i)) {
             continue;
           }
-          if (p[i].pos === pos) {
+          if (p[i].pos == pos) {
             return p[i];
           }
         }
@@ -5608,6 +5618,7 @@ var gam2 = {
 
       let blist = gam2.model.box.list[cpos];
       let op = blist.first.getBy('pos', box.pos);
+      gam2.action.box.bank.drop(cpos, box.pos);
 
       let nx = op.next;
       let pv = op.prev;
@@ -5622,9 +5633,8 @@ var gam2 = {
       } else if (!nx && !pv) {
         gam2.model.box.list[cpos] =
           gam2.model.constr.addBox({type: 'builder', level: '', levelCost: 10000, pos: 1});
-
       }
-
+      
       gam2.view.paintTopBar(coins);
 
       gam2.view.deleteEls(gam2.view.cardBox);
