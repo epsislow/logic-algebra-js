@@ -819,6 +819,7 @@ var gam2 = {
               gam2.action.box.storage.rot3(box)
             }
           })(box), 'btn-light']);
+          let cpos = gam2.model.loc.currentPos;
 
           return {
             lvl: box.level,
@@ -828,7 +829,7 @@ var gam2 = {
             content: [
               {
                 type: 'slot',
-                slotRefs: {slot: {item: 0, amount: 0, unitValue: 0}, box: box},
+                slotRefs: {slot: {item: 0, amount: 0, unitValue: 0}, box: box, cpos:cpos},
                 selected: 0,
                 res: 8,
                 amount: 3,
@@ -862,6 +863,7 @@ var gam2 = {
               gam2.action.box.storage.rot3(box)
             }
           })(box), 'btn-light']);
+          let cpos = gam2.model.loc.currentPos;
 
           return {
             lvl: box.level,
@@ -871,7 +873,7 @@ var gam2 = {
             content: [
               {
                 type: 'slot',
-                slotRefs: {slot: {item: 0, amount: 0, unitValue: 0}, box: box},
+                slotRefs: {slot: {item: 0, amount: 0, unitValue: 0}, box: box, cpos:cpos},
                 selected: 0,
                 res: 8,
                 amount: 3,
@@ -905,6 +907,7 @@ var gam2 = {
               gam2.action.box.storage.rot3(box)
             }
           })(box), 'btn-light']);
+          let cpos = gam2.model.loc.currentPos;
 
           return {
             lvl: box.level,
@@ -914,7 +917,7 @@ var gam2 = {
             content: [
               {
                 type: 'slot',
-                slotRefs: {slot: {item: 8, amount: 3, unitValue: 0}, box: box},
+                slotRefs: {slot: {item: 8, amount: 3, unitValue: 0}, box: box, cpos:cpos},
                 selected: 0,
                 res: 8,
                 amount: 3,
@@ -3261,6 +3264,7 @@ var gam2 = {
       let oldObj = 0;
       let cpos = gam2.model.loc.currentPos;
       
+      
       if (this.slotSelectType!=='item') {
         if(obj.slot.type!=='slot') {
           return;
@@ -3290,9 +3294,16 @@ var gam2 = {
         }
         return;
       }
+      if (this.slotSelectedObj && this.slotSelectedObj.cpos !== cpos) {
+        this.slotSelectedObj.slot.selected = 0;
+        this.slotSelectedObj.box.repaint = 1;
+        this.slotSelectedObj=0;
+        this.slotSelectHalf=0;
+      }
       
       if (this.slotSelectedObj) {
         oldObj = this.slotSelectedObj;
+        
         let returnAfter = 0;
         if (obj.slot === this.slotSelectedObj.slot) {
           this.slotSelectHalf = (this.slotSelectHalf + 1) % 2;
@@ -3692,10 +3703,11 @@ var gam2 = {
 
           state.content = function () {
             let conts;
+            let cpos = gam2.model.loc.currentPos;
             conts = [
               {
                 type: 'slot-out',
-                slotRefs: {slot: slot, box: box},
+                slotRefs: {slot: slot, box: box, cpos: cpos},
                 selected: slot.selected,
                 res: slot.item,
                 amount: slot.amount,
@@ -3999,11 +4011,12 @@ var gam2 = {
 
           state.content = function () {
             let conts = [];
+            let cpos = gam2.model.loc.currentPos;
             for (let i in slots) {
               conts.push(
                 {
                   type: 'slot',
-                  slotRefs: {slot: slots[i], box: box},
+                  slotRefs: {slot: slots[i], box: box, cpos:cpos},
                   selected: slots[i].selected,
                   res: slots[i].item,
                   amount: slots[i].amount,
@@ -4014,7 +4027,7 @@ var gam2 = {
             conts.push(
               {
                 type: 'slot-out',
-                slotRefs: {slot: slot, box: box},
+                slotRefs: {slot: slot, box: box, cpos:cpos},
                 selected: slot.selected,
                 res: slot.item,
                 amount: slot.amount,
@@ -4196,7 +4209,7 @@ var gam2 = {
             let slotOut = box.slotOut.p;
             let coins = gam2.action.getCoins();
             let u = gam2.action.box.bank.u;
-                    
+            let cpos = gam2.model.loc.currentPos;
 
             slotOut.item = 1 + box.unit;
             slotOut.type='bank';
@@ -4207,7 +4220,7 @@ var gam2 = {
             let conts = [
               {
                 type: 'slot-out',
-                slotRefs: {slot: slotOut, box: box},
+                slotRefs: {slot: slotOut, box: box, cpos:cpos},
                 selected: slotOut.selected,
                 res: slotOut.item,
                 amount: slotOut.amount,
@@ -4219,7 +4232,7 @@ var gam2 = {
               {type: 'br'},
               {
                 type: 'slot',
-                slotRefs: {slot: slot, box: box},
+                slotRefs: {slot: slot, box: box, cpos:cpos},
                 selected: slot.selected,
                 res: slot.item,
                 amount: slot.amount,
@@ -5049,7 +5062,7 @@ var gam2 = {
           state.content = function () {
             let conts = [];
             let ships = gam2.action.box['launch-pad'].ships;
-
+            let cpos = gam2.model.loc.currentPos;
 
             //  if (box.level < 50) {
             for (let i = 0; i < box.pads; i++) {
@@ -5067,7 +5080,7 @@ var gam2 = {
               conts.push(
                 {
                   type: 'slot',
-                  slotRefs: {slot: slot, box: box},
+                  slotRefs: {slot: slot, box: box, cpos:cpos},
                   selected: slot.selected,
                   res: slot.item,
                   amount: slot.amount,
@@ -5245,6 +5258,7 @@ var gam2 = {
 
           state.content = function () {
             let conts = [];
+            let cpos = gam2.model.loc.currentPos;
 
             var slots = gam2.model.constr.getPropList(box.slot);
 
@@ -5253,7 +5267,7 @@ var gam2 = {
               conts.push(
                 {
                   type: 'slot',
-                  slotRefs: {slot: slot, box: box},
+                  slotRefs: {slot: slot, box: box, cpos:cpos},
                   selected: slot.selected,
                   res: slot.item,
                   amount: slot.amount,
