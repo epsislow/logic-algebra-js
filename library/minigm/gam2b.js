@@ -4130,6 +4130,45 @@ var gam2 = {
           let resIn = {};
           let resOut = {};
           
+          let seed = gam2.model.rand.seed.res;
+          let rd = gam2.model.rand.rd;
+          let seedId = rd.hashCode(seed + level);
+          
+          let res = gam2.model.res.reg;
+          
+          //let rdNam = gam2.model.rand.rdNam.bind(gam2.model.rand);
+          
+          let max = rd.rand(1, 1+ (level - (level %10) /10), seedId);
+          let bestI = 0, f;
+          for(let i=0; i< max; i++) {
+            f = rd.rand(15, res.length-2, seedId);
+            bestI = f > bestI? f: bestI;
+            resIn[f] = rd.rand(5, 5000, seedId);
+          }
+          
+          let u = gam2.action.box.bank.u;
+          
+          if(level % 5 < 3 ) {
+            let am= Math.round(res[bestI].unitValue*resIn[bestI]/ res[bestI+1].unitValue)
+            resOut[bestI+1] = am+1;
+          } else {
+            let val = Math.round(res[bestI].unitValue * resIn[bestI] * 1.2);
+            let y=0;
+            for(var i= u.length-1; i >= 0; i--) {
+              if(u[i] > val) {
+                continue;
+              }
+              val = Math.floor(val / u[i]);
+              val = val > 10000? 10000: val;
+              resOut[i-1] = val;
+              y=1;
+              break;
+            }
+            if(!y) {
+              resOut[u.length]= 9999;
+            }
+          }
+          
           let quest = {
             level: level,
             resIn: resIn,
@@ -4147,11 +4186,17 @@ var gam2 = {
           box.slotsOut = 1;
           box.slotOut = {};
           box.quest = 1;
+          box.questId = gam2.action.box.trader.quests.id +1;
 
           box.levelCost = 1000;
           box.levelCostFloat = 1000;
           box.clearTik = 0;
           box.tick = 100;
+          this.addQuest(box.level+0);
+          this.addQuest(box.level+1);
+          this.addQuest(box.level+2);
+          this.addQuest(box.level+3);
+          this.addQuest(box.level+4);
 
           return box;
         },
@@ -4237,6 +4282,17 @@ var gam2 = {
 
             slotOut.type='trade';
             
+            let qId = box.questId + box.quest -1;
+            let q = gam2.action.box.trader.quests[qId];
+            if(q) {
+              let keys = Object.keys(q.resIn);
+              slot.item = keys[0];
+              slot.amount = q.resIn[keys[0]];
+              
+              let keysOut = Object.keys(q.resOut);
+              slotOut.item = keysOut[0];
+              slotOut.amount = q.resOut[keysOut[0]];
+            }
             
             let conts = [
               {
