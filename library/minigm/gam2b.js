@@ -436,6 +436,8 @@ var gam2 = {
         secs = gam2.idle.calcTimeIdle(lastTs);
         gam2.idle.calcSec(secs);
       }
+      let coins = gam2.action.getCoins();
+      gam2.view.paintTopBar(coins);
 
       console.log(gam2.action.box['launch-pad'].plans)
       alert('Loaded. ' + (lastTs ? 'Passed ' + gam2.idle.getTime(secs) : ''));
@@ -669,6 +671,10 @@ var gam2 = {
       gam2.model.reputation.genh(8);
       gam2.model.res.genRecepies();
       gam2.model.res.genItems();
+      
+      gam2.view.paintTopBar(
+      this.model.box.coins[crkey]
+      );
 
       console.log(gam2.model.res.recepies);
     },
@@ -1255,12 +1261,13 @@ var gam2 = {
         coins.ppl[0], coins.ppl[1],
         coins.power[0], coins.power[1]
       );
+      
       let b= gam2.action.box.bank.banks;
       let cpos = gam2.model.loc.currentPos;
       if(cpos in b) {
         for(let boxPos in b[cpos]) {
             let box = gam2.model.box.findBoxByRef(cpos, boxPos);
-            console.log('kk',cpos, boxPos, box);
+          //  console.log('kk',cpos, boxPos, box);
             if(box) {
               box.repaint = 1;
               gam2.view.drawBox(box, 0);
@@ -3486,6 +3493,7 @@ var gam2 = {
           box.maxAmount += 500;
 
           box.repaint = 1;
+          //let coins = gam2.action.getCoins();
           gam2.view.paintTopBar(coins);
           gam2.view.drawBox(box, 0);
         },
@@ -5914,7 +5922,10 @@ var gam2 = {
         gam2.model.loc.currentPos = [p0, p1, p2, p3].join('.');
 
         gam2.view.drawBoxes(1);
+        let coins = gam2.action.getCoins();
+        gam2.view.paintTopBar(coins);
         gam2.view.showLocOptions(pp, p0, p1, p2, p3);
+        
       },
       'unlockLoc': function (el, bi, plist) {
         if (Object.keys(gam2.view.cardBox).length) {
