@@ -4125,10 +4125,15 @@ var gam2 = {
         'quests': {
           'id': 0,
         },
-        'addQuest': function() {
+        'addQuest': function(level=1) {
           let id = ++this.quests.id;
+          let resIn = {};
+          let resOut = {};
+          
           let quest = {
-            
+            level: level,
+            resIn: resIn,
+            resOut: resOut,
           };
           
           this.quests[id] = quest;
