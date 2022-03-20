@@ -933,6 +933,47 @@ var gam2 = {
           };
         }
       },
+      'trader': {
+        'paint': function (id, box, clear = 0) {
+          let opt = {};
+
+          let state = gam2.action.box.trader.state(box);
+
+          let btns = {}, btns2 = {};
+
+          if (clear) {
+            btns.clr = 1;
+            btns.add = state.actions();
+            btns2.clr = 1;
+            btns2.add = state.actions2();
+
+          } else {
+            //btns.add = state.actionsUpdate();
+
+            btns.clr = 1;
+            btns.add = state.actions();
+            btns2.clr = 1;
+            btns2.add = state.actions2();
+
+          }
+
+          opt.lvl = box.level;
+
+          opt.btns = btns;
+          opt.btns2 = btns2;
+
+          let clearTikOpt = state.clearTikOpt();
+          if (clearTikOpt === 1) {
+            opt.tikUp = true;
+          }
+
+          if (clear) {
+            opt.content = state.content();
+          }
+
+          return opt;
+        }
+      },
       'bank': {
         'paint': function (id, box, clear = 0) {
           let opt = {};
@@ -2094,6 +2135,11 @@ var gam2 = {
         'dashed': 0,
       },
       'spaceport': {
+        'icon': 'play',
+        'bg': 'silo',
+        'dashed': 0,
+      },
+      'trader': {
         'icon': 'play',
         'bg': 'silo',
         'dashed': 0,
@@ -4075,6 +4121,151 @@ var gam2 = {
           return state;
         }
       },
+      'trader': {
+         'defaults': function(box) {
+          box.type = 'trader';
+          box.level = 1;
+          box.slots = 2;
+          box.slot = {};
+          box.slotsOut = 1;
+          box.slotOut = {};
+
+          box.levelCost = 1000;
+          box.levelCostFloat = 1000;
+          box.clearTik = 0;
+          box.tickPaint = 1;
+
+          return box;
+        },
+        'lvlUp': function (box) {
+          let coins = gam2.action.getCoins();
+
+          if (coins.money < box.levelCost) {
+            return;
+          }
+          coins.money -= box.levelCost;
+
+          box.levelCostFloat *= 2;
+          box.levelCost = Math.round(box.levelCostFloat);
+
+          box.level++;
+
+          box.repaint = 1;
+          gam2.view.paintTopBar(coins);
+          gam2.view.drawBox(box, 0);
+        },
+        'state': function (box) {
+          let state = {};
+
+          state.actions = function () {
+            let acts = [];
+            let coins = gam2.action.getCoins();
+
+            if (box.level < 20) {
+              acts.push(['Lvl up', (function (box) {
+                return function () {
+                  gam2.action.box.bank.lvlUp(box)
+                }
+              })(box), (coins.money >= box.levelCost) ? 'btn-success' : 'btn-danger']);
+            }
+            
+            acts.push(['>>', (function (box) {
+              return function () {
+                box.quest = (++box.quest)> 5? 0:box.quest;
+                box.repaint=1;
+                
+                gam2.view.drawBox(box, 0);
+              }
+            })(box), 'btn-success']);
+
+            acts.push(['inf', (function (box) {
+              return function () {
+                gam2.action.box.storage.rot3(box)
+              }
+            })(box), 'btn-light']);
+
+            return acts;
+          }
+
+          state.actions2 = function () {
+            let acts2 = [];
+            acts2.push(['Drop', (function (box) {
+              return function () {
+                gam2.action.dropBox(box)
+              }
+            })(box), 'btn-danger']);
+
+            acts2.push(['inf', (function (box) {
+              return function () {
+                gam2.action.box.storage.rot3(box)
+              }
+            })(box), 'btn-light']);
+
+            return acts2;
+          }
+
+          state.actionsUpdate = function () {
+            return [];
+          }
+
+          state.content = function () {
+            let slot = box.slot.p;
+            let slot2 = box.slot.next.p;
+            let slotOut = box.slotOut.p;
+            let cpos = gam2.model.loc.currentPos;
+
+            slotOut.type='trade';
+            
+            
+            let conts = [
+              {
+                type: 'slot',
+                slotRefs: {slot: slot, box: box, cpos:cpos},
+                selected: slot.selected,
+                res: slot.item,
+                amount: slot.amount,
+                missing: (slot.item > 0 ? 0 : 1)
+              },
+              {
+                type: 'slot-out',
+                slotRefs: {slot: slotOut, box: box, cpos:cpos},
+                selected: slotOut.selected,
+                res: slotOut.item,
+                amount: slotOut.amount,
+                missing: (slotOut.item > 0 ? 0 : 1)
+              },
+              {type:'br'},
+              {type:'br'},
+              {
+                type: 'slot',
+                slotRefs: {slot: slot2, box: box, cpos:cpos},
+                selected: slot2.selected,
+                res: slot2.item,
+                amount: slot2.amount,
+                missing: (slot2.item > 0 ? 0 : 1)
+              },
+              {type:'br'},
+            ];
+
+            if (box.level < 20) {
+              conts.push({type: 'text', text: 'Next Lvl: $' + box.levelCost});
+            }
+
+            return conts;
+          }
+
+          state.clearTikOpt = function () {
+            if (!box.clearTik) {
+              return false;
+            }
+            let clearTik = box.clearTik;
+            box.clearTik = 0;
+            return clearTik;
+          }
+
+          return state;
+        },
+      },
       'bank': {
         'u':[
           5,
@@ -5701,6 +5892,8 @@ var gam2 = {
         gam2.action.box.bank.register(cpos, box.pos);
       } else if (type === 'belts') {
         box = gam2.action.box.belts.defaults({type: 'belts', pos: pos});
+      } else if (type === 'trader') {
+        box = gam2.action.box.trader.defaults({type: 'trader', pos: pos});
       } else if (type === 'launch-pad') {
         box = gam2.action.box['launch-pad'].defaults({type: 'launch-pad', pos: pos});
 
