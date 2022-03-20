@@ -4122,6 +4122,18 @@ var gam2 = {
         }
       },
       'trader': {
+        'quests': {
+          'id': 0,
+        },
+        'addQuest': function() {
+          let id = ++this.quests.id;
+          let quest = {
+            
+          };
+          
+          this.quests[id] = quest;
+          return quest;
+        },
          'defaults': function(box) {
           box.type = 'trader';
           box.level = 1;
@@ -4129,13 +4141,17 @@ var gam2 = {
           box.slot = {};
           box.slotsOut = 1;
           box.slotOut = {};
+          box.quest = 1;
 
           box.levelCost = 1000;
           box.levelCostFloat = 1000;
           box.clearTik = 0;
-          box.tickPaint = 1;
+          box.tick = 100;
 
           return box;
+        },
+        'tick': function (box) {
+          
         },
         'lvlUp': function (box) {
           let coins = gam2.action.getCoins();
@@ -4171,7 +4187,7 @@ var gam2 = {
             
             acts.push(['>>', (function (box) {
               return function () {
-                box.quest = (++box.quest)> 5? 0:box.quest;
+                box.quest = (++box.quest)> 5? 1:box.quest;
                 box.repaint=1;
                 
                 gam2.view.drawBox(box, 0);
