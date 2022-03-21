@@ -1928,10 +1928,10 @@ var gam2 = {
             let crr= pkey +'.'+pos;
             if(bl !== null && !(crr in bl)){
             bl[crr] = this.model.constr.addBox(
-              this.action.box.trader.defaults({ pos: 1 })
+              this.action.box.trader.defaults({ pos: 1, house: house, level: 19 })
             ).nextObj(
               this.model.constr.addBox(
-                this.action.box['launch-pad'].defaults({ pos: 2 })
+                this.action.box['launch-pad'].defaults({ pos: 2, house: house, level: 19 })
               )
             )
             }
@@ -3195,6 +3195,7 @@ var gam2 = {
           'powerCost': 0,
           'is': 'box',
           'rot': 0,
+          'house': 0,
           'repaint': 1,
           'timer': 0,
         }, function (pub) {
@@ -4194,7 +4195,7 @@ var gam2 = {
         },
          'defaults': function(box) {
           box.type = 'trader';
-          box.level = 1;
+          box.level = box.level?? 1;;
           box.slots = 2;
           box.slot = {};
           box.slotsOut = 1;
@@ -4238,6 +4239,9 @@ var gam2 = {
           let state = {};
 
           state.actions = function () {
+            if(box.house >0) {
+              return [];
+            }
             let acts = [];
             let coins = gam2.action.getCoins();
 
@@ -5304,6 +5308,9 @@ var gam2 = {
           var slots = gam2.model.constr.getPropList(box.slot)
 
           state.actions = function () {
+            if(box.house > 0) {
+              return [];
+            }
             let acts = [];
             let coins = gam2.action.getCoins();
 
