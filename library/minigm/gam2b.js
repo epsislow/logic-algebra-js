@@ -1376,7 +1376,7 @@ var gam2 = {
       var cel;
 
       cel = r(container ? container : this.view.content)
-        .container((box.is === 'loc' && !opt ? 'mb-3' : 'm-2') + ' p-2 unlock bg-' + color + (opt && box.type!=='empty' ? ' option' + (box.locWithBuilds ? '-bl' : '') : '') + ' rounded box-shadow text-light bg-card' + x2 + ' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id': id})
+        .container((box.is === 'loc' && !opt ? 'mb-3' : 'm-2') + ' p-2 unlock bg-' + color + (opt && box.type!=='empty' ? ' option' + (box.locWithBuilds && !box.house ? '-bl' : '') : '') + ' rounded box-shadow text-light bg-card' + x2 + ' ' + (dashed ? 'bg-dashed' : ''), 'div', '', {'id': id})
 
         .container(box.is === 'box' ? 'face front m-2' : '', 'div')
         .container('fas fa-' + icon + ' fa-bgd' + x2 + ' fa-5x', 'div', '')
@@ -1866,6 +1866,7 @@ var gam2 = {
       let rdChr = this.model.rand.rdChr.bind(this.model.rand);
       let rdNam = this.model.rand.rdNam.bind(this.model.rand);
       let cstr = this.model.constr;
+      var bl = gam2.model.box.list;
       rd.restartSeed(seedLocId);
 
       var pkeys;
@@ -1923,8 +1924,21 @@ var gam2 = {
         type = 'empty';
         if (posch.includes(pos)) {
           type = types[lvl][rd.rand(0, types[lvl].length - 1, seedLocId)];
+          if (type === 'trade-st' && house > 1) {
+            let crr= pkey +'.'+pos;
+            if(bl !== null && !(crr in bl)){
+            bl[crr] = this.model.constr.addBox(
+              this.action.box.trader.defaults({ pos: 1 })
+            ).nextObj(
+              this.model.constr.addBox(
+                this.action.box['launch-pad'].defaults({ pos: 2 })
+              )
+            )
+            }
+          }
         }
-
+        
+        
         cob = this.model.constr.addLoc(
           cstr.locProps(
             pos, type, lvl,
@@ -2211,7 +2225,7 @@ var gam2 = {
       }
     },
     'loc': {
-      'list': null,
+      'list': {},
       'current': null,
       'currentPos': '0.0.0.0',
       'maxBoxes': {
