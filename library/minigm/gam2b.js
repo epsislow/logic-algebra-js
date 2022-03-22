@@ -305,7 +305,8 @@ var gam2 = {
           data.lp.loans[p] = lp.loans[p];
         }
       }
-
+      
+      data.quests = gam2.action.box.trader.quests;
       data.coins = gam2.model.box.coins;
       data.lastTs = Math.floor(((new Date()).getTime()) / 1000);
       //c = gam2.model.box.toObj(gam2.model.box.list['7.5.7.2'].p); JSON.stringify(c);
@@ -338,6 +339,10 @@ var gam2 = {
       }
       if ('conveyor' in data) {
         gam2.action.box.belts.conveyor = data.conveyor;
+      }
+      
+      if('quests' in data) {
+        gam2.action.box.trader.quests = data.quests;
       }
 
       gam2.model.box.list = {};
@@ -3455,11 +3460,7 @@ var gam2 = {
         moved = 1;
       }
 
-      if (oldObj) {
-        oldObj.slot.selected = 0;
-        oldObj.box.repaint = 1;
-        gam2.view.drawBox(oldObj.box, 0);
-      }
+      
 
       if (!moved) {
         if(!oldObj && obj.slot.lockOut) {
@@ -3477,13 +3478,28 @@ var gam2 = {
         this.slotSelectedObj = 0;
       }
       //console.log(el);
-
+      if (moved) {
+        let bty2 = gam2.action.box[oldObj.box.type];
+        if (bty2 && ('itemMovedOut' in bty2)) {
+          bty2.itemMovedOut(oldObj.box);
+        }
+        let bty = gam2.action.box[obj.box.type];
+        if (bty && ('itemMovedIn' in bty)) {
+          bty.itemMovedIn(obj.box);
+        }
+      }
 
       if (obj.box) {
         obj.box.repaint = 1;
         gam2.view.drawBox(obj.box, 0);
       }
-
+      
+      if (oldObj) {
+        oldObj.slot.selected = 0;
+        oldObj.box.repaint = 1;
+        gam2.view.drawBox(oldObj.box, 0);
+      }
+      
       //console.log('now', obj.slot);
       //console.log('old',oldObj.slot)
     },
@@ -4151,8 +4167,13 @@ var gam2 = {
         'quests': {
           'id': 0,
         },
-        'addQuest': function(level=1) {
-          let id = ++this.quests.id;
+        'addQuest': function(level=1, id = 0) {
+          let list = gam2.action.box.trader.quests;
+          
+          if(!id) {
+            list.id += 1;
+            id = list.id;
+          }
           let resIn = {};
           let resOut = {};
           
@@ -4201,7 +4222,7 @@ var gam2 = {
             resOut: resOut,
           };
           
-          this.quests[id] = quest;
+          list[id] = quest;
           return quest;
         },
          'defaults': function(box) {
@@ -4218,11 +4239,12 @@ var gam2 = {
           box.levelCostFloat = 1000;
           box.clearTik = 0;
           box.tick = 100;
-          this.addQuest(box.level+0);
-          this.addQuest(box.level+1);
-          this.addQuest(box.level+2);
-          this.addQuest(box.level+3);
-          this.addQuest(box.level+4);
+          let bty = gam2.action.box.trader;
+          bty.addQuest(box.level+0);
+          bty.addQuest(box.level+1);
+          bty.addQuest(box.level+2);
+          bty.addQuest(box.level+3);
+          bty.addQuest(box.level+4);
 
           return box;
         },
@@ -4240,6 +4262,8 @@ var gam2 = {
           
           let qId = box.questId + box.quest - 1;
           let q = gam2.action.box.trader.quests[qId];
+          console.log(qId);
+          console.log(gam2.action.box.trader.quests);
           if (q) {
             let keys = Object.keys(q.resIn);
             slot.item = keys[0];
@@ -4251,6 +4275,34 @@ var gam2 = {
             slotOut.amount = 0;
             slotOut.requireAmount = q.resOut[keysOut[0]];
           }
+        },
+        'itemMovedIn': function (box) {
+          let slot = box.slot.p;
+          let slotOut = box.slotOut.p;
+          if(slot.requireAmount === slot.amount) {
+            slotOut.amount = slotOut.requireAmount;
+            slotOut.lockIn = 0;
+            slot.amount = 0;
+          }
+        },
+        'itemMovedOut': function (box) {
+          let slot = box.slot.p;
+          let slotOut = box.slotOut.p;
+          if(slotOut.lockIn) {
+            return;
+          }
+          slotOut.lockOut = 1;
+          slotOut.amount = 0;
+          
+          this.addQuest(box.level+ 4, box.questId + box.quest - 1);
+          this.quest2slot(box);
+        },
+        'nextQuest': function(box) {
+          box.quest = (++box.quest) > 5 ? 1 : box.quest;
+          gam2.action.box.trader.quest2slot(box);
+          
+          box.repaint = 1;
+          gam2.view.drawBox(box, 0);
         },
         'tick': function (box) {
           
@@ -4292,11 +4344,7 @@ var gam2 = {
             
             acts.push(['>>', (function (box) {
               return function () {
-                box.quest = (++box.quest)> 5? 1:box.quest;
-                gam2.action.box.trader.quest2slot(box);
-                
-                box.repaint=1;
-                gam2.view.drawBox(box, 0);
+                gam2.action.box.trader.nextQuest(box);
               }
             })(box), 'btn-success']);
 
@@ -4337,7 +4385,6 @@ var gam2 = {
             let cpos = gam2.model.loc.currentPos;
             
             
-            
             let conts = [
               {
                 type: 'slot',
@@ -4345,15 +4392,15 @@ var gam2 = {
                 selected: slot.selected,
                 res: slot.item,
                 amount: slot.requireAmount - slot.amount,
-                missing: (slot.item > 0 ? 1 : 1)
+                missing: 1,
               },
               {
                 type: 'slot-out',
                 slotRefs: {slot: slotOut, box: box, cpos:cpos},
                 selected: slotOut.selected,
                 res: slotOut.item,
-                amount: slotOut.requireAmount - slotOut.amount,
-                missing: (slotOut.item > 0 ? 1 : 1)
+                amount: !slotOut.amount ? slotOut.requireAmount: slotOut.amount,
+                missing: (slotOut.amount > 0 ? 0 : 1)
               },
               {type:'br'},
               {type:'br'},
@@ -4363,7 +4410,7 @@ var gam2 = {
                 selected: slot2.selected,
                 res: slot2.item,
                 amount: slot2.amount,
-                missing: (slot2.item > 0 ? 0 : 1)
+                missing: 0
               },
               {type:'br'},
             ];
