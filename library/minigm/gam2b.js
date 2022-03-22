@@ -1916,7 +1916,7 @@ var gam2 = {
       }
       let house = 0;
       for (let pos = 1; pos <= maxPos; pos++) {
-        if (lvl === 3 && 1) {
+        if (lvl === 3) {
           house = rd.rand(2, gam2.model.reputation.house.length, seedLocId);
         } else {
           house = 0;
@@ -1928,7 +1928,7 @@ var gam2 = {
             let crr= pkey +'.'+pos;
             if(bl !== null && !(crr in bl)){
             bl[crr] = this.model.constr.addBox(
-              this.action.box.trader.defaults({ pos: 1, house: house, level: 19 })
+              this.action.box.trader.defaults({ pos: 1, house: house, level: rd.rand(10, 19, seedLocId) })
             ).nextObj(
               this.model.constr.addBox(
                 this.action.box['launch-pad'].defaults({ pos: 2, house: house, level: 19 })
@@ -2029,10 +2029,9 @@ var gam2 = {
       var c = ps.join('.');
       var bkeys = Object.keys(bl);
       const found = bkeys.find(el => {
-        if (el.includes(c)) {
+        if (el.startsWith(c)) {
           return true;
         }
-
       });
       return (found !== undefined);
     },
