@@ -4304,11 +4304,13 @@ var gam2 = {
             if(q) {
               let keys = Object.keys(q.resIn);
               slot.item = keys[0];
-              slot.amount = q.resIn[keys[0]];
+              slot.amount = 0;
+              slot.requireAmount = q.resIn[keys[0]];
               
               let keysOut = Object.keys(q.resOut);
               slotOut.item = keysOut[0];
-              slotOut.amount = q.resOut[keysOut[0]];
+              slotOut.amount = 0;
+              slotOut.requireAmount = q.resOut[keysOut[0]];
             }
             
             let conts = [
@@ -4317,16 +4319,16 @@ var gam2 = {
                 slotRefs: {slot: slot, box: box, cpos:cpos},
                 selected: slot.selected,
                 res: slot.item,
-                amount: slot.amount,
-                missing: (slot.item > 0 ? 0 : 1)
+                amount: slot.requireAmount - slot.amount,
+                missing: (slot.item > 0 ? 1 : 1)
               },
               {
                 type: 'slot-out',
                 slotRefs: {slot: slotOut, box: box, cpos:cpos},
                 selected: slotOut.selected,
                 res: slotOut.item,
-                amount: slotOut.amount,
-                missing: (slotOut.item > 0 ? 0 : 1)
+                amount: slotOut.requireAmount - slotOut.amount,
+                missing: (slotOut.item > 0 ? 1 : 1)
               },
               {type:'br'},
               {type:'br'},
