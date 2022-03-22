@@ -3206,6 +3206,10 @@ var gam2 = {
           gam2.model.box.addSlotOutsFor(pub.p);
           gam2.model.box.addPadsFor(pub.p);
           gam2.model.box.addBeltsFor(pub.p);
+          let bty = gam2.action.box[pub.p.type];
+          if (bty && 'init' in bty) {
+            bty.init(pub.p);
+          }
         });
       },
       'locProps': function (pos, type, lvl, name, crkey = '', house = 0) {
@@ -4214,6 +4218,30 @@ var gam2 = {
 
           return box;
         },
+        'init': function (box) {
+          this.quest2slot(box);
+        },
+        'quest2slot': function(box) {
+          let slot = box.slot.p;
+          let slot2 = box.slot.next.p;
+          let slotOut = box.slotOut.p;
+          slot.type = 'trade.in';
+          slotOut.type = 'trade.out';
+          
+          let qId = box.questId + box.quest - 1;
+          let q = gam2.action.box.trader.quests[qId];
+          if (q) {
+            let keys = Object.keys(q.resIn);
+            slot.item = keys[0];
+            slot.amount = 0;
+            slot.requireAmount = q.resIn[keys[0]];
+          
+            let keysOut = Object.keys(q.resOut);
+            slotOut.item = keysOut[0];
+            slotOut.amount = 0;
+            slotOut.requireAmount = q.resOut[keysOut[0]];
+          }
+        },
         'tick': function (box) {
           
         },
@@ -4255,8 +4283,9 @@ var gam2 = {
             acts.push(['>>', (function (box) {
               return function () {
                 box.quest = (++box.quest)> 5? 1:box.quest;
-                box.repaint=1;
+                gam2.action.box.trader.quest2slot(box);
                 
+                box.repaint=1;
                 gam2.view.drawBox(box, 0);
               }
             })(box), 'btn-success']);
@@ -4296,22 +4325,8 @@ var gam2 = {
             let slot2 = box.slot.next.p;
             let slotOut = box.slotOut.p;
             let cpos = gam2.model.loc.currentPos;
-
-            slotOut.type='trade';
             
-            let qId = box.questId + box.quest -1;
-            let q = gam2.action.box.trader.quests[qId];
-            if(q) {
-              let keys = Object.keys(q.resIn);
-              slot.item = keys[0];
-              slot.amount = 0;
-              slot.requireAmount = q.resIn[keys[0]];
-              
-              let keysOut = Object.keys(q.resOut);
-              slotOut.item = keysOut[0];
-              slotOut.amount = 0;
-              slotOut.requireAmount = q.resOut[keysOut[0]];
-            }
+            
             
             let conts = [
               {
