@@ -3158,6 +3158,8 @@ var gam2 = {
           'unitValue': 0,
           'form': '',
           'type': 'slot',
+          'lockIn': 0,
+          'lockOut': 0,
           'is': 'slot',
           'requireAmount': 0,
         }, function (pub) {
@@ -3403,7 +3405,7 @@ var gam2 = {
       }
 
       let moved = 0;
-      if (oldObj && oldObj.slot.item > 0) {
+      if (oldObj && !oldObj.slot.lockOut && !obj.slot.lockIn && oldObj.slot.item > 0) {
         if (obj.slot.item !== oldObj.slot.item) {
           
           obj.slot.item = oldObj.slot.item;
@@ -3415,6 +3417,9 @@ var gam2 = {
           amount = Math.round(amount / 2);
         }
         
+        if(obj.slot.requireAmount > 0) {
+          amount = Math.min(amount, obj.slot.requireAmount);
+        }
         obj.slot.amount += amount;
         obj.slot.unitValue = oldObj.slot.unitValue;
         if(amount===0) {
@@ -3457,6 +3462,9 @@ var gam2 = {
       }
 
       if (!moved) {
+        if(!oldObj && obj.slot.lockOut) {
+          return;
+        }
         obj.slot.selected = this.slotSelectHalf ? 2 : 1;
         this.slotSelectedObj = obj;
         if(this.slotSelectAfterFn) {
@@ -4226,7 +4234,9 @@ var gam2 = {
           let slot2 = box.slot.next.p;
           let slotOut = box.slotOut.p;
           slot.type = 'trade.in';
+          slot.lockOut = 1;
           slotOut.type = 'trade.out';
+          slotOut.lockIn = 1;
           
           let qId = box.questId + box.quest - 1;
           let q = gam2.action.box.trader.quests[qId];
@@ -6078,6 +6088,7 @@ var gam2 = {
             'power': 5000,
             'platform': 250000,
             'bank': 500,
+            'trader':100,
           },
           'research-st': {
             'laboratory': 100000,
