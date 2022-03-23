@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Tester</title>
+<!--    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"-->
+<!--          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" rel="stylesheet">-->
+
+<!--    <link href="https://use.fontawesome.com/releases/v5.15.3/css/all.css" rel="stylesheet"/>-->
+
+    <link rel="stylesheet" href="/ext/css/fontawesome.5.15.3.css"/>
+
+    <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
+
+    <link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/>
+
+    <style>
+
+        .bg-black {
+            background-color: #000;
+        }
+
+        .button {
+            margin-right: 5px;
+            padding: 2px;
+            color: #fff !important;
+        }
+
+        .btn-light {
+            color: #000 !important;
+        }
+
+        .bg-money {
+            background-color: #000;
+            border: 1px solid #fff;
+        }
+
+        .bg-empty {
+            background-color: #000;
+            border-color: #fff;
+        }
+        
+        .bg-cnstr {
+            background-color: #000;
+            border-color: #555;
+        }
+        
+        .bg-ship {
+            background-color: #000;
+            border-color: #000;
+        }
+
+
+        .bg-darkcyan {
+            background-color: #005555;
+        }
+
+        .bg-util {
+            background-color: #552d17;
+        }
+
+        .bg-back {
+            background-color: mediumslateblue;
+        }
+
+        .bg-smelter {
+            background-color: #444499;
+        }
+
+        .bg-crafter {
+            background-color: #773333;
+        }
+
+        .bg-power {
+            background-color: #224460;
+        }
+
+        .bg-silo {
+            background-color: #445533;
+        }
+        
+        .bg-orange {
+          background-color: #604003;
+        }
+
+        .bg-storage {
+            background-color: #604460;
+        }
+
+        .bg-asmb {
+            background-color: #553333;
+        }
+
+        .text-white {
+            color: #bbb !important;
+        }
+        
+        .bg-card-xs {
+            float: left;
+            width: 170px;
+            height: 77px;
+            /*border: 1px solid #fff;*/
+            position: relative;
+            z-index: 20;
+            overflow: hidden;
+        }
+
+        .bg-card {
+            float: left;
+            width: 170px;
+            height: 170px;
+            /*border: 1px solid #fff;*/
+            position: relative;
+            z-index: 20;
+            /*overflow: hidden;*/
+        }
+        .bg-card-x2 {
+          float: left;
+          width: 170px;
+          height: 355px;
+          /*border: 1px solid #fff;*/
+          position: relative;
+          z-index: 20;
+            overflow: hidden;
+        }
+        
+        .bg-card-y2 {
+          float: left;
+          width: 355px;
+          height: 170px;
+          position: relative;
+          z-index: 20;
+            overflow: hidden;
+        }
+        .bg-card-xy2 {
+          float: left;
+          width: 355px;
+          height: 355px;
+          position: relative;
+          z-index: 20;
+            overflow: hidden;
+        }
+        .fa-sml {
+          font-size:25px;
+          margin-top: 30px !important;
+        }
+        .fa-med {
+          font-size:40px;
+          margin-top: 30px !important;
+        }
+        .fa-bgd {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            color: #555;
+            z-index: 1;
+            margin-top: 30px;
+            margin-left: 25px;
+            text-align: center;
+            /*border: 1px solid #fff;*/
+            padding: 12px 0;
+        }
+        
+        .fa-bgd-xs {
+          position: absolute;
+          width: 100px;
+          height: 100px;
+          color: #555;
+          z-index: 1;
+          margin-top: 24px;
+          margin-left: 20px;
+          text-align: center;
+          /*border: 1px solid #fff;*/
+          padding: 0px 0;
+        }
+
+        .bg-dashed {
+            border-color: #526374;
+            border-style: dashed;
+            border-width: 1px !important;
+        }
+
+        .btn-warning {
+            background-color: #dd9107;
+            border-color: #dd9107;
+        }
+        
+        .i-cnstr {
+          color: #322222 !important;
+        }
+        
+        .i-clr0 {
+          color: #446699 !important;
+        }
+
+        .i-clr1 {
+            color: #996644 !important;
+        }
+
+        .i-clr2 {
+            color: #994466 !important;
+        }
+
+        .i-clr3 {
+            color: #354 !important;
+        }
+
+        .i-clr4 {
+            color: #669944 !important;
+        }
+        
+        .i-clr6 {
+          color: #771 !important;
+        }
+        
+        .i-clr7 {
+          color: #177 !important;
+        }
+        
+        .i-clr8 {
+          color: #717 !important;
+        }
+        
+        .i-clr9 {
+          color: #417 !important;
+        }
+        
+        .i-clr10 {
+          color: #714 !important;
+        }
+        
+        .i-clr5 {
+          color: #444 !important;
+        }
+        
+        .i-clr11 {
+          color: #741 !important;
+        }
+        
+        .i-clr12 {
+          color: #147 !important;
+        }
+        
+        .i-moon {
+          color: #555 !important;
+        }
+        
+        .i-sun {
+          color:#997722 !important;
+        }
+
+        .i-empty {
+            color: #555555;
+        }
+
+        .i-resource {
+            color: #444;
+        }
+
+        .i-smelter {
+            color: #222255;
+        }
+
+        .i-crafter {
+            color: #552222;
+        }
+
+        .i-power {
+            color: #112230;
+        }
+
+        .i-silo {
+            color: #224411;
+        }
+
+        .i-storage {
+            color: #272227;
+        }
+
+        .i-asmb {
+            color: #331717;
+        }
+
+        .i-back {
+            color: #3b28cc;
+        }
+
+        .i-new-resource {
+            color: #002525;
+        }
+
+        .i-new-utility {
+            color: #351d07;
+        }
+
+        .anim-stop {
+            animation: none !important;
+        }
+
+        .anim-smelter {
+            animation: giggle 0.5s infinite ease-in-out alternate-reverse;
+        }
+
+        @keyframes giggle {
+            0% {
+                color: #111133;
+                top: 5px;
+            }
+            25% {
+                color: #222288;
+                top: 3px;
+            }
+            74% {
+                color: #222255;
+                top: 5px
+            }
+            100% {
+                color: #222288;
+                top: 7px
+            }
+        }
+
+        .anim-res {
+            animation: rotation 8s infinite linear reverse;
+        }
+
+        @keyframes rotation {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(359deg);
+            }
+        }
+
+        .tik {
+            margin: 4px 0 0 0;
+            height: 7px;
+            border: 3px darkred;
+            border-radius: 4px;
+            animation-name: mine;
+            animation-duration: 1s;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            /*animation-play-state: paused;*/
+        }
+        
+        .timer {
+          color: white;
+          font-size: 14px;
+        }
+
+        @keyframes mine {
+            0% {
+                width: 0;
+                background-color: slategray;
+            }
+            /*50% {width:50%; background-color: greenyellow; }*/
+            100% {
+                width: 135px;
+                background-color: darkseagreen;
+            }
+        }
+        
+        .topbar {
+          color:#fff;
+          width: 100%;
+          font-size: 17px;
+          text-align: right;
+          margin-top: 4px;
+        }
+        .topbar .s-money,
+        .topbar .s-power,
+        .topbar .s-people
+        {
+          margin-left: 2px;
+          margin-right: 10px;
+        }
+        .topbar .s-peopl4e {
+          margin-left: 2px;
+        }
+
+        .bg-card .locked:hover {
+            border-style: solid;
+            border-color: #f44;
+        }
+        .bg-card .locked:hover .fas{
+            color: #f44 !important;
+        }
+        .bg-card .locked:hover .tt h6{
+            color: #f44;
+            text-decoration: underline;
+        }
+
+        .bg-card .unlock .tt .h6-left{
+            color: #6d7;
+        }
+
+        .bg-card .unlock:hover {
+            border-style: solid;
+            border-color: #aaf;
+        }
+        .bg-card .unlock:hover .fas{
+            color: white !important;
+        }
+        .bg-card .unlock:hover .tt h6{
+            color: white;
+            display:inline;
+        }
+        .bg-card .unlock .h6-right {
+          color: #6d7;
+      /*      display:none;*/
+        }
+        .option .fas{
+            color:#888 !important;
+        }
+        .bg-opt .tt h6{
+            color:#777 !important;
+        }
+        .option-bl .fas{
+            color:#79e !important;
+        }
+        .option-bl .tt h6{
+            color:#79e !important;
+        }
+
+        .top {
+            display: block;
+            height: 20px;
+        }
+        .bottom-xs {
+            display: block;
+            height: 20px;
+            clear: both;
+            margin-top: 24px;
+        }
+        .bottom {
+            display: block;
+            height: 20px;
+            clear: both;
+            margin-top: 118px;
+        }
+        .content {
+            clear: both;
+            height:95px;
+        }
+        
+        .slot {
+          cursor:pointer;
+          display: block;
+          background: #000;
+          border: 1px solid #159;
+          width: 35px;
+          height: 35px;
+          overflow: hidden;
+          float: left;
+          margin: 0px;
+          text-align: center;
+          padding-top: 5px;
+          position: relative;
+        }
+
+        .slot-selected {
+            border-color: #fff;
+        }
+        .slot-selected2 {
+            border-style: dashed;
+            border-color: #fff;
+        }
+        .slot-selected3 {
+            border-color: #ff9;
+        }
+        
+        .slot-output {
+          background: #000;
+          border-color: #7a7;
+        }
+
+        .slot-selected {
+            border-color: #fff;
+        }
+        
+        .slot-req-no-qty {
+            border-color: #f44;
+        }
+        
+        .slot .amount {
+          color: #fff;
+          font-size: 13px;
+          width: 16px;
+          height: 15px;
+          position: absolute;
+          bottom: 0;
+          text-shadow: 0 0 2px #000,  0 0 2px #000, 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+        }
+        .slot .req-amount {
+            color: #f88;
+            font-size: 13px;
+            width: 16px;
+            height: 15px;
+            position: absolute;
+            bottom: 0;
+            text-shadow: 0 0 2px #000,  0 0 2px #000, 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+        }
+        
+        .slot:hover {
+          background: #228;
+          border-color: #fff;
+        }
+
+        .slot-output:hover {
+            background: #282;
+            border-color: #fff;
+        }
+
+        .slot-req-no-qty:hover {
+            background: #822;
+            border-color: #fff;
+        }
+
+        .slot:hover .amount {
+          color:#fff;
+        }
+
+        .slot-spc {
+          display: block;
+          float: left;
+          width: 20px;
+          height: 40px;
+          /*margin-right: 5px;
+          height: 10px;
+          border: 1px solid #fff;
+          position: relative;*/
+        }
+        
+        .defence-pad {
+          display: block;
+          float: left;
+            width: 85px;
+            height: 85px;
+          border: 1px dashed #fff;
+            margin: 2px 25px;
+          border-radius: 3px;
+        }
+
+        .power-pad {
+            display: block;
+            float: left;
+            width: 85px;
+            height: 85px;
+            border: 1px dashed #fff;
+            margin: 2px 25px;
+            border-radius: 3px;
+        }
+        
+        
+
+        .belt {
+            display: block;
+            float: left;
+        }
+
+        .belt .button {
+            margin: 5px;
+        }
+
+        .pad {
+            display: block;
+            float: left;
+            width: 55px;
+            height: 55px;
+            background: #555;
+            border: 1px dashed #000;
+            margin: 2px;
+            border-radius: 3px;
+            position: relative;
+        }
+        
+        .pad:hover {
+          border-color: #fd5;
+        }
+        .pad:hover .ico {
+          color: #ffd !important;
+        }
+        
+        .pad-house {
+          position: absolute;
+          text-shadow: 0 0 2px #000,  0 0 2px #000, 0 0 2px #000, 0 0 2px #000, 0 0 2px #000;
+        }
+        .d-text {
+            line-height: 12px;
+        }
+        
+        .rot3 {
+          /*transition: transform 1s;
+          transform-style: preserve-3d;*/
+         /* transform: rotate3d(0, 1, 0, 180deg);*/
+          transform: rotateY(180deg);
+        }
+        .rot4{
+          transform: rotateY(90deg);
+        }
+        
+        .bg-card .face {
+          width: 155px;
+          height: 155px;
+            
+          position: absolute;
+          top:0;
+          left:0;
+          
+        /*  width: 100%;
+          height: 100%;*/
+          
+        backface-visibility: hidden;
+          opacity: 1;
+        }
+        
+        .bg-card .front {
+          z-index: 23;
+          transform: rotate(0deg);
+          /*backface-visibility: hidden;*/
+          /*transform: rotateY( 180deg);*/
+        }
+        
+        .bg-card .back {
+          transform: rotateY( 180deg);
+          z-index: 22;
+        }
+        
+        /*
+        .backhide {
+          backface-visibility: hidden;
+        }*/
+        
+        .anim-rot3 {
+            border: 1px solid #fff;
+            animation: rot3 8s infinite linear reverse;
+        }
+        
+        @keyframes rot3 {
+            to {
+                transform: transform: rotate3d(0);
+            }
+            from {
+                transform: transform: rotate3d(0, 1, 0, 180deg);
+                
+            }
+        }
+        
+        .bg-card {
+         /* position: relative;*/
+          transition: transform 0.5s;
+          transform-style: preserve-3d;
+        }
+        
+        .button {
+          height: 20px;
+          padding-top:0;
+        }
+
+        .popbox-over {
+            position:fixed;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            display:block;
+            opacity:0.5;
+            background-color: #000;
+            width:100%;
+            height:100%;
+            top:0; right:0; bottom: 0; left:0;
+            z-index:199
+        }
+        .popcont {
+            position:fixed;
+            display:block;
+            width:100%;
+            height:100%;
+            top:0; right:0; bottom: 0; left:0;
+            z-index:200
+        }
+        .popbox {
+            position: relative;
+            top:50px;
+            width: 300px;
+            height: 500px;
+            background-color: #253142;
+            border-radius: 7px;
+            z-index: 201;
+            padding: 30px;
+            overflow: hidden;
+            overflow-y: auto;
+            max-width: 300px;
+            display: block;
+            margin: 20px auto;
+        }
+        .boxclose {
+          position: absolute;
+          top: 10px;
+          right:10px;
+          width: 50px;
+          height: 50px;
+        }
+        .boxcontent{
+          color:white;
+        }
+
+        .boxarea {
+            color:white;
+            overflow-y: auto;
+        }
+
+        /*
+        */
+    </style>
+</head>
+
+<body class="bg-black">
+<main class="container" role="main">
+    Tester
+</main><!-- /.container -->
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script-->
+<script crossorigin="anonymous" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f"
+        src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+<script crossorigin="anonymous"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+
+<!--script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script-->
+
+<!--script src="/ext/popper.js" type="text/javascript"></script-->
+
+<!--script src="/ext/bootstrap.4.0.0.js" type="text/javascript"></script-->
+
+<script crossorigin="anonymous"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<!--<script src="/library/Visual.js" type="text/javascript"></script>-->
+
+<script src="/library/sha1/Random.js" type="text/javascript"></script>
+
+<script type="module">
+    import {NBQueue2} from '/library/modules/NBQueue.js'
+    import {Vs} from '/library/modules/Visual.js'
+
+    window.vs = Vs;
+    window.queue = NBQueue2;
+    
+    import { gam2 } from '/library/minigm/gam2c.js'
+    window.gam2 = gam2;
+
+    import { BigIntNum } from '/library/modules/BigIntNum.js'
+    window.BigIntNum = BigIntNum;
+
+
+    var ra;
+
+    window.onerror = function (message, url, line, column, error) {
+        console.log(message, url, line, column, error);
+        alert(message + ' L' + line + ':' + column);
+    }
+
+    
+   
+
+    window.gam2 = gam2;
+
+    //https://fontawesome.com/v5.15/icons?d=listing&p=4&s=solid&m=free
+</script>
+</body>
+</html>
