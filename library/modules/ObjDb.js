@@ -87,11 +87,46 @@ var ObjSimple = (function() {
       f.get=function(ref) {
         return o[ref[0]][ref[1]];
       }
-      f.new=function(name) {
+      f.new=function(name, prop = {}) {
         let nid= o[name].id++;
-        o[name][nid] = {};
+        o[name][nid] = prop;
         return o[name][nid];
       }
+      f.remove= function(name,id) {
+        delete o[name][id];
+        return this;
+      }
+      f.removeRef=function(ref) {
+        return this.remove(ref[0],ref[1]);
+      }
+      f.list= (function (f) {
+        let l = {}
+        l.add=function(name, ofName, idStart=0) {
+          o[name] = {listOf: ofName, id: idStart};
+          return l;
+        }
+        l.ref=function(name, id) {
+          return [name, id];
+        }
+        l.get=function(ref) {
+          let nRef= o[ref[0]][ref[1]];
+          return f.get(nRef);
+        }
+        l.new=function(name, ref) {
+          let nid= o[name].id++;
+          o[name][nid] = ref;
+          return o[name][nid];
+        }
+        l.remove=function(name,id) {
+          delete o[name][id];
+          return this;
+        }
+        l.removeRef=function(ref) {
+          return this.remove(ref[0],ref[1]);
+        }
+
+        return l;
+      })(f);
       
       return {'o':o, 'f': f};
     }
