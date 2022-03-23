@@ -77,6 +77,27 @@ var ObjSimple = (function() {
     },
     'addFn': function(o) {
       let f= {};
+      f.trz = {q: [], o: 0, en:0};
+      f.begin=function() {
+        f.trz = {q: [], o: 0, en: 1};
+      }
+      f.commit=function() {
+        f.trz.o = JSON.stringify(o);
+        for(let i in f.trz.q) {
+          let item = f.trz.q[i];
+          f[item[0]].apply(f, item[1]);
+        }
+        f.trz.o = 0;
+        f.trz.en = 0;
+      }
+      f.rollback=function() {
+        if(!f.trz.en) {
+          return;
+        }
+        o = JSON.parse(f.trz.o);
+        f.trz.o = 0;
+        f.trz.en = 0;
+      }
       f.add=function(name, idStart=0) {
         o[name] = {id: idStart};
         return f;
