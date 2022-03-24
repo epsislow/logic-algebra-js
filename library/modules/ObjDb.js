@@ -104,6 +104,7 @@ var ObjSimple = (function() {
         f.trz.old = 0;
         f.trz.en = 0;
         f.o = pub.o;
+        return this;
       }
       f.add=function(name, idStart=0) {
         pub.o[name] = {id: idStart};
