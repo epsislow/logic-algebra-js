@@ -77,44 +77,51 @@ var ObjSimple = (function() {
     },
     'addFn': function(o) {
       let f= {};
-      f.trz = {q: [], o: 0, en:0};
+      let pub = {'o':o, 'f': f};
+      f.o=o;
+      f.trz = {old: 0, en:0};
       f.begin=function() {
-        f.trz = {q: [], o: 0, en: 1};
+        if(f.trz.en) {
+          throw Error('Already in transaction');
+        }
+        let oo = JSON.parse(JSON.stringify(o));
+        f.trz = {old: o, en: 1};
+        pub.o = oo;
+        f.o = o;
+        return this;
       }
       f.commit=function() {
-        f.trz.o = JSON.stringify(o);
-        for(let i in f.trz.q) {
-          let item = f.trz.q[i];
-          f[item[0]].apply(f, item[1]);
-        }
-        f.trz.o = 0;
+        f.trz.old = 0;
         f.trz.en = 0;
+        f.o = pub.o;
+        return this;
       }
       f.rollback=function() {
         if(!f.trz.en) {
-          return;
+          throw Error('No transaction to rollback to');
         }
-        o = JSON.parse(f.trz.o);
-        f.trz.o = 0;
+        pub.o = f.trz.old;
+        f.trz.old = 0;
         f.trz.en = 0;
+        f.o = pub.o;
       }
       f.add=function(name, idStart=0) {
-        o[name] = {id: idStart};
+        pub.o[name] = {id: idStart};
         return f;
       }
       f.ref=function(name, id) {
         return [name, id];
       }
       f.get=function(ref) {
-        return o[ref[0]][ref[1]];
+        return pub.o[ref[0]][ref[1]];
       }
       f.new=function(name, prop = {}) {
-        let nid= o[name].id++;
-        o[name][nid] = prop;
-        return o[name][nid];
+        let nid= pub.o[name].id++;
+        pub.o[name][nid] = prop;
+        return pub.o[name][nid];
       }
       f.remove= function(name,id) {
-        delete o[name][id];
+        delete pub.o[name][id];
         return this;
       }
       f.removeRef=function(ref) {
@@ -123,33 +130,34 @@ var ObjSimple = (function() {
       f.list= (function (f) {
         let l = {}
         l.add=function(name, ofName, idStart=0) {
-          o[name] = {listOf: ofName, id: idStart};
+          pub.o[name] = {listOf: ofName, id: idStart};
           return l;
         }
         l.ref=function(name, id) {
           return [name, id];
         }
         l.get=function(ref) {
-          let nRef= o[ref[0]][ref[1]];
+          let nRef= pub.o[ref[0]][ref[1]];
           return f.get(nRef);
         }
         l.new=function(name, ref) {
-          let nid= o[name].id++;
+          let nid= pub.o[name].id++;
           o[name][nid] = ref;
-          return o[name][nid];
+          return pub.o[name][nid];
         }
         l.remove=function(name,id) {
-          delete o[name][id];
+          delete pub.o[name][id];
           return this;
         }
         l.removeRef=function(ref) {
           return this.remove(ref[0],ref[1]);
         }
+        l.up=f;
 
         return l;
       })(f);
-      
-      return {'o':o, 'f': f};
+
+      return pub;
     }
     
   }
