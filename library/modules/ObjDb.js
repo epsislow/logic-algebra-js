@@ -157,6 +157,49 @@ var ObjSimple = (function() {
 
         return l;
       })(f);
+      let has = function(it, where={}) {
+        
+        for(let i in it) {
+          if(!where.hasOwnProperty(i)) {
+            return 0;
+          }
+          if(where.hasOwnProperty(i) && it[i] !== where[i]) {
+            return false;
+          }
+        }
+      }
+    
+      f.filter= (function (f) {
+        let c= {};
+        c.add=function(name, ofName, where={}) {
+          
+          if(!(ofName in c)) {
+            c[ofName] = {};
+          }
+          c[ofName][name] = {where:where};
+          let l=f[ofName];
+          for(let i in l) {
+            if(l.hasOwnProperty(i) && has(l[i], where)) {
+              c[ofName][name][i] = i;
+            }
+          }
+          
+          /*
+          f.event[ofName].onAdd= (function(cc, where) {
+            return function(li, i) {
+              if (has(li, where)) {
+                cc[i] = i;
+              }
+            }
+          })(cc, where);
+          
+          f.event[ofName].onRemove = function(name, i) {
+            c.list[name]
+          }*/
+        }
+        
+        return c;
+      })(f);
 
       return pub;
     }
