@@ -129,6 +129,11 @@ var ObjSimple = (function() {
         f.event('f.new', f.ref(name, nid));
         return pub.o[name][nid];
       }
+      f.update=function(name, nid, prop = {}) {
+        Object.assign(pub.o[name][nid], prop);
+        f.event('f.update', f.ref(name, nid));
+        return pub.o[name][nid];
+      }
       f.remove= function(name,id) {
         let od = pub.o[name][id];
         delete pub.o[name][id];
@@ -186,6 +191,7 @@ var ObjSimple = (function() {
             
             break;
           case 'f.new':
+          case 'f.update':
             if(isRef(evob)) {
               let name = evob[0];
               let id = evob[1];
@@ -212,8 +218,6 @@ var ObjSimple = (function() {
                 }
               }
             }
-            break;
-          case 'f.update':
             break;
         }
       }
