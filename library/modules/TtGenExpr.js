@@ -1,5 +1,7 @@
-var TTgenFn = function (rd) {
-  pub.gen = function (seed = 1, qmax = 1000, restart = 1) {
+var TT = function (rd, lexer= 0, exec= 0) {
+  let pub = {};
+  
+  pub.gen= function (seed = 1, qmax = 1000, restart = 1) {
     if (restart) {
       rd.deleteRand(seed);
     }
@@ -10,6 +12,17 @@ var TTgenFn = function (rd) {
     }
     return v;
   }
+  
+  pub.lexer= function(vex, beautify=0, rules={}) {
+    
+  }
+  pub.exec= function(lex, extern) {
+    
+  }
+  pub.optimize= function(lex) {
+    
+  }
+  
 };
 
-export { TTgenFn }
+export { TT }
