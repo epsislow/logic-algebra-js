@@ -14,7 +14,19 @@ var TT = function (rd, lexer= 0, exec= 0) {
   }
   
   pub.lexer= function(vex, beautify=0, rules={}) {
-    
+    let len = Object.keys(rules).length;
+    let len2 = rules.map(x => {
+      return Object.keys(x).length;
+    });
+    let maxlen2 = Math.max.apply(null, len2);
+    let each = 100/len;
+    let each2 = Math.floor(100/maxlen2);
+
+    return vex.map((x, i) => {
+      return i % 2 ?
+        Math.floor(x / each)
+        Math.floor(x / each2)
+    });
   }
   pub.exec= function(lex, extern) {
     
