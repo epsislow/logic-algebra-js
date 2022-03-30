@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tester2</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" />
+
+  <!--link rel="stylesheet" href="/ext/fontawesome.5.0.13.css"/-->
+
+  <!--link rel="stylesheet" href="/ext/bootstrap.4.0.0.css"/-->
+
+  <style>
+    table {
+      color:#fff;
+      text-align:center;
+    }
+    table th, table.td {
+      padding: 2px 10px;
+    }
+    table th {
+      width: 100px;
+    }
+    tr:nth-child(even) {background: #222}
+    tr:nth-child(odd) {background: #333}
+  </style>
+</head>
+
+<body class="bg-dark">
+<main role="main" class="container">
+  Tester
+</main><!-- /.container -->
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<!--script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+
+<!--script src="/ext/jQuery.3.2.1.js" type="text/javascript"></script-->
+
+<!--script src="/ext/popper.js" type="text/javascript"></script-->
+
+<!--script src="/ext/bootstrap.4.0.0.js" type="text/javascript"></script-->
+
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+
+<script type="text/javascript" src="/library/sha1/Random.js"></script>
+
+<script type="module">
+  import { TgeFn } from '/library/modules/TinyGenExpr.js'
+
+  window.tge = TgeFn(rd);
+  console.log('[sim3]-----');
+
+  var m = 50, mm = 50;
+  var inf=[];
+  window.inf= inf;
+
+  function show(descr = '', a, inf=0) {
+    console.log(descr+':');
+    if(!inf) {
+      inf = tge.lexer(a, 2, actions.genExpr);
+    }
+    tge.show(inf.b, inf.br);
+    return inf;
+  }
+
+  var defaults = JSON.stringify({
+    'bases': {
+      'Calidar': {
+        'prodh': 80,
+        'options': ['Fighter','Frigate','Carrier','Cruiser','HeavyCruiser','Recycler'],
+        'constr': [],
+        'fleet': 0,
+        'constrTime':0,
+        'wastedTime':0,
+      },
+      'Sierra': {
+        'prodh': 128,
+        'options': ['Fighter','Frigate','Carrier','FleetCarrier','Cruiser','HeavyCruiser','Recycler'],
+        'constr': [],
+        'fleet': 0,
+        'constrTime':0,
+        'wastedTime':0
+      },
+      'Nervo': {
+        'prodh': 92,
+        'options': ['Fighter','Frigate','Carrier','Cruiser','HeavyCruiser','Recycler'],
+        'constr': [],
+        'fleet': 0,
+        'constrTime':0,
+        'wastedTime': 0
+      },
+      'Osiris': {
+        'prodh': 93,
+        'options': ['Fighter','Frigate','Carrier','FleetCarrier','Cruiser','HeavyCruiser','Recycler'],
+        'constr': [],
+        'fleet': 0,
+        'constrTime':0,
+        'wastedTime': 0
+      },
+      'Canyon': {
+        'prodh': 63,
+        'options': ['Fighter','Recycler'],
+        'constr': [],
+        'fleet': 0,
+        'constrTime':0,
+        'wastedTime': 0
+      },
+      'Mira': {
+        'prodh': 38,
+        'options': ['Fighter','Frigate','Recycler'],
+        'constr': [],
+        'fleet': 0,
+        'constrTime':0,
+        'wastedTime': 0
+      },
+    },
+    'options': {
+      'Fighter': {
+        'cost': 5,
+        'hangar': -1,
+      },
+      'Frigate': {
+        'cost': 80,
+        'hangar':4,
+      },
+      'Carrier': {
+        'cost': 400,
+        'hangar': 80,
+      },
+      'FleetCarrier': {
+        'cost': 2500,
+        'hangar':500,
+      },
+      'Cruiser': {
+        'cost': 200,
+        'hangar':4,
+      },
+      'HeavyCruiser': {
+        'cost': 500,
+        'hangar':8,
+      },
+      'Recycler': {
+        'cost': 30,
+        'hangar':0,
+      },
+    },
+    'base': 'Mira',
+    'type': 'Fighter',
+    'fleets': {
+      'Fighter' : 0,
+      'Frigate': 0,
+      'Carrier': 0,
+      'FleetCarrier': 0,
+      'Cruiser': 0,
+      'HeavyCruiser': 0,
+      'Recycler': 0,
+    },
+    'hangarNeed':0,
+    'hangar': 0,
+    'hcr': 500,
+    'cr': 0,
+    'loops':0,
+    'goodConstr':0,
+    'maxConstrTime':0,
+    'minConstrTime':0,
+    'time': {'waste': 0, 'constr':0,'passed':0},
+    'actions': 10,
+    'spent': 0,
+    'maxActions': 250,
+  });
+  //'Fighter':0,'Corvette':0,'C':0,'D':0, 'hcr': 500, 'cr': 0, 'loops':0, 'timeWaste': 0, 'timeMoved': 0, 'spent': 0, 'actions': 240, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100}
+
+  var actions = {
+    'mem': JSON.parse(defaults),
+    'calcCost2Time': function (cost, hcr) {
+      return Math.floor(cost*1000/hcr)/1000;
+    },
+    'genExpr': {
+      'main': {'a': 1,'b': 2, 'c':3, 'd':4, 'j': 3},
+      'a':{'Fighter': 1, 'Frigate': 2, 'Carrier': 3, 'HeavyCruiser': 4, 'Recycler':5},
+      'b': {'Mira': -1, 'Recycler':5, 'FleetCarrier': 6, 'Cruiser': 7},
+      'c': {'Calidar': -2, 'Sierra': -3, 'Nervo': -4, 'Osiris': -5, 'Canyon': -6},
+      'd': {'1x': 1, '5x': 5, '10x': 10, '50x': 50, '100x': 100},
+      'j': {'j':3, 'l': 4,'n': 5,'p': 6}
+    },
+    'setBase': function (opt) {
+      this.mem.base = opt;
+    },
+    'setFighter': function (opt) {
+      this.mem.type = opt;
+    },
+    'doConstrSize': function (opt) {
+      var opts = this.mem.options;
+      var bases = this.mem.bases;
+      var g = this.genExpr;
+      var base = this.mem.base;
+      var type = this.mem.type;
+
+      var cost = opts[type].cost*opt;
+
+      if (cost > this.mem.cr) {
+        if (this.mem.hcr === 0) {
+          //console.log('-- Stop --');
+          return;
+        }
+        var times= Math.ceil(cost / this.mem.hcr);
+        this.mem.time.waste += times; // * hrs
+        this.mem.cr = this.mem.cr + this.mem.hcr*times - cost;
+      } else {
+        this.mem.cr -= cost;
+      }
+      this.mem.spent += cost;
+
+      var constrTime = this.calcCost2Time(cost, this.mem.hcr);
+
+      this.mem.bases[base]['constr'].push({
+        'type': type,
+        'count': opt,
+        'cost': cost,
+        'timeConstr': constrTime,
+      });
+      this.mem.bases[base].fleet += cost;
+      this.mem.wastedTime=0;
+
+      //subtract wasted from other bases
+      //if wasted > then the value then add the difference
+
+
+      this.mem.bases[base].constrTime += constrTime;
+      this.mem.fleets[type] += opt;
+      var hg= this.mem.options[type].hangar;
+      if (hg <0) {
+        this.mem.hangarNeed+= -hg*opt;
+      } else {
+        this.mem.hangar += hg*opt;
+      }
+
+      this.mem.time.constr += constrTime; // * hrs
+
+
+      if (this.mem.bases[base].constrTime > this.mem.maxConstrTime) {
+        this.mem.maxConstrTime = this.mem.bases[base].constrTime;
+      } else {
+        this.mem.goodConstr++;
+      }
+
+      //this.mem[opt]++;
+      this.mem.actions--;
+
+      return (this.mem.actions <= 0);
+    },
+    'doOption' : function (isA, opt) {
+      var keys = [];
+      var option = 0;
+      var g = this.genExpr;
+
+      //console.log('do:', isA, opt);
+
+      if (isA === 1 ) {
+        keys = Object.keys(g['a']);
+        option = g['a'][opt];
+        if (option < 0) {
+          //console.log('1base =' + opt, keys, option);
+          this.setBase(opt);
+        } else {
+          //console.log('1type =' + opt, keys, option);
+          this.setFighter(opt);
+        }
+      } else if (isA === 2) {
+        keys = Object.keys(g['b']);
+        option = g['b'][opt];
+        if (option < 0) {
+          //console.log('2base =' + opt, keys, option);
+          this.setBase(opt);
+        } else {
+          //console.log('2type =' + opt, keys, option);
+          this.setFighter(opt);
+        }
+      } else if (isA === 3) {
+        keys = Object.keys(g['c']);
+        option = g['c'][opt];
+        if (option < 0) {
+          //console.log('3base =' + opt, keys, option);
+          this.setBase(opt);
+        } else {
+          //console.log('3type =' + opt, keys, option);
+          this.setFighter(opt);
+        }
+
+      } else if (isA === 4) {
+        //console.log('construct:'+ opt);
+        return this.doConstrSize(opt);
+      }
+      /*
+                  if (this.mem.costs[opt] > this.mem.cr) {
+                      if (this.mem.hcr === 0) {
+                          //console.log('-- Stop --');
+                          return;
+                      }
+                      var times= Math.ceil(this.mem.costs[opt] / this.mem.hcr);
+                      this.mem.timeWaste += times; // * hrs
+                      this.mem.cr = this.mem.cr + this.mem.hcr*times - this.mem.costs[opt];
+                  } else {
+                      this.mem.cr -= this.mem.costs[opt];
+                  }
+                  this.mem.spent += this.mem.costs[opt];
+                  this.mem[opt]++;
+                  this.mem.area--;
+                  if (opt === 'A') {
+                      this.mem.hcr+=1;
+                  } else if (opt === 'B') {
+                      this.mem.hcr+=2;
+                  } else if (opt === 'C') {
+                      this.mem.hcr+=5;
+                  } else if (opt === 'D') {
+                      this.mem.hcr+=10;
+                  }
+              } else if (this.mem[opt]> 0) {
+                  this.mem[opt]--;
+                  this.mem.area++;
+                  if (opt === 'A') {
+                      this.mem.hcr-=1;
+                  } else if (opt === 'B') {
+                      this.mem.hcr-=2;
+                  } else if (opt === 'C') {
+                      this.mem.hcr-=5;
+                  } else if (opt === 'D') {
+                      this.mem.hcr-=10;
+                  }
+                  this.mem.cr = this.mem.cr + Math.ceil(this.mem.costs[opt]/2);
+                  //this.mem.cr = this.mem.cr + this.mem.costs[opt];
+                  if (this.mem.cr === 0) {
+                      console.log(this.mem);
+                      console.log('here', isA, opt);
+                  }
+              }
+
+       */
+
+      return (this.mem.actions <= 0);
+    },
+    'getOptions': function (t) {
+      if (t === 'd') {
+        return Object.values(this.genExpr[t]);
+      }
+      return Object.keys(this.genExpr[t]);
+    },
+    'getTypeOptions': function () {
+      return this.mem.bases[this.mem.base]['options'];
+    },
+    'getMinConstr': function() {
+      var min=999;
+      for(var b in this.mem.bases) {
+        if (this.mem.bases[b].constrTime < min) {
+          min = this.mem.bases[b].constrTime;
+        }
+      }
+      return min;
+    },
+    'getRvals': function() {
+      return [
+        this.mem.hangarNeed,
+        this.mem.hangar,
+        Math.abs(this.mem.hangar- this.mem.hangarNeed),
+        this.mem.spent,
+        this.mem.time.constr - this.mem.maxConstrTime,
+      ];
+    },
+    'getRvals0': function () {
+      this.mem.minConstrTime = this.getMinConstr();
+      return [
+        this.mem.hangar,
+        this.mem.time.constr,
+        this.mem.spent,
+        Math.max(0,this.mem.fleets.Fighter - this.mem.hangar),
+        this.mem.fleets.Recycler * 3
+        + this.mem.fleets.Fighter * 5
+        + this.mem.fleets.Frigate * 6
+        + this.mem.fleets.Cruiser * 4
+        + this.mem.fleets.Carrier * 3
+        + this.mem.fleets.FleetCarrier * 2
+        + this.mem.fleets.HeavyCruiser * 4,
+        this.mem.loops,
+        this.mem.maxConstrTime,
+        this.mem.goodConstr,
+        this.mem.minConstrTime,
+        this.mem.maxConstrTime - this.mem.minConstrTime,
+      ];
+    },
+    'getScore': function (d= 2, importance = 0, arr=0) {
+      if(!importance)  {
+        importance = this.getScoreImportance();
+      }
+      var r = this.getRvals();
+      //var q = ['1hangar', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','10minmax'];
+      var q= [
+        '1hgNeed',
+        '2hgSum',
+        '3dHg',
+        '4spent',
+        '5dtimConstr',
+      ];
+      var sc = 0;
+      var scs = {};
+      //console.log(r)
+      for(var i in r) {
+        // console.log(i, r[i])
+        if (d & 2) {
+          console.log(q[i] + ':', r[i], ' x ', importance[i], '=', r[i] * importance[i]);
+        }
+        if(arr) {
+          scs[q[i] + ' x'+ importance[i]] = r[i] * importance[i];
+          continue;
+        }
+        sc += r[i]*importance[i];
+      }
+      // console.log(sc)
+      if(arr) {
+        return scs;
+      }
+      return sc;
+    },
+    'getScoreImportance': function () {
+      return [5,2,-10,0.005,2];
+      //  [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, 0];
+    },
+    'reset': function () {
+      this.mem = JSON.parse(defaults);
+    },
+    'setLoops': function (loops) {
+      this.mem.loops = loops;
+    }
+  }
+
+  /*
+  tge.gen(2, m/10,1);
+  tge.gen(2, m/10);
+  tge.gen(2, m/10);
+  tge.gen(2, m/10);
+  tge.gen(2, m/10);
+  tge.gen(2, m/10);
+
+  var a= [
+      tge.gen(2, m),
+      tge.gen(2, m),
+  ];
+
+  inf[0] = show('a0', a[0]);
+  inf[1] = show('a1', a[1]);
+  a[2] = tge.cross(a[0], a[1])
+  inf[2] = show('a2', a[2]);
+  a[3] = tge.mutate(a[2]);
+  inf[3] = show('a3', a[3]);
+
+
+  a[3] = tge.mutate(a[3]);
+  inf[3] = show('a3m0', a[3]);
+
+  a[3] = tge.mutate(a[3]);
+  inf[3] = show('a3m1', a[3]);
+  a[3] = tge.mutate(a[3]);
+  inf[3] = show('a3m2', a[3]);
+  a[3] = tge.mutate(a[3]);
+  inf[3] = show('a3m3', a[3]);
+  a[3] = tge.mutate(a[3]);
+  inf[3] = show('a3m4', a[3]);
+  a[3] = tge.mutate(a[3]);
+  inf[3] = show('a3m5', a[3]);
+
+
+  tge.interpret(inf[0].b, 0, {}, actions);
+  console.log(actions.mem);
+  console.log('Score0: ', actions.getScore());
+
+  tge.interpret(inf[1].b, 0, {}, actions);
+  console.log(actions.mem);
+  console.log('Score1: ', actions.getScore());
+
+  tge.interpret(inf[2].b, 0, {}, actions);
+  console.log(actions.mem);
+  console.log('Score2: ', actions.getScore());
+
+  tge.interpret(inf[3].b, 0, {}, actions, 1);
+  console.log(actions.mem);
+  console.log('Score3: ', actions.getScore());
+
+  a[3] = tge.mutate(a[3]);
+  inf[4] = show('a3m6', a[3]);
+
+  tge.interpret(inf[4].b, 0, {}, actions);
+  console.log(actions.mem);
+  console.log('Score4: ', actions.getScore());
+
+  a[3] = tge.mutate(a[3]);
+  inf[5] = show('a3m6', a[3]);
+
+  tge.interpret(inf[5].b, 0, {}, actions);
+  console.log(actions.mem);
+  console.log('Score5: ', actions.getScore());
+
+
+  a[4] = tge.cross(a[3], a[1]);
+  a[4] = tge.mutate(a[4]);
+
+  inf[6] = show('a4', a[4]);
+
+  tge.interpret(inf[6].b, 0, {}, actions);
+  console.log(actions.mem);
+  console.log('Score6: ', actions.getScore());
+  */
+
+  window.actions = actions;
+
+  var scores = [], a= [], mem = [], i=0, j =0;
+
+  m = 50;
+  mm = 50;
+
+  tge.gen(2, m, 1);
+
+  window.findScoreFor = function findScoreFor(a, i) {
+    var inf = tge.lexer(a, 2, actions.genExpr);
+    //tge.show(inf.b, inf.br, 0);
+    tge.interpret(inf.b, 0, {}, actions);
+
+    return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem, actions.getScore(0, 0, 1)];
+  }
+  m = 50;
+  mm = 50;
+  for(i = 0 ; i<mm; i++ ) {
+    if (i === 0 && 0) {
+      a[i] = [16,74,91,30,41,14,2,61,9,75,5,20,31,68,87,79,74,97,72,80,5,15,61,32,74,65,22,74,87,88,96,39,8,43,32,18,85,80,8,97,8,89,53,1,36,82,69,69,70,66,71,63,5,53,63,42,55,58,93,24,1,66,17,78,3,79,32,53,53,43,32,16,15,50,55,55,11,46,77,16,64,77,12,83,87,95,9,63,73,5,40,47,10,10,71,39,3,60,16,60];
+    } else if (i === 0 && 0) {
+      a[0]= new Array(50);
+      a[0].fill(15, 0, 49);
+    } else {
+      a[i] = tge.gen(2, m, 0);
+    }
+    scores[i] = findScoreFor(a[i], i);
+  }
+
+  window.a = a
+  window.mem = mem;
+  window.scores = scores;
+  var n = 0;
+
+  scores.sort(function (a, b) {
+    if (a[3] === b[3]) {
+      return 0;
+    } else {
+      return a[3] < b[3] ? 1 : -1;
+    }
+  });
+
+  function getFirst(s, n) {
+    var t= [];
+    for(var i=0; i< n; i++) {
+      t[i]=JSON.parse(JSON.stringify(s[i]));
+    }
+    return t;
+  }
+
+  window.epoch = function (max=10) {
+    n = 0;
+    do {
+      for (i = 0; i < 20; i++) {
+        scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
+        /*if (i < 10) {
+            scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
+        }*/
+      }
+      for(i = 0; i < 10; i++) {
+        scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
+      }
+      for (i = 2; i < scores.length; i++) {
+        scores[i] = findScoreFor(tge.mutate(scores[i][1], 4, 55), i);
+      }
+      scores.sort(function (a, b) {
+        if (a[3] === b[3]) {
+          return 0;
+        } else {
+          return a[3] < b[3] ? 1 : -1;
+        }
+      });
+      n++;
+    } while (n < max)
+
+    var show=getFirst(scores, 3);
+    console.table(show);
+  }
+  //console.table(getFirst(scores, 3));
+  //epoch(20);
+  //epoch(10);
+  //epoch(1);
+  epoch(100);
+  //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
+</script>
+</body>
+</html>
