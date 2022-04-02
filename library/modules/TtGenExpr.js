@@ -24,7 +24,7 @@ var TT = function (rd, lexer= 0, exec= 0) {
 
     return vex.map((x, i) => {
       return i % 2 ?
-        Math.floor(x / each)
+        Math.floor(x / each):
         Math.floor(x / each2)
     });
   }
