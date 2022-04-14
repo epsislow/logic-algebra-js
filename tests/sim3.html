@@ -80,55 +80,236 @@
     return inf;
   }
 
+  var baseTypes = {
+    'asteroid': {
+      'Area': 65,
+      'Solar': 4,
+      'Fertility': 5,
+      'Metal': 4,
+      'Gas': 2,
+      'Crystals': 3,
+    },
+    'crystal-moon': {
+      'Area': 71,
+      'Solar': 4,
+      'Fertility': 4,
+      'Metal': 3,
+      'Gas': 2,
+      'Crystals': 4,
+    }
+  };
+
+  var techs = {
+    'Energy': 0,
+    'Computer': 0,
+    'Armour': 0,
+    'Laser': 0,
+    'Missiles': 0,
+    'Stellar Drive': 0,
+    'Plasma': 0,
+    'Warp Drive': 0,
+    'Shielding': 0,
+    'Ion': 0,
+    'Stealth': 0,
+    'Photon': 0,
+    'Artificial Intelligence': 0,
+    'Disruptor': 0,
+    'Cybernetics': 0,
+    'Tachyon Communications': 0,
+    'Anti-Gravity': 0,
+  }
+
+  var techCost = {
+    'Energy': 2,
+    'Computer': 2,
+    'Armour': 4,
+    'Laser': 4,
+    'Missiles': 8,
+    'Stellar Drive': 16,
+    'Plasma': 32,
+    'Warp Drive': 64,
+    'Shielding': 128,
+    'Ion': 256,
+    'Stealth': 512,
+    'Photon': 1024,
+    'Artificial Intelligence': 2048,
+    'Disruptor': 4096,
+    'Cybernetics': 8192,
+    'Tachyon Communications': 32768,
+    'Anti-Gravity': 100000,
+  }
+
+  var techReq = {
+    'Energy': {},
+    'Computer': {},
+    'Armour': {},
+    'Laser': {'Energy': 2},
+    'Missiles': {'Computer': 4},
+    'Stellar Drive': {'Energy': 6},
+    'Plasma': {'Energy': 6, 'Laser': 4},
+    'Warp Drive': {'Energy': 8, 'Stellar Drive ': 4},
+    'Shielding': {'Energy': 10},
+    'Ion': {'Energy': 12, 'Laser': 10},
+    'Stealth': {'Energy': 14},
+    'Photon': {'Energy': 16, 'Plasma': 8},
+    'Artificial Intelligence': {'Computer': 20},
+    'Disruptor': {'Energy': 20, 'Laser': 18},
+    'Cybernetics': {'Artificial Intelligence': 6},
+    'Tachyon Communications': {'Energy': 24,'Computer': 24},
+    'Anti-Gravity': {'Energy': 26,'Computer': 26},
+  }
+
+  var constrTypes = {
+    'UT': {
+      'name': 'Urban Structures',
+      'description': 'Increases population capacity by bases fertility.',
+      'technologies': {},
+      'resources': {'Credits': -1,'Population':'area.Fertility', 'Area': -1},
+    },
+    'SP': {
+      'name': 'Solar Plants',
+      'description': 'Increases bases energy output by bases solar energy.',
+      'technologies': {},
+      'resources': {'Credits': -1, 'Population': -1, 'Area': -1},
+    },
+    'GP': {
+      'name': 'Gas Plants',
+      'description': 'Increases bases energy output by bases gas resource.',
+      'technologies': {},
+      'resources': {'Credits': -1, 'Population': -1, 'Area': -1},
+    },
+    'FP': {
+      'name': 'Fusion Plants',
+      'description': 'Increases bases energy output by 4.',
+      'technologies': {'Energy': 6},
+      'resources': {'Credits': -20, 'Energy': 4, 'Population': -1, 'Area': -1},
+    },
+    'AP': {
+      'name': 'Antimatter Plants',
+      'description': 'Increases bases energy output by 10.',
+      'technologies': {'Energy': 20},
+      'resources': {'Credits': -2000, 'Energy': 10, 'Population': -1, 'Area': -1, 'Advanced': 1},
+    },
+    'OP': {
+      'name': 'Orbital Plants',
+      'description': 'Increases bases energy output by 12.',
+      'technologies': {'Energy': 25},
+      'resources': {'Credits': -40000, 'Energy': 12, 'Population': -1, 'Advanced': 1},
+    },
+    'RL': {
+      'name': 'Research Labs',
+      'description': 'Increases bases research by 8, allows new technologies.',
+      'technologies': {},
+      'resources': {'Credits': -2, 'Energy': -1, 'Research': 8, 'Population': -1, 'Area': -1},
+    },
+    'MR': {
+      'name': 'Metal Refineries',
+      'description': 'Increases production and construction by bases metal.',
+      'technologies': {},
+      'resources': {'Credits': -2, 'Energy': -1, 'Economy': 1, 'Production': 'Metal','Construction': 'Metal', 'Population': -1, 'Area': -1},
+    },
+    'CM': {
+      'name': 'Crystal Mines',
+      'description': 'Increases bases economy by bases crystals resource.',
+      'technologies': {'Base': 'Crystals'},
+      'resources': {'Credits': -2, 'Energy': -1, 'Economy': 'Crystals', 'Population': -1, 'Area': -1},
+    },
+    'RF': {
+      'name': 'Robotic Factories',
+      'description': 'Increases production and construction by 2.',
+      'technologies': {'Computer': 2},
+      'resources': {'Credits': -5, 'Energy': -1, 'Economy': 1, 'Production': 2, 'Construction': 2, 'Population': -1, 'Area': -1},
+    },
+    'SY': {
+      'name': 'Shipyards',
+      'description': 'Increases bases production by 2 and allows new units.',
+      'technologies': {},
+      'resources': {'Credits': -5, 'Energy': -1, 'Economy': 2, 'Production': 2,'Population': -1, 'Area': -1},
+    },
+    'OS': {
+      'name': 'Orbital Shipyards',
+      'description': 'Increases bases production by 8 and allows new units.',
+      'technologies': {'Cybernetics': 2},
+      'resources': {'Credits': -10000, 'Energy': -12, 'Economy': 2, 'Production': 8,'Population': -1},
+    },
+    'SC': {
+      'name': 'Spaceports',
+      'description': 'Increases bases economy by 2 and allows trade routes.',
+      'technologies': {'Computer': 2},
+      'resources': {'Credits': -5, 'Energy': -1, 'Economy': 2, 'Population': -1, 'Area': -1, 'Trades': 1},
+    },
+    'CC': {
+      'name': 'Command Centers',
+      'description': 'Adds 5% fleet attack power at base and allows 1 occupation.',
+      'technologies': {'Computer': 6},
+      'resources': {'Credits': -20, 'Energy': -1, 'Population': -1, 'Area': -1, 'Ocupation':1},
+    },
+    'NF': {
+      'name': 'Nanite Factories',
+      'description': 'Increases production and construction by 4.',
+      'technologies': {'Computer': 10, 'Laser': 8},
+      'resources': {'Credits': -80, 'Energy': -2, 'Economy': 2, 'Production': 4, 'Construction': 4,'Population': -1, 'Area': -1, 'Advanced': 1},
+    },
+    'AF': {
+      'name': 'Android Factories',
+      'description': 'Increases production and construction by 6.',
+      'technologies': {'Artificial Intelligence': 4},
+      'resources': {'Credits': -1000, 'Energy': -4, 'Economy': 2, 'Production': 6, 'Construction': 6,'Population': -1, 'Area': -1, 'Advanced': 1},
+    },
+    'EC': {
+      'name': 'Economic Centers',
+      'description': 'Increases bases economy by 4.',
+      'technologies': {'Computer': 10},
+      'resources': {'Credits': -80, 'Energy': -2, 'Economy': 4, 'Population': -1, 'Area': -1, 'Advanced': 1},
+    },
+    'TF': {
+      'name': 'Terraform',
+      'description': 'Increases bases area by 5.',
+      'technologies': {'Computer': 10, 'Energy': 10},
+      'resources': {'Credits': -80, 'Area': 5, 'Advanced': 1},
+    },
+    'MP': {
+      'name': 'Multi-Level Platforms',
+      'description': 'Increases bases area by 10.',
+      'technologies': {'Armour': 22},
+      'resources': {'Credits': -1000, 'Area': 10, 'Advanced': 1},
+    },
+    'OB': {
+      'name': 'Orbital Base',
+      'description': 'Increase population capacity by 10.',
+      'technologies': {'Computer': 20},
+      'resources': {'Credits': -2000, 'Population': 10, 'Advanced': 1},
+    },
+    'JG': {
+      'name': 'Jump Gate',
+      'description': 'Increases fleet speed by 100%, allows stellar units to move between galaxies.',
+      'technologies': {'Warp Drive':12, 'Energy': 20},
+      'resources': {'Credits': -5000, 'Energy':-12,'Population': 10, 'BaseSpeed':100},
+    },
+    'BM': {
+      'name': 'Biosphere Modification',
+      'description': 'Increases astro fertility by 1.',
+      'technologies': {'Computer': 24, 'Energy': 24},
+      'resources': {'Credits': -20000, 'Energy':-24,'Population': -1, 'Area': -1, 'BaseFertility':1},
+    },
+    'CA': {
+      'name': 'Capital',
+      'description': 'Increases economy by 10 and other bases by 2. -15% empire income while occupied.',
+      'technologies': {'Tachyon Communications': 1},
+      'resources': {'Credits': -15000, 'Energy':-12, 'Population': -1, 'Area': -1, 'Economy':10, 'OtherBasesEconomy':2},
+    },
+  };
+
   var defaults = JSON.stringify({
     'bases': {
-      'Calidar': {
-        'prodh': 80,
-        'options': ['Fighter','Frigate','Carrier','Cruiser','HeavyCruiser','Recycler'],
+      'base1': {
+        'constrH': 10,
+        'options': [],
         'constr': [],
-        'fleet': 0,
+        'area': 0,
+        'pop': 5,
         'constrTime':0,
         'wastedTime':0,
-      },
-      'Sierra': {
-        'prodh': 128,
-        'options': ['Fighter','Frigate','Carrier','FleetCarrier','Cruiser','HeavyCruiser','Recycler'],
-        'constr': [],
-        'fleet': 0,
-        'constrTime':0,
-        'wastedTime':0
-      },
-      'Nervo': {
-        'prodh': 92,
-        'options': ['Fighter','Frigate','Carrier','Cruiser','HeavyCruiser','Recycler'],
-        'constr': [],
-        'fleet': 0,
-        'constrTime':0,
-        'wastedTime': 0
-      },
-      'Osiris': {
-        'prodh': 93,
-        'options': ['Fighter','Frigate','Carrier','FleetCarrier','Cruiser','HeavyCruiser','Recycler'],
-        'constr': [],
-        'fleet': 0,
-        'constrTime':0,
-        'wastedTime': 0
-      },
-      'Canyon': {
-        'prodh': 63,
-        'options': ['Fighter','Recycler'],
-        'constr': [],
-        'fleet': 0,
-        'constrTime':0,
-        'wastedTime': 0
-      },
-      'Mira': {
-        'prodh': 38,
-        'options': ['Fighter','Frigate','Recycler'],
-        'constr': [],
-        'fleet': 0,
-        'constrTime':0,
-        'wastedTime': 0
       },
     },
     'options': {
@@ -161,7 +342,7 @@
         'hangar':0,
       },
     },
-    'base': 'Mira',
+    'base': 'base1',
     'type': 'Fighter',
     'fleets': {
       'Fighter' : 0,
