@@ -139,6 +139,26 @@
     'Anti-Gravity': 100000,
   }
 
+  var techLabReq = {
+    'Energy': 1,
+    'Computer': 1,
+    'Armour': 2,
+    'Laser': 2,
+    'Missiles': 4,
+    'Stellar Drive': 5,
+    'Plasma': 6,
+    'Warp Drive': 8,
+    'Shielding': 10,
+    'Ion': 12,
+    'Stealth': 14,
+    'Photon': 16,
+    'Artificial Intelligence': 18,
+    'Disruptor': 20,
+    'Cybernetics': 22,
+    'Tachyon Communications': 24,
+    'Anti-Gravity': 26,
+  }
+
   var techReq = {
     'Energy': {},
     'Computer': {},
@@ -162,166 +182,201 @@
   var constrTypes = {
     'UT': {
       'name': 'Urban Structures',
-      'description': 'Increases population capacity by bases fertility.',
       'technologies': {},
-      'resources': {'Credits': -1,'Population':'area.Fertility', 'Area': -1},
+      'Credits': 1,
+      'require': {'Area': 1},
+      'resources': {'Population':'Fertility'},
     },
     'SP': {
       'name': 'Solar Plants',
-      'description': 'Increases bases energy output by bases solar energy.',
       'technologies': {},
-      'resources': {'Credits': -1, 'Population': -1, 'Area': -1},
+      'Credits': 1,
+      'require':{'Population': 1, 'Area': 1},
+      'resources': {'Energy': 'Solar'},
     },
     'GP': {
       'name': 'Gas Plants',
-      'description': 'Increases bases energy output by bases gas resource.',
       'technologies': {},
-      'resources': {'Credits': -1, 'Population': -1, 'Area': -1},
+      'Credits': 1,
+      'require':{'Population': 1, 'Area': 1},
+      'resources': {'Energy': 'Gas'},
     },
     'FP': {
       'name': 'Fusion Plants',
-      'description': 'Increases bases energy output by 4.',
       'technologies': {'Energy': 6},
-      'resources': {'Credits': -20, 'Energy': 4, 'Population': -1, 'Area': -1},
+      'Credits': 20,
+      'require':{'Population': 1, 'Area': 1},
+      'resources': {'Energy': 4},
     },
     'AP': {
       'name': 'Antimatter Plants',
-      'description': 'Increases bases energy output by 10.',
       'technologies': {'Energy': 20},
-      'resources': {'Credits': -2000, 'Energy': 10, 'Population': -1, 'Area': -1, 'Advanced': 1},
+      'Credits': 2000,
+      'require':{'Population': 1, 'Area': 1},
+      'resources': {'Energy': 10, 'Advanced': 1},
     },
     'OP': {
       'name': 'Orbital Plants',
-      'description': 'Increases bases energy output by 12.',
       'technologies': {'Energy': 25},
-      'resources': {'Credits': -40000, 'Energy': 12, 'Population': -1, 'Advanced': 1},
+      'Credits': 40000,
+      'require':{'Population': 1},
+      'resources': {'Energy': 12, 'Advanced': 1},
     },
     'RL': {
       'name': 'Research Labs',
-      'description': 'Increases bases research by 8, allows new technologies.',
       'technologies': {},
-      'resources': {'Credits': -2, 'Energy': -1, 'Research': 8, 'Population': -1, 'Area': -1},
+      'Credits': 2,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 1},
+      'resources': {'Research': 8},
     },
     'MR': {
       'name': 'Metal Refineries',
-      'description': 'Increases production and construction by bases metal.',
       'technologies': {},
-      'resources': {'Credits': -2, 'Energy': -1, 'Economy': 1, 'Production': 'Metal','Construction': 'Metal', 'Population': -1, 'Area': -1},
+      'Credits': 2,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 1},
+      'resources': {'Economy': 1, 'Production': 'Metal', 'Construction': 'Metal'},
     },
     'CM': {
       'name': 'Crystal Mines',
-      'description': 'Increases bases economy by bases crystals resource.',
-      'technologies': {'Base': 'Crystals'},
-      'resources': {'Credits': -2, 'Energy': -1, 'Economy': 'Crystals', 'Population': -1, 'Area': -1},
+      'technologies': {},
+      'Credits': 2,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 1, 'Crystals': 1},
+      'resources': {'Economy': 'Crystals'},
     },
     'RF': {
       'name': 'Robotic Factories',
-      'description': 'Increases production and construction by 2.',
       'technologies': {'Computer': 2},
-      'resources': {'Credits': -5, 'Energy': -1, 'Economy': 1, 'Production': 2, 'Construction': 2, 'Population': -1, 'Area': -1},
+      'Credits': 5,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 1},
+      'resources': {'Economy': 1, 'Production': 2, 'Construction': 2},
     },
     'SY': {
       'name': 'Shipyards',
-      'description': 'Increases bases production by 2 and allows new units.',
       'technologies': {},
-      'resources': {'Credits': -5, 'Energy': -1, 'Economy': 2, 'Production': 2,'Population': -1, 'Area': -1},
+      'Credits': 5,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 1},
+      'resources': {'Economy': 2, 'Production': 2},
     },
     'OS': {
       'name': 'Orbital Shipyards',
-      'description': 'Increases bases production by 8 and allows new units.',
       'technologies': {'Cybernetics': 2},
-      'resources': {'Credits': -10000, 'Energy': -12, 'Economy': 2, 'Production': 8,'Population': -1},
+      'Credits': 10000,
+      'require':{'Population': 1, 'Energy': 12},
+      'resources': {'Economy': 2, 'Production': 8},
     },
     'SC': {
       'name': 'Spaceports',
-      'description': 'Increases bases economy by 2 and allows trade routes.',
       'technologies': {'Computer': 2},
-      'resources': {'Credits': -5, 'Energy': -1, 'Economy': 2, 'Population': -1, 'Area': -1, 'Trades': 1},
+      'Credits': 5,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 1},
+      'resources': {'Economy': 2, 'Trades': 1},
     },
-    'CC': {
+    /*'CC': {
       'name': 'Command Centers',
-      'description': 'Adds 5% fleet attack power at base and allows 1 occupation.',
       'technologies': {'Computer': 6},
       'resources': {'Credits': -20, 'Energy': -1, 'Population': -1, 'Area': -1, 'Ocupation':1},
-    },
+    },*/
     'NF': {
       'name': 'Nanite Factories',
-      'description': 'Increases production and construction by 4.',
       'technologies': {'Computer': 10, 'Laser': 8},
-      'resources': {'Credits': -80, 'Energy': -2, 'Economy': 2, 'Production': 4, 'Construction': 4,'Population': -1, 'Area': -1, 'Advanced': 1},
+      'Credits': 80,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 2},
+      'resources': {'Economy': 2, 'Production': 4, 'Construction': 4,'Advanced': 1},
     },
     'AF': {
       'name': 'Android Factories',
-      'description': 'Increases production and construction by 6.',
       'technologies': {'Artificial Intelligence': 4},
-      'resources': {'Credits': -1000, 'Energy': -4, 'Economy': 2, 'Production': 6, 'Construction': 6,'Population': -1, 'Area': -1, 'Advanced': 1},
+      'Credits': 1000,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 4},
+      'resources': {'Economy': 2, 'Production': 6, 'Construction': 6,'Advanced': 1},
     },
     'EC': {
       'name': 'Economic Centers',
-      'description': 'Increases bases economy by 4.',
       'technologies': {'Computer': 10},
-      'resources': {'Credits': -80, 'Energy': -2, 'Economy': 4, 'Population': -1, 'Area': -1, 'Advanced': 1},
+      'Credits': 80,
+      'require':{'Population': 1, 'Area': 1, 'Energy': 2},
+      'resources': {'Economy': 4, 'Advanced': 1, 'Population': -1, 'Area': -1, 'Energy': -2},
     },
     'TF': {
       'name': 'Terraform',
-      'description': 'Increases bases area by 5.',
       'technologies': {'Computer': 10, 'Energy': 10},
-      'resources': {'Credits': -80, 'Area': 5, 'Advanced': 1},
+      'Credits': 80,
+      'require':{},
+      'resources': {'Area': 5, 'Advanced': 1},
     },
     'MP': {
       'name': 'Multi-Level Platforms',
-      'description': 'Increases bases area by 10.',
       'technologies': {'Armour': 22},
-      'resources': {'Credits': -1000, 'Area': 10, 'Advanced': 1},
+      'Credits': 1000,
+      'require':{},
+      'resources': {'Area': 10, 'Advanced': 1},
     },
     'OB': {
       'name': 'Orbital Base',
-      'description': 'Increase population capacity by 10.',
       'technologies': {'Computer': 20},
-      'resources': {'Credits': -2000, 'Population': 10, 'Advanced': 1},
+      'Credits': 2000,
+      'require':{},
+      'resources': {'Population': 10, 'Advanced': 1},
     },
-    'JG': {
+    /*'JG': {
       'name': 'Jump Gate',
-      'description': 'Increases fleet speed by 100%, allows stellar units to move between galaxies.',
       'technologies': {'Warp Drive':12, 'Energy': 20},
       'resources': {'Credits': -5000, 'Energy':-12,'Population': 10, 'BaseSpeed':100},
-    },
+    },*/
     'BM': {
       'name': 'Biosphere Modification',
-      'description': 'Increases astro fertility by 1.',
       'technologies': {'Computer': 24, 'Energy': 24},
-      'resources': {'Credits': -20000, 'Energy':-24,'Population': -1, 'Area': -1, 'BaseFertility':1},
+      'Credits': 20000,
+      'require': {'Energy':24,'Population': 1, 'Area': 1},
+      'resources': {'Fertility':1},
     },
+    /*
     'CA': {
       'name': 'Capital',
-      'description': 'Increases economy by 10 and other bases by 2. -15% empire income while occupied.',
       'technologies': {'Tachyon Communications': 1},
       'resources': {'Credits': -15000, 'Energy':-12, 'Population': -1, 'Area': -1, 'Economy':10, 'OtherBasesEconomy':2},
-    },
+    },*/
   };
 
   var defaults = JSON.stringify({
     'bases': {
-      'base1': {
+      'ast1': {
         'type': 'asteroid',
         'constrH': 10,
-        'options': ['constr': ['UT':1], 'research': []],
-        'constr': [],
-        'area': 0,
-        'pop': baseTypes.asteroid.Fertility,
+        'prodH': 0,
+        'researchH': 0,
+        'resources': {'Economy': 2, 'Population': 0,},
+        'options': {'constr': constrTypes, 'research': techs},
+        'constr': {'UT':1},
+        'areaConstr': 0,
+        'constrTime':0,
+        'wastedTime':0,
+      },
+      'ast2': {
+        'type': 'asteroid',
+        'constrH': 10,
+        'prodH': 0,
+        'researchH': 0,
+        'resources': {'Economy': 2, 'Population': 0,},
+        'options': {'constr': constrTypes, 'research': techs},
+        'constr': {'UT':1},
+        'areaConstr': 0,
         'constrTime':0,
         'wastedTime':0,
       },
     },
-    'base': 'base1',
+    'base': 'ast1',
     'type':'constr',
-    'hcr': 100,
-    'cr': 5,
+    'research': techs,
+    'resources': {
+      'Credits': 100,
+      'Economy': 4,
+    },
     'loops':0,
     'time': {'waste': 0, 'constr':0,'passed':0},
     'actions': 0,
     'spent': 0,
-    'maxHr': 720,
+    'limitH': 720,
   });
   
   var actions = {
@@ -330,12 +385,110 @@
       return Math.floor(cost*1000/hcr)/1000;
     },
     'genExpr': {
-      'main': {'a': 1,'b': 2, 'c':3, 'd':4, 'j': 3},
-      'a':{'cs0': 0, 'cs1': 1, 'cs2': 2, 'cs3': 3, 'cs4':4},
-      'b': {'ct0': 0, 'ct1':5, 'ct2': 10, 'ct3': 15, 'ct4':20},
-      'c': {'c': 0, 'r': 1},
-      'd': {'bs': 1, 'bt': -1, 'bss': 2, 'btt': -2, 'bx': 5},
+      'main': {'a': 1,'b': 2, 'c':3, 'd':4, 'j': 5},
+      'a': {'c': 0, 'r': 1},
+      'b':{'cs0': 0, 'cs1': 1, 'cs2': 2, 'cs3': 3, 'cs4':4},
+      'c': {'ct0': 0, 'ct1':5, 'ct2': 10, 'ct3': 15, 'ct4':20},
+      'd': {'bs': 1, 'bt': -1, 'bss': 2, 'btt': -2, 'bx': 0},
       'j': {'j':3, 'l': 4,'n': 5,'p': 6}
+    },
+    'init': function () {
+      let bases = this.mem.bases;
+      for(let base in bases) {
+        if (!bases.hasOwnProperty(base)) {
+          continue;
+        }
+        bases[base].resources = {...bases[base].resources, ...baseTypes[bases[base].type]};
+        bases[base].resources.Population +=  baseTypes[bases[base].type].Fertility;
+      }
+    },
+    'allowedConstr': function (base) {
+      let r = [];
+      let constr = this.mem.bases[base].constr;
+      let resources = this.mem.bases[base].resources;
+      for(let i in constrTypes) {
+        if (!this.checkReqConstr(i, constrTypes[i].require, resources, constr, constrTypes[i].technologies)) {
+          continue;
+        }
+        r.push(i);
+      }
+      return r;
+    },
+    'checkReqConstr': function (name, req, baseRes, baseConstr, reqTech) {
+      if (baseConstr.hasOwnProperty(name)) {
+        return 1;
+      }
+      let lvls = this.mem.research;
+
+      let cnt = 0;
+      for(let i in reqTech) {
+        if (!reqTech.hasOwnProperty(i)) {
+          continue;
+        }
+        if (parseInt(lvls[i]) < parseInt(reqTech[i])) {
+          return 0;
+        }
+        cnt++;
+      }
+      if(cnt < Object.keys(reqTech).length) {
+        return 0;
+      }
+      if (!Object.keys(req).length) {
+        return 1;
+      }
+
+      cnt = 0;
+      let val = 0;
+      for(let i in req) {
+        if (!req.hasOwnProperty(i)) {
+          continue;
+        }
+        val = parseInt(req[i]);
+        if (!Number.isInteger(req[i])) {
+          val = parseInt(baseRes[i]);
+        }
+        if (parseInt(baseRes[i]) < val) {
+          return 0;
+        }
+        cnt++;
+      }
+      return (cnt >= Object.keys(req).length);
+    },
+    'allowedResearch': function (labLvl = 1) {
+      let r = [];
+      for(let i in this.mem.research) {
+        if (!this.mem.research.hasOwnProperty(i)) {
+          continue;
+        }
+        if (techLabReq[i] > labLvl) {
+          continue;
+        }
+        if (!this.checkReqTech(i,techReq[i])) {
+          continue;
+        }
+        r.push(i);
+      }
+      return r;
+    },
+    'checkReqTech': function(tech, req) {
+      let lvls = this.mem.research;
+      if (lvls[tech] > 0) {
+        return 1;
+      }
+      if (!Object.keys(req).length) {
+        return 1;
+      }
+      let cnt = 0;
+      for(let i in req) {
+        if (!req.hasOwnProperty(i)) {
+          continue;
+        }
+        if (parseInt(lvls[i]) < parseInt(req[i])) {
+          return 0;
+        }
+        cnt++;
+      }
+      return (cnt >= Object.keys(req).length);
     },
     'setBase': function (opt) {
       this.mem.base = opt;
@@ -346,7 +499,7 @@
       var type = this.mem.type;
       var opts = bases[base].options;
       var g = this.genExpr;
-      var baseType = basesType[bases[base].type];
+      var baseType = baseTypes[bases[base].type];
       var allowedOpts = this.filterOpts
       
       var cost = opts[type].cost*opt;
@@ -585,85 +738,10 @@
     }
   }
 
-  /*
-  tge.gen(2, m/10,1);
-  tge.gen(2, m/10);
-  tge.gen(2, m/10);
-  tge.gen(2, m/10);
-  tge.gen(2, m/10);
-  tge.gen(2, m/10);
-
-  var a= [
-      tge.gen(2, m),
-      tge.gen(2, m),
-  ];
-
-  inf[0] = show('a0', a[0]);
-  inf[1] = show('a1', a[1]);
-  a[2] = tge.cross(a[0], a[1])
-  inf[2] = show('a2', a[2]);
-  a[3] = tge.mutate(a[2]);
-  inf[3] = show('a3', a[3]);
-
-
-  a[3] = tge.mutate(a[3]);
-  inf[3] = show('a3m0', a[3]);
-
-  a[3] = tge.mutate(a[3]);
-  inf[3] = show('a3m1', a[3]);
-  a[3] = tge.mutate(a[3]);
-  inf[3] = show('a3m2', a[3]);
-  a[3] = tge.mutate(a[3]);
-  inf[3] = show('a3m3', a[3]);
-  a[3] = tge.mutate(a[3]);
-  inf[3] = show('a3m4', a[3]);
-  a[3] = tge.mutate(a[3]);
-  inf[3] = show('a3m5', a[3]);
-
-
-  tge.interpret(inf[0].b, 0, {}, actions);
-  console.log(actions.mem);
-  console.log('Score0: ', actions.getScore());
-
-  tge.interpret(inf[1].b, 0, {}, actions);
-  console.log(actions.mem);
-  console.log('Score1: ', actions.getScore());
-
-  tge.interpret(inf[2].b, 0, {}, actions);
-  console.log(actions.mem);
-  console.log('Score2: ', actions.getScore());
-
-  tge.interpret(inf[3].b, 0, {}, actions, 1);
-  console.log(actions.mem);
-  console.log('Score3: ', actions.getScore());
-
-  a[3] = tge.mutate(a[3]);
-  inf[4] = show('a3m6', a[3]);
-
-  tge.interpret(inf[4].b, 0, {}, actions);
-  console.log(actions.mem);
-  console.log('Score4: ', actions.getScore());
-
-  a[3] = tge.mutate(a[3]);
-  inf[5] = show('a3m6', a[3]);
-
-  tge.interpret(inf[5].b, 0, {}, actions);
-  console.log(actions.mem);
-  console.log('Score5: ', actions.getScore());
-
-
-  a[4] = tge.cross(a[3], a[1]);
-  a[4] = tge.mutate(a[4]);
-
-  inf[6] = show('a4', a[4]);
-
-  tge.interpret(inf[6].b, 0, {}, actions);
-  console.log(actions.mem);
-  console.log('Score6: ', actions.getScore());
-  */
+  actions.init();
 
   window.actions = actions;
-
+/*
   var scores = [], a= [], mem = [], i=0, j =0;
 
   m = 50;
@@ -718,9 +796,6 @@
     do {
       for (i = 0; i < 20; i++) {
         scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
-        /*if (i < 10) {
-            scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
-        }*/
       }
       for(i = 0; i < 10; i++) {
         scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
@@ -747,6 +822,7 @@
   //epoch(1);
   epoch(100);
   //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
+  */
 </script>
 </body>
 </html>
