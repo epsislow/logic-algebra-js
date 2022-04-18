@@ -303,71 +303,27 @@
   var defaults = JSON.stringify({
     'bases': {
       'base1': {
+        'type': 'asteroid',
         'constrH': 10,
-        'options': [],
+        'options': ['constr': ['UT':1], 'research': []],
         'constr': [],
         'area': 0,
-        'pop': 5,
+        'pop': baseTypes.asteroid.Fertility,
         'constrTime':0,
         'wastedTime':0,
       },
     },
-    'options': {
-      'Fighter': {
-        'cost': 5,
-        'hangar': -1,
-      },
-      'Frigate': {
-        'cost': 80,
-        'hangar':4,
-      },
-      'Carrier': {
-        'cost': 400,
-        'hangar': 80,
-      },
-      'FleetCarrier': {
-        'cost': 2500,
-        'hangar':500,
-      },
-      'Cruiser': {
-        'cost': 200,
-        'hangar':4,
-      },
-      'HeavyCruiser': {
-        'cost': 500,
-        'hangar':8,
-      },
-      'Recycler': {
-        'cost': 30,
-        'hangar':0,
-      },
-    },
     'base': 'base1',
-    'type': 'Fighter',
-    'fleets': {
-      'Fighter' : 0,
-      'Frigate': 0,
-      'Carrier': 0,
-      'FleetCarrier': 0,
-      'Cruiser': 0,
-      'HeavyCruiser': 0,
-      'Recycler': 0,
-    },
-    'hangarNeed':0,
-    'hangar': 0,
-    'hcr': 500,
-    'cr': 0,
+    'type':'constr',
+    'hcr': 100,
+    'cr': 5,
     'loops':0,
-    'goodConstr':0,
-    'maxConstrTime':0,
-    'minConstrTime':0,
     'time': {'waste': 0, 'constr':0,'passed':0},
-    'actions': 10,
+    'actions': 0,
     'spent': 0,
-    'maxActions': 250,
+    'maxHr': 720,
   });
-  //'Fighter':0,'Corvette':0,'C':0,'D':0, 'hcr': 500, 'cr': 0, 'loops':0, 'timeWaste': 0, 'timeMoved': 0, 'spent': 0, 'actions': 240, 'costs': {'A':2, 'B': 5, 'C': 20, 'D':50}, 'maxArea': 100}
-
+  
   var actions = {
     'mem': JSON.parse(defaults),
     'calcCost2Time': function (cost, hcr) {
@@ -375,25 +331,24 @@
     },
     'genExpr': {
       'main': {'a': 1,'b': 2, 'c':3, 'd':4, 'j': 3},
-      'a':{'Fighter': 1, 'Frigate': 2, 'Carrier': 3, 'HeavyCruiser': 4, 'Recycler':5},
-      'b': {'Mira': -1, 'Recycler':5, 'FleetCarrier': 6, 'Cruiser': 7},
-      'c': {'Calidar': -2, 'Sierra': -3, 'Nervo': -4, 'Osiris': -5, 'Canyon': -6},
-      'd': {'1x': 1, '5x': 5, '10x': 10, '50x': 50, '100x': 100},
+      'a':{'cs0': 0, 'cs1': 1, 'cs2': 2, 'cs3': 3, 'cs4':4},
+      'b': {'ct0': 0, 'ct1':5, 'ct2': 10, 'ct3': 15, 'ct4':20},
+      'c': {'c': 0, 'r': 1},
+      'd': {'bs': 1, 'bt': -1, 'bss': 2, 'btt': -2, 'bx': 5},
       'j': {'j':3, 'l': 4,'n': 5,'p': 6}
     },
     'setBase': function (opt) {
       this.mem.base = opt;
     },
-    'setFighter': function (opt) {
-      this.mem.type = opt;
-    },
-    'doConstrSize': function (opt) {
-      var opts = this.mem.options;
+    'doConstr': function (opt) {
       var bases = this.mem.bases;
-      var g = this.genExpr;
       var base = this.mem.base;
       var type = this.mem.type;
-
+      var opts = bases[base].options;
+      var g = this.genExpr;
+      var baseType = basesType[bases[base].type];
+      var allowedOpts = this.filterOpts
+      
       var cost = opts[type].cost*opt;
 
       if (cost > this.mem.cr) {
