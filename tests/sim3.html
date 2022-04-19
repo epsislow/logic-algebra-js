@@ -61,6 +61,7 @@
 
 <script type="text/javascript" src="/library/sha1/Random.js"></script>
 
+</body>
 <script type="module">
   import { TgeFn } from '/library/modules/TinyGenExpr.js'
 
@@ -367,6 +368,10 @@
     },
     'base': 'ast1',
     'type':'constr',
+    'value': 'UT',
+    'baseSel': 0,
+    'constrSelA': 0,
+    'constrSelB': 0,
     'research': techs,
     'resources': {
       'Credits': 100,
@@ -374,19 +379,19 @@
     },
     'loops':0,
     'time': {'waste': 0, 'constr':0,'passed':0},
-    'actions': 0,
+    'actions': 10,
     'spent': 0,
     'limitH': 720,
   });
-  
+
   var actions = {
     'mem': JSON.parse(defaults),
     'calcCost2Time': function (cost, hcr) {
       return Math.floor(cost*1000/hcr)/1000;
     },
     'genExpr': {
-      'main': {'a': 1,'b': 2, 'c':3, 'd':4, 'j': 5},
-      'a': {'c': 0, 'r': 1},
+      'main': {'a': 2,'b': 5, 'c':5, 'd':5, 'j': 4},
+      'a': {'ac': 0, 'ar': 1, 'x1': 2,  'x11': 2, 'ac2': 0},
       'b':{'cs0': 0, 'cs1': 1, 'cs2': 2, 'cs3': 3, 'cs4':4},
       'c': {'ct0': 0, 'ct1':5, 'ct2': 10, 'ct3': 15, 'ct4':20},
       'd': {'bs': 1, 'bt': -1, 'bss': 2, 'btt': -2, 'bx': 0},
@@ -401,6 +406,9 @@
         bases[base].resources = {...bases[base].resources, ...baseTypes[bases[base].type]};
         bases[base].resources.Population +=  baseTypes[bases[base].type].Fertility;
       }
+    },
+    'humanAllowedConstr': function (base) {
+      return this.allowedConstr(base).map(i => constrTypes[i].name);
     },
     'allowedConstr': function (base) {
       let r = [];
@@ -490,10 +498,52 @@
       }
       return (cnt >= Object.keys(req).length);
     },
-    'setBase': function (opt) {
-      this.mem.base = opt;
+    'setBase': function (val) {
+      this.mem.base = val;
     },
-    'doConstr': function (opt) {
+    'setType': function (typ) {
+      this.mem.type = typ;
+    },
+    'setConstr': function (val) {
+      this.mem.constr = val;
+    },
+    'setBaseSel': function (delta) {
+      let baseKeys = Object.keys(this.mem.bases);
+      this.mem.baseSel += delta;
+      if (this.mem.baseSel < 0 ) {
+        this.mem.baseSel += baseKeys.length;
+      } else {
+        this.mem.baseSel %= baseKeys.length;
+      }
+
+      this.setBase(baseKeys[this.mem.baseSel]);
+    },
+    'setBaseConstrSelA': function (sel) {
+      this.mem.constrSelA = sel;
+    },
+    'setBaseConstrSelB': function (sel) {
+      this.mem.constrSelB = sel;
+    },
+    'setValueFromOptionsSel': function (options) {
+      this.mem.value = options[(this.mem.constrSelA + this.mem.constrSelB) % options.length];
+    },
+
+    'doConstr': function () {
+      let options = [];
+
+      if (this.mem.type === 'constr') {
+        options = this.allowedConstr(this.mem.base)
+      } else {
+        let labs = this.mem.bases[this.mem.base].constr['RL'] ?? 0;
+        options = this.allowedResearch(labs);
+      }
+      this.setValueFromOptionsSel(options);
+
+      console.log(this.mem.value + ' !');
+
+      this.mem.actions--;
+      return (this.mem.actions <= 0);
+////////////////
       var bases = this.mem.bases;
       var base = this.mem.base;
       var type = this.mem.type;
@@ -501,7 +551,7 @@
       var g = this.genExpr;
       var baseType = baseTypes[bases[base].type];
       var allowedOpts = this.filterOpts
-      
+
       var cost = opts[type].cost*opt;
 
       if (cost > this.mem.cr) {
@@ -560,42 +610,33 @@
       var option = 0;
       var g = this.genExpr;
 
-      //console.log('do:', isA, opt);
+      console.log('do:', isA, opt);
 
       if (isA === 1 ) {
         keys = Object.keys(g['a']);
         option = g['a'][opt];
-        if (option < 0) {
-          //console.log('1base =' + opt, keys, option);
-          this.setBase(opt);
+        if (option === 0) {
+          console.log('1type =' + opt, keys, option);
+          this.setType('constr');
+        } else if (option === 1) {
+          console.log('1type =' + opt, keys, option);
+          this.setType('research');
         } else {
-          //console.log('1type =' + opt, keys, option);
-          this.setFighter(opt);
+          console.log('1doOnce' + opt, keys, option);
+          this.doConstr();
         }
       } else if (isA === 2) {
         keys = Object.keys(g['b']);
         option = g['b'][opt];
-        if (option < 0) {
-          //console.log('2base =' + opt, keys, option);
-          this.setBase(opt);
-        } else {
-          //console.log('2type =' + opt, keys, option);
-          this.setFighter(opt);
-        }
+        this.setBaseConstrSelA(option);
       } else if (isA === 3) {
         keys = Object.keys(g['c']);
         option = g['c'][opt];
-        if (option < 0) {
-          //console.log('3base =' + opt, keys, option);
-          this.setBase(opt);
-        } else {
-          //console.log('3type =' + opt, keys, option);
-          this.setFighter(opt);
-        }
-
+        this.setBaseConstrSelB(option);
       } else if (isA === 4) {
-        //console.log('construct:'+ opt);
-        return this.doConstrSize(opt);
+        keys = Object.keys(g['d']);
+        option = g['d'][opt];
+        this.setBaseSel(option);
       }
       /*
                   if (this.mem.costs[opt] > this.mem.cr) {
@@ -741,7 +782,7 @@
   actions.init();
 
   window.actions = actions;
-/*
+
   var scores = [], a= [], mem = [], i=0, j =0;
 
   m = 50;
@@ -751,11 +792,13 @@
 
   window.findScoreFor = function findScoreFor(a, i) {
     var inf = tge.lexer(a, 2, actions.genExpr);
-    //tge.show(inf.b, inf.br, 0);
+    tge.show(inf.b, inf.br, 0);
     tge.interpret(inf.b, 0, {}, actions);
 
     return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem, actions.getScore(0, 0, 1)];
   }
+
+
   m = 50;
   mm = 50;
   for(i = 0 ; i<mm; i++ ) {
@@ -775,54 +818,88 @@
   window.scores = scores;
   var n = 0;
 
-  scores.sort(function (a, b) {
-    if (a[3] === b[3]) {
-      return 0;
-    } else {
-      return a[3] < b[3] ? 1 : -1;
-    }
-  });
 
-  function getFirst(s, n) {
-    var t= [];
-    for(var i=0; i< n; i++) {
-      t[i]=JSON.parse(JSON.stringify(s[i]));
-    }
-    return t;
-  }
+  /*
+    var scores = [], a= [], mem = [], i=0, j =0;
 
-  window.epoch = function (max=10) {
-    n = 0;
-    do {
-      for (i = 0; i < 20; i++) {
-        scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
+    m = 50;
+    mm = 50;
+
+    tge.gen(2, m, 1);
+
+    window.findScoreFor = function findScoreFor(a, i) {
+      var inf = tge.lexer(a, 2, actions.genExpr);
+      //tge.show(inf.b, inf.br, 0);
+      tge.interpret(inf.b, 0, {}, actions);
+
+      return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem, actions.getScore(0, 0, 1)];
+    }
+    m = 50;
+    mm = 50;
+    for(i = 0 ; i<mm; i++ ) {
+      if (i === 0 && 0) {
+        a[i] = [16,74,91,30,41,14,2,61,9,75,5,20,31,68,87,79,74,97,72,80,5,15,61,32,74,65,22,74,87,88,96,39,8,43,32,18,85,80,8,97,8,89,53,1,36,82,69,69,70,66,71,63,5,53,63,42,55,58,93,24,1,66,17,78,3,79,32,53,53,43,32,16,15,50,55,55,11,46,77,16,64,77,12,83,87,95,9,63,73,5,40,47,10,10,71,39,3,60,16,60];
+      } else if (i === 0 && 0) {
+        a[0]= new Array(50);
+        a[0].fill(15, 0, 49);
+      } else {
+        a[i] = tge.gen(2, m, 0);
       }
-      for(i = 0; i < 10; i++) {
-        scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
+      scores[i] = findScoreFor(a[i], i);
+    }
+
+    window.a = a
+    window.mem = mem;
+    window.scores = scores;
+    var n = 0;
+
+    scores.sort(function (a, b) {
+      if (a[3] === b[3]) {
+        return 0;
+      } else {
+        return a[3] < b[3] ? 1 : -1;
       }
-      for (i = 2; i < scores.length; i++) {
-        scores[i] = findScoreFor(tge.mutate(scores[i][1], 4, 55), i);
+    });
+
+    function getFirst(s, n) {
+      var t= [];
+      for(var i=0; i< n; i++) {
+        t[i]=JSON.parse(JSON.stringify(s[i]));
       }
-      scores.sort(function (a, b) {
-        if (a[3] === b[3]) {
-          return 0;
-        } else {
-          return a[3] < b[3] ? 1 : -1;
+      return t;
+    }
+
+    window.epoch = function (max=10) {
+      n = 0;
+      do {
+        for (i = 0; i < 20; i++) {
+          scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
         }
-      });
-      n++;
-    } while (n < max)
+        for(i = 0; i < 10; i++) {
+          scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
+        }
+        for (i = 2; i < scores.length; i++) {
+          scores[i] = findScoreFor(tge.mutate(scores[i][1], 4, 55), i);
+        }
+        scores.sort(function (a, b) {
+          if (a[3] === b[3]) {
+            return 0;
+          } else {
+            return a[3] < b[3] ? 1 : -1;
+          }
+        });
+        n++;
+      } while (n < max)
 
-    var show=getFirst(scores, 3);
-    console.table(show);
-  }
-  //console.table(getFirst(scores, 3));
-  //epoch(20);
-  //epoch(10);
-  //epoch(1);
-  epoch(100);
-  //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
-  */
+      var show=getFirst(scores, 3);
+      console.table(show);
+    }
+    //console.table(getFirst(scores, 3));
+    //epoch(20);
+    //epoch(10);
+    //epoch(1);
+    epoch(100);
+    //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
+    */
 </script>
-</body>
 </html>
