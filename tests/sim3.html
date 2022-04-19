@@ -379,7 +379,7 @@
     },
     'loops':0,
     'time': {'waste': 0, 'constr':0,'passed':0},
-    'actions': 10,
+    'actions': 150,
     'spent': 0,
     'limitH': 720,
   });
@@ -405,6 +405,7 @@
         }
         bases[base].resources = {...bases[base].resources, ...baseTypes[bases[base].type]};
         bases[base].resources.Population +=  baseTypes[bases[base].type].Fertility;
+        bases[base].resources.Energy = 5;
       }
     },
     'humanAllowedConstr': function (base) {
@@ -527,7 +528,9 @@
     'setValueFromOptionsSel': function (options) {
       this.mem.value = options[(this.mem.constrSelA + this.mem.constrSelB) % options.length];
     },
-
+    'findCostFor': function (start, lvl) {
+      return Math.round(Math.pow(1.5, lvl - 1) * start);
+    },
     'doConstr': function () {
       let options = [];
 
@@ -539,10 +542,53 @@
       }
       this.setValueFromOptionsSel(options);
 
-      console.log(this.mem.value + ' !');
+      if (this.mem.type === 'constr') {
+        if (!this.mem.bases[this.mem.base].constr.hasOwnProperty(this.mem.value)) {
+          this.mem.bases[this.mem.base].constr[this.mem.value] = 0;
+        }
+        this.mem.bases[this.mem.base].constr[this.mem.value]++;
+        //console.log('an '+ this.mem.value, this.mem.bases[this.mem.base].constr);
+        let baseRes = this.mem.bases[this.mem.base].resources;
+        for(let i in constrTypes[this.mem.value].resources) {
+          if (constrTypes[this.mem.value].resources.hasOwnProperty(i)) {
+            let val = constrTypes[this.mem.value].resources[i];
+            if (!Number.isInteger(val)) {
+              val = parseInt(baseRes[val]);
+            }
+            if (!this.mem.bases[this.mem.base].resources.hasOwnProperty(i)) {
+              this.mem.bases[this.mem.base].resources[i] = 0;
+            }
+            this.mem.bases[this.mem.base].resources[i] += val;
+          }
+        }
+        this.mem.spent += this.findCostFor(constrTypes[this.mem.value].Credits, this.mem.bases[this.mem.base].constr[this.mem.value]);;
+
+        //console.log(this.mem.value + ' !');
+      } else if (options.length) {
+        if (!this.mem.research.hasOwnProperty(this.mem.value)) {
+          this.mem.research[this.mem.value] = 0;
+        }
+        this.mem.research[this.mem.value]++;
+        //console.log(this.mem.value + ' ' + this.mem.research[this.mem.value] + ' !');
+        this.mem.spent += this.findCostFor(techCost[this.mem.value], this.mem.research[this.mem.value]);;
+      } else {
+        //console.log('nothing.');
+      }
+
+      this.mem.resources.Economy = 0;
+      for(let base in this.mem.bases) {
+        if (!this.mem.bases.hasOwnProperty(base)) {
+          continue;
+        }
+        this.mem.resources.Economy += this.mem.bases[base].resources.Economy;
+      }
 
       this.mem.actions--;
       return (this.mem.actions <= 0);
+
+
+
+
 ////////////////
       var bases = this.mem.bases;
       var base = this.mem.base;
@@ -610,34 +656,34 @@
       var option = 0;
       var g = this.genExpr;
 
-      console.log('do:', isA, opt);
-
       if (isA === 1 ) {
-        keys = Object.keys(g['a']);
+        //keys = Object.keys(g['a']);
         option = g['a'][opt];
         if (option === 0) {
-          console.log('1type =' + opt, keys, option);
+          //console.log('1type =' + opt);
           this.setType('constr');
         } else if (option === 1) {
-          console.log('1type =' + opt, keys, option);
+          //console.log('1type =' + opt);
           this.setType('research');
         } else {
-          console.log('1doOnce' + opt, keys, option);
+          //console.log('1doOnce' + opt);
           this.doConstr();
         }
       } else if (isA === 2) {
-        keys = Object.keys(g['b']);
+        //keys = Object.keys(g['b']);
         option = g['b'][opt];
         this.setBaseConstrSelA(option);
       } else if (isA === 3) {
-        keys = Object.keys(g['c']);
+        //keys = Object.keys(g['c']);
         option = g['c'][opt];
         this.setBaseConstrSelB(option);
       } else if (isA === 4) {
-        keys = Object.keys(g['d']);
-        option = g['d'][opt];
+        //keys = Object.keys(g['d']);
+        //option = g['d'][opt];
+        option = opt;
         this.setBaseSel(option);
       }
+      //console.log('do:', isA, option);
       /*
                   if (this.mem.costs[opt] > this.mem.cr) {
                       if (this.mem.hcr === 0) {
@@ -704,7 +750,13 @@
       }
       return min;
     },
-    'getRvals': function() {
+    'getRvals': function () {
+      return [
+            this.mem.spent,
+            this.mem.resources.Economy
+      ]
+    },
+    'getRvals1': function() {
       return [
         this.mem.hangarNeed,
         this.mem.hangar,
@@ -739,13 +791,9 @@
         importance = this.getScoreImportance();
       }
       var r = this.getRvals();
-      //var q = ['1hangar', '2sumConstr', '3spent','4timeWaste', '5quality', '6loops', '7maxOfconstrTime','8goodConstr','9minConstrTime','10minmax'];
       var q= [
-        '1hgNeed',
-        '2hgSum',
-        '3dHg',
-        '4spent',
-        '5dtimConstr',
+        '1spent',
+        '2economy',
       ];
       var sc = 0;
       var scs = {};
@@ -768,11 +816,11 @@
       return sc;
     },
     'getScoreImportance': function () {
-      return [5,2,-10,0.005,2];
-      //  [0,-15, 0, 0, 0.001, -0.25, -5,500, 10000, 0];
+      return [-0.01, 5];
     },
     'reset': function () {
       this.mem = JSON.parse(defaults);
+      this.init();
     },
     'setLoops': function (loops) {
       this.mem.loops = loops;
@@ -783,29 +831,31 @@
 
   window.actions = actions;
 
+
   var scores = [], a= [], mem = [], i=0, j =0;
 
   m = 50;
-  mm = 50;
+  mm = 100;
 
   tge.gen(2, m, 1);
 
   window.findScoreFor = function findScoreFor(a, i) {
     var inf = tge.lexer(a, 2, actions.genExpr);
-    tge.show(inf.b, inf.br, 0);
+    //tge.show(inf.b, inf.br, 0);
+    //console.log('For ' + i);
     tge.interpret(inf.b, 0, {}, actions);
 
     return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem, actions.getScore(0, 0, 1)];
   }
 
-
+window.start = function () {
   m = 50;
-  mm = 50;
-  for(i = 0 ; i<mm; i++ ) {
+  mm = 100;
+  for (i = 0; i < mm; i++) {
     if (i === 0 && 0) {
-      a[i] = [16,74,91,30,41,14,2,61,9,75,5,20,31,68,87,79,74,97,72,80,5,15,61,32,74,65,22,74,87,88,96,39,8,43,32,18,85,80,8,97,8,89,53,1,36,82,69,69,70,66,71,63,5,53,63,42,55,58,93,24,1,66,17,78,3,79,32,53,53,43,32,16,15,50,55,55,11,46,77,16,64,77,12,83,87,95,9,63,73,5,40,47,10,10,71,39,3,60,16,60];
+      a[i] = [16, 74, 91, 30, 41, 14, 2, 61, 9, 75, 5, 20, 31, 68, 87, 79, 74, 97, 72, 80, 5, 15, 61, 32, 74, 65, 22, 74, 87, 88, 96, 39, 8, 43, 32, 18, 85, 80, 8, 97, 8, 89, 53, 1, 36, 82, 69, 69, 70, 66, 71, 63, 5, 53, 63, 42, 55, 58, 93, 24, 1, 66, 17, 78, 3, 79, 32, 53, 53, 43, 32, 16, 15, 50, 55, 55, 11, 46, 77, 16, 64, 77, 12, 83, 87, 95, 9, 63, 73, 5, 40, 47, 10, 10, 71, 39, 3, 60, 16, 60];
     } else if (i === 0 && 0) {
-      a[0]= new Array(50);
+      a[0] = new Array(50);
       a[0].fill(15, 0, 49);
     } else {
       a[i] = tge.gen(2, m, 0);
@@ -818,88 +868,55 @@
   window.scores = scores;
   var n = 0;
 
-
-  /*
-    var scores = [], a= [], mem = [], i=0, j =0;
-
-    m = 50;
-    mm = 50;
-
-    tge.gen(2, m, 1);
-
-    window.findScoreFor = function findScoreFor(a, i) {
-      var inf = tge.lexer(a, 2, actions.genExpr);
-      //tge.show(inf.b, inf.br, 0);
-      tge.interpret(inf.b, 0, {}, actions);
-
-      return [i, a, tge.show(inf.b, inf.br, 1), actions.getScore(0, actions.getScoreImportance()), actions.mem, actions.getScore(0, 0, 1)];
+  scores.sort(function (a, b) {
+    if (a[3] === b[3]) {
+      return 0;
+    } else {
+      return a[3] < b[3] ? 1 : -1;
     }
-    m = 50;
-    mm = 50;
-    for(i = 0 ; i<mm; i++ ) {
-      if (i === 0 && 0) {
-        a[i] = [16,74,91,30,41,14,2,61,9,75,5,20,31,68,87,79,74,97,72,80,5,15,61,32,74,65,22,74,87,88,96,39,8,43,32,18,85,80,8,97,8,89,53,1,36,82,69,69,70,66,71,63,5,53,63,42,55,58,93,24,1,66,17,78,3,79,32,53,53,43,32,16,15,50,55,55,11,46,77,16,64,77,12,83,87,95,9,63,73,5,40,47,10,10,71,39,3,60,16,60];
-      } else if (i === 0 && 0) {
-        a[0]= new Array(50);
-        a[0].fill(15, 0, 49);
-      } else {
-        a[i] = tge.gen(2, m, 0);
+  });
+
+  function getFirst(s, n) {
+    var t= [];
+    for(var i=0; i< n; i++) {
+      t[i]=JSON.parse(JSON.stringify(s[i]));
+    }
+    return t;
+  }
+
+  window.epoch = function (max=10) {
+    n = 0;
+    do {
+      for (i = 0; i < 20; i++) {
+        scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
       }
-      scores[i] = findScoreFor(a[i], i);
-    }
-
-    window.a = a
-    window.mem = mem;
-    window.scores = scores;
-    var n = 0;
-
-    scores.sort(function (a, b) {
-      if (a[3] === b[3]) {
-        return 0;
-      } else {
-        return a[3] < b[3] ? 1 : -1;
+      for(i = 0; i < 10; i++) {
+        scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
       }
-    });
-
-    function getFirst(s, n) {
-      var t= [];
-      for(var i=0; i< n; i++) {
-        t[i]=JSON.parse(JSON.stringify(s[i]));
+      for (i = 2; i < scores.length; i++) {
+        scores[i] = findScoreFor(tge.mutate(scores[i][1], 4, 55), i);
       }
-      return t;
-    }
+      scores.sort(function (a, b) {
+        if (a[3] === b[3]) {
+          return 0;
+        } else {
+          return a[3] < b[3] ? 1 : -1;
+        }
+      });
+      n++;
+      console.log('Epoch '+ n);
+    } while (n < max)
 
-    window.epoch = function (max=10) {
-      n = 0;
-      do {
-        for (i = 0; i < 20; i++) {
-          scores[20 + i] = findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
-        }
-        for(i = 0; i < 10; i++) {
-          scores[40 + i] = findScoreFor(tge.cross(scores[i][1], scores[20 - i][1]), i);
-        }
-        for (i = 2; i < scores.length; i++) {
-          scores[i] = findScoreFor(tge.mutate(scores[i][1], 4, 55), i);
-        }
-        scores.sort(function (a, b) {
-          if (a[3] === b[3]) {
-            return 0;
-          } else {
-            return a[3] < b[3] ? 1 : -1;
-          }
-        });
-        n++;
-      } while (n < max)
+    var show=getFirst(scores, 3);
+    console.table(show);
+  }
+  //console.table(getFirst(scores, 3));
+  //epoch(20);
+  //epoch(10);
+  //epoch(1);
+  epoch(100);
+  //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
+}
 
-      var show=getFirst(scores, 3);
-      console.table(show);
-    }
-    //console.table(getFirst(scores, 3));
-    //epoch(20);
-    //epoch(10);
-    //epoch(1);
-    epoch(100);
-    //findScoreFor(tge.cross(scores[i][1], scores[i + 1][1]), 20 + i);
-    */
 </script>
 </html>
