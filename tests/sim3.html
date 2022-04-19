@@ -68,7 +68,7 @@
   window.tge = TgeFn(rd);
   console.log('[sim3]-----');
 
-  var m = 50, mm = 50;
+  var m, mm;
   var inf=[];
   window.inf= inf;
 
@@ -349,7 +349,6 @@
         'resources': {'Economy': 2, 'Population': 0,},
         'options': {'constr': constrTypes, 'research': techs},
         'constr': {'UT':1},
-        'areaConstr': 0,
         'constrTime':0,
         'wastedTime':0,
       },
@@ -361,7 +360,6 @@
         'resources': {'Economy': 2, 'Population': 0,},
         'options': {'constr': constrTypes, 'research': techs},
         'constr': {'UT':1},
-        'areaConstr': 0,
         'constrTime':0,
         'wastedTime':0,
       },
@@ -378,8 +376,10 @@
       'Economy': 4,
     },
     'loops':0,
+    'constrTime': 0,
+    'goodConstr': 0,
     'time': {'waste': 0, 'constr':0,'passed':0},
-    'actions': 150,
+    'actions': 72000,
     'spent': 0,
     'limitH': 720,
   });
@@ -397,15 +397,19 @@
       'd': {'bs': 1, 'bt': -1, 'bss': 2, 'btt': -2, 'bx': 0},
       'j': {'j':3, 'l': 4,'n': 5,'p': 6}
     },
+    'initBase': function (base) {
+      let bases = this.mem.bases;
+      bases[base].resources = {...bases[base].resources, ...baseTypes[bases[base].type]};
+      bases[base].resources.Population +=  baseTypes[bases[base].type].Fertility;
+      bases[base].resources.Energy = 5;
+    },
     'init': function () {
       let bases = this.mem.bases;
       for(let base in bases) {
         if (!bases.hasOwnProperty(base)) {
           continue;
         }
-        bases[base].resources = {...bases[base].resources, ...baseTypes[bases[base].type]};
-        bases[base].resources.Population +=  baseTypes[bases[base].type].Fertility;
-        bases[base].resources.Energy = 5;
+        this.initBase(base);
       }
     },
     'humanAllowedConstr': function (base) {
@@ -531,6 +535,43 @@
     'findCostFor': function (start, lvl) {
       return Math.round(Math.pow(1.5, lvl - 1) * start);
     },
+    'baseCost': function (baseNumber = 0, maxTotalBases = 0, discount = 0) {
+      if(baseNumber === 0) {
+        return 0;
+      }
+      //1,2,3,4,5,6,7,8,9,10
+      //0,1,2,5,1,2,5,1,2,5
+      //0,2,2,2,3,3,3,4,4,4
+
+      var noMoreMaxDiscountProc = (maxTotalBases> baseNumber) ? 25:100;
+
+      var prefix = [1,2,5];
+
+      var power = Math.floor((baseNumber+5)/3);
+
+      return Math.max(0, Math.round(prefix[(baseNumber-1)%3]*Math.pow(10,power)*noMoreMaxDiscountProc/100) - discount);
+    },
+    'addNewBase': function () {
+      let countBases =  Object.keys(this.mem.bases).length + 1;
+      if(countBases > 9) {
+        return;
+      }
+      let newName = 'ast'+ countBases;
+      this.mem.bases[newName] = {
+        'type': 'asteroid',
+        'constrH': 10,
+        'prodH': 0,
+        'researchH': 0,
+        'resources': {'Economy': 2, 'Population': 0,},
+        'options': {'constr': constrTypes, 'research': techs},
+        'constr': {'UT':1},
+        'areaConstr': 0,
+        'constrTime':0,
+        'wastedTime':0,
+      }
+      this.initBase(newName);
+      this.mem.spent += this.baseCost(countBases);
+    },
     'doConstr': function () {
       let options = [];
 
@@ -549,6 +590,9 @@
         this.mem.bases[this.mem.base].constr[this.mem.value]++;
         //console.log('an '+ this.mem.value, this.mem.bases[this.mem.base].constr);
         let baseRes = this.mem.bases[this.mem.base].resources;
+        if (!constrTypes.hasOwnProperty(this.mem.value)) {
+          console.log('HORROR', this.mem.value, this);
+        }
         for(let i in constrTypes[this.mem.value].resources) {
           if (constrTypes[this.mem.value].resources.hasOwnProperty(i)) {
             let val = constrTypes[this.mem.value].resources[i];
@@ -561,8 +605,20 @@
             this.mem.bases[this.mem.base].resources[i] += val;
           }
         }
-        this.mem.spent += this.findCostFor(constrTypes[this.mem.value].Credits, this.mem.bases[this.mem.base].constr[this.mem.value]);;
+        let cost = this.findCostFor(constrTypes[this.mem.value].Credits, this.mem.bases[this.mem.base].constr[this.mem.value]);
+        this.mem.spent += cost;
+        let constrTime = this.calcCost2Time(cost, this.mem.resources.Economy);
+        this.mem.bases[this.mem.base].constrTime += constrTime;
 
+        if (this.mem.bases[this.mem.base].constrTime > this.mem.constrTime) {
+          this.mem.constrTime = this.mem.bases[this.mem.base].constrTime;
+        } else {
+          this.mem.goodConstr++;
+        }
+
+        if (this.mem.value === 'SY' && this.mem.bases[this.mem.base].constr[this.mem.value] > 5) {
+          this.addNewBase();
+        }
         //console.log(this.mem.value + ' !');
       } else if (options.length) {
         if (!this.mem.research.hasOwnProperty(this.mem.value)) {
@@ -570,7 +626,17 @@
         }
         this.mem.research[this.mem.value]++;
         //console.log(this.mem.value + ' ' + this.mem.research[this.mem.value] + ' !');
-        this.mem.spent += this.findCostFor(techCost[this.mem.value], this.mem.research[this.mem.value]);;
+        let cost = this.findCostFor(techCost[this.mem.value], this.mem.research[this.mem.value]);
+        this.mem.spent += cost;
+        let constrTime = this.calcCost2Time(cost, this.mem.resources.Economy);
+        this.mem.bases[this.mem.base].constrTime += constrTime;
+
+        if (this.mem.bases[this.mem.base].constrTime > this.mem.constrTime) {
+          this.mem.constrTime = this.mem.bases[this.mem.base].constrTime;
+        } else {
+          this.mem.goodConstr++;
+        }
+
       } else {
         //console.log('nothing.');
       }
@@ -584,7 +650,7 @@
       }
 
       this.mem.actions--;
-      return (this.mem.actions <= 0);
+      return (this.mem.actions <= 0) || (this.mem.constrTime > this.mem.limitH);
 
 
 
@@ -649,7 +715,7 @@
       //this.mem[opt]++;
       this.mem.actions--;
 
-      return (this.mem.actions <= 0);
+      return (this.mem.actions <= 0) || (this.mem.constrTime > this.mem.limitH);
     },
     'doOption' : function (isA, opt) {
       var keys = [];
@@ -659,6 +725,9 @@
       if (isA === 1 ) {
         //keys = Object.keys(g['a']);
         option = g['a'][opt];
+        if (opt === undefined) {
+          option = 0;
+        }
         if (option === 0) {
           //console.log('1type =' + opt);
           this.setType('constr');
@@ -672,15 +741,24 @@
       } else if (isA === 2) {
         //keys = Object.keys(g['b']);
         option = g['b'][opt];
+        if (opt === undefined) {
+          option = 0;
+        }
         this.setBaseConstrSelA(option);
       } else if (isA === 3) {
         //keys = Object.keys(g['c']);
         option = g['c'][opt];
+        if (opt === undefined) {
+          option = 0;
+        }
         this.setBaseConstrSelB(option);
       } else if (isA === 4) {
         //keys = Object.keys(g['d']);
         //option = g['d'][opt];
         option = opt;
+        if (opt === undefined) {
+          option = 0;
+        }
         this.setBaseSel(option);
       }
       //console.log('do:', isA, option);
@@ -730,7 +808,7 @@
 
        */
 
-      return (this.mem.actions <= 0);
+      return (this.mem.actions <= 0) || (this.mem.constrTime > this.mem.limitH);
     },
     'getOptions': function (t) {
       if (t === 'd') {
@@ -752,8 +830,10 @@
     },
     'getRvals': function () {
       return [
-            this.mem.spent,
-            this.mem.resources.Economy
+        this.mem.spent,
+        this.mem.resources.Economy,
+        this.mem.goodConstr,
+        this.mem.constrTime,
       ]
     },
     'getRvals1': function() {
@@ -794,6 +874,8 @@
       var q= [
         '1spent',
         '2economy',
+        '3goodConstr',
+        '4constrGlobalTime',
       ];
       var sc = 0;
       var scs = {};
@@ -816,7 +898,12 @@
       return sc;
     },
     'getScoreImportance': function () {
-      return [-0.01, 5];
+      return [
+        -0.001,
+        5,
+        1,
+        -1
+      ];
     },
     'reset': function () {
       this.mem = JSON.parse(defaults);
@@ -835,7 +922,7 @@
   var scores = [], a= [], mem = [], i=0, j =0;
 
   m = 50;
-  mm = 100;
+  mm = 250;
 
   tge.gen(2, m, 1);
 
@@ -849,11 +936,9 @@
   }
 
 window.start = function () {
-  m = 50;
-  mm = 100;
   for (i = 0; i < mm; i++) {
     if (i === 0 && 0) {
-      a[i] = [16, 74, 91, 30, 41, 14, 2, 61, 9, 75, 5, 20, 31, 68, 87, 79, 74, 97, 72, 80, 5, 15, 61, 32, 74, 65, 22, 74, 87, 88, 96, 39, 8, 43, 32, 18, 85, 80, 8, 97, 8, 89, 53, 1, 36, 82, 69, 69, 70, 66, 71, 63, 5, 53, 63, 42, 55, 58, 93, 24, 1, 66, 17, 78, 3, 79, 32, 53, 53, 43, 32, 16, 15, 50, 55, 55, 11, 46, 77, 16, 64, 77, 12, 83, 87, 95, 9, 63, 73, 5, 40, 47, 10, 10, 71, 39, 3, 60, 16, 60];
+      a[i] = [  25,  51,  7,  30,  65,  15,  47,  23,  54,  79,  13,  33,  42,  51,  8,  47,  24,  94,  17,  39,  46,  39,  81,  4,  20];
     } else if (i === 0 && 0) {
       a[0] = new Array(50);
       a[0].fill(15, 0, 49);
