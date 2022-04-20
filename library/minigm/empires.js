@@ -874,67 +874,10 @@ var Empires = (function (constants) {
 					.append($('<th>').html('Value').addClass('large').attr('colspan', 2))
 					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
 			);
-			$('#baseProfit tbody.results').append(
-				$('<tr>')
-					.append($('<td>').html('Base Economy').attr('colspan', 3))
-					.append($('<td>').html('100').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Base Income').attr('colspan', 3))
-					.append($('<td>').html('100').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Command Centers').attr('colspan', 3))
-					.append($('<td>').html('10').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Defenses Power').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Defenses Armour').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Fl. Armour not shielded(0)').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Fl. Armour shielded(<6)').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Fl. Armour shielded(<10)').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Fl. Armour shielded(10+)').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Debris').attr('colspan', 3))
-					.append($('<td>').html('50000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Base Pillage').attr('colspan', 3))
-					.append($('<td>').html('10000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			).append(
-				$('<tr>')
-					.append($('<td>').html('Attacker Profit').attr('colspan', 3))
-					.append($('<td>').html('10000').attr('colspan', 2))
-					.append($('<th>').attr('colspan', 1))
-			);
+
+
+			let results = {};
+			showResults();
 
 			function addNewResearchButton() {
 				const span = $('<span>');
@@ -1059,40 +1002,106 @@ var Empires = (function (constants) {
 			}
 
 			function appendResearch(selEl, lvlEl) {
-				defResearch[selEl.val()] = lvlEl.val();
+				if (lvlEl.val() === "0") {
+					delete defResearch[selEl.val()];
+				} else {
+					defResearch[selEl.val()] = lvlEl.val();
+				}
 
 				showResearches();
 				showResults();
 			}
 			function appendDefense(selEl, lvlEl) {
-				defDefense[selEl.val()] = lvlEl.val();
+				if (lvlEl.val() === "0") {
+					delete defDefense[selEl.val()];
+				} else {
+					defDefense[selEl.val()] = lvlEl.val();
+				}
 
 				showDefenses();
 				showResults();
 			}
 			function appendFleet(selEl, lvlEl) {
-				defFleet[selEl.val()] = lvlEl.val();
+				if (lvlEl.val() === "0") {
+					delete defFleet[selEl.val()];
+				} else {
+					defFleet[selEl.val()] = lvlEl.val();
+				}
 
 				showFleets();
 				showResults();
 			}
 
-			function removeResearch() {
-				showResults();
-			}
-			function removeDefense() {
-				showResults();
-			}
-			function removeFleet() {
-				showResults();
-			}
-
 			function calcResults() {
-
+				results.baseEconomy = 10;
+				results.baseIncome = 10;
+				results.baseCC = 10;
 			}
 
 			function showResults() {
 				calcResults();
+
+				$('#baseProfit tbody.results').append(
+					$('<tr>')
+						.append($('<td>').html('Base Economy').attr('colspan', 3))
+						.append($('<td>').html(results.baseEconomy).attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Base Income').attr('colspan', 3))
+						.append($('<td>').html(results.baseIncome).attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Command Centers').attr('colspan', 3))
+						.append($('<td>').html(results.baseCC).attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Defenses Power').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Defenses Armour').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Fl. Armour not shielded(0)').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Fl. Armour shielded(<6)').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Fl. Armour shielded(<10)').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Fl. Armour shielded(10+)').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Debris').attr('colspan', 3))
+						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Base Pillage').attr('colspan', 3))
+						.append($('<td>').html('10000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Attacker Profit').attr('colspan', 3))
+						.append($('<td>').html('10000').attr('colspan', 2))
+						.append($('<th>').attr('colspan', 1))
+				);
 			}
 		},
 		showFleetSizeMaintenanceCalculator: function () {
