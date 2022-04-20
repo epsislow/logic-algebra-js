@@ -1084,11 +1084,16 @@ var Empires = (function (constants) {
 				  }
 				}
 				results.fleetDefensesArmour = qsum;
+				armourTech = defResearch.hasOwnProperty('Armour') ? defResearch['Armour'] : 0;
+				
+				let debrisProc= armourTech ? armourTech * 2 / 100 : 0.3;
 				
 				results.defensesArmour = results.baseDefensesArmour
 				  + results.fleetDefensesArmour;
 				results.defensesPower = results.baseDefensesPower 
 				  + results.fleetDefensesPower;
+				  
+				results.debris = Math.round(results.fleetDefensesArmour * debrisProc * 100)/100;
 			}
 
 			function showResults() {
@@ -1153,7 +1158,7 @@ var Empires = (function (constants) {
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Debris').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html(results.debris).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
