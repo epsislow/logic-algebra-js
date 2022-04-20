@@ -1037,8 +1037,12 @@ var Empires = (function (constants) {
 				results.baseEconomy = 10;
 				results.baseIncome = 10;
 				results.baseCC = 10;
+				results.fleetArmourNoShield = 0;
+			  results.fleetArmourLowShield = 0;
+			  results.fleetArmourMedShield = 0;
+			  results.fleetArmourBigShield = 0;
 				
-				let qsum = 0, weaponTech = 1, weapon='', armourTech = 0;
+				let qsum = 0,q= 0, weaponTech = 1, weapon='', armourTech = 0;
 				for(let d in defDefense) {
 				  weapon = constants.defenses[d].capabilities.Weapon;
 				  weaponTech = defResearch.hasOwnProperty(weapon) ? defResearch[weapon] : 0;
@@ -1056,10 +1060,35 @@ var Empires = (function (constants) {
 				}
 				results.baseDefensesArmour = qsum;
 				
+				for (let d in defFleet) {
+				  weapon = constants.units[d].Weapon;
+				  weaponTech = defResearch.hasOwnProperty(weapon) ? defResearch[weapon] : 0;
+				  weaponTech = weaponTech * 5 / 100 + 1;
+				  qsum += constants.units[d].Power * defFleet[d] * weaponTech;
+				}
+				results.fleetDefensesPower = qsum;
+				qsum = 0;
 				
+				for (let d in defFleet) {
+				  q= constants.units[d].Armour * defFleet[d] * armourTech;
+				  qsum += q;
+				  let Shield = constants.units[d].Shield;
+				  if(Shield === 0) {
+				    results.fleetArmourNoShield += q;
+				  } else if ( Shield < 6) {
+				    results.fleetArmourLowShield += q;
+				  } else if ( Shield < 10) {
+				    results.fleetArmourMedShield += q;
+				  } else if ( Shield >= 10) {
+				    results.fleetArmourBigShield += q;
+				  }
+				}
+				results.fleetDefensesArmour = qsum;
 				
-				results.defensesArmour = results.baseDefensesArmour;
-				results.defensesPower = results.baseDefensesPower;
+				results.defensesArmour = results.baseDefensesArmour
+				  + results.fleetDefensesArmour;
+				results.defensesPower = results.baseDefensesPower 
+				  + results.fleetDefensesPower;
 			}
 
 			function showResults() {
@@ -1103,23 +1132,23 @@ var Empires = (function (constants) {
 				  .append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Fl. Armour not shielded(0)').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html('FArmour not shielded(0)').attr('colspan', 3))
+						.append($('<td>').html(results.fleetArmourNoShield).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Fl. Armour shielded(<6)').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html('FArmour shielded(<6)').attr('colspan', 3))
+						.append($('<td>').html(results.fleetArmourLowShield).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Fl. Armour shielded(<10)').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html('FArmour shielded(<10)').attr('colspan', 3))
+						.append($('<td>').html(results.fleetArmourMedShield).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Fl. Armour shielded(10+)').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html('FArmour shielded(10+)').attr('colspan', 3))
+						.append($('<td>').html(results.fleetArmourBigShield).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
