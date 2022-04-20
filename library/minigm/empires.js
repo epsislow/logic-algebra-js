@@ -229,7 +229,6 @@ var EmpiresConstants = {
 		'Stealth': 0,
 	},
 	'fleetResearches': {
-		'Energy': 0,
 		'Armour': 0,
 		'Laser': 0,
 		'Missiles': 0,
