@@ -875,6 +875,10 @@ var Empires = (function (constants) {
 			);
 
 
+			let defResearch = [];
+			let defDefense = [];
+			let defFleet = [];
+			
 			let results = {};
 			showResults();
 
@@ -918,7 +922,7 @@ var Empires = (function (constants) {
 
 				for(let t in constants.defenses) {
 					let name = constants.defenses[t].name;
-					selEl.append($('<option>', {'value': name, text: name}));
+					selEl.append($('<option>', {'value': t, text: name}));
 				}
 
 				span.append(buttonEl);
@@ -956,9 +960,6 @@ var Empires = (function (constants) {
 				return span;
 			}
 
-			let defResearch = [];
-			let defDefense = [];
-			let defFleet = [];
 
 			function showResearches() {
 				$('#baseProfit tbody.research tr[class!=add]').remove();
@@ -977,9 +978,10 @@ var Empires = (function (constants) {
 				$('#baseProfit tbody.defenses tr[class!=add]').remove();
 				let addTr = $('#baseProfit tbody.defenses tr[class=add]');
 				for(let res in defDefense) {
+				  let name = constants.defenses[res].name;
 					addTr.parent().append(
 						$('<tr>')
-							.append($('<td>').html(res).attr('colspan', 3))
+							.append($('<td>').html(name).attr('colspan', 3))
 							.append($('<td>').html(defDefense[res]).attr('colspan', 2))
 							.append($('<th>').attr('colspan', 1))
 					);
@@ -1035,12 +1037,36 @@ var Empires = (function (constants) {
 				results.baseEconomy = 10;
 				results.baseIncome = 10;
 				results.baseCC = 10;
+				
+				let qsum = 0, weaponTech = 1, weapon='', armourTech = 0;
+				for(let d in defDefense) {
+				  weapon = constants.defenses[d].capabilities.Weapon;
+				  weaponTech = defResearch.hasOwnProperty(weapon) ? defResearch[weapon] : 0;
+				  weaponTech = weaponTech * 5/ 100 + 1;
+				  qsum += constants.defenses[d].capabilities.Power * defDefense[d] * weaponTech;
+				}
+				results.baseDefensesPower = qsum;
+				
+				armourTech = defResearch.hasOwnProperty('Armour') ? defResearch['Armour'] : 0;
+				armourTech = armourTech * 5 / 100 + 1;
+				qsum=0;
+				  
+				for (let d in defDefense) {
+				  qsum += constants.defenses[d].capabilities.Armour * defDefense[d] * armourTech;
+				}
+				results.baseDefensesArmour = qsum;
+				
+				
+				
+				results.defensesArmour = results.baseDefensesArmour;
+				results.defensesPower = results.baseDefensesPower;
 			}
 
 			function showResults() {
-				calcResults();
+		  	calcResults();
 
-				$('#baseProfit tbody.results').append(
+				$('#baseProfit tbody.results').html('')
+				.append(
 					$('<tr>')
 						.append($('<td>').html('Base Economy').attr('colspan', 3))
 						.append($('<td>').html(results.baseEconomy).attr('colspan', 2))
@@ -1057,14 +1083,24 @@ var Empires = (function (constants) {
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Defenses Power').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html('BaseDefenses Power').attr('colspan', 3))
+						.append($('<td>').html(results.baseDefensesPower).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Defenses Armour').attr('colspan', 3))
-						.append($('<td>').html('50000').attr('colspan', 2))
+						.append($('<td>').html('BaseDefenses Armour').attr('colspan', 3))
+						.append($('<td>').html(results.baseDefensesArmour).attr('colspan', 2))
 						.append($('<th>').attr('colspan', 1))
+				).append(
+				  $('<tr>')
+				  .append($('<td>').html('Defenses Power').attr('colspan', 3))
+				  .append($('<td>').html(results.defensesPower).attr('colspan', 2))
+				  .append($('<th>').attr('colspan', 1))
+				).append(
+				  $('<tr>')
+				  .append($('<td>').html('Defenses Armour').attr('colspan', 3))
+				  .append($('<td>').html(results.defensesArmour).attr('colspan', 2))
+				  .append($('<th>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Fl. Armour not shielded(0)').attr('colspan', 3))
