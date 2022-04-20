@@ -55,173 +55,208 @@ var EmpiresConstants = {
 	},
 	'units': {
 			'Fighters' : {
-				'Credits': 0,
+				'Credits': 5,
 				'drive': 'Inter',
 				'Weapon': 'Laser',
 				'Power': 2,
 				'Armour': 2,
 				'Shield': 0,
-				'Hangar': 0,
+				'Hangar': -1,
 				'Speed': 0,
 				'Shipyard': 1,
-				'technologies': {},
+				'technologies': {'Laser': 1},
 			},
 			'Bombers': {
-				'Credits': 0,
+				'Credits': 10,
 				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
+				'Weapon': 'Missiles',
+				'Power': 10,
+				'Armour': 4,
 				'Shield': 0,
-				'Hangar': 0,
+				'Hangar': -1,
 				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Shipyard': 2,
+				'technologies': {'Missiles': 1},
 			},
 			'HeavyBombers': {
-				'Credits': 0,
+				'Credits': 30,
 				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
+				'Weapon': 'Plasma',
+				'Power': 10,
+				'Armour': 4,
 				'Shield': 0,
-				'Hangar': 0,
+				'Hangar': -2,
 				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Shipyard': 3,
+				'technologies': {'Plasma': 14},
 			},
 			'IonBombers': {
-				'Credits': 0,
+				'Credits': 60,
 				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
+				'Weapon': 'Ion',
+				'Power': 12,
+				'Armour': 4,
+				'Shield': 1,
+				'Hangar': -2,
 				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Shipyard': 3,
+				'technologies': {'Ion': 10, 'Shielding': 10},
 			},
 			'Corvette': {
-				'Credits': 0,
-				'drive': 'Inter',
+				'Credits': 20,
+				'Drive': 'Stellar',
 				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
+				'Power': 4,
+				'Armour': 4,
 				'Shield': 0,
 				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Speed': 10,
+				'Shipyard': 4,
+				'technologies': {'Laser': 2,'Stellar Drive': 1, 'Armour': 2},
 			},
 			'Recycler': {
-				'Credits': 0,
-				'drive': 'Inter',
+				'Credits': 30,
+				'drive': 'Stellar',
 				'Weapon': 'Laser',
 				'Power': 2,
 				'Armour': 2,
 				'Shield': 0,
 				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Speed': 8,
+				'Shipyard': 5,
+				'technologies': {'Laser': 1,'Stellar Drive': 1, 'Armour': 2},
 			},
 			'Destroyer': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
+				'Credits': 40,
+				'drive': 'Stellar',
+				'Weapon': 'Plasma',
+				'Power': 8,
+				'Armour': 8,
 				'Shield': 0,
 				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Speed': 8,
+				'Shipyard': 6,
+				'technologies': {'Plasma': 1,'Stellar Drive': 2,'Armour': 6},
 			},
 			'Frigate': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
+				'Credits': 80,
+				'drive': 'Stellar',
+				'Weapon': 'Missiles',
+				'Power': 12,
+				'Armour': 12,
 				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Hangar': 4,
+				'Speed': 6,
+				'Shipyard': 8,
+				'technologies': {'Missiles': 6, 'Stellar Drive': 4,'Armour': 8},
 			},
 			'IonFrigate': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Credits': 120,
+				'drive': 'Stellar',
+				'Weapon': 'Ion',
+				'Power': 14,
+				'Armour': 12,
+				'Shield': 1,
+				'Hangar': 4,
+				'Speed': 6,
+				'Shipyard': 8,
+				'technologies': {'Ion': 10,'Stellar Drive': 4,'Armour': 8, 'Shielding': 10},
 			},
 			'Cruiser': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
-			},
-			'HeavyCruiser': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Credits': 200,
+				'drive': 'Warp',
+				'Weapon': 'Plasma',
+				'Power': 24,
+				'Armour': 24,
+				'Shield': 2,
+				'Hangar': 4,
+				'Speed': 5,
+				'Shipyard': 10,
+				'technologies': {'Plasma': 4,'Warp Drive':2,'Armour': 10,'Shielding': 2},
 			},
 			'Carrier': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Credits': 400,
+				'drive': 'Warp',
+				'Weapon': 'Missiles',
+				'Power': 12,
+				'Armour': 24,
+				'Shield': 3,
+				'Hangar': 80,
+				'Speed': 5,
+				'Shipyard': 12,
+				'technologies': {'Missiles': 6,'Warp Drive': 4,'Armour': 10,'Shielding': 2},
 			},
-			'FleetCarrier': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+			'HeavyCruiser': {
+				'Credits': 500,
+				'drive': 'Warp',
+				'Weapon': 'Plasma',
+				'Power': 48,
+				'Armour': 48,
+				'Shield': 4,
+				'Hangar': 4,
+				'Speed': 5,
+				'Shipyard': 12,
+				'technologies': {'Missiles': 6,'Warp Drive': 4,'Armour': 10,'Shielding': 2},
 			},
 			'Battleship': {
-				'Credits': 0,
-				'drive': 'Inter',
-				'Weapon': 'Laser',
-				'Power': 2,
-				'Armour': 2,
-				'Shield': 0,
-				'Hangar': 0,
-				'Speed': 0,
-				'Shipyard': 1,
-				'technologies': {},
+				'Credits': 2000,
+				'drive': 'Warp',
+				'Weapon': 'Ion',
+				'Power': 168,
+				'Armour': 128,
+				'Shield': 10,
+				'Hangar': 40,
+				'Speed': 4,
+				'Shipyard': 16,
+				'technologies': {'Ion':6, 'Warp Drive': 8,'Armour': 16, 'Shielding': 8},
 			},
+		  'FleetCarrier': {
+				'Credits': 2500,
+				'drive': 'Warp',
+				'Weapon': 'Ion',
+				'Power': 64,
+				'Armour': 96,
+				'Shield': 8,
+				'Hangar': 500,
+				'Speed': 4,
+				'Shipyard': 16,
+				'technologies': {'Ion': 4, 'Warp Drive': 8, 'Armour': 14, 'Shielding': 6},
+			},
+	},
+	'driveResearches': {
+		'Stellar Drive': 0,
+		'Warp Drive': 0,
+		'Stealth': 0,
+	},
+	'fleetResearches': {
+		'Energy': 0,
+		'Armour': 0,
+		'Laser': 0,
+		'Missiles': 0,
+		'Plasma': 0,
+		'Shielding': 0,
+		'Ion': 0,
+		'Photon': 0,
+		'Disruptor': 0,
+	},
+	'researches': {
+		'Energy': 0,
+		'Computer': 0,
+		'Armour': 0,
+		'Laser': 0,
+		'Missiles': 0,
+		'Stellar Drive': 0,
+		'Plasma': 0,
+		'Warp Drive': 0,
+		'Shielding': 0,
+		'Ion': 0,
+		'Stealth': 0,
+		'Photon': 0,
+		'Artificial Intelligence': 0,
+		'Disruptor': 0,
+		'Cybernetics': 0,
+		'Tachyon Communications': 0,
+		'Anti-Gravity': 0,
 	},
 	'defenses': {
 		'BKS': {
@@ -646,6 +681,8 @@ var Empires = (function (constants) {
 			this.showPlayerLevelCalculator();
 
 			this.showFleetSizeMaintenanceCalculator();
+
+			this.showBaseProfitability();
 			
 			empires.constants.galaxyMaps.getMap(25);
 
@@ -729,6 +766,334 @@ var Empires = (function (constants) {
 		  //var q2=q.slice(18,27);
 		  
 		  this.showTableRes(q, sortCols);
+		},
+		showBaseProfitability: function () {
+			let main = $('main');
+			let fleets = types;
+			main.prepend('<table id="baseProfit">' +
+				'<thead class="head"></thead>' +
+				'<thead class="research"></thead>' +
+				'<tbody class="research"></tbody>' +
+				'<thead class="defenses"></thead>' +
+				'<tbody class="defenses"></tbody>' +
+				'<thead class="fleet"></thead>' +
+				'<tbody class="fleet"></tbody>' +
+				'<thead class="results"></thead>' +
+				'<tbody class="results"></tbody>' +
+				'</table><br/>');
+
+			$('#baseProfit thead.head').append(
+				$('<tr>')
+					.append($('<th>').html('BaseProfit').attr('colspan', 6))
+			);
+
+			$('#baseProfit thead.research').append(
+				$('<tr>')
+					.append($('<th>').html('Research').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Level').addClass('large').attr('colspan', 2))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+			$('#baseProfit tbody.research')
+			/*.append(
+				$('<tr>')
+					.append($('<td>').html('Energy').attr('colspan', 3))
+					.append($('<td>').html('1').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Laser').attr('colspan', 3))
+					.append($('<td>').html('1').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			)*/.append(
+				$('<tr>').addClass('add')
+					.append($('<td>').html(addNewResearchButton()).attr('colspan', 6))
+			);
+
+			$('#baseProfit thead.defenses').append(
+				$('<tr>')
+					.append($('<th>').html('Defenses').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Level').addClass('large').attr('colspan', 2))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+
+			$('#baseProfit tbody.defenses')
+			/*.append(
+				$('<tr>')
+					.append($('<td>').html('Missile Turrets').attr('colspan', 3))
+					.append($('<td>').html('5').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Disruptor Turrets').attr('colspan', 3))
+					.append($('<td>').html('10').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			)*/.append(
+				$('<tr>').addClass('add')
+					.append($('<td>').html(addNewDefenseButton()).attr('colspan', 6))
+			);
+
+
+			$('#baseProfit thead.fleet').append(
+				$('<tr>')
+					.append($('<th>').html('Fleet').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Count').addClass('large').attr('colspan', 2))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+
+			$('#baseProfit tbody.fleet')
+			/*.append(
+				$('<tr>')
+					.append($('<td>').html('Fighters').attr('colspan', 3))
+					.append($('<td>').html('5').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Frigates').attr('colspan', 3))
+					.append($('<td>').html('10').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			)*/.append(
+				$('<tr>').addClass('add')
+					.append($('<td>').html(addNewFleetButton()).attr('colspan', 6))
+			);
+
+			$('#baseProfit thead.results').append(
+				$('<tr>')
+					.append($('<th>').html('Results').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Value').addClass('large').attr('colspan', 2))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+			$('#baseProfit tbody.results').append(
+				$('<tr>')
+					.append($('<td>').html('Base Economy').attr('colspan', 3))
+					.append($('<td>').html('100').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Base Income').attr('colspan', 3))
+					.append($('<td>').html('100').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Command Centers').attr('colspan', 3))
+					.append($('<td>').html('10').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Defenses Power').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Defenses Armour').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Fl. Armour not shielded(0)').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Fl. Armour shielded(<6)').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Fl. Armour shielded(<10)').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Fl. Armour shielded(10+)').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Debris').attr('colspan', 3))
+					.append($('<td>').html('50000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Base Pillage').attr('colspan', 3))
+					.append($('<td>').html('10000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			).append(
+				$('<tr>')
+					.append($('<td>').html('Attacker Profit').attr('colspan', 3))
+					.append($('<td>').html('10000').attr('colspan', 2))
+					.append($('<th>').attr('colspan', 1))
+			);
+
+			function addNewResearchButton() {
+				const span = $('<span>');
+				const buttonEl = $('<button>').html('Add');
+				const selEl = $('<select>').addClass('type');
+				const lvlEl = $('<input>').addClass('qty').val(0);
+
+				buttonEl.click((function () {
+					return function () {
+						appendResearch(selEl, lvlEl)
+					}
+				})(selEl,lvlEl));
+
+				for(let t in constants.fleetResearches) {
+					let name = t;
+					selEl.append($('<option>', {'value': name, text: name}));
+				}
+
+				span.append(buttonEl);
+				span.append(' type: ');
+				span.append(selEl);
+				span.append(' units: ');
+				span.append(lvlEl);
+
+				return span;
+			}
+
+			function addNewDefenseButton() {
+				const span = $('<span>');
+				const buttonEl = $('<button>').html('Add');
+				const selEl = $('<select>').addClass('type');
+				const lvlEl = $('<input>').addClass('qty').val(0);
+
+				buttonEl.click((function () {
+					return function () {
+						appendDefense(selEl, lvlEl)
+					}
+				})(selEl,lvlEl));
+
+				for(let t in constants.defenses) {
+					let name = constants.defenses[t].name;
+					selEl.append($('<option>', {'value': name, text: name}));
+				}
+
+				span.append(buttonEl);
+				span.append(' defense: ');
+				span.append(selEl);
+				span.append(' units: ');
+				span.append(lvlEl);
+
+				return span;
+			}
+
+			function addNewFleetButton() {
+				const span = $('<span>');
+				const buttonEl = $('<button>').html('Add');
+				const selEl = $('<select>').addClass('type');
+				const lvlEl = $('<input>').addClass('qty').val(0);
+
+				buttonEl.click((function () {
+					return function () {
+						appendFleet(selEl, lvlEl)
+					}
+				})(selEl,lvlEl));
+
+				for(let t in fleets) {
+					let name = t;
+					selEl.append($('<option>', {'value': name, text: name}));
+				}
+
+				span.append(buttonEl);
+				span.append(' type: ');
+				span.append(selEl);
+				span.append(' units: ');
+				span.append(lvlEl);
+
+				return span;
+			}
+
+			let defResearch = [];
+			let defDefense = [];
+			let defFleet = [];
+
+			function showResearches() {
+				$('#baseProfit tbody.research tr[class!=add]').remove();
+				let addTr = $('#baseProfit tbody.research tr[class=add]');
+				for(let res in defResearch) {
+					addTr.parent().append(
+						$('<tr>')
+							.append($('<td>').html(res).attr('colspan', 3))
+							.append($('<td>').html(defResearch[res]).attr('colspan', 2))
+							.append($('<th>').attr('colspan', 1))
+					);
+				}
+				addTr.parent().append(addTr);
+			}
+			function showDefenses() {
+				$('#baseProfit tbody.defenses tr[class!=add]').remove();
+				let addTr = $('#baseProfit tbody.defenses tr[class=add]');
+				for(let res in defDefense) {
+					addTr.parent().append(
+						$('<tr>')
+							.append($('<td>').html(res).attr('colspan', 3))
+							.append($('<td>').html(defDefense[res]).attr('colspan', 2))
+							.append($('<th>').attr('colspan', 1))
+					);
+				}
+				addTr.parent().append(addTr);
+			}
+			function showFleets() {
+				$('#baseProfit tbody.fleet tr[class!=add]').remove();
+				let addTr = $('#baseProfit tbody.fleet tr[class=add]');
+				for(let res in defFleet) {
+					addTr.parent().append(
+						$('<tr>')
+							.append($('<td>').html(res).attr('colspan', 3))
+							.append($('<td>').html(defFleet[res]).attr('colspan', 2))
+							.append($('<th>').attr('colspan', 1))
+					);
+				}
+				addTr.parent().append(addTr);
+			}
+
+			function appendResearch(selEl, lvlEl) {
+				defResearch[selEl.val()] = lvlEl.val();
+
+				showResearches();
+				showResults();
+			}
+			function appendDefense(selEl, lvlEl) {
+				defDefense[selEl.val()] = lvlEl.val();
+
+				showDefenses();
+				showResults();
+			}
+			function appendFleet(selEl, lvlEl) {
+				defFleet[selEl.val()] = lvlEl.val();
+
+				showFleets();
+				showResults();
+			}
+
+			function removeResearch() {
+				showResults();
+			}
+			function removeDefense() {
+				showResults();
+			}
+			function removeFleet() {
+				showResults();
+			}
+
+			function calcResults() {
+
+			}
+
+			function showResults() {
+				calcResults();
+			}
 		},
 		showFleetSizeMaintenanceCalculator: function () {
 			var main = $('main');
