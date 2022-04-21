@@ -875,11 +875,33 @@ var Empires = (function (constants) {
 			);
 
 
-			let defResearch = [];
-			let defDefense = [];
-			let defFleet = [];
+			let defResearch = {
+				'Armour': 18,
+				'Laser': 18,
+				'Missiles': 9,
+				'Plasma': 11,
+				'Shielding': 9
+			};
+			let defDefense = {
+				'PHT': 10
+			};
+			let defFleet = {
+				'HeavyCruiser': 1
+			};
 			
 			let results = {};
+
+			results.baseEconomy = 107;
+			results.baseIncome = 107;
+			results.baseTradeValue = 65;
+			results.baseDefensesPower = 0;
+			results.minimumPillage = {};
+			results.debris = 0;
+			results.baseCC = 10;
+			results.attackerProfit = 0;
+			showResearches();
+			showDefenses();
+			showFleets();
 			showResults();
 
 			function addNewResearchButton() {
@@ -1034,9 +1056,6 @@ var Empires = (function (constants) {
 			}
 
 			function calcResults() {
-				results.baseEconomy = 10;
-				results.baseIncome = 10;
-				results.baseCC = 10;
 				results.fleetArmourNoShield = 0;
 			  results.fleetArmourLowShield = 0;
 			  results.fleetArmourMedShield = 0;
@@ -1059,12 +1078,14 @@ var Empires = (function (constants) {
 				  qsum += constants.defenses[d].capabilities.Armour * defDefense[d] * armourTech;
 				}
 				results.baseDefensesArmour = qsum;
-				
+
+				let ccProc = 0;
 				for (let d in defFleet) {
 				  weapon = constants.units[d].Weapon;
 				  weaponTech = defResearch.hasOwnProperty(weapon) ? defResearch[weapon] : 0;
 				  weaponTech = weaponTech * 5 / 100 + 1;
-				  qsum += constants.units[d].Power * defFleet[d] * weaponTech;
+					ccProc = results.baseCC * 5/ 100 + 1;
+				  qsum += constants.units[d].Power * defFleet[d] * weaponTech * ccProc;
 				}
 				results.fleetDefensesPower = qsum;
 				qsum = 0;
@@ -1086,92 +1107,165 @@ var Empires = (function (constants) {
 				results.fleetDefensesArmour = qsum;
 				armourTech = defResearch.hasOwnProperty('Armour') ? defResearch['Armour'] : 0;
 				
-				let debrisProc= armourTech ? armourTech * 2 / 100 : 0.3;
+				let debrisProc= Math.max(0.35, armourTech ? armourTech * 2 / 100: 0);
 				
 				results.defensesArmour = results.baseDefensesArmour
 				  + results.fleetDefensesArmour;
 				results.defensesPower = results.baseDefensesPower 
 				  + results.fleetDefensesPower;
 				  
-				results.debris = Math.round(results.fleetDefensesArmour * debrisProc * 100)/100;
+				results.debris = results.fleetDefensesArmour * debrisProc;
+				results.minimumPillage = calculatePillage(results.baseEconomy, results.baseIncome, 1);
+
+				results.attackerProfit = results.minimumPillage.min
+					+ results.baseTradeValue
+					+ results.debris
+					- results.baseDefensesPower;
+
+				console.log(results.minimumPillage.min + ' + ' + results.baseTradeValue + ' + ' + results.debris + ' - ' + results.baseDefensesPower);
+			}
+
+			window.results = results;
+
+			function calculatePillage(e, t, a) {
+				const n = {}, i = Math.floor(.7 * e + 1);
+				n.economy = e; n.min = 0; n.ecoLost = 0; n.recover = 0; n.totalLost = 0;
+				n.min = 6 * Math.pow(t - i, 2) * a;
+				n.ecoLost = Math.round((e - i) * a);
+				n.recover = Math.round(n.ecoLost / 2);
+				for (let o = 1; o <= n.recover; o++) n.totalLost += 24 * (n.ecoLost - 2 * (o - 1));
+				return n
+			}
+
+			function changeEconomy() {
+				let val = $(this).val();
+				results.baseEconomy = parseInt(val, 10) || 0;
+			}
+
+			function changeTradeValue() {
+				let val = $(this).val().trim();
+				if (val.startsWith('+')) {
+					results.baseTradeValue += parseInt(val.substring(1), 10) || 0;
+					$(this).val('');
+				} else {
+					results.baseTradeValue = parseInt(val, 10) || 0;
+				}
+			}
+
+			function changeIncome() {
+				let val = $(this).val();
+				results.baseIncome = parseInt(val, 10) || 0;
+				if (results.baseEconomy < results.baseIncome) {
+					results.baseEconomy = results.baseIncome;
+				}
+			}
+
+			function changeCC() {
+				let val = $(this).val();
+				results.baseCC = parseInt(val, 10) || 0;
 			}
 
 			function showResults() {
 		  	calcResults();
 
+		  	const inpEconomy = $('<input>').addClass('qty').val(results.baseEconomy);
+				const inpIncome = $('<input>').addClass('qty').val(results.baseIncome);
+				const inpTradeValue = $('<input>').addClass('qty').val(results.baseTradeValue);
+				const inpCC = $('<input>').addClass('qty').val(results.baseCC);
+				const btnShowResults = $('<button>').addClass('tnyl').append($('<i>').addClass('fas fa-caret-left'));
+
+				//console.log(results.baseTradeValue);
+
+				inpEconomy.change(changeEconomy);
+				inpIncome.change(changeIncome);
+				inpTradeValue.change(changeTradeValue);
+				inpCC.change(changeCC);
+
 				$('#baseProfit tbody.results').html('')
 				.append(
 					$('<tr>')
 						.append($('<td>').html('Base Economy').attr('colspan', 3))
-						.append($('<td>').html(results.baseEconomy).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').html(inpEconomy).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Base Income').attr('colspan', 3))
-						.append($('<td>').html(results.baseIncome).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').html(inpIncome).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Base TradeValue').attr('colspan', 3))
+						.append($('<td>').html(inpTradeValue).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Command Centers').attr('colspan', 3))
-						.append($('<td>').html(results.baseCC).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').html(inpCC).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('BaseDefenses Power').attr('colspan', 3))
 						.append($('<td>').html(results.baseDefensesPower).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('BaseDefenses Armour').attr('colspan', 3))
 						.append($('<td>').html(results.baseDefensesArmour).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 				  $('<tr>')
 				  .append($('<td>').html('Defenses Power').attr('colspan', 3))
 				  .append($('<td>').html(results.defensesPower).attr('colspan', 2))
-				  .append($('<th>').attr('colspan', 1))
+				  .append($('<td>').attr('colspan', 1))
 				).append(
 				  $('<tr>')
 				  .append($('<td>').html('Defenses Armour').attr('colspan', 3))
 				  .append($('<td>').html(results.defensesArmour).attr('colspan', 2))
-				  .append($('<th>').attr('colspan', 1))
+				  .append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour not shielded(0)').attr('colspan', 3))
 						.append($('<td>').html(results.fleetArmourNoShield).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(<6)').attr('colspan', 3))
 						.append($('<td>').html(results.fleetArmourLowShield).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(<10)').attr('colspan', 3))
 						.append($('<td>').html(results.fleetArmourMedShield).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(10+)').attr('colspan', 3))
 						.append($('<td>').html(results.fleetArmourBigShield).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Debris').attr('colspan', 3))
 						.append($('<td>').html(results.debris).attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Base Pillage').attr('colspan', 3))
-						.append($('<td>').html('10000').attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').html('Minimum Pillage').attr('colspan', 3))
+						.append($('<td>').html(results.minimumPillage.min).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Attacker Profit').attr('colspan', 3))
-						.append($('<td>').html('10000').attr('colspan', 2))
-						.append($('<th>').attr('colspan', 1))
+						.append($('<td>').html(results.attackerProfit).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
 				);
+
+				inpEconomy.after(btnShowResults.click(function () { showResults();}));
+				inpIncome.after(btnShowResults.clone().click(function () { showResults();}));
+				inpTradeValue.after(btnShowResults.clone().click(function () { showResults();}));
+				inpCC.after(btnShowResults.clone().click(function () { showResults();}));
 			}
+
+			window.showResults = showResults;
 		},
 		showFleetSizeMaintenanceCalculator: function () {
 			var main = $('main');
