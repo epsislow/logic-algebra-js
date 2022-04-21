@@ -931,7 +931,7 @@ var Empires = (function (constants) {
 					cachedCurrentBaseIndex = cacheLocal.getCacheKey('empires.currentBaseIndex');
 				} else {
 					cachedBasesConfig = libLoad();
-					cachedCurrentBaseIndex = 0;
+					cachedCurrentBaseIndex = 1;
 				}
 
 				if (cachedBasesConfig) {
