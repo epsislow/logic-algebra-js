@@ -769,6 +769,7 @@ var Empires = (function (constants) {
 		showBaseProfitability: function () {
 			let main = $('main');
 			let fleets = types;
+			let cacheLocal = this.cacheLocal;
 			main.prepend('<table id="baseProfit">' +
 				'<thead class="head"></thead>' +
 				'<thead class="research"></thead>' +
@@ -902,6 +903,24 @@ var Empires = (function (constants) {
 
 			let basesConfig = {};
 			let currentBaseIndex = getNextBaseConfigIndex();
+
+			function cacheLoad() {
+				let cachedBasesConfig = cacheLocal.getCacheKey('empires.basesConfig');
+				if (cachedBasesConfig) {
+					basesConfig = JSON.parse(cachedBasesConfig);
+				}
+				showResults();
+			}
+
+			function cacheSave() {
+				let data = JSON.stringify(basesConfig);
+				cacheLocal.setCacheKey('empires.basesConfig', data);
+				let dataFound = cacheLocal.getCacheKey('empires.basesConfig');
+				return (dataFound === data);
+			}
+
+			window.cacheSave = cacheSave;
+			window.cacheLoad = cacheLoad;
 
 			function saveBaseConfig(index) {
 				basesConfig['id' + index] = {
@@ -2081,32 +2100,40 @@ var Empires = (function (constants) {
 		  }
 		  $('#tbl').find("tbody").html(trs);
 		  
-			  
-	$('#sortxB').parent().click(function () {
-		empires.planetsSort(0);
-	});
-	$('#sortMetal').parent().click(function () {
-		empires.planetsSort(1);
-	});
-	$('#sortCrystals').parent().click(function () {
-		empires.planetsSort(2);
-	});
-	$('#sortArea').parent().click(function () {
-		empires.planetsSort(3);
-	});
-	$('#sortFertility').parent().click(function () {
-		empires.planetsSort(4);
-	});
-	$('#sortGas').parent().click(function () {
-		empires.planetsSort(5);
-	});
-	$('#sortSolarEnergy').parent().click(function () {
-		empires.planetsSort(6);
-	});
-		  //console.table(tb);
+
+			$('#sortxB').parent().click(function () {
+				empires.planetsSort(0);
+			});
+			$('#sortMetal').parent().click(function () {
+				empires.planetsSort(1);
+			});
+			$('#sortCrystals').parent().click(function () {
+				empires.planetsSort(2);
+			});
+			$('#sortArea').parent().click(function () {
+				empires.planetsSort(3);
+			});
+			$('#sortFertility').parent().click(function () {
+				empires.planetsSort(4);
+			});
+			$('#sortGas').parent().click(function () {
+				empires.planetsSort(5);
+			});
+			$('#sortSolarEnergy').parent().click(function () {
+				empires.planetsSort(6);
+			});
+					//console.table(tb);
+		},
+		'cacheLocal': {
+			'getCacheKey': function ($key) {
+				return localStorage.getItem($key);
+			},
+			'setCacheKey': function ($key, $val) {
+				return localStorage.setItem($key, $val);
+			}
 		}
 	}
-	
+
 	pub.constants = EmpiresConstants;
 	
 	return pub;
