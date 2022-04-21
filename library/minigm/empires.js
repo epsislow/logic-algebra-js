@@ -922,6 +922,9 @@ var Empires = (function (constants) {
 					basesConfig = JSON.parse(cachedBasesConfig);
 					currentBaseIndex = parseInt(cachedCurrentBaseIndex);
 					loadBaseConfig(currentBaseIndex);
+					showResearches();
+					showDefenses();
+					showFleets()
 					showResults();
 					return true;
 				} else {
