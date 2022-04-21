@@ -873,7 +873,10 @@ var Empires = (function (constants) {
 			let cacheLoadBtn = $('<button>').html('Load').click(function () {
 				console.log(cacheLoad() ?'Loaded':'Load failed.');
 			});
-			let cacheSpan = $('<span>').append(cacheSaveBtn).append(cacheLoadBtn);
+			let cacheLibBtn = $('<button>').html('Lib').click(function () {
+				console.log(cacheLoad(1) ?'Loaded':'Load failed.');
+			});
+			let cacheSpan = $('<span>').append(cacheSaveBtn).append(cacheLoadBtn).append(cacheLibBtn);
 
 			$('#baseProfit thead.results').append(
 				$('<tr>')
