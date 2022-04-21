@@ -1407,10 +1407,18 @@ var Empires = (function (constants) {
 				spanBaseIndex.after(btnNextBase.click(function () {
 					currentBaseIndex = getNextBaseConfigIndex(currentBaseIndex);
 					loadBaseConfig(currentBaseIndex);
+					showResearches();
+					showDefenses();
+					showFleets()
+					showResults();
 				}));
 				spanBaseIndex.before(btnPrevBase.click(function () {
 					currentBaseIndex = getPrevBaseConfigIndex(currentBaseIndex);
 					loadBaseConfig(currentBaseIndex);
+					showResearches();
+					showDefenses();
+					showFleets()
+					showResults();
 				}))
 			}
 
