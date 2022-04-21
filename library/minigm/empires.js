@@ -865,9 +865,20 @@ var Empires = (function (constants) {
 					.append($('<td>').html(addNewFleetButton()).attr('colspan', 6))
 			);
 
+			let cacheSaveBtn = $('<button>').html('Save').click(function () {
+				calcResults();
+				saveBaseConfig(currentBaseIndex);
+				console.log(cacheSave()?'Saved':'Save failed.');
+			});
+			let cacheLoadBtn = $('<button>').html('Load').click(function () {
+				console.log(cacheLoad() ?'Loaded':'Load failed.');
+			});
+			let cacheSpan = $('<span>').append(cacheSaveBtn).append(cacheLoadBtn);
+
 			$('#baseProfit thead.results').append(
 				$('<tr>')
-					.append($('<th>').html('Results').attr('colspan', 6))
+					.append($('<th>').html('Results').attr('colspan', 4))
+					.append($('<th>').html(cacheSpan).attr('colspan', 2))
 			).append(
 				$('<tr>')
 					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
@@ -906,16 +917,25 @@ var Empires = (function (constants) {
 
 			function cacheLoad() {
 				let cachedBasesConfig = cacheLocal.getCacheKey('empires.basesConfig');
+				let cachedCurrentBaseIndex = cacheLocal.getCacheKey('empires.currentBaseIndex');
 				if (cachedBasesConfig) {
 					basesConfig = JSON.parse(cachedBasesConfig);
+					currentBaseIndex = parseInt(cachedCurrentBaseIndex);
+					loadBaseConfig(currentBaseIndex);
+					showResults();
+					return true;
+				} else {
+					return false;
 				}
-				showResults();
 			}
 
 			function cacheSave() {
 				let data = JSON.stringify(basesConfig);
 				cacheLocal.setCacheKey('empires.basesConfig', data);
 				let dataFound = cacheLocal.getCacheKey('empires.basesConfig');
+
+				cacheLocal.setCacheKey('empires.currentBaseIndex', currentBaseIndex);
+
 				return (dataFound === data);
 			}
 
@@ -1221,7 +1241,7 @@ var Empires = (function (constants) {
 					+ results.debris
 					- results.defensesPower;
 
-				console.log(results.minimumPillage.min + ' + ' + results.baseTradeValue + ' + ' + results.debris + ' - ' + results.defensesPower);
+				//console.log(results.minimumPillage.min + ' + ' + results.baseTradeValue + ' + ' + results.debris + ' - ' + results.defensesPower);
 			}
 
 			window.results = results;
@@ -1273,7 +1293,7 @@ var Empires = (function (constants) {
 				const inpTradeValue = $('<input>').addClass('qty').val(results.baseTradeValue);
 				const inpCC = $('<input>').addClass('qty').val(results.baseCC);
 				const btnShowResults = $('<button>').addClass('tnyl').append($('<i>').addClass('fas fa-caret-up'));
-				const spanBaseIndex = $('<span>').html(currentBaseIndex);
+				const spanBaseIndex = $('<span>').html(currentBaseIndex + ' / ' + Object.keys(basesConfig).length);
 				const btnPrevBase = $('<button>').addClass('tnyl').attr('style','margin-right:10px').append($('<i>').addClass('fas fa-caret-left'));
 				const btnNextBase = $('<button>').addClass('tnyl').attr('style','margin-left:10px').append($('<i>').addClass('fas fa-caret-right'));
 
