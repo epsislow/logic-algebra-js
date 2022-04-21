@@ -888,7 +888,7 @@ var Empires = (function (constants) {
 			let defFleet = {
 				'HeavyCruiser': 1
 			};
-			
+
 			let results = {};
 
 			results.baseEconomy = 107;
@@ -899,6 +899,49 @@ var Empires = (function (constants) {
 			results.debris = 0;
 			results.baseCC = 10;
 			results.attackerProfit = 0;
+
+			let basesConfig = {};
+			let currentBaseIndex = getNextBaseConfigIndex();
+
+			function saveBaseConfig(index) {
+				basesConfig['id' + index] = {
+					'defResearch': JSON.parse(JSON.stringify(defResearch)),
+					'defDefense': JSON.parse(JSON.stringify(defDefense)),
+					'defFleet': JSON.parse(JSON.stringify(defFleet)),
+					'results': JSON.parse(JSON.stringify(results)),
+				}
+			}
+
+			function loadBaseConfig(index) {
+				if (!basesConfig.hasOwnProperty('id' + index)) {
+					saveBaseConfig(index);
+					console.log('save on load' + index);
+				}
+				let cfg = basesConfig['id' + index];
+				defResearch = cfg.defResearch;
+				defDefense = cfg.defDefense;
+				defFleet = cfg.defFleet;
+				results = cfg.results;
+				showResults();
+			}
+
+			function getPrevBaseConfigIndex(index = 0) {
+				return basesConfig.hasOwnProperty('id' + (index - 1)) ? index - 1: index;
+			}
+
+			function getNextBaseConfigIndex(index = 0) {
+				return basesConfig.hasOwnProperty('id' + (index + 1)) ? index + 1: getNewBaseConfigIndex();
+			}
+
+			function getNewBaseConfigIndex() {
+				let newIndex = Object.keys(basesConfig).length + 1;
+				saveBaseConfig(newIndex);
+
+				return newIndex;
+			}
+
+			window.basesConfig = basesConfig;
+
 			showResearches();
 			showDefenses();
 			showFleets();
@@ -959,14 +1002,21 @@ var Empires = (function (constants) {
 			function addNewFleetButton() {
 				const span = $('<span>');
 				const buttonEl = $('<button>').html('Add');
+			//	const buttonParseEl = $('<button>').html('Parse').attr('style', 'margin: 0 10px');
 				const selEl = $('<select>').addClass('type');
 				const lvlEl = $('<input>').addClass('qty').val(0);
+				const parseEl = $('<textarea>').addClass('qty').attr('style','margin:0 10px; width: 50px; height:25px; font-size: 8px;').val('');
 
-				buttonEl.click((function () {
+				buttonEl.click((function (selEl,lvlEl,parseEl) {
 					return function () {
-						appendFleet(selEl, lvlEl)
+						if (parseEl.val()) {
+							appendParsedFleet(parseEl)
+							parseEl.val('');
+						} else {
+							appendFleet(selEl, lvlEl)
+						}
 					}
-				})(selEl,lvlEl));
+				})(selEl,lvlEl,parseEl));
 
 				for(let t in fleets) {
 					let name = t;
@@ -978,6 +1028,7 @@ var Empires = (function (constants) {
 				span.append(selEl);
 				span.append(' units: ');
 				span.append(lvlEl);
+				span.append(parseEl);
 
 				return span;
 			}
@@ -1024,6 +1075,29 @@ var Empires = (function (constants) {
 				addTr.parent().append(addTr);
 			}
 
+			function parseFleetOverview(e, t = "english") {
+				const a = {},
+					n = /(.*?)\s*(\d+(,\d+)*(\.\d+)?)/gm;
+				let i = n.exec(e);
+				for (; null !== i; ) {
+					let t = i[1]
+						.toLowerCase()
+						.split(" ")
+						.map((e) => (e ? e[0].toUpperCase() + e.slice(1) : ""))
+						.join("");
+					if (constants.units.hasOwnProperty(t)) {
+						a[t] = parseFloat(i[2].replace(/,/g, ""))
+					} else {
+						console.log('Not found ', t, ' in ', Object.keys(constants.units));
+					}
+					(i = n.exec(e));
+						//z.Ships.hasOwnProperty(t) && a.push({ type: z.Ships[t], quantity: parseFloat(i[2].replace(/,/g, "")) }), (i = n.exec(e));
+				}
+				return a;
+			}
+
+			window.parseFleetOverview = parseFleetOverview;
+
 			function appendResearch(selEl, lvlEl) {
 				if (lvlEl.val() === "0") {
 					delete defResearch[selEl.val()];
@@ -1044,13 +1118,19 @@ var Empires = (function (constants) {
 				showDefenses();
 				showResults();
 			}
+			function appendParsedFleet(parseEl) {
+				let fleetOverview = parseFleetOverview(parseEl.val());
+				console.log(fleetOverview);
+				defFleet = fleetOverview;
+				showFleets();
+				showResults();
+			}
 			function appendFleet(selEl, lvlEl) {
 				if (lvlEl.val() === "0") {
 					delete defFleet[selEl.val()];
 				} else {
 					defFleet[selEl.val()] = lvlEl.val();
 				}
-
 				showFleets();
 				showResults();
 			}
@@ -1120,9 +1200,9 @@ var Empires = (function (constants) {
 				results.attackerProfit = results.minimumPillage.min
 					+ results.baseTradeValue
 					+ results.debris
-					- results.baseDefensesPower;
+					- results.defensesPower;
 
-				console.log(results.minimumPillage.min + ' + ' + results.baseTradeValue + ' + ' + results.debris + ' - ' + results.baseDefensesPower);
+				console.log(results.minimumPillage.min + ' + ' + results.baseTradeValue + ' + ' + results.debris + ' - ' + results.defensesPower);
 			}
 
 			window.results = results;
@@ -1168,11 +1248,15 @@ var Empires = (function (constants) {
 			function showResults() {
 		  	calcResults();
 
+
 		  	const inpEconomy = $('<input>').addClass('qty').val(results.baseEconomy);
 				const inpIncome = $('<input>').addClass('qty').val(results.baseIncome);
 				const inpTradeValue = $('<input>').addClass('qty').val(results.baseTradeValue);
 				const inpCC = $('<input>').addClass('qty').val(results.baseCC);
-				const btnShowResults = $('<button>').addClass('tnyl').append($('<i>').addClass('fas fa-caret-left'));
+				const btnShowResults = $('<button>').addClass('tnyl').append($('<i>').addClass('fas fa-caret-up'));
+				const spanBaseIndex = $('<span>').html(currentBaseIndex);
+				const btnPrevBase = $('<button>').addClass('tnyl').attr('style','margin-right:10px').append($('<i>').addClass('fas fa-caret-left'));
+				const btnNextBase = $('<button>').addClass('tnyl').attr('style','margin-left:10px').append($('<i>').addClass('fas fa-caret-right'));
 
 				//console.log(results.baseTradeValue);
 
@@ -1183,6 +1267,11 @@ var Empires = (function (constants) {
 
 				$('#baseProfit tbody.results').html('')
 				.append(
+					$('<tr>')
+						.append($('<td>').html('Base Index').attr('colspan', 3))
+						.append($('<td>').html(spanBaseIndex).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
+				).append(
 					$('<tr>')
 						.append($('<td>').html('Base Economy').attr('colspan', 3))
 						.append($('<td>').html(inpEconomy).attr('colspan', 2))
@@ -1213,6 +1302,16 @@ var Empires = (function (constants) {
 						.append($('<td>').html(results.baseDefensesArmour).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
+					$('<tr>')
+						.append($('<td>').html('FleetDefenses Power').attr('colspan', 3))
+						.append($('<td>').html(Math.round(results.fleetDefensesPower * 100)/100).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('FleetDefenses Armour').attr('colspan', 3))
+						.append($('<td>').html(Math.round(results.fleetDefensesArmour * 100)/100).attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
+				).append(
 				  $('<tr>')
 				  .append($('<td>').html('Defenses Power').attr('colspan', 3))
 				  .append($('<td>').html(results.defensesPower).attr('colspan', 2))
@@ -1230,22 +1329,22 @@ var Empires = (function (constants) {
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(<6)').attr('colspan', 3))
-						.append($('<td>').html(results.fleetArmourLowShield).attr('colspan', 2))
+						.append($('<td>').html(Math.round(results.fleetArmourLowShield * 100)/100).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(<10)').attr('colspan', 3))
-						.append($('<td>').html(results.fleetArmourMedShield).attr('colspan', 2))
+						.append($('<td>').html(Math.round(results.fleetArmourMedShield * 100)/100).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(10+)').attr('colspan', 3))
-						.append($('<td>').html(results.fleetArmourBigShield).attr('colspan', 2))
+						.append($('<td>').html(Math.round(results.fleetArmourBigShield * 100)/100).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Debris').attr('colspan', 3))
-						.append($('<td>').html(results.debris).attr('colspan', 2))
+						.append($('<td>').html(Math.round(results.debris * 100)/100).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
@@ -1255,7 +1354,7 @@ var Empires = (function (constants) {
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Attacker Profit').attr('colspan', 3))
-						.append($('<td>').html(results.attackerProfit).attr('colspan', 2))
+						.append($('<td>').html(Math.round(results.attackerProfit * 100)/100).addClass(results.attackerProfit< 0 ? 'green bold': 'red bold').attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				);
 
@@ -1263,6 +1362,14 @@ var Empires = (function (constants) {
 				inpIncome.after(btnShowResults.clone().click(function () { showResults();}));
 				inpTradeValue.after(btnShowResults.clone().click(function () { showResults();}));
 				inpCC.after(btnShowResults.clone().click(function () { showResults();}));
+				spanBaseIndex.after(btnNextBase.click(function () {
+					currentBaseIndex = getNextBaseConfigIndex(currentBaseIndex);
+					loadBaseConfig(currentBaseIndex);
+				}));
+				spanBaseIndex.before(btnPrevBase.click(function () {
+					currentBaseIndex = getPrevBaseConfigIndex(currentBaseIndex);
+					loadBaseConfig(currentBaseIndex);
+				}))
 			}
 
 			window.showResults = showResults;
