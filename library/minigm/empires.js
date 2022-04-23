@@ -916,6 +916,7 @@ var Empires = (function (constants) {
 			results.attackerProfit = 0;
 
 			let basesConfig = {};
+			let baseNames = ['Artemis','Theia','Eos','Notus','Zaphyrus','Litae','Kronos','Phianon','Horizon'];
 			let currentBaseIndex = getNextBaseConfigIndex();
 
 			function libLoad() {
@@ -1312,7 +1313,7 @@ var Empires = (function (constants) {
 				const inpTradeValue = $('<input>').addClass('qty').val(results.baseTradeValue);
 				const inpCC = $('<input>').addClass('qty').val(results.baseCC);
 				const btnShowResults = $('<button>').addClass('tnyl').append($('<i>').addClass('fas fa-caret-up'));
-				const spanBaseIndex = $('<span>').html(currentBaseIndex + ' / ' + Object.keys(basesConfig).length);
+				const spanBaseIndex = $('<span>').html(currentBaseIndex + ' / ' + Object.keys(basesConfig).length + ' ' + baseNames[currentBaseIndex - 1]);
 				const btnPrevBase = $('<button>').addClass('tnyl').attr('style','margin-right:10px').append($('<i>').addClass('fas fa-caret-left'));
 				const btnNextBase = $('<button>').addClass('tnyl').attr('style','margin-left:10px').append($('<i>').addClass('fas fa-caret-right'));
 
@@ -1327,8 +1328,8 @@ var Empires = (function (constants) {
 				.append(
 					$('<tr>')
 						.append($('<td>').html('Base Index').attr('colspan', 3))
-						.append($('<td>').html(spanBaseIndex).attr('colspan', 2))
-						.append($('<td>').attr('colspan', 1))
+						.append($('<td>').html(spanBaseIndex).attr('colspan', 3))
+					//	.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Base Economy').attr('colspan', 3))
