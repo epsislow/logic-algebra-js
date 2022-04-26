@@ -578,7 +578,7 @@ var Empires = (function (constants) {
 		planets: {}
 	};
 	
-	var planetMecahanics = {
+	var planetMechanics = {
 		savePlanetConfig: function () {
 		},
 		loadPlanetConfig: function () {
@@ -682,6 +682,8 @@ var Empires = (function (constants) {
 			this.showFleetSizeMaintenanceCalculator();
 
 			this.showBaseProfitability();
+
+			this.showFightMechanics();
 			
 			empires.constants.galaxyMaps.getMap(25);
 
@@ -780,7 +782,7 @@ var Empires = (function (constants) {
 				'<tbody class="fleet"></tbody>' +
 				'<thead class="results"></thead>' +
 				'<tbody class="results"></tbody>' +
-				'</table><br/>');
+				'</table>');
 
 			$('#baseProfit thead.head').append(
 				$('<tr>')
@@ -1061,7 +1063,6 @@ var Empires = (function (constants) {
 			function addNewFleetButton() {
 				const span = $('<span>');
 				const buttonEl = $('<button>').html('Add');
-			//	const buttonParseEl = $('<button>').html('Parse').attr('style', 'margin: 0 10px');
 				const selEl = $('<select>').addClass('type');
 				const lvlEl = $('<input>').addClass('qty').val(0);
 				const parseEl = $('<textarea>').addClass('qty').attr('style','margin:0 10px; width: 50px; height:25px; font-size: 8px;').val('');
@@ -1154,8 +1155,6 @@ var Empires = (function (constants) {
 				}
 				return a;
 			}
-
-			window.parseFleetOverview = parseFleetOverview;
 
 			function appendResearch(selEl, lvlEl) {
 				if (lvlEl.val() === "0") {
@@ -1438,8 +1437,388 @@ var Empires = (function (constants) {
 					showResults();
 				}))
 			}
+		},
+		showFightMechanics: function () {
+			let main = $('main');
+			let fleets = types;
+			let cacheLocal = this.cacheLocal;
+			main.prepend('<table id="fightMechanics">' +
+				'<thead class="top"></thead>' +
+				'<tr>' +
+				'<td><table id="attacker" class="fighter"></table></td>' +
+				'<td><table id="defender" class="fighter"></table></td>' +
+				'</tr>' +
+				'<tbody class="top"></tbody>' +
+			'</table>');
 
-			window.showResults = showResults;
+			$('#fightMechanics .fighter').prepend(
+					'<thead class="head"></thead>' +
+					'<thead class="research"></thead>' +
+					'<tbody class="research"></tbody>' +
+					'<thead class="defenses"></thead>' +
+					'<tbody class="defenses"></tbody>' +
+					'<thead class="fleet"></thead>' +
+					'<tbody class="fleet"></tbody>'
+			);
+
+			$('#fightMechanics tbody.top').append(
+				$('<tr>')
+					.append($('<td>').html('<b>Results</b>').attr('colspan', 2))
+			).append(
+				$('<tr>')
+					.append($('<td>').attr('colspan', 2).append(
+						$('<div>').attr('id', 'results').html('Debris:10345 <br/> Profit: 243445')
+					))
+			);
+
+			$('#fightMechanics thead.top').append(
+				$('<tr>')
+					.append($('<th>').html('FightMechanics').attr('colspan', 6))
+			);
+			$('#fightMechanics #attacker thead.head').append(
+				$('<tr>')
+					.append($('<th>').html('Attacker').attr('colspan', 6))
+			);
+			$('#fightMechanics #defender thead.head').append(
+				$('<tr>')
+					.append($('<th>').html('Defender').attr('colspan', 6))
+			);
+
+			$('#fightMechanics thead.research').append(
+				$('<tr>')
+					.append($('<th>').html('Research').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Level').addClass('large').attr('colspan', 2))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+			$('#fightMechanics tbody.research')
+				.append(
+          $('<tr>')
+            .append($('<td>').html('Energy').attr('colspan', 3))
+            .append($('<td>').html('1').attr('colspan', 2))
+            .append($('<th>').attr('colspan', 1))
+        ).append(
+          $('<tr>')
+            .append($('<td>').html('Laser').attr('colspan', 3))
+            .append($('<td>').html('1').attr('colspan', 2))
+            .append($('<th>').attr('colspan', 1))
+        );
+
+			$('#fightMechanics #attacker tbody.research')
+				.append(
+					$('<tr>').addClass('add')
+						.append($('<td>').html(addNewResearchButtonFight(!0)).attr('colspan', 6))
+				);
+
+			$('#fightMechanics #defender tbody.research')
+				.append(
+					$('<tr>').addClass('add')
+						.append($('<td>').html(addNewResearchButtonFight(!1)).attr('colspan', 6))
+				);
+
+			$('#fightMechanics thead.defenses').append(
+				$('<tr>')
+					.append($('<th>').html('Defenses').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Level').addClass('large').attr('colspan', 2))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+
+			$('#fightMechanics tbody.defenses')
+				.append(
+          $('<tr>')
+            .append($('<td>').html('Missile Turrets').attr('colspan', 3))
+            .append($('<td>').html('5').attr('colspan', 2))
+            .append($('<th>').attr('colspan', 1))
+        ).append(
+          $('<tr>')
+            .append($('<td>').html('Disruptor Turrets').attr('colspan', 3))
+            .append($('<td>').html('10').attr('colspan', 2))
+            .append($('<th>').attr('colspan', 1))
+        );
+
+			$('#fightMechanics #attacker tbody.defenses')
+				.append(
+					$('<tr>').addClass('add')
+						.append($('<td>').html(addNewDefenseButtonFight(!0)).attr('colspan', 6))
+				);
+
+			$('#fightMechanics #defender tbody.defenses')
+				.append(
+					$('<tr>').addClass('add')
+						.append($('<td>').html(addNewDefenseButtonFight(!1)).attr('colspan', 6))
+				);
+
+
+			$('#fightMechanics thead.fleet').append(
+				$('<tr>')
+					.append($('<th>').html('Fleet').attr('colspan', 6))
+			).append(
+				$('<tr>')
+					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
+					.append($('<th>').html('Count').addClass('med').attr('colspan', 1))
+					.append($('<th>').html('Next').addClass('med').attr('colspan', 1))
+					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+			);
+
+			$('#fightMechanics tbody.fleet')
+				.append(
+          $('<tr>')
+            .append($('<td>').html('Fighters').attr('colspan', 3))
+            .append($('<td>').html('5').attr('colspan', 1))
+						.append($('<td>').html('5').attr('colspan', 1))
+            .append($('<th>').attr('colspan', 1))
+        ).append(
+          $('<tr>')
+            .append($('<td>').html('HeavyCruiser').attr('colspan', 3))
+            .append($('<td>').html('10').attr('colspan', 1))
+						.append($('<td>').html('10').attr('colspan', 1))
+            .append($('<th>').attr('colspan', 1))
+        );
+
+			$('#fightMechanics #attacker tbody.fleet')
+			.append(
+				$('<tr>').addClass('add')
+					.append($('<td>').html(addNewFleetButtonFight(!0)).attr('colspan', 6))
+			);
+
+			$('#fightMechanics #defender tbody.fleet')
+				.append(
+					$('<tr>').addClass('add')
+						.append($('<td>').html(addNewFleetButtonFight(!1)).attr('colspan', 6))
+				);
+
+			let attacker = {
+				'research': {},
+				'defense': {},
+				'fleet': {},
+			}, defender = {
+				'research': {},
+				'defense': {},
+				'fleet': {},
+			};
+
+			function addNewResearchButtonFight(isAttacker = false) {
+				const span = $('<span>');
+				const buttonEl = $('<button>').html('Add');
+				const selEl = $('<select>').addClass('type');
+				const lvlEl = $('<input>').addClass('qty').val(0);
+
+				buttonEl.click((function () {
+					return function () {
+						appendResearchFight(selEl, lvlEl, isAttacker)
+					}
+				})(selEl,lvlEl));
+
+				for(let t in constants.fleetResearches) {
+					let name = t;
+					selEl.append($('<option>', {'value': name, text: name}));
+				}
+
+				span.append(buttonEl);
+				span.append(' type: ');
+				span.append(selEl);
+				span.append(' units: ');
+				span.append(lvlEl);
+
+				return span;
+			}
+
+			function addNewDefenseButtonFight(isAttacker = false) {
+				const span = $('<span>');
+				const buttonEl = $('<button>').html('Add');
+				const selEl = $('<select>').addClass('type');
+				const lvlEl = $('<input>').addClass('qty').val(0);
+
+				buttonEl.click((function () {
+					return function () {
+						appendDefenseFight(selEl, lvlEl, isAttacker)
+					}
+				})(selEl,lvlEl));
+
+				for(let t in constants.defenses) {
+					let name = constants.defenses[t].name;
+					selEl.append($('<option>', {'value': t, text: name}));
+				}
+
+				span.append(buttonEl);
+				span.append(' defense: ');
+				span.append(selEl);
+				span.append(' units: ');
+				span.append(lvlEl);
+
+				return span;
+			}
+
+			function addNewFleetButtonFight(isAttacker) {
+				const span = $('<span>');
+				const buttonEl = $('<button>').html('Add');
+				const selEl = $('<select>').addClass('type');
+				const lvlEl = $('<input>').addClass('qty').val(0);
+				const parseEl = $('<textarea>').addClass('qty').attr('style','margin:0 10px; width: 50px; height:25px; font-size: 8px;').val('');
+
+				buttonEl.click((function (selEl, lvlEl, parseEl, isAttacker = false) {
+					return function () {
+						if (parseEl.val()) {
+							appendParsedFleetFight(parseEl, isAttacker)
+							parseEl.val('');
+						} else {
+							appendFleetFight(selEl, lvlEl, isAttacker)
+						}
+					}
+				})(selEl, lvlEl, parseEl, isAttacker));
+
+				for(let t in fleets) {
+					let name = t;
+					selEl.append($('<option>', {'value': name, text: name}));
+				}
+
+				span.append(buttonEl);
+				span.append(' type: ');
+				span.append(selEl);
+				span.append(' units: ');
+				span.append(lvlEl);
+				span.append(parseEl);
+
+				return span;
+			}
+
+			function showResearchesFight(research, isAttacker = false) {
+				$('#fightMechanics tbody.research tr[class!=add]').remove();
+				let addTr = $('#fightMechanics ' + (isAttacker ? '#attacker': '#defender') +  ' tbody.research tr[class=add]');
+				for(let res in research) {
+					if (!research.hasOwnProperty(res)) {
+						continue;
+					}
+					addTr.parent().append(
+						$('<tr>')
+							.append($('<td>').html(res).attr('colspan', 3))
+							.append($('<td>').html(attacker.research[res]).attr('colspan', 2))
+							.append($('<th>').attr('colspan', 1))
+					);
+				}
+				addTr.parent().append(addTr);
+			}
+			function showDefensesFight(defense, isAttacker = false) {
+				$('#fightMechanics ' +  (isAttacker ? '#attacker': '#defender') + ' tbody.defenses tr[class!=add]').remove();
+				let addTr = $('#fightMechanics tbody.defenses tr[class=add]');
+				for(let res in defense) {
+					if (!defense.hasOwnProperty(res)) {
+						continue;
+					}
+					let name = constants.defenses[res].name;
+					addTr.parent().append(
+						$('<tr>')
+							.append($('<td>').html(name).attr('colspan', 3))
+							.append($('<td>').html(defense[res]).attr('colspan', 2))
+							.append($('<th>').attr('colspan', 1))
+					);
+				}
+				addTr.parent().append(addTr);
+			}
+			function showFleetsFight(fleet, isAttacker = false) {
+				$('#fightMechanics ' +  (isAttacker ? '#attacker': '#defender') + ' tbody.fleet tr[class!=add]').remove();
+				let addTr = $('#fightMechanics tbody.fleet tr[class=add]');
+				for(let res in fleet) {
+					if (!fleet.hasOwnProperty(res)) {
+						continue;
+					}
+					addTr.parent().append(
+						$('<tr>')
+							.append($('<td>').html(res).attr('colspan', 3))
+							.append($('<td>').html(fleet[res]).attr('colspan', 2))
+							.append($('<th>').attr('colspan', 1))
+					);
+				}
+				addTr.parent().append(addTr);
+			}
+
+			function parseFleetOverviewFight(e, t = "english") {
+				const a = {},
+					n = /(.*?)\s*(\d+(,\d+)*(\.\d+)?)/gm;
+				let i = n.exec(e);
+				for (; null !== i; ) {
+					let t = i[1]
+						.toLowerCase()
+						.split(" ")
+						.map((e) => (e ? e[0].toUpperCase() + e.slice(1) : ""))
+						.join("");
+					if (constants.units.hasOwnProperty(t)) {
+						a[t] = parseFloat(i[2].replace(/,/g, ""))
+					} else {
+						console.log('Not found ', t, ' in ', Object.keys(constants.units));
+					}
+					(i = n.exec(e));
+					//z.Ships.hasOwnProperty(t) && a.push({ type: z.Ships[t], quantity: parseFloat(i[2].replace(/,/g, "")) }), (i = n.exec(e));
+				}
+				return a;
+			}
+
+			function appendResearchFight(selEl, lvlEl, isAttacker = false) {
+				if (lvlEl.val() === "0") {
+					delete attacker.research[selEl.val()];
+				} else {
+					attacker.research[selEl.val()] = lvlEl.val();
+				}
+
+				console.log(attacker, defender);
+				showResearchesFight(isAttacker? attacker.research: defender.research, isAttacker);
+				showFightResults();
+			}
+			function appendDefenseFight(selEl, lvlEl, isAttacker = false) {
+				if (lvlEl.val() === "0") {
+					if (isAttacker) {
+						delete attacker.defense[selEl.val()];
+					} else {
+						delete defender.defense[selEl.val()];
+					}
+				} else {
+					if (isAttacker) {
+						attacker.defense[selEl.val()] = lvlEl.val();
+					} else {
+						defender.defense[selEl.val()] = lvlEl.val();
+					}
+				}
+
+				showDefensesFight();
+				showFightResults();
+			}
+			function appendParsedFleetFight(parseEl, isAttacker = false) {
+				let fleetOverview = parseFleetOverview(parseEl.val());
+				console.log(fleetOverview);
+				if (isAttacker) {
+					attacker.fleet = fleetOverview;
+				} else {
+					defender.fleet = fleetOverview;
+				}
+				showFleetsFight(isAttacker? attacker.fleet: defender.fleet, isAttacker);
+				showFightResults();
+			}
+			function appendFleetFight(selEl, lvlEl, isAttacker = false) {
+				if (lvlEl.val() === "0") {
+					if (isAttacker) {
+						delete attacker.fleet[selEl.val()];
+					} else {
+						delete defender.fleet[selEl.val()];
+					}
+				} else {
+					if (isAttacker) {
+						attacker.fleet[selEl.val()] = lvlEl.val();
+					} else {
+						defender.fleet[selEl.val()] = lvlEl.val();
+					}
+				}
+				showFleetsFight(isAttacker? attacker.fleet: defender.fleet, isAttacker);
+				showFightResults();
+			}
+
+			function showFightResults() {
+
+			}
 		},
 		showFleetSizeMaintenanceCalculator: function () {
 			var main = $('main');
