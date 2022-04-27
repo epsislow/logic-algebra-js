@@ -1472,10 +1472,10 @@ var Empires = (function (constants) {
 			);
 
 			$('#fightMechanics #results')
-				.append('Units destroyed: ( Attacker: '+ 200000 + '; Defender: ' + 150000 + ')').append('<br/>')
-				.append('Experience: ( Attacker: +'+ 10000 + '; Defender: +' + 15000 + ')').append('<br/>')
-				.append('Debris: ' + 10345).append('<br/>')
-				.append('Profit: ' + 243445).append('<br/>');
+				.append('Units destroyed: ( Attacker: '+ 0 + '; Defender: ' + 0 + ')').append('<br/>')
+				.append('Experience: ( Attacker: '+ 0 + '; Defender: ' + 0 + ')').append('<br/>')
+				.append('Debris: ' + 0).append('<br/>')
+				.append('Profit: ' + 0).append('<br/>');
 
 			$('#fightMechanics thead.top').append(
 				$('<tr>')
@@ -1602,7 +1602,12 @@ var Empires = (function (constants) {
 				'defense': {},
 				'fleet': {},
 			};
-
+			let results = {
+				'unitsDestroyed': [0, 0],
+				'experience': [0, 0],
+				'debris': 0,
+				'profit': 0
+			};
 			function addNewResearchButtonFight(isAttacker = false) {
 				const span = $('<span>');
 				const buttonEl = $('<button>').html('Add');
@@ -1822,8 +1827,50 @@ var Empires = (function (constants) {
 				showFightResults();
 			}
 
-			function showFightResults() {
+			function attackOneWay(isAttacker = true) {
+				let att = isAttacker ? attacker: defender;
+				let def = isAttacker ? defender: attacker;
+				if (!Object.keys(att.fleet).length || !Object.keys(def.fleet).length) {
+					return results;
+				}
 
+				for(let unit in att.fleet) {
+					if (!att.fleet.hasOwnProperty(unit)) {
+						continue;
+					}
+					let qty = att.fleet[unit];
+					if (!qty) {
+						continue;
+					}
+					let dmgFactor = 0;
+					for(let unitB in def.fleet) {
+						if (!def.fleet.hasOwnProperty(unitB)) {
+							continue;
+						}
+						let qtyB = def.fleet[unit];
+						if (!qty) {
+							continue;
+						}
+						/*
+						let a,
+							n = 0.01,
+							i = 0.99;
+						return (e.type.name === z.Ships.ionBombers.name || e.type.name === z.Ships.ionFrigate.name) && ((n = 0.5), (i = 0.5)), (a = 0 === t.shield ? e.power : t.shield < e.power ? e.power - t.shield * i : e.power * n), a;
+						dmgFactor += Math.pow(this.calculateDamagePerUnitNew(e, t), this.factor);*/
+
+					}
+				}
+				return results;
+			}
+
+			function showFightResults() {
+				attackOneWay(results);
+
+				$('#fightMechanics #results')
+					.append('Units destroyed: ( Attacker: '+ results.unitsDestroyed[0] + '; Defender: ' + results.unitsDestroyed[1] + ')').append('<br/>')
+					.append('Experience: ( Attacker: +'+ results.experience[0] + '; Defender: +' + results.experience[1]  + ')').append('<br/>')
+					.append('Debris: ' + results.debris ).append('<br/>')
+					.append('Profit: ' + results.profit ).append('<br/>');
 			}
 		},
 		showFleetSizeMaintenanceCalculator: function () {
