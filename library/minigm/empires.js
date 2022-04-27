@@ -1467,9 +1467,15 @@ var Empires = (function (constants) {
 			).append(
 				$('<tr>')
 					.append($('<td>').attr('colspan', 2).append(
-						$('<div>').attr('id', 'results').html('Debris:10345 <br/> Profit: 243445')
+						$('<div>').attr('id', 'results')
 					))
 			);
+
+			$('#fightMechanics #results')
+				.append('Units destroyed: ( Attacker: '+ 200000 + '; Defender: ' + 150000 + ')').append('<br/>')
+				.append('Experience: ( Attacker: +'+ 10000 + '; Defender: +' + 15000 + ')').append('<br/>')
+				.append('Debris: ' + 10345).append('<br/>')
+				.append('Profit: ' + 243445).append('<br/>');
 
 			$('#fightMechanics thead.top').append(
 				$('<tr>')
@@ -1490,21 +1496,20 @@ var Empires = (function (constants) {
 			).append(
 				$('<tr>')
 					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
-					.append($('<th>').html('Level').addClass('large').attr('colspan', 2))
-					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+					.append($('<th>').html('Level').addClass('med').attr('colspan', 3))
 			);
+			/*
 			$('#fightMechanics tbody.research')
 				.append(
           $('<tr>')
             .append($('<td>').html('Energy').attr('colspan', 3))
-            .append($('<td>').html('1').attr('colspan', 2))
-            .append($('<th>').attr('colspan', 1))
+            .append($('<td>').html('1').attr('colspan', 3))
         ).append(
           $('<tr>')
             .append($('<td>').html('Laser').attr('colspan', 3))
-            .append($('<td>').html('1').attr('colspan', 2))
-            .append($('<th>').attr('colspan', 1))
+            .append($('<td>').html('1').attr('colspan', 3))
         );
+			 */
 
 			$('#fightMechanics #attacker tbody.research')
 				.append(
@@ -1524,22 +1529,20 @@ var Empires = (function (constants) {
 			).append(
 				$('<tr>')
 					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
-					.append($('<th>').html('Level').addClass('large').attr('colspan', 2))
-					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+					.append($('<th>').html('Level').addClass('med').attr('colspan', 3))
 			);
 
+			/*
 			$('#fightMechanics tbody.defenses')
 				.append(
           $('<tr>')
             .append($('<td>').html('Missile Turrets').attr('colspan', 3))
-            .append($('<td>').html('5').attr('colspan', 2))
-            .append($('<th>').attr('colspan', 1))
+            .append($('<td>').html('5').attr('colspan', 3))
         ).append(
           $('<tr>')
             .append($('<td>').html('Disruptor Turrets').attr('colspan', 3))
-            .append($('<td>').html('10').attr('colspan', 2))
-            .append($('<th>').attr('colspan', 1))
-        );
+            .append($('<td>').html('10').attr('colspan', 3))
+        );*/
 
 			$('#fightMechanics #attacker tbody.defenses')
 				.append(
@@ -1560,25 +1563,23 @@ var Empires = (function (constants) {
 			).append(
 				$('<tr>')
 					.append($('<th>').html('Name').addClass('large').attr('colspan', 3))
-					.append($('<th>').html('Count').addClass('med').attr('colspan', 1))
-					.append($('<th>').html('Next').addClass('med').attr('colspan', 1))
-					.append($('<th>').html('Actions').addClass('med').attr('colspan', 1))
+					.append($('<th>').html('Count').addClass('med').attr('colspan', 3))
 			);
 
+			/*
 			$('#fightMechanics tbody.fleet')
 				.append(
           $('<tr>')
             .append($('<td>').html('Fighters').attr('colspan', 3))
-            .append($('<td>').html('5').attr('colspan', 1))
+            .append($('<td>').html('5').attr('colspan', 2))
 						.append($('<td>').html('5').attr('colspan', 1))
-            .append($('<th>').attr('colspan', 1))
         ).append(
           $('<tr>')
             .append($('<td>').html('HeavyCruiser').attr('colspan', 3))
-            .append($('<td>').html('10').attr('colspan', 1))
+            .append($('<td>').html('10').attr('colspan', 2))
 						.append($('<td>').html('10').attr('colspan', 1))
-            .append($('<th>').attr('colspan', 1))
         );
+			 */
 
 			$('#fightMechanics #attacker tbody.fleet')
 			.append(
@@ -1688,7 +1689,7 @@ var Empires = (function (constants) {
 			}
 
 			function showResearchesFight(research, isAttacker = false) {
-				$('#fightMechanics tbody.research tr[class!=add]').remove();
+				$('#fightMechanics ' + (isAttacker ? '#attacker': '#defender') +  ' tbody.research tr[class!=add]').remove();
 				let addTr = $('#fightMechanics ' + (isAttacker ? '#attacker': '#defender') +  ' tbody.research tr[class=add]');
 				for(let res in research) {
 					if (!research.hasOwnProperty(res)) {
@@ -1697,15 +1698,14 @@ var Empires = (function (constants) {
 					addTr.parent().append(
 						$('<tr>')
 							.append($('<td>').html(res).attr('colspan', 3))
-							.append($('<td>').html(attacker.research[res]).attr('colspan', 2))
-							.append($('<th>').attr('colspan', 1))
+							.append($('<td>').html(research[res]).attr('colspan', 3))
 					);
 				}
 				addTr.parent().append(addTr);
 			}
 			function showDefensesFight(defense, isAttacker = false) {
 				$('#fightMechanics ' +  (isAttacker ? '#attacker': '#defender') + ' tbody.defenses tr[class!=add]').remove();
-				let addTr = $('#fightMechanics tbody.defenses tr[class=add]');
+				let addTr = $('#fightMechanics ' +  (isAttacker ? '#attacker': '#defender') + ' tbody.defenses tr[class=add]');
 				for(let res in defense) {
 					if (!defense.hasOwnProperty(res)) {
 						continue;
@@ -1714,15 +1714,14 @@ var Empires = (function (constants) {
 					addTr.parent().append(
 						$('<tr>')
 							.append($('<td>').html(name).attr('colspan', 3))
-							.append($('<td>').html(defense[res]).attr('colspan', 2))
-							.append($('<th>').attr('colspan', 1))
+							.append($('<td>').html(defense[res]).attr('colspan', 3))
 					);
 				}
 				addTr.parent().append(addTr);
 			}
 			function showFleetsFight(fleet, isAttacker = false) {
 				$('#fightMechanics ' +  (isAttacker ? '#attacker': '#defender') + ' tbody.fleet tr[class!=add]').remove();
-				let addTr = $('#fightMechanics tbody.fleet tr[class=add]');
+				let addTr = $('#fightMechanics  ' +  (isAttacker ? '#attacker': '#defender') + ' tbody.fleet tr[class=add]');
 				for(let res in fleet) {
 					if (!fleet.hasOwnProperty(res)) {
 						continue;
@@ -1760,12 +1759,18 @@ var Empires = (function (constants) {
 
 			function appendResearchFight(selEl, lvlEl, isAttacker = false) {
 				if (lvlEl.val() === "0") {
-					delete attacker.research[selEl.val()];
+					if (isAttacker) {
+						delete attacker.research[selEl.val()];
+					} else {
+						delete defender.research[selEl.val()];
+					}
 				} else {
-					attacker.research[selEl.val()] = lvlEl.val();
+					if (isAttacker) {
+						attacker.research[selEl.val()] = lvlEl.val();
+					} else {
+						defender.research[selEl.val()] = lvlEl.val();
+					}
 				}
-
-				console.log(attacker, defender);
 				showResearchesFight(isAttacker? attacker.research: defender.research, isAttacker);
 				showFightResults();
 			}
@@ -1784,7 +1789,8 @@ var Empires = (function (constants) {
 					}
 				}
 
-				showDefensesFight();
+				console.log(attacker, defender);
+				showDefensesFight(isAttacker? attacker.defense: defender.defense, isAttacker);
 				showFightResults();
 			}
 			function appendParsedFleetFight(parseEl, isAttacker = false) {

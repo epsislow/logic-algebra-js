@@ -256,7 +256,7 @@ var TgeFn = function (rd) {
       var Y = [];
       var Z = [];
       var loops = 0;
-      var maxLoops = 10000;
+      var maxLoops = 1000000;
       var end = 0;
 
       var ddd = function (instrCr, action, x=1,y=[],z=[],t=0) {
