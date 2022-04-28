@@ -1245,7 +1245,7 @@ var Empires = (function (constants) {
 				results.fleetDefensesArmour = qsum;
 				armourTech = defResearch.hasOwnProperty('Armour') ? defResearch['Armour'] : 0;
 				
-				let debrisProc= Math.max(0.35, armourTech ? armourTech * 2 / 100: 0);
+				let debrisProc= Math.max(Math.min(0.2 * armourTech, 0.35), 0.85);
 				
 				results.defensesArmour = results.baseDefensesArmour
 				  + results.fleetDefensesArmour;
@@ -1834,6 +1834,12 @@ var Empires = (function (constants) {
 					return results;
 				}
 
+				let attArmourTech = att.research.hasOwnProperty('Armour') ? att.research['Armour'] : 0;
+				let defArmourTech = def.research.hasOwnProperty('Armour') ? def.research['Armour'] : 0;
+
+				let attDebrisProc= Math.max(Math.min(0.2 * attArmourTech, 0.35), 0.85);
+				let defDebrisProc= Math.max(Math.min(0.2 * defArmourTech, 0.35), 0.85);
+
 				for(let unit in att.fleet) {
 					if (!att.fleet.hasOwnProperty(unit)) {
 						continue;
@@ -1842,21 +1848,44 @@ var Empires = (function (constants) {
 					if (!qty) {
 						continue;
 					}
-					let dmgFactor = 0;
-					for(let unitB in def.fleet) {
-						if (!def.fleet.hasOwnProperty(unitB)) {
+					let dmgPerUnit = 0, dmgFactor = 1, dmgToShieldsFactor = 0.01, dmgShieldedFactor = 0.99, attackPowerUnique = 0;
+					for(let unitDef in def.fleet) {
+						if (!def.fleet.hasOwnProperty(unitDef)) {
 							continue;
 						}
-						let qtyB = def.fleet[unit];
-						if (!qty) {
+						let qtyDef = def.fleet[unitDef];
+						if (!qtyDef) {
 							continue;
 						}
-						/*
-						let a,
-							n = 0.01,
-							i = 0.99;
-						return (e.type.name === z.Ships.ionBombers.name || e.type.name === z.Ships.ionFrigate.name) && ((n = 0.5), (i = 0.5)), (a = 0 === t.shield ? e.power : t.shield < e.power ? e.power - t.shield * i : e.power * n), a;
-						dmgFactor += Math.pow(this.calculateDamagePerUnitNew(e, t), this.factor);*/
+
+						dmgPerUnit = 0;
+						dmgFactor = 0.85;
+						dmgToShieldsFactor = 0.01;
+						dmgShieldedFactor = 0.99;
+
+						if(unit === 'IonBombers' || unit === 'IonFrigate') {
+							dmgToShieldsFactor = 0.5;
+							dmgShieldedFactor = 0.5;
+						}
+
+						if (unitDef.shield === 0) {
+							dmgPerUnit = unit.power;
+						} else if (unitDef.shield < unit.power) {
+							dmgPerUnit = unit.power - unitDef.shield * dmgToShieldsFactor;
+						} else {
+							dmgPerUnit = unit.power  * dmgShieldedFactor;
+						}
+
+						attackPowerUnique += Math.pow(dmgPerUnit, dmgFactor);
+					}
+					for(let unitDef in def.fleet) {
+						if (!def.fleet.hasOwnProperty(unitDef)) {
+							continue;
+						}
+						let qtyDef = def.fleet[unitDef];
+						if (!qtyDef) {
+							continue;
+						}
 
 					}
 				}
