@@ -1895,7 +1895,7 @@ var Empires = (function (constants) {
 			function showFightResults() {
 				attackOneWay(results);
 
-				$('#fightMechanics #results')
+				$('#fightMechanics #results').html('')
 					.append('Units destroyed: ( Attacker: '+ results.unitsDestroyed[0] + '; Defender: ' + results.unitsDestroyed[1] + ')').append('<br/>')
 					.append('Experience: ( Attacker: +'+ results.experience[0] + '; Defender: +' + results.experience[1]  + ')').append('<br/>')
 					.append('Debris: ' + results.debris ).append('<br/>')
