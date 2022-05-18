@@ -1827,18 +1827,37 @@ var Empires = (function (constants) {
 				showFightResults();
 			}
 
-			function attackOneWay(isAttacker = true) {
+			function damagePerUnit(unit, unitDef, withFactor = 0) {
+				let dmgPerUnit, dmgFactor =  0.85, dmgToShieldsFactor = 0.01, dmgShieldedFactor = 0.99;
+
+				if(unit === 'IonBombers' || unit === 'IonFrigate') {
+					dmgToShieldsFactor = 0.5;
+					dmgShieldedFactor = 0.5;
+				}
+
+				if (unitDef.shield === 0) {
+					dmgPerUnit = unit.power;
+				} else if (unitDef.shield < unit.power) {
+					dmgPerUnit = unit.power - unitDef.shield * dmgToShieldsFactor;
+				} else {
+					dmgPerUnit = unit.power  * dmgShieldedFactor;
+				}
+
+				return withFactor ? dmgPerUnit: Math.pow(dmgPerUnit, dmgFactor);
+			}
+
+			function attackOneWay(isAttacker = true, results) {
 				let att = isAttacker ? attacker: defender;
 				let def = isAttacker ? defender: attacker;
 				if (!Object.keys(att.fleet).length || !Object.keys(def.fleet).length) {
-					return results;
+					return;
 				}
 
 				let attArmourTech = att.research.hasOwnProperty('Armour') ? att.research['Armour'] : 0;
 				let defArmourTech = def.research.hasOwnProperty('Armour') ? def.research['Armour'] : 0;
 
-				let attDebrisProc= Math.max(Math.min(0.2 * attArmourTech, 0.35), 0.85);
-				let defDebrisProc= Math.max(Math.min(0.2 * defArmourTech, 0.35), 0.85);
+				let attDebrisProc = Math.max(Math.min(0.2 * attArmourTech, 0.35), 0.85);
+				let defDebrisProc = Math.max(Math.min(0.2 * defArmourTech, 0.35), 0.85);
 
 				for(let unit in att.fleet) {
 					if (!att.fleet.hasOwnProperty(unit)) {
@@ -1848,7 +1867,7 @@ var Empires = (function (constants) {
 					if (!qty) {
 						continue;
 					}
-					let dmgPerUnit = 0, dmgFactor = 1, dmgToShieldsFactor = 0.01, dmgShieldedFactor = 0.99, attackPowerUnique = 0;
+					let dmgPerUnit = 0, attackPowersUnique = 0;
 					for(let unitDef in def.fleet) {
 						if (!def.fleet.hasOwnProperty(unitDef)) {
 							continue;
@@ -1858,26 +1877,10 @@ var Empires = (function (constants) {
 							continue;
 						}
 
-						dmgPerUnit = 0;
-						dmgFactor = 0.85;
-						dmgToShieldsFactor = 0.01;
-						dmgShieldedFactor = 0.99;
-
-						if(unit === 'IonBombers' || unit === 'IonFrigate') {
-							dmgToShieldsFactor = 0.5;
-							dmgShieldedFactor = 0.5;
-						}
-
-						if (unitDef.shield === 0) {
-							dmgPerUnit = unit.power;
-						} else if (unitDef.shield < unit.power) {
-							dmgPerUnit = unit.power - unitDef.shield * dmgToShieldsFactor;
-						} else {
-							dmgPerUnit = unit.power  * dmgShieldedFactor;
-						}
-
-						attackPowerUnique += Math.pow(dmgPerUnit, dmgFactor);
+						attackPowersUnique += damagePerUnit(unit, unitDef, 1);
 					}
+
+					let participationCap, unitsUsed = 0, participationByDamage, participationByDefSize, participationByAmountNeeded;
 					for(let unitDef in def.fleet) {
 						if (!def.fleet.hasOwnProperty(unitDef)) {
 							continue;
@@ -1886,14 +1889,22 @@ var Empires = (function (constants) {
 						if (!qtyDef) {
 							continue;
 						}
-
+						dmgPerUnit = damagePerUnit(unit, unitDef, 0);
+						participationByDamage = (dmgPerUnit/ attackPowersUnique) * qtyDef;
+						participationByAmountNeeded = (qtyDef * unitDef.armor) / dmgPerUnit;
+						participationCap = participationByDamage;
+						participationByDefSize = (unitDef.hasOwnProperty('weapon') ? qtyDef : 1 ) * unitDef.cost * 2;
+						if (participationCap > participationByDefSize) {
+							participationCap = participationByDefSize;
+						}
 					}
 				}
-				return results;
+
 			}
 
 			function showFightResults() {
-				attackOneWay(results);
+				attackOneWay(true, results);
+				attackOneWay(false, results);
 
 				$('#fightMechanics #results').html('')
 					.append('Units destroyed: ( Attacker: '+ results.unitsDestroyed[0] + '; Defender: ' + results.unitsDestroyed[1] + ')').append('<br/>')
