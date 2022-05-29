@@ -1217,7 +1217,7 @@ var Empires = (function (constants) {
 				}
 				results.baseDefensesArmour = qsum;
 
-				let ccProc = 0;
+				let ccProc = 0; qsum = 0;
 				for (let d in defFleet) {
 				  weapon = constants.units[d].Weapon;
 				  weaponTech = defResearch.hasOwnProperty(weapon) ? defResearch[weapon] : 0;
