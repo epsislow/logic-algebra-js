@@ -1608,6 +1608,7 @@ var Empires = (function (constants) {
 				'debris': 0,
 				'profit': 0
 			};
+
 			function addNewResearchButtonFight(isAttacker = false) {
 				const span = $('<span>');
 				const buttonEl = $('<button>').html('Add');
@@ -1849,7 +1850,9 @@ var Empires = (function (constants) {
 			function attackOneWay(isAttacker = true, results) {
 				let att = isAttacker ? attacker: defender;
 				let def = isAttacker ? defender: attacker;
+				console.log('attack of: ', att.fleet,'-> to : ', def.fleet);
 				if (!Object.keys(att.fleet).length || !Object.keys(def.fleet).length) {
+					console.log('--no units--');
 					return;
 				}
 
@@ -1912,6 +1915,7 @@ var Empires = (function (constants) {
 					.append('Debris: ' + results.debris ).append('<br/>')
 					.append('Profit: ' + results.profit ).append('<br/>');
 			}
+			window.showFightResults = showFightResults;
 		},
 		showFleetSizeMaintenanceCalculator: function () {
 			var main = $('main');
