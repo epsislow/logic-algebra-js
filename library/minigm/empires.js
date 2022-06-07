@@ -1067,7 +1067,8 @@ var Empires = (function (constants) {
 					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1;
 					if (unitSelected) {
 						let unitSelectedProp = constants.units[unitSelected];
-						armourOfUnitSelected = constants.units[unitSelected].Armour;
+						armourOfUnitSelected = parseInt(constants.units[unitSelected].Armour) * armourTech;
+						let unitSelectedShield = parseInt(unitSelectedProp.Shield, 10) * shieldTech;
 						if (unit.Weapon === 'Ion') {
 							/*(e.type.name === z.Ships.ionBombers.name || e.type.name === z.Ships.ionFrigate.name) && ((n = 0.5), (i = 0.5)),
                 a = (0 === t.shield ?
@@ -1077,9 +1078,9 @@ var Empires = (function (constants) {
                                  e.power * n
 
                      )*/
-							dmgAttackToUnitSelected = dmgAttack - parseInt(unitSelectedProp.Shield, 10) * weaponTech * 0.5;
+							dmgAttackToUnitSelected = unitSelectedShield < dmgAttack? dmgAttack - unitSelectedShield * 0.5 : dmgAttack * 0.5;
 						} else {
-							dmgAttackToUnitSelected = dmgAttack - parseInt(unitSelectedProp.Shield, 10) * weaponTech * 0.99;
+							dmgAttackToUnitSelected = unitSelectedShield < dmgAttack? dmgAttack - unitSelectedShield * 0.99: dmgAttack * 0.01;
 						}
 					}
 					if (unit.Weapon === 'Ion') {
@@ -1105,6 +1106,9 @@ var Empires = (function (constants) {
 					dmgFactorCapShield = Math.pow(dmgAttackShield, factor);
 					let credits = unit.Credits;
 					let unitsNeededToKill = unitSelected? armourOfUnitSelected/dmgAttackToUnitSelected: 0;
+					let unitsCostToKill = unitSelected ? Math.ceil(unitsNeededToKill) * parseInt(unit.Credits): 0;
+					let unitSelectedCost = unitSelected ? parseInt(constants.units[unitSelected].Credits): 0;
+					let ratioCostToKill = unitSelectedCost/unitsCostToKill;
 
 					function selectUnit(name) {
 						if (unitSelected === name) {
@@ -1142,12 +1146,12 @@ var Empires = (function (constants) {
 							.append($('<td>').html((shield/credits).humanReadable()).addClass('green'))
 					).append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
-							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('red'))
+						  .append($('<td>').html((ratioCostToKill).humanReadable()).addClass('red'))
+							.append($('<td>').html((unitsCostToKill).humanReadable()).addClass('yellow'))
+							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('yellow'))
 							.append($('<td>').html((dmgAttackToUnitSelected).humanReadable()).addClass('red'))
-							.append($('<td>').html((0).humanReadable()).addClass('red'))
-							.append($('<td>').html((0).humanReadable()).addClass('red'))
-							.append($('<td>').html((0).humanReadable()).addClass('red'))
-							.append($('<td>').html((0).humanReadable()).addClass('red'))
+							.append($('<td>').html((armourOfUnitSelected).humanReadable()).addClass('blue'))
+							.append($('<td>').html(''))
 
 							.append($('<td>').html(dmgFactorCapNoShield.humanReadable()))
 							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()))
