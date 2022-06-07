@@ -52,13 +52,19 @@
     }
 
     #fightMechanics .green,
-    #baseProfit .green {
+    #baseProfit .green,
+    #baseProfitUnits .green {
         color: greenyellow;
     }
 
     #fightMechanics .red,
-    #baseProfit .red {
+    #baseProfit .red,
+    #baseProfitUnits .red {
         color: red;
+    }
+
+    #baseProfitUnits tr.selected td {
+        background-color: grey;
     }
 
     #fightMechanics .bold,
@@ -235,6 +241,13 @@
         color: greenyellow;
         width: 80px;
         display:inline-block;
+    }
+
+    .hide, .hidden {
+        display:none;
+    }
+    #baseProfitUnits td {
+        border: 1px solid black;
     }
 	</style>
 </head>

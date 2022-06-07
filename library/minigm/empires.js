@@ -222,6 +222,18 @@ var EmpiresConstants = {
 				'Shipyard': 16,
 				'technologies': {'Ion': 4, 'Warp Drive': 8, 'Armour': 14, 'Shielding': 6},
 			},
+			'Dreadnought': {
+				'Credits': 10000,
+				'drive': 'Warp',
+				'Weapon': 'Photon',
+				'Power': 756,
+				'Armour': 512,
+				'Shield': 20,
+				'Hangar': 200,
+				'Speed': 3,
+				'Shipyard': 20,
+				'technologies': {'Photon': 6, 'Warp Drive': 12, 'Armour': 20, 'Shielding': 10},
+			}
 	},
 	'driveResearches': {
 		'Stellar Drive': 0,
@@ -673,6 +685,11 @@ var Empires = (function (constants) {
 		  return Math.floor(posRes['Area']/(Math.max(posRes['Solar Energy']+1,posRes['Gas']+1)));
 		},
 		start: function (sort = 1) {
+
+			Number.prototype.humanReadable = function () {
+				return Math.round(this.valueOf() * 100)/100;
+			}
+
 			this.planetsSort(sort);
 
 			this.showProductionQueueHelper();
@@ -782,7 +799,28 @@ var Empires = (function (constants) {
 				'<tbody class="fleet"></tbody>' +
 				'<thead class="results"></thead>' +
 				'<tbody class="results"></tbody>' +
+				'</table>' +
+				'<table id="baseProfitUnits" class="">' +
+				'<thead class="head"></thead>' +
+				'<tbody class="units"></tbody>' +
 				'</table>');
+
+			$('#baseProfitUnits thead.head').append(
+				$('<tr>')
+					.append($('<th>').html('Name'))
+					.append($('<th>').html('Cost'))
+					.append($('<th>').html('Attack'))
+					.append($('<th>').html('Attack-TinyShield'))
+					.append($('<th>').html('Attack-HalfShield'))
+					.append($('<th>').html('Attack-Shield'))
+					.append($('<th>').html('Armour'))
+					.append($('<th>').html('Shield'))
+					.append($('<th>').html('Weapon'))
+					.append($('<th>').html('DmgFactor-NoShield'))
+					.append($('<th>').html('DmgFactor-TinyShield'))
+					.append($('<th>').html('DmgFactor-HalfShield'))
+					.append($('<th>').html('DmgFactor-Shield'))
+			)
 
 			$('#baseProfit thead.head').append(
 				$('<tr>')
@@ -910,6 +948,7 @@ var Empires = (function (constants) {
 
 			results.baseEconomy = 107;
 			results.baseIncome = 107;
+			results.shipyardLvl = 16;
 			results.baseTradeValue = 65;
 			results.baseDefensesPower = 0;
 			results.minimumPillage = {};
@@ -999,6 +1038,123 @@ var Empires = (function (constants) {
 				saveBaseConfig(newIndex);
 
 				return newIndex;
+			}
+
+			let unitSelected = '';
+
+			showBaseUnits();
+
+			function showBaseUnits() {
+				console.log('--base-units-refresh');
+				$('#baseProfitUnits tbody.units').html('');
+
+				for (let name in constants.units) {
+					let unit = constants.units[name];
+					let factor = 0.85;
+					let dmgFactorCapShield, dmgFactorCapTinyShield, dmgFactorCapNoShield, dmgFactorCapHalfShield;
+					let weapon = unit.Weapon;
+					let weaponTech = defResearch.hasOwnProperty(weapon) ? defResearch[weapon] : 0;
+					weaponTech = weaponTech * 5 / 100 + 1;
+					let armourTech = defResearch.hasOwnProperty('Armour') ? defResearch['Armour'] : 0;
+					armourTech = armourTech * 5 / 100 + 1;
+					let armour = parseInt(unit.Armour) * armourTech;
+					let shieldTech = defResearch.hasOwnProperty('Shielding') ? defResearch['Shielding'] : 0;
+
+					shieldTech = shieldTech * 5 / 100 + 1;
+					let shield = parseInt(unit.Shield) * shieldTech;
+					let unitIsSelected = (unitSelected === name);
+					let dmgAttack = parseInt(unit.Power, 10) * weaponTech, dmgAttackHalf, dmgAttackTinyShield, dmgAttackShield;
+					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1;
+					if (unitSelected) {
+						let unitSelectedProp = constants.units[unitSelected];
+						armourOfUnitSelected = constants.units[unitSelected].Armour;
+						if (unit.Weapon === 'Ion') {
+							/*(e.type.name === z.Ships.ionBombers.name || e.type.name === z.Ships.ionFrigate.name) && ((n = 0.5), (i = 0.5)),
+                a = (0 === t.shield ?
+                        e.power :
+                            (t.shield < e.power) ?
+                                e.power - t.shield * i :
+                                 e.power * n
+
+                     )*/
+							dmgAttackToUnitSelected = dmgAttack - parseInt(unitSelectedProp.Shield, 10) * weaponTech * 0.5;
+						} else {
+							dmgAttackToUnitSelected = dmgAttack - parseInt(unitSelectedProp.Shield, 10) * weaponTech * 0.99;
+						}
+					}
+					if (unit.Weapon === 'Ion') {
+						/*(e.type.name === z.Ships.ionBombers.name || e.type.name === z.Ships.ionFrigate.name) && ((n = 0.5), (i = 0.5)),
+              a = (0 === t.shield ?
+                      e.power :
+                          (t.shield < e.power) ?
+                              e.power - t.shield * i :
+                               e.power * n
+
+                   )*/
+						dmgAttackTinyShield = dmgAttack - (0.5);
+						dmgAttackHalf = dmgAttack - (dmgAttack / 2 * 0.5);
+						dmgAttackShield = dmgAttack * 0.5;
+					} else {
+						dmgAttackTinyShield = dmgAttack - (0.99);
+						dmgAttackHalf = dmgAttack - (dmgAttack / 2) * 0.99;
+						dmgAttackShield = dmgAttack * 0.01;
+					}
+					dmgFactorCapNoShield = Math.pow(dmgAttack, factor)
+					dmgFactorCapTinyShield = Math.pow(dmgAttackTinyShield, factor);
+					dmgFactorCapHalfShield = Math.pow(dmgAttackHalf, factor)
+					dmgFactorCapShield = Math.pow(dmgAttackShield, factor);
+					let credits = unit.Credits;
+					let unitsNeededToKill = unitSelected? armourOfUnitSelected/dmgAttackToUnitSelected: 0;
+
+					function selectUnit(name) {
+						if (unitSelected === name) {
+							unitSelected = '';
+							console.log('unit-deselected');
+						} else {
+							unitSelected = name;
+							console.log('unit-selected: '+ name);
+						}
+						showBaseUnits();
+					}
+
+					$('#baseProfitUnits tbody.units').append(
+						$('<tr>').attr('class', unitIsSelected? 'selected': '')
+							.append($('<td>').html(name).attr('style', 'cursor: pointer').click(function () { selectUnit(name);}).attr('rowspan', 3))
+							.append($('<td>').html(credits).attr('rowspan', 3))
+							.append($('<td>').html(dmgAttack.humanReadable()))
+							.append($('<td>').html(dmgAttackTinyShield.humanReadable()))
+							.append($('<td>').html(dmgAttackHalf.humanReadable()))
+							.append($('<td>').html(dmgAttackShield.humanReadable()))
+							.append($('<td>').html(armour.humanReadable()))
+							.append($('<td>').html(shield.humanReadable()))
+							.append($('<td>').html(weapon).attr('rowspan', 3))
+							.append($('<td>').html(dmgFactorCapNoShield.humanReadable()).attr('rowspan', 2))
+							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()).attr('rowspan', 2))
+							.append($('<td>').html(dmgFactorCapHalfShield.humanReadable()).attr('rowspan', 2))
+							.append($('<td>').html(dmgFactorCapShield.humanReadable()).attr('rowspan', 2))
+					).append(
+						$('<tr>').attr('class', unitIsSelected? 'selected': '')
+							.append($('<td>').html((dmgAttack/credits).humanReadable()).addClass('green'))
+							.append($('<td>').html((dmgAttackTinyShield/credits).humanReadable()).addClass('green'))
+							.append($('<td>').html((dmgAttackHalf/credits).humanReadable()).addClass('green'))
+							.append($('<td>').html((dmgAttackShield/credits).humanReadable()).addClass('green'))
+							.append($('<td>').html((armour/credits).humanReadable()).addClass('green'))
+							.append($('<td>').html((shield/credits).humanReadable()).addClass('green'))
+					).append(
+						$('<tr>').attr('class', unitIsSelected? 'selected': '')
+							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('red'))
+							.append($('<td>').html((dmgAttackToUnitSelected).humanReadable()).addClass('red'))
+							.append($('<td>').html((0).humanReadable()).addClass('red'))
+							.append($('<td>').html((0).humanReadable()).addClass('red'))
+							.append($('<td>').html((0).humanReadable()).addClass('red'))
+							.append($('<td>').html((0).humanReadable()).addClass('red'))
+
+							.append($('<td>').html(dmgFactorCapNoShield.humanReadable()))
+							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()))
+							.append($('<td>').html(dmgFactorCapHalfShield.humanReadable()))
+							.append($('<td>').html(dmgFactorCapShield.humanReadable()))
+					)
+				}
 			}
 
 			window.basesConfig = basesConfig;
@@ -1306,15 +1462,16 @@ var Empires = (function (constants) {
 			function showResults() {
 		  	calcResults();
 
-
 		  	const inpEconomy = $('<input>').addClass('qty').val(results.baseEconomy);
 				const inpIncome = $('<input>').addClass('qty').val(results.baseIncome);
+				const shipyardLvl = $('<input>').addClass('qty').val(results.shipyardLvl);
 				const inpTradeValue = $('<input>').addClass('qty').val(results.baseTradeValue);
 				const inpCC = $('<input>').addClass('qty').val(results.baseCC);
 				const btnShowResults = $('<button>').addClass('tnyl').append($('<i>').addClass('fas fa-caret-up'));
 				const spanBaseIndex = $('<span>').html(currentBaseIndex + ' / ' + Object.keys(basesConfig).length + ' ' + baseNames[currentBaseIndex - 1]);
 				const btnPrevBase = $('<button>').addClass('tnyl').attr('style','margin-right:10px').append($('<i>').addClass('fas fa-caret-left'));
 				const btnNextBase = $('<button>').addClass('tnyl').attr('style','margin-left:10px').append($('<i>').addClass('fas fa-caret-right'));
+				const btnShowUnits = $('<button>').addClass('tnyl').attr('style','margin-left:10px').append($('<i>').addClass('fas fa-caret-down'));
 
 				//console.log(results.baseTradeValue);
 
@@ -1341,7 +1498,7 @@ var Empires = (function (constants) {
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Base TradeValue').attr('colspan', 3))
+						.append($('<td>').html('Base TradeValue <span class="green"><sup>+</sup></span>').attr('colspan', 3))
 						.append($('<td>').html(inpTradeValue).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
@@ -1352,67 +1509,72 @@ var Empires = (function (constants) {
 				).append(
 					$('<tr>')
 						.append($('<td>').html('BaseDefenses Power').attr('colspan', 3))
-						.append($('<td>').html(results.baseDefensesPower).attr('colspan', 2))
+						.append($('<td>').html(results.baseDefensesPower.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('BaseDefenses Armour').attr('colspan', 3))
-						.append($('<td>').html(results.baseDefensesArmour).attr('colspan', 2))
+						.append($('<td>').html(results.baseDefensesArmour.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FleetDefenses Power').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.fleetDefensesPower * 100)/100).attr('colspan', 2))
+						.append($('<td>').html(results.fleetDefensesPower.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FleetDefenses Armour').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.fleetDefensesArmour * 100)/100).attr('colspan', 2))
+						.append($('<td>').html(results.fleetDefensesArmour.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 				  $('<tr>')
-				  .append($('<td>').html('Defenses Power').attr('colspan', 3))
-				  .append($('<td>').html(results.defensesPower).attr('colspan', 2))
+				  .append($('<td>').html('Defenses Power <span class="red"><sup>+</sup></span>').attr('colspan', 3))
+				  .append($('<td>').html(results.defensesPower.humanReadable()).attr('colspan', 2))
 				  .append($('<td>').attr('colspan', 1))
 				).append(
 				  $('<tr>')
 				  .append($('<td>').html('Defenses Armour').attr('colspan', 3))
-				  .append($('<td>').html(results.defensesArmour).attr('colspan', 2))
+				  .append($('<td>').html(results.defensesArmour.humanReadable()).attr('colspan', 2))
 				  .append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour not shielded(0)').attr('colspan', 3))
-						.append($('<td>').html(results.fleetArmourNoShield).attr('colspan', 2))
+						.append($('<td>').html(results.fleetArmourNoShield.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(<6)').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.fleetArmourLowShield * 100)/100).attr('colspan', 2))
+						.append($('<td>').html(results.fleetArmourLowShield.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(<10)').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.fleetArmourMedShield * 100)/100).attr('colspan', 2))
+						.append($('<td>').html(results.fleetArmourMedShield.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('FArmour shielded(10+)').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.fleetArmourBigShield * 100)/100).attr('colspan', 2))
+						.append($('<td>').html(results.fleetArmourBigShield.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Debris').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.debris * 100)/100).attr('colspan', 2))
+						.append($('<td>').html('Debris <span class="green"><sup>+</sup></span>').attr('colspan', 3))
+						.append($('<td>').html(results.debris.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
-						.append($('<td>').html('Minimum Pillage').attr('colspan', 3))
-						.append($('<td>').html(results.minimumPillage.min).attr('colspan', 2))
+						.append($('<td>').html('Minimum Pillage <span class="green"><sup>+</sup></span>').attr('colspan', 3))
+						.append($('<td>').html(results.minimumPillage.min.humanReadable()).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				).append(
 					$('<tr>')
 						.append($('<td>').html('Attacker Profit').attr('colspan', 3))
-						.append($('<td>').html(Math.round(results.attackerProfit * 100)/100).addClass(results.attackerProfit< 0 ? 'green bold': 'red bold').attr('colspan', 2))
+						.append($('<td>').html(results.attackerProfit.humanReadable()).addClass(results.attackerProfit< 0 ? 'green bold': 'red bold').attr('colspan', 2))
+						.append($('<td>').attr('colspan', 1))
+				).append(
+					$('<tr>')
+						.append($('<td>').html('Units for Shipyard[+]').attr('colspan', 3))
+						.append($('<td>').html(shipyardLvl).attr('colspan', 2))
 						.append($('<td>').attr('colspan', 1))
 				);
 
@@ -1420,6 +1582,7 @@ var Empires = (function (constants) {
 				inpIncome.after(btnShowResults.clone().click(function () { showResults();}));
 				inpTradeValue.after(btnShowResults.clone().click(function () { showResults();}));
 				inpCC.after(btnShowResults.clone().click(function () { showResults();}));
+				shipyardLvl.after(btnShowUnits.click(function () { showUnits()}));
 				spanBaseIndex.after(btnNextBase.click(function () {
 					currentBaseIndex = getNextBaseConfigIndex(currentBaseIndex);
 					loadBaseConfig(currentBaseIndex);
@@ -1436,6 +1599,10 @@ var Empires = (function (constants) {
 					showFleets()
 					showResults();
 				}))
+				showBaseUnits();
+			}
+			function showUnits() {
+				$('#baseProfit')
 			}
 		},
 		showFightMechanics: function () {
@@ -2247,6 +2414,7 @@ var Empires = (function (constants) {
 				'Carrier': 12,
 				'FleetCarrier': 16,
 				'Battleship': 16,
+				'Dreadnought': 20,
 			};
 
 			var hangar = {
@@ -2264,6 +2432,7 @@ var Empires = (function (constants) {
 				'Carrier': 80,
 				'FleetCarrier': 500,
 				'Battleship': 40,
+				'Dreadnought': 200,
 			};
 
 			window.types = types;
@@ -2283,6 +2452,7 @@ var Empires = (function (constants) {
 				'Carrier': 400,
 				'FleetCarrier': 2500,
 				'Battleship': 2000,
+				'Dreadnought': 10000,
 			};
 
 			window.costs = costs;
