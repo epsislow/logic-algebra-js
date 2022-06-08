@@ -1045,7 +1045,7 @@ var Empires = (function (constants) {
 			showBaseUnits();
 
 			function showBaseUnits() {
-				console.log('--base-units-refresh');
+				//console.log('--base-units-refresh');
 				$('#baseProfitUnits tbody.units').html('');
 
 				let units={...constants.units};
@@ -1065,8 +1065,6 @@ var Empires = (function (constants) {
 					}
 				}
 
-				console.log(units);
-
 				for (let name in units) {
 					let unit = units[name];
 					let factor = 0.85;
@@ -1083,10 +1081,10 @@ var Empires = (function (constants) {
 					let shield = parseInt(unit.Shield) * shieldTech;
 					let unitIsSelected = (unitSelected === name);
 					let dmgAttack = parseInt(unit.Power, 10) * weaponTech, dmgAttackHalf, dmgAttackTinyShield, dmgAttackShield;
-					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1;
+					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1, unitDefensePack = 1;
 					if (unitSelected) {
 						let unitSelectedProp = units[unitSelected];
-						let unitDefensePack = units[unitSelected].hasOwnProperty('Defense') && units[unitSelected].Defense? 5: 1;
+						unitDefensePack = units[unitSelected].hasOwnProperty('Defense') && units[unitSelected].Defense? 5: 1;
 						armourOfUnitSelected = parseInt(units[unitSelected].Armour) * armourTech * unitDefensePack;
 
 						let unitSelectedShield = parseInt(unitSelectedProp.Shield, 10) * shieldTech;
@@ -1131,21 +1129,31 @@ var Empires = (function (constants) {
 					let unitSelectedCost = unitSelected ? parseInt(units[unitSelected].Credits): 0;
 					let ratioCostToKill = unitSelectedCost/unitsCostToKill;
 
+					/*
+					if (unitDefensePack> 1) {
+						unitsNeededToKill = 0;
+						unitsCostToKill = 0;
+						unitSelectedCost = 0;
+						ratioCostToKill = 0;
+					}*/
+
 					function selectUnit(name) {
 						if (unitSelected === name) {
 							unitSelected = '';
-							console.log('unit-deselected');
+							//console.log('unit-deselected');
 						} else {
 							unitSelected = name;
-							console.log('unit-selected: '+ name);
+							//console.log('unit-selected: '+ name);
 						}
 						showBaseUnits();
 					}
 
+					let inpQty = $('<input>').addClass('qty').val(1);
+
 					$('#baseProfitUnits tbody.units').append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
 							.append($('<td>').html(name).attr('style', 'cursor: pointer').click(function () { selectUnit(name);}).attr('rowspan', 3))
-							.append($('<td>').html(credits).attr('rowspan', 3))
+							.append($('<td>').html(credits).attr('rowspan', 2))
 							.append($('<td>').html(dmgAttack.humanReadable()))
 							.append($('<td>').html(dmgAttackTinyShield.humanReadable()))
 							.append($('<td>').html(dmgAttackHalf.humanReadable()))
@@ -1167,6 +1175,7 @@ var Empires = (function (constants) {
 							.append($('<td>').html((shield/credits).humanReadable()).addClass('green'))
 					).append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
+							.append($('<td>').html(inpQty))
 						  .append($('<td>').html((ratioCostToKill).humanReadable()).addClass('red'))
 							.append($('<td>').html((unitsCostToKill).humanReadable()).addClass('yellow'))
 							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('yellow'))
