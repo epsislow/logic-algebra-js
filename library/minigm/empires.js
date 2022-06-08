@@ -1150,6 +1150,10 @@ var Empires = (function (constants) {
 						showBaseUnits();
 					}
 
+					function sumOfLevels($start, $q, $level) {
+						return $start * (Math.pow($q, $level) - 1) / ($q - 1);
+					}
+
 					function changeQty() {
 						let val = $(this).val();
 						let optionsSent = {};
@@ -1163,8 +1167,12 @@ var Empires = (function (constants) {
 							.val(inpQtyVal);
 
 					let totalUnitsCred = totalUnits;
+					if (!unitIsSelected) {
+						totalUnitsCred = 1;
+						totalUnits = 1;
+					}
 					if(unit.hasOwnProperty('Defense')) {
-						//totalUnitsCred = Math.pow(1.5, totalUnits);
+						totalUnitsCred = sumOfLevels(1, 1.5, totalUnits);
 					}
 
 					$('#baseProfitUnits tbody.units').append(
