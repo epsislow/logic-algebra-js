@@ -1048,8 +1048,27 @@ var Empires = (function (constants) {
 				console.log('--base-units-refresh');
 				$('#baseProfitUnits tbody.units').html('');
 
-				for (let name in constants.units) {
-					let unit = constants.units[name];
+				let units={...constants.units};
+
+				for (let key in constants.defenses) {
+					let defense = constants.defenses[key];
+					units[defense.name] = {
+						'Credits': defense.Credits,
+						'Weapon': defense.capabilities.Weapon,
+						'Power': defense.capabilities.Power,
+						'Armour': defense.capabilities.Armour,
+						'Shield': defense.capabilities.Shield,
+						'Hangar': 0,
+						'Speed': 0,
+						'Shipyard': 0,
+						'Defense':1,
+					}
+				}
+
+				console.log(units);
+
+				for (let name in units) {
+					let unit = units[name];
 					let factor = 0.85;
 					let dmgFactorCapShield, dmgFactorCapTinyShield, dmgFactorCapNoShield, dmgFactorCapHalfShield;
 					let weapon = unit.Weapon;
@@ -1066,8 +1085,10 @@ var Empires = (function (constants) {
 					let dmgAttack = parseInt(unit.Power, 10) * weaponTech, dmgAttackHalf, dmgAttackTinyShield, dmgAttackShield;
 					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1;
 					if (unitSelected) {
-						let unitSelectedProp = constants.units[unitSelected];
-						armourOfUnitSelected = parseInt(constants.units[unitSelected].Armour) * armourTech;
+						let unitSelectedProp = units[unitSelected];
+						let unitDefensePack = units[unitSelected].hasOwnProperty('Defense') && units[unitSelected].Defense? 5: 1;
+						armourOfUnitSelected = parseInt(units[unitSelected].Armour) * armourTech * unitDefensePack;
+
 						let unitSelectedShield = parseInt(unitSelectedProp.Shield, 10) * shieldTech;
 						if (unit.Weapon === 'Ion') {
 							/*(e.type.name === z.Ships.ionBombers.name || e.type.name === z.Ships.ionFrigate.name) && ((n = 0.5), (i = 0.5)),
@@ -1107,7 +1128,7 @@ var Empires = (function (constants) {
 					let credits = unit.Credits;
 					let unitsNeededToKill = unitSelected? armourOfUnitSelected/dmgAttackToUnitSelected: 0;
 					let unitsCostToKill = unitSelected ? Math.ceil(unitsNeededToKill) * parseInt(unit.Credits): 0;
-					let unitSelectedCost = unitSelected ? parseInt(constants.units[unitSelected].Credits): 0;
+					let unitSelectedCost = unitSelected ? parseInt(units[unitSelected].Credits): 0;
 					let ratioCostToKill = unitSelectedCost/unitsCostToKill;
 
 					function selectUnit(name) {
