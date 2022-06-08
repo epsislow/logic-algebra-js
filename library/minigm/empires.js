@@ -1044,8 +1044,8 @@ var Empires = (function (constants) {
 
 			showBaseUnits();
 
-			function showBaseUnits() {
-				//console.log('--base-units-refresh');
+			function showBaseUnits(options = {}) {
+				console.log('--base-units-refresh');
 				$('#baseProfitUnits tbody.units').html('');
 
 				let units={...constants.units};
@@ -1082,6 +1082,7 @@ var Empires = (function (constants) {
 					let unitIsSelected = (unitSelected === name);
 					let dmgAttack = parseInt(unit.Power, 10) * weaponTech, dmgAttackHalf, dmgAttackTinyShield, dmgAttackShield;
 					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1, unitDefensePack = 1;
+					let totalUnits = options.hasOwnProperty(unitSelected) ? options[unitSelected]: 1;
 					if (unitSelected) {
 						let unitSelectedProp = units[unitSelected];
 						unitDefensePack = units[unitSelected].hasOwnProperty('Defense') && units[unitSelected].Defense? 5: 1;
@@ -1124,9 +1125,10 @@ var Empires = (function (constants) {
 					dmgFactorCapHalfShield = Math.pow(dmgAttackHalf, factor)
 					dmgFactorCapShield = Math.pow(dmgAttackShield, factor);
 					let credits = unit.Credits;
-					let unitsNeededToKill = unitSelected? armourOfUnitSelected/dmgAttackToUnitSelected: 0;
+					armourOfUnitSelected *= totalUnits;
+					let unitsNeededToKill = unitSelected? armourOfUnitSelected /dmgAttackToUnitSelected: 0;
 					let unitsCostToKill = unitSelected ? Math.ceil(unitsNeededToKill) * parseInt(unit.Credits): 0;
-					let unitSelectedCost = unitSelected ? parseInt(units[unitSelected].Credits): 0;
+					let unitSelectedCost = unitSelected ? parseInt(units[unitSelected].Credits) * totalUnits : 0;
 					let ratioCostToKill = unitSelectedCost/unitsCostToKill;
 
 					/*
@@ -1148,12 +1150,27 @@ var Empires = (function (constants) {
 						showBaseUnits();
 					}
 
-					let inpQty = $('<input>').addClass('qty').val(1);
+					function changeQty() {
+						let val = $(this).val();
+						let optionsSent = {};
+						let unit = $(this).data('unit');
+						optionsSent[unit] = val;
+						showBaseUnits(optionsSent);
+					}
+					let inpQtyVal = options.hasOwnProperty(name) ? options[name]: 1;
+					let inpQty = $('<input>').addClass('qty')
+							.data('unit', name)
+							.val(inpQtyVal);
+
+					let totalUnitsCred = totalUnits;
+					if(unit.hasOwnProperty('Defense')) {
+						//totalUnitsCred = Math.pow(1.5, totalUnits);
+					}
 
 					$('#baseProfitUnits tbody.units').append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
 							.append($('<td>').html(name).attr('style', 'cursor: pointer').click(function () { selectUnit(name);}).attr('rowspan', 3))
-							.append($('<td>').html(credits).attr('rowspan', 2))
+							.append($('<td>').html(credits * totalUnitsCred).attr('rowspan', 2))
 							.append($('<td>').html(dmgAttack.humanReadable()))
 							.append($('<td>').html(dmgAttackTinyShield.humanReadable()))
 							.append($('<td>').html(dmgAttackHalf.humanReadable()))
@@ -1187,7 +1204,9 @@ var Empires = (function (constants) {
 							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()))
 							.append($('<td>').html(dmgFactorCapHalfShield.humanReadable()))
 							.append($('<td>').html(dmgFactorCapShield.humanReadable()))
-					)
+					);
+
+					inpQty.change(changeQty);
 				}
 			}
 
