@@ -1082,9 +1082,14 @@ var Empires = (function (constants) {
 					let unitIsSelected = (unitSelected === name);
 					let dmgAttack = parseInt(unit.Power, 10) * weaponTech, dmgAttackHalf, dmgAttackTinyShield, dmgAttackShield;
 					let dmgAttackToUnitSelected = 0, armourOfUnitSelected = 1, unitDefensePack = 1;
+					let dmgAttackOfUnitSelected = 0;
 					let totalUnits = options.hasOwnProperty(unitSelected) ? options[unitSelected]: 1;
 					if (unitSelected) {
 						let unitSelectedProp = units[unitSelected];
+					  let weaponTechUnitSelected = defResearch.hasOwnProperty(unitSelectedProp.Weapon) ? defResearch[unitSelectedProp.Weapon] : 0;
+					  weaponTechUnitSelected = weaponTechUnitSelected * 5 / 100 + 1;
+						dmgAttackOfUnitSelected = parseInt(unitSelectedProp.Power, 10) * weaponTechUnitSelected;
+					
 						unitDefensePack = units[unitSelected].hasOwnProperty('Defense') && units[unitSelected].Defense? 5: 1;
 						armourOfUnitSelected = parseInt(units[unitSelected].Armour) * armourTech * unitDefensePack;
 
@@ -1099,8 +1104,10 @@ var Empires = (function (constants) {
 
                      )*/
 							dmgAttackToUnitSelected = unitSelectedShield < dmgAttack? dmgAttack - unitSelectedShield * 0.5 : dmgAttack * 0.5;
+							dmgAttackOfUnitSelected = shield < dmgAttackOfUnitSelected ? dmgAttackOfUnitSelected - shield * 0.5: dmgAttackOfUnitSelected * 0.5;
 						} else {
 							dmgAttackToUnitSelected = unitSelectedShield < dmgAttack? dmgAttack - unitSelectedShield * 0.99: dmgAttack * 0.01;
+							dmgAttackOfUnitSelected = shield < dmgAttackOfUnitSelected ? dmgAttackOfUnitSelected - shield * 0.99: dmgAttackOfUnitSelected * 0.01;
 						}
 					}
 					if (unit.Weapon === 'Ion') {
@@ -1130,7 +1137,12 @@ var Empires = (function (constants) {
 					let unitsCostToKill = unitSelected ? Math.ceil(unitsNeededToKill) * parseInt(unit.Credits): 0;
 					let unitSelectedCost = unitSelected ? parseInt(units[unitSelected].Credits) * totalUnits : 0;
 					let ratioCostToKill = unitSelectedCost/unitsCostToKill;
-
+					let unitsToKillLeft = unitSelected ?
+					 ( Math.ceil(unitsNeededToKill) * armour - dmgAttackOfUnitSelected * totalUnits)/ armour
+             : 0;
+          unitsToKillLeft = unitsToKillLeft < 0? 0: unitsToKillLeft;
+          let unitsToKillDestroyed = Math.ceil(unitsNeededToKill) - Math.floor(unitsToKillLeft); 
+					let unitsToKillDestroyedCost = unitsToKillDestroyed * credits;
 					/*
 					if (unitDefensePack> 1) {
 						unitsNeededToKill = 0;
@@ -1206,7 +1218,7 @@ var Empires = (function (constants) {
 							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('yellow'))
 							.append($('<td>').html((dmgAttackToUnitSelected).humanReadable()).addClass('red'))
 							.append($('<td>').html((armourOfUnitSelected).humanReadable()).addClass('blue'))
-							.append($('<td>').html(''))
+							.append($('<td>').html((unitsToKillDestroyedCost).humanReadable()).addClass('yellow'))
 
 							.append($('<td>').html(dmgFactorCapNoShield.humanReadable()))
 							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()))
