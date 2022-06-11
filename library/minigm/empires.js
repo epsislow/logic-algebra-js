@@ -1144,6 +1144,7 @@ var Empires = (function (constants) {
           let unitsToKillDestroyed = Math.ceil(unitsNeededToKill) - Math.floor(unitsToKillLeft); 
 					let unitsToKillDestroyedCost = unitsToKillDestroyed * credits;
 					/*
+					https://aebits.win/aeBattleCalc?aT=Arm:18,Las:18,Mis:9,Pla:11,Sld:9&aS=HC:215&dT=Arm:20,Las:18,Mis:9,Pla:11,Sld:10,Pho:6&dS=DN:10&gv=1.5-2
 					if (unitDefensePack> 1) {
 						unitsNeededToKill = 0;
 						unitsCostToKill = 0;
