@@ -1225,9 +1225,9 @@ var Empires = (function (constants) {
 							$('<tr>').attr('class', unitIsSelected? 'selected': '')
 								.append($('<td>').html((dmgAttack/credits).humanReadable()).addClass('green'))
 								.append($('<td>').html((dmgAttackTinyShield/credits).humanReadable()).addClass('green'))
-								.append($('<td>').html((dmgAttackHalf/credits).humanReadable()).addClass('green'))
 								.append($('<td>').html((debrisAttacker).humanReadable()).addClass('blue'))
 								.append($('<td>').html((debrisDefender).humanReadable()).addClass('blue'))
+								.append($('<td>').html((unitsToKillLeft).humanReadable()).addClass('yellow'))
 								.append($('<td>').html(('(' + unitsToKillDestroyed.humanReadable()+ ')')).addClass('yellow'))
 						).append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
