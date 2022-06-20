@@ -1143,6 +1143,15 @@ var Empires = (function (constants) {
           unitsToKillLeft = unitsToKillLeft < 0? 0: unitsToKillLeft;
           let unitsToKillDestroyed = Math.ceil(unitsNeededToKill) - unitsToKillLeft;
 					let unitsToKillDestroyedCost = Math.floor(unitsToKillDestroyed) * credits;
+
+					let debrisProc= Math.max(Math.min(0.2 * armourTech, 0.35), 0.85);
+
+
+					let unitHereDefensePack = unit.hasOwnProperty('Defense') && unit.Defense? 5: 1;
+
+					let debrisAttacker = unitSelected && (unitHereDefensePack < 5)? Math.floor(unitsToKillDestroyed)*armour * debrisProc: 0;
+					let debrisDefender = unitSelected && (unitDefensePack < 5)? 1: 0;
+
 					/*
 					https://aebits.win/aeBattleCalc?aT=Arm:18,Las:18,Mis:9,Pla:11,Sld:9&aS=HC:215&dT=Arm:20,Las:18,Mis:9,Pla:11,Sld:10,Pho:6&dS=DN:10&gv=1.5-2
 					if (unitDefensePack> 1) {
@@ -1203,7 +1212,7 @@ var Empires = (function (constants) {
 							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()).attr('rowspan', 2))
 							.append($('<td>').html(dmgFactorCapHalfShield.humanReadable()).attr('rowspan', 2))
 							.append($('<td>').html(dmgFactorCapShield.humanReadable()).attr('rowspan', 2))
-					).append(
+					)/*.append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
 							.append($('<td>').html((dmgAttack/credits).humanReadable()).addClass('green'))
 							.append($('<td>').html((dmgAttackTinyShield/credits).humanReadable()).addClass('green'))
@@ -1211,7 +1220,16 @@ var Empires = (function (constants) {
 							.append($('<td>').html((dmgAttackShield/credits).humanReadable()).addClass('green'))
 							.append($('<td>').html((armour/credits).humanReadable()).addClass('green'))
 							.append($('<td>').html((shield/credits).humanReadable()).addClass('green'))
-					).append(
+					)*/
+						.append(
+							$('<tr>').attr('class', unitIsSelected? 'selected': '')
+								.append($('<td>').html((dmgAttack/credits).humanReadable()).addClass('green'))
+								.append($('<td>').html((dmgAttackTinyShield/credits).humanReadable()).addClass('green'))
+								.append($('<td>').html((dmgAttackHalf/credits).humanReadable()).addClass('green'))
+								.append($('<td>').html((debrisAttacker).humanReadable()).addClass('blue'))
+								.append($('<td>').html((debrisDefender).humanReadable()).addClass('blue'))
+								.append($('<td>').html(('(' + unitsToKillDestroyed.humanReadable()+ ')')).addClass('yellow'))
+						).append(
 						$('<tr>').attr('class', unitIsSelected? 'selected': '')
 							.append($('<td>').html(inpQty))
 						  .append($('<td>').html((ratioCostToKill).humanReadable()).addClass('red'))
@@ -1219,7 +1237,7 @@ var Empires = (function (constants) {
 							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('yellow'))
 							.append($('<td>').html((dmgAttackToUnitSelected).humanReadable()).addClass('red'))
 							.append($('<td>').html((armourOfUnitSelected).humanReadable()).addClass('blue'))
-							.append($('<td>').html((unitsToKillDestroyedCost).humanReadable() + ' (' + unitsToKillDestroyed.humanReadable()+ ')').addClass('yellow'))
+							.append($('<td>').html((unitsToKillDestroyedCost).humanReadable()).addClass('yellow'))
 
 							.append($('<td>').html(dmgFactorCapNoShield.humanReadable()))
 							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()))
