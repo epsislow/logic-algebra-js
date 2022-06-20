@@ -1141,8 +1141,8 @@ var Empires = (function (constants) {
 					 ( Math.ceil(unitsNeededToKill) * armour - dmgAttackOfUnitSelected * totalUnits)/ armour
              : 0;
           unitsToKillLeft = unitsToKillLeft < 0? 0: unitsToKillLeft;
-          let unitsToKillDestroyed = Math.ceil(unitsNeededToKill) - Math.floor(unitsToKillLeft); 
-					let unitsToKillDestroyedCost = unitsToKillDestroyed * credits;
+          let unitsToKillDestroyed = Math.ceil(unitsNeededToKill) - unitsToKillLeft;
+					let unitsToKillDestroyedCost = Math.floor(unitsToKillDestroyed) * credits;
 					/*
 					https://aebits.win/aeBattleCalc?aT=Arm:18,Las:18,Mis:9,Pla:11,Sld:9&aS=HC:215&dT=Arm:20,Las:18,Mis:9,Pla:11,Sld:10,Pho:6&dS=DN:10&gv=1.5-2
 					if (unitDefensePack> 1) {
@@ -1219,7 +1219,7 @@ var Empires = (function (constants) {
 							.append($('<td>').html((unitsNeededToKill).humanReadable()).addClass('yellow'))
 							.append($('<td>').html((dmgAttackToUnitSelected).humanReadable()).addClass('red'))
 							.append($('<td>').html((armourOfUnitSelected).humanReadable()).addClass('blue'))
-							.append($('<td>').html((unitsToKillDestroyedCost).humanReadable()).addClass('yellow'))
+							.append($('<td>').html((unitsToKillDestroyedCost).humanReadable() + ' (' + unitsToKillDestroyed.humanReadable()+ ')').addClass('yellow'))
 
 							.append($('<td>').html(dmgFactorCapNoShield.humanReadable()))
 							.append($('<td>').html(dmgFactorCapTinyShield.humanReadable()))
