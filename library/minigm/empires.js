@@ -233,6 +233,18 @@ var EmpiresConstants = {
 				'Speed': 3,
 				'Shipyard': 20,
 				'technologies': {'Photon': 6, 'Warp Drive': 12, 'Armour': 20, 'Shielding': 10},
+			},
+			'Titan': {
+			  'Credits': 50000,
+				'drive': 'Warp',
+				'Weapon': 'Disruptor',
+				'Power': 3500,
+				'Armour': 2048,
+				'Shield': 30,
+				'Hangar': 1000,
+				'Speed': 3,
+				'Shipyard': 22,
+				'technologies': {'Photon': 6, 'Warp Drive': 12, 'Armour': 20, 'Shielding': 10},
 			}
 	},
 	'driveResearches': {
