@@ -36,7 +36,10 @@ var BigIntNum = (function () {
     function addMethods(pub) {
         pub.keepMostSign = keepMostSign;
         pub.toString = function () {
-            return '{ '+this.num + ' ^ '+this.exp + ' ('+this.mostSign+') }';
+            return '{ '+this.num + ' * 10 ^ '+this.exp + ' ('+this.mostSign+') }';
+        }
+        pub.toInt = function () {
+            return this.num * Math.pow(10 , this.exp);
         }
 
         pub.new = function (num, exp =0) {
@@ -97,41 +100,41 @@ var BigIntNum = (function () {
 
             keepMostSign(this);
 
-            console.log(this.toString());
-
-            /*if (this.exp > b.exp) {
-                this.num += b.numToExp(this.exp);
-            } else {
-                this.num += this.numToExp(b.exp);
-            }*/
+            console.log(this.toInt());
 
             return this;
         }
 
+        pub.multiplyScalar = function (scalar) {
+            this.num *= scalar;
 
+            return this;
+        }
 
         pub.plus = function (b) {
             let r = this.clone();
-            this.add.apply(r, b);
+            r.add(b);
             return r;
         }
 
         pub.minus = function (b) {
             check(b,1);
-            /*
-            if (this.exp > b.exp) {
-                this.num -= b.numToExp(this.exp);
-            } else {
-                this.num -= this.numToExp(b.exp);
-            }*/
-            return this;
+
+            let r = this.clone();
+            let b2 = b.clone();
+            b2.multiplyScalar(-1);
+
+            r.add(b2);
+
+            return r;
         }
 
         pub.subtract = function (b) {
             let r = this.clone(this);
-            this.minus.apply(r, b);
+            r.minus(b);
             return r;
         }
+
 
         pub.lessThen = function (b) {
             return (this.exp === b.exp)? 0 :  (this.exp > b.exp ? -1:-1);
