@@ -37,7 +37,10 @@ var DbStorageConstr = function (dbKey = 'dgldb', storeKey = 'dgl', LZString = 0,
             remove: function(keys, next=0) {
                 Storage.idxdb.delete(storeKey, keys, next);
             },
-            addToChain(next, chainObj) {
+            createChain: function () {
+                return {hdls: []};
+            },
+            addToChain: function(next, chainObj) {
                 chainObj.hdls.push(next);
             },
             nextInChain: function(chainObj) {

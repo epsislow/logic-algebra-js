@@ -3172,7 +3172,10 @@ nodes.push(['out',outinf.pinx+1, outinf.piny+1]);
 		remove: function(keys, next=0) {
 			Storage.idxdb.delete('dgl', keys, next);
 		},
-		addToChain(next, chainObj) {
+    createChain: function () {
+      return {hdls: []};
+    },
+		addToChain: function(next, chainObj) {
 			chainObj.hdls.push(next);
 		},
 		nextInChain: function(chainObj) {
