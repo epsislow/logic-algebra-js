@@ -1,0 +1,26 @@
+1. generators
+    generates units after an amount of time.
+2. producer
+    consumes quantities of generated unit types
+    after an amount of time, to produce a quantity
+    of a new unit type.
+3. storage
+   stores a finite number of quantities of unit types.
+4. recover
+   recovers quantities of consumed unit types from
+   a quantity of produced unit type after an amount of
+   time.
+5. transporter
+   moves a finite number of quantities of unit types,
+   after an amount of time, from a source to a 
+   destination location.
+6. unlocker
+   requests a number of quantities of unit types, 
+   to unlock, after an amount of time, new unit types.
+
+How to calculate giving all the required inputs, 
+what the number of inputs will become, after a certain
+time duration?
+
+Is there a better way except using
+addition and subtraction?
