@@ -24,3 +24,22 @@ time duration?
 
 Is there a better way except using
 addition and subtraction?
+
+storage: 100 a, 100 b
+generator: +1 a, every 5s at 0 delay 
+transport: -9 a, every 9s at 1s delay
+transport: -9 a, every 9s at 3s delay
+transport: -9 a, every 9s at 12s delay
+producer: -5 a, -5 b, +1 c, every 10s at 0s delay
+(the order counts)
+
+how many c after 60s?
+
+100b => max 100/5 = 20c
+t0:  100a, 0c
+t1:  91a, 0c
+t3:  82a, 0c,
+t5:  83a, 0c
+t10: 78a, 1c
+t10: 69a, 1c
+
