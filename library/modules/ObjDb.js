@@ -33,7 +33,7 @@ var ObjDb = (function () {
       'select': function() {
         
       },
-      'insert': function(list, val, id=0) {
+      'add': function(list, val, id=0) {
         let dbl=this.db[this.pre.db][list];
         let nid=id?id:dbl.id; 
         dbl[nid] = val;
@@ -43,7 +43,7 @@ var ObjDb = (function () {
         let nid = id ? id : dbl.id;
         dbl[nid] = val;
       },
-      'deleteId': function(list, nid) {
+      'removeId': function(list, nid) {
         let dbl = this.db[this.pre.db][list];
         delete dbl[nid];
         
