@@ -1,0 +1,175 @@
+Considering that each logic gate are written like this: 
+lamdaFn(inputX, inputY) = output 
+
+example:
+AND( inputX, inputY) = output
+NAND(A, B) = output
+NOT(A) = ~A
+
+and considering complex lamdas like: 
+chipX(A,B,C,D) = out1, out2 this should be written like this: 
+
+"1bit out1, out2 = chipX(A,B,C,D)
+NAND(out1, out2)"
+
+
+if a chipX want to return an output as a byte it should be written like:
+"8bit out1, carry = adder(A,B)"
+
+
+labels are immutable 
+
+to convert 8bit label to a 1bit or a structured split should be written like :
+"1bit a, 7bit b = out1"
+
+to pad a 1bit to an 8bit with 0s or 1s should be written like :
+"8bit a8 = 7x0 + a" this means that the a8 value is "0000000a"
+
+complex changes can be made like:
+"
+2bit a = 11
+3bit c = 101
+8bit b8 = c + c + a"
+
+this means b8 is equal with "101" + "101" + "11" = 10110111
+
+complex splits can be written like:
+"8bit b8 = 10110111
+3bit c, 3bit _, 2bit a = b8"
+
+show(c, a) should show: "101 11"
+
+the _ label is special because it's just a placeholder 
+
+the ~ label is spacel because it represents a clock and can be changed like this:
+"~ = NOT(~)"
+also when the ~ label changes the mode of the program is important
+
+there are 3 modes that must be defined at the start of the program like this:
+
+USER MODE - in this mode when the value of ~ is changed the program waits the user to press "continue" or "Run for X steps" or "stop" or "reset"
+
+
+we can create new labels like:
+
+"def ADD(1bit a, 1bit b, 1bit cin): 
+   1bit s0 = XOR(a,b)
+   1bit s1 = XOR(s0, cin)
+   :1bit s1
+   :1bit OR(AND(a,b), AND(s0, cin))
+"
+
+or without saying 1bit since it's default:
+"def ADD(a, b, cin): 
+   s0 = XOR(a,b)
+   s1 = XOR(s0, cin)
+   :s1
+   :OR(AND(a,b), AND(s0, cin))
+"
+
+meaning it can be written like this:
+8bit cout = ADD(a,b, cin)
+
+
+===============
+I want to interpret a custom language and find syntax errors in javascript. 
+the text must be tokenized most probably. 
+The keywords are : bit show def _ ~ "1bit 2bit 3bit 4bit" until "99bit" 
+AND OR NOT XOR NAND NOR LATCH 
+all keywords are case sensitive
+
+The rules are like following:
+
+comments are only per line and starts with # 
+types are "1bit 2bit 3bit 4bit ... 99bit"
+variable names can contain letters and numbers but must start with a letter variables are case sensitive
+a variable must be defined and assigned a value.
+variables are always constant or immutable their value cannot be changed once assigned.
+
+values can either be 0 or 1 or the return of a function.
+
+examples of valid variable definitions like this:
+1bit a = 1
+1bit b = 0
+2bit c = 10
+3bit d = 001
+4bit e = 1111
+
+complex valid variable definitions:
+2bit c = 10
+5bit x = 01 + c + 0
+5bit f = c + 111
+# f will have the value 10111
+
+3bit d = 001
+1bit a2, 3bit c2 = d + 0
+# a2 has value 0 and c2 has value 010
+
+the _ is a special variable that doesn't get assigned any values it's used only like this:
+3bit a3, 2bit _ , 4bit q = 101010101
+# a3 has value 101 and q has value 0101
+
+functions look like this:
+show(a,b)
+
+the method show prints the argument values with space in between 
+3bit d = 001
+1bit a2, 3bit c2 = d + 0
+show(a2,c2) 
+# prints: 0 010
+
+the functions are defined like this:
+
+def Add(1bit a, 1bit b, 1bit cin): 
+   1bit s0 = XOR(a,b)
+   1bit s1 = XOR(s0, cin)
+   :1bit s1             # this is the first value returned
+   :1bit OR(AND(a,b), AND(s0, cin)) # this is the second value returned
+
+and called like this
+
+1bit s, 1bit c = Add(1, 1, 0)
+
+#this is invalid call because Add only returns 2 values not 3
+1bit a, 1bit b, 1bit c = Add(1, 1, 0)
+
+predefined functions: 
+
+show(..any number of arguments)
+ doesn't return any values only prints the arguments with a space between them
+ 
+NOT(1bit a)
+ :1bit
+ 
+returns the NOT of 1bit a
+ 
+AND(1bit a, 1bit b)
+ :1bit 
+ returns the AND between 1bit a and 1bit b
+ 
+OR(1bit a, 1bit b)
+ :1bit 
+ returns the OR between 1bit a and 1bit b
+ 
+XOR(1bit a, 1bit b)
+ :1bit 
+ returns the XOR between 1bit a and 1bit b 
+
+the same with NAND NOR 
+ 
+LATCH(1bit s, 1bit r)
+ :1bit Q
+ :1bit nQ
+ represents the SR-Latch with 2 arguments: 1bit s, 1bit r
+ returns two values 1bit Q and the 1bit negated value of Q of an SR-Latch
+
+1bit r = 0;
+1bit a1 = LATCH(s1,r)
+1bit a2 = LATCH(s2,r)
+
+
+~ is a special variable that represents the clock signal that first has the value 0 and can be changed 
+~ = NOT(~) 
+# negates the value of ~
+
+When a program runs it will execute and will show a syntax error in case it's not valid or execute the show instructions that will print the given arguments

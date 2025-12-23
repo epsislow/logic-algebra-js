@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Custom HTML5 Editor</title>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+body {
+    background: #1e1e1e;
+    font-family: monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#container {
+    width: 600px;
+}
+
+#runBtn {
+    width: 100%;
+    padding: 10px;
+    background: #3a3a3a;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+#editor {
+    background: #2b2b2b;
+    color: white;
+    padding: 15px;
+    min-height: 200px;
+    outline: none;
+    border-radius: 5px;
+    white-space: pre-wrap;
+}
+
+/* Syntax colors */
+.bit { color: lightgreen; }
+.number { color: red; }
+.keyword { color: yellow; }
+.action { color: lightblue; }
+</style>
+</head>
+
+<body>
+
+<div id="container">
+    <button id="runBtn">Run</button>
+    <div id="editor" contenteditable="true"></div>
+</div>
+
+<script>
+function highlightSyntax(text) {
+    // Escape HTML
+    text = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // number + bit (e.g. 8bit)
+    text = text.replace(/(\d+)(bit)/g,
+        '<span class="number">$1</span><span class="bit">$2</span>');
+
+    // bit alone
+    text = text.replace(/\bbit\b/g,
+        '<span class="bit">bit</span>');
+
+    // keywords
+    text = text.replace(/\b(def)\b|[=,:]/g,
+        '<span class="keyword">$&</span>');
+
+    // show and +
+    text = text.replace(/\b(show)\b|\+/g,
+        '<span class="action">$&</span>');
+
+    return text;
+}
+
+$('#editor').on('input', function () {
+    let caretPos = window.getSelection().getRangeAt(0).startOffset;
+    let text = $(this).text();
+
+    $(this).html(highlightSyntax(text));
+
+    // Restore caret to end (simple approach)
+    let el = this;
+    let range = document.createRange();
+    let sel = window.getSelection();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+});
+
+$('#runBtn').on('click', function () {
+    alert("Run clicked!\n\n" + $('#editor').text());
+});
+</script>
+
+</body>
+</html>

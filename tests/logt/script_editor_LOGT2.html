@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bit Language Interpreter (Advanced)</title>
+<style>
+body { font-family: monospace; background:#111; color:#eee; padding:20px }
+textarea { width:100%; height:240px; background:#000; color:#0f0 }
+button { margin:6px; padding:6px 14px }
+pre { background:#000; padding:10px; max-height:260px; overflow:auto }
+.panel { border:1px solid #444; padding:10px; margin-top:10px }
+.flex { display:flex; gap:10px }
+</style>
+</head>
+<body>
+
+<h2>Bit Language Interpreter</h2>
+
+<textarea id="code">
+def Add(1bit a, 1bit b, 1bit cin):
+  1bit s0 = XOR(a,b)
+  1bit s1 = XOR(s0, cin)
+  :1bit s1
+  :1bit OR(AND(a,b), AND(s0, cin))
+
+1bit s, 1bit c = Add(1,1,0)
+show(s,c)
+
+1bit ~ = NOT(~)
+show(~)
+
+1bit q = LATCH(1,0)
+show(q)
+</textarea>
+
+<div>
+  <button onclick="run()">Run</button>
+  <button onclick="step()">Step</button>
+  <button onclick="nextExec()">Next</button>
+  <button onclick="toggleAST()">Toggle AST</button>
+</div>
+
+<div class="flex">
+  <div class="panel" style="flex:1">
+    <h3>Output</h3>
+    <pre id="out"></pre>
+  </div>
+
+  <div class="panel" style="flex:1">
+    <h3>Variables</h3>
+    <pre id="vars"></pre>
+  </div>
+</div>
+
+<div class="panel" id="astPanel" style="display:none">
+  <h3>AST</h3>
+  <pre id="ast"></pre>
+</div>
+
+<script>
+/* ================= TOKENIZER ================= */
+
+class Token {
+  constructor(type,value,line,col){
+    this.type=type; this.value=value; this.line=line; this.col=col;
+  }
+}
+
+class Tokenizer {
+  constructor(src){
+    this.src=src; this.i=0; this.line=1; this.col=1;
+  }
+  eof(){ return this.i>=this.src.length }
+  peek(){ return this.src[this.i] }
+  next(){
+    let c=this.src[this.i++];
+    if(c=='\n'){ this.line++; this.col=1 } else this.col++;
+    return c;
+  }
+  token(type,value){ return new Token(type,value,this.line,this.col) }
+  skip(){
+    while(!this.eof()){
+      if(/\s/.test(this.peek())) this.next();
+      else if(this.peek()=='#') while(!this.eof()&&this.next()!='\n');
+      else break;
+    }
+  }
+  
+  get(){
+  this.skip();
+  if(this.eof()) return this.token('EOF');
+
+  let c = this.peek();
+
+  // Symbols
+  if ('=,+():'.includes(c)) return this.token('SYM', this.next());
+
+  // Special vars
+  if (c === '_' || c === '~') return this.token('SPECIAL', this.next());
+
+  // Starts with digit → TYPE or BIN (never ID)
+  if (/[0-9]/.test(c)) {
+    let v = '';
+    while (!this.eof() && /[a-zA-Z0-9]/.test(this.peek())) {
+      v += this.next();
+    }
+
+    if (/^\d+bit$/.test(v)) {
+      return this.token('TYPE', v);
+    }
+
+    if (/^[01]+$/.test(v)) {
+      return this.token('BIN', v);
+    }
+
+    throw Error(`Invalid numeric token '${v}' at ${this.line}:${this.col}`);
+  }
+
+  // Starts with letter → ID
+  if (/[a-zA-Z]/.test(c)) {
+    let v = '';
+    while (!this.eof() && /[a-zA-Z0-9]/.test(this.peek())) {
+      v += this.next();
+    }
+    return this.token('ID', v);
+  }
+
+  throw Error(`Unexpected char '${c}' at ${this.line}:${this.col}`);
+}
+
+  
+  
+  
+}
+
+/* ================= PARSER ================= */
+
+class Parser {
+  constructor(t){
+    this.t=t; this.c=t.get(); this.funcs=new Map();
+  }
+  eat(type,val){
+    if(this.c.type===type && (val==null||this.c.value===val))
+      this.c=this.t.get();
+    else throw Error(`Syntax error at ${this.c.line}:${this.c.col}`);
+  }
+
+  parse(){
+  const stmts = [];
+
+  while (this.c.type !== 'EOF') {
+
+    // SAFETY: skip any unexpected separators
+    if (this.c.type === 'SYM' && this.c.value === '\n') {
+      this.c = this.t.get();
+      continue;
+    }
+
+    if (this.c.type === 'ID' && this.c.value === 'def') {
+      this.parseDef();
+      continue;
+    }
+
+    // ONLY now parse a statement
+    stmts.push(this.stmt());
+  }
+
+  return stmts;
+}
+
+parseDef(){
+  // consume 'def'
+  this.eat('ID','def');
+
+  const name = this.c.value;
+  this.eat('ID');
+
+  this.eat('SYM','(');
+  const params = [];
+
+  if (this.c.value !== ')') {
+    do {
+      const type = this.c.value;
+      this.eat('TYPE');
+
+      const n = this.c.value;
+      this.eat('ID');
+
+      params.push({ type, n });
+
+      if (this.c.value === ',') {
+        this.eat('SYM', ',');
+      } else break;
+    } while (true);
+  }
+
+  this.eat('SYM',')');
+  this.eat('SYM',':');
+
+  const body = [];
+  const returns = [];
+
+  let lastLine = this.c.line;
+
+  while (this.c.type !== 'EOF') {
+
+    // 🔴 STOP at blank line (function boundary)
+    if (this.c.line > lastLine + 1) break;
+
+    lastLine = this.c.line;
+
+    // Return
+    if (this.c.value === ':') {
+      this.eat('SYM', ':');
+      const type = this.c.value;
+      this.eat('TYPE');
+      returns.push({ type, expr: this.expr() });
+      continue;
+    }
+
+    // Body statement
+    if (this.c.type === 'TYPE' || this.c.value === 'show') {
+      body.push(this.stmt());
+      continue;
+    }
+
+    break;
+  }
+
+  this.funcs.set(name, { params, body, returns });
+}
+
+
+
+
+
+  stmt(){
+    if(this.c.type==='TYPE') return this.var();
+    if(this.c.value==='show') return this.show();
+    throw Error(
+	  `Invalid statement starting with '${this.c.value}' ` +
+	  `(${this.c.type}) at ${this.c.line}:${this.c.col}`
+	);
+  }
+
+  var(){
+  const decls = [];
+
+  do {
+    // TYPE
+    const type = this.c.value;
+    this.eat('TYPE');
+
+    // NAME: ID or _
+    let name;
+    if (this.c.type === 'ID' || this.c.type === 'SPECIAL') {
+      name = this.c.value;
+      this.eat(this.c.type);
+    } else {
+      throw Error(
+        `Expected variable name at ${this.c.line}:${this.c.col}`
+      );
+    }
+
+    decls.push({ type, name });
+
+    if (this.c.value === ',') {
+      this.eat('SYM', ',');
+    } else {
+      break;
+    }
+  } while (this.c.type === 'TYPE');
+
+  this.eat('SYM', '=');
+
+  return {
+    decls,
+    expr: this.expr()
+  };
+}
+
+
+
+  show(){
+    this.eat('ID'); this.eat('SYM','(');
+    const args=[];
+    if(this.c.value!==')'){
+      do{
+        args.push(this.expr());
+        if(this.c.value===',') this.eat('SYM',',');
+        else break;
+      }while(true);
+    }
+    this.eat('SYM',')');
+    return {show:args};
+  }
+
+  expr(){
+    const p=[this.atom()];
+    while(this.c.value==='+'){ this.eat('SYM','+'); p.push(this.atom()); }
+    return p;
+  }
+
+  atom(){
+    if(this.c.type==='BIN'){ const v=this.c.value; this.eat('BIN'); return {bin:v}; }
+    if(this.c.type==='SPECIAL'){ const v=this.c.value; this.eat('SPECIAL'); return {var:v}; }
+    if(this.c.type==='ID'){
+      const n=this.c.value; this.eat('ID');
+      if(this.c.value==='(') return this.call(n);
+      return {var:n};
+    }
+    throw Error(`Bad expression at ${this.c.line}:${this.c.col}`);
+  }
+
+  call(name){
+    this.eat('SYM','(');
+    const a=[];
+    if(this.c.value!==')'){
+      do{
+        a.push(this.expr());
+        if(this.c.value===',') this.eat('SYM',',');
+        else break;
+      }while(true);
+    }
+    this.eat('SYM',')');
+    return {call:name,args:a};
+  }
+}
+
+/* ================= INTERPRETER ================= */
+
+class Interpreter {
+  constructor(funcs,out){
+    this.funcs=funcs;
+    this.out=out;
+    this.vars=new Map([['~','0']]);
+    this.latchQ='0';
+  }
+
+  bitlen(v){ return v.length }
+
+  check(bits,val){
+    if(val.length!==bits)
+      throw Error(`Bit-width mismatch: expected ${bits}, got ${val.length}`);
+  }
+
+  evalExpr(expr) {
+  const parts = [];
+
+  for (const x of expr) {
+    const v = this.evalAtom(x);
+
+    // If function returned multiple values, flatten them
+    if (Array.isArray(v)) {
+      for (const part of v) parts.push(part);
+    } else {
+      parts.push(v);
+    }
+  }
+
+  return parts;
+}
+
+  evalAtom(a){
+    if(a.bin) return a.bin;
+    if(a.var){
+      if(!this.vars.has(a.var)) throw Error('Undefined '+a.var);
+      return this.vars.get(a.var);
+    }
+    if(a.call) return this.call(a.call,a.args);
+  }
+
+  call(name,args){
+    const v = args.map(x => {
+     const r = this.evalExpr(x);
+     return Array.isArray(r) ? r.join('') : r;
+    });
+
+    const b=x=>x==='1';
+
+    const gates={
+      NOT:()=>b(v[0])?'0':'1',
+      AND:()=>b(v[0])&&b(v[1])?'1':'0',
+      OR:()=>b(v[0])||b(v[1])?'1':'0',
+      XOR:()=>b(v[0])^b(v[1])?'1':'0',
+      NAND:()=>!(b(v[0])&&b(v[1]))?'1':'0',
+      NOR:()=>!(b(v[0])||b(v[1]))?'1':'0',
+      LATCH:()=>{
+        if(v[0]==='1') this.latchQ='1';
+        if(v[1]==='1') this.latchQ='0';
+        return this.latchQ;
+      }
+    };
+
+    if(gates[name]) return gates[name]();
+
+    const f=this.funcs.get(name);
+    if(!f) throw Error('Unknown function '+name);
+    if(v.length!==f.params.length) throw Error('Bad arity '+name);
+
+    const local=new Interpreter(this.funcs,this.out);
+    f.params.forEach((p,i)=>local.vars.set(p.n,v[i]));
+    f.body.forEach(s=>local.exec(s));
+
+    if(f.returns.length===0) return '';
+    return f.returns.map(r=>local.evalExpr(r.expr));
+  }
+
+  exec(s){
+    if(s.show){
+      this.out.push(s.show.map(e=>this.evalExpr(e)).join(' '));
+    } 
+	else {
+  const value = this.evalExpr(s.expr);
+  let offset = 0;
+
+  for (const d of s.decls) {
+    const bits = parseInt(d.type);
+    const slice = value.slice(offset, offset + bits);
+
+    if (slice.length !== bits) {
+      throw Error(
+        `Bit-width mismatch: ${d.name} is ${bits}bit ` +
+        `but value '${slice}' has length ${slice.length}`
+      );
+    }
+
+    offset += bits;
+
+    if (d.name === '~') {
+      this.vars.set('~', slice);
+    } else if (d.name !== '_') {
+      if (this.vars.has(d.name))
+        throw Error('Immutable ' + d.name);
+      this.vars.set(d.name, slice);
+    }
+  }
+
+  if (offset !== value.length) {
+    throw Error(
+      `Unused bits in assignment: expected ${offset}, got ${value.length}`
+    );
+  }
+}
+	
+	
+	
+	
+	
+  }
+}
+
+/* ================= DEBUGGER ================= */
+
+let prog=null, pc=0;
+let globalInterp = null;
+
+function run(){
+  document.getElementById('out').textContent='';
+
+  const p = new Parser(new Tokenizer(code.value));
+  const stmts = p.parse();
+
+  // FULL RESET
+  globalInterp = new Interpreter(p.funcs, []);
+
+  for (const s of stmts) {
+      globalInterp.exec(s);
+  }
+
+  render(globalInterp.out);
+  showVars();
+}
+  
+  //}catch(e){ render([e.message]); }
+
+
+function step(){
+  try{
+    if(!globalInterp){
+      const p=new Parser(new Tokenizer(code.value));
+      prog=p.parse();
+      globalInterp=new Interpreter(p.funcs,[]);
+      pc=0;
+    }
+    if(pc<prog.length) globalInterp.exec(prog[pc++]);
+    render(globalInterp.out);
+    showVars();
+  }catch(e){ render([e.message]); }
+}
+
+function nextExec(){
+  if (!globalInterp) {
+    globalInterp = new Interpreter(new Map(), []);
+  }
+
+  const p = new Parser(new Tokenizer(code.value));
+  const stmts = p.parse();
+
+  // 🔑 Merge new function definitions
+  for (const [name, fn] of p.funcs.entries()) {
+    globalInterp.funcs.set(name, fn);
+  }
+
+  // Execute statements in existing environment
+  for (const s of stmts) {
+    try {
+       globalInterp.exec(s);
+	} catch (e) {
+       globalInterp.out.push("Error: " + e.message);
+	}
+  }
+
+  render(globalInterp.out);
+  showVars();
+}
+
+function render(lines){
+  document.getElementById('out').textContent=lines.join('\n');
+}
+
+function showVars(){
+  let t='';
+  globalInterp.vars.forEach((v,k)=>t+=`${k} = ${v}\n`);
+  document.getElementById('vars').textContent=t;
+}
+
+function toggleAST(){
+  const p=new Parser(new Tokenizer(code.value));
+  const ast=p.parse();
+  const panel=document.getElementById('astPanel');
+  panel.style.display=panel.style.display==='none'?'block':'none';
+  document.getElementById('ast').textContent=JSON.stringify(ast,null,2);
+}
+</script>
+
+</body>
+</html>
+

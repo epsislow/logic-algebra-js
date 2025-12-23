@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Boolean Transistor Logic Simulator – Drag & Wire</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f5f5f5; margin:0; }
+    #panel { padding: 10px; background: #fff; border-bottom: 1px solid #ccc; }
+    canvas { display:block; background:#fff; border:1px solid #333; }
+    .btn { padding:6px 10px; margin-right:5px; }
+  </style>
+</head>
+<body>
+
+<div id="panel">
+  <label><input type="checkbox" id="A"> A</label>
+  <label><input type="checkbox" id="B"> B</label>
+  <button class="btn" id="clearWires">Clear wires</button>
+  <span style="margin-left:20px;color:#555">Drag nodes. Click one node, then another, to wire.</span>
+</div>
+
+<canvas id="sim" width="900" height="400"></canvas>
+
+<script>
+// ================= BASIC BOOLEAN MODEL =================
+function Node(v, name) {
+  this.value = v ? 1 : 0;
+  this.name = name;
+}
+
+// ================= VISUAL COMPONENT =================
+function Component(node, x, y) {
+  this.node = node;
+  this.x = x;
+  this.y = y;
+  this.r = 14;
+}
+
+Component.prototype.hit = function(mx, my) {
+  const dx = mx - this.x;
+  const dy = my - this.y;
+  return dx*dx + dy*dy <= this.r*this.r;
+};
+
+Component.prototype.draw = function(ctx) {
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+  ctx.fillStyle = this.node.value ? '#4ade80' : '#e5e7eb';
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#000';
+  ctx.fillText(this.node.name + ':' + this.node.value, this.x + 18, this.y + 4);
+};
+
+// ================= WIRE =================
+function Wire(a, b) {
+  this.a = a;
+  this.b = b;
+}
+
+Wire.prototype.update = function() {
+  this.b.node.value = this.a.node.value;
+};
+
+Wire.prototype.draw = function(ctx) {
+  ctx.beginPath();
+  ctx.moveTo(this.a.x, this.a.y);
+  ctx.lineTo(this.b.x, this.b.y);
+  ctx.strokeStyle = this.a.node.value ? '#16a34a' : '#9ca3af';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+};
+
+// ================= SETUP =================
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+
+const nodeA = new Node(0, 'A');
+const nodeB = new Node(0, 'B');
+const nodeOut = new Node(0, 'OUT');
+
+const components = [
+  new Component(nodeA, 120, 200),
+  new Component(nodeB, 120, 260),
+  new Component(nodeOut, 600, 230)
+];
+
+let wires = [];
+
+// ================= INTERACTION =================
+let dragging = null;
+let wireStart = null;
+
+$('#sim').on('mousedown', function(e) {
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+
+  dragging = null;
+  components.forEach(c => {
+    if (c.hit(mx, my)) dragging = c;
+  });
+});
+
+$('#sim').on('mousemove', function(e) {
+  if (!dragging) return;
+  const r = canvas.getBoundingClientRect();
+  dragging.x = e.clientX - r.left;
+  dragging.y = e.clientY - r.top;
+  draw();
+});
+
+$('#sim').on('mouseup', function(e) {
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+
+  if (!dragging) {
+    // wiring logic
+    components.forEach(c => {
+      if (c.hit(mx, my)) {
+        if (!wireStart) {
+          wireStart = c;
+        } else if (wireStart !== c) {
+          wires.push(new Wire(wireStart, c));
+          wireStart = null;
+        }
+      }
+    });
+  }
+
+  dragging = null;
+  draw();
+});
+
+$('#clearWires').on('click', function() {
+  wires = [];
+  draw();
+});
+
+// ================= UI =================
+$('#A').on('change', function() { nodeA.value = this.checked ? 1 : 0; draw(); });
+$('#B').on('change', function() { nodeB.value = this.checked ? 1 : 0; draw(); });
+
+// ================= DRAW =================
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '14px Arial';
+
+  // propagate wires
+  wires.forEach(w => w.update());
+
+  // draw wires first
+  wires.forEach(w => w.draw(ctx));
+
+  // draw components
+  components.forEach(c => c.draw(ctx));
+
+  // wiring indicator
+  if (wireStart) {
+    ctx.fillStyle = '#ef4444';
+    ctx.fillText('Wiring from ' + wireStart.node.name, 20, 20);
+  }
+}
+
+draw();
+</script>
+</body>
+</html>

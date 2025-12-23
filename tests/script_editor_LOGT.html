@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bit Language Interpreter</title>
+<style>
+body { font-family: monospace; background:#111; color:#eee; padding:20px }
+textarea { width:100%; height:260px; background:#000; color:#0f0; }
+button { margin:10px 0; padding:8px 20px }
+pre { background:#000; padding:10px; min-height:120px }
+</style>
+</head>
+<body>
+
+<h2>Bit Language Interpreter</h2>
+
+<textarea id="code">
+# Full example
+def Add(1bit a, 1bit b, 1bit cin):
+  1bit s0 = XOR(a,b)
+  1bit s1 = XOR(s0, cin)
+  :1bit s1
+  :1bit OR(AND(a,b), AND(s0, cin))
+
+1bit s, 1bit c = Add(1,1,0)
+show(s,c)
+
+~ = NOT(~)
+show(~)
+
+1bit q, 1bit nq = LATCH(1,0)
+show(q,nq)
+</textarea>
+
+<button onclick="run()">Run</button>
+<pre id="out"></pre>
+
+<script>
+/* ========= TOKENIZER ========= */
+
+class Token {
+  constructor(type,value,line,col){
+    this.type=type; this.value=value; this.line=line; this.col=col;
+  }
+}
+
+class Tokenizer {
+  constructor(src){
+    this.src=src; this.i=0; this.line=1; this.col=1;
+  }
+  eof(){ return this.i>=this.src.length }
+  peek(){ return this.src[this.i] }
+  next(){
+    let c=this.src[this.i++];
+    if(c=='\n'){ this.line++; this.col=1 } else this.col++;
+    return c;
+  }
+  token(type,value){ return new Token(type,value,this.line,this.col) }
+
+  skip(){
+    while(!this.eof()){
+      if(/\s/.test(this.peek())) this.next();
+      else if(this.peek()=='#') while(!this.eof()&&this.next()!='\n');
+      else break;
+    }
+  }
+
+  get(){
+    this.skip();
+    if(this.eof()) return this.token('EOF');
+
+    let c=this.peek();
+
+    if('=,+():'.includes(c)) return this.token('SYM',this.next());
+    if(c=='_'||c=='~') return this.token('SPECIAL',this.next());
+
+    if(/[01]/.test(c)){
+      let v=''; while(!this.eof()&&/[01]/.test(this.peek())) v+=this.next();
+      return this.token('BIN',v);
+    }
+
+    if(/[a-zA-Z]/.test(c)){
+      let v=''; while(!this.eof()&&/[a-zA-Z0-9]/.test(this.peek())) v+=this.next();
+      if(/^\d+bit$/.test(v)) return this.token('TYPE',v);
+      return this.token('ID',v);
+    }
+
+    throw this.err("Unexpected char '"+c+"'");
+  }
+
+  err(msg){ return Error(`${msg} at ${this.line}:${this.col}`) }
+}
+
+/* ========= PARSER ========= */
+
+class Parser {
+  constructor(t){ this.t=t; this.c=t.get(); this.funcs=new Map(); }
+  eat(type,val){
+    if(this.c.type==type&&(val==null||this.c.value==val)) this.c=this.t.get();
+    else throw Error(`Syntax error at ${this.c.line}:${this.c.col}`);
+  }
+
+parse(){
+  let stmts=[];
+  while(this.c.type!='EOF'){
+	if(this.c.type==='ID' && this.c.value==='def'){
+	  this.parseDef();
+	  continue;   // ← THIS LINE IS REQUIRED
+	}
+	stmts.push(this.stmt());
+  }
+  return stmts;
+}
+
+
+
+  parseDef(){
+    this.eat('ID','def');
+
+    const name=this.c.value;
+    this.eat('ID');
+
+    this.eat('SYM','(');
+    const params=[];
+    if(this.c.value!==')'){
+      do{
+        const type=this.c.value; this.eat('TYPE');
+        const n=this.c.value; this.eat('ID');
+        params.push({type,n});
+        if(this.c.value===',') this.eat('SYM',',');
+        else break;
+      }while(true);
+    }
+    this.eat('SYM',')');
+    this.eat('SYM',':');
+
+    const body=[];
+    const returns=[];
+
+    while(this.c.type!=='EOF'){
+      if(this.c.type==='ID' && this.c.value==='def') break;
+
+      if(this.c.value===':'){
+        this.eat('SYM',':');
+        const type=this.c.value; this.eat('TYPE');
+        returns.push({type,expr:this.expr()});
+      }
+      else if(this.c.type==='TYPE' || this.c.value==='show'){
+        body.push(this.stmt());
+      }
+      else break;
+    }
+
+    this.funcs.set(name,{params,body,returns});
+  }
+  
+
+
+  stmt(){
+    if(this.c.type=='TYPE') return this.var();
+    if(this.c.value=='show') return this.show();
+    throw Error(`Invalid statement at ${this.c.line}:${this.c.col}`);
+  }
+
+  var(){
+    let type=this.c.value; this.eat('TYPE');
+    let names=[];
+    do{
+      names.push(this.c.value);
+      this.eat(this.c.type);
+      if(this.c.value==',') this.eat('SYM',','); else break;
+    }while(true);
+    this.eat('SYM','=');
+    return {type,names,expr:this.expr()};
+  }
+
+  show(){
+    this.eat('ID'); this.eat('SYM','(');
+    let a=[];
+    if(this.c.value!=')'){
+      do{ a.push(this.expr()); if(this.c.value==',') this.eat('SYM',','); else break }while(true);
+    }
+    this.eat('SYM',')');
+    return {show:a};
+  }
+
+  expr(){
+    let p=[this.atom()];
+    while(this.c.value=='+'){ this.eat('SYM','+'); p.push(this.atom()) }
+    return p;
+  }
+
+  atom(){
+    if(this.c.type=='BIN'){ let v=this.c.value; this.eat('BIN'); return {bin:v} }
+    if(this.c.type=='SPECIAL'){ let v=this.c.value; this.eat('SPECIAL'); return {var:v} }
+    if(this.c.type=='ID'){
+      let n=this.c.value; this.eat('ID');
+      if(this.c.value=='(') return this.call(n);
+      return {var:n};
+    }
+    throw Error(`Bad expression at ${this.c.line}:${this.c.col}`);
+  }
+
+  call(name){
+    this.eat('SYM','(');
+    let a=[];
+    if(this.c.value!=')'){
+      do{ a.push(this.expr()); if(this.c.value==',') this.eat('SYM',','); else break }while(true);
+    }
+    this.eat('SYM',')');
+    return {call:name,args:a};
+  }
+}
+
+/* ========= INTERPRETER ========= */
+
+class Interpreter {
+  constructor(funcs,out){
+    this.funcs=funcs; this.out=out;
+    this.vars=new Map(); this.vars.set('~','0');
+    this.latchQ='0';
+  }
+
+  evalExpr(e){ return e.map(x=>this.evalAtom(x)).join('') }
+
+  evalAtom(a){
+    if(a.bin) return a.bin;
+    if(a.var){
+      if(!this.vars.has(a.var)) throw Error('Undefined '+a.var);
+      return this.vars.get(a.var);
+    }
+    if(a.call) return this.call(a.call,a.args);
+  }
+
+  call(n,args){
+    let v=args.map(x=>this.evalExpr(x));
+    let b=x=>x=='1';
+
+    const gates={
+      NOT:()=>b(v[0])?'0':'1',
+      AND:()=>b(v[0])&&b(v[1])?'1':'0',
+      OR:()=>b(v[0])||b(v[1])?'1':'0',
+      XOR:()=>b(v[0])^b(v[1])?'1':'0',
+      NAND:()=>!(b(v[0])&&b(v[1]))?'1':'0',
+      NOR:()=>!(b(v[0])||b(v[1]))?'1':'0',
+      LATCH:()=>{
+        if(v[0]=='1') this.latchQ='1';
+        if(v[1]=='1') this.latchQ='0';
+        return this.latchQ;
+      }
+    };
+
+    if(gates[n]) return gates[n]();
+
+    let f=this.funcs.get(n);
+    if(!f) throw Error('Unknown function '+n);
+    if(v.length!=f.params.length) throw Error('Bad arity '+n);
+
+    let local=new Interpreter(this.funcs,this.out);
+    f.params.forEach((p,i)=>local.vars.set(p.n,v[i]));
+    f.body.forEach(s=>local.exec(s));
+    return f.returns.map(r=>local.evalExpr(r.expr));
+  }
+
+  exec(s){
+    if(s.show) this.out.push(s.show.map(e=>this.evalExpr(e)).join(' '));
+    else{
+      let bits=parseInt(s.type), v=this.evalExpr(s.expr), i=0;
+      for(let n of s.names){
+        let slice=v.slice(i,i+bits); i+=bits;
+        if(n=='~') this.vars.set('~',slice);
+        else if(n!='_'){
+          if(this.vars.has(n)) throw Error('Immutable '+n);
+          this.vars.set(n,slice);
+        }
+      }
+    }
+  }
+
+  run(p){ p.forEach(s=>this.exec(s)) }
+}
+
+/* ========= RUN ========= */
+
+function run(){
+  let out=[];
+  try{
+    let p=new Parser(new Tokenizer(code.value));
+    let prog=p.parse();
+    let i=new Interpreter(p.funcs,out);
+    i.run(prog);
+    document.getElementById('out').textContent=out.join('\n');
+  }catch(e){
+    document.getElementById('out').textContent=e.message;
+  }
+}
+</script>
+
+</body>
+</html>
