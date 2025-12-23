@@ -20,6 +20,7 @@ function getY(params) {
   let distance = params.yTo - params.yFrom;
   let steps = params.frames;
   let progress = params.frame;
+
   return distance / steps * progress;
 }
 
