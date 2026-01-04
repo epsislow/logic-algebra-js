@@ -49,7 +49,9 @@ var TrWorld = (function () {
 		},
 		next: function () {
 			var gen = [];
-			while(let unit = this.nextUnit();let randomUnit = gen.randomUnit()) {
+			let unit;
+			let randomUnit;
+			while(unit = this.nextUnit(), randomUnit = gen.randomUnit()) {
 				gen.push(unit.nextUnit());
 			}
 		}
@@ -61,7 +63,7 @@ var TrWorld = (function () {
 		defence: function (unit) {
 		},
 		dinner: function (unit) {
-		}
+		},
 		nomeal: function (unit) {
 		},
 	};
