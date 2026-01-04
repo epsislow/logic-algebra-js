@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Digital Logic Simulator – Drag & Wire Mode</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#f3f4f6; }
+    #panel {
+      padding:8px;
+      background:#fff;
+      border-bottom:1px solid #ccc;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    canvas { display:block; background:#fff; border:1px solid #111; }
+    .hint { color:#555; font-size:13px; }
+    button { padding:4px 8px; }
+  </style>
+</head>
+<body>
+
+<div id="panel">
+  <strong>Mode:</strong>
+  <span id="mode">DRAG</span>
+  <span class="hint">Hold CTRL to wire</span>
+  |
+  <button id="addInput">Add Input</button>
+  <button id="addOutput">Add Output</button>
+  <button id="addAND">Add AND</button>
+  <button id="addNOT">Add NOT</button>
+  <button id="clear">Clear</button>
+</div>
+
+<canvas id="sim" width="1000" height="500"></canvas>
+
+<script>
+// ================= CORE MODEL =================
+function Node(name) {
+  this.name = name;
+  this.value = 0;
+}
+
+// ================= COMPONENT BASE =================
+function Component(type, x, y) {
+  this.type = type;
+  this.x = x;
+  this.y = y;
+  this.w = 60;
+  this.h = 40;
+  this.inputs = [];
+  this.outputs = [];
+}
+
+Component.prototype.hit = function(mx, my) {
+  return mx >= this.x && mx <= this.x + this.w && my >= this.y && my <= this.y + this.h;
+};
+
+Component.prototype.drawBox = function(ctx, label) {
+  ctx.strokeRect(this.x, this.y, this.w, this.h);
+  ctx.fillText(label, this.x + 8, this.y + 22);
+};
+
+Component.prototype.eval = function() {};
+
+// ================= COMPONENT TYPES =================
+
+function InputComponent(name, x, y) {
+  Component.call(this, 'INPUT', x, y);
+  this.outputs = [new Node(name)];
+}
+InputComponent.prototype = Object.create(Component.prototype);
+InputComponent.prototype.draw = function(ctx) {
+  ctx.fillStyle = this.outputs[0].value ? '#4ade80' : '#e5e7eb';
+  ctx.fillRect(this.x, this.y, this.w, this.h);
+  ctx.strokeRect(this.x, this.y, this.w, this.h);
+  ctx.fillStyle = '#000';
+  ctx.fillText(this.outputs[0].name + ':' + this.outputs[0].value, this.x + 5, this.y + 22);
+};
+
+function OutputComponent(name, x, y) {
+  Component.call(this, 'OUTPUT', x, y);
+  this.inputs = [new Node(name)];
+}
+OutputComponent.prototype = Object.create(Component.prototype);
+OutputComponent.prototype.draw = function(ctx) {
+  ctx.fillStyle = this.inputs[0].value ? '#4ade80' : '#e5e7eb';
+  ctx.fillRect(this.x, this.y, this.w, this.h);
+  ctx.strokeRect(this.x, this.y, this.w, this.h);
+  ctx.fillStyle = '#000';
+  ctx.fillText(this.inputs[0].name + ':' + this.inputs[0].value, this.x + 5, this.y + 22);
+};
+
+function ANDComponent(x, y) {
+  Component.call(this, 'AND', x, y);
+  this.inputs = [new Node('A'), new Node('B')];
+  this.outputs = [new Node('Y')];
+}
+ANDComponent.prototype = Object.create(Component.prototype);
+ANDComponent.prototype.eval = function() {
+  this.outputs[0].value = (this.inputs[0].value && this.inputs[1].value) ? 1 : 0;
+};
+ANDComponent.prototype.draw = function(ctx) {
+  this.drawBox(ctx, 'AND');
+};
+
+function NOTComponent(x, y) {
+  Component.call(this, 'NOT', x, y);
+  this.inputs = [new Node('A')];
+  this.outputs = [new Node('Y')];
+}
+NOTComponent.prototype = Object.create(Component.prototype);
+NOTComponent.prototype.eval = function() {
+  this.outputs[0].value = this.inputs[0].value ? 0 : 1;
+};
+NOTComponent.prototype.draw = function(ctx) {
+  this.drawBox(ctx, 'NOT');
+};
+
+// ================= WIRE =================
+function Wire(fromComp, fromIndex, toComp, toIndex) {
+  this.fromComp = fromComp;
+  this.fromIndex = fromIndex;
+  this.toComp = toComp;
+  this.toIndex = toIndex;
+}
+
+Wire.prototype.update = function() {
+  this.toComp.inputs[this.toIndex].value = this.fromComp.outputs[this.fromIndex].value;
+};
+
+Wire.prototype.draw = function(ctx) {
+  const sx = this.fromComp.x + this.fromComp.w;
+  const sy = this.fromComp.y + 20;
+  const tx = this.toComp.x;
+  const ty = this.toComp.y + 20;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy);
+  ctx.lineTo(tx, ty);
+  ctx.strokeStyle = this.fromComp.outputs[this.fromIndex].value ? '#16a34a' : '#9ca3af';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+};
+
+// ================= SIM STATE =================
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+let components = [];
+let wires = [];
+
+let dragging = null;
+let dragOffset = {x:0, y:0};
+let wiring = null;
+let ctrlDown = false;
+
+// ================= INPUT HANDLING =================
+$(document).on('keydown', e => { if (e.key === 'Control') ctrlDown = true; updateMode(); });
+$(document).on('keyup', e => { if (e.key === 'Control') ctrlDown = false; updateMode(); });
+
+function updateMode() {
+  $('#mode').text(ctrlDown ? 'WIRE' : 'DRAG');
+}
+
+$('#sim').on('mousedown', e => {
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+
+  for (let c of components) {
+    if (c.hit(mx, my)) {
+      if (ctrlDown) {
+        wiring = c;
+      } else {
+        dragging = c;
+        dragOffset.x = mx - c.x;
+        dragOffset.y = my - c.y;
+      }
+      return;
+    }
+  }
+});
+
+$('#sim').on('mousemove', e => {
+  if (!dragging) return;
+  const r = canvas.getBoundingClientRect();
+  dragging.x = e.clientX - r.left - dragOffset.x;
+  dragging.y = e.clientY - r.top - dragOffset.y;
+  draw();
+});
+
+$('#sim').on('mouseup', e => {
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+
+  if (ctrlDown && wiring) {
+    for (let c of components) {
+      if (c !== wiring && c.hit(mx, my) && wiring.outputs.length && c.inputs.length) {
+        wires.push(new Wire(wiring, 0, c, 0));
+        break;
+      }
+    }
+  }
+
+  dragging = null;
+  wiring = null;
+  draw();
+});
+
+// ================= UI BUTTONS =================
+let inputCount = 0;
+let outputCount = 0;
+
+$('#addInput').on('click', () => {
+  components.push(new InputComponent('A' + (++inputCount), 50, 60 + inputCount*50));
+  draw();
+});
+
+$('#addOutput').on('click', () => {
+  components.push(new OutputComponent('OUT' + (++outputCount), 850, 60 + outputCount*50));
+  draw();
+});
+
+$('#addAND').on('click', () => {
+  components.push(new ANDComponent(400, 100));
+  draw();
+});
+
+$('#addNOT').on('click', () => {
+  components.push(new NOTComponent(400, 200));
+  draw();
+});
+
+$('#clear').on('click', () => {
+  components = [];
+  wires = [];
+  inputCount = outputCount = 0;
+  draw();
+});
+
+// ================= DRAW LOOP =================
+function step() {
+  components.forEach(c => c.eval());
+  wires.forEach(w => w.update());
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '14px Arial';
+
+  step();
+  wires.forEach(w => w.draw(ctx));
+  components.forEach(c => c.draw(ctx));
+}
+
+updateMode();
+draw();
+</script>
+</body>
+</html>

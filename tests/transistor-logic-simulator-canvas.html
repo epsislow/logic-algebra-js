@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Boolean Transistor Logic Simulator (Canvas + jQuery)</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js">
+// ================= DRAGGABLE COMPONENTS & WIRES =================
+
+// Basic component abstraction for canvas routing
+function Component(name, x, y, node) {
+  this.name = name;
+  this.x = x;
+  this.y = y;
+  this.node = node;
+  this.radius = 14;
+}
+
+Component.prototype.draw = function(ctx) {
+  ctx.beginPath();
+  ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+  ctx.fillStyle = this.node.value ? '#4ade80' : '#e5e7eb';
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#000';
+  ctx.fillText(this.name + ':' + this.node.value, this.x + 18, this.y + 4);
+};
+
+function Wire(a, b) {
+  this.a = a; // Component
+  this.b = b;
+}
+
+Wire.prototype.update = function() {
+  // propagate signal (simple wired connection)
+  this.b.node.value = this.a.node.value;
+};
+
+Wire.prototype.draw = function(ctx) {
+  ctx.beginPath();
+  ctx.moveTo(this.a.x, this.a.y);
+  ctx.lineTo(this.b.x, this.b.y);
+  ctx.strokeStyle = this.a.node.value ? '#16a34a' : '#9ca3af';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+};
+
+// Create draggable components for A, B, Sum
+const components = [
+  new Component('A', 100, 250, A),
+  new Component('B', 200, 250, B),
+  new Component('Sum', 600, 250, Sum)
+];
+
+// Example wire routing: A -> Sum (demonstration)
+const wires = [ new Wire(components[0], components[2]) ];
+
+let dragging = null;
+
+$('#sim').on('mousedown', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  components.forEach(c => {
+    const dx = mx - c.x;
+    const dy = my - c.y;
+    if (dx*dx + dy*dy < c.radius*c.radius) dragging = c;
+  });
+});
+
+$('#sim').on('mousemove', function(e) {
+  if (!dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  dragging.x = e.clientX - rect.left;
+  dragging.y = e.clientY - rect.top;
+  draw();
+});
+
+$('#sim').on('mouseup mouseleave', function() {
+  dragging = null;
+});
+
+// Extend draw() to include components and wires
+const originalDraw = draw;
+draw = function() {
+  originalDraw();
+  wires.forEach(w => w.draw(ctx));
+  components.forEach(c => c.draw(ctx));
+};
+
+</script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f5f5f5; }
+    #panel { padding: 10px; background: #fff; border-bottom: 1px solid #ccc; }
+    canvas { background: #ffffff; border: 1px solid #333; }
+    .btn { padding: 6px 10px; margin-right: 5px; }
+  </style>
+</head>
+<body>
+
+<div id="panel">
+  <label><input type="checkbox" id="A"> A</label>
+  <label><input type="checkbox" id="B"> B</label>
+  <label><input type="checkbox" id="Cin"> Cin</label>
+  <label><input type="checkbox" id="Clk"> Clk</label>
+  <br><br>
+  <strong>ALU Operation:</strong>
+  <label><input type="radio" name="op" value="00" checked> AND</label>
+  <label><input type="radio" name="op" value="01"> OR</label>
+  <label><input type="radio" name="op" value="10"> XOR</label>
+  <label><input type="radio" name="op" value="11"> ADD</label>
+  <br><br>
+  <button class="btn" id="step">Step</button>
+  <button class="btn" id="run">Run</button>
+  <button class="btn" id="stop">Stop</button>
+</div>
+
+<canvas id="sim" width="900" height="350"></canvas>
+
+<script>
+// ================= CORE BOOLEAN TRANSISTOR MODEL =================
+
+function Node(value, name) {
+  this.value = value ? 1 : 0;
+  this.name = name || "";
+}
+
+function Transistor(type, gate, source, drain) {
+  this.type = type; // NMOS / PMOS
+  this.gate = gate;
+  this.source = source;
+  this.drain = drain;
+}
+
+Transistor.prototype.isOn = function () {
+  return this.type === "NMOS" ? this.gate.value === 1 : this.gate.value === 0;
+};
+
+Transistor.prototype.update = function () {
+  if (!this.isOn()) return;
+  if (this.type === "NMOS") {
+    this.drain.value = this.source.value; // pull down
+  } else {
+    this.source.value = this.drain.value; // pull up
+  }
+};
+
+// ================= CMOS GATES =================
+
+function makeNOT(In, Out, Vdd, Gnd) {
+  const p = new Transistor("PMOS", In, Vdd, Out);
+  const n = new Transistor("NMOS", In, Out, Gnd);
+  return function () { p.update(); n.update(); };
+}
+
+function makeNAND(A, B, Out, Vdd, Gnd) {
+  const p1 = new Transistor("PMOS", A, Vdd, Out);
+  const p2 = new Transistor("PMOS", B, Vdd, Out);
+  const mid = new Node(0);
+  const n1 = new Transistor("NMOS", A, mid, Gnd);
+  const n2 = new Transistor("NMOS", B, Out, mid);
+  return function () { p1.update(); p2.update(); n2.update(); n1.update(); };
+}
+
+function makeAND(A, B, Out, tmp, Vdd, Gnd) {
+  const nandU = makeNAND(A, B, tmp, Vdd, Gnd);
+  const notU = makeNOT(tmp, Out, Vdd, Gnd);
+  return function () { nandU(); notU(); };
+}
+
+function makeOR(A, B, Out, tmp, Vdd, Gnd) {
+  const norTmp = new Node(0);
+  const p1 = new Transistor("PMOS", A, Vdd, norTmp);
+  const p2 = new Transistor("PMOS", B, norTmp, Out);
+  const n1 = new Transistor("NMOS", A, Out, Gnd);
+  const n2 = new Transistor("NMOS", B, Out, Gnd);
+  const notU = makeNOT(norTmp, Out, Vdd, Gnd);
+  return function () { p1.update(); p2.update(); n1.update(); n2.update(); notU(); };
+}
+
+function makeXOR(A, B, Out, Vdd, Gnd) {
+  const notA = new Node(0), notB = new Node(0);
+  const a1 = new Node(0), a2 = new Node(0);
+  const invA = makeNOT(A, notA, Vdd, Gnd);
+  const invB = makeNOT(B, notB, Vdd, Gnd);
+  const and1 = makeAND(A, notB, a1, new Node(0), Vdd, Gnd);
+  const and2 = makeAND(notA, B, a2, new Node(0), Vdd, Gnd);
+  const orU = makeOR(a1, a2, Out, new Node(0), Vdd, Gnd);
+  return function () { invA(); invB(); and1(); and2(); orU(); };
+}
+
+// ================= D FLIP-FLOP =================
+
+function makeDFlipFlop(D, Clk, Q, Qb) {
+  let prevClk = 0;
+  return function () {
+    if (Clk.value === 1 && prevClk === 0) {
+      Q.value = D.value;
+      Qb.value = Q.value ? 0 : 1;
+    }
+    prevClk = Clk.value;
+  };
+}
+
+// ================= 1-BIT ALU =================
+
+function makeALU(A, B, Cin, s0, s1, Sum, Cout, Vdd, Gnd) {
+  const andO = new Node(0), orO = new Node(0), xorO = new Node(0);
+  const sumTmp = new Node(0);
+
+  const andU = makeAND(A, B, andO, new Node(0), Vdd, Gnd);
+  const orU = makeOR(A, B, orO, new Node(0), Vdd, Gnd);
+  const xorU = makeXOR(A, B, xorO, Vdd, Gnd);
+  const sumU = makeXOR(xorO, Cin, sumTmp, Vdd, Gnd);
+
+  return function () {
+    andU(); orU(); xorU(); sumU();
+
+    // mux (boolean selection)
+    if (s1.value === 0 && s0.value === 0) Sum.value = andO.value;
+    if (s1.value === 0 && s0.value === 1) Sum.value = orO.value;
+    if (s1.value === 1 && s0.value === 0) Sum.value = xorO.value;
+    if (s1.value === 1 && s0.value === 1) Sum.value = sumTmp.value;
+
+    Cout.value = (s1.value === 1 && s0.value === 1 && ((A.value && B.value) || (A.value && Cin.value) || (B.value && Cin.value))) ? 1 : 0;
+  };
+}
+
+// ================= SETUP CIRCUIT =================
+
+const Vdd = new Node(1, "Vdd");
+const Gnd = new Node(0, "Gnd");
+
+const A = new Node(0, "A");
+const B = new Node(0, "B");
+const Cin = new Node(0, "Cin");
+const Clk = new Node(0, "Clk");
+
+const Q = new Node(0, "Q");
+const Qb = new Node(1, "Qb");
+
+const s0 = new Node(0, "s0");
+const s1 = new Node(0, "s1");
+
+const Sum = new Node(0, "Sum");
+const Cout = new Node(0, "Cout");
+
+const dff = makeDFlipFlop(A, Clk, Q, Qb);
+const alu = makeALU(A, B, Cin, s0, s1, Sum, Cout, Vdd, Gnd);
+
+const updates = [dff, alu];
+
+// ================= SIMULATION LOOP =================
+
+let timer = null;
+
+function step() {
+  updates.forEach(u => u());
+  draw();
+}
+
+$('#step').on('click', step);
+$('#run').on('click', () => { if (!timer) timer = setInterval(step, 200); });
+$('#stop').on('click', () => { clearInterval(timer); timer = null; });
+
+$('input').on('change', () => {
+  A.value = $('#A').is(':checked') ? 1 : 0;
+  B.value = $('#B').is(':checked') ? 1 : 0;
+  Cin.value = $('#Cin').is(':checked') ? 1 : 0;
+  Clk.value = $('#Clk').is(':checked') ? 1 : 0;
+  const op = $('input[name="op"]:checked').val();
+  s1.value = op[0] === '1' ? 1 : 0;
+  s0.value = op[1] === '1' ? 1 : 0;
+  draw();
+});
+
+// ================= CANVAS DRAWING =================
+
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+
+function drawSignal(x, y, label, node) {
+  ctx.beginPath();
+  ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.fillStyle = node.value ? '#4ade80' : '#e5e7eb';
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#000';
+  ctx.fillText(label + ': ' + node.value, x + 20, y + 4);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = '14px Arial';
+
+  drawSignal(50, 40, 'A', A);
+  drawSignal(50, 80, 'B', B);
+  drawSignal(50, 120, 'Cin', Cin);
+  drawSignal(50, 160, 'Clk', Clk);
+
+  drawSignal(350, 60, 'Q', Q);
+  drawSignal(350, 100, 'Qb', Qb);
+
+  drawSignal(650, 60, 'Sum', Sum);
+  drawSignal(650, 100, 'Cout', Cout);
+}
+
+draw();
+</script>
+</body>
+</html>
