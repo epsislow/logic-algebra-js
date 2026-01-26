@@ -1,0 +1,680 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Zap, RotateCcw } from 'lucide-react';
+
+const LogicSimulator = () => {
+  const [components, setComponents] = useState([]);
+  const [wires, setWires] = useState([]);
+  const [wireStart, setWireStart] = useState(null);
+  const [cycle, setCycle] = useState(0);
+  const [simulationError, setSimulationError] = useState(null);
+  const [dragging, setDragging] = useState(null);
+  const [panning, setPanning] = useState(false);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+
+  // Component types with their properties
+  const componentTypes = {
+    // Logic Gates (combinational - no clock needed)
+    AND: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+    OR: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+    NOT: { inputs: 1, outputs: 1, width: 60, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+    NAND: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+    NOR: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+    XOR: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+    
+    // Input/Output
+    SWITCH: { inputs: 0, outputs: 1, width: 50, height: 40, color: '#10b981', category: 'io', combinational: true },
+    DIP_SWITCH: { inputs: 0, outputs: 4, width: 60, height: 100, color: '#10b981', category: 'io', combinational: true },
+    LED: { inputs: 1, outputs: 0, width: 40, height: 40, color: '#ef4444', category: 'io', combinational: true },
+    SEVEN_SEG: { inputs: 7, outputs: 0, width: 80, height: 120, color: '#ef4444', category: 'io', combinational: true },
+    
+    // Sequential (clock-based - only update on clock edge)
+    REGISTER: { inputs: 5, outputs: 4, width: 100, height: 120, color: '#8b5cf6', category: 'memory', combinational: false },
+    COUNTER: { inputs: 2, outputs: 4, width: 100, height: 100, color: '#8b5cf6', category: 'memory', combinational: false },
+    MEMORY: { inputs: 9, outputs: 8, width: 120, height: 140, color: '#8b5cf6', category: 'memory', combinational: false },
+    SHIFT_REG: { inputs: 3, outputs: 4, width: 100, height: 100, color: '#8b5cf6', category: 'memory', combinational: false },
+  };
+
+  const addComponent = (type, x = 100, y = 100) => {
+    const config = componentTypes[type];
+    const newComponent = {
+      id: Date.now(),
+      type,
+      x,
+      y,
+      ...config,
+      state: type === 'SWITCH' ? false : 
+             type === 'DIP_SWITCH' ? [false, false, false, false] :
+             type === 'REGISTER' ? [false, false, false, false] :
+             type === 'COUNTER' ? 0 :
+             type === 'SHIFT_REG' ? [false, false, false, false] :
+             type === 'MEMORY' ? new Array(256).fill(false) :
+             null,
+      inputValues: new Array(config.inputs).fill(false),
+      outputValues: new Array(config.outputs).fill(false),
+    };
+    setComponents([...components, newComponent]);
+  };
+
+  const evaluateGate = (type, inputs) => {
+    switch(type) {
+      case 'AND': return inputs.every(v => v);
+      case 'OR': return inputs.some(v => v);
+      case 'NOT': return !inputs[0];
+      case 'NAND': return !inputs.every(v => v);
+      case 'NOR': return !inputs.some(v => v);
+      case 'XOR': return inputs.filter(v => v).length % 2 === 1;
+      default: return false;
+    }
+  };
+
+  // Topological sort to detect cycles and determine evaluation order
+  const getEvaluationOrder = (comps, wires) => {
+    const graph = new Map();
+    const inDegree = new Map();
+    
+    // Initialize graph
+    comps.forEach(comp => {
+      graph.set(comp.id, []);
+      inDegree.set(comp.id, 0);
+    });
+    
+    // Build dependency graph (only for combinational logic)
+    wires.forEach(wire => {
+      const fromComp = comps.find(c => c.id === wire.from.compId);
+      const toComp = comps.find(c => c.id === wire.to.compId);
+      
+      // Only create dependency if FROM component is combinational
+      // Sequential components don't propagate in same cycle
+      if (fromComp && toComp && fromComp.combinational) {
+        graph.get(wire.from.compId).push(wire.to.compId);
+        inDegree.set(wire.to.compId, inDegree.get(wire.to.compId) + 1);
+      }
+    });
+    
+    // Kahn's algorithm for topological sort
+    const queue = [];
+    const result = [];
+    
+    inDegree.forEach((degree, id) => {
+      if (degree === 0) {
+        queue.push(id);
+      }
+    });
+    
+    let iterations = 0;
+    const maxIterations = comps.length * 2;
+    
+    while (queue.length > 0 && iterations < maxIterations) {
+      iterations++;
+      const current = queue.shift();
+      result.push(current);
+      
+      graph.get(current).forEach(neighbor => {
+        inDegree.set(neighbor, inDegree.get(neighbor) - 1);
+        if (inDegree.get(neighbor) === 0) {
+          queue.push(neighbor);
+        }
+      });
+    }
+    
+    // Check for cycles in combinational logic
+    if (result.length < comps.filter(c => c.combinational).length) {
+      return null; // Cycle detected
+    }
+    
+    return result;
+  };
+
+  // Propagate signals through combinational logic
+  const propagateCombinational = (comps, wires) => {
+    const order = getEvaluationOrder(comps, wires);
+    
+    if (!order) {
+      setSimulationError("Combinational loop detected! Please break the feedback loop.");
+      return comps;
+    }
+    
+    setSimulationError(null);
+    
+    // Create working copy
+    let updated = comps.map(c => ({
+      ...c,
+      inputValues: [...c.inputValues],
+      outputValues: [...c.outputValues]
+    }));
+    
+    // Multiple passes to ensure full propagation
+    const MAX_PASSES = 10;
+    for (let pass = 0; pass < MAX_PASSES; pass++) {
+      let changed = false;
+      
+      // Evaluate in topological order
+      order.forEach(compId => {
+        const comp = updated.find(c => c.id === compId);
+        if (!comp || !comp.combinational) return;
+        
+        const oldOutputs = [...comp.outputValues];
+        
+        // Calculate new outputs based on current inputs
+        if (comp.type === 'SWITCH') {
+          comp.outputValues[0] = comp.state;
+        } else if (comp.type === 'DIP_SWITCH') {
+          comp.outputValues = [...comp.state];
+        } else if (['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'].includes(comp.type)) {
+          comp.outputValues[0] = evaluateGate(comp.type, comp.inputValues);
+        } else if (comp.type === 'LED') {
+          // LED doesn't change output, just displays input
+        } else if (comp.type === 'SEVEN_SEG') {
+          // Seven segment doesn't change output
+        }
+        
+        // Check if outputs changed
+        if (JSON.stringify(oldOutputs) !== JSON.stringify(comp.outputValues)) {
+          changed = true;
+        }
+      });
+      
+      // Propagate through wires
+      updated.forEach(comp => {
+        wires.forEach(wire => {
+          if (wire.from.compId === comp.id) {
+            const targetComp = updated.find(c => c.id === wire.to.compId);
+            if (targetComp && wire.to.pin < targetComp.inputValues.length) {
+              targetComp.inputValues[wire.to.pin] = comp.outputValues[wire.from.pin] || false;
+            }
+          }
+        });
+      });
+      
+      if (!changed) break; // Stable state reached
+    }
+    
+    return updated;
+  };
+
+  // Update sequential elements (on clock edge)
+  const updateSequential = (comps) => {
+    return comps.map(comp => {
+      if (!comp.combinational) {
+        const newComp = { ...comp, outputValues: [...comp.outputValues] };
+        
+        if (comp.type === 'REGISTER') {
+          // inputs: [D0, D1, D2, D3, CLK]
+          if (comp.inputValues[4]) { // clock edge
+            newComp.state = comp.inputValues.slice(0, 4);
+            newComp.outputValues = [...newComp.state];
+          } else {
+            newComp.outputValues = [...comp.state];
+          }
+        } else if (comp.type === 'COUNTER') {
+          // inputs: [CLK, RESET]
+          if (comp.inputValues[1]) { // reset
+            newComp.state = 0;
+          } else if (comp.inputValues[0]) { // clock
+            newComp.state = (comp.state + 1) % 16;
+          }
+          for (let i = 0; i < 4; i++) {
+            newComp.outputValues[i] = (newComp.state & (1 << i)) !== 0;
+          }
+        } else if (comp.type === 'SHIFT_REG') {
+          // inputs: [DATA_IN, CLK, RESET]
+          if (comp.inputValues[2]) { // reset
+            newComp.state = [false, false, false, false];
+          } else if (comp.inputValues[1]) { // clock
+            newComp.state = [comp.inputValues[0], ...comp.state.slice(0, 3)];
+          }
+          newComp.outputValues = [...newComp.state];
+        } else if (comp.type === 'MEMORY') {
+          // Simplified memory - inputs: [A0-A7, CLK], outputs: [D0-D7]
+          const addr = comp.inputValues.slice(0, 8).reduce((acc, bit, i) => acc | (bit ? (1 << i) : 0), 0);
+          if (comp.inputValues[8]) { // clock - read operation
+            for (let i = 0; i < 8; i++) {
+              newComp.outputValues[i] = (comp.state[addr] & (1 << i)) !== 0;
+            }
+          }
+        }
+        
+        return newComp;
+      }
+      return comp;
+    });
+  };
+
+  // Main simulation function
+  const simulateCircuit = () => {
+    // First, update sequential elements (clock-triggered)
+    let updated = updateSequential(components);
+    
+    // Then propagate through all combinational logic
+    updated = propagateCombinational(updated, wires);
+    
+    setComponents(updated);
+  };
+
+  const nextCycle = () => {
+    simulateCircuit();
+    setCycle(cycle + 1);
+  };
+
+  // Auto-simulate combinational changes when switches toggle
+  useEffect(() => {
+    if (components.length > 0) {
+      const updated = propagateCombinational(components, wires);
+      if (JSON.stringify(updated) !== JSON.stringify(components)) {
+        setComponents(updated);
+      }
+    }
+  }, [components.find(c => c.type === 'SWITCH')?.state, 
+      components.find(c => c.type === 'DIP_SWITCH')?.state]);
+
+  const toggleSwitch = (compId) => {
+    setComponents(components.map(c => 
+      c.id === compId && c.type === 'SWITCH' 
+        ? { ...c, state: !c.state }
+        : c
+    ));
+  };
+
+  const toggleDipSwitch = (compId, index) => {
+    setComponents(components.map(c => {
+      if (c.id === compId && c.type === 'DIP_SWITCH') {
+        const newState = [...c.state];
+        newState[index] = !newState[index];
+        return { ...c, state: newState };
+      }
+      return c;
+    }));
+  };
+
+  const startWire = (compId, pin, isOutput) => {
+    setWireStart({ compId, pin, isOutput });
+  };
+
+  const endWire = (compId, pin, isOutput) => {
+    if (!wireStart || wireStart.isOutput === isOutput) {
+      setWireStart(null);
+      return;
+    }
+    
+    const from = wireStart.isOutput ? wireStart : { compId, pin };
+    const to = wireStart.isOutput ? { compId, pin } : wireStart;
+    
+    setWires([...wires, { id: Date.now(), from, to }]);
+    setWireStart(null);
+  };
+
+  const deleteComponent = (compId) => {
+    setComponents(components.filter(c => c.id !== compId));
+    setWires(wires.filter(w => w.from.compId !== compId && w.to.compId !== compId));
+  };
+
+  // Mouse handlers for dragging components
+  const handleMouseDown = (e, compId) => {
+    if (e.button === 0) { // Left click only
+      e.stopPropagation();
+      const svg = canvasRef.current;
+      const rect = svg.getBoundingClientRect();
+      const comp = components.find(c => c.id === compId);
+      
+      setDragging({
+        id: compId,
+        offsetX: (e.clientX - rect.left - panOffset.x) - comp.x,
+        offsetY: (e.clientY - rect.top - panOffset.y) - comp.y
+      });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (dragging) {
+      const svg = canvasRef.current;
+      const rect = svg.getBoundingClientRect();
+      const newX = e.clientX - rect.left - panOffset.x - dragging.offsetX;
+      const newY = e.clientY - rect.top - panOffset.y - dragging.offsetY;
+      
+      setComponents(components.map(c =>
+        c.id === dragging.id ? { ...c, x: newX, y: newY } : c
+      ));
+    } else if (panning) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      setPanOffset({ x: panOffset.x + dx, y: panOffset.y + dy });
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setDragging(null);
+    setPanning(false);
+  };
+
+  // Panning handlers
+  const handleCanvasMouseDown = (e) => {
+    if (e.button === 0 && !e.target.closest('rect[data-component]') && 
+        !e.target.closest('circle')) {
+      setPanning(true);
+      setPanStart({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setDragging(null);
+      setPanning(false);
+    };
+    
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
+  const getPortPosition = (comp, pin, isOutput) => {
+    const spacing = comp.height / (isOutput ? comp.outputs + 1 : comp.inputs + 1);
+    return {
+      x: comp.x + (isOutput ? comp.width : 0),
+      y: comp.y + spacing * (pin + 1)
+    };
+  };
+
+  const renderComponent = (comp) => {
+    const portSize = 8;
+    
+    return (
+      <g key={comp.id}>
+        <rect
+          data-component
+          x={comp.x}
+          y={comp.y}
+          width={comp.width}
+          height={comp.height}
+          fill={comp.color}
+          stroke="#1e293b"
+          strokeWidth="2"
+          rx="4"
+          style={{ cursor: dragging?.id === comp.id ? 'grabbing' : 'grab' }}
+          onMouseDown={(e) => handleMouseDown(e, comp.id)}
+        />
+        
+        <text
+          x={comp.x + comp.width / 2}
+          y={comp.y + comp.height / 2}
+          textAnchor="middle"
+          fill="white"
+          fontSize="12"
+          fontWeight="bold"
+        >
+          {comp.type}
+        </text>
+        
+        {/* Sequential indicator */}
+        {!comp.combinational && (
+          <text
+            x={comp.x + comp.width / 2}
+            y={comp.y + comp.height / 2 + 15}
+            textAnchor="middle"
+            fill="white"
+            fontSize="9"
+          >
+            (CLK)
+          </text>
+        )}
+        
+        {/* Input ports */}
+        {Array.from({ length: comp.inputs }).map((_, i) => {
+          const pos = getPortPosition(comp, i, false);
+          return (
+            <g key={`in-${i}`}>
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={portSize}
+                fill={comp.inputValues[i] ? '#fbbf24' : '#64748b'}
+                stroke="#1e293b"
+                strokeWidth="2"
+                style={{ cursor: 'pointer' }}
+                onClick={() => endWire(comp.id, i, false)}
+              />
+              {/* Port label for sequential components */}
+              {!comp.combinational && (
+                <text
+                  x={pos.x + 12}
+                  y={pos.y + 4}
+                  fill="#94a3b8"
+                  fontSize="8"
+                >
+                  {comp.type === 'REGISTER' && i === 4 ? 'CLK' :
+                   comp.type === 'COUNTER' && i === 0 ? 'CLK' :
+                   comp.type === 'COUNTER' && i === 1 ? 'RST' :
+                   comp.type === 'SHIFT_REG' && i === 0 ? 'D' :
+                   comp.type === 'SHIFT_REG' && i === 1 ? 'CLK' :
+                   comp.type === 'SHIFT_REG' && i === 2 ? 'RST' :
+                   comp.type === 'MEMORY' && i === 8 ? 'CLK' : ''}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        
+        {/* Output ports */}
+        {Array.from({ length: comp.outputs }).map((_, i) => {
+          const pos = getPortPosition(comp, i, true);
+          return (
+            <circle
+              key={`out-${i}`}
+              cx={pos.x}
+              cy={pos.y}
+              r={portSize}
+              fill={comp.outputValues[i] ? '#fbbf24' : '#64748b'}
+              stroke="#1e293b"
+              strokeWidth="2"
+              style={{ cursor: 'pointer' }}
+              onClick={() => startWire(comp.id, i, true)}
+            />
+          );
+        })}
+        
+        {comp.type === 'SWITCH' && (
+          <rect
+            x={comp.x + 10}
+            y={comp.y + 10}
+            width={30}
+            height={20}
+            fill={comp.state ? '#10b981' : '#6b7280'}
+            stroke="#1e293b"
+            strokeWidth="2"
+            rx="2"
+            style={{ cursor: 'pointer' }}
+            onClick={() => toggleSwitch(comp.id)}
+          />
+        )}
+        
+        {comp.type === 'DIP_SWITCH' && comp.state.map((s, i) => (
+          <rect
+            key={i}
+            x={comp.x + 15}
+            y={comp.y + 15 + i * 20}
+            width={30}
+            height={15}
+            fill={s ? '#10b981' : '#6b7280'}
+            stroke="#1e293b"
+            strokeWidth="2"
+            rx="2"
+            style={{ cursor: 'pointer' }}
+            onClick={() => toggleDipSwitch(comp.id, i)}
+          />
+        ))}
+        
+        {comp.type === 'LED' && (
+          <circle
+            cx={comp.x + comp.width / 2}
+            cy={comp.y + comp.height / 2}
+            r={12}
+            fill={comp.inputValues[0] ? '#ef4444' : '#7f1d1d'}
+            stroke="#1e293b"
+            strokeWidth="2"
+          />
+        )}
+        
+        {comp.type === 'SEVEN_SEG' && (
+          <g>
+            <rect x={comp.x + 20} y={comp.y + 20} width={40} height={80} fill="#1e293b" rx="4" />
+            {comp.inputValues.slice(0, 7).map((active, i) => (
+              <rect
+                key={i}
+                x={comp.x + 25 + (i % 3) * 12}
+                y={comp.y + 25 + Math.floor(i / 3) * 25}
+                width={10}
+                height={3}
+                fill={active ? '#ef4444' : '#3f3f46'}
+              />
+            ))}
+          </g>
+        )}
+        
+        <circle
+          cx={comp.x + comp.width - 10}
+          cy={comp.y + 10}
+          r="8"
+          fill="#ef4444"
+          style={{ cursor: 'pointer' }}
+          onClick={() => deleteComponent(comp.id)}
+        />
+        <text
+          x={comp.x + comp.width - 10}
+          y={comp.y + 14}
+          textAnchor="middle"
+          fill="white"
+          fontSize="12"
+          fontWeight="bold"
+          style={{ pointerEvents: 'none' }}
+        >
+          ×
+        </text>
+      </g>
+    );
+  };
+
+  const renderWires = () => {
+    return wires.map(wire => {
+      const fromComp = components.find(c => c.id === wire.from.compId);
+      const toComp = components.find(c => c.id === wire.to.compId);
+      
+      if (!fromComp || !toComp) return null;
+      
+      const start = getPortPosition(fromComp, wire.from.pin, true);
+      const end = getPortPosition(toComp, wire.to.pin, false);
+      
+      const isActive = fromComp.outputValues[wire.from.pin];
+      
+      return (
+        <line
+          key={wire.id}
+          x1={start.x}
+          y1={start.y}
+          x2={end.x}
+          y2={end.y}
+          stroke={isActive ? '#fbbf24' : '#64748b'}
+          strokeWidth="3"
+          strokeLinecap="round"
+        />
+      );
+    });
+  };
+
+  return (
+    <div className="w-full h-screen bg-slate-900 flex flex-col">
+      <div className="bg-slate-800 border-b border-slate-700 p-3">
+        <div className="flex gap-2 flex-wrap items-center">
+          <div className="flex gap-2 border-r border-slate-700 pr-2">
+            <button
+              onClick={nextCycle}
+              className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
+            >
+              <Zap size={16} /> Clock Cycle ({cycle})
+            </button>
+            <button
+              onClick={() => { setComponents([]); setWires([]); setCycle(0); setSimulationError(null); }}
+              className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded"
+            >
+              <RotateCcw size={16} /> Reset
+            </button>
+          </div>
+          
+          {simulationError && (
+            <div className="px-3 py-2 bg-red-900 text-red-200 rounded text-sm border border-red-700">
+              ⚠️ {simulationError}
+            </div>
+          )}
+          
+          <div className="text-xs text-slate-300 font-semibold mt-2">Logic Gates:</div>
+          {['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'].map(type => (
+            <button
+              key={type}
+              onClick={() => addComponent(type, 100 + Math.random() * 200, 100 + Math.random() * 200)}
+              className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+            >
+              {type}
+            </button>
+          ))}
+          
+          <div className="text-xs text-slate-300 font-semibold mt-2">I/O:</div>
+          {['SWITCH', 'DIP_SWITCH', 'LED', 'SEVEN_SEG'].map(type => (
+            <button
+              key={type}
+              onClick={() => addComponent(type, 100 + Math.random() * 200, 100 + Math.random() * 200)}
+              className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm"
+            >
+              {type.replace('_', ' ')}
+            </button>
+          ))}
+          
+          <div className="text-xs text-slate-300 font-semibold mt-2">Sequential:</div>
+          {['REGISTER', 'COUNTER', 'SHIFT_REG', 'MEMORY'].map(type => (
+            <button
+              key={type}
+              onClick={() => addComponent(type, 100 + Math.random() * 200, 100 + Math.random() * 200)}
+              className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm"
+            >
+              {type.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <div className="flex-1 overflow-auto bg-slate-900" ref={containerRef}>
+        <svg
+          ref={canvasRef}
+          width="2000"
+          height="2000"
+          className="w-full h-full"
+          onMouseDown={handleCanvasMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{ cursor: panning ? 'grabbing' : 'default' }}
+        >
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="1" cy="1" r="1" fill="#334155" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+          
+          <g transform={`translate(${panOffset.x}, ${panOffset.y})`}>
+            {renderWires()}
+            {components.map(renderComponent)}
+          </g>
+        </svg>
+      </div>
+      
+      <div className="bg-slate-800 border-t border-slate-700 p-2 text-xs text-slate-300">
+        <strong>Controls:</strong> <span className="text-blue-400">Drag components</span> to move them. 
+        <span className="text-cyan-400"> Click & drag empty space</span> to pan the canvas.
+        <span className="text-green-400"> Combinational logic</span> (gates, switches, LEDs) updates instantly.
+        <span className="text-purple-400"> Sequential components</span> (registers, counters) update on clock edges.
+      </div>
+    </div>
+  );
+};
+
+export default LogicSimulator;

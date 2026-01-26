@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Logic Circuit Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .toolbar {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 12px;
+        }
+
+        .toolbar-content {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar-section {
+            display: flex;
+            gap: 8px;
+            border-right: 1px solid #334155;
+            padding-right: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-blue {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-blue:hover {
+            background: #2563eb;
+        }
+
+        .btn-green {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-green:hover {
+            background: #059669;
+        }
+
+        .btn-purple {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-purple:hover {
+            background: #7c3aed;
+        }
+
+        .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-top: 8px;
+        }
+
+        .error-msg {
+            padding: 8px 12px;
+            background: #7f1d1d;
+            color: #fecaca;
+            border-radius: 4px;
+            border: 1px solid #991b1b;
+            font-size: 13px;
+        }
+
+        .canvas-container {
+            flex: 1;
+            overflow: auto;
+            background: #0f172a;
+            position: relative;
+        }
+
+        #canvas {
+            display: block;
+        }
+
+        .footer {
+            background: #1e293b;
+            border-top: 1px solid #334155;
+            padding: 8px 12px;
+            font-size: 11px;
+            color: #cbd5e1;
+        }
+
+        .footer strong {
+            color: #e2e8f0;
+        }
+
+        .color-blue { color: #60a5fa; }
+        .color-cyan { color: #22d3ee; }
+        .color-green { color: #4ade80; }
+        .color-purple { color: #a78bfa; }
+
+        #canvas text {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .btn-dark {
+            background: #1f2937;
+            color: white;
+            border: 1px solid #374151;
+        }
+
+        .btn-dark:hover {
+            background: #374151;
+        }
+
+        .btn-dark:disabled {
+            background: #4b5563;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .chips-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .chips-dropdown-content {
+            display: none;
+            position: absolute;
+            background: #1e293b;
+            min-width: 200px;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            z-index: 1000;
+            top: 100%;
+            left: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chips-dropdown-content.show {
+            display: block;
+        }
+
+        .chip-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #334155;
+        }
+
+        .chip-item:hover {
+            background: #334155;
+        }
+
+        .chip-item:last-child {
+            border-bottom: none;
+        }
+
+        .chip-item-name {
+            flex: 1;
+            color: #e2e8f0;
+        }
+
+        .chip-delete-btn {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+        }
+
+        .chip-delete-btn:hover {
+            background: #dc2626;
+        }
+
+        .no-chips-msg {
+            padding: 12px;
+            color: #9ca3af;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        #exit-chip-btn {
+            display: none;
+        }
+
+        #exit-chip-btn.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <div class="toolbar-content">
+                <div class="toolbar-section">
+                    <button class="btn-primary" onclick="app.nextCycle()">⚡ Clock Cycle (<span id="cycle">0</span>)</button>
+                    <button class="btn-danger" onclick="app.reset()">↻ Reset</button>
+                </div>
+
+                <div id="error-container" style="display: none;">
+                    <div class="error-msg">⚠️ <span id="error-text"></span></div>
+                </div>
+
+                <span class="label">Logic Gates:</span>
+                <button class="btn-blue" onclick="app.addComponent('AND')">AND</button>
+                <button class="btn-blue" onclick="app.addComponent('OR')">OR</button>
+                <button class="btn-blue" onclick="app.addComponent('NOT')">NOT</button>
+                <button class="btn-blue" onclick="app.addComponent('NAND')">NAND</button>
+                <button class="btn-blue" onclick="app.addComponent('NOR')">NOR</button>
+                <button class="btn-blue" onclick="app.addComponent('XOR')">XOR</button>
+
+                <span class="label">I/O:</span>
+                <button class="btn-green" onclick="app.addComponent('SWITCH')">SWITCH</button>
+                <button class="btn-green" onclick="app.addComponent('DIP_SWITCH')">DIP SWITCH</button>
+                <button class="btn-green" onclick="app.addComponent('LED')">LED</button>
+                <button class="btn-green" onclick="app.addComponent('SEVEN_SEG')">SEVEN SEG</button>
+
+                <span class="label">Sequential:</span>
+                <button class="btn-purple" onclick="app.addComponent('REGISTER')">REGISTER</button>
+                <button class="btn-purple" onclick="app.addComponent('COUNTER')">COUNTER</button>
+                <button class="btn-purple" onclick="app.addComponent('SHIFT_REG')">SHIFT REG</button>
+                <button class="btn-purple" onclick="app.addComponent('MEMORY')">MEMORY</button>
+
+                <span class="label">Chip:</span>
+                <button class="btn-green" onclick="app.addComponent('IN')">IN</button>
+                <button class="btn-green" onclick="app.addComponent('OUT')">OUT</button>
+                <button id="save-chip-btn" class="btn-dark" onclick="app.saveChip()">SAVE</button>
+                <div class="chips-dropdown">
+                    <button class="btn-dark" onclick="app.toggleChipsDropdown()">CHIPS</button>
+                    <div id="chips-dropdown" class="chips-dropdown-content"></div>
+                </div>
+                <button id="exit-chip-btn" class="btn-danger" onclick="app.exitChip()">EXIT CHIP</button>
+            </div>
+        </div>
+
+        <div class="canvas-container">
+            <svg id="canvas" width="2000" height="2000">
+                <defs>
+                    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <circle cx="1" cy="1" r="1" fill="#334155" />
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+                <g id="main-group"></g>
+            </svg>
+        </div>
+
+        <div class="footer">
+            <strong>Controls:</strong> <span class="color-blue">Drag components</span> to move them. 
+            <span class="color-cyan">Click & drag empty space</span> to pan the canvas.
+            <span class="color-green">Combinational logic</span> (gates, switches, LEDs) updates instantly.
+            <span class="color-purple">Sequential components</span> (registers, counters) update on clock edges.
+        </div>
+    </div>
+
+    <script>
+        const componentTypes = {
+            AND: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+            OR: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+            NOT: { inputs: 1, outputs: 1, width: 60, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+            NAND: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+            NOR: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+            XOR: { inputs: 2, outputs: 1, width: 80, height: 60, color: '#3b82f6', category: 'gates', combinational: true },
+            SWITCH: { inputs: 0, outputs: 1, width: 50, height: 40, color: '#10b981', category: 'io', combinational: true },
+            DIP_SWITCH: { inputs: 0, outputs: 4, width: 60, height: 100, color: '#10b981', category: 'io', combinational: true },
+            LED: { inputs: 1, outputs: 0, width: 40, height: 40, color: '#334444', category: 'io', combinational: true },
+            SEVEN_SEG: { inputs: 7, outputs: 0, width: 80, height: 120, color: '#444444', category: 'io', combinational: true },
+            IN: { inputs: 0, outputs: 1, width: 50, height: 50, color: '#10b981', category: 'chip', combinational: true },
+            OUT: { inputs: 1, outputs: 0, width: 50, height: 50, color: '#8b4513', category: 'chip', combinational: true },
+            REGISTER: { inputs: 5, outputs: 4, width: 100, height: 120, color: '#8b5cf6', category: 'memory', combinational: false },
+            COUNTER: { inputs: 2, outputs: 4, width: 100, height: 100, color: '#8b5cf6', category: 'memory', combinational: false },
+            MEMORY: { inputs: 9, outputs: 4, width: 120, height: 160, color: '#8b5cf6', category: 'memory', combinational: false },
+            SHIFT_REG: { inputs: 3, outputs: 4, width: 100, height: 100, color: '#8b5cf6', category: 'memory', combinational: false },
+        };
+
+        const app = {
+            components: [],
+            wires: [],
+            cycle: 0,
+            wireStart: null,
+            dragging: null,
+            panning: false,
+            panOffset: { x: 0, y: 0 },
+            panStart: { x: 0, y: 0 },
+            simulationError: null,
+            savedChips: {},
+            editingChip: null,
+            mainDesign: null,
+
+            init() {
+                this.canvas = document.getElementById('canvas');
+                this.mainGroup = document.getElementById('main-group');
+                this.loadChips();
+                this.setupEventListeners();
+            },
+
+            loadChips() {
+                const saved = localStorage.getItem('savedChips');
+                if (saved) {
+                    this.savedChips = JSON.parse(saved);
+                }
+            },
+
+            saveChipsToStorage() {
+                localStorage.setItem('savedChips', JSON.stringify(this.savedChips));
+            },
+
+            saveChip() {
+                // Verifică dacă există cel puțin un IN și un OUT
+                const inCount = this.components.filter(c => c.type === 'IN').length;
+                const outCount = this.components.filter(c => c.type === 'OUT').length;
+                
+                if (inCount === 0 || outCount === 0) {
+                    alert('Pentru a salva un chip, trebuie să ai cel puțin o componentă IN și una OUT!');
+                    return;
+                }
+                
+                // Cere numele chipului
+                const name = prompt('Introdu numele chipului (doar litere și cifre):');
+                if (!name) return;
+                
+                // Validează numele
+                if (!/^[a-zA-Z0-9]+$/.test(name)) {
+                    alert('Numele poate conține doar litere și cifre!');
+                    return;
+                }
+                
+                // Verifică dacă numele există deja
+                if (this.savedChips[name]) {
+                    alert('Un chip cu acest nume există deja!');
+                    return;
+                }
+                
+                // Salvează chipul
+                this.savedChips[name] = {
+                    name: name,
+                    components: JSON.parse(JSON.stringify(this.components)),
+                    wires: JSON.parse(JSON.stringify(this.wires)),
+                    inputs: inCount,
+                    outputs: outCount
+                };
+                
+                this.saveChipsToStorage();
+                alert('Chipul "' + name + '" a fost salvat!');
+            },
+
+            toggleChipsDropdown() {
+                const dropdown = document.getElementById('chips-dropdown');
+                dropdown.classList.toggle('show');
+                this.renderChipsDropdown();
+            },
+
+            renderChipsDropdown() {
+                const dropdown = document.getElementById('chips-dropdown');
+                const chipNames = Object.keys(this.savedChips);
+                
+                if (chipNames.length === 0) {
+                    dropdown.innerHTML = '<div class="no-chips-msg">Niciun chip salvat</div>';
+                    return;
+                }
+                
+                dropdown.innerHTML = chipNames.map(name => `
+                    <div class="chip-item">
+                        <span class="chip-item-name" onclick="app.placeChip('${name}')">${name}</span>
+                        <button class="chip-delete-btn" onclick="event.stopPropagation(); app.deleteChip('${name}')">×</button>
+                    </div>
+                `).join('');
+            },
+
+            deleteChip(name) {
+                if (confirm('Ești sigur că vrei să ștergi chipul "' + name + '"?')) {
+                    delete this.savedChips[name];
+                    this.saveChipsToStorage();
+                    this.renderChipsDropdown();
+                }
+            },
+
+            placeChip(name) {
+                const chip = this.savedChips[name];
+                if (!chip) return;
+                
+                // Închide dropdown-ul
+                document.getElementById('chips-dropdown').classList.remove('show');
+                
+                // Calculează dimensiunile bazate pe numărul de inputuri/outputuri
+                const height = Math.max(80, Math.max(chip.inputs, chip.outputs) * 25 + 40);
+                const width = 100;
+                
+                // Calculează poziția vizibilă pe ecran
+                const viewX = -this.panOffset.x + 100 + Math.random() * 200;
+                const viewY = -this.panOffset.y + 100 + Math.random() * 200;
+                
+                const component = {
+                    id: Date.now() + Math.random(),
+                    type: 'CHIP',
+                    chipName: name,
+                    x: viewX,
+                    y: viewY,
+                    width: width,
+                    height: height,
+                    color: '#1f2937',
+                    inputs: chip.inputs,
+                    outputs: chip.outputs,
+                    category: 'custom',
+                    combinational: true,
+                    // Clonează componentele și wire-urile interne
+                    internalComponents: JSON.parse(JSON.stringify(chip.components)),
+                    internalWires: JSON.parse(JSON.stringify(chip.wires)),
+                    inputValues: new Array(chip.inputs).fill(false),
+                    outputValues: new Array(chip.outputs).fill(false),
+                    state: null
+                };
+                
+                // Regenerează ID-urile pentru componentele interne
+                const idMap = new Map();
+                component.internalComponents.forEach(c => {
+                    const oldId = c.id;
+                    c.id = Date.now() + Math.random();
+                    idMap.set(oldId, c.id);
+                });
+                
+                // Actualizează referințele în wire-uri
+                component.internalWires.forEach(w => {
+                    w.from.compId = idMap.get(w.from.compId);
+                    w.to.compId = idMap.get(w.to.compId);
+                });
+                
+                this.components.push(component);
+                this.render();
+            },
+
+            enterChip(compId) {
+                const comp = this.components.find(c => c.id === compId);
+                if (!comp || comp.type !== 'CHIP') return;
+                
+                // Salvează designul principal
+                this.mainDesign = {
+                    components: this.components,
+                    wires: this.wires,
+                    panOffset: { ...this.panOffset }
+                };
+                
+                this.editingChip = comp;
+                
+                // Încarcă componentele interne ale chipului
+                this.components = comp.internalComponents;
+                this.wires = comp.internalWires;
+                this.panOffset = { x: 0, y: 0 };
+                
+                // Afișează butonul EXIT CHIP
+                document.getElementById('exit-chip-btn').classList.add('show');
+                
+                this.render();
+            },
+
+            exitChip() {
+                if (!this.editingChip || !this.mainDesign) return;
+                
+                // Salvează modificările în chip
+                this.editingChip.internalComponents = this.components;
+                this.editingChip.internalWires = this.wires;
+                
+                // Actualizează și chipul salvat în storage
+                if (this.savedChips[this.editingChip.chipName]) {
+                    this.savedChips[this.editingChip.chipName].components = JSON.parse(JSON.stringify(this.components));
+                    this.savedChips[this.editingChip.chipName].wires = JSON.parse(JSON.stringify(this.wires));
+                    this.saveChipsToStorage();
+                }
+                
+                // Restaurează designul principal
+                this.components = this.mainDesign.components;
+                this.wires = this.mainDesign.wires;
+                this.panOffset = this.mainDesign.panOffset;
+                
+                this.editingChip = null;
+                this.mainDesign = null;
+                
+                // Ascunde butonul EXIT CHIP
+                document.getElementById('exit-chip-btn').classList.remove('show');
+                
+                this.render();
+            },
+
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+                window.addEventListener('mouseup', () => this.handleMouseUp());
+                
+                // Închide dropdown-ul chips când se face click în altă parte
+                document.addEventListener('click', (e) => {
+                    const dropdown = document.getElementById('chips-dropdown');
+                    const chipsBtn = e.target.closest('.chips-dropdown');
+                    if (!chipsBtn && dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            },
+
+            addComponent(type) {
+                const config = componentTypes[type];
+                // Calculează poziția vizibilă pe ecran ținând cont de panning
+                const viewX = -this.panOffset.x + 100 + Math.random() * 200;
+                const viewY = -this.panOffset.y + 100 + Math.random() * 200;
+                const component = {
+                    id: Date.now() + Math.random(),
+                    type,
+                    x: viewX,
+                    y: viewY,
+                    ...config,
+                    state: type === 'SWITCH' ? false : 
+                           type === 'IN' ? false :
+                           type === 'DIP_SWITCH' ? [false, false, false, false] :
+                           type === 'REGISTER' ? [false, false, false, false] :
+                           type === 'COUNTER' ? 0 :
+                           type === 'SHIFT_REG' ? [false, false, false, false] :
+                           type === 'MEMORY' ? new Array(16).fill(0) :
+                           null,
+                    inputValues: new Array(config.inputs).fill(false),
+                    outputValues: new Array(config.outputs).fill(false),
+                };
+                this.components.push(component);
+                this.render();
+            },
+
+            deleteComponent(compId) {
+                this.components = this.components.filter(c => c.id !== compId);
+                this.wires = this.wires.filter(w => w.from.compId !== compId && w.to.compId !== compId);
+                this.render();
+            },
+
+            evaluateGate(type, inputs) {
+                switch(type) {
+                    case 'AND': return inputs.every(v => v);
+                    case 'OR': return inputs.some(v => v);
+                    case 'NOT': return !inputs[0];
+                    case 'NAND': return !inputs.every(v => v);
+                    case 'NOR': return !inputs.some(v => v);
+                    case 'XOR': return inputs.filter(v => v).length % 2 === 1;
+                    default: return false;
+                }
+            },
+
+            simulateChip(chip) {
+                if (!chip.internalComponents || !chip.internalWires) return;
+                
+                // Găsește componentele IN și OUT interne
+                const inComps = chip.internalComponents.filter(c => c.type === 'IN');
+                const outComps = chip.internalComponents.filter(c => c.type === 'OUT');
+                
+                // Transferă valorile de la inputurile chipului la componentele IN
+                inComps.forEach((inComp, i) => {
+                    if (i < chip.inputValues.length) {
+                        inComp.state = chip.inputValues[i];
+                        inComp.outputValues[0] = chip.inputValues[i];
+                    }
+                });
+                
+                // Simulează componentele interne (mai multe treceri)
+                const MAX_PASSES = 10;
+                for (let pass = 0; pass < MAX_PASSES; pass++) {
+                    let changed = false;
+                    
+                    chip.internalComponents.forEach(comp => {
+                        if (!comp.combinational) return;
+                        
+                        const oldOutputs = JSON.stringify(comp.outputValues);
+                        
+                        if (comp.type === 'SWITCH' || comp.type === 'IN') {
+                            comp.outputValues[0] = comp.state;
+                        } else if (comp.type === 'DIP_SWITCH') {
+                            comp.outputValues = [...comp.state];
+                        } else if (['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'].includes(comp.type)) {
+                            comp.outputValues[0] = this.evaluateGate(comp.type, comp.inputValues);
+                        }
+                        
+                        if (oldOutputs !== JSON.stringify(comp.outputValues)) {
+                            changed = true;
+                        }
+                    });
+                    
+                    // Propagă semnalele prin wire-uri interne
+                    chip.internalComponents.forEach(comp => {
+                        chip.internalWires.forEach(wire => {
+                            if (wire.from.compId === comp.id) {
+                                const targetComp = chip.internalComponents.find(c => c.id === wire.to.compId);
+                                if (targetComp && wire.to.pin < targetComp.inputValues.length) {
+                                    targetComp.inputValues[wire.to.pin] = comp.outputValues[wire.from.pin] || false;
+                                }
+                            }
+                        });
+                    });
+                    
+                    if (!changed) break;
+                }
+                
+                // Transferă valorile de la componentele OUT la outputurile chipului
+                outComps.forEach((outComp, i) => {
+                    if (i < chip.outputValues.length) {
+                        chip.outputValues[i] = outComp.inputValues[0] || false;
+                    }
+                });
+            },
+
+            getEvaluationOrder() {
+                const graph = new Map();
+                const inDegree = new Map();
+                
+                this.components.forEach(comp => {
+                    graph.set(comp.id, []);
+                    inDegree.set(comp.id, 0);
+                });
+                
+                this.wires.forEach(wire => {
+                    const fromComp = this.components.find(c => c.id === wire.from.compId);
+                    const toComp = this.components.find(c => c.id === wire.to.compId);
+                    
+                    if (fromComp && toComp && fromComp.combinational) {
+                        graph.get(wire.from.compId).push(wire.to.compId);
+                        inDegree.set(wire.to.compId, inDegree.get(wire.to.compId) + 1);
+                    }
+                });
+                
+                const queue = [];
+                const result = [];
+                
+                inDegree.forEach((degree, id) => {
+                    if (degree === 0) queue.push(id);
+                });
+                
+                let iterations = 0;
+                const maxIterations = this.components.length * 2;
+                
+                while (queue.length > 0 && iterations < maxIterations) {
+                    iterations++;
+                    const current = queue.shift();
+                    result.push(current);
+                    
+                    graph.get(current).forEach(neighbor => {
+                        inDegree.set(neighbor, inDegree.get(neighbor) - 1);
+                        if (inDegree.get(neighbor) === 0) {
+                            queue.push(neighbor);
+                        }
+                    });
+                }
+                
+                if (result.length < this.components.filter(c => c.combinational).length) {
+                    return null;
+                }
+                
+                return result;
+            },
+
+            propagateCombinational() {
+                const order = this.getEvaluationOrder();
+                
+                if (!order) {
+                    this.setError("Combinational loop detected! Please break the feedback loop.");
+                    return;
+                }
+                
+                this.setError(null);
+                
+                const MAX_PASSES = 10;
+                for (let pass = 0; pass < MAX_PASSES; pass++) {
+                    let changed = false;
+                    
+                    order.forEach(compId => {
+                        const comp = this.components.find(c => c.id === compId);
+                        if (!comp || !comp.combinational) return;
+                        
+                        const oldOutputs = JSON.stringify(comp.outputValues);
+                        
+                        if (comp.type === 'SWITCH' || comp.type === 'IN') {
+                            comp.outputValues[0] = comp.state;
+                        } else if (comp.type === 'DIP_SWITCH') {
+                            comp.outputValues = [...comp.state];
+                        } else if (['AND', 'OR', 'NOT', 'NAND', 'NOR', 'XOR'].includes(comp.type)) {
+                            comp.outputValues[0] = this.evaluateGate(comp.type, comp.inputValues);
+                        } else if (comp.type === 'CHIP') {
+                            // Simulare internă a chipului
+                            this.simulateChip(comp);
+                        }
+                        
+                        if (oldOutputs !== JSON.stringify(comp.outputValues)) {
+                            changed = true;
+                        }
+                    });
+                    
+                    this.components.forEach(comp => {
+                        this.wires.forEach(wire => {
+                            if (wire.from.compId === comp.id) {
+                                const targetComp = this.components.find(c => c.id === wire.to.compId);
+                                if (targetComp && wire.to.pin < targetComp.inputValues.length) {
+                                    targetComp.inputValues[wire.to.pin] = comp.outputValues[wire.from.pin] || false;
+                                }
+                            }
+                        });
+                    });
+                    
+                    if (!changed) break;
+                }
+            },
+
+            updateSequential() {
+                this.components.forEach(comp => {
+                    if (!comp.combinational) {
+                        if (comp.type === 'REGISTER') {
+                            if (comp.inputValues[4]) {
+                                comp.state = comp.inputValues.slice(0, 4);
+                                comp.outputValues = [...comp.state];
+                            } else {
+                                comp.outputValues = [...comp.state];
+                            }
+                        } else if (comp.type === 'COUNTER') {
+                            if (comp.inputValues[1]) {
+                                comp.state = 0;
+                            } else if (comp.inputValues[0]) {
+                                comp.state = (comp.state + 1) % 16;
+                            }
+                            for (let i = 0; i < 4; i++) {
+                                comp.outputValues[i] = (comp.state & (1 << i)) !== 0;
+                            }
+                        } else if (comp.type === 'SHIFT_REG') {
+                            if (comp.inputValues[2]) {
+                                comp.state = [false, false, false, false];
+                            } else if (comp.inputValues[1]) {
+                                comp.state = [comp.inputValues[0], ...comp.state.slice(0, 3)];
+                            }
+                            comp.outputValues = [...comp.state];
+                        } else if (comp.type === 'MEMORY') {
+                            // Inputuri 0-3: adresă (A0-A3), permite 16 locații
+                            const addr = comp.inputValues.slice(0, 4).reduce((acc, bit, i) => acc | (bit ? (1 << i) : 0), 0);
+                            // Inputuri 4-7: date (D0-D3)
+                            const data = comp.inputValues.slice(4, 8).reduce((acc, bit, i) => acc | (bit ? (1 << i) : 0), 0);
+                            // Input 8: CLK - când este activ, scrie datele la adresa specificată
+                            if (comp.inputValues[8]) {
+                                comp.state[addr] = data;
+                            }
+                            // Outputurile afișează întotdeauna valoarea de la adresa curentă
+                            for (let i = 0; i < 4; i++) {
+                                comp.outputValues[i] = (comp.state[addr] & (1 << i)) !== 0;
+                            }
+                        }
+                    }
+                });
+            },
+
+            nextCycle() {
+                this.updateSequential();
+                this.propagateCombinational();
+                this.cycle++;
+                document.getElementById('cycle').textContent = this.cycle;
+                this.render();
+            },
+
+            reset() {
+                this.components = [];
+                this.wires = [];
+                this.cycle = 0;
+                this.wireStart = null;
+                this.simulationError = null;
+                document.getElementById('cycle').textContent = '0';
+                this.setError(null);
+                this.render();
+            },
+
+            setError(msg) {
+                this.simulationError = msg;
+                const container = document.getElementById('error-container');
+                const text = document.getElementById('error-text');
+                if (msg) {
+                    text.textContent = msg;
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                }
+            },
+
+            toggleSwitch(compId) {
+                const comp = this.components.find(c => c.id === compId);
+                if (comp) {
+                    comp.state = !comp.state;
+                    this.propagateCombinational();
+                    this.render();
+                }
+            },
+
+            toggleDipSwitch(compId, index) {
+                const comp = this.components.find(c => c.id === compId);
+                if (comp) {
+                    comp.state[index] = !comp.state[index];
+                    this.propagateCombinational();
+                    this.render();
+                }
+            },
+
+            startWire(compId, pin) {
+                this.wireStart = { compId, pin };
+            },
+
+            endWire(compId, pin) {
+                if (!this.wireStart) return;
+                
+                this.wires.push({
+                    id: Date.now() + Math.random(),
+                    from: this.wireStart,
+                    to: { compId, pin }
+                });
+                this.wireStart = null;
+                this.propagateCombinational();
+                this.render();
+            },
+
+            getPortPosition(comp, pin, isOutput) {
+                const spacing = comp.height / (isOutput ? comp.outputs + 1 : comp.inputs + 1);
+                return {
+                    x: comp.x + (isOutput ? comp.width : 0),
+                    y: comp.y + spacing * (pin + 1)
+                };
+            },
+
+            handleMouseDown(e, compId) {
+                if (e.button === 0) {
+                    e.stopPropagation();
+                    const rect = this.canvas.getBoundingClientRect();
+                    const comp = this.components.find(c => c.id === compId);
+                    
+                    this.dragging = {
+                        id: compId,
+                        offsetX: (e.clientX - rect.left - this.panOffset.x) - comp.x,
+                        offsetY: (e.clientY - rect.top - this.panOffset.y) - comp.y
+                    };
+                }
+            },
+
+            handleMouseMove(e) {
+                if (this.dragging) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const comp = this.components.find(c => c.id === this.dragging.id);
+                    if (comp) {
+                        comp.x = e.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
+                        comp.y = e.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                        this.render();
+                    }
+                } else if (this.panning) {
+                    const dx = e.clientX - this.panStart.x;
+                    const dy = e.clientY - this.panStart.y;
+                    this.panOffset.x += dx;
+                    this.panOffset.y += dy;
+                    this.panStart = { x: e.clientX, y: e.clientY };
+                    this.render();
+                }
+            },
+
+            handleMouseUp() {
+                this.dragging = null;
+                this.panning = false;
+                this.canvas.style.cursor = 'default';
+            },
+
+            handleCanvasMouseDown(e) {
+                if (e.button === 0) {
+                    // Verifică dacă click-ul a fost pe o componentă
+                    const isOnComponent = e.target.closest('[data-component]');
+                    if (!isOnComponent) {
+                        this.panning = true;
+                        this.panStart = { x: e.clientX, y: e.clientY };
+                        this.canvas.style.cursor = 'grabbing';
+                    }
+                }
+            },
+
+            render() {
+                this.mainGroup.innerHTML = '';
+                this.mainGroup.setAttribute('transform', `translate(${this.panOffset.x}, ${this.panOffset.y})`);
+                
+                // Render wires
+                this.wires.forEach(wire => {
+                    const fromComp = this.components.find(c => c.id === wire.from.compId);
+                    const toComp = this.components.find(c => c.id === wire.to.compId);
+                    
+                    if (!fromComp || !toComp) return;
+                    
+                    const start = this.getPortPosition(fromComp, wire.from.pin, true);
+                    const end = this.getPortPosition(toComp, wire.to.pin, false);
+                    
+                    const isActive = fromComp.outputValues[wire.from.pin];
+                    
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', start.x);
+                    line.setAttribute('y1', start.y);
+                    line.setAttribute('x2', end.x);
+                    line.setAttribute('y2', end.y);
+                    line.setAttribute('stroke', isActive ? '#fbbf24' : '#64748b');
+                    line.setAttribute('stroke-width', '3');
+                    line.setAttribute('stroke-linecap', 'round');
+                    this.mainGroup.appendChild(line);
+                });
+                
+                // Render components
+                this.components.forEach(comp => {
+                    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    g.setAttribute('data-component', comp.id);
+                    
+                    // Component body
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', comp.x);
+                    rect.setAttribute('y', comp.y);
+                    rect.setAttribute('width', comp.width);
+                    rect.setAttribute('height', comp.height);
+                    rect.setAttribute('fill', comp.color);
+                    rect.setAttribute('stroke', '#1e293b');
+                    rect.setAttribute('stroke-width', '2');
+                    rect.setAttribute('rx', '4');
+                    rect.style.cursor = this.dragging?.id === comp.id ? 'grabbing' : 'grab';
+                    rect.addEventListener('mousedown', (e) => this.handleMouseDown(e, comp.id));
+                    g.appendChild(rect);
+                    
+                    // Component label
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', comp.x + comp.width / 2);
+                    text.setAttribute('y', comp.y + comp.height / 2);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', 'white');
+                    text.setAttribute('font-size', '12');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    text.style.cursor = this.dragging?.id === comp.id ? 'grabbing' : 'grab';
+                    text.textContent = comp.type;
+                    text.addEventListener('mousedown', (e) => this.handleMouseDown(e, comp.id));
+                    if (comp.type === 'CHIP') {
+                        text.addEventListener('dblclick', (e) => {
+                            e.stopPropagation();
+                            this.enterChip(comp.id);
+                        });
+                    }
+                    g.appendChild(text);
+                    
+                    // Sequential indicator
+                    if (!comp.combinational) {
+                        const clkText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        clkText.setAttribute('x', comp.x + comp.width / 2);
+                        clkText.setAttribute('y', comp.y + comp.height / 2 + 15);
+                        clkText.setAttribute('text-anchor', 'middle');
+                        clkText.setAttribute('fill', 'white');
+                        clkText.setAttribute('font-size', '9');
+                        clkText.style.cursor = this.dragging?.id === comp.id ? 'grabbing' : 'grab';
+                        clkText.textContent = '(CLK)';
+                        clkText.addEventListener('mousedown', (e) => this.handleMouseDown(e, comp.id));
+                        g.appendChild(clkText);
+                    }
+                    
+                    // Input ports
+                    for (let i = 0; i < comp.inputs; i++) {
+                        const pos = this.getPortPosition(comp, i, false);
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', pos.x);
+                        circle.setAttribute('cy', pos.y);
+                        circle.setAttribute('r', '8');
+                        circle.setAttribute('fill', comp.inputValues[i] ? '#fbbf24' : '#64748b');
+                        circle.setAttribute('stroke', '#1e293b');
+                        circle.setAttribute('stroke-width', '2');
+                        circle.style.cursor = 'pointer';
+                        circle.addEventListener('click', () => this.endWire(comp.id, i));
+                        g.appendChild(circle);
+                    }
+                    
+                    // Output ports
+                    for (let i = 0; i < comp.outputs; i++) {
+                        const pos = this.getPortPosition(comp, i, true);
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', pos.x);
+                        circle.setAttribute('cy', pos.y);
+                        circle.setAttribute('r', '8');
+                        circle.setAttribute('fill', comp.outputValues[i] ? '#fbbf24' : '#64748b');
+                        circle.setAttribute('stroke', '#1e293b');
+                        circle.setAttribute('stroke-width', '2');
+                        circle.style.cursor = 'pointer';
+                        circle.addEventListener('click', () => this.startWire(comp.id, i));
+                        g.appendChild(circle);
+                    }
+                    
+                    // Special rendering
+                    if (comp.type === 'SWITCH') {
+                        const switchRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        switchRect.setAttribute('x', comp.x + 10);
+                        switchRect.setAttribute('y', comp.y + 10);
+                        switchRect.setAttribute('width', '30');
+                        switchRect.setAttribute('height', '20');
+                        switchRect.setAttribute('fill', comp.state ? '#10b981' : '#6b7280');
+                        switchRect.setAttribute('stroke', '#1e293b');
+                        switchRect.setAttribute('stroke-width', '2');
+                        switchRect.setAttribute('rx', '2');
+                        switchRect.style.cursor = 'pointer';
+                        switchRect.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.toggleSwitch(comp.id);
+                        });
+                        g.appendChild(switchRect);
+                    }
+                    
+                    if (comp.type === 'DIP_SWITCH') {
+                        comp.state.forEach((s, i) => {
+                            const dipRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                            dipRect.setAttribute('x', comp.x + 15);
+                            dipRect.setAttribute('y', comp.y + 15 + i * 20);
+                            dipRect.setAttribute('width', '30');
+                            dipRect.setAttribute('height', '15');
+                            dipRect.setAttribute('fill', s ? '#10b981' : '#6b7280');
+                            dipRect.setAttribute('stroke', '#1e293b');
+                            dipRect.setAttribute('stroke-width', '2');
+                            dipRect.setAttribute('rx', '2');
+                            dipRect.style.cursor = 'pointer';
+                            dipRect.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                this.toggleDipSwitch(comp.id, i);
+                            });
+                            g.appendChild(dipRect);
+                        });
+                    }
+                    
+                    if (comp.type === 'LED') {
+                        const led = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        led.setAttribute('cx', comp.x + comp.width / 2);
+                        led.setAttribute('cy', comp.y + comp.height / 2);
+                        led.setAttribute('r', '12');
+                        led.setAttribute('fill', comp.inputValues[0] ? '#ef4444' : '#7f1d1d');
+                        led.setAttribute('stroke', '#1e293b');
+                        led.setAttribute('stroke-width', '2');
+                        g.appendChild(led);
+                    }
+                    
+                    if (comp.type === 'SEVEN_SEG') {
+                        // Fundalul display-ului
+                        const segBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        segBg.setAttribute('x', comp.x + 15);
+                        segBg.setAttribute('y', comp.y + 15);
+                        segBg.setAttribute('width', '50');
+                        segBg.setAttribute('height', '90');
+                        segBg.setAttribute('fill', '#1e293b');
+                        segBg.setAttribute('rx', '4');
+                        g.appendChild(segBg);
+                        
+                        // Pozițiile segmentelor pentru un display 7-seg realist
+                        // Ordinea inputurilor: A(sus), B(dreapta-sus), C(dreapta-jos), D(jos), E(stânga-jos), F(stânga-sus), G(mijloc)
+                        const cx = comp.x + 40; // centru X
+                        const cy = comp.y + 60; // centru Y
+                        const segW = 20; // lățime segment orizontal
+                        const segH = 4;  // grosime segment
+                        const segL = 25; // lungime segment vertical
+                        
+                        const segments = [
+                            // A - segment orizontal sus
+                            { x: cx - segW/2, y: cy - 35, w: segW, h: segH, horizontal: true },
+                            // B - segment vertical dreapta-sus
+                            { x: cx + segW/2 - segH, y: cy - 35 + segH, w: segH, h: segL, horizontal: false },
+                            // C - segment vertical dreapta-jos
+                            { x: cx + segW/2 - segH, y: cy + segH, w: segH, h: segL, horizontal: false },
+                            // D - segment orizontal jos
+                            { x: cx - segW/2, y: cy + segL + segH, w: segW, h: segH, horizontal: true },
+                            // E - segment vertical stânga-jos
+                            { x: cx - segW/2, y: cy + segH, w: segH, h: segL, horizontal: false },
+                            // F - segment vertical stânga-sus
+                            { x: cx - segW/2, y: cy - 35 + segH, w: segH, h: segL, horizontal: false },
+                            // G - segment orizontal mijloc
+                            { x: cx - segW/2, y: cy - segH/2, w: segW, h: segH, horizontal: true }
+                        ];
+                        
+                        segments.forEach((seg, i) => {
+                            const active = comp.inputValues[i];
+                            const segment = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                            segment.setAttribute('x', seg.x);
+                            segment.setAttribute('y', seg.y);
+                            segment.setAttribute('width', seg.w);
+                            segment.setAttribute('height', seg.h);
+                            segment.setAttribute('fill', active ? '#ef4444' : '#3f3f46');
+                            segment.setAttribute('rx', '1');
+                            g.appendChild(segment);
+                        });
+                    }
+                    
+                    // Randare IN - componentă rotundă verde cu buton rotund în mijloc
+                    if (comp.type === 'IN') {
+                        // Înlocuim dreptunghiul cu un cerc
+                        rect.setAttribute('rx', '25');
+                        rect.setAttribute('ry', '25');
+                        
+                        // Buton rotund în mijloc pentru toggle
+                        const inButton = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        inButton.setAttribute('cx', comp.x + comp.width / 2);
+                        inButton.setAttribute('cy', comp.y + comp.height / 2);
+                        inButton.setAttribute('r', '12');
+                        inButton.setAttribute('fill', comp.state ? '#22c55e' : '#6b7280');
+                        inButton.setAttribute('stroke', '#1e293b');
+                        inButton.setAttribute('stroke-width', '2');
+                        inButton.style.cursor = 'pointer';
+                        inButton.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.toggleSwitch(comp.id);
+                        });
+                        g.appendChild(inButton);
+                    }
+                    
+                    // Randare OUT - componentă rotundă maro (nu este interactivă)
+                    if (comp.type === 'OUT') {
+                        // Înlocuim dreptunghiul cu un cerc
+                        rect.setAttribute('rx', '25');
+                        rect.setAttribute('ry', '25');
+                        
+                        // Indicator de stare în mijloc
+                        const outIndicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        outIndicator.setAttribute('cx', comp.x + comp.width / 2);
+                        outIndicator.setAttribute('cy', comp.y + comp.height / 2);
+                        outIndicator.setAttribute('r', '12');
+                        outIndicator.setAttribute('fill', comp.inputValues[0] ? '#fbbf24' : '#4a3728');
+                        outIndicator.setAttribute('stroke', '#1e293b');
+                        outIndicator.setAttribute('stroke-width', '2');
+                        g.appendChild(outIndicator);
+                    }
+                    
+                    // Randare CHIP - componentă custom neagră cu nume în centru
+                    if (comp.type === 'CHIP') {
+                        // Suprascrie culoarea și stilul
+                        rect.setAttribute('fill', '#1f2937');
+                        rect.setAttribute('stroke', '#4b5563');
+                        rect.setAttribute('stroke-width', '3');
+                        
+                        // Adaugă dublu-click pentru a intra în chip
+                        rect.addEventListener('dblclick', (e) => {
+                            e.stopPropagation();
+                            this.enterChip(comp.id);
+                        });
+                        
+                        // Actualizează textul să afișeze numele chipului
+                        text.textContent = comp.chipName;
+                    }
+                    
+                    // Delete button
+                    const deleteCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    deleteCircle.setAttribute('cx', comp.x + comp.width - 10);
+                    deleteCircle.setAttribute('cy', comp.y + 10);
+                    deleteCircle.setAttribute('r', '8');
+                    deleteCircle.setAttribute('fill', '#ef4444');
+                    deleteCircle.style.cursor = 'pointer';
+                    deleteCircle.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.deleteComponent(comp.id);
+                    });
+                    g.appendChild(deleteCircle);
+                    
+                    const deleteX = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    deleteX.setAttribute('x', comp.x + comp.width - 10);
+                    deleteX.setAttribute('y', comp.y + 14);
+                    deleteX.setAttribute('text-anchor', 'middle');
+                    deleteX.setAttribute('fill', 'white');
+                    deleteX.setAttribute('font-size', '12');
+                    deleteX.setAttribute('font-weight', 'bold');
+                    deleteX.style.pointerEvents = 'none';
+                    deleteX.textContent = '×';
+                    g.appendChild(deleteX);
+                    
+                    this.mainGroup.appendChild(g);
+                });
+            }
+        };
+
+        // Initialize the app when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
