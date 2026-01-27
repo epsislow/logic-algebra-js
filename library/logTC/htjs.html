@@ -336,6 +336,7 @@
             <span class="color-cyan">Click & drag empty space</span> to pan the canvas.
             <span class="color-green">Combinational logic</span> (gates, switches, LEDs) updates instantly.
             <span class="color-purple">Sequential components</span> (registers, counters) update on clock edges.
+            <br><strong>Debug:</strong> <span id="debug-info">-</span>
         </div>
     </div>
 
@@ -596,6 +597,12 @@
             touchMoved: false,
             isTouchActive: false,
 
+            debug(msg) {
+                const el = document.getElementById('debug-info');
+                if (el) el.textContent = msg;
+                console.log(msg);
+            },
+
             findComponentByDataAttribute(target) {
                 if (!target) return null;
                 const componentGroup = target.closest('[data-component]');
@@ -628,10 +635,10 @@
             handleTouchStart(e) {
                 // Previne evenimente de mouse sintetice
                 e.preventDefault();
+                e.stopPropagation();
                 
                 if (e.touches.length === 1) {
                     const touch = e.touches[0];
-                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
                     const rect = this.canvas.getBoundingClientRect();
                     
                     this.touchStartPos = { x: touch.clientX, y: touch.clientY };
@@ -643,6 +650,8 @@
                         touch.clientX - rect.left,
                         touch.clientY - rect.top
                     );
+                    
+                    this.debug('Start: ' + (comp ? comp.type : 'empty'));
                     
                     // Verifică pentru double tap pe CHIP
                     const now = Date.now();
@@ -666,6 +675,7 @@
                             offsetX: (touch.clientX - rect.left - this.panOffset.x) - comp.x,
                             offsetY: (touch.clientY - rect.top - this.panOffset.y) - comp.y
                         };
+                        this.debug('Drag started: ' + comp.type);
                     } else {
                         // Panning pe zona goală
                         this.panning = true;
@@ -681,6 +691,7 @@
             handleTouchMove(e) {
                 if (e.touches.length === 1) {
                     e.preventDefault();
+                    e.stopPropagation();
                     const touch = e.touches[0];
                     
                     // Detectează dacă s-a mișcat suficient (threshold mai mic)
@@ -692,11 +703,16 @@
                         }
                     }
                     
+                    this.debug('Move: drag=' + !!this.dragging + ' comp=' + (this.dragging?.comp?.type || 'null'));
+                    
                     // ÎNTOTDEAUNA mișcă componenta dacă dragging este setat, indiferent de touchMoved
                     if (this.dragging && this.dragging.comp) {
                         const rect = this.canvas.getBoundingClientRect();
-                        this.dragging.comp.x = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
-                        this.dragging.comp.y = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                        const newX = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
+                        const newY = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                        this.debug('Moving: ' + Math.round(newX) + ',' + Math.round(newY));
+                        this.dragging.comp.x = newX;
+                        this.dragging.comp.y = newY;
                         this.render();
                     } else if (this.panning) {
                         const dx = touch.clientX - this.panStart.x;
@@ -710,6 +726,8 @@
             },
 
             handleTouchEnd(e) {
+                this.debug('End: drag=' + !!this.dragging + ' moved=' + this.touchMoved);
+                
                 const wasDragging = this.dragging !== null;
                 const wasPanning = this.panning;
                 const touch = e.changedTouches[0];
