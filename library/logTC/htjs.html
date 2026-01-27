@@ -594,6 +594,7 @@
             lastTapTarget: null,
             touchStartPos: null,
             touchMoved: false,
+            isTouchActive: false,
 
             findComponentByDataAttribute(target) {
                 const componentGroup = target.closest('[data-component]');
@@ -605,12 +606,16 @@
             },
 
             handleTouchStart(e) {
+                // Previne evenimente de mouse sintetice
+                e.preventDefault();
+                
                 if (e.touches.length === 1) {
                     const touch = e.touches[0];
                     const target = document.elementFromPoint(touch.clientX, touch.clientY);
                     
                     this.touchStartPos = { x: touch.clientX, y: touch.clientY };
                     this.touchMoved = false;
+                    this.isTouchActive = true;
                     
                     // Verifică pentru double tap
                     const now = Date.now();
@@ -618,7 +623,6 @@
                         // Double tap - intră în chip
                         const comp = this.findComponentByDataAttribute(target);
                         if (comp && comp.type === 'CHIP') {
-                            e.preventDefault();
                             this.enterChip(comp.id);
                             this.lastTap = 0;
                             return;
@@ -630,7 +634,6 @@
                     // Caută componenta
                     const comp = this.findComponentByDataAttribute(target);
                     if (comp) {
-                        e.preventDefault();
                         const rect = this.canvas.getBoundingClientRect();
                         // Stochează referința directă la componentă
                         this.dragging = {
@@ -640,13 +643,11 @@
                         };
                     } else {
                         // Panning pe zona goală
-                        e.preventDefault();
                         this.panning = true;
                         this.panStart = { x: touch.clientX, y: touch.clientY };
                     }
                 } else if (e.touches.length === 2) {
                     // Pinch zoom - pentru viitor
-                    e.preventDefault();
                     this.dragging = null;
                     this.panning = false;
                 }
@@ -683,19 +684,31 @@
             },
 
             handleTouchEnd(e) {
+                const wasDragging = this.dragging !== null;
+                const wasPanning = this.panning;
                 const touch = e.changedTouches[0];
                 const target = document.elementFromPoint(touch.clientX, touch.clientY);
                 
-                // Doar dacă nu s-a mișcat (tap scurt) - simulează click
-                if (!this.touchMoved && target) {
-                    // Simulează click pentru elemente interactive (switch, porturi, etc.)
-                    target.click();
-                }
-                
+                // Resetează starea de drag/pan
                 this.dragging = null;
                 this.panning = false;
                 this.touchStartPos = null;
+                
+                // Doar dacă nu s-a mișcat - simulează click pentru elemente interactive
+                if (!this.touchMoved && target) {
+                    // Nu simula click pe body-ul componentei (rect/text), doar pe elemente interactive
+                    const isInteractiveElement = target.style?.cursor === 'pointer';
+                    if (isInteractiveElement) {
+                        target.click();
+                    }
+                }
+                
                 this.touchMoved = false;
+                
+                // Resetează flag-ul touch după un mic delay pentru a preveni mouse events sintetice
+                setTimeout(() => {
+                    this.isTouchActive = false;
+                }, 100);
             },
 
             addComponent(type) {
@@ -1022,6 +1035,9 @@
             },
 
             handleMouseDown(e, compId) {
+                // Ignoră dacă touch este activ (previne evenimente sintetice)
+                if (this.isTouchActive) return;
+                
                 if (e.button === 0) {
                     e.stopPropagation();
                     const rect = this.canvas.getBoundingClientRect();
@@ -1058,6 +1074,9 @@
             },
 
             handleCanvasMouseDown(e) {
+                // Ignoră dacă touch este activ
+                if (this.isTouchActive) return;
+                
                 if (e.button === 0) {
                     // Verifică dacă click-ul a fost pe o componentă
                     const isOnComponent = e.target.closest('[data-component]');
