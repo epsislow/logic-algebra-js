@@ -150,6 +150,34 @@
             -ms-user-select: none;
         }
 
+        /* Touch support pentru mobile */
+        #canvas {
+            touch-action: none;
+            -webkit-touch-callout: none;
+        }
+
+        .canvas-container {
+            touch-action: none;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Butoane mai mari pentru touch */
+        @media (max-width: 768px) {
+            button {
+                padding: 10px 14px;
+                font-size: 14px;
+                min-height: 44px;
+            }
+            
+            .toolbar-content {
+                gap: 6px;
+            }
+            
+            .label {
+                font-size: 10px;
+            }
+        }
+
         .btn-dark {
             background: #1f2937;
             color: white;
@@ -540,10 +568,16 @@
             },
 
             setupEventListeners() {
+                // Mouse events
                 this.canvas.addEventListener('mousedown', (e) => this.handleCanvasMouseDown(e));
                 this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
                 this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
                 window.addEventListener('mouseup', () => this.handleMouseUp());
+                
+                // Touch events pentru mobile
+                this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+                this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
                 
                 // Închide dropdown-ul chips când se face click în altă parte
                 document.addEventListener('click', (e) => {
@@ -553,6 +587,99 @@
                         dropdown.classList.remove('show');
                     }
                 });
+            },
+
+            // Touch handling
+            lastTap: 0,
+            lastTapTarget: null,
+
+            handleTouchStart(e) {
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    
+                    // Verifică pentru double tap
+                    const now = Date.now();
+                    if (now - this.lastTap < 300 && this.lastTapTarget === target) {
+                        // Double tap - intră în chip
+                        const componentGroup = target.closest('[data-component]');
+                        if (componentGroup) {
+                            const compId = parseFloat(componentGroup.getAttribute('data-component'));
+                            const comp = this.components.find(c => c.id === compId);
+                            if (comp && comp.type === 'CHIP') {
+                                e.preventDefault();
+                                this.enterChip(compId);
+                                return;
+                            }
+                        }
+                    }
+                    this.lastTap = now;
+                    this.lastTapTarget = target;
+                    
+                    // Simulează mousedown
+                    const componentGroup = target.closest('[data-component]');
+                    if (componentGroup) {
+                        const compId = parseFloat(componentGroup.getAttribute('data-component'));
+                        const comp = this.components.find(c => c.id === compId);
+                        if (comp) {
+                            e.preventDefault();
+                            const rect = this.canvas.getBoundingClientRect();
+                            this.dragging = {
+                                id: compId,
+                                offsetX: (touch.clientX - rect.left - this.panOffset.x) - comp.x,
+                                offsetY: (touch.clientY - rect.top - this.panOffset.y) - comp.y
+                            };
+                        }
+                    } else {
+                        // Panning pe zona goală
+                        e.preventDefault();
+                        this.panning = true;
+                        this.panStart = { x: touch.clientX, y: touch.clientY };
+                    }
+                } else if (e.touches.length === 2) {
+                    // Pinch zoom - pentru viitor
+                    e.preventDefault();
+                }
+            },
+
+            handleTouchMove(e) {
+                if (e.touches.length === 1) {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    
+                    if (this.dragging) {
+                        const rect = this.canvas.getBoundingClientRect();
+                        const comp = this.components.find(c => c.id === this.dragging.id);
+                        if (comp) {
+                            comp.x = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
+                            comp.y = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                            this.render();
+                        }
+                    } else if (this.panning) {
+                        const dx = touch.clientX - this.panStart.x;
+                        const dy = touch.clientY - this.panStart.y;
+                        this.panOffset.x += dx;
+                        this.panOffset.y += dy;
+                        this.panStart = { x: touch.clientX, y: touch.clientY };
+                        this.render();
+                    }
+                }
+            },
+
+            handleTouchEnd(e) {
+                // Verifică dacă a fost un tap scurt (pentru toggle switch/IN sau click pe porturi)
+                if (!this.dragging && !this.panning) {
+                    const touch = e.changedTouches[0];
+                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    
+                    // Simulează click pentru elemente interactive
+                    if (target) {
+                        target.click();
+                    }
+                }
+                
+                this.dragging = null;
+                this.panning = false;
             },
 
             addComponent(type) {
