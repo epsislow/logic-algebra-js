@@ -592,44 +592,52 @@
             // Touch handling
             lastTap: 0,
             lastTapTarget: null,
+            touchStartPos: null,
+            touchMoved: false,
+
+            findComponentByDataAttribute(target) {
+                const componentGroup = target.closest('[data-component]');
+                if (!componentGroup) return null;
+                
+                const compIdStr = componentGroup.getAttribute('data-component');
+                // Caută componenta comparând ID-urile ca string pentru a evita probleme de precizie
+                return this.components.find(c => String(c.id) === compIdStr);
+            },
 
             handleTouchStart(e) {
                 if (e.touches.length === 1) {
                     const touch = e.touches[0];
                     const target = document.elementFromPoint(touch.clientX, touch.clientY);
                     
+                    this.touchStartPos = { x: touch.clientX, y: touch.clientY };
+                    this.touchMoved = false;
+                    
                     // Verifică pentru double tap
                     const now = Date.now();
                     if (now - this.lastTap < 300 && this.lastTapTarget === target) {
                         // Double tap - intră în chip
-                        const componentGroup = target.closest('[data-component]');
-                        if (componentGroup) {
-                            const compId = parseFloat(componentGroup.getAttribute('data-component'));
-                            const comp = this.components.find(c => c.id === compId);
-                            if (comp && comp.type === 'CHIP') {
-                                e.preventDefault();
-                                this.enterChip(compId);
-                                return;
-                            }
+                        const comp = this.findComponentByDataAttribute(target);
+                        if (comp && comp.type === 'CHIP') {
+                            e.preventDefault();
+                            this.enterChip(comp.id);
+                            this.lastTap = 0;
+                            return;
                         }
                     }
                     this.lastTap = now;
                     this.lastTapTarget = target;
                     
-                    // Simulează mousedown
-                    const componentGroup = target.closest('[data-component]');
-                    if (componentGroup) {
-                        const compId = parseFloat(componentGroup.getAttribute('data-component'));
-                        const comp = this.components.find(c => c.id === compId);
-                        if (comp) {
-                            e.preventDefault();
-                            const rect = this.canvas.getBoundingClientRect();
-                            this.dragging = {
-                                id: compId,
-                                offsetX: (touch.clientX - rect.left - this.panOffset.x) - comp.x,
-                                offsetY: (touch.clientY - rect.top - this.panOffset.y) - comp.y
-                            };
-                        }
+                    // Caută componenta
+                    const comp = this.findComponentByDataAttribute(target);
+                    if (comp) {
+                        e.preventDefault();
+                        const rect = this.canvas.getBoundingClientRect();
+                        // Stochează referința directă la componentă
+                        this.dragging = {
+                            comp: comp,
+                            offsetX: (touch.clientX - rect.left - this.panOffset.x) - comp.x,
+                            offsetY: (touch.clientY - rect.top - this.panOffset.y) - comp.y
+                        };
                     } else {
                         // Panning pe zona goală
                         e.preventDefault();
@@ -639,6 +647,8 @@
                 } else if (e.touches.length === 2) {
                     // Pinch zoom - pentru viitor
                     e.preventDefault();
+                    this.dragging = null;
+                    this.panning = false;
                 }
             },
 
@@ -647,14 +657,20 @@
                     e.preventDefault();
                     const touch = e.touches[0];
                     
-                    if (this.dragging) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        const comp = this.components.find(c => c.id === this.dragging.id);
-                        if (comp) {
-                            comp.x = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
-                            comp.y = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
-                            this.render();
+                    // Detectează dacă s-a mișcat suficient
+                    if (this.touchStartPos) {
+                        const dx = Math.abs(touch.clientX - this.touchStartPos.x);
+                        const dy = Math.abs(touch.clientY - this.touchStartPos.y);
+                        if (dx > 5 || dy > 5) {
+                            this.touchMoved = true;
                         }
+                    }
+                    
+                    if (this.dragging && this.dragging.comp) {
+                        const rect = this.canvas.getBoundingClientRect();
+                        this.dragging.comp.x = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
+                        this.dragging.comp.y = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                        this.render();
                     } else if (this.panning) {
                         const dx = touch.clientX - this.panStart.x;
                         const dy = touch.clientY - this.panStart.y;
@@ -667,19 +683,19 @@
             },
 
             handleTouchEnd(e) {
-                // Verifică dacă a fost un tap scurt (pentru toggle switch/IN sau click pe porturi)
-                if (!this.dragging && !this.panning) {
-                    const touch = e.changedTouches[0];
-                    const target = document.elementFromPoint(touch.clientX, touch.clientY);
-                    
-                    // Simulează click pentru elemente interactive
-                    if (target) {
-                        target.click();
-                    }
+                const touch = e.changedTouches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                
+                // Doar dacă nu s-a mișcat (tap scurt) - simulează click
+                if (!this.touchMoved && target) {
+                    // Simulează click pentru elemente interactive (switch, porturi, etc.)
+                    target.click();
                 }
                 
                 this.dragging = null;
                 this.panning = false;
+                this.touchStartPos = null;
+                this.touchMoved = false;
             },
 
             addComponent(type) {
@@ -1012,7 +1028,7 @@
                     const comp = this.components.find(c => c.id === compId);
                     
                     this.dragging = {
-                        id: compId,
+                        comp: comp,
                         offsetX: (e.clientX - rect.left - this.panOffset.x) - comp.x,
                         offsetY: (e.clientY - rect.top - this.panOffset.y) - comp.y
                     };
@@ -1020,14 +1036,11 @@
             },
 
             handleMouseMove(e) {
-                if (this.dragging) {
+                if (this.dragging && this.dragging.comp) {
                     const rect = this.canvas.getBoundingClientRect();
-                    const comp = this.components.find(c => c.id === this.dragging.id);
-                    if (comp) {
-                        comp.x = e.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
-                        comp.y = e.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
-                        this.render();
-                    }
+                    this.dragging.comp.x = e.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
+                    this.dragging.comp.y = e.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                    this.render();
                 } else if (this.panning) {
                     const dx = e.clientX - this.panStart.x;
                     const dy = e.clientY - this.panStart.y;
@@ -1098,7 +1111,7 @@
                     rect.setAttribute('stroke', '#1e293b');
                     rect.setAttribute('stroke-width', '2');
                     rect.setAttribute('rx', '4');
-                    rect.style.cursor = this.dragging?.id === comp.id ? 'grabbing' : 'grab';
+                    rect.style.cursor = this.dragging?.comp?.id === comp.id ? 'grabbing' : 'grab';
                     rect.addEventListener('mousedown', (e) => this.handleMouseDown(e, comp.id));
                     g.appendChild(rect);
                     
@@ -1111,7 +1124,7 @@
                     text.setAttribute('font-size', '12');
                     text.setAttribute('font-weight', 'bold');
                     text.setAttribute('dominant-baseline', 'middle');
-                    text.style.cursor = this.dragging?.id === comp.id ? 'grabbing' : 'grab';
+                    text.style.cursor = this.dragging?.comp?.id === comp.id ? 'grabbing' : 'grab';
                     text.textContent = comp.type;
                     text.addEventListener('mousedown', (e) => this.handleMouseDown(e, comp.id));
                     if (comp.type === 'CHIP') {
@@ -1130,7 +1143,7 @@
                         clkText.setAttribute('text-anchor', 'middle');
                         clkText.setAttribute('fill', 'white');
                         clkText.setAttribute('font-size', '9');
-                        clkText.style.cursor = this.dragging?.id === comp.id ? 'grabbing' : 'grab';
+                        clkText.style.cursor = this.dragging?.comp?.id === comp.id ? 'grabbing' : 'grab';
                         clkText.textContent = '(CLK)';
                         clkText.addEventListener('mousedown', (e) => this.handleMouseDown(e, comp.id));
                         g.appendChild(clkText);
