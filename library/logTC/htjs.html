@@ -591,18 +591,38 @@
 
             // Touch handling
             lastTap: 0,
-            lastTapTarget: null,
+            lastTapComponent: null,
             touchStartPos: null,
             touchMoved: false,
             isTouchActive: false,
 
             findComponentByDataAttribute(target) {
+                if (!target) return null;
                 const componentGroup = target.closest('[data-component]');
                 if (!componentGroup) return null;
                 
                 const compIdStr = componentGroup.getAttribute('data-component');
+                if (!compIdStr) return null;
+                
                 // Caută componenta comparând ID-urile ca string pentru a evita probleme de precizie
-                return this.components.find(c => String(c.id) === compIdStr);
+                const comp = this.components.find(c => String(c.id) === compIdStr);
+                return comp;
+            },
+
+            findComponentAtPosition(x, y) {
+                // Găsește componenta la coordonatele date (în spațiul canvas-ului)
+                const canvasX = x - this.panOffset.x;
+                const canvasY = y - this.panOffset.y;
+                
+                // Caută în ordine inversă pentru a găsi componenta de deasupra
+                for (let i = this.components.length - 1; i >= 0; i--) {
+                    const comp = this.components[i];
+                    if (canvasX >= comp.x && canvasX <= comp.x + comp.width &&
+                        canvasY >= comp.y && canvasY <= comp.y + comp.height) {
+                        return comp;
+                    }
+                }
+                return null;
             },
 
             handleTouchStart(e) {
@@ -612,29 +632,34 @@
                 if (e.touches.length === 1) {
                     const touch = e.touches[0];
                     const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const rect = this.canvas.getBoundingClientRect();
                     
                     this.touchStartPos = { x: touch.clientX, y: touch.clientY };
                     this.touchMoved = false;
                     this.isTouchActive = true;
                     
-                    // Verifică pentru double tap
+                    // Găsește componenta la coordonatele touch-ului
+                    const comp = this.findComponentAtPosition(
+                        touch.clientX - rect.left,
+                        touch.clientY - rect.top
+                    );
+                    
+                    // Verifică pentru double tap pe CHIP
                     const now = Date.now();
-                    if (now - this.lastTap < 300 && this.lastTapTarget === target) {
+                    if (comp && comp === this.lastTapComponent && now - this.lastTap < 300) {
                         // Double tap - intră în chip
-                        const comp = this.findComponentByDataAttribute(target);
-                        if (comp && comp.type === 'CHIP') {
+                        if (comp.type === 'CHIP') {
                             this.enterChip(comp.id);
                             this.lastTap = 0;
+                            this.lastTapComponent = null;
                             return;
                         }
                     }
                     this.lastTap = now;
-                    this.lastTapTarget = target;
+                    this.lastTapComponent = comp;
                     
-                    // Caută componenta
-                    const comp = this.findComponentByDataAttribute(target);
+                    // Dacă am găsit o componentă, începe drag
                     if (comp) {
-                        const rect = this.canvas.getBoundingClientRect();
                         // Stochează referința directă la componentă
                         this.dragging = {
                             comp: comp,
@@ -658,15 +683,16 @@
                     e.preventDefault();
                     const touch = e.touches[0];
                     
-                    // Detectează dacă s-a mișcat suficient
+                    // Detectează dacă s-a mișcat suficient (threshold mai mic)
                     if (this.touchStartPos) {
                         const dx = Math.abs(touch.clientX - this.touchStartPos.x);
                         const dy = Math.abs(touch.clientY - this.touchStartPos.y);
-                        if (dx > 5 || dy > 5) {
+                        if (dx > 2 || dy > 2) {
                             this.touchMoved = true;
                         }
                     }
                     
+                    // ÎNTOTDEAUNA mișcă componenta dacă dragging este setat, indiferent de touchMoved
                     if (this.dragging && this.dragging.comp) {
                         const rect = this.canvas.getBoundingClientRect();
                         this.dragging.comp.x = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
