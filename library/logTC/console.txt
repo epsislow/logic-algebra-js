@@ -1,0 +1,8 @@
+Start: MEMORY
+Drag started: MEMORY
+Move: drag=true comp=MEMORY
+Moving: 229,114
+Start: MEMORY
+Drag started: MEMORY
+Move: drag=true comp=MEMORY
+Moving: 229,114
