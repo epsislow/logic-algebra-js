@@ -575,10 +575,11 @@
                 this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
                 window.addEventListener('mouseup', () => this.handleMouseUp());
                 
-                // Touch events pentru mobile
+                // Touch events pentru mobile - touchmove și touchend pe document pentru a nu pierde evenimentele
                 this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-                this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-                this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+                document.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+                document.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+                document.addEventListener('touchcancel', (e) => this.handleTouchEnd(e), { passive: false });
                 
                 // Închide dropdown-ul chips când se face click în altă parte
                 document.addEventListener('click', (e) => {
@@ -689,47 +690,48 @@
             },
 
             handleTouchMove(e) {
-                if (e.touches.length === 1) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const touch = e.touches[0];
-                    
-                    // Detectează dacă s-a mișcat suficient (threshold mai mic)
-                    if (this.touchStartPos) {
-                        const dx = Math.abs(touch.clientX - this.touchStartPos.x);
-                        const dy = Math.abs(touch.clientY - this.touchStartPos.y);
-                        if (dx > 2 || dy > 2) {
-                            this.touchMoved = true;
-                        }
+                // Ignoră dacă nu avem un touch activ
+                if (!this.isTouchActive) return;
+                if (e.touches.length !== 1) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                const touch = e.touches[0];
+                
+                // Detectează dacă s-a mișcat suficient (threshold mai mic)
+                if (this.touchStartPos) {
+                    const dx = Math.abs(touch.clientX - this.touchStartPos.x);
+                    const dy = Math.abs(touch.clientY - this.touchStartPos.y);
+                    if (dx > 2 || dy > 2) {
+                        this.touchMoved = true;
                     }
-                    
-                    this.debug('Move: drag=' + !!this.dragging + ' comp=' + (this.dragging?.comp?.type || 'null'));
-                    
-                    // ÎNTOTDEAUNA mișcă componenta dacă dragging este setat, indiferent de touchMoved
-                    if (this.dragging && this.dragging.comp) {
-                        const rect = this.canvas.getBoundingClientRect();
-                        const newX = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
-                        const newY = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
-                        this.debug('Moving: ' + Math.round(newX) + ',' + Math.round(newY));
-                        this.dragging.comp.x = newX;
-                        this.dragging.comp.y = newY;
-                        this.render();
-                    } else if (this.panning) {
-                        const dx = touch.clientX - this.panStart.x;
-                        const dy = touch.clientY - this.panStart.y;
-                        this.panOffset.x += dx;
-                        this.panOffset.y += dy;
-                        this.panStart = { x: touch.clientX, y: touch.clientY };
-                        this.render();
-                    }
+                }
+                
+                // Mișcă componenta dacă dragging este setat
+                if (this.dragging && this.dragging.comp) {
+                    const rect = this.canvas.getBoundingClientRect();
+                    const newX = touch.clientX - rect.left - this.panOffset.x - this.dragging.offsetX;
+                    const newY = touch.clientY - rect.top - this.panOffset.y - this.dragging.offsetY;
+                    this.debug('Moving: ' + Math.round(newX) + ',' + Math.round(newY));
+                    this.dragging.comp.x = newX;
+                    this.dragging.comp.y = newY;
+                    this.render();
+                } else if (this.panning) {
+                    const dx = touch.clientX - this.panStart.x;
+                    const dy = touch.clientY - this.panStart.y;
+                    this.panOffset.x += dx;
+                    this.panOffset.y += dy;
+                    this.panStart = { x: touch.clientX, y: touch.clientY };
+                    this.render();
                 }
             },
 
             handleTouchEnd(e) {
+                // Ignoră dacă nu avem un touch activ
+                if (!this.isTouchActive) return;
+                
                 this.debug('End: drag=' + !!this.dragging + ' moved=' + this.touchMoved);
                 
-                const wasDragging = this.dragging !== null;
-                const wasPanning = this.panning;
                 const touch = e.changedTouches[0];
                 const target = document.elementFromPoint(touch.clientX, touch.clientY);
                 
@@ -748,11 +750,7 @@
                 }
                 
                 this.touchMoved = false;
-                
-                // Resetează flag-ul touch după un mic delay pentru a preveni mouse events sintetice
-                setTimeout(() => {
-                    this.isTouchActive = false;
-                }, 100);
+                this.isTouchActive = false;
             },
 
             addComponent(type) {
