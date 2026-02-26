@@ -1099,6 +1099,207 @@ console.log('\n=== Test 89: := does not interfere with .var:get syntax ===');
   }
 }
 
+// ================================================================
+// UNBIND / BIND — Tokenizer tests
+// ================================================================
+
+console.log('\n=== Test 102: !! produces two SYM(!) tokens ===');
+{
+  const { tokens } = tokenize('!!a');
+  const bangs = tokens.filter(t => t.type === 'SYM' && t.value === '!');
+  const ids   = tokens.filter(t => t.type === 'ID'  && t.value === 'a');
+  assert('!! gives 2 SYM(!) tokens', String(bangs.length), '2');
+  assert('!! followed by ID(a)', String(ids.length), '1');
+}
+
+console.log('\n=== Test 103: unbind is recognized as ID token ===');
+{
+  const { tokens } = tokenize('unbind(a)');
+  const id = tokens.filter(t => t.type === 'ID' && t.value === 'unbind');
+  assert('unbind gives ID("unbind")', String(id.length), '1');
+}
+
+console.log('\n=== Test 104: bind is recognized as ID token ===');
+{
+  const { tokens } = tokenize('bind(a, &2)');
+  const id = tokens.filter(t => t.type === 'ID' && t.value === 'bind');
+  assert('bind gives ID("bind")', String(id.length), '1');
+}
+
+console.log('\n=== Test 105: &2 tokenizes as REF("&2") ===');
+{
+  const { tokens } = tokenize('bind(a, &2)');
+  const ref = tokens.filter(t => t.type === 'REF');
+  assert('&2 gives REF token', String(ref.length >= 1), 'true');
+  assert('REF value is &2', ref[ref.length - 1].value, '&2');
+}
+
+console.log('\n=== Test 106: & alone tokenizes as REF("&") ===');
+{
+  const { tokens } = tokenize('& 2');
+  const ref = tokens.filter(t => t.type === 'REF' && t.value === '&');
+  assert('& alone gives REF("&")', String(ref.length), '1');
+}
+
+console.log('\n=== Test 107: 2wire a := &2 has REF("&2") after := ===');
+{
+  const { tokens } = tokenize('2wire a := &2');
+  const colonEq = tokens.filter(t => t.type === 'SYM' && t.value === ':=');
+  const ref = tokens.filter(t => t.type === 'REF' && t.value === '&2');
+  assert(':= present in "2wire a := &2"', String(colonEq.length), '1');
+  assert('REF("&2") present after :=', String(ref.length), '1');
+}
+
+console.log('\n=== Test 107b: !!a,b,c tokenizes correctly ===');
+{
+  const { tokens } = tokenize('!!a, b, c');
+  const bangs = tokens.filter(t => t.type === 'SYM' && t.value === '!');
+  const ids   = tokens.filter(t => t.type === 'ID');
+  const commas = tokens.filter(t => t.type === 'SYM' && t.value === ',');
+  assert('!!a,b,c → 2 bangs', String(bangs.length), '2');
+  assert('!!a,b,c → 3 IDs', String(ids.length), '3');
+  assert('!!a,b,c → 2 commas', String(commas.length), '2');
+}
+
+// ================================================================
+// UNBIND / BIND — Parser tests
+// ================================================================
+
+{
+  const parserEnd2 = src.indexOf('/* ================= INTERPRETER ================= */');
+  const parserChunk2 = src.slice(tokStart, parserEnd2);
+  const sandboxP2 = { Error, parseInt, String, Array, Set, Map, RegExp, console, Object };
+  vm.runInNewContext(
+    parserChunk2 + `\nvar _Parser3 = Parser; var _Tokenizer3 = Tokenizer; var _pre3 = preprocessRepeat;`,
+    sandboxP2
+  );
+  const Parser3 = sandboxP2._Parser3;
+  const Tokenizer3 = sandboxP2._Tokenizer3;
+  const pre3 = sandboxP2._pre3;
+
+  function parse3(code) {
+    const processed = pre3(code);
+    const p = new Parser3(new Tokenizer3(processed));
+    return p.parse();
+  }
+
+  console.log('\n=== Test 108: Parser — !!a → {unbind:[\'a\']} ===');
+  {
+    const stmts = parse3('!!a');
+    assert('!!a has unbind array', String(Array.isArray(stmts[0].unbind)), 'true');
+    assert('!!a unbind length = 1', String(stmts[0].unbind.length), '1');
+    assert('!!a unbind[0] = "a"', stmts[0].unbind[0], 'a');
+  }
+
+  console.log('\n=== Test 109: Parser — !!a, b, c → {unbind:[\'a\',\'b\',\'c\']} ===');
+  {
+    const stmts = parse3('!!a, b, c');
+    assert('!!a,b,c unbind length = 3', String(stmts[0].unbind.length), '3');
+    assert('unbind[0] = "a"', stmts[0].unbind[0], 'a');
+    assert('unbind[1] = "b"', stmts[0].unbind[1], 'b');
+    assert('unbind[2] = "c"', stmts[0].unbind[2], 'c');
+  }
+
+  console.log('\n=== Test 110: Parser — unbind(a) → {unbind:[\'a\']} ===');
+  {
+    const stmts = parse3('unbind(a)');
+    assert('unbind(a) has unbind array', String(Array.isArray(stmts[0].unbind)), 'true');
+    assert('unbind(a) unbind[0] = "a"', stmts[0].unbind[0], 'a');
+  }
+
+  console.log('\n=== Test 111: Parser — unbind(a, b, c) → {unbind:[\'a\',\'b\',\'c\']} ===');
+  {
+    const stmts = parse3('unbind(a, b, c)');
+    assert('unbind(a,b,c) length = 3', String(stmts[0].unbind.length), '3');
+    assert('unbind(a,b,c)[0] = a', stmts[0].unbind[0], 'a');
+    assert('unbind(a,b,c)[1] = b', stmts[0].unbind[1], 'b');
+    assert('unbind(a,b,c)[2] = c', stmts[0].unbind[2], 'c');
+  }
+
+  console.log('\n=== Test 112: Parser — bind(a, &2) → {bind:{name:\'a\', ref:\'&2\'}} ===');
+  {
+    const stmts = parse3('bind(a, &2)');
+    const b = stmts[0].bind;
+    assert('bind stmt has .bind', String(b !== undefined && b !== null), 'true');
+    assert('bind.name = "a"', b.name, 'a');
+    assert('bind.ref = "&2"', b.ref, '&2');
+  }
+
+  console.log('\n=== Test 113: Parser — 2wire a := &2 → initExpr has refLiteral ===');
+  {
+    const stmts = parse3('2wire a := &2');
+    const s = stmts[0];
+    assert('2wire a := &2 has decls', String(Array.isArray(s.decls)), 'true');
+    assert('decls[0].name = "a"', s.decls[0].name, 'a');
+    assert('decls[0].type = "2wire"', s.decls[0].type, '2wire');
+    assert('initExpr has refLiteral', String(s.initExpr && s.initExpr.refLiteral !== undefined), 'true');
+    assert('refLiteral value is &2', s.initExpr.refLiteral, '&2');
+  }
+
+  console.log('\n=== Test 114: Parser — !! without name throws ===');
+  {
+    assertThrows('!! without name throws',
+      () => parse3('!! '),
+      'Expected wire name'
+    );
+  }
+
+  console.log('\n=== Test 115: Parser — !!a appears as single stmt in multi-line script ===');
+  {
+    const stmts = parse3(`2wire q := 00
+!!q`);
+    assert('2 statements total', String(stmts.length), '2');
+    assert('stmt[1] is unbind', String(Array.isArray(stmts[1].unbind)), 'true');
+    assert('stmt[1].unbind[0] = "q"', stmts[1].unbind[0], 'q');
+  }
+
+  console.log('\n=== Test 116: Parser — unbind and bind in same script ===');
+  {
+    const stmts = parse3(`2wire a := 11
+!!a
+bind(a, &1)`);
+    assert('3 stmts in script', String(stmts.length), '3');
+    assert('stmt[0] is decl', String(Array.isArray(stmts[0].decls)), 'true');
+    assert('stmt[1] is unbind', String(Array.isArray(stmts[1].unbind)), 'true');
+    assert('stmt[2] is bind', String(stmts[2].bind !== undefined), 'true');
+  }
+
+  console.log('\n=== Test 117: Parser — bind(a, &10) handles multi-digit index ===');
+  {
+    const stmts = parse3('bind(a, &10)');
+    const b = stmts[0].bind;
+    assert('bind(&10) name = "a"', b.name, 'a');
+    assert('bind(&10) ref = "&10"', b.ref, '&10');
+  }
+
+  console.log('\n=== Test 118: Parser — 4wire t := &5 has refLiteral ===');
+  {
+    const stmts = parse3('4wire t := &5');
+    const s = stmts[0];
+    assert('4wire t := &5 refLiteral = "&5"', s.initExpr.refLiteral, '&5');
+    assert('4wire t := &5 type = "4wire"', s.decls[0].type, '4wire');
+  }
+
+  console.log('\n=== Test 119: Parser — !!a then reuse name as new wire decl ===');
+  {
+    const stmts = parse3(`1wire t0 = 0
+!!t0
+4wire t0 = 1111`);
+    assert('3 stmts', String(stmts.length), '3');
+    assert('stmt[0] decl name t0', stmts[0].decls[0].name, 't0');
+    assert('stmt[1] unbind t0', stmts[1].unbind[0], 't0');
+    assert('stmt[2] decl name t0 (reuse)', stmts[2].decls[0].name, 't0');
+    assert('stmt[2] type 4wire', stmts[2].decls[0].type, '4wire');
+  }
+
+  console.log('\n=== Test 120: Parser — bind(a, &0) — zero index ===');
+  {
+    const stmts = parse3('bind(a, &0)');
+    const b = stmts[0].bind;
+    assert('bind(&0) ref = "&0"', b.ref, '&0');
+  }
+}
+
 // Summary
 console.log(`\n========== RESULTS ==========`);
 console.log(`  Passed: ${passed}`);

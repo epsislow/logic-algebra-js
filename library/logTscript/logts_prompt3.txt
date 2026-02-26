@@ -1254,3 +1254,87 @@ Ask any questions regarding this if you need.
 
 
 we should queue the event and.
+
+-----
+I want to add the posibility to unbind wire names by using of their storages like this:
+unbind(a,b,c,d)
+or like this using the double !! symbol:
+!!a, b, c
+#unbinds a,b,c wires
+!!d
+#unbinds d wire
+#equivalent with unbind(d)
+
+This allows the user to reuse the unbinded names and create new definitions.
+
+1wire t0 = 0
+!!t0
+4wire t0 = ^F
+
+
+After unbinding, The program should still work.
+2wire q := 00
+2wire a = !q
+1wire b = AND(a)
+!!a 
+show(a)
+#should show an error like: a is undefined
+show(b)
+#still works and shows b = 1
+q = 11
+show(b)
+#still works and shows b = 0
+
+
+
+
+also there is the bind command that allows to bind a name to some storage like this:
+bind(a, &2)
+#a will get the same length as the storage index 2
+#or like this:
+2wire a := &2
+#this means we want to allow to use & at assignations 
+2wire a = &2
+======
+Daca in loc de unbinding in spate ar face un rename la wire de genul: 
+!!a  => rename a to _a.1 
+in acest caz statementurile vechi ar functiona
+si am putea bindui numele a din nou 
+
+poate o idee mai buna decat rename ar fi ca wireurile sa aiba un naming convetion de genul w1 care se autoincrementeaza w2, w3, w1000, w1001
+
+dar in program numele wireurilor sunt doar nume: a este w1, b este w2 in acest caz, exemplul acesta:
+
+1wire t0 = 0
+#create wireName t0 related to w1
+!!t0
+#delete t0 wireName, means statement t0 = 0 still exists because it actualy is w1 = 0 
+4wire t0 = ^F
+#create wirename t0 related to w2 that is = ^F 
+
+This way when binding we actualy bind to the wire w that the storage is connected to.
+2wire a0 = 11
+#creates storage 1 with value 11, creates wire w1, connects w1 = storage 1 containing 11, creates wireName a0 and connects a0 with wire w1
+3wire b0 = 101
+#creates storage 2 with value 101, creates wire w2, connects w2 = storage 2 containing 101 , creates wireName b0 and connects b0 with wire w2
+!!a0 
+#removes wireName a0, wire w1 still exists, all statements having w1 still execute properly, in AST we can use w1 notation if needed
+3wire a0 := &2
+#creates wire w3 = storage 2, creates wireName a0 and connects a0 to wire w3
+
+3wire a0:= b0 
+#this also works: finds what storage b0 has, creates wire w3 = storage 2, creates wireName a0 and connects a0 to wire w3 or something like this, check better how assignations between wires are performed now, and should be done alike.
+
+Would this work? 
+Daca mai sunt intrebari te rog sa intrebi.
+=====
+1. La momentul crearii AST-ului, in AST ar trebuii sa avem doar w-uri, {var: 'w1'} si undeva in alta parte sa avem poate varName: 'a' toate legaturile se fac cu w1,w2, wX-uri. numele variabilelor se duc intr-un alt storage poate numit wireNames.
+
+2. eu zic ca declartia ar trebuii sa se fie {decls: [{name: 'w1'}], ...}  si asa nu s-ar recrea nimic. remember t0 nu mai este numele wireului ci este un wireName (ceva nou)
+
+3. corect 
+
+4. si fi crezut ca nu trebuie sa modificam nimic la WireStorageMap. trebuie insa sa avem care sa traduca wireNameuri in wire-uri wX.
+
+5. nu este fara utilitate, daca wX sunt folosite in statementuri atunci este corect, asta doreste utilizatorul scriptului. Intr-o viitoare cerinta putem sa facem un cleanUp pe zombie wires care nu sunt folosite in nici un statement.
+

@@ -1020,6 +1020,25 @@ parsePcbInstance() {
     if(this.c.type==='KEYWORD' && this.c.value==='comp') return this.parseComp();
     // PCB instance: pcb [name] .var::
     if(this.c.type==='KEYWORD' && this.c.value==='pcb') return this.parsePcbInstance();
+    // Unbind: !!a, b, c  — double ! prefix
+    if(this.c.type==='SYM' && this.c.value==='!'){
+      this.eat('SYM','!');
+      if(this.c.type==='SYM' && this.c.value==='!'){
+        this.eat('SYM','!');
+        return this.parseUnbind();
+      }
+      throw Error(`Unexpected '!' at ${this.c.line}:${this.c.col} — did you mean '!!' for unbind?`);
+    }
+    // unbind(a, b, c) — function-call style
+    if(this.c.type==='ID' && this.c.value==='unbind'){
+      this.eat('ID');
+      return this.parseUnbindCall();
+    }
+    // bind(a, &2) — bind wire name to storage
+    if(this.c.type==='ID' && this.c.value==='bind'){
+      this.eat('ID');
+      return this.parseBindCall();
+    }
     // Assignment to component: .name = expr (component names start with .)
     if(this.c.type==='SYM' && this.c.value==='.' && this.peekNextIsComponentAssign()){
       return this.assignment();
@@ -1033,6 +1052,58 @@ parsePcbInstance() {
       return this.mixedVar();
     }
     throw Error(`Invalid statement starting with '${this.c.value}' (${this.c.type}) at ${this.c.file}: ${this.c.line}:${this.c.col}`);
+  }
+
+  // Parse a comma-separated list of wire names after !!
+  parseUnbind(){
+    const names = [];
+    do {
+      if(this.c.type !== 'ID') throw Error(`Expected wire name at ${this.c.line}:${this.c.col}`);
+      names.push(this.c.value);
+      this.eat('ID');
+      if(this.c.type === 'SYM' && this.c.value === ',') this.eat('SYM',',');
+      else break;
+    } while(true);
+    return {unbind: names};
+  }
+
+  // Parse unbind(a, b, c)
+  parseUnbindCall(){
+    this.eat('SYM','(');
+    const names = [];
+    while(!(this.c.type === 'SYM' && this.c.value === ')')){
+      if(this.c.type !== 'ID') throw Error(`Expected wire name at ${this.c.line}:${this.c.col}`);
+      names.push(this.c.value);
+      this.eat('ID');
+      if(this.c.type === 'SYM' && this.c.value === ',') this.eat('SYM',',');
+    }
+    this.eat('SYM',')');
+    return {unbind: names};
+  }
+
+  // Parse bind(a, &2)
+  parseBindCall(){
+    this.eat('SYM','(');
+    if(this.c.type !== 'ID') throw Error(`Expected wire name at ${this.c.line}:${this.c.col}`);
+    const name = this.c.value;
+    this.eat('ID');
+    this.eat('SYM',',');
+    let refStr;
+    if(this.c.type === 'REF' && this.c.value === '&'){
+      this.eat('REF');
+      if(this.c.type !== 'BIN' && this.c.type !== 'DEC'){
+        throw Error(`Expected storage index after & at ${this.c.line}:${this.c.col}`);
+      }
+      refStr = `&${this.c.value}`;
+      this.eat(this.c.type);
+    } else if(this.c.type === 'REF' && this.c.value.startsWith('&')){
+      refStr = this.c.value;
+      this.eat('REF');
+    } else {
+      throw Error(`Expected & reference at ${this.c.line}:${this.c.col}`);
+    }
+    this.eat('SYM',')');
+    return {bind: {name, ref: refStr}};
   }
   
   peekNextIsComponentAssign(){
@@ -1489,7 +1560,7 @@ assignment() {
     }
   }
 
-  // Parse a single literal atom allowed after := (BIN, HEX, DEC with optional ! prefix)
+  // Parse a single literal atom allowed after := (BIN, HEX, DEC, REF with optional ! prefix)
   initLiteral(){
     let notPrefix = false;
     if(this.c.type === 'SYM' && this.c.value === '!'){
@@ -1506,8 +1577,22 @@ assignment() {
     } else if(this.c.type === 'DEC'){
       atom = {dec: this.c.value};
       this.eat('DEC');
+    } else if(this.c.type === 'REF'){
+      // REF token: & N  (bind wire to existing storage index)
+      if(this.c.value === '&'){
+        this.eat('REF');
+        if(this.c.type !== 'BIN' && this.c.type !== 'DEC'){
+          throw Error(`Expected storage index after & at ${this.c.line}:${this.c.col}`);
+        }
+        atom = {refLiteral: this.c.value};
+        this.eat(this.c.type);
+      } else {
+        // Pre-tokenized form like &0, &1
+        atom = {refLiteral: this.c.value};
+        this.eat('REF');
+      }
     } else {
-      throw Error(`Expected a literal value (binary, hex ^, or decimal \\) after := at ${this.c.line}:${this.c.col}`);
+      throw Error(`Expected a literal value (binary, hex ^, decimal \\, or &ref) after := at ${this.c.line}:${this.c.col}`);
     }
     if(notPrefix) atom.not = true;
     return atom;
@@ -2869,6 +2954,98 @@ class Interpreter {
     this.generateRandomBit(); // Initialize with a random bit
     
     this.cycle=1;
+    this.wireCounter = 0; // auto-increment for internal wire IDs: w1, w2, ...
+  }
+
+  // Allocate a new internal wire with a unique ID like 'w1', 'w2', ...
+  // Creates the internal entry in this.wires (no internalName field = it IS internal).
+  allocInternalWire(type) {
+    const wId = 'w' + (++this.wireCounter);
+    this.wires.set(wId, {type, ref: null});
+    return wId;
+  }
+
+  // Sync all user-facing wire entries that point to internal wire wId.
+  // Call this after updating internal wire's ref.
+  syncUserWireRefs(wId, ref) {
+    for (const [, entry] of this.wires) {
+      if (entry.internalName === wId) {
+        entry.ref = ref;
+      }
+    }
+  }
+
+  // Sync internal wire entry when a user wire entry is updated directly.
+  syncInternalWireRef(userName, ref) {
+    const entry = this.wires.get(userName);
+    if (entry && entry.internalName) {
+      const internal = this.wires.get(entry.internalName);
+      if (internal) internal.ref = ref;
+    }
+  }
+
+  // Deep-clone a statement and replace all user-facing wire names with their
+  // internal wId counterparts ('a' → 'w1') so that wireStatements keep working
+  // after the user-facing name is unbound.
+  transformStmtForWireStatements(stmt) {
+    const transformAtom = (atom) => {
+      const a = {...atom};
+      if (a.var !== undefined) {
+        const entry = this.wires.get(a.var);
+        if (entry && entry.internalName) a.var = entry.internalName;
+      }
+      if (a.ref !== undefined && typeof a.ref === 'string') {
+        const entry = this.wires.get(a.ref);
+        if (entry && entry.internalName) a.ref = entry.internalName;
+      }
+      if (a.call !== undefined && Array.isArray(a.args)) {
+        a.args = a.args.map(exprArr =>
+          Array.isArray(exprArr) ? exprArr.map(transformAtom) : exprArr
+        );
+      }
+      if (a.bitRange) {
+        const br = {...a.bitRange};
+        if (Array.isArray(br.startExpr)) br.startExpr = br.startExpr.map(transformAtom);
+        if (Array.isArray(br.endExpr)) br.endExpr = br.endExpr.map(transformAtom);
+        if (Array.isArray(br.lenExpr)) br.lenExpr = br.lenExpr.map(transformAtom);
+        a.bitRange = br;
+      }
+      return a;
+    };
+
+    const transformExpr = (expr) => {
+      if (!Array.isArray(expr)) return expr;
+      return expr.map(transformAtom);
+    };
+
+    const s = {...stmt};
+
+    if (s.decls) {
+      s.decls = s.decls.map(d => {
+        const nd = {...d};
+        if (nd.name !== undefined) {
+          const entry = this.wires.get(nd.name);
+          if (entry && entry.internalName) nd.name = entry.internalName;
+        }
+        return nd;
+      });
+    }
+
+    if (s.expr) s.expr = transformExpr(s.expr);
+    if (s.initExpr) s.initExpr = transformAtom(s.initExpr);
+
+    if (s.assignment) {
+      s.assignment = {...s.assignment};
+      const target = {...s.assignment.target};
+      if (target.var !== undefined) {
+        const entry = this.wires.get(target.var);
+        if (entry && entry.internalName) target.var = entry.internalName;
+      }
+      s.assignment.target = target;
+      s.assignment.expr = transformExpr(s.assignment.expr);
+    }
+
+    return s;
   }
 
   getBitWidth(type){
@@ -4464,6 +4641,38 @@ const idx = parseInt(
     this.currentStmt = s;
     
     try {
+    // Handler for unbind statement: !!a,b  or  unbind(a,b)
+    if(s.unbind){
+      for(const name of s.unbind){
+        const entry = this.wires.get(name);
+        if(entry && entry.internalName){
+          this.wires.delete(name); // remove user-facing entry; internal wN remains active
+        } else if(entry){
+          // Wire exists but has no internalName (e.g. declared without expr) — just delete
+          this.wires.delete(name);
+        } else {
+          this.out.push(`Error: ${name} is not defined`);
+        }
+      }
+      return;
+    }
+
+    // Handler for bind statement: bind(a, &2)
+    if(s.bind){
+      const {name, ref} = s.bind;
+      const refStr = ref.startsWith('&') ? ref : `&${ref}`;
+      const refIdx = parseInt(refStr.slice(1));
+      const stored = this.storage.find(st => st.index === refIdx);
+      if(!stored) throw Error(`Storage ${refStr} does not exist — cannot bind ${name}`);
+      const bitWidth = stored.value.length;
+      const wireType = `${bitWidth}wire`;
+      const wId = this.allocInternalWire(wireType);
+      this.wires.get(wId).ref = refStr;
+      this.wireStorageMap.set(wId, refIdx);
+      this.wires.set(name, {type: wireType, ref: refStr, internalName: wId});
+      return;
+    }
+
     if(s.show){
       const results = [];
       for(const e of s.show){
@@ -5592,11 +5801,17 @@ if (s.assignment) {
     }
 
     entry.ref = `&${idx}`;
-    // Cache in wireStorageMap so execWireStatement can reuse this slot on cascade re-execution
-    this.wireStorageMap.set(name, idx);
-    // Track this assignment statement for reactive cascade re-execution
-    if(!this.wireStatements.includes(s)){
-      this.wireStatements.push(s);
+    // Sync internal wire entry
+    this.syncInternalWireRef(name, `&${idx}`);
+    // Cache in wireStorageMap using internal wire id
+    const wEntryA = this.wires.get(name);
+    const wMapKeyA = wEntryA && wEntryA.internalName ? wEntryA.internalName : name;
+    this.wireStorageMap.set(wMapKeyA, idx);
+    // Track this assignment statement for reactive cascade re-execution (transformed)
+    if(!this.wireStatements.some(ws => ws._origStmt === s)){
+      const transformed = this.transformStmtForWireStatements(s);
+      transformed._origStmt = s;
+      this.wireStatements.push(transformed);
     }
     
     // Update connected components
@@ -5723,6 +5938,17 @@ if (s.assignment) {
           if(!this.isWire(d.type)) throw Error(`Wire initialization := only allowed for wire types at ${loc}`);
           if(d.name === '_') continue;
           if(this.wires.has(d.name)) throw Error(`Wire ${d.name} already declared at ${loc}`);
+          // Handle REF literal: 2wire a := &2  (bind to existing storage)
+          if(s.initExpr.refLiteral !== undefined){
+            const refRaw = s.initExpr.refLiteral.toString();
+            const refStr = refRaw.startsWith('&') ? refRaw : `&${refRaw}`;
+            const refIdx = parseInt(refStr.slice(1));
+            const wId = this.allocInternalWire(d.type);
+            this.wires.get(wId).ref = refStr;
+            this.wireStorageMap.set(wId, refIdx);
+            this.wires.set(d.name, {type: d.type, ref: refStr, internalName: wId});
+            continue;
+          }
           // Evaluate the literal atom to get initial binary value
           const initPart = this.evalAtom(s.initExpr, false);
           let initValue = initPart.value || '0'.repeat(bits);
@@ -5733,9 +5959,11 @@ if (s.assignment) {
             initValue = initValue.substring(initValue.length - bits);
           }
           // Store initial value and set ref — mark initOnly so first := assignment is allowed
+          const wId = this.allocInternalWire(d.type);
           const storageIdx = this.storeValue(initValue);
-          this.wireStorageMap.set(d.name, storageIdx);
-          this.wires.set(d.name, {type: d.type, ref: `&${storageIdx}`, initOnly: true});
+          this.wireStorageMap.set(wId, storageIdx);
+          this.wires.get(wId).ref = `&${storageIdx}`;
+          this.wires.set(d.name, {type: d.type, ref: `&${storageIdx}`, initOnly: true, internalName: wId});
         }
         // Do NOT add to wireStatements — no cascading re-execution for literal init
         return;
@@ -5748,7 +5976,8 @@ if (s.assignment) {
         if(!this.isWire(d.type)) throw Error(`Only wires can be declared without assignment at ${loc} (found ${d.type} for ${d.name})`);
         if(d.name === '_') continue;
         if(this.wires.has(d.name)) throw Error(`Wire ${d.name} already declared at ${loc}`);
-        this.wires.set(d.name, {type: d.type, ref: null});
+        const wId = this.allocInternalWire(d.type);
+        this.wires.set(d.name, {type: d.type, ref: null, internalName: wId});
       }
       return;
     }
@@ -5830,6 +6059,14 @@ if (s.assignment) {
           }
           if(existing.ref !== null && existing.ref !== '&-') throw Error(`Wire ${d.name} already assigned`);
         }
+
+        // Get or allocate the internal wire id (wN) for this user-facing name
+        let wId;
+        if(this.wires.has(d.name) && this.wires.get(d.name).internalName){
+          wId = this.wires.get(d.name).internalName;
+        } else {
+          wId = this.allocInternalWire(actualType);
+        }
         
         // Build reference from expression parts, starting at bitOffset
         const wireRef = this.buildRefFromParts(exprResult, bits, bitOffset);
@@ -5865,17 +6102,19 @@ if (s.assignment) {
         if(this.mode === 'WIREWRITE' && this.wires.has(d.name)){
           const existing = this.wires.get(d.name);
           if(existing.ref !== null && existing.ref !== '&-'){
-            // Check if wire has existing storage index
-            if(this.wireStorageMap.has(d.name)){
-              storageIdx = this.wireStorageMap.get(d.name);
+            // Check if wire has existing storage index (via wId)
+            if(this.wireStorageMap.has(wId)){
+              storageIdx = this.wireStorageMap.get(wId);
               const stored = this.storage.find(s => s.index === storageIdx);
               if(stored){
                 // Update existing storage value
                 stored.value = wireValue || '0'.repeat(bits);
                 // Keep the same reference - don't change existing.ref
-                // Track for NEXT
-                if(!this.wireStatements.includes(s)){
-                  this.wireStatements.push(s);
+                // Track for NEXT (transformed statement)
+                if(!this.wireStatements.some(ws => ws._origStmt === s)){
+                  const transformed = this.transformStmtForWireStatements(s);
+                  transformed._origStmt = s;
+                  this.wireStatements.push(transformed);
                 }
                 bitOffset += bits;
                 continue;
@@ -5890,11 +6129,13 @@ if (s.assignment) {
                 // Update existing storage value
                 stored.value = wireValue || '0'.repeat(bits);
                 // Keep the same reference - don't change existing.ref
-                // Update wireStorageMap
-                this.wireStorageMap.set(d.name, storageIdx);
-                // Track for NEXT
-                if(!this.wireStatements.includes(s)){
-                  this.wireStatements.push(s);
+                // Update wireStorageMap with wId
+                this.wireStorageMap.set(wId, storageIdx);
+                // Track for NEXT (transformed statement)
+                if(!this.wireStatements.some(ws => ws._origStmt === s)){
+                  const transformed = this.transformStmtForWireStatements(s);
+                  transformed._origStmt = s;
+                  this.wireStatements.push(transformed);
                 }
                 bitOffset += bits;
                 continue;
@@ -5903,35 +6144,41 @@ if (s.assignment) {
           }
         }
         
-        // Default behavior: reuse existing storage or create new one
-        if(this.wireStorageMap.has(d.name)){
+        // Default behavior: reuse existing storage or create new one (keyed by wId)
+        if(this.wireStorageMap.has(wId)){
           // Reuse existing storage
-          storageIdx = this.wireStorageMap.get(d.name);
+          storageIdx = this.wireStorageMap.get(wId);
           const stored = this.storage.find(s => s.index === storageIdx);
           if(stored){
             stored.value = wireValue || '0'.repeat(bits);
           } else {
             // Storage was lost, create new one
             storageIdx = this.storeValue(wireValue || '0'.repeat(bits));
-            this.wireStorageMap.set(d.name, storageIdx);
+            this.wireStorageMap.set(wId, storageIdx);
           }
         } else {
           // Create new storage
           storageIdx = this.storeValue(wireValue || '0'.repeat(bits));
-          this.wireStorageMap.set(d.name, storageIdx);
+          this.wireStorageMap.set(wId, storageIdx);
         }
         
-        // Set wire reference to the storage index
+        // Set wire reference to the storage index (both user and internal entries)
         const simpleRef = `&${storageIdx}`;
         if(!this.wires.has(d.name)){
-          this.wires.set(d.name, {type: actualType, ref: simpleRef});
+          this.wires.set(d.name, {type: actualType, ref: simpleRef, internalName: wId});
         } else {
-          this.wires.get(d.name).ref = simpleRef;
+          const existing = this.wires.get(d.name);
+          existing.ref = simpleRef;
+          if(!existing.internalName) existing.internalName = wId;
         }
+        // Always keep internal entry in sync
+        this.wires.get(wId).ref = simpleRef;
         
-        // Track wire statement for NEXT
-        if(!this.wireStatements.includes(s)){
-          this.wireStatements.push(s);
+        // Track wire statement for NEXT — push TRANSFORMED statement (with wId names)
+        if(!this.wireStatements.some(ws => ws._origStmt === s)){
+          const transformed = this.transformStmtForWireStatements(s);
+          transformed._origStmt = s;
+          this.wireStatements.push(transformed);
         }
       } else {
         // Bit assignment - store value
@@ -6009,6 +6256,8 @@ if (s.assignment) {
           this.wireStorageMap.set(wireName, storageIdx);
         }
         wire.ref = `&${storageIdx}`;
+        // Sync all user-facing entries that point to this internal wire
+        this.syncUserWireRefs(wireName, `&${storageIdx}`);
       } catch(e){
         console.log(`[DEBUG execWireStmt] ERROR in assignment '${wireName}':`, e.message);
       } finally {
@@ -6105,6 +6354,8 @@ if (s.assignment) {
       if(this.wires.has(d.name)){
         this.wires.get(d.name).ref = simpleRef;
       }
+      // Sync all user-facing entries that point to this internal wire (d.name is wId after transform)
+      this.syncUserWireRefs(d.name, simpleRef);
       console.log(`[DEBUG execWireStmt] wire '${d.name}' stored value='${wireValue}' at ref=${simpleRef}`);
       
       bitOffset += bits;
