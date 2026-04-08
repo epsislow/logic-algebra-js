@@ -82,20 +82,6 @@ var SevenSegComponent = class SevenSegComponent extends BuiltinComponent {
     if (!pending) return;
     const segAttributes = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-    if (pending.hex !== undefined) {
-      let hexValue = this.reEvalPendingValue(pending, 'hex', reEvaluate, ctx);
-      const segPattern = SevenSegComponent.hexTo7Seg(hexValue);
-      if (comp.deviceIds.length > 0) {
-        const segId = comp.deviceIds[0];
-        const segments = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
-        for (let i = 0; i < segments.length; i++) {
-          if (typeof setSegment === 'function') setSegment(segId, segments[i], segPattern[i] === '1');
-        }
-        const currentH = comp.lastSegmentValue ? comp.lastSegmentValue[7] : '0';
-        comp.lastSegmentValue = segPattern + currentH;
-      }
-    }
-
     let hasSegmentProperty = false;
     for (const segName of segAttributes) {
       if (pending[segName] !== undefined) { hasSegmentProperty = true; break; }
@@ -113,6 +99,20 @@ var SevenSegComponent = class SevenSegComponent extends BuiltinComponent {
           const segIndex = segAttributes.indexOf(segName);
           if (segIndex >= 0) { segArray[segIndex] = segBit; comp.lastSegmentValue = segArray.join(''); }
         }
+      }
+    }
+
+    if (pending.hex !== undefined) {
+      let hexValue = this.reEvalPendingValue(pending, 'hex', reEvaluate, ctx);
+      const segPattern = SevenSegComponent.hexTo7Seg(hexValue);
+      if (comp.deviceIds.length > 0) {
+        const segId = comp.deviceIds[0];
+        const segments = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+        for (let i = 0; i < segments.length; i++) {
+          if (typeof setSegment === 'function') setSegment(segId, segments[i], segPattern[i] === '1');
+        }
+        const currentH = comp.lastSegmentValue ? comp.lastSegmentValue[7] : '0';
+        comp.lastSegmentValue = segPattern + currentH;
       }
     }
 
@@ -137,6 +137,21 @@ var SevenSegComponent = class SevenSegComponent extends BuiltinComponent {
     if (pending.set !== undefined) {
       let setValue = this.reEvalPendingValue(pending, 'set', reEvaluate, ctx);
       if (setValue === '1' || setValue[setValue.length - 1] === '1') {
+        const segAttribs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+        if (comp.deviceIds.length > 0) {
+          const segId = comp.deviceIds[0];
+          for (const segName of segAttribs) {
+            if (pending[segName] !== undefined) {
+              let sv = this.reEvalPendingValue(pending, segName, reEvaluate, ctx);
+              const segBit = sv.length > 0 ? sv[sv.length - 1] : '0';
+              if (typeof setSegment === 'function') setSegment(segId, segName, segBit === '1');
+              if (!comp.lastSegmentValue) comp.lastSegmentValue = '00000000';
+              const segArr2 = comp.lastSegmentValue.split('');
+              const segIdx = segAttribs.indexOf(segName);
+              if (segIdx >= 0) { segArr2[segIdx] = segBit; comp.lastSegmentValue = segArr2.join(''); }
+            }
+          }
+        }
         if (pending.hex !== undefined) {
           let hexValue = this.reEvalPendingValue(pending, 'hex', reEvaluate, ctx);
           const segPattern = SevenSegComponent.hexTo7Seg(hexValue);
@@ -148,21 +163,6 @@ var SevenSegComponent = class SevenSegComponent extends BuiltinComponent {
             }
             const currentH = comp.lastSegmentValue ? comp.lastSegmentValue[7] : '0';
             comp.lastSegmentValue = segPattern + currentH;
-
-            const segAttribs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-            const hasIndividualSegs = segAttribs.some(s => pending[s] !== undefined);
-            if (hasIndividualSegs) {
-              for (const segName of segAttribs) {
-                if (pending[segName] !== undefined) {
-                  let sv = this.reEvalPendingValue(pending, segName, reEvaluate, ctx);
-                  const segBit = sv.length > 0 ? sv[sv.length - 1] : '0';
-                  if (typeof setSegment === 'function') setSegment(segId, segName, segBit === '1');
-                  const segArr2 = comp.lastSegmentValue.split('');
-                  const segIdx = segAttribs.indexOf(segName);
-                  if (segIdx >= 0) { segArr2[segIdx] = segBit; comp.lastSegmentValue = segArr2.join(''); }
-                }
-              }
-            }
           }
         }
       }

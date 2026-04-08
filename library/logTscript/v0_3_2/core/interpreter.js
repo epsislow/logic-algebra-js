@@ -1937,8 +1937,9 @@ if (s.assignment) {
         }
         const pending = this.componentPendingProperties.get(name);
         pending[property] = {
-          expr: expr, // Store expression for re-evaluation
-          value: value // Store current value
+          expr: expr,
+          value: value,
+          _inline: true
         };
         
         // Check if value is '~' (next iteration) or '1' (immediate)
@@ -1979,8 +1980,9 @@ if (s.assignment) {
         }
         const pending = this.componentPendingProperties.get(name);
         pending[property] = {
-          expr: expr, // Store expression for re-evaluation
-          value: value // Store current value
+          expr: expr,
+          value: value,
+          _inline: true
         };
         
         if(comp && this.componentRegistry){
@@ -3650,6 +3652,18 @@ if (s.assignment) {
       }
     }
     
+    // Save inline properties before block execution so they survive clearing
+    let _savedInlineProps = null;
+    if(reEvaluate && this.componentPendingProperties.has(component)){
+      const p = this.componentPendingProperties.get(component);
+      for(const propName of Object.keys(p)){
+        if(p[propName]._inline){
+          if(!_savedInlineProps) _savedInlineProps = {};
+          _savedInlineProps[propName] = p[propName];
+        }
+      }
+    }
+
     // Execute each property assignment in order
     for(const prop of properties){
       const property = prop.property;
@@ -3700,12 +3714,11 @@ if (s.assignment) {
       }
       
       // If reEvaluate is true, clear properties that are not in the current block
-      // This ensures that only properties from the executing block are applied
+      // but preserve _inline properties (they will be restored after the block)
       if(reEvaluate){
         const currentBlockPropNames = new Set(properties.map(p => p.property));
-        // Remove properties that are not in the current block
         for(const propName of Object.keys(pending)){
-          if(!currentBlockPropNames.has(propName)){
+          if(!currentBlockPropNames.has(propName) && !pending[propName]._inline){
             delete pending[propName];
           }
         }
@@ -3725,6 +3738,16 @@ if (s.assignment) {
         const when = value === '~' ? 'next' : 'immediate';
         this.componentPendingSet.set(component, when);
         this.applyComponentProperties(component, when, reEvaluate);
+      }
+    }
+    
+    // Restore inline properties that were overwritten by the block
+    if(_savedInlineProps){
+      const pending = this.componentPendingProperties.get(component);
+      if(pending){
+        for(const propName of Object.keys(_savedInlineProps)){
+          pending[propName] = _savedInlineProps[propName];
+        }
       }
     }
     
