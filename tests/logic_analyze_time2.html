@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vertical Logic Analyzer - Bottom to Top</title>
+  <style>
+    body {
+      background-color: #121214;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 { margin-bottom: 5px; font-size: 1.5rem; }
+    p { color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem; }
+    .container {
+      display: flex;
+      gap: 20px;
+      background: #1a1a1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    canvas {
+      background-color: #0d0d0f;
+      border: 1px solid #2d2d34;
+      border-radius: 6px;
+    }
+    .controls { display: flex; flex-direction: column; gap: 15px; width: 250px; }
+    .channel-row {
+      background: #24242b;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .channel-label {
+      font-weight: bold;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .status-indicator { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: #333; }
+    .btn-group { display: flex; gap: 5px; }
+    button {
+      flex: 1;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    button:hover { background-color: #2563eb; }
+    button.pulse-btn { background-color: #8b5cf6; }
+    button.pulse-btn:hover { background-color: #7c3aed; }
+  </style>
+</head>
+<body>
+
+  <h1>Live Vertical Logic Analyzer</h1>
+  <p>Data streams upwards. The bottom row is the live cutting edge.</p>
+
+  <div class="container">
+    <canvas id="timelineCanvas" width="400" height="500"></canvas>
+    <div class="controls" id="controlsContainer"></div>
+  </div>
+
+<script>
+const canvas = document.getElementById('timelineCanvas');
+const ctx = canvas.getContext('2d');
+
+// Engine Configurations
+const ROW_HEIGHT = 5; 
+// We make edge events take up more vertical space (e.g., 3x taller)
+const EDGE_HEIGHT = 15; 
+const MAX_CHANNELS = 5;
+
+// Enumerated Protocol States
+const STATE_LOW  = 0;
+const STATE_RISE = 1;
+const STATE_HIGH = 2;
+const STATE_FALL = 3;
+
+const COLORS = {
+  [STATE_LOW]:  '#3a1d1d', // Muted Red
+  [STATE_HIGH]: '#2ecc71', // Active Green
+  [STATE_RISE]: '#ffffff', // Rising Edge White
+  [STATE_FALL]: '#a855f7'  // Falling Edge Violet
+};
+
+let virtualHardwarePins = Array(MAX_CHANNELS).fill(false);
+let channels = Array.from({ length: MAX_CHANNELS }, () => []);
+
+function createControlPanel() {
+  const container = document.getElementById('controlsContainer');
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    const row = document.createElement('div');
+    row.className = 'channel-row';
+    row.innerHTML = `
+      <div class="channel-label">
+        <span>CH ${i} (Pin State)</span>
+        <span class="status-indicator" id="status-${i}" style="color: #ef4444;">LOW</span>
+      </div>
+      <div class="btn-group">
+        <button onclick="togglePin(${i})">Toggle State</button>
+        <button class="pulse-btn" onclick="triggerPulse(${i})">Send Pulse</button>
+      </div>
+    `;
+    container.appendChild(row);
+  }
+}
+
+function togglePin(chIndex) {
+  virtualHardwarePins[chIndex] = !virtualHardwarePins[chIndex];
+  updateHardwareUI(chIndex);
+}
+
+function triggerPulse(chIndex) {
+  virtualHardwarePins[chIndex] = true;
+  updateHardwareUI(chIndex);
+  setTimeout(() => {
+    virtualHardwarePins[chIndex] = false;
+    updateHardwareUI(chIndex);
+  }, 150);
+}
+
+function updateHardwareUI(chIndex) {
+  const label = document.getElementById(`status-${chIndex}`);
+  if (virtualHardwarePins[chIndex]) {
+    label.innerText = "HIGH"; label.style.color = "#2ecc71";
+  } else {
+    label.innerText = "LOW"; label.style.color = "#ef4444";
+  }
+}
+
+function ingestLiveSamples() {
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    const history = channels[i];
+    const currentTargetBit = virtualHardwarePins[i];
+    const lastRegisteredState = history[0]; // Index 0 is the newest data
+
+    let calculatedState = currentTargetBit ? STATE_HIGH : STATE_LOW;
+
+    if (lastRegisteredState !== undefined) {
+      const wasHigh = (lastRegisteredState === STATE_HIGH || lastRegisteredState === STATE_RISE);
+      if (!wasHigh && currentTargetBit)  calculatedState = STATE_RISE;
+      if (wasHigh && !currentTargetBit) calculatedState = STATE_FALL;
+    }
+
+    history.unshift(calculatedState);
+    
+    // Safety cap to prevent memory leak
+    if (history.length > 200) {
+      history.pop();
+    }
+  }
+}
+
+function renderTimeline() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const columnWidth = canvas.width / MAX_CHANNELS;
+
+  // Track the current Y cursor position starting from the bottom of the canvas
+  let currentY = canvas.height;
+
+  // Loop through history entries (0 is live, 1 is past, 2 is older past...)
+  for (let idx = 0; idx < channels[0].length; idx++) {
+    // If we've drawn off the top of the screen, stop processing
+    if (currentY < 0) break;
+
+    // Phase A: Peak cross-channel alignment guide line
+    let crossEdgeDetected = false;
+    for (let col = 0; col < MAX_CHANNELS; col++) {
+      const s = channels[col][idx];
+      if (s === STATE_RISE || s === STATE_FALL) {
+        crossEdgeDetected = true;
+        break;
+      }
+    }
+
+    // Determine the step height for this historical entry
+    const currentStepHeight = crossEdgeDetected ? EDGE_HEIGHT : ROW_HEIGHT;
+    // Calculate the target Y position since data flows UPWARDS
+    const targetY = currentY - currentStepHeight;
+
+    if (crossEdgeDetected) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillRect(0, targetY, canvas.width, currentStepHeight);
+    }
+
+    // Phase B: Draw the channel lanes using the new geometry rules
+    for (let col = 0; col < MAX_CHANNELS; col++) {
+      const state = channels[col][idx];
+      if (state === undefined) continue;
+
+      const xStart = col * columnWidth;
+      ctx.fillStyle = COLORS[state];
+
+      // Define width dimensions within the column track
+      const lowWidth = columnWidth * 0.1;
+      const highWidth = columnWidth * 0.6;
+
+      const lowOffset = (columnWidth - lowWidth) / 2;
+      const highOffset = (columnWidth - highWidth) / 2;
+
+      ctx.beginPath();
+
+      if (state === STATE_RISE) {
+        // Triangle widening out as it moves forward in time (from top to bottom of this segment)
+        // Since time flows up, the older data (top of segment) is LOW width, 
+        // and the newer data (bottom of segment) is HIGH width.
+        ctx.moveTo(xStart + lowOffset, targetY); 
+        ctx.lineTo(xStart + lowOffset + lowWidth, targetY);
+        ctx.lineTo(xStart + highOffset + highWidth, currentY);
+        ctx.lineTo(xStart + highOffset, currentY);
+      } 
+      else if (state === STATE_FALL) {
+        // Triangle narrowing down as it moves forward in time (from top to bottom of this segment)
+        // Older data (top of segment) is HIGH width, 
+        // newer data (bottom of segment) is LOW width.
+        ctx.moveTo(xStart + highOffset, targetY);
+        ctx.lineTo(xStart + highOffset + highWidth, targetY);
+        ctx.lineTo(xStart + lowOffset + lowWidth, currentY);
+        ctx.lineTo(xStart + lowOffset, currentY);
+      } 
+      else if (state === STATE_HIGH) {
+        // Standard high block trace
+        ctx.fillRect(xStart + highOffset, targetY, highWidth, currentStepHeight);
+        continue; // skip fill path call
+      } 
+      else {
+        // Standard low block trace
+        ctx.fillRect(xStart + lowOffset, targetY, lowWidth, currentStepHeight);
+        continue; // skip fill path call
+      }
+
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Advance our drawing cursor upward for the next index row
+    currentY = targetY;
+  }
+
+  // Draw vertical lane dividers
+  ctx.strokeStyle = '#23232a';
+  ctx.lineWidth = 1;
+  for (let col = 1; col < MAX_CHANNELS; col++) {
+    ctx.beginPath();
+    ctx.moveTo(col * columnWidth, 0);
+    ctx.lineTo(col * columnWidth, canvas.height);
+    ctx.stroke();
+  }
+}
+
+function engineTick() {
+  ingestLiveSamples();
+  renderTimeline();
+}
+
+createControlPanel();
+setInterval(engineTick, 30); // ~33 FPS
+</script>
+</body>
+</html>

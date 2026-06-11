@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vertical Logic Analyzer - Pro Version</title>
+  <style>
+    body {
+      background-color: #121214;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+    }
+    h1 { margin-bottom: 5px; font-size: 1.5rem; }
+    p { color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem; text-align: center; }
+    .main-layout {
+      display: flex;
+      gap: 20px;
+      background: #1a1a1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .canvas-container {
+      position: relative;
+    }
+    canvas {
+      background-color: #0d0d0f;
+      border: 1px solid #2d2d34;
+      border-radius: 6px;
+      cursor: grab;
+    }
+    canvas:active { cursor: grabbing; }
+    .controls { display: flex; flex-direction: column; gap: 15px; width: 260px; }
+    .global-toolbar {
+      background: #24242b;
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+    .channel-row {
+      background: #24242b;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .channel-label {
+      font-weight: bold;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .status-indicator { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: #333; }
+    .btn-group { display: flex; gap: 5px; }
+    button {
+      flex: 1;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    button:hover { background-color: #2563eb; }
+    button.pulse-btn { background-color: #8b5cf6; }
+    button.pulse-btn:hover { background-color: #7c3aed; }
+    button.action-btn { background-color: #475569; }
+    button.action-btn:hover { background-color: #334155; }
+    button.active-toggle { background-color: #ef4444; }
+    button.active-toggle:hover { background-color: #dc2626; }
+    .speed-badge { background: #1e1b4b; color: #818cf8; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>Interactive Logic Analyzer</h1>
+  <p>Time flows <b>UPWARD</b>. Bottom is live. <br><b>Scroll Wheel</b> or <b>Click + Drag</b> the canvas to review historical buffers when paused.</p>
+
+  <div class="main-layout">
+    <div class="canvas-container">
+      <canvas id="timelineCanvas" width="450" height="550"></canvas>
+    </div>
+    
+    <div class="controls">
+      <!-- Global Time/Timeline Modifiers -->
+      <div class="global-toolbar">
+        <div class="toolbar-row">
+          <span>Engine State:</span>
+          <button id="pauseBtn" class="action-btn" onclick="togglePause()">Pause</button>
+        </div>
+        <div class="toolbar-row">
+          <span>Feed Velocity:</span>
+          <div class="btn-group" style="flex: 2; margin-left: 10px;">
+            <button onclick="adjustSpeed(-1)">-</button>
+            <span class="speed-badge" id="speedDisplay">1x</span>
+            <button onclick="adjustSpeed(1)">+</button>
+          </div>
+        </div>
+        <button class="action-btn" style="background:#0284c7" onclick="resetScroll()">Snap to Live Feed</button>
+      </div>
+
+      * Hardware Inputs
+      <div id="hardwarePinsContainer" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+  </div>
+
+<script>
+const canvas = document.getElementById('timelineCanvas');
+const ctx = canvas.getContext('2d');
+
+// State Enums
+const STATE_LOW  = 0; const STATE_RISE = 1;
+const STATE_HIGH = 2; const STATE_FALL = 3;
+
+const COLORS = {
+  [STATE_LOW]:  '#2a1616', [STATE_HIGH]: '#2ecc71',
+  [STATE_RISE]: '#ffffff', [STATE_FALL]: '#a855f7'
+};
+
+const MAX_CHANNELS = 5;
+let baseRowHeight = 6; 
+let edgeRowHeight = 16; 
+
+// Timing Variables
+let timelineSpeedMultiplier = 1; 
+let isPaused = false;
+let systemRunningTimeMs = 0; 
+let lastSecondMarkerDropped = 0;
+
+// Scroll Offset tracking (0 means anchored perfectly to the live bottom view)
+let scrollOffsetY = 0; 
+
+let virtualHardwarePins = Array(MAX_CHANNELS).fill(false);
+// Store objects: { state: ENUM, ms: number, isTimeMarker: boolean }
+let channels = Array.from({ length: MAX_CHANNELS }, () => []);
+let generalTimeMarkers = []; 
+
+// Drag-to-Scroll Context Window
+let isDragging = false;
+let dragStartY = 0;
+
+function createControlPanel() {
+  const container = document.getElementById('hardwarePinsContainer');
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    const row = document.createElement('div');
+    row.className = 'channel-row';
+    row.innerHTML = `
+      <div class="channel-label">
+        <span>CH ${i}</span>
+        <span class="status-indicator" id="status-${i}" style="color: #ef4444;">LOW</span>
+      </div>
+      <div class="btn-group">
+        <button onclick="togglePin(${i})">Toggle</button>
+        <button class="pulse-btn" onclick="triggerPulse(${i})">Pulse</button>
+      </div>
+    `;
+    container.appendChild(row);
+  }
+}
+
+function togglePin(chIndex) {
+  virtualHardwarePins[chIndex] = !virtualHardwarePins[chIndex];
+  updateHardwareUI(chIndex);
+}
+
+function triggerPulse(chIndex) {
+  virtualHardwarePins[chIndex] = true;
+  updateHardwareUI(chIndex);
+  setTimeout(() => {
+    virtualHardwarePins[chIndex] = false;
+    updateHardwareUI(chIndex);
+  }, 100);
+}
+
+function updateHardwareUI(chIndex) {
+  const label = document.getElementById(`status-${chIndex}`);
+  if (virtualHardwarePins[chIndex]) {
+    label.innerText = "HIGH"; label.style.color = "#2ecc71";
+  } else {
+    label.innerText = "LOW"; label.style.color = "#ef4444";
+  }
+}
+
+function togglePause() {
+  isPaused = !isPaused;
+  const btn = document.getElementById('pauseBtn');
+  if (isPaused) {
+    btn.innerText = "Resume";
+    btn.classList.add('active-toggle');
+  } else {
+    btn.innerText = "Pause";
+    btn.classList.remove('active-toggle');
+    resetScroll(); // Snap back to real-time upon resuming
+  }
+}
+
+function adjustSpeed(direction) {
+  if (direction > 0 && timelineSpeedMultiplier < 4) timelineSpeedMultiplier += 1;
+  if (direction < 0 && timelineSpeedMultiplier > 1) timelineSpeedMultiplier -= 1;
+  document.getElementById('speedDisplay').innerText = timelineSpeedMultiplier + "x";
+}
+
+function resetScroll() {
+  scrollOffsetY = 0;
+  renderTimeline();
+}
+
+/**
+ * Samples data and increments clocks based on current speed multipliers
+ */
+function ingestLiveSamples() {
+  if (isPaused) return;
+
+  // Execute processing loops based on the user's requested timeline velocity acceleration
+  for (let step = 0; step < timelineSpeedMultiplier; step++) {
+    systemRunningTimeMs += 20; // 20ms engine ticks
+
+    // Evaluate standard periodic 1-second grid intervals
+    let insertTimeMarkerLine = false;
+    if (systemRunningTimeMs - lastSecondMarkerDropped >= 1000) {
+      insertTimeMarkerLine = true;
+      lastSecondMarkerDropped = Math.floor(systemRunningTimeMs / 1000) * 1000;
+    }
+    generalTimeMarkers.unshift({ isMarker: insertTimeMarkerLine, ms: systemRunningTimeMs });
+
+    // Process logic changes across channels
+    for (let i = 0; i < MAX_CHANNELS; i++) {
+      const history = channels[i];
+      const pinTarget = virtualHardwarePins[i];
+      const lastNode = history[0];
+
+      let calculatedState = pinTarget ? STATE_HIGH : STATE_LOW;
+
+      if (lastNode !== undefined) {
+        const wasHigh = (lastNode.state === STATE_HIGH || lastNode.state === STATE_RISE);
+        if (!wasHigh && pinTarget)  calculatedState = STATE_RISE;
+        if (wasHigh && !pinTarget) calculatedState = STATE_FALL;
+      }
+
+      history.unshift({ state: calculatedState, ms: systemRunningTimeMs });
+
+      if (history.length > 1500) history.pop();
+    }
+    
+    if (generalTimeMarkers.length > 1500) generalTimeMarkers.pop();
+  }
+}
+
+function renderTimeline() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Rightmost 70px slice reserved for time label markers
+  const lanesWidth = canvas.width - 70;
+  const columnWidth = lanesWidth / MAX_CHANNELS;
+
+  // Render initialization point at the bottom margin, modified by scroll offsets
+  let currentY = canvas.height + scrollOffsetY;
+
+  // Historical data index scanner
+  for (let idx = 0; idx < generalTimeMarkers.length; idx++) {
+    if (currentY < -40) break; // Terminate early once layout exits top bounds
+
+    // Check if any line encounters an edge element at this timestamp slice
+    let crossEdgeDetected = false;
+    for (let col = 0; col < MAX_CHANNELS; col++) {
+      if (channels[col][idx] && (channels[col][idx].state === STATE_RISE || channels[col][idx].state === STATE_FALL)) {
+        crossEdgeDetected = true;
+        break;
+      }
+    }
+
+    const currentStepHeight = crossEdgeDetected ? edgeRowHeight : baseRowHeight;
+    const targetY = currentY - currentStepHeight;
+
+    // Boundary check to prevent drawing if row is completely below the viewport
+    if (currentY > 0 && targetY < canvas.height) {
+      
+      // 1. Draw Periodic 1 or 2 Second Grid Markers (Only if no edge line takes precedent)
+      if (generalTimeMarkers[idx].isMarker && !crossEdgeDetected) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(0, targetY); ctx.lineTo(lanesWidth, targetY); ctx.stroke();
+        ctx.setLineDash([]); // clear dash formatting
+
+        // Write clear interval ticks on side panel boundary
+      //  ctx.fillStyle = '#64748b';
+      //  ctx.font = '10px monospace';
+    //    ctx.textAlign = 'left';
+
+
+
+        // Write clear interval ticks on side panel boundary
+        ctx.fillStyle = '#64748b';
+        ctx.font = '10px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${(generalTimeMarkers[idx].ms / 1000).toFixed(0)}s`, lanesWidth + 10, targetY + 4);
+      }
+
+      // 2. Process Horizontal Edge Alignment Guidelines
+      if (crossEdgeDetected) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+        ctx.fillRect(0, targetY, lanesWidth, currentStepHeight);
+      }
+
+      // 3. Render Geometry Tracks Across Channels
+      for (let col = 0; col < MAX_CHANNELS; col++) {
+        const node = channels[col][idx];
+        if (!node) continue;
+
+        const xStart = col * columnWidth;
+        ctx.fillStyle = COLORS[node.state];
+
+        const lowWidth = columnWidth * 0.12;
+        const highWidth = columnWidth * 0.65;
+        const lowOffset = (columnWidth - lowWidth) / 2;
+        const highOffset = (columnWidth - highWidth) / 2;
+
+        ctx.beginPath();
+
+        if (node.state === STATE_RISE) {
+          ctx.moveTo(xStart + lowOffset, targetY);
+          ctx.lineTo(xStart + lowOffset + lowWidth, targetY);
+          ctx.lineTo(xStart + highOffset + highWidth, currentY);
+          ctx.lineTo(xStart + highOffset, currentY);
+          ctx.closePath(); ctx.fill();
+        } 
+        else if (node.state === STATE_FALL) {
+          ctx.moveTo(xStart + highOffset, targetY);
+          ctx.lineTo(xStart + highOffset + highWidth, targetY);
+          ctx.lineTo(xStart + lowOffset + lowWidth, currentY);
+          ctx.lineTo(xStart + lowOffset, currentY);
+          ctx.closePath(); ctx.fill();
+        } 
+        else if (node.state === STATE_HIGH) {
+          ctx.fillRect(xStart + highOffset, targetY, highWidth, currentStepHeight);
+          
+          // Print Exact Text Timestamp ONLY when High State settles completely
+          if (idx > 0 && channels[col][idx - 1] && channels[col][idx - 1].state === STATE_RISE) {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${node.ms}ms`, xStart + (columnWidth / 2), currentY - 2);
+          }
+        } 
+        else {
+          ctx.fillRect(xStart + lowOffset, targetY, lowWidth, currentStepHeight);
+
+          // Print Exact Text Timestamp ONLY when Low State settles completely
+          if (idx > 0 && channels[col][idx - 1] && channels[col][idx - 1].state === STATE_FALL) {
+            ctx.fillStyle = '#a855f7';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${node.ms}ms`, xStart + (columnWidth / 2), currentY - 2);
+          }
+        }
+      }
+    }
+
+    currentY = targetY;
+  }
+
+  // Draw Vertical Lane Separators and Sidebar background panel divider
+  ctx.strokeStyle = '#222227';
+  ctx.lineWidth = 1;
+  for (let col = 1; col <= MAX_CHANNELS; col++) {
+    ctx.beginPath();
+    ctx.moveTo(col * columnWidth, 0);
+    ctx.lineTo(col * columnWidth, canvas.height);
+    ctx.stroke();
+  }
+  
+  // Highlight static side timeline bar track
+  ctx.fillStyle = '#141416';
+  ctx.fillRect(lanesWidth, 0, 70, canvas.height);
+  ctx.strokeStyle = '#2d2d34';
+  ctx.beginPath(); ctx.moveTo(lanesWidth, 0); ctx.lineTo(lanesWidth, canvas.height); ctx.stroke();
+}
+
+// --- Dynamic Event Listeners for Scrolling & Dragging Navigation ---
+
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  dragStartY = e.clientY;
+  if (!isPaused) togglePause(); // Auto-pause to allow stable inspection
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  const deltaY = e.clientY - dragStartY;
+  dragStartY = e.clientY;
+  
+  // Update offsets (constrain scrolling to keep future data bounded)
+  scrollOffsetY += deltaY;
+  if (scrollOffsetY < 0) scrollOffsetY = 0; 
+  renderTimeline();
+});
+
+window.addEventListener('mouseup', () => { isDragging = false; });
+
+// Mouse Wheel Scroll Listener
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (!isPaused) togglePause(); // Auto-pause on wheel adjustment
+  
+  scrollOffsetY += e.deltaY * 0.4;
+  if (scrollOffsetY < 0) scrollOffsetY = 0;
+  renderTimeline();
+});
+
+function loop() {
+  ingestLiveSamples();
+  renderTimeline();
+  requestAnimationFrame(loop);
+}
+
+createControlPanel();
+loop();
+</script>
+</body>
+</html>

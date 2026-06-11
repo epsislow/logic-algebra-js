@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vertical Logic Analyzer Timeline</title>
+  <style>
+    body {
+      background-color: #121214;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 5px;
+      font-size: 1.5rem;
+    }
+    p {
+      color: #94a3b8;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      background: #1a1a1e;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    canvas {
+      background-color: #0d0d0f;
+      border: 1px solid #2d2d34;
+      border-radius: 6px;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 250px;
+    }
+    .channel-row {
+      background: #24242b;
+      padding: 10px;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .channel-label {
+      font-weight: bold;
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .status-indicator {
+      font-size: 0.8rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #333;
+    }
+    .btn-group {
+      display: flex;
+      gap: 5px;
+    }
+    button {
+      flex: 1;
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    button.pulse-btn {
+      background-color: #8b5cf6;
+    }
+    button.pulse-btn:hover {
+      background-color: #7c3aed;
+    }
+    .legend {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+      font-size: 0.8rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .color-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Live Vertical Logic Analyzer</h1>
+  <p>Data streams downwards. Top row is the live cutting edge.</p>
+
+  <div class="container">
+    <!-- The Live Timeline Viewport -->
+    <canvas id="timelineCanvas" width="400" height="500"></canvas>
+
+    <!-- Interactive Event Trigger Dashboard -->
+    <div class="controls" id="controlsContainer">
+      <!-- Generated dynamically by JS for 5 channels -->
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="color-box" style="background: #1f1414; border: 1px solid #ef4444;"></div> Low State</div>
+    <div class="legend-item"><div class="color-box" style="background: #ffffff;"></div> Rising Edge</div>
+    <div class="legend-item"><div class="color-box" style="background: #2ecc71;"></div> High State</div>
+    <div class="legend-item"><div class="color-box" style="background: #a855f7;"></div> Falling Edge</div>
+  </div>
+
+<script>
+const canvas = document.getElementById('timelineCanvas');
+const ctx = canvas.getContext('2d');
+
+// Engine Configurations
+const ROW_HEIGHT = 5; 
+const VISIBLE_ROWS = Math.floor(canvas.height / ROW_HEIGHT);
+const MAX_CHANNELS = 5;
+
+// Enumerated Protocol States
+const STATE_LOW  = 0;
+const STATE_RISE = 1;
+const STATE_HIGH = 2;
+const STATE_FALL = 3;
+
+const COLORS = {
+  [STATE_LOW]:  '#1f1414', // Very dark/muted red
+  [STATE_HIGH]: '#2ecc71', // Vibrant active green
+  [STATE_RISE]: '#ffffff', // High visibility white blast
+  [STATE_FALL]: '#a855f7'  // High visibility electric violet
+};
+
+// Tracks the logical pin state (true=High, false=Low) for the inputs
+let virtualHardwarePins = Array(MAX_CHANNELS).fill(false);
+
+// Multi-channel timeline arrays
+let channels = Array.from({ length: MAX_CHANNELS }, () => []);
+
+/**
+ * Builds the UI Dashboard so you can trigger real-time events manually
+ */
+function createControlPanel() {
+  const container = document.getElementById('controlsContainer');
+  
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    const row = document.createElement('div');
+    row.className = 'channel-row';
+    
+    row.innerHTML = `
+      <div class="channel-label">
+        <span>CH ${i} (Pin State)</span>
+        <span class="status-indicator" id="status-${i}" style="color: #ef4444;">LOW</span>
+      </div>
+      <div class="btn-group">
+        <button onclick="togglePin(${i})">Toggle State</button>
+        <button class="pulse-btn" onclick="triggerPulse(${i})">Send Pulse</button>
+      </div>
+    `;
+    container.appendChild(row);
+  }
+}
+
+/**
+ * Event Trigger 1: Hard state inversion (Low -> High or High -> Low)
+ */
+function togglePin(chIndex) {
+  virtualHardwarePins[chIndex] = !virtualHardwarePins[chIndex];
+  updateHardwareUI(chIndex);
+}
+
+/**
+ * Event Trigger 2: An automated quick Blip/Pulse (Low -> High -> Low)
+ */
+function triggerPulse(chIndex) {
+  // Turn high instantly
+  virtualHardwarePins[chIndex] = true;
+  updateHardwareUI(chIndex);
+  
+  // Clear it back to low automatically after 120 milliseconds
+  setTimeout(() => {
+    virtualHardwarePins[chIndex] = false;
+    updateHardwareUI(chIndex);
+  }, 120);
+}
+
+function updateHardwareUI(chIndex) {
+  const label = document.getElementById(`status-${chIndex}`);
+  if (virtualHardwarePins[chIndex]) {
+    label.innerText = "HIGH";
+    label.style.color = "#2ecc71";
+  } else {
+    label.innerText = "LOW";
+    label.style.color = "#ef4444";
+  }
+}
+
+/**
+ * Processes stream history data inputs and tags transition nodes
+ */
+function ingestLiveSamples() {
+  for (let i = 0; i < MAX_CHANNELS; i++) {
+    const history = channels[i];
+    const currentTargetBit = virtualHardwarePins[i];
+    const lastRegisteredState = history[0];
+
+    let calculatedState = currentTargetBit ? STATE_HIGH : STATE_LOW;
+
+    // Check transition edges relative to previous tick
+    if (lastRegisteredState !== undefined) {
+      const wasHigh = (lastRegisteredState === STATE_HIGH || lastRegisteredState === STATE_RISE);
+      
+      if (!wasHigh && currentTargetBit) {
+        calculatedState = STATE_RISE;
+      } else if (wasHigh && !currentTargetBit) {
+        calculatedState = STATE_FALL;
+      }
+    }
+
+    // Slide history down (insert newest at top/index 0)
+    history.unshift(calculatedState);
+    if (history.length > VISIBLE_ROWS) {
+      history.pop();
+    }
+  }
+}
+
+/**
+ * Paint execution pass
+ */
+function renderTimeline() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  const columnWidth = canvas.width / MAX_CHANNELS;
+
+  // Track channels to render text markers at the top block
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'center';
+
+  for (let row = 0; row < VISIBLE_ROWS; row++) {
+    const y = row * ROW_HEIGHT;
+    let crossEdgeDetected = false;
+
+    // Phase A: Peek to see if a hardware change occurs across ANY channel on this row
+    for (let col = 0; col < MAX_CHANNELS; col++) {
+      const s = channels[col][row];
+      if (s === STATE_RISE || s === STATE_FALL) {
+        crossEdgeDetected = true;
+        break;
+      }
+    }
+
+    // Draw horizontal timeline cross-hair alignment lines across the grid canvas
+    if (crossEdgeDetected) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.fillRect(0, y, canvas.width, 1);
+    }
+
+    // Phase B: Draw the channel lane blocks
+    for (let col = 0; col < MAX_CHANNELS; col++) {
+      const state = channels[col][row];
+      if (state === undefined) continue;
+
+      const x = col * columnWidth;
+      ctx.fillStyle = COLORS[state];
+
+      if (state === STATE_RISE || state === STATE_FALL) {
+        // Edge: Full width banner across the lane slot
+        ctx.fillRect(x + 2, y, columnWidth - 4, ROW_HEIGHT);
+      } else if (state === STATE_HIGH) {
+        // High State: Medium-thick vertical trace block
+        ctx.fillRect(x + (columnWidth * 0.25), y, columnWidth * 0.5, ROW_HEIGHT);
+      } else {
+        // Low State: Thin baseline wire
+        ctx.fillRect(x + (columnWidth * 0.45), y, columnWidth * 0.1, ROW_HEIGHT);
+      }
+    }
+  }
+
+  // Draw Lane Dividing Guides on top of traces
+  ctx.strokeStyle = '#23232a';
+  ctx.lineWidth = 1;
+  for (let col = 1; col < MAX_CHANNELS; col++) {
+    ctx.beginPath();
+    ctx.moveTo(col * columnWidth, 0);
+    ctx.lineTo(col * columnWidth, canvas.height);
+    ctx.stroke();
+  }
+}
+
+/**
+ * System clock runner simulation loop
+ */
+function engineTick() {
+  ingestLiveSamples();
+  renderTimeline();
+}
+
+// Initialization 
+createControlPanel();
+// Run logic sampling at regular hardware intervals (approx 50 samples/second)
+setInterval(engineTick, 20);
+
+</script>
+</body>
+</html>
