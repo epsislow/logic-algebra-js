@@ -1,0 +1,11 @@
+# Normalizare line endings: LF in repo, consistent pe toate platformele
+* text=auto eol=lf
+
+# Fisiere binare
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
