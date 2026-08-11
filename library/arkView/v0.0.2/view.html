@@ -101,40 +101,68 @@
         // 2. STIVA PENTRU BREADCRUMBS
         const istoricNavigare = [];
 
-        // 3. GENERAREA STRUCTURII DE ETAJE
+
+        // 3. GENERAREA STRUCTURII CYBERPUNK (ETAJE ȘI NODURI NEON)
         const numarEtaje = 4;
         const coordonateLiniiInterEtaj = [];
-        const culoriEtaje = [0x00ffcc, 0x0099ff, 0xff00ff, 0xffcc00];
+        
+        // Culori Cyberpunk pure (Culori Neon)
+        const culoriEtaje = [
+            0x00ffcc, // Cyan Neon (Baza)
+            0xff0055, // Roz/Magenta Neon
+            0x00ff33, // Verde Neon Matrix
+            0x9900ff  // Violet Neon
+        ];
+
+        // Adăugăm un container global pentru noduri pentru a le accesa mai ușor
+        const masinaNoduri = [];
 
         for (let i = 0; i < numarEtaje; i++) {
             const etajGrup = new THREE.Group();
             etajGrup.position.y = i * 40; 
 
-            // Grila/podeaua etajului
-            const grid = new THREE.GridHelper(100, 20, culoriEtaje[i], 0x1e293b);
-            grid.material.opacity = 0.2;
-            grid.material.transparent = true;
-            etajGrup.add(grid);
+            // EFECT HOLOGRAFIC: În loc de grilă standard, creăm cercuri concentrice (efect radar/hologramă)
+            for(let r = 1; r <= 3; r++) {
+                const geomCerc = new THREE.RingGeometry(r * 10 - 0.2, r * 10, 64);
+                geomCerc.rotateX(-Math.PI / 2); // Îl punem plat ca o podea
+                const matCerc = new THREE.MeshBasicMaterial({
+                    color: culoriEtaje[i],
+                    transparent: true,
+                    opacity: 0.08, // Foarte discret în fundal
+                    side: THREE.DoubleSide
+                });
+                etajGrup.add(new THREE.Mesh(geomCerc, matCerc));
+            }
 
-            // Generăm noduri în cerc
-            const numarNoduri = 8;
+            // Generăm nodurile sub formă de OZN-uri / Cristale neon (OctahedronGeometry)
+            const numarNoduri = 12; // Am mărit numărul lor
             for (let j = 0; j < numarNoduri; j++) {
                 const unghi = (j / numarNoduri) * Math.PI * 2;
                 const raza = 30;
                 const x = Math.cos(unghi) * raza;
                 const z = Math.sin(unghi) * raza;
 
-                const geomNod = new THREE.BoxGeometry(3, 3, 3);
-                const matNod = new THREE.MeshBasicMaterial({ color: culoriEtaje[i] });
+                // Geometrie în formă de diamant/cristal (arată mult mai digital decât un cub)
+                const geomNod = new THREE.OctahedronGeometry(2.5);
+                const matNod = new THREE.MeshBasicMaterial({ 
+                    color: culoriEtaje[i],
+                    wireframe: true // Rulează în mod WIREFRAME pentru aspectul de hologramă retro-SF
+                });
+                
                 const nodMesh = new THREE.Mesh(geomNod, matNod);
                 nodMesh.position.set(x, 0, z);
-                nodMesh.userData = { inaltimeY: i * 40, numeEtaj: 'Modul Funcții ' + (i + 1) };
-
+                
+                // Salvăm datele pentru Raycasting (Click)
+                nodMesh.userData = { inaltimeY: i * 40, numeEtaj: 'Modul Cyber-Core ' + (i + 1) };
+                
                 etajGrup.add(nodMesh);
+                masinaNoduri.push(nodMesh); // Salvăm într-un array global pentru a le anima mai târziu
 
+                // Conexiunile inter-etaj oblice
                 if (i < numarEtaje - 1) {
                     coordonateLiniiInterEtaj.push(x, i * 40, z);
-                    const urmatorulUnghi = ((j + 1) / numarNoduri) * Math.PI * 2;
+                    // Le conectăm în diagonală (j + 2) pentru a crea o rețea complexă, stil "data-stream"
+                    const urmatorulUnghi = ((j + 2) / numarNoduri) * Math.PI * 2;
                     coordonateLiniiInterEtaj.push(Math.cos(urmatorulUnghi) * raza, (i + 1) * 40, Math.sin(urmatorulUnghi) * raza);
                 }
             }
@@ -142,18 +170,41 @@
             scene.add(etajGrup);
         }
 
-        // 4. RANDAREA LINIILOR INTER-ETAJ
+        // 4. RANDAREA LINIILOR INTER-ETAJ (FLUX DE DATE CYBERPUNK)
         const geomLinii = new THREE.BufferGeometry();
         geomLinii.setAttribute('position', new THREE.Float32BufferAttribute(coordonateLiniiInterEtaj, 3));
         
         const matLinii = new THREE.LineBasicMaterial({
-            color: 0x4488ff,
+            color: 0x00ffff, // Liniile dintre etaje sunt Cyan electric
             transparent: true,
-            opacity: 0.25,
-            blending: THREE.AdditiveBlending
+            opacity: 0.15,
+            blending: THREE.AdditiveBlending // Modul de amestecare "Additive" face ca liniile suprapuse să strălucească mai puternic!
         });
         const sistemLiniiInterEtaj = new THREE.LineSegments(geomLinii, matLinii);
         scene.add(sistemLiniiInterEtaj);
+
+        // EXTRA EFECT CYBERPUNK: O ploaie de particule/stele digitale digitale în fundal (Matrix Dust)
+        const geometrieParticule = new THREE.BufferGeometry();
+        const numarParticule = 500;
+        const pozitiiParticule = [];
+
+        for(let p = 0; p < numarParticule; p++) {
+            pozitiiParticule.push((Math.random() - 0.5) * 300); // X
+            pozitiiParticule.push(Math.random() * 200 - 20);    // Y (înălțime)
+            pozitiiParticule.push((Math.random() - 0.5) * 300); // Z
+        }
+
+        geometrieParticule.setAttribute('position', new THREE.Float32BufferAttribute(pozitiiParticule, 3));
+        const materialParticule = new THREE.PointsMaterial({
+            color: 0xff0055,
+            size: 1.5,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending
+        });
+        const norParticule = new THREE.Points(geometrieParticule, materialParticule);
+        scene.add(norParticule);
+
 
         // 5. SISTEMUL DE NAVIGARE FLUIDĂ (Folosind variabila globală "gsap")
         window.navigheazaCatre = function(tintaCameraY, eticheta, salveazaInIstoric = true) {
@@ -295,10 +346,33 @@ window.addEventListener('mouseup', function(event) {
 });
 
 
-        // 6. LOOP-UL DE RANDARE
+        // 6. LOOP-UL DE RANDARE DINAMIC (60+ FPS)
+        let ceas = 0; // Folosit pentru animații bazate pe timp matematic (Sinus/Cosinus)
+
         function animate() {
             requestAnimationFrame(animate);
+            
             controls.update(); 
+            
+            // Incrementăm timpul la fiecare cadru
+            ceas += 0.01;
+
+            // A. Animăm nodurile (cristalele wireframe se învârt și plutesc ușor în sus și în jos)
+            masinaNoduri.forEach(function(nod, index) {
+                nod.rotation.y += 0.01; // Rotație pe axa Y
+                nod.rotation.x += 0.005; // Rotație ușoară pe axa X
+                
+                // Efect de plutire fluidă pe verticală (folosind funcția Sinus bazată pe indexul nodului)
+                nod.position.y = Math.sin(ceas + index) * 0.5;
+            });
+
+            // B. Efect de pulsație pe liniile dintre etaje (efect de curent electric/data-flow)
+            // Schimbăm opacitatea foarte fin în funcție de timp pentru a crea o pulsație organică
+            sistemLiniiInterEtaj.material.opacity = 0.12 + Math.sin(ceas * 4) * 0.05;
+
+            // C. Rotim norul de particule din fundal pentru adâncime cosmică/digitală
+            norParticule.rotation.y += 0.0005;
+
             renderer.render(scene, camera);
         }
         animate();
