@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Code Dependency Visualizer</title>
+    <style>
+        /* Resetăm marginile pentru ca WebGL să ocupe tot ecranul */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #0b0f19;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Canvas-ul 3D unde randează WebGL */
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Interfața HTML 2D suprapusă peste grafica 3D */
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none; /* Permite click-ul să treacă prin containerul gol către WebGL */
+        }
+
+        #btn-back {
+            display: none; /* Ascuns la început când suntem la Home */
+            background: #ff0055;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            pointer-events: auto; /* Reactivăm click-ul pe buton */
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        #btn-back:hover {
+            background: #d00044;
+        }
+
+        #breadcrumbs {
+            color: #8fa0dd;
+            font-size: 16px;
+            background: rgba(11, 15, 25, 0.8);
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            border: 1px solid #1e293b;
+        }
+    </style>
+
+    <!-- Import Map: Îi spune browserului de unde să descarce Three.js și extra modulele -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com",
+          "three/addons/": "https://unpkg.com",
+          "gsap": "https://cloudflare.com"
+        }
+      }
+    </script>
+</head>
+<body>
+
+    <!-- Interfața de Control -->
+    <div id="ui-container">
+        <button id="btn-back">← Înapoi</button>
+        <div id="breadcrumbs">Home</div>
+    </div>
+
+    <!-- Canvas-ul WebGL -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Scriptul Principal al Aplicației -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        // Încarcă GSAP global deoarece CDN-ul injectează o variabilă globală window.gsap
+        import 'gsap'; 
+
+        // 1. SETĂRI DE BAZĂ (Scenă, Cameră, Renderer)
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0b0f19, 0.003); // Fog pentru adâncime vizuală
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // Poziție inițială oblică, de sus, pentru a vedea toate etajele global
+        camera.position.set(80, 120, 150); 
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Controalele de mouse (Orbit)
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Efect de mișcare lină (inerție)
+        controls.dampingFactor = 0.05;
+
+        // 2. STIVA PENTRU BREADCRUMBS
+        const istoricNavigare = [];
+
+        // 3. GENERAREA STRUCTURII DE ETAJE (Simulare Date)
+        const numarEtaje = 4;
+        const etajeGrupuri = [];
+        const coordonateLiniiInterEtaj = [];
+
+        // Definim o culoare tehnică pentru fiecare etaj
+        const culoriEtaje = [0x00ffcc, 0x0099ff, 0xff00ff, 0xffcc00];
+
+        for (let i = 0; i < numarEtaje; i++) {
+            const etajGrup = new THREE.Group();
+            etajGrup.position.y = i * 40; // Etajele sunt la Y = 0, 40, 80, 120
+            etajGrup.userData = { nume: `Etaj ${i + 1}`, inaltimeY: i * 40 };
+
+            // Desenăm o grilă/podea simbolică pentru etaj
+            const grid = new THREE.GridHelper(100, 20, culoriEtaje[i], 0x1e293b);
+            grid.position.y = 0;
+            // Ne asigurăm că grila acceptă transparența din fog
+            grid.material.opacity = 0.2;
+            grid.material.transparent = true;
+            etajGrup.add(grid);
+
+            // Generăm câteva noduri (funcții software) fictive pe acest etaj
+            // Le așezăm în cerc pentru a nu se suprapune
+            const numarNoduri = 8;
+            for (let j = 0; j < numarNoduri; j++) {
+                const unghi = (j / numarNoduri) * Math.PI * 2;
+                const raza = 30;
+                const x = Math.cos(unghi) * raza;
+                const z = Math.sin(unghi) * raza;
+
+                // Nodul grafic (un mic cub sau sferă)
+                const geomNod = new THREE.BoxGeometry(3, 3, 3);
+                const matNod = new THREE.MeshBasicMaterial({ color: culoriEtaje[i] });
+                const nodMesh = new THREE.Mesh(geomNod, matNod);
+                nodMesh.position.set(x, 0, z);
+                
+                etajGrup.add(nodMesh);
+
+                // Salvăm punctele globale pentru a trage linii către etajul următor (dacă există)
+                if (i < numarEtaje - 1) {
+                    // Punct de pornire (Etaj curent)
+                    coordonateLiniiInterEtaj.push(x, i * 40, z);
+                    // Punct de sosire (Etajul de deasupra, legat ușor decalat spre următorul nod)
+                    const urmatorulUnghi = ((j + 1) / numarNoduri) * Math.PI * 2;
+                    coordonateLiniiInterEtaj.push(Math.cos(urmatorulUnghi) * raza, (i + 1) * 40, Math.sin(urmatorulUnghi) * raza);
+                }
+            }
+
+            etajeGrupuri.push(etajGrup);
+            scene.add(etajGrup);
+        }
+
+        // 4. RANDAREA LINIILOR INTER-ETAJ (Într-un singur Buffer masiv)
+        const geomLinii = new THREE.BufferGeometry();
+        geomLinii.setAttribute('position', new THREE.Float32BufferAttribute(coordonateLiniiInterEtaj, 3));
+        
+        const matLinii = new THREE.LineBasicMaterial({
+            color: 0x4488ff,
+            transparent: true,
+            opacity: 0.25,
+            blending: THREE.AdditiveBlending
+        });
+        const sistemLiniiInterEtaj = new THREE.LineSegments(geomLinii, matLinii);
+        scene.add(sistemLiniiInterEtaj);
+
+        // 5. SISTEMUL DE NAVIGARE FLUIDĂ (GSAP)
+        window.navigheazaCatre = function(tintaCameraY, eticheta, salveazaInIstoric = true) {
+            if (salveazaInIstoric) {
+                istoricNavigare.push({
+                    cameraPoz: camera.position.clone(),
+                    controlTinta: controls.target.clone(),
+                    eticheta: eticheta
+                });
+                actualizeazaUI();
+            }
+
+            controls.enabled = false;
+
+            // Camera va zbura poziționată în fața etajului respectiv
+            gsap.to(camera.position, {
+                x: 60,
+                y: tintaCameraY + 25, // Privire ușor de sus spre etaj
+                z: 80,
+                duration: 1.2,
+                ease: "power2.inOut"
+            });
+
+            // Ținta camerei devine centrul etajului selectat
+            gsap.to(controls.target, {
+                x: 0,
+                y: tintaCameraY,
+                z: 0,
+                duration: 1.2,
+                ease: "power2.inOut",
+                onComplete: () => { controls.enabled = true; }
+            });
+        };
+
+        window.mergiInapoi = function() {
+            if (istoricNavigare.length === 0) return;
+            const stareaAnterioara = istoricNavigare.pop();
+
+            controls.enabled = false;
+
+            gsap.to(camera.position, {
+                x: stareaAnterioara.cameraPoz.x,
+                y: stareaAnterioara.cameraPoz.y,
+                z: stareaAnterioara.cameraPoz.z,
+                duration: 1.2,
+                ease: "power2.inOut"
+            });
+
+            gsap.to(controls.target, {
+                x: stareaAnterioara.controlTinta.x,
+                y: stareaAnterioara.controlTinta.y,
+                z: stareaAnterioara.controlTinta.z,
+                duration: 1.2,
+                ease: "power2.inOut",
+                onComplete: () => { controls.enabled = true; }
+            });
+
+            actualizeazaUI();
+        };
+
+        function actualizeazaUI() {
+            const txtBreadcrumbs = document.getElementById('breadcrumbs');
+            const btnBack = document.getElementById('btn-back');
+
+            btnBack.style.display = istoricNavigare.length > 0 ? 'block' : 'none';
+
+            let textStiva = 'Home';
+            istoricNavigare.forEach(pas => {
+                textStiva += ` &gt; ${pas.eticheta}`;
+            });
+            txtBreadcrumbs.innerHTML = textStiva;
+        }
+
+        // Legăm evenimentul de click pe butonul de Back din HTML
+        document.getElementById('btn-back').addEventListener('click', () => window.mergiInapoi());
+
+        // SIMULARE INTERACȚIUNE: Apasă tastele 1, 2, 3, 4 ca să "zbori" la etaje
+        window.addEventListener('keydown', (e) => {
+            if (['1', '2', '3', '4'].includes(e.key)) {
+                const indexEtaj = parseInt(e.key) - 1;
+                const inaltimeY = indexEtaj * 40;
+                window.navigheazaCatre(inaltimeY, `Modul Funcții ${e.key}`);
+            }
+        });
+
+        // 6. LOOP-UL DE RANDARE (60+ FPS)
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Obligatoriu pentru OrbitControls cu damping/inerție
+            controls.update(); 
+            
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 7. RESPONSIVENESS (Redimensionare automată fereastră)
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

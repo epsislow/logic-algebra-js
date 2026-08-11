@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Code Dependency Visualizer - Local Offline</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #0b0f19;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #btn-back {
+            display: none;
+            background: #ff0055;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            pointer-events: auto;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        #btn-back:hover {
+            background: #d00044;
+        }
+
+        #breadcrumbs {
+            color: #8fa0dd;
+            font-size: 16px;
+            background: rgba(11, 15, 25, 0.8);
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            border: 1px solid #1e293b;
+        }
+    </style>
+
+    <!-- ÎNCĂRCAREA LIBRĂRIILOR LOCALE (FĂRĂ REȚEA, FĂRĂ MODULE) -->
+    <script src="res/three.js"></script>
+    <script src="res/OrbitControls.js"></script>
+    <script src="res/gsap.js"></script>
+</head>
+<body>
+
+    <div id="ui-container">
+        <button id="btn-back">← Înapoi</button>
+        <div id="breadcrumbs">Home</div>
+    </div>
+
+    <canvas id="webgl-canvas"></canvas>
+
+    <script>
+        // Verificăm dacă fișierele s-au încărcat corect din folderul local res
+        if (typeof THREE === 'undefined' || typeof gsap === 'undefined') {
+            alert("Eroare: Nu s-au putut încărca scripturile din folderul 'res'. Verifică dacă fișierele sunt descărcate și redenumite corect.");
+        }
+
+        // 1. SETĂRI DE BAZĂ (Scenă, Cameră, Renderer)
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0b0f19, 0.003);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(80, 120, 150); 
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Controalele de mouse (Orbit) - Varianta non-module folosește THREE.OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; 
+        controls.dampingFactor = 0.05;
+
+        // 2. STIVA PENTRU BREADCRUMBS
+        const istoricNavigare = [];
+
+        // 3. GENERAREA STRUCTURII DE ETAJE
+        const numarEtaje = 4;
+        const coordonateLiniiInterEtaj = [];
+        const culoriEtaje = [0x00ffcc, 0x0099ff, 0xff00ff, 0xffcc00];
+
+        for (let i = 0; i < numarEtaje; i++) {
+            const etajGrup = new THREE.Group();
+            etajGrup.position.y = i * 40; 
+
+            // Grila/podeaua etajului
+            const grid = new THREE.GridHelper(100, 20, culoriEtaje[i], 0x1e293b);
+            grid.material.opacity = 0.2;
+            grid.material.transparent = true;
+            etajGrup.add(grid);
+
+            // Generăm noduri în cerc
+            const numarNoduri = 8;
+            for (let j = 0; j < numarNoduri; j++) {
+                const unghi = (j / numarNoduri) * Math.PI * 2;
+                const raza = 30;
+                const x = Math.cos(unghi) * raza;
+                const z = Math.sin(unghi) * raza;
+
+                const geomNod = new THREE.BoxGeometry(3, 3, 3);
+                const matNod = new THREE.MeshBasicMaterial({ color: culoriEtaje[i] });
+                const nodMesh = new THREE.Mesh(geomNod, matNod);
+                nodMesh.position.set(x, 0, z);
+                nodMesh.userData = { inaltimeY: i * 40, numeEtaj: 'Modul Funcții ' + (i + 1) };
+
+                etajGrup.add(nodMesh);
+
+                if (i < numarEtaje - 1) {
+                    coordonateLiniiInterEtaj.push(x, i * 40, z);
+                    const urmatorulUnghi = ((j + 1) / numarNoduri) * Math.PI * 2;
+                    coordonateLiniiInterEtaj.push(Math.cos(urmatorulUnghi) * raza, (i + 1) * 40, Math.sin(urmatorulUnghi) * raza);
+                }
+            }
+
+            scene.add(etajGrup);
+        }
+
+        // 4. RANDAREA LINIILOR INTER-ETAJ
+        const geomLinii = new THREE.BufferGeometry();
+        geomLinii.setAttribute('position', new THREE.Float32BufferAttribute(coordonateLiniiInterEtaj, 3));
+        
+        const matLinii = new THREE.LineBasicMaterial({
+            color: 0x4488ff,
+            transparent: true,
+            opacity: 0.25,
+            blending: THREE.AdditiveBlending
+        });
+        const sistemLiniiInterEtaj = new THREE.LineSegments(geomLinii, matLinii);
+        scene.add(sistemLiniiInterEtaj);
+
+        // 5. SISTEMUL DE NAVIGARE FLUIDĂ (Folosind variabila globală "gsap")
+        window.navigheazaCatre = function(tintaCameraY, eticheta, salveazaInIstoric = true) {
+            if (salveazaInIstoric) {
+                istoricNavigare.push({
+                    cameraPoz: camera.position.clone(),
+                    controlTinta: controls.target.clone(),
+                    eticheta: eticheta
+                });
+                actualizeazaUI();
+            }
+
+            controls.enabled = false;
+
+            gsap.to(camera.position, {
+                x: 60,
+                y: tintaCameraY + 25,
+                z: 80,
+                duration: 1.2,
+                ease: "power2.inOut"
+            });
+
+            gsap.to(controls.target, {
+                x: 0,
+                y: tintaCameraY,
+                z: 0,
+                duration: 1.2,
+                ease: "power2.inOut",
+                onComplete: function() { controls.enabled = true; }
+            });
+        };
+
+        window.mergiInapoi = function() {
+            if (istoricNavigare.length === 0) return;
+            const stareaAnterioara = istoricNavigare.pop();
+
+            controls.enabled = false;
+
+            gsap.to(camera.position, {
+                x: stareaAnterioara.cameraPoz.x,
+                y: stareaAnterioara.cameraPoz.y,
+                z: stareaAnterioara.cameraPoz.z,
+                duration: 1.2,
+                ease: "power2.inOut"
+            });
+
+            gsap.to(controls.target, {
+                x: stareaAnterioara.controlTinta.x,
+                y: stareaAnterioara.controlTinta.y,
+                z: stareaAnterioara.controlTinta.z,
+                duration: 1.2,
+                ease: "power2.inOut",
+                onComplete: function() { controls.enabled = true; }
+            });
+
+            actualizeazaUI();
+        };
+
+        function actualizeazaUI() {
+            const txtBreadcrumbs = document.getElementById('breadcrumbs');
+            const btnBack = document.getElementById('btn-back');
+
+            btnBack.style.display = istoricNavigare.length > 0 ? 'block' : 'none';
+
+            let textStiva = 'Home';
+            istoricNavigare.forEach(function(pas) {
+                textStiva += ' &gt; ' + pas.eticheta;
+            });
+            txtBreadcrumbs.innerHTML = textStiva;
+        }
+
+        document.getElementById('btn-back').addEventListener('click', function() { window.mergiInapoi(); });
+
+        // Ascultăm tastele 1, 2, 3, 4 pentru testarea zborului camerei
+        window.addEventListener('keydown', function(e) {
+            if (['1', '2', '3', '4'].includes(e.key)) {
+                const indexEtaj = parseInt(e.key) - 1;
+                const inaltimeY = indexEtaj * 40;
+                window.navigheazaCatre(inaltimeY, 'Modul Funcții ' + e.key);
+            }
+        });
+
+
+// === LOGICA DE CLICK PE OBIECTE (RAYCASTING) ===
+
+// Inițializăm uneltele de detectare
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// Ascultăm evenimentul de click pe întregul ecran
+window.addEventListener('click', function(event) {
+    // 1. Transformăm coordonatele click-ului de pe ecran (pixeli) în coordonate WebGL (de la -1 la 1)
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // 2. Setăm raza din cameră către poziția mouse-ului
+    raycaster.setFromCamera(mouse, camera);
+
+    // 3. Calculăm ce obiecte din scenă au fost atinse de rază
+    // Căutăm în interiorul întregii scene (true înseamnă că verifică și copiii grupurilor)
+    const intersectii = raycaster.intersectObjects(scene.children, true);
+
+    // 4. Dacă am lovit cel puțin un obiect
+    if (intersectii.length > 0) {
+        // Luăm primul obiect lovit (cel mai apropiat de cameră)
+        const obiectLovit = intersectii[0].object;
+
+        // Verificăm dacă obiectul lovit este un nod (adică are datele salvate în userData)
+        if (obiectLovit.userData && typeof obiectLovit.userData.inaltimeY !== 'undefined') {
+            const inaltimeTintaY = obiectLovit.userData.inaltimeY;
+            const etichetaEtaj = obiectLovit.userData.numeEtaj;
+
+            // Apelăm funcția ta existentă de navigare fluidă (GSAP)
+            window.navigheazaCatre(inaltimeTintaY, etichetaEtaj);
+        }
+    }
+});
+
+
+        // 6. LOOP-UL DE RANDARE
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 7. RESPONSIVENESS
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
