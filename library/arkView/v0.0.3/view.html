@@ -274,29 +274,190 @@
             scene.add(etajGrup);
         });
 
-        // TRASAREA REȚELEI DE LEBUGĂTURI INTER-ETAJ (Data Streams)
-        const coordonateLinii = [];
-        dateProiect.legaturi.forEach(function(legatura) {
+        // TRASAREA REȚELEI DE FLUX INTER-ETAJ (Data Streams animate)
+        const grupFluxLegaturi = new THREE.Group();
+        const materialeFlux = [];
+
+        const fluxVertexShader = [
+            'attribute float lineDistance;',
+            'varying float vLineDistance;',
+            'void main() {',
+            '    vLineDistance = lineDistance;',
+            '    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+            '}'
+        ].join('\n');
+
+        const fluxFragmentShader = [
+            'uniform float uTime;',
+            'uniform vec3 uColor;',
+            'uniform float uSpeed;',
+            'uniform float uPulseScale;',
+            'uniform float uSeed;',
+            'uniform float uPhase;',
+            'varying float vLineDistance;',
+            'float hash(float n) {',
+            '    return fract(sin(n) * 43758.5453123);',
+            '}',
+            'float impulsAleator(float travel, float seed) {',
+            '    float celula = floor(travel);',
+            '    float local = fract(travel);',
+            '    float hActiv = hash(celula * 17.0 + seed);',
+            '    float hPoz = hash(celula * 31.0 + seed + 7.0);',
+            '    float hLatime = hash(celula * 53.0 + seed + 13.0);',
+            '    float hIntens = hash(celula * 71.0 + seed + 19.0);',
+            '    if (hActiv < 0.42) return 0.0;',
+            '    float start = hPoz * 0.78;',
+            '    float latime = 0.035 + hLatime * 0.14;',
+            '    float dist = local - start;',
+            '    if (dist < 0.0) dist += 1.0;',
+            '    float forma = smoothstep(0.0, latime * 0.25, dist) * (1.0 - smoothstep(latime * 0.25, latime, dist));',
+            '    return forma * (0.55 + hIntens * 0.65);',
+            '}',
+            'void main() {',
+            '    float travel = vLineDistance * uPulseScale - uTime * uSpeed + uPhase;',
+            '    float pulse = impulsAleator(travel, uSeed);',
+            '    pulse += impulsAleator(travel * 1.37 + 3.7, uSeed + 41.0) * 0.6;',
+            '    pulse = min(pulse, 1.0);',
+            '    float brightness = 0.16 + pulse * 1.35;',
+            '    float alpha = 0.115 + pulse * 0.90;',
+            '    gl_FragColor = vec4(uColor * brightness, alpha);',
+            '}'
+        ].join('\n');
+
+        function construiesteTraseuCircuit(p1, p2) {
+            const midY = (p1.y + p2.y) * 0.5;
+            return [
+                p1.clone(),
+                new THREE.Vector3(p1.x, midY, p1.z),
+                new THREE.Vector3(p2.x, midY, p2.z),
+                p2.clone()
+            ];
+        }
+
+        function offsetPuncteParalele(puncte, indexLinie, totalLinii, spacing) {
+            const offsetAmount = (indexLinie - (totalLinii - 1) / 2) * spacing;
+            const up = new THREE.Vector3(0, 1, 0);
+            const rezultat = [];
+
+            for (let i = 0; i < puncte.length; i++) {
+                const copie = puncte[i].clone();
+                let tangenta;
+
+                if (i === 0) {
+                    tangenta = puncte[1].clone().sub(puncte[0]).normalize();
+                } else if (i === puncte.length - 1) {
+                    tangenta = puncte[i].clone().sub(puncte[i - 1]).normalize();
+                } else {
+                    tangenta = puncte[i + 1].clone().sub(puncte[i - 1]).normalize();
+                }
+
+                let perpendiculara = new THREE.Vector3().crossVectors(tangenta, up);
+                if (perpendiculara.lengthSq() < 0.0001) {
+                    perpendiculara = new THREE.Vector3().crossVectors(tangenta, new THREE.Vector3(1, 0, 0));
+                }
+                perpendiculara.normalize();
+
+                copie.add(perpendiculara.multiplyScalar(offsetAmount));
+                rezultat.push(copie);
+            }
+
+            return rezultat;
+        }
+
+        function creeazaGeometrieFlux(puncte) {
+            const pozitii = [];
+            puncte.forEach(function(p) {
+                pozitii.push(p.x, p.y, p.z);
+            });
+
+            const geometrie = new THREE.BufferGeometry();
+            geometrie.setAttribute('position', new THREE.Float32BufferAttribute(pozitii, 3));
+
+            const distante = [0];
+            let distantaCurenta = 0;
+            for (let i = 1; i < puncte.length; i++) {
+                distantaCurenta += puncte[i].distanceTo(puncte[i - 1]);
+                distante.push(distantaCurenta);
+            }
+            geometrie.setAttribute('lineDistance', new THREE.Float32BufferAttribute(distante, 1));
+
+            return geometrie;
+        }
+
+        function creeazaMaterialFlux(viteza, culoare, seed, faza) {
+            const material = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uColor: { value: new THREE.Color(culoare) },
+                    uSpeed: { value: viteza },
+                    uPulseScale: { value: 0.055 + Math.random() * 0.04 },
+                    uSeed: { value: seed },
+                    uPhase: { value: faza }
+                },
+                vertexShader: fluxVertexShader,
+                fragmentShader: fluxFragmentShader,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            materialeFlux.push(material);
+            return material;
+        }
+
+        function adaugaNodFlux(pozitie, culoare) {
+            const geomNod = new THREE.SphereGeometry(0.35, 8, 8);
+            const matNod = new THREE.MeshBasicMaterial({
+                color: culoare,
+                transparent: true,
+                opacity: 0.9,
+                blending: THREE.AdditiveBlending
+            });
+            const nod = new THREE.Mesh(geomNod, matNod);
+            nod.position.copy(pozitie);
+            nod.userData.fazaPuls = Math.random() * Math.PI * 2;
+            nod.userData.vitezaPuls = 2.5 + Math.random() * 3.5;
+            grupFluxLegaturi.add(nod);
+        }
+
+        const NUMAR_LINII_PARALELE = 4;
+        const SPATIERE_FLUX = 0.32;
+        const CULOARE_FLUX = 0x00ffcc;
+
+        dateProiect.legaturi.forEach(function(legatura, indexLegatura) {
             const p1 = dictionarPozitiiGlobale[legatura.deLa];
             const p2 = dictionarPozitiiGlobale[legatura.la];
+            if (!p1 || !p2) return;
 
-            if (p1 && p2) {
-                coordonateLinii.push(p1.x, p1.y, p1.z);
-                coordonateLinii.push(p2.x, p2.y, p2.z);
+            const traseu = construiesteTraseuCircuit(p1, p2);
+
+            // Traseu de bază discret (cadru static al circuitului)
+            const geomBaza = creeazaGeometrieFlux(traseu);
+            const linieBaza = new THREE.Line(geomBaza, new THREE.LineBasicMaterial({
+                color: CULOARE_FLUX,
+                transparent: true,
+                opacity: 0.10,
+                blending: THREE.AdditiveBlending
+            }));
+            grupFluxLegaturi.add(linieBaza);
+
+            adaugaNodFlux(p1, CULOARE_FLUX);
+            adaugaNodFlux(p2, CULOARE_FLUX);
+            adaugaNodFlux(traseu[1], CULOARE_FLUX);
+            adaugaNodFlux(traseu[2], CULOARE_FLUX);
+
+            for (let linie = 0; linie < NUMAR_LINII_PARALELE; linie++) {
+                const puncteOffset = offsetPuncteParalele(traseu, linie, NUMAR_LINII_PARALELE, SPATIERE_FLUX);
+                const geometrie = creeazaGeometrieFlux(puncteOffset);
+                const viteza = 0.7 + Math.random() * 1.6;
+                const seed = Math.random() * 1000 + indexLegatura * 47 + linie * 13;
+                const faza = Math.random() * 12;
+                const material = creeazaMaterialFlux(viteza, CULOARE_FLUX, seed, faza);
+                const linieFlux = new THREE.Line(geometrie, material);
+                grupFluxLegaturi.add(linieFlux);
             }
         });
 
-        const geomRetea = new THREE.BufferGeometry();
-        geomRetea.setAttribute('position', new THREE.Float32BufferAttribute(coordonateLinii, 3));
-        
-        const matRetea = new THREE.LineBasicMaterial({
-            color: 0x00ffff, 
-            transparent: true,
-            opacity: 0.35,
-            blending: THREE.AdditiveBlending
-        });
-        const sistemLegaturiConexiuni = new THREE.LineSegments(geomRetea, matRetea);
-        scene.add(sistemLegaturiConexiuni);
+        scene.add(grupFluxLegaturi);
 
         // MATRIX DATA DUST (Ploaie de biți luminate în fundal)
         const geomPraf = new THREE.BufferGeometry();
@@ -442,8 +603,21 @@
                 panou.position.y = Math.sin(ceas * 1.5 + index) * 0.4;
             });
 
-            // Pulsație rețea linii
-            sistemLegaturiConexiuni.material.opacity = 0.25 + Math.sin(ceas * 3) * 0.12;
+            // Animație flux pe liniile de legătură
+            materialeFlux.forEach(function(mat) {
+                mat.uniforms.uTime.value = ceas;
+            });
+
+            // Pulsație noduri de intersecție (fază random per nod)
+            grupFluxLegaturi.children.forEach(function(copil) {
+                if (copil.isMesh) {
+                    const f = copil.userData.fazaPuls || 0;
+                    const v = copil.userData.vitezaPuls || 3;
+                    const unda = Math.sin(ceas * v + f);
+                    copil.scale.setScalar(0.6 + unda * 0.35);
+                    copil.material.opacity = 0.40 + unda * 0.52;
+                }
+            });
 
             norPraf.rotation.y += 0.0003;
 
