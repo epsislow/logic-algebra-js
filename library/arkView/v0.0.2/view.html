@@ -236,37 +236,59 @@
             }
         });
 
-
-// === LOGICA DE CLICK PE OBIECTE (RAYCASTING) ===
-
-// Inițializăm uneltele de detectare
+// === LOGICA DE CLICK CORECTATĂ (FĂRĂ CONFLICT DE ROTIRE) ===
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// Ascultăm evenimentul de click pe întregul ecran
-window.addEventListener('click', function(event) {
-    // 1. Transformăm coordonatele click-ului de pe ecran (pixeli) în coordonate WebGL (de la -1 la 1)
+// Îi spunem razei să aibă o toleranță de 1.5 unități în spațiul 3D. 
+// Chiar dacă dai click puțin pe lângă cub, el tot va fi detectat!
+raycaster.params.Points.threshold = 1.5; 
+raycaster.params.Mesh.threshold = 1.5; // (Dacă folosești versiuni mai noi, deși pe 0.147 threshold-ul pe Mesh se aplică automat din dimensiunea geometriei)
+
+
+// Reținem poziția unde s-a apăsat inițial click-ul pe ecran
+let startX = 0;
+let startY = 0;
+
+window.addEventListener('mousedown', function(event) {
+    startX = event.clientX;
+    startY = event.clientY;
+});
+
+window.addEventListener('mouseup', function(event) {
+    // Calculăm câți pixeli s-a mișcat mouse-ul între apăsare și eliberare
+    const deltaX = Math.abs(event.clientX - startX);
+    const deltaY = Math.abs(event.clientY - startY);
+
+    // Dacă utilizatorul a mișcat mouse-ul mai mult de 4 pixeli, 
+    // înseamnă că doar a rotit sau a mutat scena (Pan/Rotate), deci anulăm click-ul.
+    if (deltaX > 4 || deltaY > 4) return;
+
+    // 1. Transformăm coordonatele pentru WebGL
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    // 2. Setăm raza din cameră către poziția mouse-ului
+    // 2. Trimitem raza din cameră
     raycaster.setFromCamera(mouse, camera);
 
-    // 3. Calculăm ce obiecte din scenă au fost atinse de rază
-    // Căutăm în interiorul întregii scene (true înseamnă că verifică și copiii grupurilor)
+    // 3. Verificăm intersecțiile
     const intersectii = raycaster.intersectObjects(scene.children, true);
 
-    // 4. Dacă am lovit cel puțin un obiect
     if (intersectii.length > 0) {
-        // Luăm primul obiect lovit (cel mai apropiat de cameră)
-        const obiectLovit = intersectii[0].object;
+        // Căutăm printre obiectele lovite primul care are userData valid
+        // (Asta ne ajută dacă raza lovește din greșeală o linie în loc de cub)
+        let obiectLovit = null;
+        for (let i = 0; i < intersectii.length; i++) {
+            if (intersectii[i].object.userData && typeof intersectii[i].object.userData.inaltimeY !== 'undefined') {
+                obiectLovit = intersectii[i].object;
+                break; // Am găsit nodul, ne oprim
+            }
+        }
 
-        // Verificăm dacă obiectul lovit este un nod (adică are datele salvate în userData)
-        if (obiectLovit.userData && typeof obiectLovit.userData.inaltimeY !== 'undefined') {
+        // Dacă am găsit un nod valid, zburăm la el
+        if (obiectLovit) {
             const inaltimeTintaY = obiectLovit.userData.inaltimeY;
             const etichetaEtaj = obiectLovit.userData.numeEtaj;
-
-            // Apelăm funcția ta existentă de navigare fluidă (GSAP)
             window.navigheazaCatre(inaltimeTintaY, etichetaEtaj);
         }
     }
