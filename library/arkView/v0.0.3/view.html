@@ -114,7 +114,7 @@
         renderer.toneMapping = THREE.ReinhardToneMapping;
         renderer.toneMappingExposure = 1.2;
 
-        const controls = new OrbitControls(camera, renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true; 
         controls.dampingFactor = 0.05;
         controls.maxPolarAngle = Math.PI / 2 - 0.05; // Împiedică camera să coboare sub podea
@@ -135,11 +135,18 @@
         const renderPass = new THREE.RenderPass(scene, camera);
         
         // Inițializăm Bloom-ul
-        const bloomPass = new THREE.UnrealBloomPass(
+        /*const bloomPass = new THREE.UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight), 
             1.5,  // Intensitate Glow
             0.4,  // Razā Blur
             0.15  // Prag luminozitate
+        );*/
+
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight), 
+            1.1,  // AM SCĂZUT INTENSITATEA BLOOM (era 1.8) pentru a nu mai fi spălată imaginea
+            0.4,  
+            0.15  // Am mărit pragul ca să ignore reflexiile slabe ale sticlei
         );
         
         // !!! ACEASTA ESTE LINIA CRUCIALĂ PENTRU COPIILE DE POST-PROCESARE CLASICE !!!
@@ -224,20 +231,20 @@
                 
                 // MATERIALUL AVANSAT DE STICLĂ SF REPREZENTAT ÎN IMAGINILE TALE
                 const matSticla = new THREE.MeshPhysicalMaterial({
-                    color: 0x0a1128,          // Bază de albastru închis cibernetic
+                    color: 0x050b1e,          // Un albastru închis și mai profund pentru opacitate
                     transparent: true,
-                    opacity: 0.5,
-                    roughness: 0.1,           // Foarte lucioasă
-                    metalness: 0.2,
-                    transmission: 0.6,        // Creează efectul de "frosted/cloudy glass"
-                    ior: 1.5,                 // Indicele de refracție al sticlei
-                    thickness: 1.0,           // Grosimea refracției luminii
-                    clearcoat: 1.0,           // Strat lucios suplimentar de reflexie
-                    clearcoatRoughness: 0.05
+                    opacity: 0.85,            // AM MĂRIT OPACITATEA (era 0.5) - panoul devine mai solid
+                    roughness: 0.5,           // AM MĂRIT ROUGHNESS (era 0.1) - sticla devine mată, nu mai reflectă ca o oglindă
+                    metalness: 0.1,           // Am scăzut reflexia metalică
+                    transmission: 0.3,        // AM SCĂZUT TRANSMISSION (era 0.6) - trece mai puțină lumină prin el, devenind mai vizibil
+                    ior: 1.2,                 // Am scăzut indicele de refracție pentru a fi mai discret
+                    thickness: 0.5,           
+                    clearcoat: 0.1,           // AM SCĂZUT CLEARCOAT (era 1.0) - am eliminat aproape complet stratul lucios de deasupra
+                    clearcoatRoughness: 0.5
                 });
 
                 const panouMesh = new THREE.Mesh(geomSticla, matSticla);
-                panouMesh.position.set(functie.x, 0, function.z);
+                panouMesh.position.set(functie.x, 0, functie.z);
 
                 // Adăugăm o margine luminoasă neon în jurul panoului de sticlă (Wireframe Outline)
                 const geomMargine = new THREE.EdgesGeometry(geomSticla);
@@ -349,3 +356,110 @@
 
         // 5. FLIGHT INTERPOLATION (GSAP CAMERA SYSTEM)
         window.navigheazaCatre = function(tintaY, eticheta, salveazaIstoric = true) {
+            if (salveazaIstoric) {
+                istoricNavigare.push({
+                    cPoz: camera.position.clone(),
+                    cTinta: controls.target.clone(),
+                    eticheta: eticheta
+                });
+                actualizeazaUI();
+            }
+
+            controls.enabled = false;
+
+            // Camera zboară cinematic direct în fața panoului selectat la acel etaj
+            gsap.to(camera.position, {
+                x: 45,
+                y: tintaY + 22, 
+                z: 55,
+                duration: 1.4,
+                ease: "power3.inOut"
+            });
+
+            gsap.to(controls.target, {
+                x: 0,
+                y: tintaY,
+                z: 0,
+                duration: 1.4,
+                ease: "power3.inOut",
+                onComplete: function() { controls.enabled = true; }
+            });
+        };
+
+        window.mergiInapoi = function() {
+            if (istoricNavigare.length === 0) return;
+            const stareaAnterioara = istoricNavigare.pop();
+
+            controls.enabled = false;
+
+            gsap.to(camera.position, {
+                x: stareaAnterioara.cPoz.x,
+                y: stareaAnterioara.cPoz.y,
+                z: stareaAnterioara.cPoz.z,
+                duration: 1.4,
+                ease: "power3.inOut"
+            });
+
+            gsap.to(controls.target, {
+                x: stareaAnterioara.cTinta.x,
+                y: stareaAnterioara.cTinta.y,
+                z: stareaAnterioara.cTinta.z,
+                duration: 1.4,
+                ease: "power3.inOut",
+                onComplete: function() { controls.enabled = true; }
+            });
+
+            actualizeazaUI();
+        };
+
+        function actualizeazaUI() {
+            const txtB = document.getElementById('breadcrumbs');
+            const btnB = document.getElementById('btn-back');
+
+            btnB.style.display = istoricNavigare.length > 0 ? 'block' : 'none';
+
+            let textStiva = 'SYS_CORE // HOME';
+            istoricNavigare.forEach(function(pas) {
+                textStiva += ' &gt; ' + pas.eticheta;
+            });
+            txtB.innerHTML = textStiva;
+        }
+
+        document.getElementById('btn-back').addEventListener('click', function() { window.mergiInapoi(); });
+
+
+        // 6. LOOP-UL DE RANDARE CU EFFECT COMPOSER
+        let ceas = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+            
+            ceas += 0.008;
+
+            // Animație plutire panouri de sticlă
+            masinaPanouriSticla.forEach(function(panou, index) {
+                panou.position.y = Math.sin(ceas * 1.5 + index) * 0.4;
+            });
+
+            // Pulsație rețea linii
+            sistemLegaturiConexiuni.material.opacity = 0.25 + Math.sin(ceas * 3) * 0.12;
+
+            norPraf.rotation.y += 0.0003;
+
+            // Rulăm prin EffectComposer pentru a procesa lumina de Neon/Glow
+            composer.render();
+        }
+        animate();
+
+
+        // 7. RESPONSIVENESS
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
