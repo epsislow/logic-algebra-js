@@ -49,7 +49,7 @@ ArkView.FunctionLabelOverlay.prototype._build = function () {
         self.svg.appendChild(dot);
 
         panel.addEventListener('click', function () {
-            self.navigation.flyTo(panou.userData.inaltimeY, panou.userData.numeEtaj);
+            self.navigation.flyTo(panou, panou.userData.numeEtaj);
         });
 
         self.callouts.push({

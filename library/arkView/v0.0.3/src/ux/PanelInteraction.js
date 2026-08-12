@@ -33,7 +33,7 @@ ArkView.PanelInteraction.prototype._bindEvents = function () {
         for (var i = 0; i < hits.length; i++) {
             var obj = hits[i].object;
             if (obj.userData && obj.userData.estePanou) {
-                self.navigation.flyTo(obj.userData.inaltimeY, obj.userData.numeEtaj);
+                self.navigation.flyTo(obj, obj.userData.numeEtaj);
                 break;
             }
         }

@@ -6,8 +6,30 @@ ArkView.Navigation = function (engine, breadcrumbUI) {
     this.stiva = [];
 };
 
-ArkView.Navigation.prototype.flyTo = function (tintaY, eticheta, salveazaIstoric) {
+ArkView.Navigation.prototype._calculeazaPozitiiCamera = function (tinta) {
+    var camera = this.engine.camera;
+    var controls = this.engine.controls;
+
+    var offset = camera.position.clone().sub(controls.target);
+    if (offset.lengthSq() < 100) {
+        offset.set(32, 24, 32);
+    } else {
+        offset.normalize().multiplyScalar(Math.max(36, offset.length()));
+    }
+
+    return {
+        tinta: tinta.clone(),
+        camera: tinta.clone().add(offset)
+    };
+};
+
+ArkView.Navigation.prototype.flyTo = function (panou, eticheta, salveazaIstoric) {
     var dejaUltima = this.breadcrumbUI.getLast() === eticheta;
+
+    var tinta = new THREE.Vector3();
+    panou.getWorldPosition(tinta);
+
+    var pozitii = this._calculeazaPozitiiCamera(tinta);
 
     if (salveazaIstoric !== false && !dejaUltima) {
         this.stiva.push({
@@ -22,17 +44,17 @@ ArkView.Navigation.prototype.flyTo = function (tintaY, eticheta, salveazaIstoric
     controls.enabled = false;
 
     gsap.to(this.engine.camera.position, {
-        x: 45,
-        y: tintaY + 22,
-        z: 55,
+        x: pozitii.camera.x,
+        y: pozitii.camera.y,
+        z: pozitii.camera.z,
         duration: 1.4,
         ease: 'power3.inOut'
     });
 
     gsap.to(controls.target, {
-        x: 0,
-        y: tintaY,
-        z: 0,
+        x: pozitii.tinta.x,
+        y: pozitii.tinta.y,
+        z: pozitii.tinta.z,
         duration: 1.4,
         ease: 'power3.inOut',
         onComplete: function () { controls.enabled = true; }
