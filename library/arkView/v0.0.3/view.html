@@ -27,6 +27,7 @@
     <script src="src/view/PanelBuilder.js"></script>
     <script src="src/view/FluxNetwork.js"></script>
     <script src="src/view/ParticleField.js"></script>
+    <script src="src/view/FunctionLabelOverlay.js"></script>
     <script src="src/ux/BreadcrumbUI.js"></script>
     <script src="src/ux/Navigation.js"></script>
     <script src="src/ux/PanelInteraction.js"></script>
@@ -37,6 +38,12 @@
         <button id="btn-back">← SYSTEM BACK</button>
         <div id="breadcrumbs">SYS_CORE // HOME</div>
     </div>
+
+    <div id="fui-overlay">
+        <svg id="fui-lines"></svg>
+        <div id="fui-labels"></div>
+    </div>
+
     <canvas id="webgl-canvas"></canvas>
 </body>
 </html>

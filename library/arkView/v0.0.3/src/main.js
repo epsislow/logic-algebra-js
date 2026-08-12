@@ -16,6 +16,7 @@ ArkView.bootstrap = function () {
 
     var breadcrumbUI = new ArkView.BreadcrumbUI();
     var navigation = new ArkView.Navigation(engine, breadcrumbUI);
+    var labelOverlay = new ArkView.FunctionLabelOverlay(engine, panelBuilder, navigation);
 
     new ArkView.PanelInteraction(engine, navigation);
     breadcrumbUI.onBack(function () { navigation.goBack(); });
@@ -25,6 +26,7 @@ ArkView.bootstrap = function () {
     engine.addUpdatable(panelBuilder);
     engine.addUpdatable(fluxNetwork);
     engine.addUpdatable(particles);
+    engine.addUpdatable(labelOverlay);
 
     engine.start(function () {
         postProcessing.render();

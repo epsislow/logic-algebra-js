@@ -57,6 +57,8 @@ ArkView.PanelBuilder.prototype._createPanel = function (functie, etaj, inaltimeY
     mesh.userData = {
         inaltimeY: inaltimeY,
         numeEtaj: etaj.nume + ' // ' + functie.nume,
+        numeFunctie: functie.nume,
+        culoareEtaj: etaj.culoare,
         estePanou: true
     };
 

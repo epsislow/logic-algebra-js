@@ -21,8 +21,73 @@ body, html {
     position: absolute;
     top: 20px;
     left: 20px;
-    z-index: 10;
+    z-index: 20;
     pointer-events: none;
+}
+
+#fui-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+#fui-lines {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+#fui-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.fui-callout {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+}
+
+.fui-callout-panel {
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    background: rgba(5, 12, 28, 0.82);
+    border: 1px solid var(--callout-color, #00e5ff);
+    color: var(--callout-color, #00e5ff);
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 11px;
+    letter-spacing: 0.6px;
+    padding: 5px 12px;
+    white-space: nowrap;
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.12);
+    backdrop-filter: blur(4px);
+    transition: box-shadow 0.2s, background 0.2s;
+}
+
+.fui-callout-panel:hover {
+    background: rgba(8, 20, 45, 0.92);
+    box-shadow: 0 0 20px rgba(176, 38, 255, 0.35);
+}
+
+.fui-leader {
+    stroke-width: 1;
+    fill: none;
+    opacity: 0.55;
+    filter: drop-shadow(0 0 3px rgba(0, 229, 255, 0.4));
+}
+
+.fui-anchor {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 4px currentColor);
 }
 
 #btn-back {
