@@ -53,7 +53,7 @@
         }
 
         #breadcrumbs {
-            color: #00ffcc;
+            color: #cc88ff;
             font-size: 14px;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -62,7 +62,7 @@
             border-radius: 4px;
             display: inline-block;
             border: 1px solid #111936;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+            box-shadow: 0 0 20px rgba(176, 38, 255, 0.15);
         }
     </style>
 
@@ -123,11 +123,11 @@
         const luminaAmbientala = new THREE.AmbientLight(0x0a1128, 1.5);
         scene.add(luminaAmbientala);
 
-        const luminaDirectie1 = new THREE.DirectionalLight(0x00ffff, 2.0);
+        const luminaDirectie1 = new THREE.DirectionalLight(0x4488ff, 1.8);
         luminaDirectie1.position.set(1, 1, 1);
         scene.add(luminaDirectie1);
 
-        const luminaDirectie2 = new THREE.DirectionalLight(0xff0055, 1.5);
+        const luminaDirectie2 = new THREE.DirectionalLight(0xcc44ff, 1.6);
         luminaDirectie2.position.set(-1, 1, -1);
         scene.add(luminaDirectie2);
 
@@ -144,9 +144,9 @@
 
         const bloomPass = new THREE.UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight), 
-            1.1,  // AM SCĂZUT INTENSITATEA BLOOM (era 1.8) pentru a nu mai fi spălată imaginea
-            0.4,  
-            0.15  // Am mărit pragul ca să ignore reflexiile slabe ale sticlei
+            1.25,
+            0.45,  
+            0.12
         );
         
         // !!! ACEASTA ESTE LINIA CRUCIALĂ PENTRU COPIILE DE POST-PROCESARE CLASICE !!!
@@ -166,7 +166,7 @@
             etaje: [
                 {
                     nume: "DATABASE_LAYER",
-                    culoare: 0x00ffcc, // Cyan Neon
+                    culoare: 0x00e5ff, // Cyan electric
                     functii: [
                         { id: "db_init", nume: "initPool()", x: -25, z: -20 },
                         { id: "db_query", nume: "executeQuery()", x: 0, z: -30 },
@@ -175,7 +175,7 @@
                 },
                 {
                     nume: "CORE_LOGIC_LAYER",
-                    culoare: 0xff0055, // Roz Neon
+                    culoare: 0xff44cc, // Magenta neon
                     functii: [
                         { id: "auth_main", nume: "validateToken()", x: -30, z: 10 },
                         { id: "calc_salary", nume: "calculateSalar()", x: 0, z: 0 },
@@ -184,7 +184,7 @@
                 },
                 {
                     nume: "API_GATEWAY_LAYER",
-                    culoare: 0x9900ff, // Violet Neon
+                    culoare: 0xb026ff, // Violet neon
                     functii: [
                         { id: "api_router", nume: "routeRequest()", x: -15, z: 30 },
                         { id: "api_cors", nume: "handleCORS()", x: 15, z: 30 }
@@ -289,7 +289,9 @@
 
         const fluxFragmentShader = [
             'uniform float uTime;',
-            'uniform vec3 uColor;',
+            'uniform vec3 uColorStart;',
+            'uniform vec3 uColorEnd;',
+            'uniform float uMaxDistance;',
             'uniform float uSpeed;',
             'uniform float uPulseScale;',
             'uniform float uSeed;',
@@ -314,30 +316,61 @@
             '    return forma * (0.55 + hIntens * 0.65);',
             '}',
             'void main() {',
+            '    float t = clamp(vLineDistance / max(uMaxDistance, 0.001), 0.0, 1.0);',
+            '    vec3 baseColor = mix(uColorStart, uColorEnd, t);',
             '    float travel = vLineDistance * uPulseScale - uTime * uSpeed + uPhase;',
             '    float pulse = impulsAleator(travel, uSeed);',
             '    pulse += impulsAleator(travel * 1.37 + 3.7, uSeed + 41.0) * 0.6;',
             '    pulse = min(pulse, 1.0);',
+            '    vec3 pulseColor = mix(vec3(1.0, 0.95, 1.0), uColorEnd, 0.35);',
+            '    vec3 finalColor = mix(baseColor, pulseColor, pulse * 0.75);',
             '    float brightness = 0.16 + pulse * 1.35;',
             '    float alpha = 0.115 + pulse * 0.90;',
-            '    gl_FragColor = vec4(uColor * brightness, alpha);',
+            '    gl_FragColor = vec4(finalColor * brightness, alpha);',
             '}'
         ].join('\n');
 
-        function construiesteTraseuCircuit(p1, p2) {
-            const midY = (p1.y + p2.y) * 0.5;
-            return [
-                p1.clone(),
-                new THREE.Vector3(p1.x, midY, p1.z),
-                new THREE.Vector3(p2.x, midY, p2.z),
-                p2.clone()
-            ];
+        function construiesteTraseuCurbat(p1, p2, seed) {
+            const start = p1.clone();
+            const end = p2.clone();
+            const delta = new THREE.Vector3().subVectors(end, start);
+            const distanta = delta.length();
+
+            if (distanta < 0.001) {
+                return [start, end];
+            }
+
+            const directie = delta.clone().normalize();
+            let perpendiculara = new THREE.Vector3(-directie.z, directie.y * 0.25, directie.x);
+            if (perpendiculara.lengthSq() < 0.0001) {
+                perpendiculara.set(1, 0, 0);
+            } else {
+                perpendiculara.normalize();
+            }
+
+            const factorCurba = 0.22 + (seed % 100) / 100 * 0.38;
+            const semn = (seed % 2 === 0) ? 1 : -1;
+            const arcVertical = Math.abs(delta.y) * 0.12 + distanta * 0.06;
+
+            const cp1 = start.clone()
+                .add(directie.clone().multiplyScalar(distanta * 0.30))
+                .add(perpendiculara.clone().multiplyScalar(distanta * factorCurba * semn))
+                .add(new THREE.Vector3(0, arcVertical, 0));
+
+            const cp2 = end.clone()
+                .add(directie.clone().multiplyScalar(-distanta * 0.30))
+                .add(perpendiculara.clone().multiplyScalar(distanta * factorCurba * semn * 0.75))
+                .add(new THREE.Vector3(0, -arcVertical * 0.4, 0));
+
+            const curba = new THREE.CubicBezierCurve3(start, cp1, cp2, end);
+            return curba.getPoints(56);
         }
 
         function offsetPuncteParalele(puncte, indexLinie, totalLinii, spacing) {
             const offsetAmount = (indexLinie - (totalLinii - 1) / 2) * spacing;
             const up = new THREE.Vector3(0, 1, 0);
             const rezultat = [];
+            const ultimulIndex = puncte.length - 1;
 
             for (let i = 0; i < puncte.length; i++) {
                 const copie = puncte[i].clone();
@@ -357,7 +390,11 @@
                 }
                 perpendiculara.normalize();
 
-                copie.add(perpendiculara.multiplyScalar(offsetAmount));
+                // Firele converg la capete și se deschid la mijloc (efect fiber-optic)
+                const t = i / ultimulIndex;
+                const factorSpread = Math.sin(t * Math.PI);
+
+                copie.add(perpendiculara.multiplyScalar(offsetAmount * factorSpread));
                 rezultat.push(copie);
             }
 
@@ -384,11 +421,18 @@
             return geometrie;
         }
 
-        function creeazaMaterialFlux(viteza, culoare, seed, faza) {
+        function obtineLungimeMaxima(geometrie) {
+            const distante = geometrie.attributes.lineDistance.array;
+            return distante[distante.length - 1] || 1;
+        }
+
+        function creeazaMaterialFlux(viteza, culoareStart, culoareEnd, lungimeMax, seed, faza) {
             const material = new THREE.ShaderMaterial({
                 uniforms: {
                     uTime: { value: 0 },
-                    uColor: { value: new THREE.Color(culoare) },
+                    uColorStart: { value: new THREE.Color(culoareStart) },
+                    uColorEnd: { value: new THREE.Color(culoareEnd) },
+                    uMaxDistance: { value: lungimeMax },
                     uSpeed: { value: viteza },
                     uPulseScale: { value: 0.055 + Math.random() * 0.04 },
                     uSeed: { value: seed },
@@ -421,37 +465,63 @@
 
         const NUMAR_LINII_PARALELE = 4;
         const SPATIERE_FLUX = 0.32;
-        const CULOARE_FLUX = 0x00ffcc;
+
+        // Paletă neon: cyan electric → violet/magenta (ca în referințele vizuale)
+        const PALETA_FLUX = [
+            { start: 0x00e5ff, end: 0xb026ff },
+            { start: 0x00ccff, end: 0xff44cc },
+            { start: 0x44eeff, end: 0x8844ff },
+            { start: 0x00d4ff, end: 0xcc22ff },
+            { start: 0x66ddff, end: 0xff00aa }
+        ];
+
+        const culoareTempA = new THREE.Color();
+        const culoareTempB = new THREE.Color();
 
         dateProiect.legaturi.forEach(function(legatura, indexLegatura) {
             const p1 = dictionarPozitiiGlobale[legatura.deLa];
             const p2 = dictionarPozitiiGlobale[legatura.la];
             if (!p1 || !p2) return;
 
-            const traseu = construiesteTraseuCircuit(p1, p2);
+            const paleta = PALETA_FLUX[indexLegatura % PALETA_FLUX.length];
+            const seedCurba = indexLegatura * 137 + legatura.deLa.length * 23 + legatura.la.length * 11;
+            const traseu = construiesteTraseuCurbat(p1, p2, seedCurba);
 
-            // Traseu de bază discret (cadru static al circuitului)
+            // Traseu de bază discret (cadru static al curbei)
             const geomBaza = creeazaGeometrieFlux(traseu);
+            culoareTempA.set(paleta.start);
+            culoareTempB.set(paleta.end);
             const linieBaza = new THREE.Line(geomBaza, new THREE.LineBasicMaterial({
-                color: CULOARE_FLUX,
+                color: culoareTempA.clone().lerp(culoareTempB, 0.5),
                 transparent: true,
                 opacity: 0.10,
                 blending: THREE.AdditiveBlending
             }));
             grupFluxLegaturi.add(linieBaza);
 
-            adaugaNodFlux(p1, CULOARE_FLUX);
-            adaugaNodFlux(p2, CULOARE_FLUX);
-            adaugaNodFlux(traseu[1], CULOARE_FLUX);
-            adaugaNodFlux(traseu[2], CULOARE_FLUX);
+            adaugaNodFlux(p1, paleta.start);
+            adaugaNodFlux(p2, paleta.end);
 
             for (let linie = 0; linie < NUMAR_LINII_PARALELE; linie++) {
                 const puncteOffset = offsetPuncteParalele(traseu, linie, NUMAR_LINII_PARALELE, SPATIERE_FLUX);
                 const geometrie = creeazaGeometrieFlux(puncteOffset);
+                const lungimeMax = obtineLungimeMaxima(geometrie);
+
+                const mixLinie = linie / Math.max(NUMAR_LINII_PARALELE - 1, 1);
+                culoareTempA.set(paleta.start).lerp(culoareTempB.set(paleta.end), mixLinie * 0.25);
+                culoareTempB.set(paleta.start).lerp(new THREE.Color(paleta.end), 0.45 + mixLinie * 0.55);
+
                 const viteza = 0.7 + Math.random() * 1.6;
                 const seed = Math.random() * 1000 + indexLegatura * 47 + linie * 13;
                 const faza = Math.random() * 12;
-                const material = creeazaMaterialFlux(viteza, CULOARE_FLUX, seed, faza);
+                const material = creeazaMaterialFlux(
+                    viteza,
+                    culoareTempA.getHex(),
+                    culoareTempB.getHex(),
+                    lungimeMax,
+                    seed,
+                    faza
+                );
                 const linieFlux = new THREE.Line(geometrie, material);
                 grupFluxLegaturi.add(linieFlux);
             }
@@ -469,10 +539,10 @@
         }
         geomPraf.setAttribute('position', new THREE.Float32BufferAttribute(pozitiiPraf, 3));
         const matPraf = new THREE.PointsMaterial({
-            color: 0x00ffcc,
+            color: 0x9944cc,
             size: 1.2,
             transparent: true,
-            opacity: 0.3,
+            opacity: 0.25,
             blending: THREE.AdditiveBlending
         });
         const norPraf = new THREE.Points(geomPraf, matPraf);
