@@ -56,4 +56,14 @@ body, html {
     display: inline-block;
     border: 1px solid #111936;
     box-shadow: 0 0 20px rgba(176, 38, 255, 0.15);
+    pointer-events: auto;
+}
+
+.crumb-home {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.crumb-home:hover {
+    color: #e8bbff;
 }

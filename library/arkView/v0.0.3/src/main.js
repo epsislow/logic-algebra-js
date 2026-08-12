@@ -19,6 +19,8 @@ ArkView.bootstrap = function () {
 
     new ArkView.PanelInteraction(engine, navigation);
     breadcrumbUI.onBack(function () { navigation.goBack(); });
+    breadcrumbUI.onHome(function () { navigation.goHome(); });
+    breadcrumbUI._render();
 
     engine.addUpdatable(panelBuilder);
     engine.addUpdatable(fluxNetwork);
