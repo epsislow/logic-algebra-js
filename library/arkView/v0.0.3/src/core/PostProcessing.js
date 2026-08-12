@@ -10,7 +10,6 @@ ArkView.PostProcessing = function (engine) {
 
     var size = new THREE.Vector2(window.innerWidth, window.innerHeight);
     var bloomCfg = ArkView.Config.BLOOM;
-    var vigCfg = ArkView.Config.VIGNETTE;
 
     this.renderPass = new THREE.RenderPass(engine.scene, engine.camera);
 
@@ -47,14 +46,8 @@ ArkView.PostProcessing = function (engine) {
         }),
         'baseTexture'
     );
+    this.mixPass.renderToScreen = true;
     this.finalComposer.addPass(this.mixPass);
-
-    this.vignettePass = new THREE.ShaderPass(ArkView.VignetteShader);
-    this.vignettePass.uniforms.uOffset.value = vigCfg.offset;
-    this.vignettePass.uniforms.uDarkness.value = vigCfg.darkness;
-    this.vignettePass.uniforms.uContrast.value = vigCfg.contrast;
-    this.vignettePass.renderToScreen = true;
-    this.finalComposer.addPass(this.vignettePass);
 
     var self = this;
     engine.onResize(function () {

@@ -20,12 +20,6 @@ ArkView.Config = {
         threshold: 0.08
     },
 
-    VIGNETTE: {
-        offset: 0.95,
-        darkness: 1.35,
-        contrast: 1.12
-    },
-
     PALETTE: [
         { start: 0x00e5ff, end: 0xb026ff },
         { start: 0x00ccff, end: 0xff44cc },
