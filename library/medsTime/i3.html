@@ -103,39 +103,55 @@
         #medTable thead {
             display: none;
         }
+        #medTable .col-stock {
+            width: 56px;
+        }
+        #medTable .col-actions {
+            width: 32px;
+        }
         #medTable td {
             padding: 6px 4px;
             text-align: left;
             vertical-align: middle;
         }
-        #medTable tr.med-row-top td {
-            padding-top: 10px;
-        }
-        #medTable tr.med-row-bottom td {
+        #medTable tr.med-row-bottom td,
+        #medTable tr.med-item td {
             padding-bottom: 10px;
             border-bottom: 2px solid #e2e8f0;
-            font-size: 12px;
+        }
+        #medTable tr.med-item td {
+            padding-top: 10px;
         }
         #medTable tr:hover {
             background-color: #f9f9f9;
+        }
+        .med-line-top {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto 28px;
+            align-items: center;
+            gap: 8px;
+        }
+        .med-line-bottom {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: start;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 12px;
         }
         .med-name {
             word-break: break-word;
         }
         .med-stock {
-            width: 56px;
-            text-align: right;
-        }
-        .med-actions {
-            width: 32px;
-            text-align: center;
-        }
-        .med-freq {
-            white-space: nowrap;
             text-align: right;
         }
         .med-end {
-            word-break: break-word;
+            white-space: nowrap;
+        }
+        .med-freq {
+            text-align: right;
+            overflow-wrap: anywhere;
+            padding-right: 40px;
         }
         .status-alert {
             color: #c0392b;
@@ -238,17 +254,13 @@
         </div>
     </div>
 
-    <h3>📋 Planul tău curent (Salvat automat)</h2>
+    <h3>📋 Planul tău curent (Salvat automat)</h3>
     <table id="medTable">
-        <thead>
-            <tr>
-                <th>Medicament</th>
-                <th>Stoc</th>
-                <th>Frecvență (Doza)</th>
-                <th>Rămâi fără stoc pe data de:</th>
-                <th>Acțiuni</th>
-            </tr>
-        </thead>
+        <colgroup>
+            <col class="col-name">
+            <col class="col-stock">
+            <col class="col-actions">
+        </colgroup>
         <tbody>
             <!-- Datele se încarcă din JavaScript -->
         </tbody>
@@ -383,8 +395,8 @@
         const day = String(checkDate.getDate()).padStart(2, '0');
         const month = String(checkDate.getMonth() + 1).padStart(2, '0');
         const year = checkDate.getFullYear();
-        const daysOfWeekRo = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
-        const dayName = daysOfWeekRo[checkDate.getDay()];
+        const daysShort = ["D", "L", "M", "Mi", "J", "V", "S"];
+        const dayName = daysShort[checkDate.getDay()];
 
         return {
             timestamp: checkDate.getTime(),
@@ -423,27 +435,25 @@
             const totalDaily = med.dim + med.pranz + med.seara;
             const freqText = formatFreqText(med, totalDaily);
 
-            const rowTop = document.createElement('tr');
-            rowTop.className = 'med-row-top';
-            rowTop.innerHTML = `
-                <td class="med-name"><strong>${med.name}</strong></td>
-                <td class="med-stock">
-                    <input type="number" class="inline-qty" value="${med.qty}" onchange="updateStock('${med.id}', this.value)">
-                </td>
-                <td class="med-actions" rowspan="2">
-                    <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+            const row = document.createElement('tr');
+            row.className = 'med-item';
+            row.innerHTML = `
+                <td colspan="3">
+                    <div class="med-line-top">
+                        <div class="med-name"><strong>${med.name}</strong></div>
+                        <div class="med-stock">
+                            <input type="number" class="inline-qty" value="${med.qty}" onchange="updateStock('${med.id}', this.value)">
+                        </div>
+                        <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+                    </div>
+                    <div class="med-line-bottom">
+                        <span class="med-end status-alert">${stockOut.label}</span>
+                        <span class="med-freq">${freqText}</span>
+                    </div>
                 </td>
             `;
 
-            const rowBottom = document.createElement('tr');
-            rowBottom.className = 'med-row-bottom';
-            rowBottom.innerHTML = `
-                <td class="med-end status-alert">Fără stoc: ${stockOut.label}</td>
-                <td class="med-freq">${freqText}</td>
-            `;
-
-            tableBody.appendChild(rowTop);
-            tableBody.appendChild(rowBottom);
+            tableBody.appendChild(row);
         });
     }
 
