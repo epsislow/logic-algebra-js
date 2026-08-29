@@ -274,20 +274,31 @@
         }
         .calendar-toolbar {
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
+            gap: 8px;
             margin-top: 12px;
         }
-        .btn-past-week {
+        .btn-past-week,
+        .btn-auto-check {
             background-color: #7f8c8d;
             flex: none;
-            padding: 8px 16px;
-            font-size: 13px;
+            padding: 8px 12px;
+            font-size: 12px;
         }
-        .btn-past-week:hover {
+        .btn-past-week:hover,
+        .btn-auto-check:hover {
             background-color: #616a6b;
         }
-        .btn-past-week.active {
+        .btn-past-week.active,
+        .btn-auto-check.active {
             background-color: #566573;
+        }
+        .btn-auto-check {
+            background-color: #16a085;
+        }
+        .btn-auto-check:hover {
+            background-color: #138d75;
         }
         .calendar-day-header {
             display: flex;
@@ -427,7 +438,7 @@
         </div>
         <div>
             <label for="medStartDate">Data începerii</label>
-            <input type="date" id="medStartDate">
+            <input type="date" id="medStartDate" lang="ro">
         </div>
         <div>
             <label for="doseType">Doză Administrare</label>
@@ -511,6 +522,7 @@
     <div id="planCalendarView" class="hidden">
         <div class="calendar-toolbar" id="calendarToolbar">
             <button type="button" id="btnTogglePastWeek" class="btn-past-week" onclick="togglePastWeek()">📆 Ultimele 7 zile</button>
+            <button type="button" id="btnAutoCheck" class="btn-auto-check" onclick="autoCheckUntilYesterday()">✓ Calculează până ieri</button>
         </div>
         <div id="medCalendar"></div>
     </div>
@@ -647,10 +659,15 @@
         let intervalDays = 1;
         let specificDays = [];
 
-        const startDate = document.getElementById('medStartDate').value || formatDateKey(new Date());
+        const startDate = getStartDateFromForm();
 
         if (!name || isNaN(qty) || qty <= 0) {
             alert("Te rog să introduci un nume valid și cantitatea inițială.");
+            return;
+        }
+
+        if (!document.getElementById('medStartDate').value) {
+            alert("Selectează data începerii.");
             return;
         }
 
@@ -912,6 +929,14 @@
         return `${year}-${month}-${day}`;
     }
 
+    function getStartDateFromForm() {
+        return document.getElementById('medStartDate').value || formatDateKey(new Date());
+    }
+
+    function setStartDateInput(dateKey) {
+        document.getElementById('medStartDate').value = dateKey;
+    }
+
     function getCheckKey(medId, dateKey, period) {
         return `${medId}|${dateKey}|${period}`;
     }
@@ -1061,6 +1086,49 @@
         }
     }
 
+    function autoCheckUntilYesterday() {
+        if (medications.length === 0) {
+            alert("Nu există medicamente în plan.");
+            return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        let addedChecks = 0;
+
+        medications.forEach(med => {
+            let current = parseDateKey(getMedStartDate(med));
+
+            while (current <= yesterday) {
+                const dateKey = formatDateKey(current);
+
+                if (isMedScheduledOnDate(med, current)) {
+                    for (const period of PERIODS) {
+                        const dose = getDoseForPeriod(med, period);
+                        if (dose <= 0) continue;
+                        if (isMedChecked(med.id, dateKey, period)) continue;
+                        if (getRemainingBeforeDose(med, dateKey, period) < dose - 0.0001) continue;
+
+                        medChecks[getCheckKey(med.id, dateKey, period)] = true;
+                        addedChecks++;
+                    }
+                }
+
+                current.setDate(current.getDate() + 1);
+            }
+        });
+
+        saveChecksToStorage();
+        renderPlan();
+
+        if (addedChecks === 0) {
+            alert("Nu s-au găsit doze de bifat până ieri (poate sunt deja bifate sau stocul nu ajunge).");
+        }
+    }
+
     function togglePastWeek() {
         showPastWeek = !showPastWeek;
         const btn = document.getElementById('btnTogglePastWeek');
@@ -1172,7 +1240,7 @@
     function resetForm() {
         document.getElementById('medName').value = '';
         document.getElementById('medQty').value = '';
-        document.getElementById('medStartDate').value = formatDateKey(new Date());
+        setStartDateInput(formatDateKey(new Date()));
         document.getElementById('medUnit').value = 'caps';
         document.getElementById('freqType').value = 'daily';
         document.getElementById('doseDim').value = '0';
@@ -1198,7 +1266,7 @@
             normalizeMedications();
         }
         loadChecksFromStorage();
-        document.getElementById('medStartDate').value = formatDateKey(new Date());
+        setStartDateInput(formatDateKey(new Date()));
         updateUnitFields();
         renderPlan();
     };
