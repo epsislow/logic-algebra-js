@@ -157,6 +157,13 @@
             gap: 4px;
             text-align: right;
         }
+        .stock-remaining {
+            font-weight: bold;
+            font-size: 15px;
+            color: #2c3e50;
+            min-width: 60px;
+            text-align: right;
+        }
         .med-unit {
             flex-shrink: 0;
             width: 24px;
@@ -406,7 +413,7 @@
         </div>
         <div class="full-width qty-unit-row">
             <div>
-                <label for="medQty" id="medQtyLabel">Capsule disponibile</label>
+                <label for="medQty" id="medQtyLabel">Cantitate inițială</label>
                 <input type="number" id="medQty" min="1" step="1" placeholder="Ex: 30">
             </div>
             <div>
@@ -417,6 +424,10 @@
                     <option value="mg">mg</option>
                 </select>
             </div>
+        </div>
+        <div>
+            <label for="medStartDate">Data începerii</label>
+            <input type="date" id="medStartDate">
         </div>
         <div>
             <label for="doseType">Doză Administrare</label>
@@ -516,10 +527,12 @@
 
     const UNIT_LABELS = { caps: 'caps', ml: 'ml', mg: 'mg' };
     const UNIT_STOCK_LABELS = {
-        caps: 'Capsule disponibile',
-        ml: 'Cantitate disponibilă (ml)',
-        mg: 'Cantitate disponibilă (mg)'
+        caps: 'Cantitate inițială (caps)',
+        ml: 'Cantitate inițială (ml)',
+        mg: 'Cantitate inițială (mg)'
     };
+    const PERIOD_ORDER = { dim: 0, pranz: 1, seara: 2 };
+    const PERIODS = ['dim', 'pranz', 'seara'];
 
     function getMedUnit(med) {
         return med.unit || 'caps';
@@ -568,10 +581,38 @@
         }
     }
 
+    function getMedStartDate(med) {
+        return med.startDate || formatDateKey(new Date());
+    }
+
+    function getMedInitialQty(med) {
+        return med.initialQty ?? med.qty ?? 0;
+    }
+
+    function parseDateKey(dateKey) {
+        const [year, month, day] = dateKey.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }
+
+    function compareDateKeys(a, b) {
+        return a.localeCompare(b);
+    }
+
+    function getDoseForPeriod(med, period) {
+        if (period === 'dim') return med.dim;
+        if (period === 'pranz') return med.pranz;
+        return med.seara;
+    }
+
     function normalizeMedications() {
+        const todayKey = formatDateKey(new Date());
         medications = medications.map(med => ({
             ...med,
-            unit: med.unit || 'caps'
+            unit: med.unit || 'caps',
+            initialQty: med.initialQty ?? med.qty ?? 0,
+            startDate: med.startDate || todayKey
         }));
     }
 
@@ -606,8 +647,10 @@
         let intervalDays = 1;
         let specificDays = [];
 
+        const startDate = document.getElementById('medStartDate').value || formatDateKey(new Date());
+
         if (!name || isNaN(qty) || qty <= 0) {
-            alert("Te rog să introduci un nume valid și o cantitate în stoc.");
+            alert("Te rog să introduci un nume valid și cantitatea inițială.");
             return;
         }
 
@@ -632,7 +675,8 @@
         const newMed = {
             id: Date.now().toString(),
             name,
-            qty,
+            initialQty: qty,
+            startDate,
             unit,
             freqType,
             interval: intervalDays,
@@ -648,42 +692,136 @@
         resetForm();
     }
 
-    // Calculează data la care se termină stocul; returnează timestamp pentru sortare și text afișat
-    function calculateStockOut(med) {
-        let currentQty = med.qty;
-        let checkDate = new Date();
-        checkDate.setHours(0, 0, 0, 0);
-        const dailyDose = med.dim + med.pranz + med.seara;
+    function getCurrentRemaining(med) {
         const epsilon = 0.0001;
+        let consumed = 0;
+        const startDate = getMedStartDate(med);
 
-        if (dailyDose <= 0) {
-            return { timestamp: Number.MAX_SAFE_INTEGER, label: "Nu se consumă" };
+        Object.keys(medChecks).forEach(key => {
+            if (!medChecks[key]) return;
+            const [medId, dateKey, period] = key.split('|');
+            if (medId !== med.id) return;
+            if (compareDateKeys(dateKey, startDate) < 0) return;
+            consumed += getDoseForPeriod(med, period);
+        });
+
+        return Math.max(0, getMedInitialQty(med) - consumed);
+    }
+
+    function isMedScheduledOnDate(med, date) {
+        const dateKey = formatDateKey(date);
+        if (compareDateKeys(dateKey, getMedStartDate(med)) < 0) {
+            return false;
         }
 
-        let daysCounter = 0;
-        const maxSafetyIterations = 5000;
+        if (med.freqType === 'daily') {
+            return true;
+        }
 
-        while (currentQty > epsilon && daysCounter < maxSafetyIterations) {
-            let takesMedicineToday = false;
+        const startDate = parseDateKey(getMedStartDate(med));
+        const offsetFromStart = Math.round((date - startDate) / (24 * 60 * 60 * 1000));
 
-            if (med.freqType === 'daily') {
-                takesMedicineToday = true;
-            } else if (med.freqType === 'interval') {
-                if (daysCounter % med.interval === 0) {
-                    takesMedicineToday = true;
+        if (med.freqType === 'interval') {
+            return ((offsetFromStart % med.interval) + med.interval) % med.interval === 0;
+        }
+
+        if (med.freqType === 'days') {
+            return med.specificDays.includes(date.getDay().toString());
+        }
+
+        return false;
+    }
+
+    function getRemainingBeforeDose(med, dateKey, period) {
+        const epsilon = 0.0001;
+        const startDate = getMedStartDate(med);
+        const todayKey = formatDateKey(new Date());
+        let remaining = getMedInitialQty(med);
+        const targetDate = parseDateKey(dateKey);
+        let current = parseDateKey(startDate);
+
+        while (current <= targetDate) {
+            const currentKey = formatDateKey(current);
+
+            for (const p of PERIODS) {
+                if (currentKey === dateKey && p === period) {
+                    return remaining;
                 }
-            } else if (med.freqType === 'days') {
-                const currentDayOfWeek = checkDate.getDay().toString();
-                if (med.specificDays.includes(currentDayOfWeek)) {
-                    takesMedicineToday = true;
+
+                if (!isMedScheduledOnDate(med, current)) {
+                    continue;
+                }
+
+                const dose = getDoseForPeriod(med, p);
+                if (dose <= 0) {
+                    continue;
+                }
+
+                if (isMedChecked(med.id, currentKey, p)) {
+                    remaining -= dose;
+                } else if (compareDateKeys(currentKey, todayKey) > 0) {
+                    remaining -= dose;
+                }
+
+                if (remaining < epsilon) {
+                    return remaining;
                 }
             }
 
-            if (takesMedicineToday) {
-                if (currentQty < dailyDose - epsilon) {
-                    break;
+            current.setDate(current.getDate() + 1);
+        }
+
+        return remaining;
+    }
+
+    function shouldShowDoseInCalendar(med, date, dateKey, period) {
+        if (compareDateKeys(dateKey, getMedStartDate(med)) < 0) {
+            return false;
+        }
+        if (!isMedScheduledOnDate(med, date)) {
+            return false;
+        }
+
+        const dose = getDoseForPeriod(med, period);
+        if (dose <= 0) {
+            return false;
+        }
+
+        return getRemainingBeforeDose(med, dateKey, period) >= dose - 0.0001;
+    }
+
+    // Calculează data la care se termină stocul; returnează timestamp pentru sortare și text afișat
+    function calculateStockOut(med) {
+        const epsilon = 0.0001;
+        let currentQty = getCurrentRemaining(med);
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
+
+        if (currentQty <= epsilon) {
+            const day = String(checkDate.getDate()).padStart(2, '0');
+            const month = String(checkDate.getMonth() + 1).padStart(2, '0');
+            const year = checkDate.getFullYear();
+            return {
+                timestamp: checkDate.getTime(),
+                label: `${DAYS_SHORT[checkDate.getDay()]}, ${day}.${month}.${year}`
+            };
+        }
+
+        let iterations = 0;
+        const maxSafetyIterations = 5000;
+
+        while (currentQty > epsilon && iterations < maxSafetyIterations) {
+            if (isMedScheduledOnDate(med, checkDate)) {
+                for (const period of PERIODS) {
+                    const dose = getDoseForPeriod(med, period);
+                    if (dose <= 0) continue;
+                    if (currentQty < dose - epsilon) {
+                        iterations = maxSafetyIterations;
+                        break;
+                    }
+                    currentQty -= dose;
+                    if (currentQty <= epsilon) break;
                 }
-                currentQty -= dailyDose;
             }
 
             if (currentQty <= epsilon) {
@@ -691,10 +829,10 @@
             }
 
             checkDate.setDate(checkDate.getDate() + 1);
-            daysCounter++;
+            iterations++;
         }
 
-        if (daysCounter >= maxSafetyIterations) {
+        if (iterations >= maxSafetyIterations) {
             return { timestamp: Number.MAX_SAFE_INTEGER, label: "Peste 10+ ani" };
         }
 
@@ -790,6 +928,7 @@
             delete medChecks[key];
         }
         saveChecksToStorage();
+        renderPlan();
     }
 
     function removeChecksForMed(medId) {
@@ -819,19 +958,10 @@
     }
 
     function isMedTakenOnDayOffset(med, dayOffset) {
-        if (med.freqType === 'daily') {
-            return true;
-        }
-        if (med.freqType === 'interval') {
-            return ((dayOffset % med.interval) + med.interval) % med.interval === 0;
-        }
-        if (med.freqType === 'days') {
-            const date = new Date();
-            date.setHours(0, 0, 0, 0);
-            date.setDate(date.getDate() + dayOffset);
-            return med.specificDays.includes(date.getDay().toString());
-        }
-        return false;
+        const date = new Date();
+        date.setHours(0, 0, 0, 0);
+        date.setDate(date.getDate() + dayOffset);
+        return isMedScheduledOnDate(med, date);
     }
 
     function formatCalendarMedItem(med, amount, dateKey, period) {
@@ -881,10 +1011,15 @@
             const searaMeds = [];
 
             filteredMeds.forEach(med => {
-                if (!isMedTakenOnDayOffset(med, dayOffset)) return;
-                if (med.dim > 0) dimMeds.push(formatCalendarMedItem(med, med.dim, dateKey, 'dim'));
-                if (med.pranz > 0) pranzMeds.push(formatCalendarMedItem(med, med.pranz, dateKey, 'pranz'));
-                if (med.seara > 0) searaMeds.push(formatCalendarMedItem(med, med.seara, dateKey, 'seara'));
+                if (med.dim > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'dim')) {
+                    dimMeds.push(formatCalendarMedItem(med, med.dim, dateKey, 'dim'));
+                }
+                if (med.pranz > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'pranz')) {
+                    pranzMeds.push(formatCalendarMedItem(med, med.pranz, dateKey, 'pranz'));
+                }
+                if (med.seara > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'seara')) {
+                    searaMeds.push(formatCalendarMedItem(med, med.seara, dateKey, 'seara'));
+                }
             });
 
             if (dimMeds.length === 0 && pranzMeds.length === 0 && searaMeds.length === 0) {
@@ -982,9 +1117,9 @@
 
         sortedMeds.forEach(({ med, stockOut }) => {
             const unit = getMedUnit(med);
+            const remaining = getCurrentRemaining(med);
             const totalDaily = med.dim + med.pranz + med.seara;
             const freqText = formatFreqText(med, totalDaily);
-            const qtyStep = unit === 'caps' ? '1' : '0.1';
 
             const statusClass = getStockStatusClass(stockOut);
             const statusIcon = getStockStatusIcon(statusClass);
@@ -996,7 +1131,7 @@
                     <div class="med-line-top">
                         <div class="med-name">${statusIcon}<strong>${med.name}</strong></div>
                         <div class="med-stock">
-                            <input type="number" class="inline-qty" value="${formatDoseValue(med.qty, unit)}" step="${qtyStep}" min="0" onchange="updateStock('${med.id}', this.value)">
+                            <span class="stock-remaining">${formatDoseValue(remaining, unit)}</span>
                             <span class="med-unit">${UNIT_LABELS[unit]}</span>
                         </div>
                         <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
@@ -1012,23 +1147,6 @@
         });
     }
 
-    // Funcție apelată când modifici stocul manual în interiorul tabelului
-    function updateStock(id, newQty) {
-        const med = medications.find(m => m.id === id);
-        if (!med) return;
-
-        const unit = getMedUnit(med);
-        const qtyValue = parseQtyValue(newQty, unit);
-        if (isNaN(qtyValue) || qtyValue < 0) {
-            alert("Introdu o cantitate validă.");
-            renderPlan();
-            return;
-        }
-
-        med.qty = qtyValue;
-        saveToStorage();
-        renderPlan();
-    }
     // Șterge un singur rând din tabel
     function deleteMedication(id) {
         if (confirm("Sigur vrei să ștergi acest medicament din listă?")) {
@@ -1054,6 +1172,7 @@
     function resetForm() {
         document.getElementById('medName').value = '';
         document.getElementById('medQty').value = '';
+        document.getElementById('medStartDate').value = formatDateKey(new Date());
         document.getElementById('medUnit').value = 'caps';
         document.getElementById('freqType').value = 'daily';
         document.getElementById('doseDim').value = '0';
@@ -1079,6 +1198,7 @@
             normalizeMedications();
         }
         loadChecksFromStorage();
+        document.getElementById('medStartDate').value = formatDateKey(new Date());
         updateUnitFields();
         renderPlan();
     };
