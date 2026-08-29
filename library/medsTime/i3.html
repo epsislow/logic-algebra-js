@@ -125,11 +125,14 @@
         #medTable tr:hover {
             background-color: #f9f9f9;
         }
-        .med-line-top {
+        .med-item-inner {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto auto;
             align-items: center;
             gap: 8px;
+        }
+        .med-line-top {
+            display: contents;
         }
         .med-actions-group {
             display: flex;
@@ -153,8 +156,9 @@
             background-color: #219653;
         }
         .med-line-bottom {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr);
+            grid-column: 1 / 3;
+            display: flex;
+            justify-content: space-between;
             align-items: start;
             gap: 8px;
             margin-top: 4px;
@@ -204,8 +208,8 @@
         }
         .med-freq {
             text-align: right;
-            overflow-wrap: anywhere;
-            padding-right: 40px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .status-urgent {
             color: #c0392b;
@@ -1255,7 +1259,7 @@
             row.className = 'med-item';
             row.innerHTML = `
                 <td colspan="3">
-                    <div class="med-line-top">
+                    <div class="med-item-inner">
                         <div class="med-name">${statusIcon}<strong>${med.name}</strong></div>
                         <div class="med-stock">
                             <span class="stock-remaining">${formatDoseValue(remaining, unit)}</span>
@@ -1265,9 +1269,10 @@
                             ${checkBtn}
                             <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
                         </div>
-                    <div class="med-line-bottom">
-                        <span class="med-end ${statusClass}">Fără stoc: ${stockOut.label}</span>
-                        <span class="med-freq">${freqText}</span>
+                        <div class="med-line-bottom">
+                            <span class="med-end ${statusClass}">Fără stoc: ${stockOut.label}</span>
+                            <span class="med-freq">${freqText}</span>
+                        </div>
                     </div>
                 </td>
             `;
