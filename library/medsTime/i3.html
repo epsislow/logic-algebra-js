@@ -141,6 +141,14 @@
         }
         .med-name {
             word-break: break-word;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .med-status-icon {
+            flex-shrink: 0;
+            font-size: 14px;
+            line-height: 1;
         }
         .med-stock {
             text-align: right;
@@ -186,6 +194,18 @@
             padding: 4px;
             text-align: center;
             font-size: 13px;
+        }
+        .search-box {
+            margin-top: 16px;
+        }
+        .search-box input {
+            width: 100%;
+        }
+        .med-empty {
+            text-align: center;
+            padding: 12px;
+            color: #7f8c8d;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -263,6 +283,10 @@
     </div>
 
     <h3>📋 Planul tău curent (Salvat automat)</h3>
+    <div class="search-box">
+        <label for="medSearch">Caută medicament</label>
+        <input type="search" id="medSearch" placeholder="Ex: Paracetamol" oninput="renderTable()">
+    </div>
     <table id="medTable">
         <colgroup>
             <col class="col-name">
@@ -428,6 +452,19 @@
         return 'status-ok';
     }
 
+    function getStockStatusIcon(statusClass) {
+        if (statusClass === 'status-urgent') {
+            return '<span class="med-status-icon" title="Stoc epuizat în curând">⚠️</span>';
+        }
+        if (statusClass === 'status-warning') {
+            return '<span class="med-status-icon" title="Stoc limitat">🟠</span>';
+        }
+        if (statusClass === 'status-ok') {
+            return '<span class="med-status-icon" title="Stoc suficient">🟢</span>';
+        }
+        return '';
+    }
+
     // Formatează frecvența compact: 1/z, 1/3z, L Mi V 1/z
     function formatFreqText(med, totalDaily) {
         if (med.freqType === 'daily') {
@@ -451,22 +488,33 @@
         const tableBody = document.querySelector('#medTable tbody');
         tableBody.innerHTML = '';
 
+        const searchQuery = (document.getElementById('medSearch')?.value || '').trim().toLowerCase();
+
         const sortedMeds = medications
+            .filter(med => !searchQuery || med.name.toLowerCase().includes(searchQuery))
             .map(med => ({ med, stockOut: calculateStockOut(med) }))
             .sort((a, b) => a.stockOut.timestamp - b.stockOut.timestamp);
+
+        if (sortedMeds.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `<td colspan="3" class="med-empty">Niciun medicament găsit.</td>`;
+            tableBody.appendChild(emptyRow);
+            return;
+        }
 
         sortedMeds.forEach(({ med, stockOut }) => {
             const totalDaily = med.dim + med.pranz + med.seara;
             const freqText = formatFreqText(med, totalDaily);
 
             const statusClass = getStockStatusClass(stockOut);
+            const statusIcon = getStockStatusIcon(statusClass);
 
             const row = document.createElement('tr');
             row.className = 'med-item';
             row.innerHTML = `
                 <td colspan="3">
                     <div class="med-line-top">
-                        <div class="med-name"><strong>${med.name}</strong></div>
+                        <div class="med-name">${statusIcon}<strong>${med.name}</strong></div>
                         <div class="med-stock">
                             <input type="number" class="inline-qty" value="${med.qty}" onchange="updateStock('${med.id}', this.value)">
                         </div>
