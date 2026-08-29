@@ -244,37 +244,153 @@
         }
         #medCalendar {
             margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         .calendar-day {
-            padding: 12px 0;
-            border-bottom: 2px solid #e2e8f0;
+            background: #f9fafb;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
         }
-        .calendar-day:last-child {
-            border-bottom: none;
+        .calendar-day-today {
+            border-color: #3498db;
+            background: #f0f7ff;
+        }
+        .calendar-day-past {
+            background: #f3f4f6;
+            border-color: #d5d8dc;
+        }
+        .calendar-day-badge--past {
+            background: #95a5a6;
+        }
+        .calendar-toolbar {
+            display: flex;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .btn-past-week {
+            background-color: #7f8c8d;
+            flex: none;
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        .btn-past-week:hover {
+            background-color: #616a6b;
+        }
+        .btn-past-week.active {
+            background-color: #566573;
+        }
+        .calendar-day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
         }
         .calendar-day-title {
             font-weight: bold;
             color: #2c3e50;
-            font-size: 14px;
+            font-size: 15px;
+        }
+        .calendar-day-badge {
+            font-size: 11px;
+            background: #3498db;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+        }
+        .calendar-periods {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
         .calendar-period {
-            margin-top: 8px;
+            background: #fff;
+            border-radius: 6px;
+            padding: 10px;
+            border-left: 4px solid #bdc3c7;
+        }
+        .calendar-period--dim {
+            border-left-color: #f39c12;
+        }
+        .calendar-period--pranz {
+            border-left-color: #e67e22;
+        }
+        .calendar-period--seara {
+            border-left-color: #8e44ad;
         }
         .calendar-period-title {
-            font-size: 12px;
-            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #2c3e50;
             font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
+            margin-bottom: 6px;
+        }
+        .calendar-period-icon {
+            font-size: 16px;
+            line-height: 1;
         }
         .calendar-med-list {
             list-style: none;
             padding: 0;
-            margin: 4px 0 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .calendar-med-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #f4f7f6;
+            border-radius: 6px;
             font-size: 13px;
         }
-        .calendar-med-list li {
-            padding: 2px 0;
+        .calendar-med-item--done {
+            background: #eafaf1;
+        }
+        .calendar-med-item--done .calendar-med-name {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .calendar-med-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+            font-weight: normal;
+            margin: 0;
+        }
+        .calendar-med-check input {
+            width: auto;
+            flex-shrink: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+        .calendar-med-name {
+            font-weight: 600;
+            color: #2c3e50;
+            word-break: break-word;
+        }
+        .calendar-med-dose {
+            flex-shrink: 0;
+            font-weight: bold;
+            color: #fff;
+            background: #34495e;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -382,6 +498,9 @@
         </table>
     </div>
     <div id="planCalendarView" class="hidden">
+        <div class="calendar-toolbar" id="calendarToolbar">
+            <button type="button" id="btnTogglePastWeek" class="btn-past-week" onclick="togglePastWeek()">📆 Ultimele 7 zile</button>
+        </div>
         <div id="medCalendar"></div>
     </div>
 </div>
@@ -390,6 +509,8 @@
     // Tabloul global în care stocăm obiectele medicamentelor
     let medications = [];
     let showCalendarView = false;
+    let showPastWeek = false;
+    let medChecks = {};
 
     const DAYS_SHORT = ["D", "L", "M", "Mi", "J", "V", "S"];
 
@@ -646,6 +767,50 @@
         return medications.filter(med => !searchQuery || med.name.toLowerCase().includes(searchQuery));
     }
 
+    function formatDateKey(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${year}-${month}-${day}`;
+    }
+
+    function getCheckKey(medId, dateKey, period) {
+        return `${medId}|${dateKey}|${period}`;
+    }
+
+    function isMedChecked(medId, dateKey, period) {
+        return !!medChecks[getCheckKey(medId, dateKey, period)];
+    }
+
+    function toggleMedCheck(medId, dateKey, period, checked) {
+        const key = getCheckKey(medId, dateKey, period);
+        if (checked) {
+            medChecks[key] = true;
+        } else {
+            delete medChecks[key];
+        }
+        saveChecksToStorage();
+    }
+
+    function removeChecksForMed(medId) {
+        const prefix = `${medId}|`;
+        Object.keys(medChecks).forEach(key => {
+            if (key.startsWith(prefix)) {
+                delete medChecks[key];
+            }
+        });
+        saveChecksToStorage();
+    }
+
+    function saveChecksToStorage() {
+        localStorage.setItem('medicationsChecks_v1', JSON.stringify(medChecks));
+    }
+
+    function loadChecksFromStorage() {
+        const stored = localStorage.getItem('medicationsChecks_v1');
+        medChecks = stored ? JSON.parse(stored) : {};
+    }
+
     function formatDateLabel(date) {
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -658,7 +823,7 @@
             return true;
         }
         if (med.freqType === 'interval') {
-            return dayOffset % med.interval === 0;
+            return ((dayOffset % med.interval) + med.interval) % med.interval === 0;
         }
         if (med.freqType === 'days') {
             const date = new Date();
@@ -669,9 +834,31 @@
         return false;
     }
 
-    function formatCalendarDose(med, amount) {
+    function formatCalendarMedItem(med, amount, dateKey, period) {
         const unit = getMedUnit(med);
-        return `${med.name} — ${formatDoseValue(amount, unit)} ${UNIT_LABELS[unit]}`;
+        const checked = isMedChecked(med.id, dateKey, period);
+        const doneClass = checked ? ' calendar-med-item--done' : '';
+        const checkedAttr = checked ? ' checked' : '';
+
+        return `<li class="calendar-med-item${doneClass}">
+            <label class="calendar-med-check">
+                <input type="checkbox"${checkedAttr} onchange="toggleMedCheck('${med.id}', '${dateKey}', '${period}', this.checked); this.closest('.calendar-med-item').classList.toggle('calendar-med-item--done', this.checked)">
+                <span class="calendar-med-name">${med.name}</span>
+            </label>
+            <span class="calendar-med-dose">${formatDoseValue(amount, unit)} ${UNIT_LABELS[unit]}</span>
+        </li>`;
+    }
+
+    function renderCalendarPeriod(periodClass, icon, title, medItems) {
+        if (medItems.length === 0) return '';
+        return `
+            <div class="calendar-period ${periodClass}">
+                <div class="calendar-period-title">
+                    <span class="calendar-period-icon">${icon}</span>
+                    <span>${title}</span>
+                </div>
+                <ul class="calendar-med-list">${medItems.join('')}</ul>
+            </div>`;
     }
 
     function renderCalendar() {
@@ -680,11 +867,14 @@
 
         const filteredMeds = getFilteredMedications();
         let hasAnyDay = false;
+        const startOffset = showPastWeek ? -7 : 0;
+        const endOffset = 13;
 
-        for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+        for (let dayOffset = startOffset; dayOffset <= endOffset; dayOffset++) {
             const date = new Date();
             date.setHours(0, 0, 0, 0);
             date.setDate(date.getDate() + dayOffset);
+            const dateKey = formatDateKey(date);
 
             const dimMeds = [];
             const pranzMeds = [];
@@ -692,9 +882,9 @@
 
             filteredMeds.forEach(med => {
                 if (!isMedTakenOnDayOffset(med, dayOffset)) return;
-                if (med.dim > 0) dimMeds.push(formatCalendarDose(med, med.dim));
-                if (med.pranz > 0) pranzMeds.push(formatCalendarDose(med, med.pranz));
-                if (med.seara > 0) searaMeds.push(formatCalendarDose(med, med.seara));
+                if (med.dim > 0) dimMeds.push(formatCalendarMedItem(med, med.dim, dateKey, 'dim'));
+                if (med.pranz > 0) pranzMeds.push(formatCalendarMedItem(med, med.pranz, dateKey, 'pranz'));
+                if (med.seara > 0) searaMeds.push(formatCalendarMedItem(med, med.seara, dateKey, 'seara'));
             });
 
             if (dimMeds.length === 0 && pranzMeds.length === 0 && searaMeds.length === 0) {
@@ -703,39 +893,50 @@
 
             hasAnyDay = true;
             const dayEl = document.createElement('div');
-            dayEl.className = 'calendar-day';
+            let dayClass = 'calendar-day';
+            if (dayOffset === 0) dayClass += ' calendar-day-today';
+            if (dayOffset < 0) dayClass += ' calendar-day-past';
+            dayEl.className = dayClass;
 
-            let html = `<div class="calendar-day-title">${formatDateLabel(date)}</div>`;
+            let dayBadge = '';
+            if (dayOffset === 0) {
+                dayBadge = '<span class="calendar-day-badge">Azi</span>';
+            } else if (dayOffset < 0) {
+                dayBadge = '<span class="calendar-day-badge calendar-day-badge--past">Trecut</span>';
+            }
+            let html = `
+                <div class="calendar-day-header">
+                    <div class="calendar-day-title">${formatDateLabel(date)}</div>
+                    ${dayBadge}
+                </div>
+                <div class="calendar-periods">`;
 
-            if (dimMeds.length > 0) {
-                html += `
-                    <div class="calendar-period">
-                        <div class="calendar-period-title">Dimineața</div>
-                        <ul class="calendar-med-list">${dimMeds.map(item => `<li>${item}</li>`).join('')}</ul>
-                    </div>`;
-            }
-            if (pranzMeds.length > 0) {
-                html += `
-                    <div class="calendar-period">
-                        <div class="calendar-period-title">Prânz</div>
-                        <ul class="calendar-med-list">${pranzMeds.map(item => `<li>${item}</li>`).join('')}</ul>
-                    </div>`;
-            }
-            if (searaMeds.length > 0) {
-                html += `
-                    <div class="calendar-period">
-                        <div class="calendar-period-title">Seara</div>
-                        <ul class="calendar-med-list">${searaMeds.map(item => `<li>${item}</li>`).join('')}</ul>
-                    </div>`;
-            }
+            html += renderCalendarPeriod('calendar-period--dim', '🌅', 'Dimineața', dimMeds);
+            html += renderCalendarPeriod('calendar-period--pranz', '☀️', 'Prânz', pranzMeds);
+            html += renderCalendarPeriod('calendar-period--seara', '🌙', 'Seara', searaMeds);
+
+            html += '</div>';
 
             dayEl.innerHTML = html;
             container.appendChild(dayEl);
         }
 
         if (!hasAnyDay) {
-            container.innerHTML = '<p class="med-empty">Niciun medicament de luat în următoarele 2 săptămâni.</p>';
+            container.innerHTML = '<p class="med-empty">Niciun medicament de luat în perioada selectată.</p>';
         }
+    }
+
+    function togglePastWeek() {
+        showPastWeek = !showPastWeek;
+        const btn = document.getElementById('btnTogglePastWeek');
+        if (showPastWeek) {
+            btn.textContent = 'Ascunde zilele trecute';
+            btn.classList.add('active');
+        } else {
+            btn.textContent = '📆 Ultimele 7 zile';
+            btn.classList.remove('active');
+        }
+        renderCalendar();
     }
 
     function renderPlan() {
@@ -832,6 +1033,7 @@
     function deleteMedication(id) {
         if (confirm("Sigur vrei să ștergi acest medicament din listă?")) {
             medications = medications.filter(m => m.id !== id);
+            removeChecksForMed(id);
             saveToStorage();
             renderPlan();
         }
@@ -841,6 +1043,8 @@
     function resetAll() {
         if (confirm("Sigur vrei să ștergi TOATE medicamentele salvate? Datele nu vor mai putea fi recuperate.")) {
             medications = [];
+            medChecks = {};
+            saveChecksToStorage();
             saveToStorage();
             renderPlan();
         }
@@ -874,6 +1078,7 @@
             medications = JSON.parse(stored);
             normalizeMedications();
         }
+        loadChecksFromStorage();
         updateUnitFields();
         renderPlan();
     };
