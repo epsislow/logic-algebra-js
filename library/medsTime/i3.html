@@ -151,7 +151,25 @@
             line-height: 1;
         }
         .med-stock {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
             text-align: right;
+        }
+        .med-unit {
+            flex-shrink: 0;
+            width: 24px;
+            font-size: 12px;
+            color: #7f8c8d;
+            white-space: nowrap;
+            text-align: left;
+        }
+        .qty-unit-row {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 10px;
+            align-items: end;
         }
         .med-end {
             white-space: nowrap;
@@ -219,9 +237,19 @@
             <label for="medName">Nume Medicament</label>
             <input type="text" id="medName" placeholder="Ex: Paracetamol">
         </div>
-        <div>
-            <label for="medQty">Capsule Disponibile</label>
-            <input type="number" id="medQty" min="1" placeholder="Ex: 30">
+        <div class="full-width qty-unit-row">
+            <div>
+                <label for="medQty" id="medQtyLabel">Capsule disponibile</label>
+                <input type="number" id="medQty" min="1" step="1" placeholder="Ex: 30">
+            </div>
+            <div>
+                <label for="medUnit">Unitate</label>
+                <select id="medUnit" onchange="updateUnitFields()">
+                    <option value="caps">Capsule</option>
+                    <option value="ml">ml</option>
+                    <option value="mg">mg</option>
+                </select>
+            </div>
         </div>
         <div>
             <label for="doseType">Doză Administrare</label>
@@ -303,6 +331,67 @@
     // Tabloul global în care stocăm obiectele medicamentelor
     let medications = [];
 
+    const UNIT_LABELS = { caps: 'caps', ml: 'ml', mg: 'mg' };
+    const UNIT_STOCK_LABELS = {
+        caps: 'Capsule disponibile',
+        ml: 'Cantitate disponibilă (ml)',
+        mg: 'Cantitate disponibilă (mg)'
+    };
+
+    function getMedUnit(med) {
+        return med.unit || 'caps';
+    }
+
+    function parseDoseValue(value, unit) {
+        const parsed = unit === 'caps' ? parseInt(value, 10) : parseFloat(value);
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function parseQtyValue(value, unit) {
+        const parsed = unit === 'caps' ? parseInt(value, 10) : parseFloat(value);
+        return isNaN(parsed) ? NaN : parsed;
+    }
+
+    function formatDoseValue(value, unit) {
+        if (unit === 'caps') return String(Math.round(value));
+        return parseFloat(Number(value).toFixed(2)).toString();
+    }
+
+    function updateUnitFields() {
+        const unit = document.getElementById('medUnit').value;
+        const qtyInput = document.getElementById('medQty');
+        const doseIds = ['doseDim', 'dosePranz', 'doseSeara'];
+
+        document.getElementById('medQtyLabel').textContent = UNIT_STOCK_LABELS[unit];
+
+        if (unit === 'caps') {
+            qtyInput.step = '1';
+            qtyInput.min = '1';
+            qtyInput.placeholder = 'Ex: 30';
+            doseIds.forEach(id => {
+                const el = document.getElementById(id);
+                el.step = '1';
+                el.min = '0';
+            });
+        } else {
+            qtyInput.step = '0.1';
+            qtyInput.min = '0.1';
+            qtyInput.placeholder = unit === 'ml' ? 'Ex: 100' : 'Ex: 500';
+            doseIds.forEach(id => {
+                const el = document.getElementById(id);
+                el.step = '0.1';
+                el.min = '0';
+            });
+        }
+    }
+
+    function normalizeMedications() {
+        medications = medications.map(med => ({
+            ...med,
+            unit: med.unit || 'caps'
+        }));
+    }
+
     // Ascunde sau arată câmpurile suplimentare în funcție de frecvența aleasă
     function toggleFreqFields() {
         const type = document.getElementById('freqType').value;
@@ -324,17 +413,18 @@
     // Adaugă un medicament nou în memorie și în tabel
     function addMedication() {
         const name = document.getElementById('medName').value.trim();
-        const qty = parseInt(document.getElementById('medQty').value);
+        const unit = document.getElementById('medUnit').value;
+        const qty = parseQtyValue(document.getElementById('medQty').value, unit);
         const freqType = document.getElementById('freqType').value;
-        const dim = parseInt(document.getElementById('doseDim').value) || 0;
-        const pranz = parseInt(document.getElementById('dosePranz').value) || 0;
-        const seara = parseInt(document.getElementById('doseSeara').value) || 0;
+        const dim = parseDoseValue(document.getElementById('doseDim').value, unit);
+        const pranz = parseDoseValue(document.getElementById('dosePranz').value, unit);
+        const seara = parseDoseValue(document.getElementById('doseSeara').value, unit);
 
         let intervalDays = 1;
         let specificDays = [];
 
         if (!name || isNaN(qty) || qty <= 0) {
-            alert("Te rog să introduci un nume valid și numărul de capsule aflate în stoc.");
+            alert("Te rog să introduci un nume valid și o cantitate în stoc.");
             return;
         }
 
@@ -352,15 +442,15 @@
 
         const totalDaily = dim + pranz + seara;
         if (totalDaily === 0) {
-            alert("Introdu doza zilnică (cel puțin o capsulă dimineața, la prânz sau seara).");
+            alert("Introdu doza zilnică (cel puțin o valoare dimineața, la prânz sau seara).");
             return;
         }
 
-        // Creăm structura completă a obiectului
         const newMed = {
             id: Date.now().toString(),
             name,
             qty,
+            unit,
             freqType,
             interval: intervalDays,
             specificDays,
@@ -381,6 +471,7 @@
         let checkDate = new Date();
         checkDate.setHours(0, 0, 0, 0);
         const dailyDose = med.dim + med.pranz + med.seara;
+        const epsilon = 0.0001;
 
         if (dailyDose <= 0) {
             return { timestamp: Number.MAX_SAFE_INTEGER, label: "Nu se consumă" };
@@ -389,7 +480,7 @@
         let daysCounter = 0;
         const maxSafetyIterations = 5000;
 
-        while (currentQty > 0 && daysCounter < maxSafetyIterations) {
+        while (currentQty > epsilon && daysCounter < maxSafetyIterations) {
             let takesMedicineToday = false;
 
             if (med.freqType === 'daily') {
@@ -406,13 +497,13 @@
             }
 
             if (takesMedicineToday) {
-                if (currentQty < dailyDose) {
+                if (currentQty < dailyDose - epsilon) {
                     break;
                 }
                 currentQty -= dailyDose;
             }
 
-            if (currentQty <= 0) {
+            if (currentQty <= epsilon) {
                 break;
             }
 
@@ -467,18 +558,20 @@
 
     // Formatează frecvența compact: 1/z, 1/3z, L Mi V 1/z
     function formatFreqText(med, totalDaily) {
+        const doseText = formatDoseValue(totalDaily, getMedUnit(med));
+
         if (med.freqType === 'daily') {
-            return `${totalDaily}/z`;
+            return `${doseText}/z`;
         }
         if (med.freqType === 'interval') {
-            return `${totalDaily}/${med.interval}z`;
+            return `${doseText}/${med.interval}z`;
         }
         if (med.freqType === 'days') {
             const daysMap = { '1': 'L', '2': 'M', '3': 'Mi', '4': 'J', '5': 'V', '6': 'S', '0': 'D' };
             const dayOrder = ['1', '2', '3', '4', '5', '6', '0'];
             const sorted = med.specificDays.slice().sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
             const days = sorted.map(d => daysMap[d]).join(' ');
-            return `${days} ${totalDaily}/z`;
+            return `${days} ${doseText}/z`;
         }
         return '';
     }
@@ -503,8 +596,10 @@
         }
 
         sortedMeds.forEach(({ med, stockOut }) => {
+            const unit = getMedUnit(med);
             const totalDaily = med.dim + med.pranz + med.seara;
             const freqText = formatFreqText(med, totalDaily);
+            const qtyStep = unit === 'caps' ? '1' : '0.1';
 
             const statusClass = getStockStatusClass(stockOut);
             const statusIcon = getStockStatusIcon(statusClass);
@@ -516,7 +611,8 @@
                     <div class="med-line-top">
                         <div class="med-name">${statusIcon}<strong>${med.name}</strong></div>
                         <div class="med-stock">
-                            <input type="number" class="inline-qty" value="${med.qty}" onchange="updateStock('${med.id}', this.value)">
+                            <input type="number" class="inline-qty" value="${formatDoseValue(med.qty, unit)}" step="${qtyStep}" min="0" onchange="updateStock('${med.id}', this.value)">
+                            <span class="med-unit">${UNIT_LABELS[unit]}</span>
                         </div>
                         <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
                     </div>
@@ -533,18 +629,20 @@
 
     // Funcție apelată când modifici stocul manual în interiorul tabelului
     function updateStock(id, newQty) {
-        const qtyValue = parseInt(newQty);
+        const med = medications.find(m => m.id === id);
+        if (!med) return;
+
+        const unit = getMedUnit(med);
+        const qtyValue = parseQtyValue(newQty, unit);
         if (isNaN(qtyValue) || qtyValue < 0) {
-            alert("Introdu un număr valid de capsule.");
+            alert("Introdu o cantitate validă.");
             renderTable();
             return;
         }
-        const med = medications.find(m => m.id === id);
-        if (med) {
-            med.qty = qtyValue;
-            saveToStorage();
-            renderTable(); // Recalculează automat noua dată
-        }
+
+        med.qty = qtyValue;
+        saveToStorage();
+        renderTable();
     }
     // Șterge un singur rând din tabel
     function deleteMedication(id) {
@@ -568,6 +666,7 @@
     function resetForm() {
         document.getElementById('medName').value = '';
         document.getElementById('medQty').value = '';
+        document.getElementById('medUnit').value = 'caps';
         document.getElementById('freqType').value = 'daily';
         document.getElementById('doseDim').value = '0';
         document.getElementById('dosePranz').value = '0';
@@ -575,6 +674,7 @@
         document.getElementById('intervalDays').value = '2';
         
         document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+        updateUnitFields();
         toggleFreqFields();
     }
 
@@ -588,7 +688,9 @@
         const stored = localStorage.getItem('medicationsStockApp_v2');
         if (stored) {
             medications = JSON.parse(stored);
+            normalizeMedications();
         }
+        updateUnitFields();
         renderTable();
     };
 </script>
