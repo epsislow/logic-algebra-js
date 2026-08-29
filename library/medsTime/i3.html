@@ -128,7 +128,7 @@
         .med-item-inner {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto auto;
-            align-items: center;
+            align-items: start;
             gap: 8px;
         }
         .med-line-top {
@@ -164,11 +164,20 @@
             margin-top: 4px;
             font-size: 12px;
         }
+        .med-name-block {
+            min-width: 0;
+        }
         .med-name {
             word-break: break-word;
             display: flex;
             align-items: center;
             gap: 4px;
+        }
+        .med-start {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+            padding-left: 18px;
         }
         .med-status-icon {
             flex-shrink: 0;
@@ -437,6 +446,17 @@
             color: #2c3e50;
             word-break: break-word;
         }
+        .calendar-med-name-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+        }
+        .calendar-med-start {
+            font-size: 10px;
+            color: #7f8c8d;
+            font-weight: normal;
+        }
         .calendar-med-dose {
             flex-shrink: 0;
             font-weight: bold;
@@ -661,6 +681,33 @@
         return med.seara;
     }
 
+    function getUniqueMedName(inputName) {
+        const base = inputName.trim();
+        const related = medications.filter(med => {
+            if (med.name === base) return true;
+            const match = med.name.match(/^(.+) #(\d+)$/);
+            return match && match[1] === base;
+        });
+
+        if (related.length === 0) return base;
+
+        let maxSuffix = 0;
+        related.forEach(med => {
+            if (med.name === base) {
+                maxSuffix = Math.max(maxSuffix, 1);
+            } else {
+                const match = med.name.match(/ #(\d+)$/);
+                if (match) maxSuffix = Math.max(maxSuffix, parseInt(match[1], 10));
+            }
+        });
+
+        return `${base} #${maxSuffix + 1}`;
+    }
+
+    function formatMedStartLabel(med) {
+        return `Start: ${formatDateLabel(parseDateKey(getMedStartDate(med)))}`;
+    }
+
     function normalizeMedications() {
         const todayKey = formatDateKey(new Date());
         medications = medications.map(med => ({
@@ -734,7 +781,7 @@
 
         const newMed = {
             id: Date.now().toString(),
-            name,
+            name: getUniqueMedName(name),
             initialQty: qty,
             startDate,
             unit,
@@ -1041,7 +1088,10 @@
         return `<li class="calendar-med-item${doneClass}">
             <label class="calendar-med-check">
                 <input type="checkbox"${checkedAttr} onchange="toggleMedCheck('${med.id}', '${dateKey}', '${period}', this.checked); this.closest('.calendar-med-item').classList.toggle('calendar-med-item--done', this.checked)">
-                <span class="calendar-med-name">${med.name}</span>
+                <span class="calendar-med-name-wrap">
+                    <span class="calendar-med-name">${med.name}</span>
+                    <span class="calendar-med-start">${formatMedStartLabel(med)}</span>
+                </span>
             </label>
             <span class="calendar-med-dose">${formatDoseValue(amount, unit)} ${UNIT_LABELS[unit]}</span>
         </li>`;
@@ -1293,12 +1343,17 @@
                 ? `<button class="check-yesterday-btn" onclick="autoCheckMedUntilYesterday('${med.id}')" title="Check până ieri" aria-label="Check până ieri">✓</button>`
                 : '';
 
+            const startLabel = formatMedStartLabel(med);
+
             const row = document.createElement('tr');
             row.className = 'med-item';
             row.innerHTML = `
                 <td colspan="3">
                     <div class="med-item-inner">
-                        <div class="med-name">${statusIcon}<strong>${med.name}</strong></div>
+                        <div class="med-name-block">
+                            <div class="med-name">${statusIcon}<strong>${med.name}</strong></div>
+                            <div class="med-start">${startLabel}</div>
+                        </div>
                         <div class="med-stock">
                             <span class="stock-remaining">${formatDoseValue(remaining, unit)}</span>
                             <span class="med-unit">${UNIT_LABELS[unit]}</span>
