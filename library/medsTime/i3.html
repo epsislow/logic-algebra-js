@@ -20,7 +20,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        h1, h2 {
+        h1, h2, h3 {
             color: #2c3e50;
             text-align: center;
         }
@@ -94,22 +94,48 @@
         .btn-add:hover { background-color: #219653; }
         .btn-reset-all { background-color: #7f8c8d; max-width: 150px; }
         .btn-reset-all:hover { background-color: #616a6b; }
-        table {
+        #medTable {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: fixed;
         }
-        th, td {
-            padding: 12px;
+        #medTable thead {
+            display: none;
+        }
+        #medTable td {
+            padding: 6px 4px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
         }
-        th {
-            background-color: #34495e;
-            color: white;
+        #medTable tr.med-row-top td {
+            padding-top: 10px;
         }
-        tr:hover {
-            background-color: #f1f1f1;
+        #medTable tr.med-row-bottom td {
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            font-size: 12px;
+        }
+        #medTable tr:hover {
+            background-color: #f9f9f9;
+        }
+        .med-name {
+            word-break: break-word;
+        }
+        .med-stock {
+            width: 56px;
+            text-align: right;
+        }
+        .med-actions {
+            width: 32px;
+            text-align: center;
+        }
+        .med-freq {
+            white-space: nowrap;
+            text-align: right;
+        }
+        .med-end {
+            word-break: break-word;
         }
         .status-alert {
             color: #c0392b;
@@ -119,22 +145,23 @@
             background-color: #e74c3c;
             color: white;
             border: none;
-            padding: 6px 12px;
+            width: 28px;
+            height: 28px;
+            padding: 0;
             border-radius: 4px;
             cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            flex: none;
         }
         .delete-btn:hover {
             background-color: #c0392b;
         }
-        .edit-stock-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
         .inline-qty {
-            width: 70px;
+            width: 50px;
             padding: 4px;
             text-align: center;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -211,7 +238,7 @@
         </div>
     </div>
 
-    <h2>📋 Planul tău curent (Salvat automat)</h2>
+    <h3>📋 Planul tău curent (Salvat automat)</h2>
     <table id="medTable">
         <thead>
             <tr>
@@ -360,42 +387,55 @@
         return `${dayName}, ${day}.${month}.${year}`;
     }
 
+    // Formatează frecvența compact: 1/z, 1/3z, L Mi V 1/z
+    function formatFreqText(med, totalDaily) {
+        if (med.freqType === 'daily') {
+            return `${totalDaily}/z`;
+        }
+        if (med.freqType === 'interval') {
+            return `${totalDaily}/${med.interval}z`;
+        }
+        if (med.freqType === 'days') {
+            const daysMap = { '1': 'L', '2': 'M', '3': 'Mi', '4': 'J', '5': 'V', '6': 'S', '0': 'D' };
+            const dayOrder = ['1', '2', '3', '4', '5', '6', '0'];
+            const sorted = med.specificDays.slice().sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+            const days = sorted.map(d => daysMap[d]).join(' ');
+            return `${days} ${totalDaily}/z`;
+        }
+        return '';
+    }
+
     // Desenează tabelul pe ecran utilizând datele salvate
     function renderTable() {
         const tableBody = document.querySelector('#medTable tbody');
         tableBody.innerHTML = '';
 
         medications.forEach(med => {
-            const row = document.createElement('tr');
             const totalDaily = med.dim + med.pranz + med.seara;
             const endDateStr = calculateEndDate(med);
+            const freqText = formatFreqText(med, totalDaily);
 
-            let freqText = '';
-            if (med.freqType === 'daily') freqText = 'Zilnic';
-            else if (med.freqType === 'interval') {
-                freqText = med.interval === 2 ? 'O zi da, o zi nu' : `La fiecare ${med.interval} zile`;
-            } else if (med.freqType === 'days') {
-                const daysMap = { '1': 'Lu', '2': 'Ma', '3': 'Mi', '4': 'Jo', '5': 'Vi', '6': 'Sâ', '0': 'Du' };
-                freqText = med.specificDays.map(d => daysMap[d]).join(', ');
-            }
-
-            row.innerHTML = `
-                <td><strong>${med.name}</strong></td>
-                <td>
-                    <div class="edit-stock-container">
-                        <input type="number" class="inline-qty" value="${med.qty}" onchange="updateStock('${med.id}', this.value)">
-                        <!--span>capsule</span-->
-                    </div>
+            const rowTop = document.createElement('tr');
+            rowTop.className = 'med-row-top';
+            rowTop.innerHTML = `
+                <td class="med-name"><strong>${med.name}</strong></td>
+                <td class="med-stock">
+                    <input type="number" class="inline-qty" value="${med.qty}" onchange="updateStock('${med.id}', this.value)">
                 </td>
-                <!--td>${med.dim}</td>
-                <td>${med.pranz}</td>
-                <td>${med.seara}</td-->
-                <td>${freqText} (${totalDaily}/zi)</td>
-                <td class="status-alert">${endDateStr}</td>
-                <td><button class="delete-btn" onclick="deleteMedication('${med.id}')">Șterge</button></td>
+                <td class="med-actions" rowspan="2">
+                    <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+                </td>
             `;
 
-            tableBody.appendChild(row);
+            const rowBottom = document.createElement('tr');
+            rowBottom.className = 'med-row-bottom';
+            rowBottom.innerHTML = `
+                <td class="med-end status-alert">Fără stoc: ${endDateStr}</td>
+                <td class="med-freq">${freqText}</td>
+            `;
+
+            tableBody.appendChild(rowTop);
+            tableBody.appendChild(rowBottom);
         });
     }
 
