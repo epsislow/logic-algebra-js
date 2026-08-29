@@ -331,29 +331,30 @@
         resetForm();
     }
 
-    // Calculează calendaristic data exactă la care stocul ajunge la 0
-    function calculateEndDate(med) {
+    // Calculează data la care se termină stocul; returnează timestamp pentru sortare și text afișat
+    function calculateStockOut(med) {
         let currentQty = med.qty;
-        let checkDate = new Date(); // Începe de astăzi
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
         const dailyDose = med.dim + med.pranz + med.seara;
 
-        if (dailyDose <= 0) return "Nu se consumă";
+        if (dailyDose <= 0) {
+            return { timestamp: Number.MAX_SAFE_INTEGER, label: "Nu se consumă" };
+        }
 
         let daysCounter = 0;
-        const maxSafetyIterations = 5000; // Protecție buclă infinită
+        const maxSafetyIterations = 5000;
 
         while (currentQty > 0 && daysCounter < maxSafetyIterations) {
             let takesMedicineToday = false;
 
             if (med.freqType === 'daily') {
                 takesMedicineToday = true;
-            } 
-            else if (med.freqType === 'interval') {
+            } else if (med.freqType === 'interval') {
                 if (daysCounter % med.interval === 0) {
                     takesMedicineToday = true;
                 }
-            } 
-            else if (med.freqType === 'days') {
+            } else if (med.freqType === 'days') {
                 const currentDayOfWeek = checkDate.getDay().toString();
                 if (med.specificDays.includes(currentDayOfWeek)) {
                     takesMedicineToday = true;
@@ -362,7 +363,7 @@
 
             if (takesMedicineToday) {
                 if (currentQty < dailyDose) {
-                    break; // Nu mai avem doza completă pentru această zi
+                    break;
                 }
                 currentQty -= dailyDose;
             }
@@ -375,16 +376,20 @@
             daysCounter++;
         }
 
-        if (daysCounter >= maxSafetyIterations) return "Peste 10+ ani";
+        if (daysCounter >= maxSafetyIterations) {
+            return { timestamp: Number.MAX_SAFE_INTEGER, label: "Peste 10+ ani" };
+        }
 
         const day = String(checkDate.getDate()).padStart(2, '0');
         const month = String(checkDate.getMonth() + 1).padStart(2, '0');
         const year = checkDate.getFullYear();
-        
         const daysOfWeekRo = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
         const dayName = daysOfWeekRo[checkDate.getDay()];
 
-        return `${dayName}, ${day}.${month}.${year}`;
+        return {
+            timestamp: checkDate.getTime(),
+            label: `${dayName}, ${day}.${month}.${year}`
+        };
     }
 
     // Formatează frecvența compact: 1/z, 1/3z, L Mi V 1/z
@@ -410,9 +415,12 @@
         const tableBody = document.querySelector('#medTable tbody');
         tableBody.innerHTML = '';
 
-        medications.forEach(med => {
+        const sortedMeds = medications
+            .map(med => ({ med, stockOut: calculateStockOut(med) }))
+            .sort((a, b) => a.stockOut.timestamp - b.stockOut.timestamp);
+
+        sortedMeds.forEach(({ med, stockOut }) => {
             const totalDaily = med.dim + med.pranz + med.seara;
-            const endDateStr = calculateEndDate(med);
             const freqText = formatFreqText(med, totalDaily);
 
             const rowTop = document.createElement('tr');
@@ -430,7 +438,7 @@
             const rowBottom = document.createElement('tr');
             rowBottom.className = 'med-row-bottom';
             rowBottom.innerHTML = `
-                <td class="med-end status-alert">Fără stoc: ${endDateStr}</td>
+                <td class="med-end status-alert">Fără stoc: ${stockOut.label}</td>
                 <td class="med-freq">${freqText}</td>
             `;
 
