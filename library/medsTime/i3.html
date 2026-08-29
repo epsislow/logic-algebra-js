@@ -153,8 +153,16 @@
             overflow-wrap: anywhere;
             padding-right: 40px;
         }
-        .status-alert {
+        .status-urgent {
             color: #c0392b;
+            font-weight: bold;
+        }
+        .status-warning {
+            color: #e67e22;
+            font-weight: bold;
+        }
+        .status-ok {
+            color: #27ae60;
             font-weight: bold;
         }
         .delete-btn {
@@ -404,6 +412,22 @@
         };
     }
 
+    // Clasă de culoare în funcție de câte zile mai sunt până la epuizarea stocului
+    function getStockStatusClass(stockOut) {
+        if (stockOut.timestamp === Number.MAX_SAFE_INTEGER) {
+            return 'status-ok';
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const endDate = new Date(stockOut.timestamp);
+        const daysUntil = Math.ceil((endDate - today) / (24 * 60 * 60 * 1000));
+
+        if (daysUntil <= 15) return 'status-urgent';
+        if (daysUntil <= 30) return 'status-warning';
+        return 'status-ok';
+    }
+
     // Formatează frecvența compact: 1/z, 1/3z, L Mi V 1/z
     function formatFreqText(med, totalDaily) {
         if (med.freqType === 'daily') {
@@ -435,6 +459,8 @@
             const totalDaily = med.dim + med.pranz + med.seara;
             const freqText = formatFreqText(med, totalDaily);
 
+            const statusClass = getStockStatusClass(stockOut);
+
             const row = document.createElement('tr');
             row.className = 'med-item';
             row.innerHTML = `
@@ -447,7 +473,7 @@
                         <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
                     </div>
                     <div class="med-line-bottom">
-                        <span class="med-end status-alert">${stockOut.label}</span>
+                        <span class="med-end ${statusClass}">Fără stoc: ${stockOut.label}</span>
                         <span class="med-freq">${freqText}</span>
                     </div>
                 </td>
