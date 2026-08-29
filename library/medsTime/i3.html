@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .container {
-            max-width: 1000px;
+            max-width: 350px;
             margin: 0 auto;
             background: #fff;
             padding: 25px;
@@ -26,7 +26,7 @@
         }
         .form-group {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
             background: #f9f9f9;
@@ -153,6 +153,24 @@
             <input type="number" id="medQty" min="1" placeholder="Ex: 30">
         </div>
         <div>
+            <label for="doseType">Doză Administrare</label>
+            <div class="dose-inputs">
+                <div>
+                    <label style="font-size:0.75rem; font-weight:normal;">Dimineața</label>
+                    <input type="number" id="doseDim" min="0" value="0">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem; font-weight:normal;">Prânz</label>
+                    <input type="number" id="dosePranz" min="0" value="0">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem; font-weight:normal;">Seara</label>
+                    <input type="number" id="doseSeara" min="0" value="0">
+                </div>
+            </div>
+
+        </div>
+        <div>
             <label for="freqType">Frecvență Administrare</label>
             <select id="freqType" onchange="toggleFreqFields()">
                 <option value="daily">În fiecare zi</option>
@@ -185,37 +203,7 @@
                 <label class="checkbox-label"><input type="checkbox" class="day-checkbox" value="0"> Duminică</label>
             </div>
         </div>
-      <!--div class="form-group">
-                <label>Doza per moment al zilei</label-->
-                <div class="dose-inputs">
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:normal;">Dimineața</label>
-                        <input type="number" id="doseDim" min="0" value="0">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:normal;">Prânz</label>
-                        <input type="number" id="dosePranz" min="0" value="0">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:normal;">Seara</label>
-                        <input type="number" id="doseSeara" min="0" value="0">
-                    </div>
-                </div>
             
-            
-            
-        <!--div>
-            <label for="doseDim">Dimineața (buc)</label>
-            <input type="number" id="doseDim" min="0" value="0">
-        </div>
-        <div>
-            <label for="dosePranz">Prânz (buc)</label>
-            <input type="number" id="dosePranz" min="0" value="0">
-        </div>
-        <div>
-            <label for="doseSeara">Seara (buc)</label>
-            <input type="number" id="doseSeara" min="0" value="0">
-        </div-->
 
         <div class="flex-buttons">
             <button class="btn-add" onclick="addMedication()">Adaugă în Plan</button>
@@ -229,10 +217,6 @@
             <tr>
                 <th>Medicament</th>
                 <th>Stoc</th>
-                <!--(Modifică direct)</th>
-                <th>Dimineața</th>
-                <th>Prânz</th>
-                <th>Seara</th-->
                 <th>Frecvență (Doza)</th>
                 <th>Rămâi fără stoc pe data de:</th>
                 <th>Acțiuni</th>
