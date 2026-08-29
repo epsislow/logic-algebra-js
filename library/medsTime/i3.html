@@ -127,9 +127,30 @@
         }
         .med-line-top {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto 28px;
+            grid-template-columns: minmax(0, 1fr) auto auto;
             align-items: center;
             gap: 8px;
+        }
+        .med-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .check-yesterday-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            flex: none;
+        }
+        .check-yesterday-btn:hover {
+            background-color: #219653;
         }
         .med-line-bottom {
             display: grid;
@@ -273,32 +294,20 @@
             background: #95a5a6;
         }
         .calendar-toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
             margin-top: 12px;
         }
-        .btn-past-week,
-        .btn-auto-check {
-            background-color: #7f8c8d;
-            flex: none;
-            padding: 8px 12px;
-            font-size: 12px;
+        .calendar-range label {
+            font-size: 13px;
+            margin-bottom: 6px;
         }
-        .btn-past-week:hover,
-        .btn-auto-check:hover {
-            background-color: #616a6b;
+        .calendar-range input {
+            width: 100%;
         }
-        .btn-past-week.active,
-        .btn-auto-check.active {
-            background-color: #566573;
-        }
-        .btn-auto-check {
-            background-color: #16a085;
-        }
-        .btn-auto-check:hover {
-            background-color: #138d75;
+        .calendar-range-hint {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 4px;
+            text-align: center;
         }
         .calendar-day-header {
             display: flex;
@@ -521,8 +530,11 @@
     </div>
     <div id="planCalendarView" class="hidden">
         <div class="calendar-toolbar" id="calendarToolbar">
-            <button type="button" id="btnTogglePastWeek" class="btn-past-week" onclick="togglePastWeek()">📆 Ultimele 7 zile</button>
-            <button type="button" id="btnAutoCheck" class="btn-auto-check" onclick="autoCheckUntilYesterday()">✓ Calculează până ieri</button>
+            <div class="calendar-range">
+                <label for="calendarViewStart">Afișare calendar de la</label>
+                <input type="date" id="calendarViewStart" lang="ro" onchange="onCalendarViewStartChange()">
+                <div class="calendar-range-hint" id="calendarRangeHint"></div>
+            </div>
         </div>
         <div id="medCalendar"></div>
     </div>
@@ -532,7 +544,6 @@
     // Tabloul global în care stocăm obiectele medicamentelor
     let medications = [];
     let showCalendarView = false;
-    let showPastWeek = false;
     let medChecks = {};
 
     const DAYS_SHORT = ["D", "L", "M", "Mi", "J", "V", "S"];
@@ -1016,19 +1027,115 @@
             </div>`;
     }
 
+    function getYesterdayDate() {
+        const yesterday = new Date();
+        yesterday.setHours(0, 0, 0, 0);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday;
+    }
+
+    function getCalendarViewStart() {
+        const input = document.getElementById('calendarViewStart');
+        return (input && input.value) ? input.value : formatDateKey(new Date());
+    }
+
+    function onCalendarViewStartChange() {
+        localStorage.setItem('calendarViewStart', getCalendarViewStart());
+        updateCalendarRangeHint();
+        renderCalendar();
+    }
+
+    function updateCalendarRangeHint() {
+        const hint = document.getElementById('calendarRangeHint');
+        if (!hint) return;
+
+        const viewStart = parseDateKey(getCalendarViewStart());
+        const viewEnd = new Date(viewStart);
+        viewEnd.setDate(viewEnd.getDate() + 13);
+
+        hint.textContent = `Până la ${formatDateLabel(viewEnd)} (14 zile)`;
+    }
+
+    function initCalendarViewStart() {
+        const stored = localStorage.getItem('calendarViewStart');
+        const input = document.getElementById('calendarViewStart');
+        if (!input) return;
+
+        input.value = stored || formatDateKey(new Date());
+        updateCalendarRangeHint();
+    }
+
+    function forEachScheduledDoseUntil(med, endDate, callback) {
+        const medStart = parseDateKey(getMedStartDate(med));
+        let current = new Date(medStart);
+
+        while (current <= endDate) {
+            if (isMedScheduledOnDate(med, current)) {
+                const dateKey = formatDateKey(current);
+                for (const period of PERIODS) {
+                    const dose = getDoseForPeriod(med, period);
+                    if (dose <= 0) continue;
+                    if (getRemainingBeforeDose(med, dateKey, period) < dose - 0.0001) continue;
+                    callback(dateKey, period);
+                }
+            }
+            current.setDate(current.getDate() + 1);
+        }
+    }
+
+    function hasUncheckedDosesUntilYesterday(med) {
+        const yesterday = getYesterdayDate();
+        const medStart = parseDateKey(getMedStartDate(med));
+        if (yesterday < medStart) return false;
+
+        let hasAnyDose = false;
+        let hasUnchecked = false;
+
+        forEachScheduledDoseUntil(med, yesterday, (dateKey, period) => {
+            hasAnyDose = true;
+            if (!isMedChecked(med.id, dateKey, period)) {
+                hasUnchecked = true;
+            }
+        });
+
+        return hasAnyDose && hasUnchecked;
+    }
+
+    function autoCheckMedUntilYesterday(medId) {
+        const med = medications.find(m => m.id === medId);
+        if (!med) return;
+
+        const yesterday = getYesterdayDate();
+        let addedChecks = 0;
+
+        forEachScheduledDoseUntil(med, yesterday, (dateKey, period) => {
+            if (!isMedChecked(med.id, dateKey, period)) {
+                medChecks[getCheckKey(med.id, dateKey, period)] = true;
+                addedChecks++;
+            }
+        });
+
+        if (addedChecks === 0) return;
+
+        saveChecksToStorage();
+        renderPlan();
+    }
+
     function renderCalendar() {
         const container = document.getElementById('medCalendar');
         container.innerHTML = '';
 
         const filteredMeds = getFilteredMedications();
         let hasAnyDay = false;
-        const startOffset = showPastWeek ? -7 : 0;
-        const endOffset = 13;
 
-        for (let dayOffset = startOffset; dayOffset <= endOffset; dayOffset++) {
-            const date = new Date();
-            date.setHours(0, 0, 0, 0);
-            date.setDate(date.getDate() + dayOffset);
+        const viewStart = parseDateKey(getCalendarViewStart());
+        const viewEnd = new Date(viewStart);
+        viewEnd.setDate(viewEnd.getDate() + 13);
+        const todayKey = formatDateKey(new Date());
+
+        let current = new Date(viewStart);
+        while (current <= viewEnd) {
+            const date = new Date(current);
             const dateKey = formatDateKey(date);
 
             const dimMeds = [];
@@ -1048,20 +1155,21 @@
             });
 
             if (dimMeds.length === 0 && pranzMeds.length === 0 && searaMeds.length === 0) {
+                current.setDate(current.getDate() + 1);
                 continue;
             }
 
             hasAnyDay = true;
             const dayEl = document.createElement('div');
             let dayClass = 'calendar-day';
-            if (dayOffset === 0) dayClass += ' calendar-day-today';
-            if (dayOffset < 0) dayClass += ' calendar-day-past';
+            if (dateKey === todayKey) dayClass += ' calendar-day-today';
+            if (compareDateKeys(dateKey, todayKey) < 0) dayClass += ' calendar-day-past';
             dayEl.className = dayClass;
 
             let dayBadge = '';
-            if (dayOffset === 0) {
+            if (dateKey === todayKey) {
                 dayBadge = '<span class="calendar-day-badge">Azi</span>';
-            } else if (dayOffset < 0) {
+            } else if (compareDateKeys(dateKey, todayKey) < 0) {
                 dayBadge = '<span class="calendar-day-badge calendar-day-badge--past">Trecut</span>';
             }
             let html = `
@@ -1079,6 +1187,7 @@
 
             dayEl.innerHTML = html;
             container.appendChild(dayEl);
+            current.setDate(current.getDate() + 1);
         }
 
         if (!hasAnyDay) {
@@ -1086,64 +1195,9 @@
         }
     }
 
-    function autoCheckUntilYesterday() {
-        if (medications.length === 0) {
-            alert("Nu există medicamente în plan.");
-            return;
-        }
-
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        let addedChecks = 0;
-
-        medications.forEach(med => {
-            let current = parseDateKey(getMedStartDate(med));
-
-            while (current <= yesterday) {
-                const dateKey = formatDateKey(current);
-
-                if (isMedScheduledOnDate(med, current)) {
-                    for (const period of PERIODS) {
-                        const dose = getDoseForPeriod(med, period);
-                        if (dose <= 0) continue;
-                        if (isMedChecked(med.id, dateKey, period)) continue;
-                        if (getRemainingBeforeDose(med, dateKey, period) < dose - 0.0001) continue;
-
-                        medChecks[getCheckKey(med.id, dateKey, period)] = true;
-                        addedChecks++;
-                    }
-                }
-
-                current.setDate(current.getDate() + 1);
-            }
-        });
-
-        saveChecksToStorage();
-        renderPlan();
-
-        if (addedChecks === 0) {
-            alert("Nu s-au găsit doze de bifat până ieri (poate sunt deja bifate sau stocul nu ajunge).");
-        }
-    }
-
-    function togglePastWeek() {
-        showPastWeek = !showPastWeek;
-        const btn = document.getElementById('btnTogglePastWeek');
-        if (showPastWeek) {
-            btn.textContent = 'Ascunde zilele trecute';
-            btn.classList.add('active');
-        } else {
-            btn.textContent = '📆 Ultimele 7 zile';
-            btn.classList.remove('active');
-        }
-        renderCalendar();
-    }
-
     function renderPlan() {
         if (showCalendarView) {
+            updateCalendarRangeHint();
             renderCalendar();
         } else {
             renderTable();
@@ -1157,6 +1211,7 @@
 
         const btn = document.getElementById('btnToggleCalendar');
         if (showCalendarView) {
+            initCalendarViewStart();
             btn.textContent = '📋 Înapoi la listă';
             btn.classList.add('active');
         } else {
@@ -1191,6 +1246,10 @@
 
             const statusClass = getStockStatusClass(stockOut);
             const statusIcon = getStockStatusIcon(statusClass);
+            const showCheckBtn = hasUncheckedDosesUntilYesterday(med);
+            const checkBtn = showCheckBtn
+                ? `<button class="check-yesterday-btn" onclick="autoCheckMedUntilYesterday('${med.id}')" title="Check până ieri" aria-label="Check până ieri">✓</button>`
+                : '';
 
             const row = document.createElement('tr');
             row.className = 'med-item';
@@ -1202,8 +1261,10 @@
                             <span class="stock-remaining">${formatDoseValue(remaining, unit)}</span>
                             <span class="med-unit">${UNIT_LABELS[unit]}</span>
                         </div>
-                        <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
-                    </div>
+                        <div class="med-actions-group">
+                            ${checkBtn}
+                            <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+                        </div>
                     <div class="med-line-bottom">
                         <span class="med-end ${statusClass}">Fără stoc: ${stockOut.label}</span>
                         <span class="med-freq">${freqText}</span>
@@ -1266,6 +1327,7 @@
             normalizeMedications();
         }
         loadChecksFromStorage();
+        initCalendarViewStart();
         setStartDateInput(formatDateKey(new Date()));
         updateUnitFields();
         renderPlan();
