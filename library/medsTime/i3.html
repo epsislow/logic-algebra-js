@@ -304,6 +304,30 @@
             font-size: 13px;
             margin-bottom: 6px;
         }
+        .calendar-range-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .calendar-range-row input {
+            flex: 1;
+            min-width: 0;
+        }
+        .calendar-week-btn {
+            background-color: #7f8c8d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            flex: none;
+            white-space: nowrap;
+        }
+        .calendar-week-btn:hover {
+            background-color: #616a6b;
+        }
         .calendar-range input {
             width: 100%;
         }
@@ -536,7 +560,11 @@
         <div class="calendar-toolbar" id="calendarToolbar">
             <div class="calendar-range">
                 <label for="calendarViewStart">Afișare calendar de la</label>
-                <input type="date" id="calendarViewStart" lang="ro" onchange="onCalendarViewStartChange()">
+                <div class="calendar-range-row">
+                    <button type="button" class="calendar-week-btn" onclick="shiftCalendarViewStart(-1)">−1w</button>
+                    <input type="date" id="calendarViewStart" lang="ro" onchange="onCalendarViewStartChange()">
+                    <button type="button" class="calendar-week-btn" onclick="shiftCalendarViewStart(1)">+1w</button>
+                </div>
                 <div class="calendar-range-hint" id="calendarRangeHint"></div>
             </div>
         </div>
@@ -1047,6 +1075,16 @@
         localStorage.setItem('calendarViewStart', getCalendarViewStart());
         updateCalendarRangeHint();
         renderCalendar();
+    }
+
+    function shiftCalendarViewStart(weeks) {
+        const input = document.getElementById('calendarViewStart');
+        if (!input) return;
+
+        const current = parseDateKey(getCalendarViewStart());
+        current.setDate(current.getDate() + weeks * 7);
+        input.value = formatDateKey(current);
+        onCalendarViewStartChange();
     }
 
     function updateCalendarRangeHint() {
