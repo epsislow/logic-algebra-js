@@ -383,6 +383,55 @@
         .calendar-range input {
             width: 100%;
         }
+        .confirm-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .confirm-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(44, 62, 80, 0.45);
+        }
+        .confirm-modal-box {
+            position: relative;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            padding: 22px 20px 18px;
+            max-width: 320px;
+            width: 100%;
+            z-index: 1;
+        }
+        .confirm-modal-message {
+            margin: 0 0 20px;
+            font-size: 15px;
+            line-height: 1.45;
+            color: #333;
+            text-align: center;
+        }
+        .confirm-modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-modal-cancel {
+            background-color: #7f8c8d;
+            flex: 1;
+        }
+        .confirm-modal-cancel:hover {
+            background-color: #616a6b;
+        }
+        .confirm-modal-ok {
+            background-color: #e74c3c;
+            flex: 1;
+        }
+        .confirm-modal-ok:hover {
+            background-color: #c0392b;
+        }
         .calendar-range-hint {
             font-size: 11px;
             color: #7f8c8d;
@@ -636,11 +685,23 @@
     </div>
 </div>
 
+<div id="confirmModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalMessage">
+    <div class="confirm-modal-backdrop" onclick="closeConfirmModal()"></div>
+    <div class="confirm-modal-box">
+        <p id="confirmModalMessage" class="confirm-modal-message"></p>
+        <div class="confirm-modal-actions">
+            <button type="button" class="confirm-modal-cancel" onclick="closeConfirmModal()">Anulează</button>
+            <button type="button" class="confirm-modal-ok" id="confirmModalOk" onclick="confirmModalOk()">Șterge</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Tabloul global în care stocăm obiectele medicamentelor
     let medications = [];
     let showCalendarView = false;
     let medChecks = {};
+    let confirmModalCallback = null;
 
     const DAYS_SHORT = ["D", "L", "M", "Mi", "J", "V", "S"];
 
@@ -1466,24 +1527,56 @@
 
     // Șterge un singur rând din tabel
     function deleteMedication(id) {
-        if (confirm("Sigur vrei să ștergi acest medicament din listă?")) {
+        showConfirmModal("Sigur vrei să ștergi acest medicament din listă?", () => {
             medications = medications.filter(m => m.id !== id);
             removeChecksForMed(id);
             saveToStorage();
             renderPlan();
-        }
+        });
     }
 
     // Funcția Reset - Golește memoria locală și tabelul
     function resetAll() {
-        if (confirm("Sigur vrei să ștergi TOATE medicamentele salvate? Datele nu vor mai putea fi recuperate.")) {
+        showConfirmModal("Sigur vrei să ștergi TOATE medicamentele salvate? Datele nu vor mai putea fi recuperate.", () => {
             medications = [];
             medChecks = {};
             saveChecksToStorage();
             saveToStorage();
             renderPlan();
-        }
+        });
     }
+
+    function showConfirmModal(message, onConfirm) {
+        const modal = document.getElementById('confirmModal');
+        const messageEl = document.getElementById('confirmModalMessage');
+        if (!modal || !messageEl) return;
+
+        messageEl.textContent = message;
+        confirmModalCallback = onConfirm;
+        modal.classList.remove('hidden');
+        document.getElementById('confirmModalOk')?.focus();
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        if (!modal) return;
+
+        modal.classList.add('hidden');
+        confirmModalCallback = null;
+    }
+
+    function confirmModalOk() {
+        const callback = confirmModalCallback;
+        closeConfirmModal();
+        if (callback) callback();
+    }
+
+    document.addEventListener('keydown', (event) => {
+        const modal = document.getElementById('confirmModal');
+        if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+            closeConfirmModal();
+        }
+    });
 
     // Curăță datele introduse în formular pentru a lăsa loc următorului medicament
     function resetForm() {
