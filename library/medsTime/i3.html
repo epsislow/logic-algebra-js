@@ -674,6 +674,85 @@
             border-radius: 4px;
             font-size: 15px;
         }
+        .add-person-modal-box {
+            max-width: 340px;
+        }
+        .icon-picker-label {
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: left;
+            color: #2c3e50;
+        }
+        .icon-picker-layout {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: flex-start;
+        }
+        .icon-picker-categories {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: none;
+            min-width: 88px;
+        }
+        .icon-cat-btn {
+            text-align: left;
+            padding: 8px 10px;
+            background: #f3f4f6;
+            color: #2c3e50;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            flex: none;
+            width: 100%;
+        }
+        .icon-cat-btn:hover {
+            background: #e8eaed;
+        }
+        .icon-cat-btn.active {
+            background: #fff9f0;
+            border-color: #e67e22;
+            color: #e67e22;
+        }
+        .icon-picker-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .icon-pick-btn {
+            font-size: 26px;
+            padding: 8px 4px;
+            background: #f9f9f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            flex: none;
+            line-height: 1.2;
+        }
+        .icon-pick-btn:hover {
+            border-color: #d5d8dc;
+        }
+        .icon-pick-btn.active {
+            border-color: #e67e22;
+            background: #fff9f0;
+        }
+        .person-icon-btn {
+            font-size: 26px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            flex: none;
+            line-height: 1;
+        }
+        .person-icon-btn:hover {
+            opacity: 0.85;
+        }
         .confirm-modal-add {
             background-color: #27ae60;
             flex: 1;
@@ -980,13 +1059,24 @@
 
 <div id="addPersonModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="addPersonModalLabel">
     <div class="confirm-modal-backdrop" onclick="closeAddPersonModal()"></div>
-    <div class="confirm-modal-box">
-        <p id="addPersonModalLabel" class="confirm-modal-message">Persoană nouă</p>
+    <div class="confirm-modal-box add-person-modal-box">
+        <p id="addPersonModalLabel" class="confirm-modal-message" style="text-align: left;">Persoană nouă</p>
+        <label for="addPersonName" class="icon-picker-label">Nume</label>
         <input type="text" id="addPersonName" class="add-person-modal-input" placeholder="Ex: Mama" maxlength="50">
+        <span class="icon-picker-label">Alege iconița</span>
+        <div id="addPersonIconPicker"></div>
         <div class="confirm-modal-actions">
             <button type="button" class="confirm-modal-cancel" onclick="closeAddPersonModal()">Anulează</button>
             <button type="button" class="confirm-modal-add" onclick="confirmAddPerson()">Adaugă</button>
         </div>
+    </div>
+</div>
+
+<div id="iconPickerModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="iconPickerModalLabel">
+    <div class="confirm-modal-backdrop" onclick="closeIconPickerModal()"></div>
+    <div class="confirm-modal-box add-person-modal-box">
+        <p id="iconPickerModalLabel" class="confirm-modal-message" style="text-align: left;">Alege iconița</p>
+        <div id="iconPickerModalBody"></div>
     </div>
 </div>
 
@@ -1004,6 +1094,21 @@
 
     const PERSONS_STORAGE_KEY = 'medicationsPersons_v1';
     const MEDS_STORAGE_KEY = 'medicationsStockApp_v2';
+    const DEFAULT_PERSON_ICON = '👨';
+    const PERSON_ICON_SETS = {
+        barbat: ['👨', '🧔', '👨‍🦰', '👨‍🦳', '👱‍♂️', '👴'],
+        femeie: ['👩', '👩‍🦰', '👩‍🦱', '👩‍🦳', '👱‍♀️', '👵'],
+        copil: ['👶', '👦', '👧']
+    };
+    const PERSON_ICON_CATEGORIES = [
+        { key: 'barbat', label: 'Bărbat' },
+        { key: 'femeie', label: 'Femeie' },
+        { key: 'copil', label: 'Copil' }
+    ];
+
+    let addPersonIcon = DEFAULT_PERSON_ICON;
+    let addPersonIconCategory = 'barbat';
+    let iconPickerEditPersonId = null;
 
     const DAYS_SHORT = ["D", "L", "M", "Mi", "J", "V", "S"];
 
@@ -1444,6 +1549,107 @@
         return persons.find(person => person.id === selectedPersonId) || null;
     }
 
+    function getAllPersonIcons() {
+        return Object.values(PERSON_ICON_SETS).flat();
+    }
+
+    function getPersonIcon(person) {
+        const icon = person?.icon;
+        if (icon && getAllPersonIcons().includes(icon)) {
+            return icon;
+        }
+        return DEFAULT_PERSON_ICON;
+    }
+
+    function getCategoryForIcon(icon) {
+        for (const category of PERSON_ICON_CATEGORIES) {
+            if (PERSON_ICON_SETS[category.key].includes(icon)) {
+                return category.key;
+            }
+        }
+        return 'barbat';
+    }
+
+    function renderIconPicker(containerId, category, selectedIcon, contextKey) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const categoriesHtml = PERSON_ICON_CATEGORIES.map(item => {
+            const activeClass = item.key === category ? ' active' : '';
+            return `<button type="button" class="icon-cat-btn${activeClass}" onclick="setIconPickerCategory('${item.key}', '${contextKey}')">${item.label}</button>`;
+        }).join('');
+
+        const icons = PERSON_ICON_SETS[category] || [];
+        const iconsHtml = icons.map((icon, index) => {
+            const activeClass = icon === selectedIcon ? ' active' : '';
+            return `<button type="button" class="icon-pick-btn${activeClass}" onclick="selectPersonIconAt('${category}', ${index}, '${contextKey}')">${icon}</button>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="icon-picker-layout">
+                <div class="icon-picker-categories">${categoriesHtml}</div>
+                <div class="icon-picker-grid">${iconsHtml}</div>
+            </div>`;
+    }
+
+    function setIconPickerCategory(category, contextKey) {
+        if (contextKey === 'add') {
+            addPersonIconCategory = category;
+            renderIconPicker('addPersonIconPicker', category, addPersonIcon, 'add');
+            return;
+        }
+
+        const person = persons.find(item => item.id === contextKey);
+        if (!person) return;
+
+        renderIconPicker('iconPickerModalBody', category, getPersonIcon(person), contextKey);
+    }
+
+    function selectPersonIconAt(category, index, contextKey) {
+        const icon = PERSON_ICON_SETS[category]?.[index];
+        if (!icon) return;
+
+        if (contextKey === 'add') {
+            addPersonIcon = icon;
+            addPersonIconCategory = category;
+            renderIconPicker('addPersonIconPicker', category, icon, 'add');
+            return;
+        }
+
+        const person = persons.find(item => item.id === contextKey);
+        if (!person) return;
+
+        person.icon = icon;
+        closeIconPickerModal();
+        renderPersonList();
+        updatePersonPlanTitleIfNeeded();
+    }
+
+    function openIconPickerForEdit(personId) {
+        if (!personEditMode) return;
+
+        const person = persons.find(item => item.id === personId);
+        if (!person) return;
+
+        iconPickerEditPersonId = personId;
+        const icon = getPersonIcon(person);
+        const category = getCategoryForIcon(icon);
+        renderIconPicker('iconPickerModalBody', category, icon, personId);
+        document.getElementById('iconPickerModal')?.classList.remove('hidden');
+    }
+
+    function closeIconPickerModal() {
+        document.getElementById('iconPickerModal')?.classList.add('hidden');
+        iconPickerEditPersonId = null;
+    }
+
+    function normalizePersonIcons() {
+        persons = persons.map(person => ({
+            ...person,
+            icon: getPersonIcon(person)
+        }));
+    }
+
     function updatePersonListChrome() {
         const normalActions = document.getElementById('personNormalActions');
         const editActions = document.getElementById('personEditActions');
@@ -1523,7 +1729,7 @@
         const person = getSelectedPerson();
         const title = document.getElementById('personPlanTitle');
         if (person && title) {
-            title.textContent = `👤 ${person.name}`;
+            title.textContent = `${getPersonIcon(person)} ${person.name}`;
         }
     }
 
@@ -1590,11 +1796,12 @@
             container.innerHTML = persons.map(person => {
                 const safeName = person.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const count = getPersonMedCount(person.id);
+                const personIcon = getPersonIcon(person);
                 const deleteBtn = canDeletePerson
                     ? `<button type="button" class="delete-btn" onclick="deletePerson('${person.id}')" title="Șterge persoana" aria-label="Șterge persoana">×</button>`
                     : '';
                 return `<div class="person-edit-card">
-                    <span class="person-card-icon" aria-hidden="true">👤</span>
+                    <button type="button" class="person-icon-btn" onclick="openIconPickerForEdit('${person.id}')" title="Schimbă iconița" aria-label="Schimbă iconița">${personIcon}</button>
                     <div class="person-card-info">
                         <input
                             type="text"
@@ -1615,8 +1822,9 @@
         container.innerHTML = persons.map(person => {
             const count = getPersonMedCount(person.id);
             const safeName = person.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const personIcon = getPersonIcon(person);
             return `<button type="button" class="person-card" onclick="openPerson('${person.id}')">
-                <span class="person-card-icon" aria-hidden="true">👤</span>
+                <span class="person-card-icon" aria-hidden="true">${personIcon}</span>
                 <span class="person-card-info">
                     <span class="person-card-name">${safeName}</span>
                     <span class="person-card-count">${formatMedCountLabel(count)}</span>
@@ -1639,7 +1847,7 @@
         document.getElementById('appTitle').classList.add('hidden');
 
         const person = getSelectedPerson();
-        document.getElementById('personPlanTitle').textContent = `👤 ${person?.name || ''}`;
+        document.getElementById('personPlanTitle').textContent = `${getPersonIcon(person)} ${person?.name || ''}`;
 
         showListView();
         renderPlan();
@@ -1665,6 +1873,9 @@
         if (!modal || !input) return;
 
         input.value = '';
+        addPersonIcon = DEFAULT_PERSON_ICON;
+        addPersonIconCategory = 'barbat';
+        renderIconPicker('addPersonIconPicker', addPersonIconCategory, addPersonIcon, 'add');
         modal.classList.remove('hidden');
         input.focus();
     }
@@ -1684,7 +1895,8 @@
 
         const newPerson = {
             id: `person_${Date.now()}`,
-            name
+            name,
+            icon: addPersonIcon
         };
 
         persons.push(newPerson);
@@ -1703,7 +1915,7 @@
         if (storedPersons) {
             persons = JSON.parse(storedPersons);
         } else {
-            const defaultPerson = { id: 'person_default', name: 'Eu' };
+            const defaultPerson = { id: 'person_default', name: 'Eu', icon: DEFAULT_PERSON_ICON };
             persons = [defaultPerson];
             medications = medications.map(med => ({
                 ...med,
@@ -1714,10 +1926,13 @@
         }
 
         if (persons.length === 0) {
-            const defaultPerson = { id: `person_${Date.now()}`, name: 'Eu' };
+            const defaultPerson = { id: `person_${Date.now()}`, name: 'Eu', icon: DEFAULT_PERSON_ICON };
             persons = [defaultPerson];
             savePersonsToStorage();
         }
+
+        normalizePersonIcons();
+        savePersonsToStorage();
 
         const fallbackPersonId = persons[0].id;
         medications = medications.map(med => ({
@@ -2236,10 +2451,13 @@
     document.addEventListener('keydown', (event) => {
         const confirmModal = document.getElementById('confirmModal');
         const addPersonModal = document.getElementById('addPersonModal');
+        const iconPickerModal = document.getElementById('iconPickerModal');
 
         if (event.key === 'Escape') {
             if (confirmModal && !confirmModal.classList.contains('hidden')) {
                 closeConfirmModal();
+            } else if (iconPickerModal && !iconPickerModal.classList.contains('hidden')) {
+                closeIconPickerModal();
             } else if (addPersonModal && !addPersonModal.classList.contains('hidden')) {
                 closeAddPersonModal();
             } else if (medFormOpen) {
