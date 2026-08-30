@@ -128,16 +128,43 @@
         .med-item-inner {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto auto;
+            grid-template-rows: auto auto;
             align-items: start;
             gap: 8px;
         }
         .med-line-top {
             display: contents;
         }
+        .med-actions-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            align-self: stretch;
+            grid-column: 3;
+            grid-row: 1 / 3;
+            gap: 4px;
+        }
         .med-actions-group {
             display: flex;
             align-items: center;
             gap: 4px;
+        }
+        .copy-form-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 17px;
+            line-height: 1;
+            flex: none;
+        }
+        .copy-form-btn:hover {
+            background-color: #2980b9;
         }
         .check-yesterday-btn {
             background-color: #27ae60;
@@ -336,6 +363,22 @@
         }
         .calendar-week-btn:hover {
             background-color: #616a6b;
+        }
+        .calendar-today-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            flex: none;
+            line-height: 1;
+            margin-left: 4px;
+        }
+        .calendar-today-btn:hover {
+            background-color: #219653;
         }
         .calendar-range input {
             width: 100%;
@@ -584,6 +627,7 @@
                     <button type="button" class="calendar-week-btn" onclick="shiftCalendarViewStart(-1)">−1w</button>
                     <input type="date" id="calendarViewStart" lang="ro" onchange="onCalendarViewStartChange()">
                     <button type="button" class="calendar-week-btn" onclick="shiftCalendarViewStart(1)">+1w</button>
+                    <button type="button" class="calendar-today-btn" title="Azi" aria-label="Azi" onclick="goToCalendarToday()">↓</button>
                 </div>
                 <div class="calendar-range-hint" id="calendarRangeHint"></div>
             </div>
@@ -1137,6 +1181,14 @@
         onCalendarViewStartChange();
     }
 
+    function goToCalendarToday() {
+        const input = document.getElementById('calendarViewStart');
+        if (!input) return;
+
+        input.value = formatDateKey(new Date());
+        onCalendarViewStartChange();
+    }
+
     function updateCalendarRangeHint() {
         const hint = document.getElementById('calendarRangeHint');
         if (!hint) return;
@@ -1358,9 +1410,12 @@
                             <span class="stock-remaining">${formatDoseValue(remaining, unit)}</span>
                             <span class="med-unit">${UNIT_LABELS[unit]}</span>
                         </div>
-                        <div class="med-actions-group">
-                            ${checkBtn}
-                            <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+                        <div class="med-actions-col">
+                            <div class="med-actions-group">
+                                ${checkBtn}
+                                <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+                            </div>
+                            <button class="copy-form-btn" onclick="copyMedicationToForm('${med.id}')" title="Copiază în formular" aria-label="Copiază în formular">⧉</button>
                         </div>
                         <div class="med-line-bottom">
                             <span class="med-end ${statusClass}">Fără stoc: ${stockOut.label}</span>
@@ -1372,6 +1427,41 @@
 
             tableBody.appendChild(row);
         });
+    }
+
+    function getBaseMedName(name) {
+        const match = name.match(/^(.+) #\d+$/);
+        return match ? match[1] : name;
+    }
+
+    function copyMedicationToForm(id) {
+        const med = medications.find(m => m.id === id);
+        if (!med) return;
+
+        const unit = getMedUnit(med);
+
+        document.getElementById('medName').value = getBaseMedName(med.name);
+        document.getElementById('medQty').value = formatDoseValue(getMedInitialQty(med), unit);
+        document.getElementById('medUnit').value = unit;
+        setStartDateInput(getMedStartDate(med));
+        updateUnitFields();
+
+        document.getElementById('doseDim').value = formatDoseValue(med.dim, unit);
+        document.getElementById('dosePranz').value = formatDoseValue(med.pranz, unit);
+        document.getElementById('doseSeara').value = formatDoseValue(med.seara, unit);
+
+        document.getElementById('freqType').value = med.freqType;
+        toggleFreqFields();
+
+        if (med.freqType === 'interval') {
+            document.getElementById('intervalDays').value = String(med.interval);
+        } else if (med.freqType === 'days') {
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.checked = med.specificDays.includes(cb.value);
+            });
+        }
+
+        document.querySelector('.form-group')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     // Șterge un singur rând din tabel
