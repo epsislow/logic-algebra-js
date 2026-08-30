@@ -65,6 +65,27 @@
             border-color: #e67e22;
             background: #fff9f0;
         }
+        .btn-app-quit {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 150;
+            width: auto;
+            min-width: 72px;
+            padding: 10px 14px;
+            background: #7f8c8d;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            flex: none;
+            cursor: pointer;
+        }
+        .btn-app-quit:hover {
+            background: #616a6b;
+        }
         .lang-dropdown {
             position: absolute;
             top: calc(100% + 4px);
@@ -1304,6 +1325,7 @@
             addToPlan: 'Adaugă în Plan',
             cancel: 'Anulează',
             ok: 'OK',
+            appQuit: 'Ieșire',
             delete: 'Șterge',
             add: 'Adaugă',
             calendarFrom: 'Afișare calendar de la',
@@ -1414,6 +1436,7 @@
             addToPlan: 'Add to plan',
             cancel: 'Cancel',
             ok: 'OK',
+            appQuit: 'Quit',
             delete: 'Delete',
             add: 'Add',
             calendarFrom: 'Show calendar from',
@@ -1524,6 +1547,7 @@
             addToPlan: 'Ajouter au plan',
             cancel: 'Annuler',
             ok: 'OK',
+            appQuit: 'Quitter',
             delete: 'Supprimer',
             add: 'Ajouter',
             calendarFrom: 'Afficher le calendrier à partir du',
@@ -2239,6 +2263,22 @@
             window.AndroidBridge.reschedule(JSON.stringify(payload));
         }
         return payload;
+    }
+
+    function quitAndroidApp() {
+        if (window.AndroidBridge && typeof window.AndroidBridge.quit === 'function') {
+            window.AndroidBridge.quit();
+        }
+    }
+
+    function initAndroidBridge() {
+        const quitBtn = document.getElementById('btnAppQuit');
+        if (!quitBtn) return;
+        if (window.AndroidBridge && typeof window.AndroidBridge.quit === 'function') {
+            quitBtn.classList.remove('hidden');
+        } else {
+            quitBtn.classList.add('hidden');
+        }
     }
 
     // Calculează data la care se termină stocul; returnează timestamp pentru sortare și text afișat
@@ -3578,8 +3618,11 @@
         initLanguage();
         renderPersonList();
         pushNotificationSchedule();
+        initAndroidBridge();
     };
 </script>
+
+<button type="button" id="btnAppQuit" class="btn-app-quit hidden" onclick="quitAndroidApp()" data-i18n="appQuit">Ieșire</button>
 
 </body>
 </html>
