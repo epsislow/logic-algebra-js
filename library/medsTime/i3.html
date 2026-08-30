@@ -500,9 +500,77 @@
             background-color: #c0392b;
         }
         .person-list-heading {
-            margin-top: 0;
+            margin: 0;
             text-align: left;
             font-size: 15px;
+        }
+        .person-list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .btn-person-edit-done {
+            background-color: #27ae60;
+            flex: none;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-person-edit-done:hover {
+            background-color: #219653;
+        }
+        .person-actions-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .person-actions-bar .btn-add-person {
+            flex: 1;
+            width: auto;
+        }
+        .btn-edit-persons {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            flex: none;
+        }
+        .btn-edit-persons:hover {
+            background-color: #d35400;
+        }
+        .btn-cancel-person-edit {
+            width: 100%;
+            background-color: #7f8c8d;
+            flex: none;
+        }
+        .btn-cancel-person-edit:hover {
+            background-color: #616a6b;
+        }
+        .person-edit-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fff9f0;
+            border: 1px solid #e67e22;
+            border-radius: 6px;
+        }
+        .person-name-input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 15px;
+            font-weight: bold;
+            box-sizing: border-box;
         }
         #personList {
             display: flex;
@@ -554,7 +622,6 @@
             line-height: 1;
         }
         .btn-add-person {
-            width: 100%;
             background-color: #27ae60;
             flex: none;
         }
@@ -749,9 +816,18 @@
     <h1 id="appTitle">💊 Monitorizare & Calculator Medicamente</h1>
 
     <div id="personListView">
-        <h3 class="person-list-heading">Persoane</h3>
+        <div class="person-list-header">
+            <h3 class="person-list-heading">Persoane</h3>
+            <button type="button" id="btnPersonEditDone" class="btn-person-edit-done hidden" onclick="finishPersonEditMode()">Gata</button>
+        </div>
         <div id="personList"></div>
-        <button type="button" class="btn-add-person" onclick="openAddPersonModal()">＋ Persoană nouă</button>
+        <div id="personNormalActions" class="person-actions-bar">
+            <button type="button" class="btn-add-person" onclick="openAddPersonModal()">＋ Persoană nouă</button>
+            <button type="button" class="btn-edit-persons" onclick="enterPersonEditMode()" title="Editează persoanele" aria-label="Editează persoanele">✎</button>
+        </div>
+        <div id="personEditActions" class="hidden">
+            <button type="button" class="btn-cancel-person-edit" onclick="cancelPersonEditMode()">Anulare editare</button>
+        </div>
     </div>
 
     <div id="personPlanView" class="hidden">
@@ -919,6 +995,8 @@
     let medications = [];
     let persons = [];
     let selectedPersonId = null;
+    let personEditMode = false;
+    let personEditSnapshot = null;
     let showCalendarView = false;
     let medFormOpen = false;
     let medChecks = {};
@@ -1366,12 +1444,167 @@
         return persons.find(person => person.id === selectedPersonId) || null;
     }
 
+    function updatePersonListChrome() {
+        const normalActions = document.getElementById('personNormalActions');
+        const editActions = document.getElementById('personEditActions');
+        const doneBtn = document.getElementById('btnPersonEditDone');
+        const heading = document.querySelector('.person-list-heading');
+
+        if (normalActions) normalActions.classList.toggle('hidden', personEditMode);
+        if (editActions) editActions.classList.toggle('hidden', !personEditMode);
+        if (doneBtn) doneBtn.classList.toggle('hidden', !personEditMode);
+        if (heading) {
+            heading.textContent = personEditMode ? 'Mod editare' : 'Persoane';
+        }
+    }
+
+    function enterPersonEditMode() {
+        if (persons.length === 0) return;
+
+        personEditMode = true;
+        personEditSnapshot = persons.map(person => ({ ...person }));
+        updatePersonListChrome();
+        renderPersonList();
+    }
+
+    function cancelPersonEditMode() {
+        if (!personEditMode) return;
+
+        if (personEditSnapshot) {
+            persons = personEditSnapshot.map(person => ({ ...person }));
+            savePersonsToStorage();
+        }
+
+        personEditMode = false;
+        personEditSnapshot = null;
+        updatePersonListChrome();
+        renderPersonList();
+    }
+
+    function finishPersonEditMode() {
+        if (!personEditMode) return;
+
+        if (!syncAllPersonNamesFromInputs()) return;
+
+        personEditMode = false;
+        personEditSnapshot = null;
+        savePersonsToStorage();
+        updatePersonListChrome();
+        renderPersonList();
+        updatePersonPlanTitleIfNeeded();
+    }
+
+    function syncAllPersonNamesFromInputs() {
+        const inputs = document.querySelectorAll('.person-name-input');
+        for (const input of inputs) {
+            const personId = input.dataset.personId;
+            const name = input.value.trim();
+            if (!name) {
+                alert('Numele persoanei nu poate fi gol.');
+                input.focus();
+                return false;
+            }
+
+            const person = persons.find(item => item.id === personId);
+            if (person) person.name = name;
+        }
+        return true;
+    }
+
+    function handlePersonNameKeydown(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            finishPersonEditMode();
+        }
+    }
+
+    function updatePersonPlanTitleIfNeeded() {
+        if (!selectedPersonId) return;
+        const person = getSelectedPerson();
+        const title = document.getElementById('personPlanTitle');
+        if (person && title) {
+            title.textContent = `👤 ${person.name}`;
+        }
+    }
+
+    function removeMedicationsForPerson(personId) {
+        const medIds = medications.filter(med => med.personId === personId).map(med => med.id);
+        medications = medications.filter(med => med.personId !== personId);
+        medIds.forEach(medId => removeChecksForMed(medId));
+        saveChecksToStorage();
+        saveToStorage();
+    }
+
+    function deletePerson(personId) {
+        if (!personEditMode) return;
+
+        if (persons.length <= 1) {
+            alert('Trebuie să existe cel puțin o persoană.');
+            return;
+        }
+
+        const person = persons.find(item => item.id === personId);
+        if (!person) return;
+
+        const medCount = getPersonMedCount(personId);
+        const safeName = person.name;
+        const message = medCount > 0
+            ? `Sigur vrei să ștergi persoana „${safeName}”? Are ${formatMedCountLabel(medCount)} salvate — acestea vor fi șterse definitiv.`
+            : `Sigur vrei să ștergi persoana „${safeName}”?`;
+
+        showConfirmModal(message, () => {
+            removeMedicationsForPerson(personId);
+            persons = persons.filter(item => item.id !== personId);
+            savePersonsToStorage();
+
+            if (selectedPersonId === personId) {
+                selectedPersonId = null;
+                document.getElementById('personPlanView').classList.add('hidden');
+                document.getElementById('personListView').classList.remove('hidden');
+                document.getElementById('appTitle').classList.remove('hidden');
+            }
+
+            if (persons.length === 0) {
+                personEditMode = false;
+                personEditSnapshot = null;
+                updatePersonListChrome();
+            }
+
+            renderPersonList();
+        });
+    }
+
     function renderPersonList() {
         const container = document.getElementById('personList');
         if (!container) return;
 
+        updatePersonListChrome();
+
         if (persons.length === 0) {
             container.innerHTML = '<p class="med-empty">Nicio persoană.</p>';
+            return;
+        }
+
+        if (personEditMode) {
+            container.innerHTML = persons.map(person => {
+                const safeName = person.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                const count = getPersonMedCount(person.id);
+                return `<div class="person-edit-card">
+                    <span class="person-card-icon" aria-hidden="true">👤</span>
+                    <div class="person-card-info">
+                        <input
+                            type="text"
+                            class="person-name-input"
+                            data-person-id="${person.id}"
+                            value="${safeName}"
+                            maxlength="50"
+                            aria-label="Nume persoană"
+                            onkeydown="handlePersonNameKeydown(event)">
+                        <span class="person-card-count">${formatMedCountLabel(count)}</span>
+                    </div>
+                    <button type="button" class="delete-btn" onclick="deletePerson('${person.id}')" title="Șterge persoana" aria-label="Șterge persoana">×</button>
+                </div>`;
+            }).join('');
             return;
         }
 
@@ -1390,6 +1623,7 @@
     }
 
     function openPerson(personId) {
+        if (personEditMode) return;
         if (!persons.some(person => person.id === personId)) return;
 
         selectedPersonId = personId;
@@ -1420,6 +1654,8 @@
     }
 
     function openAddPersonModal() {
+        if (personEditMode) return;
+
         const modal = document.getElementById('addPersonModal');
         const input = document.getElementById('addPersonName');
         if (!modal || !input) return;
@@ -2004,6 +2240,8 @@
                 closeAddPersonModal();
             } else if (medFormOpen) {
                 closeMedFormPanel();
+            } else if (personEditMode) {
+                cancelPersonEditMode();
             }
             return;
         }
