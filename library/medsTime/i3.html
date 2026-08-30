@@ -351,22 +351,31 @@
             color: #7f8c8d;
             font-size: 14px;
         }
-        .plan-toolbar {
+        .plan-tabs {
             display: flex;
-            justify-content: center;
             margin-top: 16px;
+            border-bottom: 2px solid #e2e8f0;
         }
-        .btn-calendar {
-            background-color: #3498db;
-            flex: none;
-            padding: 8px 16px;
+        .plan-tab {
+            flex: 1;
+            padding: 10px 8px;
+            background: transparent;
+            color: #7f8c8d;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            border-radius: 0;
             font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .btn-calendar:hover {
-            background-color: #2980b9;
+        .plan-tab:hover {
+            color: #2c3e50;
+            background: #f9fafb;
         }
-        .btn-calendar.active {
-            background-color: #2c3e50;
+        .plan-tab.active {
+            color: #2c3e50;
+            border-bottom-color: #3498db;
         }
         #medCalendar {
             margin-top: 16px;
@@ -759,11 +768,10 @@
             <label for="medSearch">Caută medicament</label>
             <input type="search" id="medSearch" placeholder="Ex: Paracetamol" oninput="renderPlan()">
         </div>
-        <div class="plan-toolbar">
-            <button type="button" id="btnToggleCalendar" class="btn-calendar" onclick="toggleCalendarView()">📅 Calendar 2 săpt.</button>
+        <div class="plan-tabs" role="tablist" aria-label="Vizualizare plan">
+            <button type="button" id="tabPlanList" class="plan-tab active" role="tab" aria-selected="true" onclick="setPlanTab('list')">💊 Lista</button>
+            <button type="button" id="tabPlanCalendar" class="plan-tab" role="tab" aria-selected="false" onclick="setPlanTab('calendar')">📅 Calendar</button>
         </div>
-
-    <h3>📋 Planul tău curent (Salvat automat)</h3>
 
         <div id="medFormPanel" class="med-form-panel hidden">
             <div class="med-form-header">
@@ -1771,15 +1779,33 @@
     }
 
     function showListView() {
-        showCalendarView = false;
-        document.getElementById('planListView').classList.remove('hidden');
-        document.getElementById('planCalendarView').classList.add('hidden');
+        setPlanTab('list');
+    }
 
-        const btn = document.getElementById('btnToggleCalendar');
-        if (btn) {
-            btn.textContent = '📅 Calendar 2 săpt.';
-            btn.classList.remove('active');
+    function updatePlanTabsUI() {
+        const tabList = document.getElementById('tabPlanList');
+        const tabCalendar = document.getElementById('tabPlanCalendar');
+        if (!tabList || !tabCalendar) return;
+
+        tabList.classList.toggle('active', !showCalendarView);
+        tabList.setAttribute('aria-selected', String(!showCalendarView));
+        tabCalendar.classList.toggle('active', showCalendarView);
+        tabCalendar.setAttribute('aria-selected', String(showCalendarView));
+    }
+
+    function setPlanTab(tab) {
+        const isCalendar = tab === 'calendar';
+
+        if (isCalendar) {
+            closeMedFormPanel();
+            initCalendarViewStart();
         }
+
+        showCalendarView = isCalendar;
+        document.getElementById('planListView').classList.toggle('hidden', isCalendar);
+        document.getElementById('planCalendarView').classList.toggle('hidden', !isCalendar);
+        updatePlanTabsUI();
+        renderPlan();
     }
 
     function openAddMedForm() {
@@ -1833,25 +1859,6 @@
             const row = document.querySelector(`#medTable tr[data-med-id="${medId}"]`);
             row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
-    }
-
-    function toggleCalendarView() {
-        showCalendarView = !showCalendarView;
-
-        if (showCalendarView) {
-            closeMedFormPanel();
-            document.getElementById('planListView').classList.add('hidden');
-            document.getElementById('planCalendarView').classList.remove('hidden');
-
-            const btn = document.getElementById('btnToggleCalendar');
-            initCalendarViewStart();
-            btn.textContent = '📋 Înapoi la listă';
-            btn.classList.add('active');
-        } else {
-            showListView();
-        }
-
-        renderPlan();
     }
 
     // Desenează tabelul pe ecran utilizând datele salvate
