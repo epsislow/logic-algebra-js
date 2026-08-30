@@ -282,10 +282,68 @@
             font-size: 13px;
         }
         .search-box {
-            margin-top: 16px;
+            margin-top: 12px;
         }
         .search-box input {
             width: 100%;
+        }
+        .plan-actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .plan-actions-bar button {
+            flex: 1;
+        }
+        .plan-actions-bar .btn-reset-all {
+            max-width: none;
+        }
+        .btn-open-med-form {
+            background-color: #27ae60;
+        }
+        .btn-open-med-form:hover {
+            background-color: #219653;
+        }
+        .med-form-panel {
+            margin-top: 16px;
+        }
+        .med-form-panel .form-group {
+            margin-bottom: 0;
+        }
+        .med-form-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+        .med-form-title {
+            font-weight: bold;
+            font-size: 15px;
+            color: #2c3e50;
+        }
+        .med-form-close-btn {
+            width: 28px;
+            height: 28px;
+            flex: none;
+            padding: 0;
+            background: #f3f4f6;
+            color: #2c3e50;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .med-form-close-btn:hover {
+            background: #e8eaed;
+        }
+        .btn-cancel-form {
+            background-color: #7f8c8d;
+        }
+        .btn-cancel-form:hover {
+            background-color: #616a6b;
         }
         .med-empty {
             text-align: center;
@@ -692,8 +750,27 @@
             <button type="button" class="person-back-btn" onclick="closePersonPlan()" title="Înapoi" aria-label="Înapoi">←</button>
             <span class="person-plan-title" id="personPlanTitle"></span>
         </div>
-    
-    <div class="form-group">
+
+        <div class="plan-actions-bar">
+            <button type="button" class="btn-open-med-form" onclick="openAddMedForm()">Adaugă 💊</button>
+            <button type="button" class="btn-reset-all" onclick="resetAll()">Șterge toate 💊</button>
+        </div>
+        <div class="search-box">
+            <label for="medSearch">Caută medicament</label>
+            <input type="search" id="medSearch" placeholder="Ex: Paracetamol" oninput="renderPlan()">
+        </div>
+        <div class="plan-toolbar">
+            <button type="button" id="btnToggleCalendar" class="btn-calendar" onclick="toggleCalendarView()">📅 Calendar 2 săpt.</button>
+        </div>
+
+    <h3>📋 Planul tău curent (Salvat automat)</h3>
+
+        <div id="medFormPanel" class="med-form-panel hidden">
+            <div class="med-form-header">
+                <span class="med-form-title" id="medFormTitle">Adaugă medicament</span>
+                <button type="button" class="med-form-close-btn" onclick="closeMedFormPanel()" title="Închide" aria-label="Închide">×</button>
+            </div>
+            <div class="form-group">
         <div>
             <label for="medName">Nume Medicament</label>
             <input type="text" id="medName" placeholder="Ex: Paracetamol">
@@ -770,19 +847,12 @@
             
 
         <div class="flex-buttons">
-            <button class="btn-add" onclick="addMedication()">Adaugă în Plan</button>
-            <button class="btn-reset-all" onclick="resetAll()">Șterge Tot</button>
+            <button type="button" class="btn-add" onclick="addMedication()">Adaugă în Plan</button>
+            <button type="button" class="btn-cancel-form" onclick="closeMedFormPanel()">Anulează</button>
         </div>
-    </div>
+            </div>
+        </div>
 
-    <h3>📋 Planul tău curent (Salvat automat)</h3>
-    <div class="search-box">
-        <label for="medSearch">Caută medicament</label>
-        <input type="search" id="medSearch" placeholder="Ex: Paracetamol" oninput="renderPlan()">
-    </div>
-    <div class="plan-toolbar">
-        <button type="button" id="btnToggleCalendar" class="btn-calendar" onclick="toggleCalendarView()">📅 Calendar 2 săpt.</button>
-    </div>
     <div id="planListView">
         <table id="medTable">
             <colgroup>
@@ -842,6 +912,7 @@
     let persons = [];
     let selectedPersonId = null;
     let showCalendarView = false;
+    let medFormOpen = false;
     let medChecks = {};
     let confirmModalCallback = null;
 
@@ -1031,8 +1102,9 @@
             return;
         }
 
+        const newMedId = Date.now().toString();
         const newMed = {
-            id: Date.now().toString(),
+            id: newMedId,
             personId: selectedPersonId,
             name: getUniqueMedName(name),
             initialQty: qty,
@@ -1048,9 +1120,11 @@
 
         medications.push(newMed);
         saveToStorage();
+        closeMedFormPanel();
+        showListView();
         renderPlan();
         renderPersonList();
-        resetForm();
+        scrollToMedItem(newMedId);
     }
 
     function getCurrentRemaining(med) {
@@ -1312,6 +1386,7 @@
 
         selectedPersonId = personId;
         showCalendarView = false;
+        closeMedFormPanel();
 
         document.getElementById('personListView').classList.add('hidden');
         document.getElementById('personPlanView').classList.remove('hidden');
@@ -1320,18 +1395,14 @@
         const person = getSelectedPerson();
         document.getElementById('personPlanTitle').textContent = `👤 ${person?.name || ''}`;
 
-        document.getElementById('planListView').classList.remove('hidden');
-        document.getElementById('planCalendarView').classList.add('hidden');
-        const btn = document.getElementById('btnToggleCalendar');
-        btn.textContent = '📅 Calendar 2 săpt.';
-        btn.classList.remove('active');
-
+        showListView();
         renderPlan();
     }
 
     function closePersonPlan() {
         selectedPersonId = null;
         showCalendarView = false;
+        closeMedFormPanel();
 
         document.getElementById('personPlanView').classList.add('hidden');
         document.getElementById('personListView').classList.remove('hidden');
@@ -1699,19 +1770,85 @@
         }
     }
 
-    function toggleCalendarView() {
-        showCalendarView = !showCalendarView;
-        document.getElementById('planListView').classList.toggle('hidden', showCalendarView);
-        document.getElementById('planCalendarView').classList.toggle('hidden', !showCalendarView);
+    function showListView() {
+        showCalendarView = false;
+        document.getElementById('planListView').classList.remove('hidden');
+        document.getElementById('planCalendarView').classList.add('hidden');
 
         const btn = document.getElementById('btnToggleCalendar');
+        if (btn) {
+            btn.textContent = '📅 Calendar 2 săpt.';
+            btn.classList.remove('active');
+        }
+    }
+
+    function openAddMedForm() {
+        if (!selectedPersonId) return;
+
         if (showCalendarView) {
+            showListView();
+        }
+
+        resetForm();
+        document.getElementById('medFormTitle').textContent = 'Adaugă medicament';
+        document.getElementById('medFormPanel').classList.remove('hidden');
+        medFormOpen = true;
+        document.getElementById('medFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('medName').focus();
+    }
+
+    function closeMedFormPanel() {
+        document.getElementById('medFormPanel')?.classList.add('hidden');
+        medFormOpen = false;
+        resetForm();
+    }
+
+    function fillMedFormFromMedication(med) {
+        const unit = getMedUnit(med);
+
+        document.getElementById('medName').value = getBaseMedName(med.name);
+        document.getElementById('medQty').value = formatDoseValue(getMedInitialQty(med), unit);
+        document.getElementById('medUnit').value = unit;
+        setStartDateInput(getMedStartDate(med));
+        updateUnitFields();
+
+        document.getElementById('doseDim').value = formatDoseValue(med.dim, unit);
+        document.getElementById('dosePranz').value = formatDoseValue(med.pranz, unit);
+        document.getElementById('doseSeara').value = formatDoseValue(med.seara, unit);
+
+        document.getElementById('freqType').value = med.freqType;
+        toggleFreqFields();
+
+        if (med.freqType === 'interval') {
+            document.getElementById('intervalDays').value = String(med.interval);
+        } else if (med.freqType === 'days') {
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.checked = med.specificDays.includes(cb.value);
+            });
+        }
+    }
+
+    function scrollToMedItem(medId) {
+        requestAnimationFrame(() => {
+            const row = document.querySelector(`#medTable tr[data-med-id="${medId}"]`);
+            row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
+
+    function toggleCalendarView() {
+        showCalendarView = !showCalendarView;
+
+        if (showCalendarView) {
+            closeMedFormPanel();
+            document.getElementById('planListView').classList.add('hidden');
+            document.getElementById('planCalendarView').classList.remove('hidden');
+
+            const btn = document.getElementById('btnToggleCalendar');
             initCalendarViewStart();
             btn.textContent = '📋 Înapoi la listă';
             btn.classList.add('active');
         } else {
-            btn.textContent = '📅 Calendar 2 săpt.';
-            btn.classList.remove('active');
+            showListView();
         }
 
         renderPlan();
@@ -1750,6 +1887,7 @@
 
             const row = document.createElement('tr');
             row.className = 'med-item';
+            row.dataset.medId = med.id;
             row.innerHTML = `
                 <td colspan="3">
                     <div class="med-item-inner">
@@ -1789,30 +1927,12 @@
         const med = medications.find(m => m.id === id);
         if (!med) return;
 
-        const unit = getMedUnit(med);
-
-        document.getElementById('medName').value = getBaseMedName(med.name);
-        document.getElementById('medQty').value = formatDoseValue(getMedInitialQty(med), unit);
-        document.getElementById('medUnit').value = unit;
-        setStartDateInput(getMedStartDate(med));
-        updateUnitFields();
-
-        document.getElementById('doseDim').value = formatDoseValue(med.dim, unit);
-        document.getElementById('dosePranz').value = formatDoseValue(med.pranz, unit);
-        document.getElementById('doseSeara').value = formatDoseValue(med.seara, unit);
-
-        document.getElementById('freqType').value = med.freqType;
-        toggleFreqFields();
-
-        if (med.freqType === 'interval') {
-            document.getElementById('intervalDays').value = String(med.interval);
-        } else if (med.freqType === 'days') {
-            document.querySelectorAll('.day-checkbox').forEach(cb => {
-                cb.checked = med.specificDays.includes(cb.value);
-            });
-        }
-
-        document.querySelector('.form-group')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        fillMedFormFromMedication(med);
+        document.getElementById('medFormTitle').textContent = 'Adaugă medicament';
+        document.getElementById('medFormPanel').classList.remove('hidden');
+        medFormOpen = true;
+        document.getElementById('medFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('medName').focus();
     }
 
     // Șterge un singur rând din tabel
@@ -1875,6 +1995,8 @@
                 closeConfirmModal();
             } else if (addPersonModal && !addPersonModal.classList.contains('hidden')) {
                 closeAddPersonModal();
+            } else if (medFormOpen) {
+                closeMedFormPanel();
             }
             return;
         }
