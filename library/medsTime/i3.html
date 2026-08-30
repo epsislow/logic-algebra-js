@@ -24,6 +24,88 @@
             color: #2c3e50;
             text-align: center;
         }
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .app-header h1 {
+            flex: 1;
+            min-width: 0;
+            text-align: left;
+            font-size: 1.15rem;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .lang-switcher {
+            position: relative;
+            flex: none;
+            align-self: flex-start;
+            margin-top: 2px;
+        }
+        .lang-toggle {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            font-size: 18px;
+            background: #f3f4f6;
+            color: #2c3e50;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            flex: none;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .lang-toggle:hover {
+            background: #e8eaed;
+        }
+        .lang-toggle.open {
+            border-color: #e67e22;
+            background: #fff9f0;
+        }
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            min-width: 148px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            padding: 4px;
+            z-index: 200;
+        }
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 10px;
+            background: transparent;
+            color: #2c3e50;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: normal;
+            flex: none;
+            text-align: left;
+            cursor: pointer;
+        }
+        .lang-option:hover {
+            background: #f3f4f6;
+        }
+        .lang-option.active {
+            background: #fff9f0;
+            color: #e67e22;
+            font-weight: bold;
+        }
+        .lang-option-flag {
+            font-size: 18px;
+            line-height: 1;
+            flex: none;
+        }
         .form-group {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -657,6 +739,7 @@
             background: #e8eaed;
         }
         .person-plan-title {
+            flex: 1;
             font-weight: bold;
             font-size: 16px;
             color: #2c3e50;
@@ -664,6 +747,10 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .person-plan-header .lang-switcher {
+            flex: none;
+            margin-left: auto;
         }
         .add-person-modal-input {
             width: 100%;
@@ -906,90 +993,102 @@
 <body>
 
 <div class="container">
-    <h1 id="appTitle">💊 Monitorizare & Calculator Medicamente</h1>
+    <div class="app-header">
+        <h1 id="appTitle" data-i18n="appTitle">💊 Monitorizare & Calculator Medicamente</h1>
+        <div class="lang-switcher" id="langSwitcher">
+            <button type="button" class="lang-toggle" id="langToggle" onclick="toggleLangDropdown(event)" aria-haspopup="listbox" aria-expanded="false" title="Language">
+                <span id="langToggleFlag">🇷🇴</span>
+            </button>
+            <div class="lang-dropdown hidden" id="langDropdown" role="listbox">
+                <button type="button" class="lang-option" data-lang="ro" onclick="selectLanguage('ro')"><span class="lang-option-flag">🇷🇴</span><span>Română</span></button>
+                <button type="button" class="lang-option" data-lang="en" onclick="selectLanguage('en')"><span class="lang-option-flag">🇬🇧</span><span>English</span></button>
+                <button type="button" class="lang-option" data-lang="fr" onclick="selectLanguage('fr')"><span class="lang-option-flag">🇫🇷</span><span>Français</span></button>
+            </div>
+        </div>
+    </div>
 
     <div id="personListView">
         <div class="person-list-header">
-            <h3 class="person-list-heading">Persoane</h3>
-            <button type="button" id="btnPersonEditDone" class="btn-person-edit-done hidden" onclick="finishPersonEditMode()">Gata</button>
+            <h3 class="person-list-heading" data-i18n="persons">Persoane</h3>
+            <button type="button" id="btnPersonEditDone" class="btn-person-edit-done hidden" onclick="finishPersonEditMode()" data-i18n="done">Gata</button>
         </div>
         <div id="personList"></div>
         <div id="personNormalActions" class="person-actions-bar">
-            <button type="button" class="btn-add-person" onclick="openAddPersonModal()">＋ Persoană nouă</button>
-            <button type="button" class="btn-edit-persons" onclick="enterPersonEditMode()" title="Editează persoanele" aria-label="Editează persoanele">✎</button>
+            <button type="button" class="btn-add-person" onclick="openAddPersonModal()" data-i18n="addPerson">＋ Persoană nouă</button>
+            <button type="button" class="btn-edit-persons" onclick="enterPersonEditMode()" data-i18n-title="editPersons" data-i18n-aria="editPersons">✎</button>
         </div>
         <div id="personEditActions" class="hidden">
-            <button type="button" class="btn-cancel-person-edit" onclick="cancelPersonEditMode()">Anulare editare</button>
+            <button type="button" class="btn-cancel-person-edit" onclick="cancelPersonEditMode()" data-i18n="cancelEdit">Anulare editare</button>
         </div>
     </div>
 
     <div id="personPlanView" class="hidden">
-        <div class="person-plan-header">
-            <button type="button" class="person-back-btn" onclick="closePersonPlan()" title="Înapoi" aria-label="Înapoi">←</button>
+        <div class="person-plan-header" id="personPlanHeader">
+            <button type="button" class="person-back-btn" onclick="closePersonPlan()" data-i18n-title="back" data-i18n-aria="back">←</button>
             <span class="person-plan-title" id="personPlanTitle"></span>
         </div>
 
         <div class="plan-actions-bar">
-            <button type="button" class="btn-open-med-form" onclick="openAddMedForm()">Adaugă 💊</button>
-            <button type="button" class="btn-reset-all" onclick="resetAll()">Șterge toate 💊</button>
+            <button type="button" class="btn-open-med-form" onclick="openAddMedForm()" data-i18n="addMed">Adaugă 💊</button>
+            <button type="button" class="btn-reset-all" onclick="resetAll()" data-i18n="deleteAllMeds">Șterge toate 💊</button>
         </div>
         <div class="search-box">
-            <label for="medSearch">Caută medicament</label>
-            <input type="search" id="medSearch" placeholder="Ex: Paracetamol" oninput="renderPlan()">
+            <label for="medSearch" data-i18n="searchMed">Caută medicament</label>
+            <input type="search" id="medSearch" data-i18n-placeholder="searchPlaceholder" placeholder="Ex: Paracetamol" oninput="renderPlan()">
         </div>
-        <div class="plan-tabs" role="tablist" aria-label="Vizualizare plan">
-            <button type="button" id="tabPlanList" class="plan-tab active" role="tab" aria-selected="true" onclick="setPlanTab('list')">💊 Lista</button>
-            <button type="button" id="tabPlanCalendar" class="plan-tab" role="tab" aria-selected="false" onclick="setPlanTab('calendar')">📅 Calendar</button>
+        <div class="plan-tabs" role="tablist" data-i18n-aria="planViewLabel" aria-label="Vizualizare plan">
+            <button type="button" id="tabPlanList" class="plan-tab active" role="tab" aria-selected="true" onclick="setPlanTab('list')" data-i18n="tabList">💊 Lista</button>
+            <button type="button" id="tabPlanCalendar" class="plan-tab" role="tab" aria-selected="false" onclick="setPlanTab('calendar')" data-i18n="tabCalendar">📅 Calendar</button>
         </div>
 
         <div id="medFormPanel" class="med-form-panel hidden">
             <div class="med-form-header">
-                <span class="med-form-title" id="medFormTitle">Adaugă medicament</span>
-                <button type="button" class="med-form-close-btn" onclick="closeMedFormPanel()" title="Închide" aria-label="Închide">×</button>
+                <span class="med-form-title" id="medFormTitle" data-i18n="addMedForm">Adaugă medicament</span>
+                <button type="button" class="med-form-close-btn" onclick="closeMedFormPanel()" data-i18n-title="close" data-i18n-aria="close">×</button>
             </div>
             <div class="form-group">
         <div>
-            <label for="medName">Nume Medicament</label>
-            <input type="text" id="medName" placeholder="Ex: Paracetamol">
+            <label for="medName" data-i18n="medName">Nume Medicament</label>
+            <input type="text" id="medName" data-i18n-placeholder="medNamePh" placeholder="Ex: Paracetamol">
         </div>
         <div class="full-width qty-unit-row">
             <div>
-                <label for="medQty" id="medQtyLabel">Cantitate inițială</label>
-                <input type="number" id="medQty" min="1" step="1" placeholder="Ex: 30">
+                <label for="medQty" id="medQtyLabel" data-i18n="initialQtyCaps">Cantitate inițială</label>
+                <input type="number" id="medQty" min="1" step="1" data-i18n-placeholder="qtyPh30" placeholder="Ex: 30">
             </div>
             <div>
-                <label for="medUnit">Unitate</label>
+                <label for="medUnit" data-i18n="unit">Unitate</label>
                 <select id="medUnit" onchange="updateUnitFields()">
-                    <option value="caps">Capsule</option>
+                    <option value="caps" data-i18n="unitCaps">Capsule</option>
                     <option value="ml">ml</option>
                     <option value="mg">mg</option>
                 </select>
             </div>
         </div>
         <div>
-            <label for="medStartDate">Data începerii</label>
+            <label for="medStartDate" data-i18n="startDate">Data începerii</label>
             <input type="date" id="medStartDate" lang="ro">
         </div>
         <div>
-            <label for="doseType">Doză Administrare</label>
+            <label for="doseType" data-i18n="doseAdmin">Doză Administrare</label>
             <div class="dose-inputs">
                 <div>
-                    <label style="font-size:0.75rem; font-weight:normal;">Dimineața</label>
+                    <label style="font-size:0.75rem; font-weight:normal;" data-i18n="morning">Dimineața</label>
                     <input type="number" id="doseDim" min="0" value="0">
                 </div>
                 <div>
-                    <label style="font-size:0.75rem; font-weight:normal;">Prânz</label>
+                    <label style="font-size:0.75rem; font-weight:normal;" data-i18n="lunch">Prânz</label>
                     <input type="number" id="dosePranz" min="0" value="0">
                 </div>
                 <div>
-                    <label style="font-size:0.75rem; font-weight:normal;">Seara</label>
+                    <label style="font-size:0.75rem; font-weight:normal;" data-i18n="evening">Seara</label>
                     <input type="number" id="doseSeara" min="0" value="0">
                 </div>
             </div>
 
         </div>
         <div>
-            <label for="freqType">Frecvență Administrare</label>
+            <label for="freqType" data-i18n="frequency">Frecvență Administrare</label>
             <select id="freqType" onchange="toggleFreqFields()">
                 <option value="daily">În fiecare zi</option>
                 <option value="interval">La interval de zile (ex: o zi da, o zi nu)</option>
@@ -999,7 +1098,7 @@
 
         <!-- Câmp dinamic pentru intervale (o zi da, o zi nu / o dată la X zile) -->
         <div id="intervalContainer" class="hidden">
-            <label for="intervalDays">Repetă la fiecare (zile)</label>
+            <label for="intervalDays" data-i18n="repeatEvery">Repetă la fiecare (zile)</label>
             <select id="intervalDays">
                 <option value="2">2 zile (O zi da, o zi nu)</option>
                 <option value="3">3 zile (O zi da, două nu)</option>
@@ -1010,7 +1109,7 @@
 
         <!-- Câmp dinamic pentru zile specifice din săptămână -->
         <div id="daysContainer" class="full-width hidden">
-            <label>Selectează zilele în care iei medicamentul:</label>
+            <label data-i18n="selectDays">Selectează zilele în care iei medicamentul:</label>
             <div class="checkbox-group">
                 <label class="checkbox-label"><input type="checkbox" class="day-checkbox" value="1"> Luni</label>
                 <label class="checkbox-label"><input type="checkbox" class="day-checkbox" value="2"> Marți</label>
@@ -1024,8 +1123,8 @@
             
 
         <div class="flex-buttons">
-            <button type="button" class="btn-add" onclick="addMedication()">Adaugă în Plan</button>
-            <button type="button" class="btn-cancel-form" onclick="closeMedFormPanel()">Anulează</button>
+            <button type="button" class="btn-add" onclick="addMedication()" data-i18n="addToPlan">Adaugă în Plan</button>
+            <button type="button" class="btn-cancel-form" onclick="closeMedFormPanel()" data-i18n="cancel">Anulează</button>
         </div>
             </div>
         </div>
@@ -1045,12 +1144,12 @@
     <div id="planCalendarView" class="hidden">
         <div class="calendar-toolbar" id="calendarToolbar">
             <div class="calendar-range">
-                <label for="calendarViewStart">Afișare calendar de la</label>
+                <label for="calendarViewStart" data-i18n="calendarFrom">Afișare calendar de la</label>
                 <div class="calendar-range-row">
                     <button type="button" class="calendar-week-btn" onclick="shiftCalendarViewStart(-1)">−1w</button>
                     <input type="date" id="calendarViewStart" lang="ro" onchange="onCalendarViewStartChange()">
                     <button type="button" class="calendar-week-btn" onclick="shiftCalendarViewStart(1)">+1w</button>
-                    <button type="button" class="calendar-today-btn" title="Azi" aria-label="Azi" onclick="goToCalendarToday()">↓</button>
+                    <button type="button" class="calendar-today-btn" data-i18n-title="today" data-i18n-aria="today" onclick="goToCalendarToday()">↓</button>
                 </div>
                 <div class="calendar-range-hint" id="calendarRangeHint"></div>
             </div>
@@ -1065,8 +1164,8 @@
     <div class="confirm-modal-box">
         <p id="confirmModalMessage" class="confirm-modal-message"></p>
         <div class="confirm-modal-actions">
-            <button type="button" class="confirm-modal-cancel" onclick="closeConfirmModal()">Anulează</button>
-            <button type="button" class="confirm-modal-ok" id="confirmModalOk" onclick="confirmModalOk()">Șterge</button>
+            <button type="button" class="confirm-modal-cancel" onclick="closeConfirmModal()" data-i18n="cancel">Anulează</button>
+            <button type="button" class="confirm-modal-ok" id="confirmModalOk" onclick="confirmModalOk()" data-i18n="delete">Șterge</button>
         </div>
     </div>
 </div>
@@ -1074,14 +1173,14 @@
 <div id="addPersonModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="addPersonModalLabel">
     <div class="confirm-modal-backdrop" onclick="closeAddPersonModal()"></div>
     <div class="confirm-modal-box add-person-modal-box">
-        <p id="addPersonModalLabel" class="confirm-modal-message" style="text-align: left;">Persoană nouă</p>
-        <label for="addPersonName" class="icon-picker-label">Nume</label>
-        <input type="text" id="addPersonName" class="add-person-modal-input" placeholder="Ex: Mama" maxlength="50">
-        <span class="icon-picker-label">Alege iconița</span>
+        <p id="addPersonModalLabel" class="confirm-modal-message" style="text-align: left;" data-i18n="newPerson">Persoană nouă</p>
+        <label for="addPersonName" class="icon-picker-label" data-i18n="personName">Nume</label>
+        <input type="text" id="addPersonName" class="add-person-modal-input" data-i18n-placeholder="personNamePh" placeholder="Ex: Mama" maxlength="50">
+        <span class="icon-picker-label" data-i18n="chooseIcon">Alege iconița</span>
         <div id="addPersonIconPicker"></div>
         <div class="confirm-modal-actions">
-            <button type="button" class="confirm-modal-cancel" onclick="closeAddPersonModal()">Anulează</button>
-            <button type="button" class="confirm-modal-add" onclick="confirmAddPerson()">Adaugă</button>
+            <button type="button" class="confirm-modal-cancel" onclick="closeAddPersonModal()" data-i18n="cancel">Anulează</button>
+            <button type="button" class="confirm-modal-add" onclick="confirmAddPerson()" data-i18n="add">Adaugă</button>
         </div>
     </div>
 </div>
@@ -1089,12 +1188,472 @@
 <div id="iconPickerModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="iconPickerModalLabel">
     <div class="confirm-modal-backdrop" onclick="closeIconPickerModal()"></div>
     <div class="confirm-modal-box add-person-modal-box">
-        <p id="iconPickerModalLabel" class="confirm-modal-message" style="text-align: left;">Alege iconița</p>
+        <p id="iconPickerModalLabel" class="confirm-modal-message" style="text-align: left;" data-i18n="chooseIcon">Alege iconița</p>
         <div id="iconPickerModalBody"></div>
     </div>
 </div>
 
 <script>
+    const LANG_STORAGE_KEY = 'appLang';
+    const DEFAULT_PERSON_NAME = 'Name';
+
+    const I18N = {
+        ro: {
+            daysShort: ['D', 'L', 'M', 'Mi', 'J', 'V', 'S'],
+            pageTitle: 'Calculator Stoc Medicamente',
+            appTitle: '💊 Monitorizare & Calculator Medicamente',
+            persons: 'Persoane',
+            editMode: 'Mod editare',
+            done: 'Gata',
+            addPerson: '＋ Persoană nouă',
+            editPersons: 'Editează persoanele',
+            cancelEdit: 'Anulare editare',
+            back: 'Înapoi',
+            addMed: 'Adaugă 💊',
+            deleteAllMeds: 'Șterge toate 💊',
+            searchMed: 'Caută medicament',
+            searchPlaceholder: 'Ex: Paracetamol',
+            tabList: '💊 Lista',
+            tabCalendar: '📅 Calendar',
+            planViewLabel: 'Vizualizare plan',
+            addMedForm: 'Adaugă medicament',
+            close: 'Închide',
+            medName: 'Nume Medicament',
+            medNamePh: 'Ex: Paracetamol',
+            initialQtyCaps: 'Cantitate inițială (caps)',
+            initialQtyMl: 'Cantitate inițială (ml)',
+            initialQtyMg: 'Cantitate inițială (mg)',
+            qtyPh30: 'Ex: 30',
+            qtyPh100: 'Ex: 100',
+            qtyPh500: 'Ex: 500',
+            unit: 'Unitate',
+            unitCaps: 'Capsule',
+            startDate: 'Data începerii',
+            doseAdmin: 'Doză Administrare',
+            morning: 'Dimineața',
+            lunch: 'Prânz',
+            evening: 'Seara',
+            frequency: 'Frecvență Administrare',
+            freqDaily: 'În fiecare zi',
+            freqInterval: 'La interval de zile (ex: o zi da, o zi nu)',
+            freqDays: 'Zile specifice din săptămână',
+            repeatEvery: 'Repetă la fiecare (zile)',
+            intervalOpt2: '2 zile (O zi da, o zi nu)',
+            intervalOpt3: '3 zile (O zi da, două nu)',
+            intervalOpt4: '4 zile',
+            intervalOpt5: '5 zile',
+            selectDays: 'Selectează zilele în care iei medicamentul:',
+            mon: 'Luni', tue: 'Marți', wed: 'Miercuri', thu: 'Joi', fri: 'Vineri', sat: 'Sâmbătă', sun: 'Duminică',
+            addToPlan: 'Adaugă în Plan',
+            cancel: 'Anulează',
+            delete: 'Șterge',
+            add: 'Adaugă',
+            calendarFrom: 'Afișare calendar de la',
+            today: 'Azi',
+            calendarUntil: 'Până la {date} (14 zile)',
+            stockOut: 'Fără stoc',
+            stockOutSoon: 'Stoc epuizat în curând',
+            stockLow: 'Stoc limitat',
+            stockOk: 'Stoc suficient',
+            over10years: 'Peste 10+ ani',
+            medCount1: '1 medicament',
+            medCountN: '{count} medicamente',
+            noPersons: 'Nicio persoană.',
+            noMeds: 'Niciun medicament găsit.',
+            noMedsCalendar: 'Niciun medicament de luat în perioada selectată.',
+            changeIcon: 'Schimbă iconița',
+            deletePerson: 'Șterge persoana',
+            personName: 'Nume',
+            personNameAria: 'Nume persoană',
+            personNamePh: 'Ex: Mama',
+            newPerson: 'Persoană nouă',
+            chooseIcon: 'Alege iconița',
+            iconCatBarbat: 'Bărbat',
+            iconCatFemeie: 'Femeie',
+            iconCatCopil: 'Copil',
+            startLabel: 'Start',
+            checkUntilYesterday: 'Check până ieri',
+            copyToForm: 'Copiază în formular',
+            badgeToday: 'Azi',
+            badgePast: 'Trecut',
+            periodMorning: 'Dimineața',
+            periodLunch: 'Prânz',
+            periodEvening: 'Seara',
+            freqPerDay: 'z',
+            alertInvalidMed: 'Te rog să introduci un nume valid și cantitatea inițială.',
+            alertStartDate: 'Selectează data începerii.',
+            alertSelectDays: 'Selectează cel puțin o zi din săptămână.',
+            alertDailyDose: 'Introdu doza zilnică (cel puțin o valoare dimineața, la prânz sau seara).',
+            alertEmptyPersonName: 'Numele persoanei nu poate fi gol.',
+            alertMinOnePerson: 'Trebuie să existe cel puțin o persoană.',
+            alertPersonName: 'Introdu un nume pentru persoană.',
+            confirmDeleteMed: 'Sigur vrei să ștergi acest medicament din listă?',
+            confirmDeleteAllMeds: 'Sigur vrei să ștergi TOATE medicamentele pentru {name}? Datele nu vor mai putea fi recuperate.',
+            confirmDeletePerson: 'Sigur vrei să ștergi persoana „{name}"?',
+            confirmDeletePersonWithMeds: 'Sigur vrei să ștergi persoana „{name}"? Are {count} salvate — acestea vor fi șterse definitiv.'
+        },
+        en: {
+            daysShort: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+            pageTitle: 'Medication Stock Calculator',
+            appTitle: '💊 Medication Monitor & Calculator',
+            persons: 'People',
+            editMode: 'Edit mode',
+            done: 'Done',
+            addPerson: '＋ New person',
+            editPersons: 'Edit people',
+            cancelEdit: 'Cancel editing',
+            back: 'Back',
+            addMed: 'Add 💊',
+            deleteAllMeds: 'Delete all 💊',
+            searchMed: 'Search medication',
+            searchPlaceholder: 'E.g. Paracetamol',
+            tabList: '💊 List',
+            tabCalendar: '📅 Calendar',
+            planViewLabel: 'Plan view',
+            addMedForm: 'Add medication',
+            close: 'Close',
+            medName: 'Medication name',
+            medNamePh: 'E.g. Paracetamol',
+            initialQtyCaps: 'Initial quantity (caps)',
+            initialQtyMl: 'Initial quantity (ml)',
+            initialQtyMg: 'Initial quantity (mg)',
+            qtyPh30: 'E.g. 30',
+            qtyPh100: 'E.g. 100',
+            qtyPh500: 'E.g. 500',
+            unit: 'Unit',
+            unitCaps: 'Capsules',
+            startDate: 'Start date',
+            doseAdmin: 'Dose schedule',
+            morning: 'Morning',
+            lunch: 'Lunch',
+            evening: 'Evening',
+            frequency: 'Frequency',
+            freqDaily: 'Every day',
+            freqInterval: 'Every X days (e.g. every other day)',
+            freqDays: 'Specific days of the week',
+            repeatEvery: 'Repeat every (days)',
+            intervalOpt2: '2 days (one on, one off)',
+            intervalOpt3: '3 days (one on, two off)',
+            intervalOpt4: '4 days',
+            intervalOpt5: '5 days',
+            selectDays: 'Select the days you take the medication:',
+            mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun',
+            addToPlan: 'Add to plan',
+            cancel: 'Cancel',
+            delete: 'Delete',
+            add: 'Add',
+            calendarFrom: 'Show calendar from',
+            today: 'Today',
+            calendarUntil: 'Until {date} (14 days)',
+            stockOut: 'Out of stock',
+            stockOutSoon: 'Stock running out soon',
+            stockLow: 'Low stock',
+            stockOk: 'Stock sufficient',
+            over10years: 'Over 10+ years',
+            medCount1: '1 medication',
+            medCountN: '{count} medications',
+            noPersons: 'No people yet.',
+            noMeds: 'No medications found.',
+            noMedsCalendar: 'No medications in the selected period.',
+            changeIcon: 'Change icon',
+            deletePerson: 'Delete person',
+            personName: 'Name',
+            personNameAria: 'Person name',
+            personNamePh: 'E.g. Mom',
+            newPerson: 'New person',
+            chooseIcon: 'Choose icon',
+            iconCatBarbat: 'Man',
+            iconCatFemeie: 'Woman',
+            iconCatCopil: 'Child',
+            startLabel: 'Start',
+            checkUntilYesterday: 'Check until yesterday',
+            copyToForm: 'Copy to form',
+            badgeToday: 'Today',
+            badgePast: 'Past',
+            periodMorning: 'Morning',
+            periodLunch: 'Lunch',
+            periodEvening: 'Evening',
+            freqPerDay: 'd',
+            alertInvalidMed: 'Please enter a valid name and initial quantity.',
+            alertStartDate: 'Select a start date.',
+            alertSelectDays: 'Select at least one day of the week.',
+            alertDailyDose: 'Enter a daily dose (at least one value for morning, lunch or evening).',
+            alertEmptyPersonName: 'Person name cannot be empty.',
+            alertMinOnePerson: 'At least one person is required.',
+            alertPersonName: 'Enter a name for the person.',
+            confirmDeleteMed: 'Delete this medication from the list?',
+            confirmDeleteAllMeds: 'Delete ALL medications for {name}? This cannot be undone.',
+            confirmDeletePerson: 'Delete person "{name}"?',
+            confirmDeletePersonWithMeds: 'Delete person "{name}"? They have {count} saved — these will be permanently deleted.'
+        },
+        fr: {
+            daysShort: ['D', 'L', 'M', 'Me', 'J', 'V', 'S'],
+            pageTitle: 'Calculateur de stock médicaments',
+            appTitle: '💊 Suivi & calculateur médicaments',
+            persons: 'Personnes',
+            editMode: 'Mode édition',
+            done: 'OK',
+            addPerson: '＋ Nouvelle personne',
+            editPersons: 'Modifier les personnes',
+            cancelEdit: 'Annuler édition',
+            back: 'Retour',
+            addMed: 'Ajouter 💊',
+            deleteAllMeds: 'Effacer tout 💊',
+            searchMed: 'Chercher médicament',
+            searchPlaceholder: 'Ex : Paracétamol',
+            tabList: '💊 Liste',
+            tabCalendar: '📅 Calendrier',
+            planViewLabel: 'Vue du plan',
+            addMedForm: 'Ajouter médicament',
+            close: 'Fermer',
+            medName: 'Nom du médicament',
+            medNamePh: 'Ex : Paracétamol',
+            initialQtyCaps: 'Quantité initiale (gél.)',
+            initialQtyMl: 'Quantité initiale (ml)',
+            initialQtyMg: 'Quantité initiale (mg)',
+            qtyPh30: 'Ex : 30',
+            qtyPh100: 'Ex : 100',
+            qtyPh500: 'Ex : 500',
+            unit: 'Unité',
+            unitCaps: 'Gélules',
+            startDate: 'Date de début',
+            doseAdmin: 'Prise',
+            morning: 'Matin',
+            lunch: 'Midi',
+            evening: 'Soir',
+            frequency: 'Fréquence',
+            freqDaily: 'Chaque jour',
+            freqInterval: 'Tous les X jours (ex. un jour sur deux)',
+            freqDays: 'Jours précis de la semaine',
+            repeatEvery: 'Répéter tous les (jours)',
+            intervalOpt2: '2 jours (un jour oui, un non)',
+            intervalOpt3: '3 jours (un jour oui, deux non)',
+            intervalOpt4: '4 jours',
+            intervalOpt5: '5 jours',
+            selectDays: 'Sélectionnez les jours de prise :',
+            mon: 'Lun', tue: 'Mar', wed: 'Mer', thu: 'Jeu', fri: 'Ven', sat: 'Sam', sun: 'Dim',
+            addToPlan: 'Ajouter au plan',
+            cancel: 'Annuler',
+            delete: 'Supprimer',
+            add: 'Ajouter',
+            calendarFrom: 'Afficher le calendrier à partir du',
+            today: 'Aujourd\'hui',
+            calendarUntil: 'Jusqu\'au {date} (14 jours)',
+            stockOut: 'Rupture de stock',
+            stockOutSoon: 'Stock bientôt épuisé',
+            stockLow: 'Stock limité',
+            stockOk: 'Stock suffisant',
+            over10years: 'Plus de 10+ ans',
+            medCount1: '1 médicament',
+            medCountN: '{count} médicaments',
+            noPersons: 'Aucune personne.',
+            noMeds: 'Aucun médicament trouvé.',
+            noMedsCalendar: 'Aucun médicament sur la période sélectionnée.',
+            changeIcon: 'Changer l\'icône',
+            deletePerson: 'Supprimer la personne',
+            personName: 'Nom',
+            personNameAria: 'Nom de la personne',
+            personNamePh: 'Ex : Maman',
+            newPerson: 'Nouvelle personne',
+            chooseIcon: 'Choisir une icône',
+            iconCatBarbat: 'Homme',
+            iconCatFemeie: 'Femme',
+            iconCatCopil: 'Enfant',
+            startLabel: 'Début',
+            checkUntilYesterday: 'Cocher jusqu\'à hier',
+            copyToForm: 'Copier dans le formulaire',
+            badgeToday: 'Aujourd\'hui',
+            badgePast: 'Passé',
+            periodMorning: 'Matin',
+            periodLunch: 'Midi',
+            periodEvening: 'Soir',
+            freqPerDay: 'j',
+            alertInvalidMed: 'Entrez un nom valide et une quantité initiale.',
+            alertStartDate: 'Sélectionnez la date de début.',
+            alertSelectDays: 'Sélectionnez au moins un jour de la semaine.',
+            alertDailyDose: 'Entrez la dose quotidienne (au moins une valeur matin, midi ou soir).',
+            alertEmptyPersonName: 'Le nom ne peut pas être vide.',
+            alertMinOnePerson: 'Il faut au moins une personne.',
+            alertPersonName: 'Entrez un nom pour la personne.',
+            confirmDeleteMed: 'Supprimer ce médicament de la liste ?',
+            confirmDeleteAllMeds: 'Supprimer TOUS les médicaments pour {name} ? Irréversible.',
+            confirmDeletePerson: 'Supprimer la personne « {name} » ?',
+            confirmDeletePersonWithMeds: 'Supprimer « {name} » ? {count} seront supprimés définitivement.'
+        }
+    };
+
+    let currentLang = 'ro';
+
+    function getLangDict() {
+        return I18N[currentLang] || I18N.ro;
+    }
+
+    function t(key, vars = {}) {
+        let text = getLangDict()[key] ?? I18N.ro[key] ?? key;
+        Object.keys(vars).forEach(name => {
+            text = text.split(`{${name}}`).join(vars[name]);
+        });
+        return text;
+    }
+
+    function getDaysShort() {
+        return getLangDict().daysShort || I18N.ro.daysShort;
+    }
+
+    function getUnitStockLabel(unit) {
+        if (unit === 'ml') return t('initialQtyMl');
+        if (unit === 'mg') return t('initialQtyMg');
+        return t('initialQtyCaps');
+    }
+
+    function getIconCategoryLabel(key) {
+        if (key === 'barbat') return t('iconCatBarbat');
+        if (key === 'femeie') return t('iconCatFemeie');
+        return t('iconCatCopil');
+    }
+
+    function getWeekdayShort(dayValue) {
+        const map = { '0': 0, '1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6 };
+        return getDaysShort()[map[dayValue]] || dayValue;
+    }
+
+    const LANG_META = {
+        ro: { flag: '🇷🇴', name: 'Română' },
+        en: { flag: '🇬🇧', name: 'English' },
+        fr: { flag: '🇫🇷', name: 'Français' }
+    };
+
+    function toggleLangDropdown(event) {
+        event.stopPropagation();
+        const dropdown = document.getElementById('langDropdown');
+        const toggle = document.getElementById('langToggle');
+        if (!dropdown || !toggle) return;
+
+        const willOpen = dropdown.classList.contains('hidden');
+        dropdown.classList.toggle('hidden', !willOpen);
+        toggle.classList.toggle('open', willOpen);
+        toggle.setAttribute('aria-expanded', String(willOpen));
+    }
+
+    function closeLangDropdown() {
+        const dropdown = document.getElementById('langDropdown');
+        const toggle = document.getElementById('langToggle');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (toggle) {
+            toggle.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function selectLanguage(lang) {
+        setLanguage(lang);
+        closeLangDropdown();
+    }
+
+    function updateLangButtons() {
+        const meta = LANG_META[currentLang] || LANG_META.ro;
+        const flagEl = document.getElementById('langToggleFlag');
+        if (flagEl) flagEl.textContent = meta.flag;
+
+        document.querySelectorAll('.lang-option').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === currentLang);
+        });
+    }
+
+    function updateSelectOptions() {
+        const freqType = document.getElementById('freqType');
+        if (freqType) {
+            const val = freqType.value;
+            freqType.options[0].textContent = t('freqDaily');
+            freqType.options[1].textContent = t('freqInterval');
+            freqType.options[2].textContent = t('freqDays');
+            freqType.value = val;
+        }
+
+        const intervalDays = document.getElementById('intervalDays');
+        if (intervalDays) {
+            const val = intervalDays.value;
+            intervalDays.options[0].textContent = t('intervalOpt2');
+            intervalDays.options[1].textContent = t('intervalOpt3');
+            intervalDays.options[2].textContent = t('intervalOpt4');
+            intervalDays.options[3].textContent = t('intervalOpt5');
+            intervalDays.value = val;
+        }
+
+        const weekdayMap = [
+            { sel: '.day-checkbox[value="1"]', key: 'mon' },
+            { sel: '.day-checkbox[value="2"]', key: 'tue' },
+            { sel: '.day-checkbox[value="3"]', key: 'wed' },
+            { sel: '.day-checkbox[value="4"]', key: 'thu' },
+            { sel: '.day-checkbox[value="5"]', key: 'fri' },
+            { sel: '.day-checkbox[value="6"]', key: 'sat' },
+            { sel: '.day-checkbox[value="0"]', key: 'sun' }
+        ];
+        weekdayMap.forEach(({ sel, key }) => {
+            const input = document.querySelector(sel);
+            if (input && input.parentElement) {
+                input.parentElement.lastChild.textContent = ' ' + t(key);
+            }
+        });
+
+        const unitCapsOpt = document.querySelector('#medUnit option[value="caps"]');
+        if (unitCapsOpt) unitCapsOpt.textContent = t('unitCaps');
+    }
+
+    function applyLanguage() {
+        document.documentElement.lang = currentLang;
+        document.title = t('pageTitle');
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = t(el.dataset.i18n);
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.placeholder = t(el.dataset.i18nPlaceholder);
+        });
+
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            el.title = t(el.dataset.i18nTitle);
+        });
+
+        document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+            el.setAttribute('aria-label', t(el.dataset.i18nAria));
+        });
+
+        const medStartDate = document.getElementById('medStartDate');
+        const calendarViewStart = document.getElementById('calendarViewStart');
+        if (medStartDate) medStartDate.lang = currentLang;
+        if (calendarViewStart) calendarViewStart.lang = currentLang;
+
+        updateLangButtons();
+        updateSelectOptions();
+        updateUnitFields();
+        updatePersonListChrome();
+
+        if (medFormOpen) {
+            document.getElementById('medFormTitle').textContent = t('addMedForm');
+        }
+
+        renderPersonList();
+        if (selectedPersonId) {
+            updatePersonPlanTitleIfNeeded();
+            renderPlan();
+        }
+    }
+
+    function setLanguage(lang) {
+        if (!I18N[lang]) return;
+        currentLang = lang;
+        localStorage.setItem(LANG_STORAGE_KEY, lang);
+        applyLanguage();
+    }
+
+    function initLanguage() {
+        const stored = localStorage.getItem(LANG_STORAGE_KEY);
+        currentLang = I18N[stored] ? stored : 'ro';
+        applyLanguage();
+    }
+
     // Tabloul global în care stocăm obiectele medicamentelor
     let medications = [];
     let persons = [];
@@ -1115,23 +1674,16 @@
         copil: ['👶', '👦', '👧']
     };
     const PERSON_ICON_CATEGORIES = [
-        { key: 'barbat', label: 'Bărbat' },
-        { key: 'femeie', label: 'Femeie' },
-        { key: 'copil', label: 'Copil' }
+        { key: 'barbat' },
+        { key: 'femeie' },
+        { key: 'copil' }
     ];
 
     let addPersonIcon = DEFAULT_PERSON_ICON;
     let addPersonIconCategory = 'barbat';
     let iconPickerEditPersonId = null;
 
-    const DAYS_SHORT = ["D", "L", "M", "Mi", "J", "V", "S"];
-
     const UNIT_LABELS = { caps: 'caps', ml: 'ml', mg: 'mg' };
-    const UNIT_STOCK_LABELS = {
-        caps: 'Cantitate inițială (caps)',
-        ml: 'Cantitate inițială (ml)',
-        mg: 'Cantitate inițială (mg)'
-    };
     const PERIOD_ORDER = { dim: 0, pranz: 1, seara: 2 };
     const PERIODS = ['dim', 'pranz', 'seara'];
 
@@ -1159,12 +1711,12 @@
         const qtyInput = document.getElementById('medQty');
         const doseIds = ['doseDim', 'dosePranz', 'doseSeara'];
 
-        document.getElementById('medQtyLabel').textContent = UNIT_STOCK_LABELS[unit];
+        document.getElementById('medQtyLabel').textContent = getUnitStockLabel(unit);
 
         if (unit === 'caps') {
             qtyInput.step = '1';
             qtyInput.min = '1';
-            qtyInput.placeholder = 'Ex: 30';
+            qtyInput.placeholder = t('qtyPh30');
             doseIds.forEach(id => {
                 const el = document.getElementById(id);
                 el.step = '1';
@@ -1173,7 +1725,7 @@
         } else {
             qtyInput.step = '0.1';
             qtyInput.min = '0.1';
-            qtyInput.placeholder = unit === 'ml' ? 'Ex: 100' : 'Ex: 500';
+            qtyInput.placeholder = unit === 'ml' ? t('qtyPh100') : t('qtyPh500');
             doseIds.forEach(id => {
                 const el = document.getElementById(id);
                 el.step = '0.1';
@@ -1231,7 +1783,7 @@
     }
 
     function formatMedStartLabel(med) {
-        return `Start: ${formatDateLabel(parseDateKey(getMedStartDate(med)))}`;
+        return `${t('startLabel')}: ${formatDateLabel(parseDateKey(getMedStartDate(med)))}`;
     }
 
     function normalizeMedications() {
@@ -1280,12 +1832,12 @@
         const startDate = getStartDateFromForm();
 
         if (!name || isNaN(qty) || qty <= 0) {
-            alert("Te rog să introduci un nume valid și cantitatea inițială.");
+            alert(t('alertInvalidMed'));
             return;
         }
 
         if (!document.getElementById('medStartDate').value) {
-            alert("Selectează data începerii.");
+            alert(t('alertStartDate'));
             return;
         }
 
@@ -1296,14 +1848,14 @@
             checkedBoxes.forEach(cb => specificDays.push(cb.value));
 
             if (specificDays.length === 0) {
-                alert("Selectează cel puțin o zi din săptămână.");
+                alert(t('alertSelectDays'));
                 return;
             }
         }
 
         const totalDaily = dim + pranz + seara;
         if (totalDaily === 0) {
-            alert("Introdu doza zilnică (cel puțin o valoare dimineața, la prânz sau seara).");
+            alert(t('alertDailyDose'));
             return;
         }
 
@@ -1445,7 +1997,7 @@
             const year = checkDate.getFullYear();
             return {
                 timestamp: checkDate.getTime(),
-                label: `${DAYS_SHORT[checkDate.getDay()]}, ${day}.${month}.${year}`
+                label: `${getDaysShort()[checkDate.getDay()]}, ${day}.${month}.${year}`
             };
         }
 
@@ -1477,13 +2029,13 @@
         }
 
         if (iterations >= maxSafetyIterations) {
-            return { timestamp: Number.MAX_SAFE_INTEGER, label: "Peste 10+ ani" };
+            return { timestamp: Number.MAX_SAFE_INTEGER, label: t('over10years') };
         }
 
         const day = String(checkDate.getDate()).padStart(2, '0');
         const month = String(checkDate.getMonth() + 1).padStart(2, '0');
         const year = checkDate.getFullYear();
-        const dayName = DAYS_SHORT[checkDate.getDay()];
+        const dayName = getDaysShort()[checkDate.getDay()];
 
         return {
             timestamp: checkDate.getTime(),
@@ -1509,13 +2061,13 @@
 
     function getStockStatusIcon(statusClass) {
         if (statusClass === 'status-urgent') {
-            return '<span class="med-status-icon" title="Stoc epuizat în curând">⚠️</span>';
+            return `<span class="med-status-icon" title="${t('stockOutSoon')}">⚠️</span>`;
         }
         if (statusClass === 'status-warning') {
-            return '<span class="med-status-icon" title="Stoc limitat">🟠</span>';
+            return `<span class="med-status-icon" title="${t('stockLow')}">🟠</span>`;
         }
         if (statusClass === 'status-ok') {
-            return '<span class="med-status-icon" title="Stoc suficient">🟢</span>';
+            return `<span class="med-status-icon" title="${t('stockOk')}">🟢</span>`;
         }
         return '';
     }
@@ -1525,17 +2077,16 @@
         const doseText = formatDoseValue(totalDaily, getMedUnit(med));
 
         if (med.freqType === 'daily') {
-            return `${doseText}/z`;
+            return `${doseText}/${t('freqPerDay')}`;
         }
         if (med.freqType === 'interval') {
-            return `${doseText}/${med.interval}z`;
+            return `${doseText}/${med.interval}${t('freqPerDay')}`;
         }
         if (med.freqType === 'days') {
-            const daysMap = { '1': 'L', '2': 'M', '3': 'Mi', '4': 'J', '5': 'V', '6': 'S', '0': 'D' };
             const dayOrder = ['1', '2', '3', '4', '5', '6', '0'];
             const sorted = med.specificDays.slice().sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
-            const days = sorted.map(d => daysMap[d]).join(' ');
-            return `${days} ${doseText}/z`;
+            const days = sorted.map(d => getWeekdayShort(d)).join(' ');
+            return `${days} ${doseText}/${t('freqPerDay')}`;
         }
         return '';
     }
@@ -1559,8 +2110,8 @@
     }
 
     function formatMedCountLabel(count) {
-        if (count === 1) return '1 medicament';
-        return `${count} medicamente`;
+        if (count === 1) return t('medCount1');
+        return t('medCountN', { count });
     }
 
     function getSelectedPerson() {
@@ -1594,7 +2145,7 @@
 
         const categoriesHtml = PERSON_ICON_CATEGORIES.map(item => {
             const activeClass = item.key === category ? ' active' : '';
-            return `<button type="button" class="icon-cat-btn${activeClass}" onclick="setIconPickerCategory('${item.key}', '${contextKey}')">${item.label}</button>`;
+            return `<button type="button" class="icon-cat-btn${activeClass}" onclick="setIconPickerCategory('${item.key}', '${contextKey}')">${getIconCategoryLabel(item.key)}</button>`;
         }).join('');
 
         const icons = PERSON_ICON_SETS[category] || [];
@@ -1678,7 +2229,7 @@
         if (editActions) editActions.classList.toggle('hidden', !personEditMode);
         if (doneBtn) doneBtn.classList.toggle('hidden', !personEditMode);
         if (heading) {
-            heading.textContent = personEditMode ? 'Mod editare' : 'Persoane';
+            heading.textContent = personEditMode ? t('editMode') : t('persons');
         }
     }
 
@@ -1724,7 +2275,7 @@
             const personId = input.dataset.personId;
             const name = input.value.trim();
             if (!name) {
-                alert('Numele persoanei nu poate fi gol.');
+                alert(t('alertEmptyPersonName'));
                 input.focus();
                 return false;
             }
@@ -1763,7 +2314,7 @@
         if (!personEditMode) return;
 
         if (persons.length <= 1) {
-            alert('Trebuie să existe cel puțin o persoană.');
+            alert(t('alertMinOnePerson'));
             return;
         }
 
@@ -1773,8 +2324,8 @@
         const medCount = getPersonMedCount(personId);
         const safeName = person.name;
         const message = medCount > 0
-            ? `Sigur vrei să ștergi persoana „${safeName}”? Are ${formatMedCountLabel(medCount)} salvate — acestea vor fi șterse definitiv.`
-            : `Sigur vrei să ștergi persoana „${safeName}”?`;
+            ? t('confirmDeletePersonWithMeds', { name: safeName, count: formatMedCountLabel(medCount) })
+            : t('confirmDeletePerson', { name: safeName });
 
         showConfirmModal(message, () => {
             removeMedicationsForPerson(personId);
@@ -1785,7 +2336,7 @@
                 selectedPersonId = null;
                 document.getElementById('personPlanView').classList.add('hidden');
                 document.getElementById('personListView').classList.remove('hidden');
-                document.getElementById('appTitle').classList.remove('hidden');
+                placeLangSwitcherInAppHeader();
             }
 
             if (persons.length === 0) {
@@ -1805,7 +2356,7 @@
         updatePersonListChrome();
 
         if (persons.length === 0) {
-            container.innerHTML = '<p class="med-empty">Nicio persoană.</p>';
+            container.innerHTML = `<p class="med-empty">${t('noPersons')}</p>`;
             return;
         }
 
@@ -1816,10 +2367,10 @@
                 const count = getPersonMedCount(person.id);
                 const personIcon = getPersonIcon(person);
                 const deleteBtn = canDeletePerson
-                    ? `<button type="button" class="delete-btn" onclick="deletePerson('${person.id}')" title="Șterge persoana" aria-label="Șterge persoana">×</button>`
+                    ? `<button type="button" class="delete-btn" onclick="deletePerson('${person.id}')" title="${t('deletePerson')}" aria-label="${t('deletePerson')}">×</button>`
                     : '';
                 return `<div class="person-edit-card">
-                    <button type="button" class="person-icon-btn" onclick="openIconPickerForEdit('${person.id}')" title="Schimbă iconița" aria-label="Schimbă iconița">${personIcon}</button>
+                    <button type="button" class="person-icon-btn" onclick="openIconPickerForEdit('${person.id}')" title="${t('changeIcon')}" aria-label="${t('changeIcon')}">${personIcon}</button>
                     <div class="person-card-info">
                         <input
                             type="text"
@@ -1827,7 +2378,7 @@
                             data-person-id="${person.id}"
                             value="${safeName}"
                             maxlength="50"
-                            aria-label="Nume persoană"
+                            aria-label="${t('personNameAria')}"
                             onkeydown="handlePersonNameKeydown(event)">
                         <span class="person-card-count">${formatMedCountLabel(count)}</span>
                     </div>
@@ -1852,6 +2403,26 @@
         }).join('');
     }
 
+    function placeLangSwitcherInAppHeader() {
+        const appHeader = document.querySelector('.app-header');
+        const langSwitcher = document.getElementById('langSwitcher');
+        if (appHeader && langSwitcher) {
+            appHeader.appendChild(langSwitcher);
+        }
+        appHeader?.classList.remove('hidden');
+        document.getElementById('appTitle')?.classList.remove('hidden');
+    }
+
+    function placeLangSwitcherInPersonHeader() {
+        const personHeader = document.getElementById('personPlanHeader');
+        const langSwitcher = document.getElementById('langSwitcher');
+        const appHeader = document.querySelector('.app-header');
+        if (personHeader && langSwitcher) {
+            personHeader.appendChild(langSwitcher);
+        }
+        appHeader?.classList.add('hidden');
+    }
+
     function openPerson(personId) {
         if (personEditMode) return;
         if (!persons.some(person => person.id === personId)) return;
@@ -1862,7 +2433,7 @@
 
         document.getElementById('personListView').classList.add('hidden');
         document.getElementById('personPlanView').classList.remove('hidden');
-        document.getElementById('appTitle').classList.add('hidden');
+        placeLangSwitcherInPersonHeader();
 
         const person = getSelectedPerson();
         document.getElementById('personPlanTitle').textContent = `${getPersonIcon(person)} ${person?.name || ''}`;
@@ -1878,7 +2449,7 @@
 
         document.getElementById('personPlanView').classList.add('hidden');
         document.getElementById('personListView').classList.remove('hidden');
-        document.getElementById('appTitle').classList.remove('hidden');
+        placeLangSwitcherInAppHeader();
 
         renderPersonList();
     }
@@ -1906,7 +2477,7 @@
         const input = document.getElementById('addPersonName');
         const name = (input?.value || '').trim();
         if (!name) {
-            alert('Introdu un nume pentru persoană.');
+            alert(t('alertPersonName'));
             input?.focus();
             return;
         }
@@ -1933,7 +2504,7 @@
         if (storedPersons) {
             persons = JSON.parse(storedPersons);
         } else {
-            const defaultPerson = { id: 'person_default', name: 'Eu', icon: DEFAULT_PERSON_ICON };
+            const defaultPerson = { id: 'person_default', name: DEFAULT_PERSON_NAME, icon: DEFAULT_PERSON_ICON };
             persons = [defaultPerson];
             medications = medications.map(med => ({
                 ...med,
@@ -1944,7 +2515,7 @@
         }
 
         if (persons.length === 0) {
-            const defaultPerson = { id: `person_${Date.now()}`, name: 'Eu', icon: DEFAULT_PERSON_ICON };
+            const defaultPerson = { id: `person_${Date.now()}`, name: DEFAULT_PERSON_NAME, icon: DEFAULT_PERSON_ICON };
             persons = [defaultPerson];
             savePersonsToStorage();
         }
@@ -2046,7 +2617,7 @@
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
-        return `${DAYS_SHORT[date.getDay()]}, ${day}.${month}.${year}`;
+        return `${getDaysShort()[date.getDay()]}, ${day}.${month}.${year}`;
     }
 
     function isMedTakenOnDayOffset(med, dayOffset) {
@@ -2136,7 +2707,7 @@
         const viewEnd = new Date(viewStart);
         viewEnd.setDate(viewEnd.getDate() + 13);
 
-        hint.textContent = `Până la ${formatDateLabel(viewEnd)} (14 zile)`;
+        hint.textContent = t('calendarUntil', { date: formatDateLabel(viewEnd) });
     }
 
     function initCalendarViewStart() {
@@ -2251,9 +2822,9 @@
 
             let dayBadge = '';
             if (dateKey === todayKey) {
-                dayBadge = '<span class="calendar-day-badge">Azi</span>';
+                dayBadge = `<span class="calendar-day-badge">${t('badgeToday')}</span>`;
             } else if (compareDateKeys(dateKey, todayKey) < 0) {
-                dayBadge = '<span class="calendar-day-badge calendar-day-badge--past">Trecut</span>';
+                dayBadge = `<span class="calendar-day-badge calendar-day-badge--past">${t('badgePast')}</span>`;
             }
             let html = `
                 <div class="calendar-day-header">
@@ -2262,9 +2833,9 @@
                 </div>
                 <div class="calendar-periods">`;
 
-            html += renderCalendarPeriod('calendar-period--dim', '🌅', 'Dimineața', dimMeds);
-            html += renderCalendarPeriod('calendar-period--pranz', '☀️', 'Prânz', pranzMeds);
-            html += renderCalendarPeriod('calendar-period--seara', '🌙', 'Seara', searaMeds);
+            html += renderCalendarPeriod('calendar-period--dim', '🌅', t('periodMorning'), dimMeds);
+            html += renderCalendarPeriod('calendar-period--pranz', '☀️', t('periodLunch'), pranzMeds);
+            html += renderCalendarPeriod('calendar-period--seara', '🌙', t('periodEvening'), searaMeds);
 
             html += '</div>';
 
@@ -2274,7 +2845,7 @@
         }
 
         if (!hasAnyDay) {
-            container.innerHTML = '<p class="med-empty">Niciun medicament de luat în perioada selectată.</p>';
+            container.innerHTML = `<p class="med-empty">${t('noMedsCalendar')}</p>`;
         }
     }
 
@@ -2325,7 +2896,7 @@
         }
 
         resetForm();
-        document.getElementById('medFormTitle').textContent = 'Adaugă medicament';
+        document.getElementById('medFormTitle').textContent = t('addMedForm');
         document.getElementById('medFormPanel').classList.remove('hidden');
         medFormOpen = true;
         document.getElementById('medFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2381,7 +2952,7 @@
 
         if (sortedMeds.length === 0) {
             const emptyRow = document.createElement('tr');
-            emptyRow.innerHTML = `<td colspan="3" class="med-empty">Niciun medicament găsit.</td>`;
+            emptyRow.innerHTML = `<td colspan="3" class="med-empty">${t('noMeds')}</td>`;
             tableBody.appendChild(emptyRow);
             return;
         }
@@ -2396,7 +2967,7 @@
             const statusIcon = getStockStatusIcon(statusClass);
             const showCheckBtn = hasUncheckedDosesUntilYesterday(med);
             const checkBtn = showCheckBtn
-                ? `<button class="check-yesterday-btn" onclick="autoCheckMedUntilYesterday('${med.id}')" title="Check până ieri" aria-label="Check până ieri">✓</button>`
+                ? `<button class="check-yesterday-btn" onclick="autoCheckMedUntilYesterday('${med.id}')" title="${t('checkUntilYesterday')}" aria-label="${t('checkUntilYesterday')}">✓</button>`
                 : '';
 
             const startLabel = formatMedStartLabel(med);
@@ -2418,12 +2989,12 @@
                         <div class="med-actions-col">
                             <div class="med-actions-group">
                                 ${checkBtn}
-                                <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="Șterge" aria-label="Șterge">×</button>
+                                <button class="delete-btn" onclick="deleteMedication('${med.id}')" title="${t('delete')}" aria-label="${t('delete')}">×</button>
                             </div>
-                            <button class="copy-form-btn" onclick="copyMedicationToForm('${med.id}')" title="Copiază în formular" aria-label="Copiază în formular">⧉</button>
+                            <button class="copy-form-btn" onclick="copyMedicationToForm('${med.id}')" title="${t('copyToForm')}" aria-label="${t('copyToForm')}">⧉</button>
                         </div>
                         <div class="med-line-bottom">
-                            <span class="med-end ${statusClass}">Fără stoc: ${stockOut.label}</span>
+                            <span class="med-end ${statusClass}">${t('stockOut')}: ${stockOut.label}</span>
                             <span class="med-freq">${freqText}</span>
                         </div>
                     </div>
@@ -2444,7 +3015,7 @@
         if (!med) return;
 
         fillMedFormFromMedication(med);
-        document.getElementById('medFormTitle').textContent = 'Adaugă medicament';
+        document.getElementById('medFormTitle').textContent = t('addMedForm');
         document.getElementById('medFormPanel').classList.remove('hidden');
         medFormOpen = true;
         document.getElementById('medFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2453,7 +3024,7 @@
 
     // Șterge un singur rând din tabel
     function deleteMedication(id) {
-        showConfirmModal("Sigur vrei să ștergi acest medicament din listă?", () => {
+        showConfirmModal(t('confirmDeleteMed'), () => {
             medications = medications.filter(m => m.id !== id);
             removeChecksForMed(id);
             saveToStorage();
@@ -2466,7 +3037,7 @@
     function resetAll() {
         const person = getSelectedPerson();
         const personName = person?.name || 'această persoană';
-        showConfirmModal(`Sigur vrei să ștergi TOATE medicamentele pentru ${personName}? Datele nu vor mai putea fi recuperate.`, () => {
+        showConfirmModal(t('confirmDeleteAllMeds', { name: personName }), () => {
             const medIdsToRemove = getPersonMedications().map(med => med.id);
             medications = medications.filter(med => med.personId !== selectedPersonId);
             medIdsToRemove.forEach(medId => removeChecksForMed(medId));
@@ -2502,6 +3073,12 @@
         if (callback) callback();
     }
 
+    document.addEventListener('click', (event) => {
+        if (!document.getElementById('langSwitcher')?.contains(event.target)) {
+            closeLangDropdown();
+        }
+    });
+
     document.addEventListener('keydown', (event) => {
         const confirmModal = document.getElementById('confirmModal');
         const addPersonModal = document.getElementById('addPersonModal');
@@ -2518,6 +3095,8 @@
                 closeMedFormPanel();
             } else if (personEditMode) {
                 cancelPersonEditMode();
+            } else {
+                closeLangDropdown();
             }
             return;
         }
@@ -2560,7 +3139,7 @@
         loadChecksFromStorage();
         initCalendarViewStart();
         setStartDateInput(formatDateKey(new Date()));
-        updateUnitFields();
+        initLanguage();
         renderPersonList();
     };
 </script>
