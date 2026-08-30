@@ -845,6 +845,20 @@
             text-decoration: line-through;
             opacity: 0.7;
         }
+        .calendar-med-item--future {
+            opacity: 0.75;
+        }
+        .calendar-med-item--future .calendar-med-check {
+            cursor: default;
+        }
+        .calendar-med-item--future .calendar-med-check input {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+        .calendar-med-item--future .calendar-med-name,
+        .calendar-med-item--future .calendar-med-dose {
+            color: #95a5a6;
+        }
         .calendar-med-check {
             display: flex;
             align-items: center;
@@ -1322,12 +1336,14 @@
         const epsilon = 0.0001;
         let consumed = 0;
         const startDate = getMedStartDate(med);
+        const todayKey = getTodayKey();
 
         Object.keys(medChecks).forEach(key => {
             if (!medChecks[key]) return;
             const [medId, dateKey, period] = key.split('|');
             if (medId !== med.id) return;
             if (compareDateKeys(dateKey, startDate) < 0) return;
+            if (compareDateKeys(dateKey, todayKey) > 0) return;
             consumed += getDoseForPeriod(med, period);
         });
 
@@ -1438,9 +1454,11 @@
 
         while (currentQty > epsilon && iterations < maxSafetyIterations) {
             if (isMedScheduledOnDate(med, checkDate)) {
+                const dateKey = formatDateKey(checkDate);
                 for (const period of PERIODS) {
                     const dose = getDoseForPeriod(med, period);
                     if (dose <= 0) continue;
+                    if (isMedChecked(med.id, dateKey, period)) continue;
                     if (currentQty < dose - epsilon) {
                         iterations = maxSafetyIterations;
                         break;
@@ -1948,6 +1966,14 @@
         return `${year}-${month}-${day}`;
     }
 
+    function getTodayKey() {
+        return formatDateKey(new Date());
+    }
+
+    function canCheckMedOnDate(dateKey) {
+        return compareDateKeys(dateKey, getTodayKey()) <= 0;
+    }
+
     function getStartDateFromForm() {
         return document.getElementById('medStartDate').value || formatDateKey(new Date());
     }
@@ -1965,6 +1991,8 @@
     }
 
     function toggleMedCheck(medId, dateKey, period, checked) {
+        if (!canCheckMedOnDate(dateKey)) return;
+
         const key = getCheckKey(medId, dateKey, period);
         if (checked) {
             medChecks[key] = true;
@@ -1992,6 +2020,26 @@
     function loadChecksFromStorage() {
         const stored = localStorage.getItem('medicationsChecks_v1');
         medChecks = stored ? JSON.parse(stored) : {};
+        purgeFutureChecks();
+    }
+
+    function purgeFutureChecks() {
+        const todayKey = getTodayKey();
+        let changed = false;
+
+        Object.keys(medChecks).forEach(key => {
+            const parts = key.split('|');
+            if (parts.length < 3) return;
+            const dateKey = parts[1];
+            if (compareDateKeys(dateKey, todayKey) > 0) {
+                delete medChecks[key];
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            saveChecksToStorage();
+        }
     }
 
     function formatDateLabel(date) {
@@ -2010,13 +2058,19 @@
 
     function formatCalendarMedItem(med, amount, dateKey, period) {
         const unit = getMedUnit(med);
-        const checked = isMedChecked(med.id, dateKey, period);
+        const isFuture = !canCheckMedOnDate(dateKey);
+        const checked = !isFuture && isMedChecked(med.id, dateKey, period);
         const doneClass = checked ? ' calendar-med-item--done' : '';
+        const futureClass = isFuture ? ' calendar-med-item--future' : '';
         const checkedAttr = checked ? ' checked' : '';
+        const disabledAttr = isFuture ? ' disabled' : '';
+        const changeHandler = isFuture
+            ? ''
+            : ` onchange="toggleMedCheck('${med.id}', '${dateKey}', '${period}', this.checked); this.closest('.calendar-med-item').classList.toggle('calendar-med-item--done', this.checked)"`;
 
-        return `<li class="calendar-med-item${doneClass}">
+        return `<li class="calendar-med-item${doneClass}${futureClass}">
             <label class="calendar-med-check">
-                <input type="checkbox"${checkedAttr} onchange="toggleMedCheck('${med.id}', '${dateKey}', '${period}', this.checked); this.closest('.calendar-med-item').classList.toggle('calendar-med-item--done', this.checked)">
+                <input type="checkbox"${checkedAttr}${disabledAttr}${changeHandler}>
                 <span class="calendar-med-name-wrap">
                     <span class="calendar-med-name">${med.name}</span>
                     <span class="calendar-med-start">${formatMedStartLabel(med)}</span>
