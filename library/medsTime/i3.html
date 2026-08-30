@@ -380,6 +380,21 @@
         .plan-actions-bar .btn-reset-all {
             max-width: none;
         }
+        .backup-actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            margin-bottom: 4px;
+        }
+        .backup-actions-bar button {
+            flex: 1;
+            background-color: #7f8c8d;
+            font-size: 14px;
+            padding: 9px 12px;
+        }
+        .backup-actions-bar button:hover {
+            background-color: #616a6b;
+        }
         .btn-open-med-form {
             background-color: #27ae60;
         }
@@ -581,6 +596,10 @@
         .confirm-modal-ok:hover {
             background-color: #c0392b;
         }
+        .confirm-modal-actions--single button {
+            flex: 1;
+            width: 100%;
+        }
         .person-list-heading {
             margin: 0;
             text-align: left;
@@ -663,7 +682,7 @@
         .person-card {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             width: 100%;
             padding: 14px 12px;
             background: #f9f9f9;
@@ -673,6 +692,7 @@
             text-align: left;
             color: #2c3e50;
             flex: none;
+            box-sizing: border-box;
         }
         .person-card:hover {
             background: #f3f4f6;
@@ -702,6 +722,29 @@
             color: #95a5a6;
             flex: none;
             line-height: 1;
+        }
+        .person-default-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            background: transparent;
+            color: #bdc3c7;
+            border: none;
+            border-radius: 4px;
+            font-size: 20px;
+            line-height: 1;
+            flex: none;
+            cursor: pointer;
+        }
+        .person-default-btn:hover {
+            background: #f3f4f6;
+            color: #f39c12;
+        }
+        .person-default-btn.is-default {
+            color: #f39c12;
+        }
+        .person-edit-card .person-default-btn {
+            align-self: center;
         }
         .btn-add-person {
             background-color: #27ae60;
@@ -1140,6 +1183,10 @@
                 <!-- Datele se încarcă din JavaScript -->
             </tbody>
         </table>
+        <div class="backup-actions-bar">
+            <button type="button" onclick="exportBackup()" data-i18n="exportData">Export</button>
+            <button type="button" onclick="importBackup()" data-i18n="importData">Import</button>
+        </div>
     </div>
     <div id="planCalendarView" class="hidden">
         <div class="calendar-toolbar" id="calendarToolbar">
@@ -1166,6 +1213,16 @@
         <div class="confirm-modal-actions">
             <button type="button" class="confirm-modal-cancel" onclick="closeConfirmModal()" data-i18n="cancel">Anulează</button>
             <button type="button" class="confirm-modal-ok" id="confirmModalOk" onclick="confirmModalOk()" data-i18n="delete">Șterge</button>
+        </div>
+    </div>
+</div>
+
+<div id="alertModal" class="confirm-modal hidden" role="alertdialog" aria-modal="true" aria-labelledby="alertModalMessage">
+    <div class="confirm-modal-backdrop" onclick="closeAlertModal()"></div>
+    <div class="confirm-modal-box">
+        <p id="alertModalMessage" class="confirm-modal-message"></p>
+        <div class="confirm-modal-actions confirm-modal-actions--single">
+            <button type="button" class="confirm-modal-add" id="alertModalOk" onclick="closeAlertModal()" data-i18n="ok">OK</button>
         </div>
     </div>
 </div>
@@ -1246,6 +1303,7 @@
             mon: 'Luni', tue: 'Marți', wed: 'Miercuri', thu: 'Joi', fri: 'Vineri', sat: 'Sâmbătă', sun: 'Duminică',
             addToPlan: 'Adaugă în Plan',
             cancel: 'Anulează',
+            ok: 'OK',
             delete: 'Șterge',
             add: 'Adaugă',
             calendarFrom: 'Afișare calendar de la',
@@ -1265,6 +1323,8 @@
             deletePerson: 'Șterge persoana',
             personName: 'Nume',
             personNameAria: 'Nume persoană',
+            setDefaultPerson: 'Setează ca persoană principală (notificări)',
+            defaultPersonBadge: 'Principal',
             personNamePh: 'Ex: Mama',
             newPerson: 'Persoană nouă',
             chooseIcon: 'Alege iconița',
@@ -1290,7 +1350,20 @@
             confirmDeleteMed: 'Sigur vrei să ștergi acest medicament din listă?',
             confirmDeleteAllMeds: 'Sigur vrei să ștergi TOATE medicamentele pentru {name}? Datele nu vor mai putea fi recuperate.',
             confirmDeletePerson: 'Sigur vrei să ștergi persoana „{name}"?',
-            confirmDeletePersonWithMeds: 'Sigur vrei să ștergi persoana „{name}"? Are {count} salvate — acestea vor fi șterse definitiv.'
+            confirmDeletePersonWithMeds: 'Sigur vrei să ștergi persoana „{name}"? Are {count} salvate — acestea vor fi șterse definitiv.',
+            exportData: 'Export',
+            importData: 'Import',
+            import: 'Import',
+            exportSuccess: 'Medicamentele și bifările persoanei curente au fost copiate în clipboard.',
+            importSuccess: 'Import reușit.',
+            importConfirm: 'Importul înlocuiește medicamentele și bifările pentru persoana curentă. Continui?',
+            errorExportClipboard: 'Nu s-a putut copia în clipboard.',
+            errorImportClipboard: 'Nu s-a putut citi clipboard-ul.',
+            errorImportInvalid: 'Date invalide. Folosește un export Meds Monitor.',
+            errorImportEmpty: 'Clipboard-ul este gol.',
+            errorImportVersion: 'Versiune export neacceptată.',
+            errorExportNoPerson: 'Deschide planul unei persoane înainte de export.',
+            errorImportNoPerson: 'Deschide planul unei persoane înainte de import.'
         },
         en: {
             daysShort: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
@@ -1340,6 +1413,7 @@
             mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat', sun: 'Sun',
             addToPlan: 'Add to plan',
             cancel: 'Cancel',
+            ok: 'OK',
             delete: 'Delete',
             add: 'Add',
             calendarFrom: 'Show calendar from',
@@ -1359,6 +1433,8 @@
             deletePerson: 'Delete person',
             personName: 'Name',
             personNameAria: 'Person name',
+            setDefaultPerson: 'Set as default person (notifications)',
+            defaultPersonBadge: 'Default',
             personNamePh: 'E.g. Mom',
             newPerson: 'New person',
             chooseIcon: 'Choose icon',
@@ -1384,7 +1460,20 @@
             confirmDeleteMed: 'Delete this medication from the list?',
             confirmDeleteAllMeds: 'Delete ALL medications for {name}? This cannot be undone.',
             confirmDeletePerson: 'Delete person "{name}"?',
-            confirmDeletePersonWithMeds: 'Delete person "{name}"? They have {count} saved — these will be permanently deleted.'
+            confirmDeletePersonWithMeds: 'Delete person "{name}"? They have {count} saved — these will be permanently deleted.',
+            exportData: 'Export',
+            importData: 'Import',
+            import: 'Import',
+            exportSuccess: 'Current person\'s medications and checkmarks copied to clipboard.',
+            importSuccess: 'Import successful.',
+            importConfirm: 'Import replaces medications and checkmarks for the current person. Continue?',
+            errorExportClipboard: 'Could not copy to clipboard.',
+            errorImportClipboard: 'Could not read clipboard.',
+            errorImportInvalid: 'Invalid data. Use a Meds Monitor export.',
+            errorImportEmpty: 'Clipboard is empty.',
+            errorImportVersion: 'Unsupported export version.',
+            errorExportNoPerson: 'Open a person\'s plan before exporting.',
+            errorImportNoPerson: 'Open a person\'s plan before importing.'
         },
         fr: {
             daysShort: ['D', 'L', 'M', 'Me', 'J', 'V', 'S'],
@@ -1434,6 +1523,7 @@
             mon: 'Lun', tue: 'Mar', wed: 'Mer', thu: 'Jeu', fri: 'Ven', sat: 'Sam', sun: 'Dim',
             addToPlan: 'Ajouter au plan',
             cancel: 'Annuler',
+            ok: 'OK',
             delete: 'Supprimer',
             add: 'Ajouter',
             calendarFrom: 'Afficher le calendrier à partir du',
@@ -1453,6 +1543,8 @@
             deletePerson: 'Supprimer la personne',
             personName: 'Nom',
             personNameAria: 'Nom de la personne',
+            setDefaultPerson: 'Définir comme personne principale (notifications)',
+            defaultPersonBadge: 'Principal',
             personNamePh: 'Ex : Maman',
             newPerson: 'Nouvelle personne',
             chooseIcon: 'Choisir une icône',
@@ -1478,7 +1570,20 @@
             confirmDeleteMed: 'Supprimer ce médicament de la liste ?',
             confirmDeleteAllMeds: 'Supprimer TOUS les médicaments pour {name} ? Irréversible.',
             confirmDeletePerson: 'Supprimer la personne « {name} » ?',
-            confirmDeletePersonWithMeds: 'Supprimer « {name} » ? {count} seront supprimés définitivement.'
+            confirmDeletePersonWithMeds: 'Supprimer « {name} » ? {count} seront supprimés définitivement.',
+            exportData: 'Exporter',
+            importData: 'Importer',
+            import: 'Importer',
+            exportSuccess: 'Médicaments et coches de la personne actuelle copiés dans le presse-papiers.',
+            importSuccess: 'Import réussi.',
+            importConfirm: 'L\'import remplace les médicaments et coches pour la personne actuelle. Continuer ?',
+            errorExportClipboard: 'Impossible de copier dans le presse-papiers.',
+            errorImportClipboard: 'Impossible de lire le presse-papiers.',
+            errorImportInvalid: 'Données invalides. Utilisez un export Meds Monitor.',
+            errorImportEmpty: 'Le presse-papiers est vide.',
+            errorImportVersion: 'Version d\'export non prise en charge.',
+            errorExportNoPerson: 'Ouvrez le plan d\'une personne avant d\'exporter.',
+            errorImportNoPerson: 'Ouvrez le plan d\'une personne avant d\'importer.'
         }
     };
 
@@ -1664,9 +1769,19 @@
     let medFormOpen = false;
     let medChecks = {};
     let confirmModalCallback = null;
+    let defaultPersonId = null;
 
     const PERSONS_STORAGE_KEY = 'medicationsPersons_v1';
     const MEDS_STORAGE_KEY = 'medicationsStockApp_v2';
+    const DEFAULT_PERSON_STORAGE_KEY = 'defaultPersonId';
+    const NOTIFICATION_SCHEDULE_DAYS = 14;
+    const NOTIFICATION_TIMES = {
+        dim: '09:00',
+        pranz: '14:00',
+        seara: '19:00'
+    };
+    const BACKUP_APP_ID = 'MedsMonitor';
+    const BACKUP_VERSION = 1;
     const DEFAULT_PERSON_ICON = '👨';
     const PERSON_ICON_SETS = {
         barbat: ['👨', '🧔', '👨‍🦰', '👨‍🦳', '👱‍♂️', '👴'],
@@ -1982,6 +2097,148 @@
         }
 
         return getRemainingBeforeDose(med, dateKey, period) >= dose - 0.0001;
+    }
+
+    function getPeriodLabel(period) {
+        if (period === 'dim') return t('periodMorning');
+        if (period === 'pranz') return t('periodLunch');
+        return t('periodEvening');
+    }
+
+    function getDefaultPersonId() {
+        if (defaultPersonId && persons.some(person => person.id === defaultPersonId)) {
+            return defaultPersonId;
+        }
+        return persons[0]?.id || null;
+    }
+
+    function getDefaultPerson() {
+        const personId = getDefaultPersonId();
+        return persons.find(person => person.id === personId) || null;
+    }
+
+    function loadDefaultPersonId() {
+        const stored = localStorage.getItem(DEFAULT_PERSON_STORAGE_KEY);
+        if (stored && persons.some(person => person.id === stored)) {
+            defaultPersonId = stored;
+            return;
+        }
+        defaultPersonId = persons[0]?.id || null;
+        saveDefaultPersonId();
+    }
+
+    function saveDefaultPersonId() {
+        if (defaultPersonId) {
+            localStorage.setItem(DEFAULT_PERSON_STORAGE_KEY, defaultPersonId);
+        } else {
+            localStorage.removeItem(DEFAULT_PERSON_STORAGE_KEY);
+        }
+    }
+
+    function ensureDefaultPerson() {
+        if (persons.length === 0) {
+            defaultPersonId = null;
+            saveDefaultPersonId();
+            pushNotificationSchedule();
+            return;
+        }
+        if (!defaultPersonId || !persons.some(person => person.id === defaultPersonId)) {
+            defaultPersonId = persons[0].id;
+            saveDefaultPersonId();
+            pushNotificationSchedule();
+        }
+    }
+
+    function setDefaultPerson(personId) {
+        if (!persons.some(person => person.id === personId)) return;
+        defaultPersonId = personId;
+        saveDefaultPersonId();
+        renderPersonList();
+        pushNotificationSchedule();
+    }
+
+    function renderDefaultPersonButton(personId) {
+        const isDefault = personId === getDefaultPersonId();
+        const star = isDefault ? '★' : '☆';
+        const title = t('setDefaultPerson');
+        return `<button type="button" class="person-default-btn${isDefault ? ' is-default' : ''}" onclick="event.stopPropagation(); setDefaultPerson('${personId}')" title="${title}" aria-label="${title}" aria-pressed="${isDefault}">${star}</button>`;
+    }
+
+    function handlePersonCardClick(event) {
+        const card = event.currentTarget;
+        const personId = card?.dataset?.personId;
+        if (!personId || personEditMode) return;
+        openPerson(personId);
+    }
+
+    function handlePersonCardKeydown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        handlePersonCardClick(event);
+    }
+
+    function getDueMedsForPeriod(personId, dateKey, period) {
+        if (!personId) return [];
+
+        const date = parseDateKey(dateKey);
+        return getPersonMedications(personId).filter(med => {
+            const dose = getDoseForPeriod(med, period);
+            if (dose <= 0) return false;
+            if (!shouldShowDoseInCalendar(med, date, dateKey, period)) return false;
+            if (isMedChecked(med.id, dateKey, period)) return false;
+            return true;
+        });
+    }
+
+    function buildNotificationSchedule(personId = getDefaultPersonId()) {
+        if (!personId) {
+            return {
+                defaultPersonId: null,
+                personName: '',
+                generatedAt: new Date().toISOString(),
+                slots: []
+            };
+        }
+
+        const person = persons.find(item => item.id === personId);
+        const slots = [];
+        const startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+
+        for (let dayOffset = 0; dayOffset < NOTIFICATION_SCHEDULE_DAYS; dayOffset++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + dayOffset);
+            const dateKey = formatDateKey(date);
+
+            PERIODS.forEach(period => {
+                const meds = getDueMedsForPeriod(personId, dateKey, period);
+                if (meds.length === 0) return;
+
+                slots.push({
+                    date: dateKey,
+                    period,
+                    periodLabel: getPeriodLabel(period),
+                    time: NOTIFICATION_TIMES[period],
+                    meds: meds.map(med => med.name),
+                    medIds: meds.map(med => med.id)
+                });
+            });
+        }
+
+        return {
+            defaultPersonId: personId,
+            personName: person?.name || '',
+            generatedAt: new Date().toISOString(),
+            slots
+        };
+    }
+
+    function pushNotificationSchedule() {
+        const payload = buildNotificationSchedule();
+        if (window.AndroidBridge && typeof window.AndroidBridge.reschedule === 'function') {
+            window.AndroidBridge.reschedule(JSON.stringify(payload));
+        }
+        return payload;
     }
 
     // Calculează data la care se termină stocul; returnează timestamp pentru sortare și text afișat
@@ -2339,6 +2596,8 @@
                 placeLangSwitcherInAppHeader();
             }
 
+            ensureDefaultPerson();
+
             if (persons.length === 0) {
                 personEditMode = false;
                 personEditSnapshot = null;
@@ -2382,6 +2641,7 @@
                             onkeydown="handlePersonNameKeydown(event)">
                         <span class="person-card-count">${formatMedCountLabel(count)}</span>
                     </div>
+                    ${renderDefaultPersonButton(person.id)}
                     ${deleteBtn}
                 </div>`;
             }).join('');
@@ -2392,14 +2652,16 @@
             const count = getPersonMedCount(person.id);
             const safeName = person.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const personIcon = getPersonIcon(person);
-            return `<button type="button" class="person-card" onclick="openPerson('${person.id}')">
+            const isDefault = person.id === getDefaultPersonId();
+            return `<div class="person-card" data-person-id="${person.id}" onclick="handlePersonCardClick(event)" onkeydown="handlePersonCardKeydown(event)" role="button" tabindex="0">
                 <span class="person-card-icon" aria-hidden="true">${personIcon}</span>
                 <span class="person-card-info">
                     <span class="person-card-name">${safeName}</span>
-                    <span class="person-card-count">${formatMedCountLabel(count)}</span>
+                    <span class="person-card-count">${formatMedCountLabel(count)}${isDefault ? ` · ${t('defaultPersonBadge')}` : ''}</span>
                 </span>
+                ${renderDefaultPersonButton(person.id)}
                 <span class="person-card-arrow" aria-hidden="true">›</span>
-            </button>`;
+            </div>`;
         }).join('');
     }
 
@@ -2528,6 +2790,8 @@
             ...med,
             personId: persons.some(person => person.id === med.personId) ? med.personId : fallbackPersonId
         }));
+        loadDefaultPersonId();
+        ensureDefaultPerson();
     }
 
     function formatDateKey(date) {
@@ -2586,31 +2850,12 @@
 
     function saveChecksToStorage() {
         localStorage.setItem('medicationsChecks_v1', JSON.stringify(medChecks));
+        pushNotificationSchedule();
     }
 
     function loadChecksFromStorage() {
         const stored = localStorage.getItem('medicationsChecks_v1');
         medChecks = stored ? JSON.parse(stored) : {};
-        purgeFutureChecks();
-    }
-
-    function purgeFutureChecks() {
-        const todayKey = getTodayKey();
-        let changed = false;
-
-        Object.keys(medChecks).forEach(key => {
-            const parts = key.split('|');
-            if (parts.length < 3) return;
-            const dateKey = parts[1];
-            if (compareDateKeys(dateKey, todayKey) > 0) {
-                delete medChecks[key];
-                changed = true;
-            }
-        });
-
-        if (changed) {
-            saveChecksToStorage();
-        }
     }
 
     function formatDateLabel(date) {
@@ -3048,15 +3293,197 @@
         });
     }
 
-    function showConfirmModal(message, onConfirm) {
+    function buildBackupPayload() {
+        if (!selectedPersonId) {
+            throw new Error(t('errorExportNoPerson'));
+        }
+
+        const personMeds = getPersonMedications(selectedPersonId);
+        const medIds = new Set(personMeds.map(med => med.id));
+        const checks = {};
+
+        Object.entries(medChecks).forEach(([key, value]) => {
+            if (!value) return;
+            const medId = key.split('|')[0];
+            if (medIds.has(medId)) {
+                checks[key] = true;
+            }
+        });
+
+        return {
+            app: BACKUP_APP_ID,
+            version: BACKUP_VERSION,
+            exportedAt: new Date().toISOString(),
+            medications: personMeds.map(med => ({ ...med })),
+            medChecks: checks
+        };
+    }
+
+    function isValidImportedMedication(med) {
+        if (!med || typeof med !== 'object') return false;
+        if (typeof med.id !== 'string' || !med.id) return false;
+        if (typeof med.name !== 'string' || !med.name.trim()) return false;
+        const qty = med.initialQty ?? med.qty;
+        if (qty === undefined || qty === null || Number.isNaN(Number(qty))) return false;
+        return true;
+    }
+
+    function removePersonMedicationsAndChecks(personId) {
+        const medIdsToRemove = getPersonMedications(personId).map(med => med.id);
+        medications = medications.filter(med => med.personId !== personId);
+        medIdsToRemove.forEach(medId => {
+            const prefix = `${medId}|`;
+            Object.keys(medChecks).forEach(key => {
+                if (key.startsWith(prefix)) {
+                    delete medChecks[key];
+                }
+            });
+        });
+    }
+
+    function parseBackupPayload(text) {
+        const trimmed = (text || '').trim();
+        if (!trimmed) {
+            throw new Error(t('errorImportEmpty'));
+        }
+
+        let data;
+        try {
+            data = JSON.parse(trimmed);
+        } catch (error) {
+            throw new Error(t('errorImportInvalid'));
+        }
+
+        if (!data || data.app !== BACKUP_APP_ID) {
+            throw new Error(t('errorImportInvalid'));
+        }
+        if (data.version !== BACKUP_VERSION) {
+            throw new Error(t('errorImportVersion'));
+        }
+        if (!Array.isArray(data.medications)) {
+            throw new Error(t('errorImportInvalid'));
+        }
+        if (data.medChecks !== undefined && (typeof data.medChecks !== 'object' || Array.isArray(data.medChecks))) {
+            throw new Error(t('errorImportInvalid'));
+        }
+
+        return data;
+    }
+
+    function applyBackupData(data) {
+        if (!selectedPersonId) {
+            throw new Error(t('errorImportNoPerson'));
+        }
+
+        removePersonMedicationsAndChecks(selectedPersonId);
+
+        const existingMedIds = new Set(medications.map(med => med.id));
+        const idMap = new Map();
+        const importedMeds = [];
+
+        data.medications.filter(isValidImportedMedication).forEach(med => {
+            const copy = { ...med, personId: selectedPersonId };
+            if (existingMedIds.has(copy.id)) {
+                const newId = `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+                idMap.set(copy.id, newId);
+                copy.id = newId;
+            }
+            existingMedIds.add(copy.id);
+            importedMeds.push(copy);
+        });
+
+        if (importedMeds.length === 0 && data.medications.length > 0) {
+            throw new Error(t('errorImportInvalid'));
+        }
+
+        medications.push(...importedMeds);
+        normalizeMedications();
+
+        const importedMedIds = new Set(importedMeds.map(med => med.id));
+        Object.entries(data.medChecks || {}).forEach(([key, value]) => {
+            if (!value) return;
+            const parts = key.split('|');
+            if (parts.length < 3) return;
+
+            const originalMedId = parts[0];
+            const mappedMedId = idMap.get(originalMedId) || originalMedId;
+            if (!importedMedIds.has(mappedMedId)) return;
+
+            medChecks[getCheckKey(mappedMedId, parts[1], parts[2])] = true;
+        });
+
+        saveToStorage();
+        saveChecksToStorage();
+        renderPersonList();
+        renderPlan();
+    }
+
+    async function exportBackup() {
+        if (!navigator.clipboard?.writeText) {
+            showAlertModal(t('errorExportClipboard'));
+            return;
+        }
+
+        try {
+            const text = JSON.stringify(buildBackupPayload());
+            await navigator.clipboard.writeText(text);
+            showAlertModal(t('exportSuccess'));
+        } catch (error) {
+            showAlertModal(error?.message || t('errorExportClipboard'));
+        }
+    }
+
+    function importBackup() {
+        showConfirmModal(t('importConfirm'), () => {
+            importBackupFromClipboard();
+        }, t('import'));
+    }
+
+    async function importBackupFromClipboard() {
+        if (!navigator.clipboard?.readText) {
+            showAlertModal(t('errorImportClipboard'));
+            return;
+        }
+
+        try {
+            const text = await navigator.clipboard.readText();
+            const data = parseBackupPayload(text);
+            applyBackupData(data);
+            showAlertModal(t('importSuccess'));
+        } catch (error) {
+            showAlertModal(error?.message || t('errorImportClipboard'));
+        }
+    }
+
+    function showAlertModal(message) {
+        const modal = document.getElementById('alertModal');
+        const messageEl = document.getElementById('alertModalMessage');
+        if (!modal || !messageEl) return;
+
+        messageEl.textContent = message;
+        modal.classList.remove('hidden');
+        document.getElementById('alertModalOk')?.focus();
+    }
+
+    function closeAlertModal() {
+        const modal = document.getElementById('alertModal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+    }
+
+    function showConfirmModal(message, onConfirm, okLabel) {
         const modal = document.getElementById('confirmModal');
         const messageEl = document.getElementById('confirmModalMessage');
+        const okBtn = document.getElementById('confirmModalOk');
         if (!modal || !messageEl) return;
 
         messageEl.textContent = message;
         confirmModalCallback = onConfirm;
+        if (okBtn) {
+            okBtn.textContent = okLabel || t('delete');
+        }
         modal.classList.remove('hidden');
-        document.getElementById('confirmModalOk')?.focus();
+        okBtn?.focus();
     }
 
     function closeConfirmModal() {
@@ -3081,12 +3508,15 @@
 
     document.addEventListener('keydown', (event) => {
         const confirmModal = document.getElementById('confirmModal');
+        const alertModal = document.getElementById('alertModal');
         const addPersonModal = document.getElementById('addPersonModal');
         const iconPickerModal = document.getElementById('iconPickerModal');
 
         if (event.key === 'Escape') {
             if (confirmModal && !confirmModal.classList.contains('hidden')) {
                 closeConfirmModal();
+            } else if (alertModal && !alertModal.classList.contains('hidden')) {
+                closeAlertModal();
             } else if (iconPickerModal && !iconPickerModal.classList.contains('hidden')) {
                 closeIconPickerModal();
             } else if (addPersonModal && !addPersonModal.classList.contains('hidden')) {
@@ -3098,6 +3528,11 @@
             } else {
                 closeLangDropdown();
             }
+            return;
+        }
+
+        if (event.key === 'Enter' && alertModal && !alertModal.classList.contains('hidden')) {
+            closeAlertModal();
             return;
         }
 
@@ -3126,6 +3561,7 @@
     // Salvează starea listei în memoria browserului
     function saveToStorage() {
         localStorage.setItem(MEDS_STORAGE_KEY, JSON.stringify(medications));
+        pushNotificationSchedule();
     }
 
     // Încarcă datele salvate la pornirea/reîmprospătarea paginii
@@ -3141,6 +3577,7 @@
         setStartDateInput(formatDateKey(new Date()));
         initLanguage();
         renderPersonList();
+        pushNotificationSchedule();
     };
 </script>
 
