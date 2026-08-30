@@ -432,6 +432,121 @@
         .confirm-modal-ok:hover {
             background-color: #c0392b;
         }
+        .person-list-heading {
+            margin-top: 0;
+            text-align: left;
+            font-size: 15px;
+        }
+        #personList {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .person-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 12px;
+            background: #f9f9f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            color: #2c3e50;
+            flex: none;
+        }
+        .person-card:hover {
+            background: #f3f4f6;
+            border-color: #d5d8dc;
+        }
+        .person-card-icon {
+            font-size: 22px;
+            flex: none;
+        }
+        .person-card-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .person-card-name {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .person-card-count {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        .person-card-arrow {
+            font-size: 22px;
+            color: #95a5a6;
+            flex: none;
+            line-height: 1;
+        }
+        .btn-add-person {
+            width: 100%;
+            background-color: #27ae60;
+            flex: none;
+        }
+        .btn-add-person:hover {
+            background-color: #219653;
+        }
+        .person-plan-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0 12px;
+            margin-bottom: 8px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .person-back-btn {
+            width: 36px;
+            height: 36px;
+            flex: none;
+            padding: 0;
+            background: #f3f4f6;
+            color: #2c3e50;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .person-back-btn:hover {
+            background: #e8eaed;
+        }
+        .person-plan-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c3e50;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .add-person-modal-input {
+            width: 100%;
+            margin-bottom: 16px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 15px;
+        }
+        .confirm-modal-add {
+            background-color: #27ae60;
+            flex: 1;
+        }
+        .confirm-modal-add:hover {
+            background-color: #219653;
+        }
         .calendar-range-hint {
             font-size: 11px;
             color: #7f8c8d;
@@ -564,7 +679,19 @@
 <body>
 
 <div class="container">
-    <h1>💊 Monitorizare & Calculator Medicamente</h1>
+    <h1 id="appTitle">💊 Monitorizare & Calculator Medicamente</h1>
+
+    <div id="personListView">
+        <h3 class="person-list-heading">Persoane</h3>
+        <div id="personList"></div>
+        <button type="button" class="btn-add-person" onclick="openAddPersonModal()">＋ Persoană nouă</button>
+    </div>
+
+    <div id="personPlanView" class="hidden">
+        <div class="person-plan-header">
+            <button type="button" class="person-back-btn" onclick="closePersonPlan()" title="Înapoi" aria-label="Înapoi">←</button>
+            <span class="person-plan-title" id="personPlanTitle"></span>
+        </div>
     
     <div class="form-group">
         <div>
@@ -683,6 +810,7 @@
         </div>
         <div id="medCalendar"></div>
     </div>
+    </div>
 </div>
 
 <div id="confirmModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalMessage">
@@ -696,12 +824,29 @@
     </div>
 </div>
 
+<div id="addPersonModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="addPersonModalLabel">
+    <div class="confirm-modal-backdrop" onclick="closeAddPersonModal()"></div>
+    <div class="confirm-modal-box">
+        <p id="addPersonModalLabel" class="confirm-modal-message">Persoană nouă</p>
+        <input type="text" id="addPersonName" class="add-person-modal-input" placeholder="Ex: Mama" maxlength="50">
+        <div class="confirm-modal-actions">
+            <button type="button" class="confirm-modal-cancel" onclick="closeAddPersonModal()">Anulează</button>
+            <button type="button" class="confirm-modal-add" onclick="confirmAddPerson()">Adaugă</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Tabloul global în care stocăm obiectele medicamentelor
     let medications = [];
+    let persons = [];
+    let selectedPersonId = null;
     let showCalendarView = false;
     let medChecks = {};
     let confirmModalCallback = null;
+
+    const PERSONS_STORAGE_KEY = 'medicationsPersons_v1';
+    const MEDS_STORAGE_KEY = 'medicationsStockApp_v2';
 
     const DAYS_SHORT = ["D", "L", "M", "Mi", "J", "V", "S"];
 
@@ -788,7 +933,7 @@
 
     function getUniqueMedName(inputName) {
         const base = inputName.trim();
-        const related = medications.filter(med => {
+        const related = getPersonMedications().filter(med => {
             if (med.name === base) return true;
             const match = med.name.match(/^(.+) #(\d+)$/);
             return match && match[1] === base;
@@ -843,6 +988,8 @@
 
     // Adaugă un medicament nou în memorie și în tabel
     function addMedication() {
+        if (!selectedPersonId) return;
+
         const name = document.getElementById('medName').value.trim();
         const unit = document.getElementById('medUnit').value;
         const qty = parseQtyValue(document.getElementById('medQty').value, unit);
@@ -886,6 +1033,7 @@
 
         const newMed = {
             id: Date.now().toString(),
+            personId: selectedPersonId,
             name: getUniqueMedName(name),
             initialQty: qty,
             startDate,
@@ -901,6 +1049,7 @@
         medications.push(newMed);
         saveToStorage();
         renderPlan();
+        renderPersonList();
         resetForm();
     }
 
@@ -1114,7 +1263,148 @@
 
     function getFilteredMedications() {
         const searchQuery = getSearchQuery();
-        return medications.filter(med => !searchQuery || med.name.toLowerCase().includes(searchQuery));
+        return getPersonMedications()
+            .filter(med => !searchQuery || med.name.toLowerCase().includes(searchQuery));
+    }
+
+    function getPersonMedications(personId = selectedPersonId) {
+        return medications.filter(med => med.personId === personId);
+    }
+
+    function getPersonMedCount(personId) {
+        return medications.filter(med => med.personId === personId).length;
+    }
+
+    function formatMedCountLabel(count) {
+        if (count === 1) return '1 medicament';
+        return `${count} medicamente`;
+    }
+
+    function getSelectedPerson() {
+        return persons.find(person => person.id === selectedPersonId) || null;
+    }
+
+    function renderPersonList() {
+        const container = document.getElementById('personList');
+        if (!container) return;
+
+        if (persons.length === 0) {
+            container.innerHTML = '<p class="med-empty">Nicio persoană.</p>';
+            return;
+        }
+
+        container.innerHTML = persons.map(person => {
+            const count = getPersonMedCount(person.id);
+            const safeName = person.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<button type="button" class="person-card" onclick="openPerson('${person.id}')">
+                <span class="person-card-icon" aria-hidden="true">👤</span>
+                <span class="person-card-info">
+                    <span class="person-card-name">${safeName}</span>
+                    <span class="person-card-count">${formatMedCountLabel(count)}</span>
+                </span>
+                <span class="person-card-arrow" aria-hidden="true">›</span>
+            </button>`;
+        }).join('');
+    }
+
+    function openPerson(personId) {
+        if (!persons.some(person => person.id === personId)) return;
+
+        selectedPersonId = personId;
+        showCalendarView = false;
+
+        document.getElementById('personListView').classList.add('hidden');
+        document.getElementById('personPlanView').classList.remove('hidden');
+        document.getElementById('appTitle').classList.add('hidden');
+
+        const person = getSelectedPerson();
+        document.getElementById('personPlanTitle').textContent = `👤 ${person?.name || ''}`;
+
+        document.getElementById('planListView').classList.remove('hidden');
+        document.getElementById('planCalendarView').classList.add('hidden');
+        const btn = document.getElementById('btnToggleCalendar');
+        btn.textContent = '📅 Calendar 2 săpt.';
+        btn.classList.remove('active');
+
+        renderPlan();
+    }
+
+    function closePersonPlan() {
+        selectedPersonId = null;
+        showCalendarView = false;
+
+        document.getElementById('personPlanView').classList.add('hidden');
+        document.getElementById('personListView').classList.remove('hidden');
+        document.getElementById('appTitle').classList.remove('hidden');
+
+        renderPersonList();
+    }
+
+    function openAddPersonModal() {
+        const modal = document.getElementById('addPersonModal');
+        const input = document.getElementById('addPersonName');
+        if (!modal || !input) return;
+
+        input.value = '';
+        modal.classList.remove('hidden');
+        input.focus();
+    }
+
+    function closeAddPersonModal() {
+        document.getElementById('addPersonModal')?.classList.add('hidden');
+    }
+
+    function confirmAddPerson() {
+        const input = document.getElementById('addPersonName');
+        const name = (input?.value || '').trim();
+        if (!name) {
+            alert('Introdu un nume pentru persoană.');
+            input?.focus();
+            return;
+        }
+
+        const newPerson = {
+            id: `person_${Date.now()}`,
+            name
+        };
+
+        persons.push(newPerson);
+        savePersonsToStorage();
+        closeAddPersonModal();
+        renderPersonList();
+        openPerson(newPerson.id);
+    }
+
+    function savePersonsToStorage() {
+        localStorage.setItem(PERSONS_STORAGE_KEY, JSON.stringify(persons));
+    }
+
+    function migrateToPersons() {
+        const storedPersons = localStorage.getItem(PERSONS_STORAGE_KEY);
+        if (storedPersons) {
+            persons = JSON.parse(storedPersons);
+        } else {
+            const defaultPerson = { id: 'person_default', name: 'Eu' };
+            persons = [defaultPerson];
+            medications = medications.map(med => ({
+                ...med,
+                personId: med.personId || defaultPerson.id
+            }));
+            savePersonsToStorage();
+            saveToStorage();
+        }
+
+        if (persons.length === 0) {
+            const defaultPerson = { id: `person_${Date.now()}`, name: 'Eu' };
+            persons = [defaultPerson];
+            savePersonsToStorage();
+        }
+
+        const fallbackPersonId = persons[0].id;
+        medications = medications.map(med => ({
+            ...med,
+            personId: persons.some(person => person.id === med.personId) ? med.personId : fallbackPersonId
+        }));
     }
 
     function formatDateKey(date) {
@@ -1532,17 +1822,22 @@
             removeChecksForMed(id);
             saveToStorage();
             renderPlan();
+            renderPersonList();
         });
     }
 
     // Funcția Reset - Golește memoria locală și tabelul
     function resetAll() {
-        showConfirmModal("Sigur vrei să ștergi TOATE medicamentele salvate? Datele nu vor mai putea fi recuperate.", () => {
-            medications = [];
-            medChecks = {};
+        const person = getSelectedPerson();
+        const personName = person?.name || 'această persoană';
+        showConfirmModal(`Sigur vrei să ștergi TOATE medicamentele pentru ${personName}? Datele nu vor mai putea fi recuperate.`, () => {
+            const medIdsToRemove = getPersonMedications().map(med => med.id);
+            medications = medications.filter(med => med.personId !== selectedPersonId);
+            medIdsToRemove.forEach(medId => removeChecksForMed(medId));
             saveChecksToStorage();
             saveToStorage();
             renderPlan();
+            renderPersonList();
         });
     }
 
@@ -1572,9 +1867,20 @@
     }
 
     document.addEventListener('keydown', (event) => {
-        const modal = document.getElementById('confirmModal');
-        if (event.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
-            closeConfirmModal();
+        const confirmModal = document.getElementById('confirmModal');
+        const addPersonModal = document.getElementById('addPersonModal');
+
+        if (event.key === 'Escape') {
+            if (confirmModal && !confirmModal.classList.contains('hidden')) {
+                closeConfirmModal();
+            } else if (addPersonModal && !addPersonModal.classList.contains('hidden')) {
+                closeAddPersonModal();
+            }
+            return;
+        }
+
+        if (event.key === 'Enter' && addPersonModal && !addPersonModal.classList.contains('hidden')) {
+            confirmAddPerson();
         }
     });
 
@@ -1597,21 +1903,22 @@
 
     // Salvează starea listei în memoria browserului
     function saveToStorage() {
-        localStorage.setItem('medicationsStockApp_v2', JSON.stringify(medications));
+        localStorage.setItem(MEDS_STORAGE_KEY, JSON.stringify(medications));
     }
 
     // Încarcă datele salvate la pornirea/reîmprospătarea paginii
     window.onload = function() {
-        const stored = localStorage.getItem('medicationsStockApp_v2');
+        const stored = localStorage.getItem(MEDS_STORAGE_KEY);
         if (stored) {
             medications = JSON.parse(stored);
             normalizeMedications();
         }
+        migrateToPersons();
         loadChecksFromStorage();
         initCalendarViewStart();
         setStartDateInput(formatDateKey(new Date()));
         updateUnitFields();
-        renderPlan();
+        renderPersonList();
     };
 </script>
 
