@@ -1586,9 +1586,13 @@
         }
 
         if (personEditMode) {
+            const canDeletePerson = persons.length > 1;
             container.innerHTML = persons.map(person => {
                 const safeName = person.name.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const count = getPersonMedCount(person.id);
+                const deleteBtn = canDeletePerson
+                    ? `<button type="button" class="delete-btn" onclick="deletePerson('${person.id}')" title="Șterge persoana" aria-label="Șterge persoana">×</button>`
+                    : '';
                 return `<div class="person-edit-card">
                     <span class="person-card-icon" aria-hidden="true">👤</span>
                     <div class="person-card-info">
@@ -1602,7 +1606,7 @@
                             onkeydown="handlePersonNameKeydown(event)">
                         <span class="person-card-count">${formatMedCountLabel(count)}</span>
                     </div>
-                    <button type="button" class="delete-btn" onclick="deletePerson('${person.id}')" title="Șterge persoana" aria-label="Șterge persoana">×</button>
+                    ${deleteBtn}
                 </div>`;
             }).join('');
             return;
