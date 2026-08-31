@@ -45,6 +45,54 @@
             align-self: flex-start;
             margin-top: 2px;
         }
+        .app-header-controls {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            flex: none;
+        }
+        .settings-toggle {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            font-size: 17px;
+            background: #f3f4f6;
+            color: #2c3e50;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            flex: none;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .settings-toggle:hover {
+            background: #e8eaed;
+        }
+        .settings-modal-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .settings-modal-row label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .settings-modal-row input[type="time"] {
+            width: auto;
+            flex: none;
+            padding: 6px 8px;
+            font-size: 14px;
+        }
+        .settings-hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin: 0 0 16px;
+            text-align: left;
+            line-height: 1.4;
+        }
         .lang-toggle {
             width: 34px;
             height: 34px;
@@ -816,6 +864,64 @@
             flex: none;
             margin-left: auto;
         }
+        #todayCheckHeader .lang-switcher {
+            flex: none;
+            margin-left: auto;
+        }
+        .today-check-body {
+            padding-bottom: 72px;
+        }
+        .today-check-day {
+            margin-top: 4px;
+        }
+        .calendar-day-badge--clickable {
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            flex: none;
+            width: auto;
+            padding: 3px 10px;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+        .calendar-day-badge--clickable:hover {
+            background: #2980b9;
+        }
+        .today-check-empty {
+            margin: 0;
+            padding: 4px 0 2px;
+            font-size: 13px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+        .today-check-footer {
+            position: fixed;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            z-index: 150;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-today-quit {
+            width: auto;
+            min-width: 72px;
+            padding: 10px 14px;
+            background: #7f8c8d;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            flex: none;
+            cursor: pointer;
+        }
+        .btn-today-quit:hover {
+            background: #616a6b;
+        }
         .add-person-modal-input {
             width: 100%;
             margin-bottom: 16px;
@@ -1059,7 +1165,9 @@
 <div class="container">
     <div class="app-header">
         <h1 id="appTitle" data-i18n="appTitle">💊 Meds Monitor</h1>
-        <div class="lang-switcher" id="langSwitcher">
+        <div class="app-header-controls" id="appHeaderControls">
+            <button type="button" class="settings-toggle" id="btnSettings" onclick="openSettingsModal()" data-i18n-title="settings" data-i18n-aria="settings" title="Setări" aria-label="Setări">⚙️</button>
+            <div class="lang-switcher" id="langSwitcher">
             <button type="button" class="lang-toggle" id="langToggle" onclick="toggleLangDropdown(event)" aria-haspopup="listbox" aria-expanded="false" title="Language">
                 <span id="langToggleFlag">🇷🇴</span>
             </button>
@@ -1068,6 +1176,7 @@
                 <button type="button" class="lang-option" data-lang="en" onclick="selectLanguage('en')"><span class="lang-option-flag">🇬🇧</span><span>English</span></button>
                 <button type="button" class="lang-option" data-lang="fr" onclick="selectLanguage('fr')"><span class="lang-option-flag">🇫🇷</span><span>Français</span></button>
             </div>
+        </div>
         </div>
     </div>
 
@@ -1225,6 +1334,25 @@
         <div id="medCalendar"></div>
     </div>
     </div>
+
+    <div id="todayCheckView" class="hidden">
+        <div class="person-plan-header" id="todayCheckHeader">
+            <button type="button" class="person-back-btn" onclick="closeTodayCheckView()" data-i18n-title="back" data-i18n-aria="back">←</button>
+            <span class="person-plan-title" id="todayCheckTitle"></span>
+        </div>
+        <div class="today-check-body">
+            <div class="calendar-day calendar-day-today today-check-day">
+                <div class="calendar-day-header">
+                    <div class="calendar-day-title" id="todayCheckDate"></div>
+                    <span class="calendar-day-badge" id="todayCheckBadge" data-i18n="badgeToday">Azi</span>
+                </div>
+                <div class="calendar-periods" id="todayCheckPeriods"></div>
+            </div>
+        </div>
+        <div class="today-check-footer">
+            <button type="button" id="btnTodayQuit" class="btn-today-quit hidden" onclick="quitAndroidApp()" data-i18n="appQuit">Ieșire</button>
+        </div>
+    </div>
 </div>
 
 <div id="confirmModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalMessage">
@@ -1268,6 +1396,30 @@
     <div class="confirm-modal-box add-person-modal-box">
         <p id="iconPickerModalLabel" class="confirm-modal-message" style="text-align: left;" data-i18n="chooseIcon">Alege iconița</p>
         <div id="iconPickerModalBody"></div>
+    </div>
+</div>
+
+<div id="settingsModal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="confirm-modal-backdrop" onclick="closeSettingsModal()"></div>
+    <div class="confirm-modal-box add-person-modal-box">
+        <p id="settingsModalTitle" class="confirm-modal-message" style="text-align: left;" data-i18n="settingsTitle">Setări notificări</p>
+        <p class="settings-hint" data-i18n="settingsNotifyHint">Ore pentru persoana principală. Active doar în app Android.</p>
+        <div class="settings-modal-row">
+            <label for="settingsNotifyMorning" data-i18n="settingsNotifyMorning">Dimineața</label>
+            <input type="time" id="settingsNotifyMorning" value="09:00">
+        </div>
+        <div class="settings-modal-row">
+            <label for="settingsNotifyLunch" data-i18n="settingsNotifyLunch">Prânz</label>
+            <input type="time" id="settingsNotifyLunch" value="14:00">
+        </div>
+        <div class="settings-modal-row">
+            <label for="settingsNotifyEvening" data-i18n="settingsNotifyEvening">Seara</label>
+            <input type="time" id="settingsNotifyEvening" value="19:00">
+        </div>
+        <div class="confirm-modal-actions">
+            <button type="button" class="confirm-modal-cancel" onclick="closeSettingsModal()" data-i18n="cancel">Anulează</button>
+            <button type="button" class="confirm-modal-add" onclick="saveSettingsFromModal()" data-i18n="save">Salvează</button>
+        </div>
     </div>
 </div>
 
@@ -1325,6 +1477,14 @@
             addToPlan: 'Adaugă în Plan',
             cancel: 'Anulează',
             ok: 'OK',
+            settings: 'Setări',
+            settingsTitle: 'Setări notificări',
+            settingsNotifyHint: 'Ore pentru persoana principală. Active doar în app Android.',
+            settingsNotifyMorning: 'Dimineața',
+            settingsNotifyLunch: 'Prânz',
+            settingsNotifyEvening: 'Seara',
+            save: 'Salvează',
+            alertInvalidTime: 'Introdu ore valide (HH:MM).',
             appQuit: 'Ieșire',
             delete: 'Șterge',
             add: 'Adaugă',
@@ -1341,6 +1501,8 @@
             noPersons: 'Nicio persoană.',
             noMeds: 'Niciun medicament găsit.',
             noMedsCalendar: 'Niciun medicament de luat în perioada selectată.',
+            noMedsToday: 'Niciun medicament de luat azi.',
+            noMedsPeriod: 'Nimic de luat',
             changeIcon: 'Schimbă iconița',
             deletePerson: 'Șterge persoana',
             personName: 'Nume',
@@ -1436,6 +1598,14 @@
             addToPlan: 'Add to plan',
             cancel: 'Cancel',
             ok: 'OK',
+            settings: 'Settings',
+            settingsTitle: 'Notification settings',
+            settingsNotifyHint: 'Times for the primary person. Active only in the Android app.',
+            settingsNotifyMorning: 'Morning',
+            settingsNotifyLunch: 'Lunch',
+            settingsNotifyEvening: 'Evening',
+            save: 'Save',
+            alertInvalidTime: 'Enter valid times (HH:MM).',
             appQuit: 'Quit',
             delete: 'Delete',
             add: 'Add',
@@ -1452,6 +1622,8 @@
             noPersons: 'No people yet.',
             noMeds: 'No medications found.',
             noMedsCalendar: 'No medications in the selected period.',
+            noMedsToday: 'No medications to take today.',
+            noMedsPeriod: 'Nothing to take',
             changeIcon: 'Change icon',
             deletePerson: 'Delete person',
             personName: 'Name',
@@ -1547,6 +1719,14 @@
             addToPlan: 'Ajouter au plan',
             cancel: 'Annuler',
             ok: 'OK',
+            settings: 'Paramètres',
+            settingsTitle: 'Notifications',
+            settingsNotifyHint: 'Heures pour la personne principale. Actives uniquement dans l\'app Android.',
+            settingsNotifyMorning: 'Matin',
+            settingsNotifyLunch: 'Midi',
+            settingsNotifyEvening: 'Soir',
+            save: 'Enregistrer',
+            alertInvalidTime: 'Saisissez des heures valides (HH:MM).',
             appQuit: 'Quitter',
             delete: 'Supprimer',
             add: 'Ajouter',
@@ -1563,6 +1743,8 @@
             noPersons: 'Aucune personne.',
             noMeds: 'Aucun médicament trouvé.',
             noMedsCalendar: 'Aucun médicament sur la période sélectionnée.',
+            noMedsToday: 'Aucun médicament à prendre aujourd\'hui.',
+            noMedsPeriod: 'Rien à prendre',
             changeIcon: 'Changer l\'icône',
             deletePerson: 'Supprimer la personne',
             personName: 'Nom',
@@ -1790,6 +1972,7 @@
     let personEditMode = false;
     let personEditSnapshot = null;
     let showCalendarView = false;
+    let todayCheckViewOpen = false;
     let medFormOpen = false;
     let medChecks = {};
     let confirmModalCallback = null;
@@ -1799,11 +1982,13 @@
     const MEDS_STORAGE_KEY = 'medicationsStockApp_v2';
     const DEFAULT_PERSON_STORAGE_KEY = 'defaultPersonId';
     const NOTIFICATION_SCHEDULE_DAYS = 14;
-    const NOTIFICATION_TIMES = {
+    const DEFAULT_NOTIFICATION_TIMES = {
         dim: '09:00',
         pranz: '14:00',
         seara: '19:00'
     };
+    const NOTIFICATION_TIMES_STORAGE_KEY = 'notificationTimes_v1';
+    let notificationTimes = { ...DEFAULT_NOTIFICATION_TIMES };
     const BACKUP_APP_ID = 'MedsMonitor';
     const BACKUP_VERSION = 1;
     const DEFAULT_PERSON_ICON = '👨';
@@ -1825,6 +2010,58 @@
     const UNIT_LABELS = { caps: 'caps', ml: 'ml', mg: 'mg' };
     const PERIOD_ORDER = { dim: 0, pranz: 1, seara: 2 };
     const PERIODS = ['dim', 'pranz', 'seara'];
+
+    function loadNotificationTimes() {
+        const stored = localStorage.getItem(NOTIFICATION_TIMES_STORAGE_KEY);
+        if (!stored) return;
+        try {
+            const parsed = JSON.parse(stored);
+            notificationTimes = { ...DEFAULT_NOTIFICATION_TIMES, ...parsed };
+        } catch (e) {}
+    }
+
+    function getNotificationTimes() {
+        return notificationTimes;
+    }
+
+    function saveNotificationTimes(times) {
+        notificationTimes = { ...DEFAULT_NOTIFICATION_TIMES, ...times };
+        localStorage.setItem(NOTIFICATION_TIMES_STORAGE_KEY, JSON.stringify(notificationTimes));
+        pushNotificationSchedule();
+    }
+
+    function isValidTimeValue(value) {
+        if (!/^\d{2}:\d{2}$/.test(value)) return false;
+        const [hours, minutes] = value.split(':').map(Number);
+        return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+    }
+
+    function openSettingsModal() {
+        closeLangDropdown();
+        const times = getNotificationTimes();
+        document.getElementById('settingsNotifyMorning').value = times.dim;
+        document.getElementById('settingsNotifyLunch').value = times.pranz;
+        document.getElementById('settingsNotifyEvening').value = times.seara;
+        document.getElementById('settingsModal')?.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settingsModal')?.classList.add('hidden');
+    }
+
+    function saveSettingsFromModal() {
+        const times = {
+            dim: document.getElementById('settingsNotifyMorning')?.value || DEFAULT_NOTIFICATION_TIMES.dim,
+            pranz: document.getElementById('settingsNotifyLunch')?.value || DEFAULT_NOTIFICATION_TIMES.pranz,
+            seara: document.getElementById('settingsNotifyEvening')?.value || DEFAULT_NOTIFICATION_TIMES.seara
+        };
+        if (!PERIODS.every(period => isValidTimeValue(times[period]))) {
+            showAlertModal(t('alertInvalidTime'));
+            return;
+        }
+        saveNotificationTimes(times);
+        closeSettingsModal();
+    }
 
     function getMedUnit(med) {
         return med.unit || 'caps';
@@ -2242,7 +2479,7 @@
                     date: dateKey,
                     period,
                     periodLabel: getPeriodLabel(period),
-                    time: NOTIFICATION_TIMES[period],
+                    time: getNotificationTimes()[period],
                     meds: meds.map(med => med.name),
                     medIds: meds.map(med => med.id)
                 });
@@ -2272,16 +2509,89 @@
     }
 
     function initAndroidBridge() {
+        updateQuitButtonVisibility();
+    }
+
+    function isTodayCheckViewOpen() {
+        return todayCheckViewOpen;
+    }
+
+    function updateQuitButtonVisibility() {
+        const isAndroid = window.AndroidBridge && typeof window.AndroidBridge.quit === 'function';
         const quitBtn = document.getElementById('btnAppQuit');
-        if (!quitBtn) return;
-        if (window.AndroidBridge && typeof window.AndroidBridge.quit === 'function') {
-            quitBtn.classList.remove('hidden');
+        const todayQuitBtn = document.getElementById('btnTodayQuit');
+
+        if (!isAndroid) {
+            quitBtn?.classList.add('hidden');
+            todayQuitBtn?.classList.add('hidden');
+            return;
+        }
+
+        if (isTodayCheckViewOpen()) {
+            quitBtn?.classList.add('hidden');
+            todayQuitBtn?.classList.remove('hidden');
         } else {
-            quitBtn.classList.add('hidden');
+            quitBtn?.classList.remove('hidden');
+            todayQuitBtn?.classList.add('hidden');
         }
     }
 
     // Calculează data la care se termină stocul; returnează timestamp pentru sortare și text afișat
+    function formatStockOutDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return {
+            timestamp: date.getTime(),
+            label: `${getDaysShort()[date.getDay()]}, ${day}.${month}.${year}`
+        };
+    }
+
+    function simulateStockDepletion(med, startDate, endDate, mode) {
+        const epsilon = 0.0001;
+        let currentQty = getMedInitialQty(med);
+        const checkDate = new Date(startDate);
+        checkDate.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(0, 0, 0, 0);
+        let iterations = 0;
+        const maxSafetyIterations = 5000;
+
+        while (checkDate <= end && currentQty > epsilon && iterations < maxSafetyIterations) {
+            if (isMedScheduledOnDate(med, checkDate)) {
+                const dateKey = formatDateKey(checkDate);
+                for (const period of PERIODS) {
+                    const dose = getDoseForPeriod(med, period);
+                    if (dose <= 0) continue;
+                    if (mode === 'checked' && !isMedChecked(med.id, dateKey, period)) continue;
+                    if (currentQty < dose - epsilon) {
+                        return formatStockOutDate(checkDate);
+                    }
+                    currentQty -= dose;
+                    if (currentQty <= epsilon) {
+                        return formatStockOutDate(checkDate);
+                    }
+                }
+            }
+
+            checkDate.setDate(checkDate.getDate() + 1);
+            iterations++;
+        }
+
+        return null;
+    }
+
+    function findPastStockOutDate(med) {
+        const medStart = parseDateKey(getMedStartDate(med));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const fromChecks = simulateStockDepletion(med, medStart, today, 'checked');
+        if (fromChecks) return fromChecks;
+
+        return simulateStockDepletion(med, medStart, today, 'scheduled');
+    }
+
     function calculateStockOut(med) {
         const epsilon = 0.0001;
         let currentQty = getCurrentRemaining(med);
@@ -2289,17 +2599,17 @@
         checkDate.setHours(0, 0, 0, 0);
 
         if (currentQty <= epsilon) {
-            const day = String(checkDate.getDate()).padStart(2, '0');
-            const month = String(checkDate.getMonth() + 1).padStart(2, '0');
-            const year = checkDate.getFullYear();
-            return {
-                timestamp: checkDate.getTime(),
-                label: `${getDaysShort()[checkDate.getDay()]}, ${day}.${month}.${year}`
-            };
+            const pastStockOut = findPastStockOutDate(med);
+            if (pastStockOut) return pastStockOut;
+            return formatStockOutDate(checkDate);
         }
 
         let iterations = 0;
         const maxSafetyIterations = 5000;
+        const medStart = parseDateKey(getMedStartDate(med));
+        if (checkDate < medStart) {
+            checkDate = new Date(medStart);
+        }
 
         while (currentQty > epsilon && iterations < maxSafetyIterations) {
             if (isMedScheduledOnDate(med, checkDate)) {
@@ -2309,7 +2619,7 @@
                     if (dose <= 0) continue;
                     if (isMedChecked(med.id, dateKey, period)) continue;
                     if (currentQty < dose - epsilon) {
-                        iterations = maxSafetyIterations;
+                        currentQty = 0;
                         break;
                     }
                     currentQty -= dose;
@@ -2329,15 +2639,7 @@
             return { timestamp: Number.MAX_SAFE_INTEGER, label: t('over10years') };
         }
 
-        const day = String(checkDate.getDate()).padStart(2, '0');
-        const month = String(checkDate.getMonth() + 1).padStart(2, '0');
-        const year = checkDate.getFullYear();
-        const dayName = getDaysShort()[checkDate.getDay()];
-
-        return {
-            timestamp: checkDate.getTime(),
-            label: `${dayName}, ${day}.${month}.${year}`
-        };
+        return formatStockOutDate(checkDate);
     }
 
     // Clasă de culoare în funcție de câte zile mai sunt până la epuizarea stocului
@@ -2706,11 +3008,12 @@
     }
 
     function placeLangSwitcherInAppHeader() {
-        const appHeader = document.querySelector('.app-header');
+        const appHeaderControls = document.getElementById('appHeaderControls');
         const langSwitcher = document.getElementById('langSwitcher');
-        if (appHeader && langSwitcher) {
-            appHeader.appendChild(langSwitcher);
+        if (appHeaderControls && langSwitcher) {
+            appHeaderControls.appendChild(langSwitcher);
         }
+        const appHeader = document.querySelector('.app-header');
         appHeader?.classList.remove('hidden');
         document.getElementById('appTitle')?.classList.remove('hidden');
     }
@@ -2725,10 +3028,114 @@
         appHeader?.classList.add('hidden');
     }
 
+    function placeLangSwitcherInTodayHeader() {
+        const todayHeader = document.getElementById('todayCheckHeader');
+        const langSwitcher = document.getElementById('langSwitcher');
+        const appHeader = document.querySelector('.app-header');
+        if (todayHeader && langSwitcher) {
+            todayHeader.appendChild(langSwitcher);
+        }
+        appHeader?.classList.add('hidden');
+    }
+
+    function collectCalendarMedsForDay(meds, dateKey, date) {
+        const dimMeds = [];
+        const pranzMeds = [];
+        const searaMeds = [];
+
+        meds.forEach(med => {
+            if (med.dim > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'dim')) {
+                dimMeds.push(formatCalendarMedItem(med, med.dim, dateKey, 'dim'));
+            }
+            if (med.pranz > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'pranz')) {
+                pranzMeds.push(formatCalendarMedItem(med, med.pranz, dateKey, 'pranz'));
+            }
+            if (med.seara > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'seara')) {
+                searaMeds.push(formatCalendarMedItem(med, med.seara, dateKey, 'seara'));
+            }
+        });
+
+        return { dimMeds, pranzMeds, searaMeds };
+    }
+
+    function renderTodayCheckView() {
+        const container = document.getElementById('todayCheckPeriods');
+        const dateEl = document.getElementById('todayCheckDate');
+        if (!container || !dateEl || !selectedPersonId) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayKey = formatDateKey(today);
+        dateEl.textContent = formatDateLabel(today);
+
+        const meds = getPersonMedications(selectedPersonId);
+        const { dimMeds, pranzMeds, searaMeds } = collectCalendarMedsForDay(meds, todayKey, today);
+        const hasAny = dimMeds.length > 0 || pranzMeds.length > 0 || searaMeds.length > 0;
+
+        if (!hasAny) {
+            container.innerHTML = `<p class="med-empty">${t('noMedsToday')}</p>`;
+            return;
+        }
+
+        let html = '';
+        html += renderCalendarPeriod('calendar-period--dim', '🌅', t('periodMorning'), dimMeds, { alwaysShow: true });
+        html += renderCalendarPeriod('calendar-period--pranz', '☀️', t('periodLunch'), pranzMeds, { alwaysShow: true });
+        html += renderCalendarPeriod('calendar-period--seara', '🌙', t('periodEvening'), searaMeds, { alwaysShow: true });
+        container.innerHTML = html;
+    }
+
+    function openTodayCheckView(personId) {
+        const targetId = personId || selectedPersonId;
+        if (!targetId || !persons.some(person => person.id === targetId)) return;
+
+        selectedPersonId = targetId;
+        showCalendarView = true;
+        todayCheckViewOpen = true;
+        closeMedFormPanel();
+
+        document.getElementById('personListView').classList.add('hidden');
+        document.getElementById('personPlanView').classList.add('hidden');
+        document.getElementById('todayCheckView').classList.remove('hidden');
+
+        placeLangSwitcherInTodayHeader();
+
+        const person = persons.find(item => item.id === targetId);
+        document.getElementById('todayCheckTitle').textContent = `${getPersonIcon(person)} ${person?.name || ''}`;
+
+        renderTodayCheckView();
+        updateQuitButtonVisibility();
+    }
+
+    function closeTodayCheckView() {
+        if (!selectedPersonId) return;
+
+        todayCheckViewOpen = false;
+        document.getElementById('todayCheckView').classList.add('hidden');
+        document.getElementById('personPlanView').classList.remove('hidden');
+
+        showCalendarView = true;
+        placeLangSwitcherInPersonHeader();
+
+        const person = getSelectedPerson();
+        document.getElementById('personPlanTitle').textContent = `${getPersonIcon(person)} ${person?.name || ''}`;
+
+        setPlanTab('calendar');
+        goToCalendarToday();
+        renderPlan();
+        updateQuitButtonVisibility();
+    }
+
+    function openTodayCheckViewFromCalendar() {
+        if (!selectedPersonId) return;
+        openTodayCheckView(selectedPersonId);
+    }
+
     function openPerson(personId) {
         if (personEditMode) return;
         if (!persons.some(person => person.id === personId)) return;
 
+        todayCheckViewOpen = false;
+        document.getElementById('todayCheckView')?.classList.add('hidden');
         selectedPersonId = personId;
         showCalendarView = false;
         closeMedFormPanel();
@@ -2742,18 +3149,47 @@
 
         showListView();
         renderPlan();
+        updateQuitButtonVisibility();
+    }
+
+    function consumePendingNotificationNav() {
+        if (!window.__pendingNotificationNav) return;
+        const nav = window.__pendingNotificationNav;
+        window.__pendingNotificationNav = null;
+        openFromNotification(nav.personId, nav.view);
+    }
+
+    function openFromNotification(personId, view) {
+        const targetId = (personId && persons.some(person => person.id === personId))
+            ? personId
+            : getDefaultPersonId();
+        if (!targetId) return;
+
+        if (view === 'today') {
+            openTodayCheckView(targetId);
+            return;
+        }
+
+        openPerson(targetId);
+        if (view === 'calendar') {
+            goToCalendarToday();
+            setPlanTab('calendar');
+        }
     }
 
     function closePersonPlan() {
         selectedPersonId = null;
         showCalendarView = false;
+        todayCheckViewOpen = false;
         closeMedFormPanel();
 
+        document.getElementById('todayCheckView')?.classList.add('hidden');
         document.getElementById('personPlanView').classList.add('hidden');
         document.getElementById('personListView').classList.remove('hidden');
         placeLangSwitcherInAppHeader();
 
         renderPersonList();
+        updateQuitButtonVisibility();
     }
 
     function openAddPersonModal() {
@@ -2875,7 +3311,11 @@
             delete medChecks[key];
         }
         saveChecksToStorage();
-        renderPlan();
+        if (isTodayCheckViewOpen()) {
+            renderTodayCheckView();
+        } else {
+            renderPlan();
+        }
     }
 
     function removeChecksForMed(medId) {
@@ -2936,15 +3376,21 @@
         </li>`;
     }
 
-    function renderCalendarPeriod(periodClass, icon, title, medItems) {
-        if (medItems.length === 0) return '';
+    function renderCalendarPeriod(periodClass, icon, title, medItems, options = {}) {
+        const alwaysShow = options.alwaysShow === true;
+        if (!alwaysShow && medItems.length === 0) return '';
+
+        const contentHtml = medItems.length === 0
+            ? `<p class="today-check-empty">${t('noMedsPeriod')}</p>`
+            : `<ul class="calendar-med-list">${medItems.join('')}</ul>`;
+
         return `
             <div class="calendar-period ${periodClass}">
                 <div class="calendar-period-title">
                     <span class="calendar-period-icon">${icon}</span>
                     <span>${title}</span>
                 </div>
-                <ul class="calendar-med-list">${medItems.join('')}</ul>
+                ${contentHtml}
             </div>`;
     }
 
@@ -3077,21 +3523,7 @@
             const date = new Date(current);
             const dateKey = formatDateKey(date);
 
-            const dimMeds = [];
-            const pranzMeds = [];
-            const searaMeds = [];
-
-            filteredMeds.forEach(med => {
-                if (med.dim > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'dim')) {
-                    dimMeds.push(formatCalendarMedItem(med, med.dim, dateKey, 'dim'));
-                }
-                if (med.pranz > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'pranz')) {
-                    pranzMeds.push(formatCalendarMedItem(med, med.pranz, dateKey, 'pranz'));
-                }
-                if (med.seara > 0 && shouldShowDoseInCalendar(med, date, dateKey, 'seara')) {
-                    searaMeds.push(formatCalendarMedItem(med, med.seara, dateKey, 'seara'));
-                }
-            });
+            const { dimMeds, pranzMeds, searaMeds } = collectCalendarMedsForDay(filteredMeds, dateKey, date);
 
             if (dimMeds.length === 0 && pranzMeds.length === 0 && searaMeds.length === 0) {
                 current.setDate(current.getDate() + 1);
@@ -3107,7 +3539,7 @@
 
             let dayBadge = '';
             if (dateKey === todayKey) {
-                dayBadge = `<span class="calendar-day-badge">${t('badgeToday')}</span>`;
+                dayBadge = `<button type="button" class="calendar-day-badge calendar-day-badge--clickable" onclick="openTodayCheckViewFromCalendar()" title="${t('badgeToday')}" aria-label="${t('badgeToday')}">${t('badgeToday')}</button>`;
             } else if (compareDateKeys(dateKey, todayKey) < 0) {
                 dayBadge = `<span class="calendar-day-badge calendar-day-badge--past">${t('badgePast')}</span>`;
             }
@@ -3458,15 +3890,35 @@
         renderPlan();
     }
 
-    async function exportBackup() {
-        if (!navigator.clipboard?.writeText) {
-            showAlertModal(t('errorExportClipboard'));
+    async function readClipboardText() {
+        if (window.AndroidBridge && typeof window.AndroidBridge.readClipboard === 'function') {
+            return window.AndroidBridge.readClipboard();
+        }
+        if (navigator.clipboard?.readText) {
+            return navigator.clipboard.readText();
+        }
+        throw new Error(t('errorImportClipboard'));
+    }
+
+    async function writeClipboardText(text) {
+        if (window.AndroidBridge && typeof window.AndroidBridge.writeClipboard === 'function') {
+            const success = window.AndroidBridge.writeClipboard(text);
+            if (!success) {
+                throw new Error(t('errorExportClipboard'));
+            }
             return;
         }
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+        throw new Error(t('errorExportClipboard'));
+    }
 
+    async function exportBackup() {
         try {
             const text = JSON.stringify(buildBackupPayload());
-            await navigator.clipboard.writeText(text);
+            await writeClipboardText(text);
             showAlertModal(t('exportSuccess'));
         } catch (error) {
             showAlertModal(error?.message || t('errorExportClipboard'));
@@ -3480,13 +3932,8 @@
     }
 
     async function importBackupFromClipboard() {
-        if (!navigator.clipboard?.readText) {
-            showAlertModal(t('errorImportClipboard'));
-            return;
-        }
-
         try {
-            const text = await navigator.clipboard.readText();
+            const text = await readClipboardText();
             const data = parseBackupPayload(text);
             applyBackupData(data);
             showAlertModal(t('importSuccess'));
@@ -3551,12 +3998,17 @@
         const alertModal = document.getElementById('alertModal');
         const addPersonModal = document.getElementById('addPersonModal');
         const iconPickerModal = document.getElementById('iconPickerModal');
+        const settingsModal = document.getElementById('settingsModal');
 
         if (event.key === 'Escape') {
             if (confirmModal && !confirmModal.classList.contains('hidden')) {
                 closeConfirmModal();
             } else if (alertModal && !alertModal.classList.contains('hidden')) {
                 closeAlertModal();
+            } else if (settingsModal && !settingsModal.classList.contains('hidden')) {
+                closeSettingsModal();
+            } else if (isTodayCheckViewOpen()) {
+                closeTodayCheckView();
             } else if (iconPickerModal && !iconPickerModal.classList.contains('hidden')) {
                 closeIconPickerModal();
             } else if (addPersonModal && !addPersonModal.classList.contains('hidden')) {
@@ -3616,9 +4068,11 @@
         initCalendarViewStart();
         setStartDateInput(formatDateKey(new Date()));
         initLanguage();
+        loadNotificationTimes();
         renderPersonList();
         pushNotificationSchedule();
         initAndroidBridge();
+        consumePendingNotificationNav();
     };
 </script>
 
