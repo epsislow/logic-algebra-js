@@ -1,0 +1,2338 @@
+# LogTScript — Inline Parser
+
+## 1. Overview
+
+`inline [parser]` is the LogTScript mechanism for defining a language parser directly inside a LogTScript program.
+
+Its purpose is to allow a user to define a complete language from scratch without implementing a conventional parser in an external programming language.
+
+An inline parser is responsible for transforming **source text** into a **structured, schema-defined representation** of that language.
+
+The fundamental pipeline is:
+
+```text
+Source Text
+    │
+    ▼
+┌──────────────────┐
+│  inline [parser] │
+│                  │
+│  Lexical Rules   │
+│  Syntax Rules    │
+│  Error Rules     │
+└────────┬─────────┘
+         │
+         ▼
+   AST / Structured
+       Value
+         │
+         ▼
+┌──────────────────┐
+│  comp [interp]   │
+│                  │
+│  Interpretation  │
+│  / Execution     │
+└──────────────────┘
+```
+
+The parser and interpreter are intentionally separate.
+
+The parser answers:
+
+> **"What structure does this source text represent?"**
+
+The interpreter answers:
+
+> **"What does that structure mean, and what should happen when it is executed?"**
+
+This separation is fundamental to the design.
+
+---
+
+# 2. Parser Output Is a Schema-Defined AST
+
+LogTScript does not require an opaque, implementation-specific `AST` runtime type.
+
+Instead, the AST is represented using the existing LogTScript schema system.
+
+For example:
+
+```logts
+<expr>:
+    kind: 4
+    value: 32
+    children: <expr>[0-]
+:
+```
+
+The schema describes the structure of an expression.
+
+A parser can therefore produce a value conforming to `<expr>`.
+
+Conceptually:
+
+```text
+source text
+     │
+     ▼
+   parser
+     │
+     ▼
+<expr>
+     │
+     ├── kind
+     ├── value
+     └── children
+```
+
+The AST is therefore not a special hidden object owned by the parser.
+
+It is ordinary structured LogTScript data.
+
+This provides several important properties:
+
+* AST values can be passed through wires.
+* AST values can be stored.
+* AST values can be inspected.
+* AST values can be modified by logic.
+* AST values can be constructed without a parser.
+* Different parsers can produce the same AST schema.
+* An interpreter can consume an AST without knowing anything about the original source text.
+
+---
+
+# 3. Parser and Interpreter Independence
+
+The parser should not be responsible for execution.
+
+Likewise, the interpreter should not require a parser.
+
+The intended architecture is:
+
+```text
+              ┌─────────────────┐
+              │ inline [parser] │
+              └────────┬────────┘
+                       │
+                       ▼
+                    AST
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  comp [interp]  │
+              └─────────────────┘
+```
+
+However, the AST can come from anywhere:
+
+```text
+                   ┌── inline [parser]
+                   │
+                   ├── another parser
+                   │
+                   ├── manually constructed AST
+                   │
+                   └── logic-generated AST
+                   │
+                   ▼
+                AST schema
+                   │
+                   ▼
+             comp [interp]
+```
+
+This means that a language implementation can be divided into independent pieces.
+
+For example:
+
+```text
+Parser A ─────┐
+              │
+Parser B ─────┼──> <expr> AST ───> Interpreter
+              │
+Logic ────────┘
+```
+
+As long as all producers generate the expected schema, the interpreter does not care where the AST originated.
+
+---
+
+# 4. Defining an Inline Parser
+
+The basic form is:
+
+```logts
+inline [parser] .language {
+    ...
+}
+```
+
+The parser definition contains the rules required to recognize the language.
+
+A complete parser normally consists of three conceptual layers:
+
+```text
+inline [parser]
+│
+├── Lexical Rules
+│
+├── Syntax Rules
+│
+└── Error / Recovery Rules
+```
+
+Lexical rules define the building blocks.
+
+Syntax rules define how those building blocks are combined.
+
+Error rules define what happens when the source cannot be recognized.
+
+---
+
+# 5. Lexical Rules
+
+Lexical rules define the tokens of the language.
+
+The basic syntax is:
+
+```logts
+lexem NAME = PATTERN;
+```
+
+For example:
+
+```logts
+lexem INT = [0-9]+;
+lexem ID  = [a-zA-Z_][a-zA-Z0-9_]*;
+```
+
+This defines two lexical units:
+
+```text
+INT
+ID
+```
+
+An input such as:
+
+```text
+hello
+```
+
+can therefore produce:
+
+```text
+ID("hello")
+```
+
+while:
+
+```text
+123
+```
+
+can produce:
+
+```text
+INT("123")
+```
+
+Lexical rules operate before syntax rules.
+
+The conceptual pipeline is:
+
+```text
+characters
+    │
+    ▼
+lexer
+    │
+    ▼
+tokens
+    │
+    ▼
+syntax parser
+```
+
+---
+
+# 6. Lexical Errors
+
+Lexical errors occur when the input contains characters that cannot be recognized by the lexical rules.
+
+For example, if the language defines:
+
+```logts
+lexem INT = [0-9]+;
+lexem ID  = [a-zA-Z_][a-zA-Z0-9_]*;
+```
+
+and the source contains an unsupported character:
+
+```text
+abc @ 123
+```
+
+the lexer may encounter `@` without being able to produce a valid token.
+
+This is different from a syntax error.
+
+The distinction is:
+
+```text
+Lexical Error
+    ↓
+"The characters cannot be converted into valid tokens."
+
+Syntax Error
+    ↓
+"The tokens are valid, but they do not form a valid structure."
+```
+
+This distinction is important because it allows the parser to report the correct stage of failure.
+
+---
+
+# 7. Syntax Rules
+
+Syntax rules define the structure of the language.
+
+The basic form is:
+
+```logts
+regula NAME
+    = PATTERN;
+```
+
+For example:
+
+```logts
+regula program
+    = instructiune+;
+```
+
+and:
+
+```logts
+regula instructiune
+    = ID "=" expresie -> CallAsignare;
+```
+
+A rule can reference other rules.
+
+For example:
+
+```logts
+regula program
+    = instructiune+;
+
+regula instructiune
+    = ID "=" expresie -> CallAsignare;
+
+regula expresie
+    = INT -> CallNumar
+    | ID  -> CallVariabila;
+```
+
+The resulting grammar can be visualized as:
+
+```text
+program
+  │
+  └── instructiune+
+          │
+          ├── ID
+          ├── "="
+          └── expresie
+                  │
+                  ├── INT
+                  └── ID
+```
+
+---
+
+# 8. Rule Names
+
+Every rule has a name.
+
+For example:
+
+```logts
+regula program ...
+regula instructiune ...
+regula expresie ...
+```
+
+Rule names should be unique.
+
+Likewise, lexical names should be unique.
+
+A lexical symbol and a syntax rule should not use the same identifier because the parser needs to distinguish the two kinds of grammar symbols unambiguously.
+
+The explicit keywords:
+
+```text
+lexem
+regula
+```
+
+make the grammar definition self-describing.
+
+---
+
+# 9. Alternatives
+
+The `|` operator defines alternatives.
+
+For example:
+
+```logts
+regula expresie
+    = INT
+    | ID;
+```
+
+means:
+
+```text
+expression = integer OR identifier
+```
+
+A more useful example is:
+
+```logts
+regula expresie
+    = expresie "*" expresie -> CallInmultire
+    | expresie "+" expresie -> CallAdunare
+    | "(" expresie ")"      -> CallParanteze
+    | INT                   -> CallNumar
+    | ID                    -> CallVariabila;
+```
+
+Each branch represents an independent possible match.
+
+Conceptually:
+
+```text
+expresie
+│
+├── expresie "*" expresie
+├── expresie "+" expresie
+├── "(" expresie ")"
+├── INT
+└── ID
+```
+
+---
+
+# 10. Call Rules
+
+The `->` operator associates a successful grammar branch with a call name.
+
+For example:
+
+```logts
+regula expresie
+    = INT -> CallNumar;
+```
+
+When the rule matches an integer, the parser produces a structured result associated with:
+
+```text
+CallNumar
+```
+
+Similarly:
+
+```logts
+regula expresie
+    = expresie "+" expresie -> CallAdunare;
+```
+
+identifies the semantic operation associated with that syntax.
+
+The call name should be viewed as a bridge between parsing and the semantic representation/implementation.
+
+For example:
+
+```text
+"2 + 3"
+     │
+     ▼
+parser
+     │
+     ▼
+CallAdunare
+     │
+     ├── left  = 2
+     └── right = 3
+```
+
+The parser recognizes the syntax.
+
+The interpreter determines what `CallAdunare` means.
+
+---
+
+# 11. Structural Rules Without Calls
+
+Not every rule needs to generate a call.
+
+High-level structural rules can simply group other rules.
+
+For example:
+
+```logts
+regula program
+    = instructiune+;
+```
+
+Here `program` defines the overall structure but does not necessarily represent an executable operation.
+
+This allows grammars to distinguish between:
+
+```text
+structural rules
+```
+
+and:
+
+```text
+semantic/action rules
+```
+
+For example:
+
+```logts
+regula program
+    = instructiune+;
+
+regula instructiune
+    = ID "=" expresie -> CallAsignare;
+```
+
+The first describes organization.
+
+The second identifies an operation.
+
+---
+
+# 12. Literals
+
+Fixed text can be written as a quoted literal.
+
+For example:
+
+```logts
+"="
+"+"
+"*"
+"("
+")"
+","
+";"
+```
+
+A grammar such as:
+
+```logts
+regula asignare
+    = ID "=" expresie -> CallAsignare;
+```
+
+therefore means:
+
+```text
+ID
+followed by the literal "="
+followed by expresie
+```
+
+Quoted literals make it explicit that the text is part of the language syntax rather than a reference to another grammar rule.
+
+---
+
+# 13. Repetition Operators
+
+LogTScript parser rules support standard multiplicity operators.
+
+## `+`
+
+One or more occurrences:
+
+```logts
+instructiune+
+```
+
+Meaning:
+
+```text
+instructiune
+instructiune instructiune
+instructiune instructiune instructiune
+...
+```
+
+At least one element is required.
+
+---
+
+## `*`
+
+Zero or more occurrences:
+
+```logts
+instructiune*
+```
+
+Meaning:
+
+```text
+empty
+instructiune
+instructiune instructiune
+...
+```
+
+---
+
+## `?`
+
+Zero or one occurrence:
+
+```logts
+"else" bloc_cod
+```
+
+can be made optional with:
+
+```logts
+("else" bloc_cod)?
+```
+
+This allows:
+
+```text
+if (...) {
+}
+```
+
+and:
+
+```text
+if (...) {
+} else {
+}
+```
+
+---
+
+# 14. Local Grouping
+
+Parentheses can group grammar expressions.
+
+For example:
+
+```logts
+regula structura_if
+    = "if" "(" expresie ")" bloc_cod
+      ("else" bloc_cod)?
+      -> CallIfThenElse;
+```
+
+The parentheses here do not necessarily correspond to source-language parentheses.
+
+They group grammar elements.
+
+The following:
+
+```logts
+("else" bloc_cod)?
+```
+
+means:
+
+```text
+the entire sequence
+
+"else" bloc_cod
+
+is optional
+```
+
+rather than only `bloc_cod`.
+
+This allows complex local grammar structures without requiring a separate named rule for every small combination.
+
+---
+
+# 15. Separator Lists
+
+Lists are extremely common in programming languages.
+
+For example:
+
+```text
+function(a, b, c)
+```
+
+A parser can express a separated list using `%`.
+
+Example:
+
+```logts
+regula apel_functie
+    = ID "(" expresie % "," ")" -> CallApelFunctie;
+```
+
+The `%` operator means:
+
+> repeat the specified element while using the specified separator.
+
+Conceptually:
+
+```text
+expresie % ","
+```
+
+recognizes:
+
+```text
+expresie
+expresie , expresie
+expresie , expresie , expresie
+...
+```
+
+The separator is syntax and does not need to become part of the logical argument list.
+
+Thus:
+
+```text
+foo(a, b, c)
+```
+
+can produce a call conceptually equivalent to:
+
+```text
+CallApelFunctie
+    name = foo
+    arguments = [a, b, c]
+```
+
+rather than:
+
+```text
+[a, ",", b, ",", c]
+```
+
+This keeps the resulting structure clean.
+
+---
+
+# 16. Empty Lists
+
+Whether a separated list can be empty is an important grammar decision.
+
+For example, a function call may allow:
+
+```text
+foo()
+```
+
+or may require at least one argument:
+
+```text
+foo(a)
+```
+
+The grammar should explicitly express the desired behavior rather than relying on an implicit interpretation.
+
+The `%` mechanism therefore works together with the surrounding multiplicity/grouping rules when a language needs to distinguish:
+
+```text
+zero arguments
+```
+
+from:
+
+```text
+one or more arguments
+```
+
+---
+
+# 17. Lookahead
+
+Some languages contain situations where the parser needs to inspect upcoming syntax without consuming it.
+
+LogTScript provides lookahead operators.
+
+## Positive Lookahead: `&`
+
+```logts
+&(...)
+```
+
+means:
+
+> the following structure must match, but it is not consumed.
+
+Example:
+
+```logts
+regula eticheta_cod
+    = ID &(":") -> CallDefinireEticheta;
+```
+
+This recognizes an identifier only when it is immediately followed by `:`.
+
+The important distinction is:
+
+```text
+ID
+```
+
+is consumed.
+
+```text
+":"
+```
+
+is inspected but not consumed by the lookahead.
+
+This is useful for syntax such as:
+
+```text
+label:
+```
+
+where the label value should not contain the colon.
+
+---
+
+# 18. Negative Lookahead
+
+The `!` form provides negative lookahead.
+
+Conceptually:
+
+```logts
+!(...)
+```
+
+means:
+
+> the following structure must not match.
+
+For example, a grammar can distinguish a general identifier from an identifier that begins a special construct by testing what follows it.
+
+Lookahead is therefore useful when the grammar needs local contextual information without changing the consumed input.
+
+---
+
+# 19. Named Parameter Mapping
+
+Complex grammar rules often contain multiple occurrences of the same rule type.
+
+For example:
+
+```logts
+regula bucla_for
+    = "for"
+      "("
+      $init:asignare
+      ";"
+      $conditie:expresie
+      ";"
+      $pas:asignare
+      ")"
+      $corp:bloc_cod
+      -> CallBuclaFor;
+```
+
+The `$name:` syntax gives an explicit name to a captured part of the match.
+
+The parser can therefore produce a call context conceptually equivalent to:
+
+```text
+CallBuclaFor
+    init
+        = ...
+    conditie
+        = ...
+    pas
+        = ...
+    corp
+        = ...
+```
+
+The implementation does not need to depend on positional indexes such as:
+
+```text
+argument(0)
+argument(1)
+argument(2)
+argument(3)
+```
+
+Instead, the grammar itself documents the meaning of every captured value.
+
+---
+
+# 20. Captures and the AST
+
+Named captures are particularly useful because the captured values can map naturally into the AST schema.
+
+For example:
+
+```logts
+<forNode>:
+    kind: 4
+    init: <statement>
+    condition: <expr>
+    step: <statement>
+    body: <block>
+:
+```
+
+The parser rule:
+
+```logts
+regula bucla_for
+    = "for"
+      "("
+      $init:asignare
+      ";"
+      $conditie:expresie
+      ";"
+      $pas:asignare
+      ")"
+      $corp:bloc_cod
+      -> CallBuclaFor;
+```
+
+can therefore construct a node whose fields correspond directly to:
+
+```text
+init
+condition
+step
+body
+```
+
+The exact representation is determined by the AST schema.
+
+The parser syntax and AST schema therefore work together:
+
+```text
+Grammar
+   │
+   │ captures
+   ▼
+Named values
+   │
+   │ mapped into
+   ▼
+AST schema
+```
+
+---
+
+# 21. Operator Precedence
+
+Expression grammars often need to distinguish operators with different precedence.
+
+For example:
+
+```text
+a + b * c
+```
+
+normally means:
+
+```text
+a + (b * c)
+```
+
+rather than:
+
+```text
+(a + b) * c
+```
+
+The grammar definition must therefore establish how alternatives are selected and/or structured.
+
+A proposed parser behavior is that the ordering of alternatives establishes priority.
+
+For example:
+
+```logts
+regula expresie
+    = expresie "*" expresie -> CallInmultire
+    | expresie "+" expresie -> CallAdunare
+    | INT                   -> CallNumar
+    | ID                    -> CallVariabila;
+```
+
+Here the multiplication alternative appears before the addition alternative.
+
+The intended result is that:
+
+```text
+a + b * c
+```
+
+is interpreted structurally as:
+
+```text
+CallAdunare
+├── left
+│   └── a
+└── right
+    └── CallInmultire
+        ├── b
+        └── c
+```
+
+The exact parser implementation must preserve this deterministic priority behavior.
+
+For more complicated grammars, explicit grammar structure may still be preferable because it makes precedence easier to reason about.
+
+For example:
+
+```logts
+regula expresie
+    = expresie "+" termen -> CallAdunare
+    | termen;
+
+regula termen
+    = termen "*" factor -> CallInmultire
+    | factor;
+
+regula factor
+    = "(" expresie ")"
+    | INT
+    | ID;
+```
+
+This is the traditional layered representation of precedence.
+
+The important point is that precedence is part of the grammar's parsing behavior and must result in an unambiguous AST structure.
+
+---
+
+# 22. Recursive Grammar Rules
+
+Programming languages naturally contain recursive structures.
+
+For example:
+
+```text
+1 + 2 * 3
+```
+
+contains expressions inside larger expressions.
+
+Similarly:
+
+```text
+if (...) {
+    if (...) {
+    }
+}
+```
+
+contains blocks containing statements containing blocks.
+
+The parser therefore needs to support recursive grammar rules.
+
+A rule can reference itself directly or indirectly.
+
+Conceptually:
+
+```text
+expression
+    → expression + term
+    → term
+```
+
+and:
+
+```text
+term
+    → term * factor
+    → factor
+```
+
+Recursive grammar structure is what allows the parser to describe arbitrarily deep source programs.
+
+---
+
+# 23. Recursive AST Schemas
+
+The AST schema can also be recursive.
+
+For example:
+
+```logts
+<expr>:
+    kind: 4
+    value: 32
+    children: <expr>[0-]
+:
+```
+
+A concrete value can contain:
+
+```text
+expr
+ ├── kind
+ ├── value
+ └── children
+      ├── expr
+      │    ├── ...
+      │    └── children
+      └── expr
+           ├── ...
+           └── children
+```
+
+The schema definition is recursive, but each concrete AST value remains finite.
+
+For example:
+
+```text
+ADD
+├── NUMBER 5
+└── ADD
+    ├── NUMBER 3
+    └── NUMBER 2
+```
+
+contains recursion in the type definition but only a finite number of actual nodes.
+
+---
+
+# 24. Recursive ASTs and Variable-Length Data
+
+Recursive structures create an important serialization problem.
+
+A parser must know where one concrete structure ends before it can read the next structure.
+
+For example:
+
+```text
+node
+├── kind
+├── value
+└── children
+      ├── node
+      ├── node
+      └── node
+```
+
+The schema describes that `children` is variable-length.
+
+But the concrete representation still needs a way to determine the size of each structure.
+
+This is where LogTScript's existing protocol concepts become important.
+
+The parser does not need an entirely separate AST-specific framing mechanism.
+
+It can use the same general concepts already available for structured bit parsing:
+
+```text
+length
+lengthOf
+withLength
+ParseStream
+repeated sections
+substreams
+```
+
+The general model is:
+
+```text
+schema
+   │
+   │ describes structure
+   ▼
+concrete bit representation
+   │
+   │ length/framing
+   ▼
+bounded structure
+```
+
+This allows recursive structures to remain finite and parseable.
+
+---
+
+# 25. Cursor-Based Parsing
+
+The concrete parser operates conceptually on a stream with a current position.
+
+For example:
+
+```text
+┌───────────────────────────────────────┐
+│ input bits                            │
+│                                       │
+│       ▲                               │
+│       │                               │
+│     cursor                            │
+└───────────────────────────────────────┘
+```
+
+When a field is consumed:
+
+```text
+field A
+```
+
+the cursor advances.
+
+Then:
+
+```text
+field B
+```
+
+is read from the new position.
+
+This becomes particularly important for variable-length and recursive structures.
+
+A bounded substructure can be represented conceptually as:
+
+```text
+main stream
+│
+├── node length
+│
+└── node substream
+     │
+     ├── kind
+     ├── value
+     └── children
+```
+
+When the substream is exhausted, the parser knows that the node has ended.
+
+The following field can then be read from the parent stream.
+
+---
+
+# 26. Parser Output as Structured Bits
+
+Because LogTScript schemas describe bit-level structure, an AST does not need to be treated as an opaque heap object.
+
+Conceptually:
+
+```text
+AST schema
+    ↓
+structured bit representation
+    ↓
+AST value
+```
+
+For example:
+
+```logts
+<literalNode>:
+    kind: 4
+    value: 32
+:
+```
+
+could describe a node with a four-bit kind field and a 32-bit value field.
+
+A more complex node can contain nested structures.
+
+The parser can therefore produce a schema-conforming representation that can be transmitted through normal LogTScript mechanisms.
+
+---
+
+# 27. Error Rules
+
+A parser must define what happens when no valid syntax alternative matches.
+
+An error rule can be associated with a grammar rule.
+
+For example:
+
+```logts
+regula expresie
+    = expresie "*" expresie -> CallInmultire
+    | expresie "+" expresie -> CallAdunare
+    | "(" expresie ")"      -> CallParanteze
+    | INT                   -> CallNumar
+    | ID                    -> CallVariabila
+
+    error "expected expression";
+```
+
+The semantics are:
+
+```text
+try alternatives
+      │
+      ├── success → produce AST
+      │
+      └── failure → produce parser error
+```
+
+The error message provides a human-readable description of what was expected.
+
+---
+
+# 28. Parse Errors as Structured Data
+
+Errors should not have to exist only as strings.
+
+A parser can expose structured information such as:
+
+```text
+ParseError
+├── rule
+├── position
+├── length
+├── message
+└── token
+```
+
+Conceptually, this can itself be represented through a schema.
+
+For example:
+
+```logts
+<parseError>:
+    kind: 4
+    position: 32
+    length: 1
+    message: ...
+    token: ...
+:
+```
+
+The exact fields and widths depend on the final parser/error schema design.
+
+The important architectural principle is:
+
+> Parser errors can be represented as normal structured LogTScript data rather than as opaque runtime-only exceptions.
+
+This makes errors usable by other components.
+
+For example:
+
+```text
+parser
+   │
+   ├── AST ────────> interpreter
+   │
+   └── ParseError ─> UI / logger / debugger
+```
+
+---
+
+# 29. Error Location
+
+A useful parser error should identify where parsing failed.
+
+For example:
+
+```text
+x = 10;
+y = ;
+z = 20;
+```
+
+The parser should be able to identify the invalid portion:
+
+```text
+y = ;
+    ^
+```
+
+A structured error can therefore contain information about:
+
+```text
+position
+length
+rule
+expected syntax
+actual token
+```
+
+This allows a frontend or UI to highlight the offending source range.
+
+---
+
+# 30. Expected Tokens
+
+A parser can provide a more useful error when it knows what could have matched.
+
+For example:
+
+```text
+x = ;
+    ^
+```
+
+could produce:
+
+```text
+expected expression
+found ";"
+```
+
+rather than simply:
+
+```text
+syntax error
+```
+
+For a more detailed diagnostic:
+
+```text
+ParseError
+    rule: expresie
+    position: 4
+    found: ";"
+    expected:
+        INT
+        ID
+        "("
+```
+
+This information can be generated from the grammar alternatives that were attempted.
+
+---
+
+# 31. Error Recovery
+
+Stopping at the first syntax error is often undesirable.
+
+Consider:
+
+```text
+x = 10;
+y = ;
+z = 20;
+```
+
+A parser that stops immediately loses the valid third statement.
+
+Error recovery allows parsing to continue.
+
+For example:
+
+```logts
+regula instructiune
+    = ID "=" expresie ";"
+    error "invalid instruction"
+    recover ";";
+```
+
+The intended behavior is:
+
+```text
+parse instruction
+      │
+      ▼
+    failure
+      │
+      ▼
+ produce error
+      │
+      ▼
+ consume until ";"
+      │
+      ▼
+ continue parsing
+```
+
+The result can therefore contain both:
+
+```text
+valid AST nodes
+```
+
+and:
+
+```text
+parse errors
+```
+
+instead of losing the entire parse.
+
+---
+
+# 32. Recovery Synchronization Points
+
+A recovery token should normally be something that reliably marks the end of the damaged construct.
+
+Common examples include:
+
+```text
+";"
+"}"
+")"
+```
+
+For example:
+
+```logts
+recover ";";
+```
+
+can recover from an invalid statement.
+
+Similarly:
+
+```logts
+recover "}";
+```
+
+can be useful when recovering from a malformed block.
+
+The parser should consume input until the selected synchronization point is reached, then resume normal parsing.
+
+---
+
+# 33. Local Error Handling
+
+Error behavior can be attached to the rule where the problem is understood best.
+
+For example:
+
+```logts
+regula structura_if
+    = "if" "(" expresie ")" bloc_cod
+      ("else" bloc_cod)?
+      -> CallIfThenElse
+
+    error "invalid if statement"
+    recover "}";
+```
+
+This gives the grammar author control over the diagnostic and recovery behavior of that construct.
+
+---
+
+# 34. Lexical vs Syntax Errors
+
+The complete parsing pipeline can therefore be represented as:
+
+```text
+Source
+  │
+  ▼
+┌────────────┐
+│   Lexer    │
+└─────┬──────┘
+      │
+      ├──────────────> LexError
+      │
+      ▼
+    Tokens
+      │
+      ▼
+┌────────────┐
+│   Parser   │
+└─────┬──────┘
+      │
+      ├──────────────> ParseError
+      │
+      ▼
+     AST
+```
+
+This separation is useful for diagnostics and tooling.
+
+---
+
+# 35. Complete Example
+
+The following example combines the major grammar mechanisms.
+
+```logts
+inline [parser] .simpleLanguage {
+
+    # ----------------------------------------
+    # LEXICAL RULES
+    # ----------------------------------------
+
+    lexem INT = [0-9]+;
+    lexem ID  = [a-zA-Z_][a-zA-Z0-9_]*;
+
+
+    # ----------------------------------------
+    # PROGRAM STRUCTURE
+    # ----------------------------------------
+
+    regula program
+        = instructiune+;
+
+
+    # ----------------------------------------
+    # ASSIGNMENT
+    # ----------------------------------------
+
+    regula instructiune
+        = $name:ID "=" $value:expresie ";"
+          -> CallAsignare
+
+        error "expected assignment"
+        recover ";";
+
+
+    # ----------------------------------------
+    # EXPRESSIONS
+    # ----------------------------------------
+
+    regula expresie
+        = expresie "*" expresie
+          -> CallInmultire
+
+        | expresie "+" expresie
+          -> CallAdunare
+
+        | "(" expresie ")"
+          -> CallParanteze
+
+        | INT
+          -> CallNumar
+
+        | ID
+          -> CallVariabila
+
+        error "expected expression";
+
+
+    # ----------------------------------------
+    # FUNCTION CALL
+    # ----------------------------------------
+
+    regula apel
+        = $name:ID
+          "("
+          expresie % ","
+          ")"
+          -> CallApelFunctie;
+}
+```
+
+A source program such as:
+
+```text
+x = 10;
+y = x + 2 * 3;
+foo(x, y, 42);
+```
+
+can produce an AST representing:
+
+```text
+Program
+├── Assignment
+│   ├── name = x
+│   └── value
+│       └── Number(10)
+│
+├── Assignment
+│   ├── name = y
+│   └── value
+│       └── Add
+│           ├── Variable(x)
+│           └── Multiply
+│               ├── Number(2)
+│               └── Number(3)
+│
+└── FunctionCall
+    ├── name = foo
+    └── arguments
+        ├── Variable(x)
+        ├── Variable(y)
+        └── Number(42)
+```
+
+The important point is that this is the **AST structure**, not the execution.
+
+---
+
+# 36. AST Schema for the Example
+
+The corresponding schema could conceptually describe nodes such as:
+
+```logts
+<expr>:
+    kind: 4
+    value: 32
+    children: <expr>[0-]
+:
+```
+
+A richer language may use specialized node structures:
+
+```logts
+<number>:
+    kind: 4
+    value: 32
+:
+
+<variable>:
+    kind: 4
+    name: ...
+:
+
+<binary>:
+    kind: 4
+    left: <expr>
+    right: <expr>
+:
+
+<expr>:
+    kind: 4
+    ...
+:
+```
+
+The exact schema design is language-specific.
+
+The parser defines **how source syntax maps into these structures**.
+
+The schema defines **what the resulting structures look like**.
+
+---
+
+# 37. The Parser Does Not Execute the AST
+
+Consider:
+
+```text
+x = 10 + 20;
+```
+
+The parser should not itself perform:
+
+```text
+x = 30
+```
+
+Instead it produces something conceptually like:
+
+```text
+Assignment
+├── name = x
+└── expression
+    └── Add
+        ├── Number(10)
+        └── Number(20)
+```
+
+The interpreter then decides what that means.
+
+For example:
+
+```text
+AST
+ │
+ ▼
+Interpreter
+ │
+ ▼
+assignment operation
+ │
+ ▼
+runtime state
+```
+
+This keeps parsing and execution independent.
+
+---
+
+# 38. `comp [interp]`
+
+`comp [interp]` is the runtime component responsible for consuming an AST and executing/interpreting it.
+
+It does not need to contain a parser.
+
+The intended relationship is:
+
+```text
+inline [parser]
+        │
+        │ AST
+        ▼
+comp [interp]
+        │
+        │ execution
+        ▼
+runtime outputs
+```
+
+The interpreter knows the AST schema it accepts.
+
+For example, conceptually:
+
+```logts
+comp [interp] .languageInterp {
+    ...
+}
+```
+
+can be configured to operate on a particular AST schema.
+
+The important point is that the interpreter does not need to know whether the AST came from:
+
+```text
+source text
+```
+
+or:
+
+```text
+another component
+```
+
+or:
+
+```text
+manually constructed data
+```
+
+---
+
+# 39. AST Without a Parser
+
+One of the major benefits of schema-defined ASTs is that a parser is not required to construct them.
+
+An AST can be constructed directly.
+
+Conceptually:
+
+```text
+              ┌── parser
+              │
+              ├── logic
+              │
+              ├── protocol
+              │
+              └── manually constructed data
+                         │
+                         ▼
+                    AST schema
+                         │
+                         ▼
+                    interpreter
+```
+
+This makes the AST a reusable intermediate representation rather than an implementation detail of parsing.
+
+---
+
+# 40. Multiple Parsers, One Interpreter
+
+A language can also have multiple frontends.
+
+For example:
+
+```text
+Text Parser ─────────┐
+                     │
+Binary Parser ───────┼──> <languageAST> ──> Interpreter
+                     │
+Visual Editor ───────┘
+```
+
+As long as all three generate the same schema, they can use the same interpreter.
+
+This is particularly useful for tools that have both textual and visual representations.
+
+---
+
+# 41. Parser as a Producer of Structured Data
+
+The most important abstraction is therefore:
+
+```text
+inline [parser]
+```
+
+is a **producer of structured values**.
+
+It takes:
+
+```text
+text
+```
+
+and produces:
+
+```text
+schema-defined structure
+```
+
+The parser does not own the AST.
+
+The schema does.
+
+This can be summarized as:
+
+```text
+Text
+  │
+  ▼
+Parser
+  │
+  ▼
+Schema-defined AST
+```
+
+rather than:
+
+```text
+Text
+  │
+  ▼
+Parser
+  │
+  ▼
+Opaque AST object
+```
+
+---
+
+# 42. Parser and Protocol
+
+The parser can also benefit from LogTScript's existing protocol concepts.
+
+Protocol parsing already provides the general mechanisms required for structured bit streams:
+
+```text
+cursor
+length
+lengthOf
+withLength
+repetition
+substreams
+rest
+parse trees
+```
+
+These mechanisms are useful when a parser needs to represent variable-length or recursively nested structures.
+
+The parser therefore does not need a separate serialization universe just for ASTs.
+
+Instead:
+
+```text
+Parser
+   │
+   ├── grammar recognition
+   │
+   └── structured output
+           │
+           ▼
+     schema / protocol
+           │
+           ▼
+       concrete bits
+```
+
+This is especially important for recursive ASTs.
+
+---
+
+# 43. Recursive AST Framing
+
+Consider:
+
+```text
+<expr>
+    ├── kind
+    ├── value
+    └── children[]
+             │
+             ├── <expr>
+             ├── <expr>
+             └── <expr>
+```
+
+The schema says that `children` is recursive and variable-length.
+
+The concrete representation must still establish boundaries.
+
+A length-framed representation can conceptually be:
+
+```text
+┌──────────────┬────────────────────────────┐
+│ node length  │ node data                  │
+└──────────────┴────────────────────────────┘
+                     │
+                     ├── kind
+                     ├── value
+                     └── children
+```
+
+A child can itself be framed:
+
+```text
+node
+ │
+ ├── kind
+ ├── value
+ ├── child length
+ │     └── child
+ │           ├── kind
+ │           └── ...
+ └── ...
+```
+
+The important principle is:
+
+> The schema describes the recursive structure, while concrete length/framing information determines where each instance ends.
+
+This allows a recursive schema to describe finite concrete values.
+
+---
+
+# 44. Determinism
+
+A parser should resolve grammar alternatives deterministically according to the defined grammar semantics.
+
+Ambiguous rules should therefore be designed carefully.
+
+For example:
+
+```logts
+regula value
+    = ID
+    | ID "(" expresie ")";
+```
+
+requires the parser to determine whether the identifier is:
+
+```text
+ID
+```
+
+or the beginning of:
+
+```text
+function call
+```
+
+Lookahead can help:
+
+```logts
+regula value
+    = ID "(" expresie ")" -> CallFunction
+    | ID                   -> CallVariable;
+```
+
+or explicit lookahead can be used when the grammar requires more contextual control.
+
+The grammar should make precedence, alternatives, and lookahead behavior explicit enough that the resulting AST is deterministic.
+
+---
+
+# 45. Error Handling as Part of the Language Definition
+
+A language definition is not complete if it only describes valid programs.
+
+It should also describe how invalid programs are diagnosed.
+
+The parser therefore has three conceptual outcomes:
+
+```text
+Input
+  │
+  ▼
+Parser
+  │
+  ├── valid structure
+  │       ↓
+  │      AST
+  │
+  └── invalid structure
+          ↓
+       ParseError
+```
+
+With recovery:
+
+```text
+Input
+  │
+  ▼
+Parser
+  │
+  ├── AST node
+  ├── ParseError
+  ├── AST node
+  ├── AST node
+  └── ParseError
+```
+
+This allows tools such as editors and IDE-like environments to continue working even when the source is incomplete or temporarily invalid.
+
+---
+
+# 46. Designing a Complete Language
+
+A complete language definition can therefore follow this structure:
+
+```logts
+inline [parser] .myLanguage {
+
+    # ========================================
+    # 1. LEXICAL DEFINITIONS
+    # ========================================
+
+    lexem INT = [0-9]+;
+    lexem ID  = [a-zA-Z_][a-zA-Z0-9_]*;
+
+
+    # ========================================
+    # 2. PROGRAM STRUCTURE
+    # ========================================
+
+    regula program
+        = statement+;
+
+
+    # ========================================
+    # 3. STATEMENTS
+    # ========================================
+
+    regula statement
+        = ...
+        | ...
+        ;
+
+
+    # ========================================
+    # 4. EXPRESSIONS
+    # ========================================
+
+    regula expression
+        = ...
+        | ...
+        ;
+
+
+    # ========================================
+    # 5. ERROR HANDLING
+    # ========================================
+
+    ...
+}
+```
+
+The corresponding AST schemas can be defined separately:
+
+```logts
+<program>:
+    ...
+:
+
+<statement>:
+    ...
+:
+
+<expr>:
+    ...
+:
+```
+
+The parser connects the two by constructing values conforming to those schemas.
+
+---
+
+# 47. Complete Architecture
+
+The complete system can therefore be viewed as several independent layers.
+
+```text
+                 SOURCE TEXT
+                     │
+                     ▼
+             ┌───────────────┐
+             │    LEXER      │
+             │               │
+             │ lexem rules   │
+             └───────┬───────┘
+                     │
+                     ▼
+                  TOKENS
+                     │
+                     ▼
+             ┌───────────────┐
+             │    PARSER     │
+             │               │
+             │ syntax rules  │
+             │ alternatives  │
+             │ grouping      │
+             │ repetition    │
+             │ lookahead     │
+             │ captures      │
+             └───────┬───────┘
+                     │
+              ┌──────┴──────┐
+              │             │
+              ▼             ▼
+             AST         ParseError
+              │
+              ▼
+        schema-defined
+           structure
+              │
+              ▼
+       ┌───────────────┐
+       │ comp [interp] │
+       │               │
+       │ AST semantics │
+       └───────┬───────┘
+               │
+               ▼
+          EXECUTION /
+          INTERPRETATION
+```
+
+---
+
+# 48. Design Principles
+
+The `inline [parser]` system is based on several core principles.
+
+### 48.1 Parser and interpreter are separate
+
+The parser recognizes structure.
+
+The interpreter gives that structure meaning.
+
+---
+
+### 48.2 The AST is not opaque
+
+The AST is represented using LogTScript schemas.
+
+---
+
+### 48.3 Schemas are reusable
+
+An AST schema is not tied exclusively to one parser.
+
+---
+
+### 48.4 Parser output is ordinary structured data
+
+AST values can be transported, stored, modified, inspected, and passed to other components.
+
+---
+
+### 48.5 Recursive structures are allowed conceptually
+
+Recursive ASTs are natural for programming languages.
+
+Concrete instances remain finite through explicit framing/length semantics.
+
+---
+
+### 48.6 Existing protocol mechanisms are reused
+
+Variable-length and nested structures can use the same general length/cursor/substream concepts used elsewhere in LogTScript.
+
+---
+
+### 48.7 Errors are structured
+
+Parser errors can expose position, rule, token, message, and other diagnostic information.
+
+---
+
+### 48.8 Recovery is explicit
+
+A grammar can define synchronization points that allow parsing to continue after an error.
+
+---
+
+### 48.9 Grammar remains readable
+
+The meta-language should describe a language in a way that resembles the language's conceptual grammar rather than requiring large amounts of parser implementation code.
+
+---
+
+# 49. Summary
+
+`inline [parser]` turns LogTScript into a **language-definition environment**.
+
+A user can define:
+
+```text
+lexical tokens
+        +
+syntax rules
+        +
+grammar alternatives
+        +
+repetition
+        +
+grouping
+        +
+separator lists
+        +
+lookahead
+        +
+named captures
+        +
+error handling
+        +
+recovery
+```
+
+and use those rules to transform source text into a schema-defined AST.
+
+The complete conceptual model is:
+
+```text
+                    LANGUAGE DEFINITION
+                           │
+            ┌──────────────┴──────────────┐
+            │                             │
+      Lexical rules                  AST schemas
+            │                             │
+            ▼                             │
+          Tokens                          │
+            │                             │
+            ▼                             │
+      Syntax rules ───────────────────────┤
+            │                             │
+            ▼                             │
+          Parser                           │
+            │                             │
+            └──────────────┬──────────────┘
+                           ▼
+                    AST VALUE
+                           │
+                           ▼
+                    comp [interp]
+                           │
+                           ▼
+                      SEMANTICS
+```
+
+The key abstraction is therefore:
+
+> **`inline [parser]` is a programmable source-to-structure transformation.**
+
+It does not define what the language *does*.
+
+It defines what the source *is*.
+
+The resulting AST is ordinary, schema-defined LogTScript data and can be consumed by `comp [interp]`, modified by logic, generated manually, serialized through existing protocol mechanisms, or produced by an entirely different parser.
+
+This separation gives LogTScript a clean architecture for building not just one language, but potentially many languages that share the same runtime and structural mechanisms.
