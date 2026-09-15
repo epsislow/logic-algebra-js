@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upstash Redis CRUD + Căutare Wildcard</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; }
+        .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        .box-credintiale { border: 2px dashed #007bff; background: #f8f9fa; }
+        .box-cautare { border: 2px solid #ffc107; background: #fffdf5; }
+        select, input, button { padding: 8px; margin: 5px 0; display: block; width: 100%; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; min-height: 40px; }
+        .btn-albastru { background: #007bff; }
+        .btn-albastru:hover { background: #0056b3; }
+        .btn-rosu { background: #dc3545; }
+        .btn-rosu:hover { background: #bd2130; }
+        .btn-galben { background: #ffc107; color: #333; }
+        .btn-galben:hover { background: #e0a800; }
+        .zona-butoane { display: flex; gap: 10px; }
+        .zona-butoane button { flex: 1; }
+        input:disabled { background: #e9ecef; cursor: not-allowed; }
+        .badge { background: #e0e0e0; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>Upstash Cloud Storage (CRUD & Search)</h2>
+
+    <!-- CONFIGURARE CREDENȚIALE -->
+    <div class="box box-credintiale">
+        <h3>🔑 1. Conexiune Upstash</h3>
+        <label for="db-url">URL-ul bazei de date:</label>
+        <input type="text" id="db-url" placeholder="https://cosmic-earwig-108386.upstash.io">
+        
+        <label for="db-token">Token-ul tău secret (REST TOKEN):</label>
+        <input type="password" id="db-token" placeholder="Lipește token-ul secret aici">
+        
+        <div class="zona-butoane">
+            <button id="btn-salveaza" onclick="salveazaCredintiale()" class="btn-albastru">Conectează și Salvează datele</button>
+            <button id="btn-editeaza" onclick="permiteEditare()" class="btn-rosu" style="display: none;">Editează / Schimbă DB</button>
+        </div>
+    </div>
+
+    <!-- NOU: MODUL DE CĂUTARE ȘI FILTRARE WILDCARD -->
+    <div class="box box-cautare">
+        <h3>🔍 2. Scanează și Caută Câmpuri (Wildcard)</h3>
+        <p style="font-size: 13px; color: #666; margin: 0 0 10px 0;">
+            Folosește <strong>*</strong> ca wildcard. Ex: <code>set*</code> (începe cu), <code>*set*</code> (conține set), <code>*</code> (toate).
+        </p>
+        
+        <label for="input-search">Filtru căutare:</label>
+        <input type="text" id="input-search" value="*" placeholder="ex: *set* sau *">
+        
+        <button onclick="scaneazaCampuri()" class="btn-galben">Caută în Baza de Date</button>
+        
+        <p style="margin-top: 15px;">
+            <strong>Câmpuri găsite:</strong> <span id="total-campuri" class="badge">0</span>
+        </p>
+        
+        <label for="select-citire">Alege din rezultate pentru a citi:</label>
+        <select id="select-citire" onchange="citesteCamp()">
+            <option value="">-- Execută o căutare mai sus --</option>
+        </select>
+    </div>
+
+    <!-- READ / AFISARE REZULTAT -->
+    <div class="box">
+        <h3>📄 3. Conținut Câmp Selectat</h3>
+        <pre id="rezultat-citire">Niciun câmp încărcat.</pre>
+    </div>
+
+    <!-- CREATE / UPDATE -->
+    <div class="box">
+        <h3>💾 4. Adaugă sau Modifică un Câmp (CREATE / UPDATE)</h3>
+        <label for="nume-camp">Nume Câmp (Cheie):</label>
+        <input type="text" id="nume-camp" placeholder="ex: setari_aplicatie">
+        
+        <label for="valoare-camp">Conținut JSON:</label>
+        <input type="text" id="valoare-camp" placeholder='ex: {"tema": "dark", "limba": "ro"}'>
+        
+        <button onclick="salveazaCamp()">Salvează în Cloud</button>
+    </div>
+
+    <!-- DELETE -->
+    <div class="box" style="border-color: #dc3545;">
+        <h3>🗑️ 5. Șterge un Câmp (DELETE)</h3>
+        <input type="text" id="nume-camp-stergere" placeholder="Introduceți numele exact al câmpului pentru ștergere">
+        <button onclick="stergeCamp()" class="btn-rosu">Șterge definitiv</button>
+    </div>
+
+    <script>
+        // La încărcarea paginii
+        window.onload = function() {
+            const urlSalvat = localStorage.getItem('upstash_url');
+            const tokenSalvat = localStorage.getItem('upstash_token');
+            
+            if (urlSalvat) document.getElementById('db-url').value = urlSalvat;
+            if (tokenSalvat) document.getElementById('db-token').value = tokenSalvat;
+            
+            if (urlSalvat && tokenSalvat) {
+                blocheazaCampuri(true);
+                scaneazaCampuri(); // Scanează automat toate câmpurile la pornire
+            }
+        };
+
+        function salveazaCredintiale() {
+            const url = document.getElementById('db-url').value.trim();
+            const token = document.getElementById('db-token').value.trim();
+            
+            if (!url || !token) {
+                alert("Completează URL-ul și Token-ul!");
+                return;
+            }
+            
+            localStorage.setItem('upstash_url', url);
+            localStorage.setItem('upstash_token', token);
+            
+            blocheazaCampuri(true);
+            alert("Conexiune salvată!");
+            scaneazaCampuri();
+        }
+
+        function permiteEditare() {
+            blocheazaCampuri(false);
+            document.getElementById('db-token').value = "";
+            document.getElementById('db-token').focus();
+        }
+
+        function blocheazaCampuri(stare) {
+            document.getElementById('db-url').disabled = stare;
+            document.getElementById('db-token').disabled = stare;
+            document.getElementById('btn-salveaza').style.display = stare ? "none" : "block";
+            document.getElementById('btn-editeaza').style.display = stare ? "block" : "none";
+        }
+
+        // Core API fetcher
+        async function executaComandaRedis(comanda) {
+            const url = localStorage.getItem('upstash_url');
+            const token = localStorage.getItem('upstash_token');
+            
+            if (!url || !token) {
+                throw new Error("Lipsește configurarea Upstash din secțiunea 1!");
+            }
+
+            const raspuns = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(comanda)
+            });
+            
+            if (!raspuns.ok) throw new Error("Eroare la baza de date. Verifică credențialele.");
+            
+            const date = await raspuns.json();
+            return date.result;
+        }
+
+        // ========================================================
+        // 🔍 FUNCȚIA NOUĂ: SCANARE ȘI CĂUTARE CU WILDCARD
+        // ========================================================
+        async function scaneazaCampuri() {
+            const filtru = document.getElementById('input-search').value.trim() || "*";
+            const dropdown = document.getElementById('select-citire');
+            const indicatorTotal = document.getElementById('total-campuri');
+            
+            dropdown.innerHTML = "<option>Se caută...</option>";
+            indicatorTotal.innerText = "...";
+
+            try {
+                // Trimitem comanda: KEYS filtru (ex: KEYS *set*)
+                const cheiGasite = await executaComandaRedis(["KEYS", filtru]);
+
+                if (!cheiGasite || cheiGasite.length === 0) {
+                    dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
+                    indicatorTotal.innerText = "0";
+                    document.getElementById('rezultat-citire').innerText = "Niciun rezultat pentru filtrul introdus.";
+                    return;
+                }
+
+                // Sortăm cheile alfabetic ca să fie mai ușor de urmărit
+                cheiGasite.sort();
+
+                // Actualizăm numărul total de câmpuri găsite
+                indicatorTotal.innerText = cheiGasite.length;
+
+                // Reconstruim dropdown-ul cu cheile returnate de Redis
+                dropdown.innerHTML = "";
+                cheiGasite.forEach(cheie => {
+                    const option = document.createElement('option');
+                    option.value = cheie;
+                    option.innerText = cheie;
+                    dropdown.appendChild(option);
+                });
+
+                // Citim automat conținutul primei chei din listă
+                citesteCamp();
+
+            } catch (err) {
+                dropdown.innerHTML = "<option value=''>Eroare la scanare</option>";
+                document.getElementById('rezultat-citire').innerText = err.message;
+            }
+        }
+
+        // READ (Citește câmpul selectat din dropdown)
+        async function citesteCamp() {
+            const cheie = document.getElementById('select-citire').value;
+            const ecran = document.getElementById('rezultat-citire');
+            
+            if (!cheie) {
+                ecran.innerText = "Selectează un câmp valid din listă.";
+                return;
+            }
+            ecran.innerText = "Se încarcă...";
+
+            try {
+                const rezultatString = await executaComandaRedis(["GET", cheie]);
+
+                if (!rezultatString) {
+                    ecran.innerText = "Câmpul este gol.";
+                    return;
+                }
+
+                const jsonObiect = JSON.parse(rezultatString);
+                ecran.innerText = JSON.stringify(jsonObiect, null, 2);
+            } catch (err) {
+                ecran.innerText = "Eroare la parsare/citire: " + err.message;
+            }
+        }
+
+        // ==========================================
+        // 4. CREATE / UPDATE (Salvează sau Modifică)
+        // ==========================================
+        async function salveazaCamp() {
+            const cheie = document.getElementById('nume-camp').value.trim();
+            const valoareRaw = document.getElementById('valoare-camp').value.trim();
+
+            if (!cheie || !valoareRaw) {
+                alert("Completează datele din secțiunea 4!");
+                return;
+            }
+
+            try {
+                const jsonValidat = JSON.parse(valoareRaw);
+                await executaComandaRedis(["SET", cheie, JSON.stringify(jsonValidat)]);
+
+                alert(`Câmpul "${cheie}" a fost salvat!`);
+                
+                // Repunem filtrul pe "*" ca să vedem noul câmp adăugat și reîmprospătăm lista
+                document.getElementById('input-search').value = "*";
+                await scaneazaCampuri();
+                
+                // Selectăm vizual noul câmp în dropdown și îl afișăm
+                document.getElementById('select-citire').value = cheie;
+                citesteCamp();
+            } catch (err) {
+                alert(err.message.includes("JSON") ? "Introdu un JSON valid!" : err.message);
+            }
+        }
+
+        // ==========================================
+        // 5. DELETE (Șterge un Câmp definitiv)
+        // ==========================================
+        async function stergeCamp() {
+            const cheie = document.getElementById('nume-camp-stergere').value.trim();
+
+            if (!cheie) {
+                alert("Introdu numele câmpului de șters!");
+                return;
+            }
+
+            if (!confirm(`Ștergi definitiv câmpul "${cheie}"?`)) return;
+
+            try {
+                const numarSterse = await executaComandaRedis(["DEL", cheie]);
+
+                if (numarSterse > 0) {
+                    alert(`Câmpul "${cheie}" a fost șters.`);
+                    // Rescanăm baza de date ca să dispară din listă
+                    scaneazaCampuri();
+                } else {
+                    alert("Câmpul nu există în baza de date.");
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    </script>
+</body>
+</html>
