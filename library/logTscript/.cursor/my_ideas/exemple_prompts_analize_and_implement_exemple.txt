@@ -161,4 +161,124 @@ sa te asiguri ca toate testele trec cu success, si ca blocurile din paginiile de
 
 nu scrii in documentatie despre fazele amanate sau faze viitoare, scrii in engleza, si nu exista breaking changes. inline canvas si comp canvas nu sunt in productie inca.
 
+Didactic language and digital-logic simulator for teaching digital systems: wires, interactive panels, CPU (ASM/ISA), PLC, logic (SWI-PROLOG like) and physical-style components.
+
+Didactic language and digital-logic simulator for teaching digital systems: wires, interactive panels, CPU (ASM/ISA), PLC, protocols, Prolog-like logic, and physical-style components.
+
+Didactic language and digital-logic simulator for teaching digital systems: wires, interactive panels, chips, displays, network, CPU (ASM/ISA), RAM, lut, PLC, protocols, Prolog-like logic, and physical-style components.
+
+Didactic language and digital-logic simulator for teaching digital systems: wires, panels, chips, displays, network, CPU (ASM/ISA), RAM, LUT, PLC, protocols, Prolog-like logic, and physical-style components.
+
+cd D:\wamp64\www\logTscript-extract
+git add -A
+git status
+git commit -m "Flatten app to repo root as index.html for GitHub Pages`n`nUntrack .cursor locally via .gitignore, drop legacy v0_3_1, and move v0_3_2 contents to root."
+git push
+
+
+
+=======
+
+Vezi te rog diff origin/main,
+am facut o incercare de adauga un widget card in codeMirror pentur "comp" dar nu e facut foarte bine, nu tine cont tipurile componentelor si ce poate avea, nu poti adauga atribute noi, blocurile de genul 
+comp clcd symbols, 
+comp canvas hitbox, 
+comp logic 
+comp plc 
+
+
+As vrea sa vezi sa scrii un plan in .cursor/plans 
+ceva cu nume de genul cm-widget-cards plan 
+
+poti vedea un plan exemplu @.cursor/plans/canvas_inline_and_comp.plan.md 
+
+nu imi pune intrebari iti dau in scris pt fiecare decizie neconfirmata,
+
+necesar, si de adaugat si in plan daca nu este deja ca legenda:
+daca ai recomandari notezi optinile cu (recommended) 
+daca gasesti ca daca facem altfel are mai mult sens, poti pune optiunile tale cu (change)
+cand e o faza gata de implementare poti sa scrii (ready-to-implement)
+daca o faza e implementata poti sa scrii (completed)
+
+ as vrea sa analizezi sa vezi directia, sa vezi cam ce se doreste, ce ti se pare neclar sau daca vezi modificari de la directie da-mi optiuni 
+in tabelul cu decizii pentru fiecare faza as vrea tot asa D1, D2, D3, Dx si sa continuam de la numarul Dx la care suntem in plan, si pt fiecare decizie poti sa imi dai optiunile detaliate sub tabelul deciziilor acelei faze cum ziceam vezi structura existenta acum in planul exemplu @.cursor/plans/canvas_inline_and_comp.plan.md 
+
+
+=====
+
+
+daca vezi alte optiuni decat ce am zis eu acum, analizeaza si adauga decizii te rog intr-o sectiune post-F3 si le discutam. nu modifica planul pana nu si decid pentru ele ce cum, le gandim, le discutam mai intai in scris in plan. 
+
+
+2px solid #ea580c
+
+
+
+----===-----
+
+
+nu imi pune intrebari iti dau in scris pt fiecare decizie neconfirmata,
+
+necesar, si de adaugat si in plan daca nu este deja ca legenda:
+daca ai recomandari notezi optinile cu (recommended) 
+daca gasesti ca daca facem altfel are mai mult sens, poti pune optiunile tale cu (change)
+cand e o faza gata de implementare poti sa scrii (ready-to-implement)
+daca o faza e implementata poti sa scrii (completed)
+
+ as vrea sa analizezi sa vezi directia, sa vezi cam ce se doreste, este un sketch deci e posibil sa fie si greseli, ce ti se pare neclar sau daca vezi modificari de la directie da-mi optiuni, cu decizii in tabel adica sa continuam de la numarul Dx la care suntem in plan, si pt fiecare decizie poti sa imi dai optiunile detaliate sub tabelul deciziilor, vezi cum am facut la ultimele faze din planul @.cursor/plans/inline_logic.plan.md 
+ 
+ 
+ 
+-----
+ 
+vreau sa implementam parser, acesta va avea un inline parser un inline interp si un comp interp.
+ 
+
+imi adaugi plan nou un te rog parser_interp_inline_comp.plan.md in @.cursor/plans/  pe aceasi structura si reguli ca @.cursor/plans/inline_logic2.plan.md 
+vezi structura acolo
+
+
+La fel ca la fazele de acolo doresc ca daca e ceva de amanat sa avem un tabel cu faze amanate cu nume exemplu de forma 1+a, 1+b, 1+c, ... 1+x
+
+nu imi pune intrebari iti dau in scris pt fiecare decizie neconfirmata,
+
+necesar, si de adaugat si in plan daca nu este deja ca legenda:
+daca ai recomandari notezi optinile cu (recommended) 
+daca gasesti ca daca facem altfel are mai mult sens, poti pune optiunile tale cu (change)
+cand e o faza gata de implementare poti sa scrii (ready-to-implement)
+daca o faza e implementata poti sa scrii (completed)
+
+ as vrea sa analizezi sa vezi directia, sa vezi cam ce se doreste, dar este un sketch posibil sa fie si greseli, ce ti se pare neclar sau daca vezi modificari de la directie da-mi optiuni, in tabel as vrea tot asa D1 D2 D3 adica sa continuam de la numarul Dx la care suntem in plan, si pt fiecare decizie poti sa imi dai optiunile poate detaliate acolo unde este necesar. 
+
+vezi cum e in @.cursor/plans/inline_logic2.plan.md 
+
+
+sigur avem nevoie de niste faze 1,2,3,4 pentru ca documentatia sketch are multe lucruri.
+
+documentatia sketch este in mai multe fisiere, in ordinea probabila a implementarilor: 
+
+inline parser sketch: @.cursor/my_ideas/inline_parser_full_sketch_for_comp_interp.txt 
+inline interp sketch: @.cursor/my_ideas/inline_interp_sketch 
+comp interp sketch: @.cursor/my_ideas/comp_interp_sketch 
+
+cum ziceam e posibl sa fie si greseli dar directia este explicata in fiecare fisier.
+
+
+----===---
+implementeaza te rog F1a - F1e inclusiv.
+
+sa adaugi exemple cu butoane load si load and run
+sa scrii documentatie cu comportamentul/ functionalitatile noi si exemple care sa mearga conform
+
+daca folosesti in teste functionalitate logTscript adica wire connections, trebuie sa existe si teste pe wave nu doar legacy, am observat diferente la rulari intre wave si legacy, pentru ca se propaga diferit semnalele, au fost corectate dar posibil ca din nou sa apara rezultate diferite, si asta nu este ok, rezultatele trebuie sa fie aceleasi intre wave si legacy.
+
+sa te asiguri ca toate testele trec cu success, si ca blocurile din paginiile de documentatie ruleza cu success.
+
+
+nu scrii in documentatie despre fazele amanate sau faze viitoare, scrii in engleza, si nu exista breaking changes. inline parser, inline interp si comp interp nu sunt in productie inca.
+
+probabil e nevoie de mai multe exemple nu doar 1-2 pentru ca complexitatea este mare.
+
+
+----
 
