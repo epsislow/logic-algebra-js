@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-House Storage Securizat</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; background: #fdfdfd; }
+        .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white; }
+        .box-auth { border: 2px solid #007bff; background: #f8f9fa; text-align: center; }
+        select, input, button { padding: 10px; margin: 6px 0; display: block; width: 100%; box-sizing: border-box; border-radius: 4px; }
+        input { border: 1px solid #aaa; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 15px; }
+        button:hover { background: #218838; }
+        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; min-height: 40px; border: 1px solid #ddd; }
+        .btn-albastru { background: #007bff; }
+        .btn-albastru:hover { background: #0056b3; }
+        .btn-rosu { background: #dc3545; }
+        .btn-rosu:hover { background: #bd2130; }
+        .zona-utilizator { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 5px; }
+        .badge { background: #6c757d; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <h2>Sistem Gestiune In-House (Cloudflare + Upstash)</h2>
+
+    <!-- ECRAN 1: FORMULARUL DE LOGIN -->
+    <div id="ecran-login" class="box box-auth">
+        <h3>🔒 Autentificare Necesară</h3>
+        <p style="font-size: 13px; color: #555;">Sistem securizat server-side. Token-urile sunt ascunse în Cloudflare.</p>
+        <input type="text" id="login-username" placeholder="Utilizator (ex: admin)">
+        <input type="password" id="login-password" placeholder="Parolă">
+        <button onclick="executaLogin()" class="btn-albastru">Conectează-te</button>
+    </div>
+
+    <!-- ECRAN 2: PANOUL DE CONTROL CRUD (Ascuns implicit până la login) -->
+    <div id="panou-aplicatie" style="display: none;">
+        
+        <div class="zona-utilizator">
+            <span>Conectat ca: <strong id="nume-utilizator-afisat">...</strong></span>
+            <button onclick="executaLogout()" class="btn-rosu" style="width: auto; margin: 0; padding: 5px 10px; font-size: 13px;">Deconectare</button>
+        </div>
+
+        <!-- CĂUTARE WILDCARD ȘI SELECTARE CÂMP -->
+        <div class="box" style="border-color: #ffc107; background: #fffdf6;">
+            <h3>🔍 Scanează și Filtrează Câmpuri</h3>
+            <input type="text" id="input-search" value="*" placeholder="Filtru wildcard (ex: * sau set*)">
+            <button onclick="scaneazaToateCampurile()" style="background: #ffc107; color: #333;">Caută în Baza de Date</button>
+            <p style="margin-top: 10px; font-size: 14px;">Câmpuri găsite: <span id="total-campuri" class="badge">0</span></p>
+            
+            <label for="select-citire">Alege din rezultate pentru a citi conținutul:</label>
+            <select id="select-citire" onchange="citesteContinutCamp()">
+                <option value="">-- Încarcă lista mai sus --</option>
+            </select>
+        </div>
+
+        <!-- AFISARE REZULTAT READ -->
+        <div class="box">
+            <h3>📄 Conținut JSON (Citire)</h3>
+            <pre id="rezultat-citire">Selectează un câmp din lista de mai sus.</pre>
+        </div>
+
+        <!-- CREATE / UPDATE -->
+        <div class="box">
+            <h3>💾 Adaugă sau Modifică un Câmp (CREATE / UPDATE)</h3>
+            <label for="nume-camp">Nume Câmp (Cheie):</label>
+            <input type="text" id="nume-camp" placeholder="ex: setari_aplicatie">
+            
+            <label for="valoare-camp">Conținut JSON:</label>
+            <input type="text" id="valoare-camp" placeholder='ex: {"tema": "dark", "limba": "ro"}'>
+            
+            <button onclick="salveazaCampInCloud()">Salvează Câmpul</button>
+        </div>
+
+        <!-- DELETE -->
+        <div class="box" style="border-color: #dc3545;">
+            <h3>🗑️ Șterge un Câmp (DELETE)</h3>
+            <input type="text" id="nume-camp-stergere" placeholder="Numele exact al câmpului de șters">
+            <button onclick="stergeCampDinCloud()" class="btn-rosu">Șterge Definitiv</button>
+        </div>
+
+    </div>
+
+    <script>
+        // ========================================================
+        // CONFIGURARE: Pune aici link-ul tău primit de la Cloudflare
+        // ========================================================
+        const WORKER_URL = "https://little-darkness-9133.ady25626.workers.dev";
+
+        // La pornirea paginii, verificăm dacă avem sesiune salvată
+        window.onload = function() {
+            const token = localStorage.getItem("session_token");
+            const user = localStorage.getItem("session_user");
+            
+            if (token && user) {
+                arataPanouAplicatie(user);
+            }
+        };
+
+        // Helper universal pentru a trimite cereri CRUD către Cloudflare Worker-ul tău
+        async function apeleazaServerul(ruta, dateTrimise) {
+            const token = localStorage.getItem("session_token");
+            
+            const configurareCerere = {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            };
+
+            // Dacă avem token de sesiune, îl atașăm în Header-ul securizat de Authorization
+            if (token) {
+                configurareCerere.headers["Authorization"] = `Bearer ${token}`;
+            }
+
+            configurareCerere.body = JSON.stringify(dateTrimise);
+
+            const raspuns = await fetch(`${WORKER_URL}${ruta}`, configurareCerere);
+            
+            if (raspuns.status === 401 || raspuns.status === 403) {
+                executaLogout();
+                throw new Error("Sesiune invalidă sau expirată. Te rog reconectează-te.");
+            }
+            
+            if (!raspuns.ok) {
+                const textEroare = await raspuns.text();
+                throw new Error(textEroare || "Eroare la server.");
+            }
+
+            return await raspuns.json();
+        }
+
+        // ==========================================
+        // 🔐 FUNCȚIA DE AUTENTIFICARE (LOGIN)
+        // ==========================================
+        async function executaLogin() {
+            const user = document.getElementById("login-username").value.trim();
+            const pass = document.getElementById("login-password").value.trim();
+
+            if (!user || !pass) {
+                alert("Introdu utilizatorul și parola!");
+                return;
+            }
+
+            try {
+                const dateInapoi = await apeleazaServerul("/api/login", { username: user, password: pass });
+                
+                if (dateInapoi.succes) {
+                    localStorage.setItem("session_token", dateInapoi.token);
+                    localStorage.setItem("session_user", user);
+                    arataPanouAplicatie(user);
+                }
+            } catch (err) {
+                alert("Eroare de logare: " + err.message);
+            }
+        }
+
+        function arataPanouAplicatie(username) {
+            document.getElementById("ecran-login").style.display = "none";
+            document.getElementById("panou-aplicatie").style.display = "block";
+            document.getElementById("nume-utilizator-afisat").innerText = username;
+            scaneazaToateCampurile(); // Încarcă automat câmpurile la login succes
+        }
+
+        function executaLogout() {
+            localStorage.removeItem("session_token");
+            localStorage.removeItem("session_user");
+            document.getElementById("ecran-login").style.display = "block";
+            document.getElementById("panou-aplicatie").style.display = "none";
+        }
+
+        // ==========================================
+        // 🔍 SCANARE ȘI FILTRARE CÂMPURI (KEYS wildcard)
+        // ==========================================
+        async function scaneazaToateCampurile() {
+            const filtru = document.getElementById("input-search").value.trim() || "*";
+            const dropdown = document.getElementById("select-citire");
+            const indicatorTotal = document.getElementById("total-campuri");
+            
+            dropdown.innerHTML = "<option>Se încarcă lista...</option>";
+
+            try {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
+                const chei = date.rezultat || [];
+
+                // Filtrăm cheile de sistem pentru autentificare, ca să nu le stricăm din greșeală în interfața de câmpuri
+                const cheiFiltrate = chei.filter(c => !c.startsWith("user:") && !c.startsWith("session:"));
+                cheiFiltrate.sort();
+
+                indicatorTotal.innerText = cheiFiltrate.length;
+                dropdown.innerHTML = "";
+
+                if (cheiFiltrate.length === 0) {
+                    dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
+                    document.getElementById("rezultat-citire").innerText = "Nu există date pentru filtrul introdus.";
+                    return;
+                }
+
+                cheiFiltrate.forEach(cheie => {
+                    const opt = document.createElement("option");
+                    opt.value = cheie;
+                    opt.innerText = cheie;
+                    dropdown.appendChild(opt);
+                });
+
+                citesteContinutCamp();
+            } catch (err) {
+                dropdown.innerHTML = "<option value=''>Eroare la citire</option>";
+                document.getElementById("rezultat-citire").innerText = err.message;
+            }
+        }
+
+        // ==========================================
+        // 📄 CITEȘTE CONȚINUT CÂMP (GET)
+        // ==========================================
+        async function citesteContinutCamp() {
+            const cheie = document.getElementById("select-citire").value;
+            const ecran = document.getElementById("rezultat-citire");
+
+            if (!cheie) {
+                ecran.innerText = "Selectează un câmp din lista de mai sus.";
+                return;
+            }
+            ecran.innerText = "Se încarcă textul...";
+
+            try {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", cheie] });
+                
+                if (!date.rezultat) {
+                    ecran.innerText = "Câmp gol.";
+                    return;
+                }
+                
+                const obiectJSON = JSON.parse(date.rezultat);
+                ecran.innerText = JSON.stringify(obiectJSON, null, 2);
+            } catch (err) {
+                ecran.innerText = "Eroare la preluare date: " + err.message;
+            }
+        }
+
+        // ==========================================
+        // 💾 SALVEAZĂ SAU MODIFICĂ CÂMP (SET)
+        // ==========================================
+        async function salveazaCampInCloud() {
+            const cheie = document.getElementById("nume-camp").value.trim();
+            const valoareRaw = document.getElementById("valoare-camp").value.trim();
+
+            if (!cheie || !valoareRaw) {
+                alert("Te rog completează datele de salvare!");
+                return;
+            }
+
+            try {
+                // Validare JSON direct în browser înainte de trimitere
+                const jsonValidat = JSON.parse(valoareRaw);
+                
+                await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, JSON.stringify(jsonValidat)] });
+                alert(`Câmpul "${cheie}" a fost salvat securizat!`);
+                
+                document.getElementById("input-search").value = "*";
+                await scaneazaToateCampurile();
+                document.getElementById("select-citire").value = cheie;
+                citesteContinutCamp();
+            } catch (err) {
+                alert(err.message.includes("JSON") ? "Te rog introdu un JSON valid în casetă!" : err.message);
+            }
+        }
+
+        // ==========================================
+        // 🗑️ ȘTERGE UN CÂMP (DEL)
+        // ==========================================
+        async function stergeCampDinCloud() {
+            const cheie = document.getElementById("nume-camp-stergere").value.trim();
+
+            if (!cheie) {
+                alert("Scrie numele câmpului pe care vrei să îl ștergi!");
+                return;
+            }
+
+            if (!confirm(`Ești sigur că vrei să ștergi definitiv câmpul "${cheie}"?`)) return;
+
+            try {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheie] });
+                
+                if (date.rezultat > 0) {
+                    alert(`Câmpul "${cheie}" a fost eliminat.`);
+                    scaneazaToateCampurile();
+                } else {
+                    alert("Câmpul nu a fost găsit în baza de date.");
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+    </script>
+</body>
+</html>

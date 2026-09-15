@@ -289,6 +289,29 @@
                 alert(err.message);
             }
         }
+		
+		// Funcție pe care o poți apela printr-un buton ca să vezi statisticile interne
+		async function veziStatisticiBazaDate() {
+			try {
+				// Trimitem comanda: INFO
+				const textStatistici = await executaComandaRedis(["INFO"]);
+				
+				// Căutăm în textul returnat variabila pentru comenzi procesate
+				const linii = textStatistici.split("\n");
+				let comenziProcesate = 0;
+				
+				linii.forEach(linie => {
+					if (linie.startsWith("total_commands_processed:")) {
+						comenziProcesate = linie.split(":")[1].trim();
+					}
+				});
+
+				alert(`Această bază de date a procesat în total ${comenziProcesate} comenzi de la creare.`);
+			} catch (err) {
+				alert("Nu s-au putut prelua statisticile: " + err.message);
+			}
+		}
+
     </script>
 </body>
 </html>
