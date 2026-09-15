@@ -109,34 +109,45 @@
 
 <script>
     const schemaConfig = {
-      "type": "array",
-      "minItems": 7,
-      "maxItems": 7,
-      "items": [
+  "type": "array",
+  "minItems": 7,
+  "maxItems": 7,
+  "items": [
         { "title": "Setare 1", "type": "integer", "enum":[1,2,3], "default": 1 },
         { "title": "Setare 2", "type": "integer", "enum":[1,2,3], "default": 2 },
         { "title": "Setare 3", "type": "integer", "enum":[1,2,3], "default": 3 },
-        { "title": "Valoare Liberă 4", "type": "integer", "default": 4 },
-        { "title": "Valoare Liberă 5", "type": "integer", "default": 5 },
-        { "title": "Valoare Liberă 6", "type": "integer", "default": 6 },
-        {
+    { "title": "Valoare Liberă 4", "type": "integer", "default": 4 },
+    { "title": "Valoare Liberă 5", "type": "integer", "default": 5 },
+    { "title": "Valoare Liberă 6", "type": "integer", "default": 6 },
+    {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID Unic", "type": "integer", "default": 7 },
+        "lista_nume": {
+          "title": "Listă Utilizatori",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "title": "Nume"
+          }
+        },
+        "detalii_tehnice": {
+          "title": "Detalii Tehnice Sistem",
           "type": "object",
           "properties": {
-            "id": { "title": "ID Unic", "type": "integer", "default": 7 },
-			 "lista_nume": {
-              "title": "Listă Utilizatori",
-              "type": "array",
-              "uniqueItems": true, // Previne adăugarea aceluiași nume de două ori (opțional)
-              "items": {
-                "type": "string",
-                "title": "Nume"
-              }
-            }
+            "port": { "title": "Port Conexiune", "type": "integer", "default": 8080 },
+            "protocol": { "title": "Protocol", "type": "string", "enum": ["HTTP", "HTTPS", "FTP"], "default": "HTTPS" },
+            "activat": { "title": "Status Rețea", "type": "string", "enum": ["DA", "NU"], "default": "DA" }
           },
-          "required": ["id"]
+          "required": ["port", "protocol"]
         }
-      ]
-    };
+      },
+      "required": ["id", "detalii_tehnice"]
+    }
+  ]
+}
+;
 
     const element = document.getElementById('editor_holder');
     const editor = new JSONEditor(element, {
