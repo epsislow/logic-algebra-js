@@ -291,6 +291,70 @@
                 alert(err.message);
             }
         }
+		
+		async function adaugaStockLine(id, username, locatieId, dateObiect) {
+			try {
+				// Trimitem comenzile separat, una câte una, ca să fim siguri că Upstash le scrie corect
+				
+				// 1. Salvare obiect principal
+				const r1 = await apeleazaServerul("/api/comanda", {
+					comandaRedis: ["SET", `stock-line:${id}`, JSON.stringify(dateObiect)]
+				});
+				console.log(`SET stock-line:${id} ->`, r1);
+				
+				// 2. Adăugare în index user
+				const r2 = await apeleazaServerul("/api/comanda", {
+					comandaRedis: ["SADD", `user:${username}:stock-lines`, id]
+				});
+				console.log(`SADD user index ->`, r2);
+				
+				// 3. Adăugare în index locație
+				const r3 = await apeleazaServerul("/api/comanda", {
+					comandaRedis: ["SADD", `location:${locatieId}:stock-lines`, id]
+				});
+				console.log(`SADD location index ->`, r3);
+
+				console.log(`Stocul ${id} și indecșii au fost procesați.`);
+			} catch (err) {
+				console.error("Eroare la adăugarea stocului:", err);
+			}
+		}
+
+
+		async function cautaStocuriDupaUtilizatorSiLocatie(username, locatieId) {
+			try {
+				// --- PASUL 1: Intersectăm seturile de indecși ---
+				const pasul1 = await apeleazaServerul("/api/comanda", {
+					comandaRedis: ["SINTER", `user:${username}:stock-lines`, `location:${locatieId}:stock-lines`]
+				});
+
+				const iduriGasite = pasul1.rezultat || [];
+				
+				if (iduriGasite.length === 0) {
+					console.log("Nu s-a găsit niciun stoc pentru această combinație.");
+					return [];
+				}
+
+				// --- PASUL 2: MGET în masă (CORECorectat aici: fără spațiu în nume) ---
+				const cheiStocReale = iduriGasite.map(id => `stock-line:${id}`);
+
+				// Rulăm o singură comandă MGET cu toate cheile ca argumente
+				const pasul2 = await apeleazaServerul("/api/comanda", {
+					comandaRedis: ["MGET", ...cheiStocReale]
+				});
+
+				// În pasul2.rezultat vei avea un array cu toate obiectele JSON complete sub formă de string
+				const obiecteStoc = pasul2.rezultat.map(item => item ? JSON.parse(item) : null);
+				
+				console.log("Toate datele au fost aduse eficient:", obiecteStoc);
+				return obiecteStoc;
+
+			} catch (err) {
+				console.error("Eroare la căutarea stocurilor: " + err.message);
+			}
+		}
+
+
     </script>
 </body>
 </html>
