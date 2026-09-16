@@ -353,8 +353,66 @@
 				console.error("Eroare la căutarea stocurilor: " + err.message);
 			}
 		}
+		
+		
+		/////////////////////
+		
+		
+		async function creeazaTabelStocuriSQL() {
+			await apeleazaServerul("/api/sql", {
+				sql: "CREATE TABLE IF NOT EXISTS stock_lines (id TEXT PRIMARY KEY, username TEXT, location_id TEXT, produs TEXT, cantitate INTEGER);"
+			});
+			// Adăugăm indexul automat pentru căutările combinate rapide
+			await apeleazaServerul("/api/sql", {
+				sql: "CREATE INDEX IF NOT EXISTS idx_user_loc ON stock_lines(username, location_id);"
+			});
+			console.log("Tabelul SQL D1 pentru stocuri a fost creat!");
+		}
+
+		async function cautaStocuriSQL(username, locatieId) {
+			const raspuns = await apeleazaServerul("/api/sql", {
+				sql: "SELECT * FROM stock_lines WHERE username = ? AND location_id = ?;",
+				params: [username, locatieId]
+			});
+			console.log("Datele primite direct din SQL:", raspuns.rezultat);
+			return raspuns.rezultat;
+		}
+
+		async function salveazaStocSQL(id, username, locatieId, produs, cantitate) {
+			try {
+				const raspuns = await apeleazaServerul("/api/sql", {
+					sql: `INSERT INTO stock_lines (id, username, location_id, produs, cantitate) 
+						  VALUES (?, ?, ?, ?, ?) 
+						  ON CONFLICT(id) DO UPDATE SET 
+							username = excluded.username, 
+							location_id = excluded.location_id, 
+							produs = excluded.produs, 
+							cantitate = excluded.cantitate;`,
+					params: [id, username, locatieId, produs, cantitate]
+				});
+				
+				console.log(`[SQL D1] Stocul cu ID-ul ${id} a fost salvat cu succes!`, raspuns);
+			} catch (err) {
+				console.error("Eroare la salvarea în SQL D1:", err.message);
+			}
+		}
 
 
+/***
+await creeazaTabelStocuriSQL()
+
+
+// Încărcăm 4 linii de stoc diferite în tabelul tău din Cloudflare D1
+await salveazaStocSQL("100", "john", "1222", "Șuruburi M6", 500);
+await salveazaStocSQL("111", "john", "1222", "Piulițe M6", 250);
+await salveazaStocSQL("222", "maria", "1222", "Șuruburi M6", 100); // Alt user, aceeași locație
+await salveazaStocSQL("333", "john", "9999", "Ciocan", 5);         // Același user, altă locație
+
+console.log("Toate datele de test au fost inserate în D1 SQL!");
+
+rezultate = await cautaStocuriSQL("john", "1222");
+
+*/
     </script>
 </body>
 </html>
