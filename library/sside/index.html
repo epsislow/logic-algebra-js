@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>In-House Storage Securizat</title>
+	
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/json-editor/2.15.1/jsoneditor.min.js"></script>
+	
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; background: #fdfdfd; }
         .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white; }
@@ -60,6 +63,29 @@
             <h3>📄 Conținut JSON (Citire)</h3>
             <pre id="rezultat-citire">Selectează un câmp din lista de mai sus.</pre>
         </div>
+
+        <!-- EDITOR DINAMIC -->
+		<div class="card" style="margin-top: 20px; padding: 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px;">
+			<h3><i class="fa fa-edit"></i> Editor Dinamic (schema)</h3>
+			
+			<div style="margin-bottom: 15px;">
+				<label><strong>Introdu Schema JSON (Aici pui regulile):</strong></label>
+				<textarea id="schema-input" rows="5" style="width:100%; font-family:monospace; margin-top:5px;" placeholder='Exemplu: {"type": "object", "properties": {"id": {"type": "integer"}}}'></textarea>
+			</div>
+			
+			<button type="button" onclick="genereazaFormularDinamic()" style="background: #2196F3; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+				Generează Formular
+			</button>
+
+			<!-- Zona unde va apărea formularul editabil -->
+			<div id="json-editor-holder" style="margin-top: 20px; padding: 10px; background: #fafafa; border: 1px dashed #bbb;"></div>
+
+			<button id="save-editor-btn" type="button" onclick="salveazaDateEditor()" style="display:none; margin-top: 15px; background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+				Salvează Datele din Formular
+			</button>
+		</div>
+
+
 
         <!-- CREATE / UPDATE -->
         <div class="box">
@@ -396,6 +422,95 @@
 				console.error("Eroare la salvarea în SQL D1:", err.message);
 			}
 		}
+
+// Variabilă globală pentru a ține instanța editorului activ
+let dynamicJsonEditor = null;
+
+// 1. Funcția care generează formularul pe baza schemei și a JSON-ului citit
+function genereazaFormularDinamic() {
+    const holder = document.getElementById('json-editor-holder');
+    const schemaTxt = document.getElementById('schema-input').value.trim();
+    
+    // Presupunem că în index.html ai un element (ex: o zonă de text/pre) care ține JSON-ul curent descărcat.
+    // Înlocuiește 'id_element_continut_json' cu ID-ul real din codul tău (unde scrie textul JSON-ului cu id: 7)
+    const currentJsonElement = document.getElementById('id_element_continut_json'); 
+    
+    if (!schemaTxt) {
+        alert("Te rog să introduci o schemă validă mai întâi!");
+        return;
+    }
+
+    try {
+        const schema = JSON.parse(schemaTxt);
+        let startValue = {};
+
+        // Încercăm să preluăm JSON-ul curent afișat în panoul de citire pentru a-l popula ca valori de pornire
+        if (currentJsonElement) {
+            try {
+                startValue = JSON.parse(currentJsonElement.innerText || currentJsonElement.value);
+            } catch(e) {
+                console.log("Nu s-a putut parsa JSON-ul existent, pornim cu formular gol.");
+            }
+        }
+
+        // Dacă există deja un editor randat anterior, îl distrugem pentru a nu se suprapune
+        if (dynamicJsonEditor) {
+            dynamicJsonEditor.destroy();
+        }
+
+        // Inițializăm JSON-Editor în containerul dedicat
+        dynamicJsonEditor = new JSONEditor(holder, {
+            schema: schema,
+            startval: startValue,
+            theme: 'bootstrap4', // sau tema pe care o preferi
+            iconlib: 'fontawesome5',
+            disable_collapse: true,
+            disable_edit_json: true,
+            disable_properties: true
+        });
+
+        // Afișăm butonul de salvare de sub editor
+        document.getElementById('save-editor-btn').style.display = 'block';
+
+    } catch (err) {
+        alert("Eroare la parsarea schemei JSON: " + err.message);
+    }
+}
+
+// 2. Funcția care preia datele din formular și le trimite către fluxul tău de salvare
+function salveazaDateEditor() {
+    if (!dynamicJsonEditor) return;
+
+    // Preluăm datele modificate din formularul vizual
+    const dateModificate = dynamicJsonEditor.getValue();
+    const jsonString = JSON.stringify(dateModificate, null, 2);
+
+    // Identificăm numele câmpului (cheia) pe care lucram în mod curent în aplicație.
+    // Înlocuiește 'nume_camp_input_id' cu ID-ul real al inputului tău pentru "Nume Câmp (Cheie)"
+    const inputCheie = document.getElementById('nume-camp'); 
+	const dropdown = document.getElementById("select-citire");
+	
+	inputCheie.value = dropdown.value;
+
+    if (inputCheie) {
+        // Populăm automat datele în formularul tău existent de CREATE/UPDATE de dedesubt ca să se trimită corect
+        // Înlocuiește 'continut_json_input_id' cu ID-ul inputului/textarea-ului tău pentru conținut JSON de la Update
+        const inputContinutUpdate = document.getElementById('valoare-camp');
+        if (inputContinutUpdate) {
+            inputContinutUpdate.value = jsonString;
+        }
+
+        // Executăm direct funcția ta nativă din index.html care salvează în Cloud.
+        // Înlocuiește 'salveazaCamp' cu numele exact al funcției asociate butonului verde "Salvează Câmpul"
+        if (typeof salveazaCampInCloud() === "function") {
+            salveazaCampInCloud();
+        } else {
+            //alert("Formularul a fost actualizat local! Apasă pe butonul verde de jos pentru a finaliza.");
+        }
+    } else {
+        alert("Nu s-a putut detecta numele câmpului (cheia) curentă pentru salvare.");
+    }
+}
 
 
 /***
