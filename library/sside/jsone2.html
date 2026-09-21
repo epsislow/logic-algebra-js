@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator și Editor JSON Dinamic</title>
+    
+    <!-- JSON-Editor de pe CDN public -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/json-editor/2.15.1/jsoneditor.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 20px; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+        .main-layout {
+            display: flex;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .column {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            min-width: 320px;
+        }
+        h2 { 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 10px; 
+            margin-top: 0; 
+            font-size: 18px; 
+            color: #007bff;
+        }
+        h3 {
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        #submit-btn { 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            font-size: 16px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            width: 100%; 
+        }
+        #submit-btn:hover { background-color: #218838; }
+        
+        .output-box { 
+            margin-top: 20px; 
+            background: #272822; 
+            color: #f8f8f2; 
+            padding: 15px; 
+            border-radius: 6px; 
+            overflow-x: auto; 
+        }
+        pre { margin: 0; font-size: 12px; }
+
+        /* Stiluri specifice adaptate din design-ul tău pentru editorul de date generat */
+        #data_editor_holder [data-schemaid="root"] > .je-header { display: none !important; }
+        #data_editor_holder [data-schemaid="root"] > .je-indented-panel > div {
+            display: flex !important;
+            flex-wrap: wrap !important; 
+            gap: 15px !important;       
+            padding: 15px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        #data_editor_holder [data-schemaid="root"] > .je-indented-panel > div > .je-indented-panel {
+            flex: 1 1 calc(33.333% - 15px) !important; 
+            min-width: 180px !important;               
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+        }
+        #data_editor_holder .je-object__container {
+            flex: 1 1 100% !important; 
+            border-top: 1px dashed #ccc !important;
+            padding-top: 15px !important;
+            margin-top: 10px !important;
+        }
+        #data_editor_holder .je-object__title { display: none !important; }
+
+        /* Global inputs rule */
+        input[type="text"], input[type="number"], select { 
+            width: 100% !important; 
+            max-width: 240px !important; 
+            padding: 6px 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 13px;
+        }
+        
+        /* Ajustare butoane native din JSON-editorul de scheme */
+        .json-editor-btn-add, .json-editor-btntype-add, .json-editor-btntype-properties {
+            background: #007bff !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            font-size: 12px !important;
+            margin-right: 5px !important;
+        }
+        .json-editor-btntype-delete, .json-editor-btntype-deletelast {
+            background: #dc3545 !important;
+            color: white !important;
+            border: none !important;
+            padding: 5px 10px !important;
+            border-radius: 4px !important;
+            font-size: 12px !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-layout">
+    <!-- COLOANA 1: Formularul din care construiești structura (Schema) -->
+    <div class="column">
+        <h2>1. Configurează Structura Formularului (Schema)</h2>
+        <div id="schema_editor_holder"></div>
+    </div>
+    
+    <!-- COLOANA 2: Formularul rezultat din structura configurată în stânga -->
+    <div class="column">
+        <h2>2. Completează Datele</h2>
+        <div id="data_editor_holder"></div>
+        
+        <button id="submit-btn">Extrage Datele Finale (JSON)</button>
+
+        <div class="output-box">
+            <h3>JSON Final Generat:</h3>
+            <pre id="output_json">{}</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Aceasta este "Schema unei Scheme". Îi spune editorului din stânga ce opțiuni să îți ofere
+    const metaSchema = {
+        "type": "object",
+        "title": "Configurație Câmpuri",
+        "properties": {
+            "type": { "type": "string", "enum": ["array"], "default": "array", "options": { "hidden": true } },
+            "items": {
+                "type": "array",
+                "title": "Elemente în Formular",
+                "item_title": "Câmp",
+                "items": {
+                    "type": "object",
+                    "title": "Câmp",
+                    "headerTemplate": "{{self.title}} ({{self.type}})",
+                    "properties": {
+                        "title": { "type": "string", "title": "Etichetă Câmp (Titlu)", "default": "Setare Nouă" },
+                        "type": { 
+                            "type": "string", 
+                            "title": "Tip Dată", 
+                            "enum": ["string", "integer", "number", "boolean"], 
+                            "default": "integer" 
+                        },
+                        "default": { "type": "string", "title": "Valoare Implicită (Opțional)" },
+                        "enum": {
+                            "type": "array",
+                            "title": "Opțiuni fixe limitate (Enum - Opțional)",
+                            "items": { "type": "string", "title": "Opțiune" }
+                        }
+                    },
+                    "required": ["title", "type"]
+                }
+            }
+        }
+    };
+
+    // Datele inițiale cu care se încarcă structura ta din exemplul precedent
+    const initialSchemaStructure = {
+        "type": "array",
+        "items": [
+            { "title": "Setare 1", "type": "integer", "enum": ["1", "2", "3"], "default": "1" },
+            { "title": "Setare 2", "type": "integer", "enum": ["1", "2", "3"], "default": "2" },
+            { "title": "Setare 3", "type": "integer", "enum": ["1", "2", "3"], "default": "3" },
+            { "title": "Valoare Liberă 4", "type": "integer", "default": "4" },
+            { "title": "Valoare Liberă 5", "type": "integer", "default": "5" },
+            { "title": "Valoare Liberă 6", "type": "integer", "default": "6" }
+        ]
+    };
+
+    let schemaEditor;
+    let dataEditor;
+
+    // 1. Inițializăm Editorul de Structură (Stânga)
+    const schemaHolder = document.getElementById('schema_editor_holder');
+    schemaEditor = new JSONEditor(schemaHolder, {
+        schema: metaSchema,
+        theme: 'html',
+        disable_collapse: true,
+        disable_edit_json: true,
+        disable_properties: true,
+        startval: initialSchemaStructure
+    });
+
+    // Funcție care transformă datele din formularul din stânga într-o schemă JSON validă
+    function generateTargetSchema(schemaFormValues) {
+        if (!schemaFormValues || !schemaFormValues.items) return { type: "array", items: [] };
+        
+        // Mapăm datele configurate vizual în reguli JSON Schema curate
+        const processedItems = schemaFormValues.items.map(item => {
+            let config = {
+                title: item.title,
+                type: item.type
+            };
+            
+            if (item.default !== undefined && item.default !== "") {
+                config.default = item.type === "integer" || item.type === "number" ? Number(item.default) : item.default;
+            }
+            
+            if (item.enum && item.enum.length > 0) {
+                config.enum = item.enum.map(val => item.type === "integer" || item.type === "number" ? Number(val) : val);
+            }
+            
+            return config;
+        });
+
+        return {
+            type: "array",
+            minItems: processedItems.length,
+            maxItems: processedItems.length,
+            items: processedItems
+        };
+    }
+
+    // 2. Funcția de actualizare a Editorului de Date (Dreapta)
+    function updateDataEditor() {
+        const formValues = schemaEditor.getValue();
+        const currentTargetSchema = generateTargetSchema(formValues);
+        
+        // Păstrăm datele completate deja dacă e posibil
+        let previousData = [];
+        if (dataEditor) {
+            previousData = dataEditor.getValue();
+            dataEditor.destroy(); // Distrugem vechiul instanțiat pentru a aplica noua structură
+        } else {
+            // Prima rulare, generăm niște valori implicite bazate pe schemă
+            previousData = currentTargetSchema.items.map(i => i.default || 0);
+        }
+
+        const dataHolder = document.getElementById('data_editor_holder');
+        
+        dataEditor = new JSONEditor(dataHolder, {
+            schema: currentTargetSchema,
+            theme: 'html',
+            disable_collapse: true,
+            disable_edit_json: true,
+            disable_properties: true,
+            disable_array_reorder: true,
+            startval: previousData
+        });
+
+        // Curățarea indicilor auto din labels ca în scriptul tău original
+        dataEditor.on('ready', () => {
+            document.querySelectorAll('#data_editor_holder .je-form-input-label').forEach((label) => {
+                let text = label.textContent.trim();
+                let parti = text.split(' ');
+                if (parti.length > 1 && !isNaN(parti[parti.length - 1])) {
+                    parti.pop(); 
+                    label.textContent = parti.join(' ');
+                }
+            });
+        });
+    }
+
+    // Ascultăm modificările din stânga pentru a schimba instant structura din dreapta
+    schemaEditor.on('change', () => {
+        updateDataEditor();
+    });
+
+    // 3. Extragerea datelor finale la click pe buton
+    document.getElementById('submit-btn').addEventListener('click', function() {
+        if (dataEditor) {
+            const finalData = dataEditor.getValue();
+            document.getElementById('output_json').textContent = JSON.stringify(finalData, null, 2);
+        }
+    });
+</script>
+
+</body>
+</html>
