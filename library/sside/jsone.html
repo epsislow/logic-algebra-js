@@ -137,6 +137,19 @@
         "title": "Configurație Generală",
         "properties": {
             "root_type": { "type": "string", "title": "Tipul Rădăcină al JSON-ului", "enum": ["object", "array"], "default": "object" },
+            "array_mode": {
+                "type": "string",
+                "title": "Mod Array Rădăcină",
+                "enum": ["tuple", "list"],
+                "default": "tuple",
+                "options": {
+                    "enum_titles": [
+                        "Poziții fixe (tuple) — lungime = nr. câmpuri",
+                        "Listă variabilă — adaugi elemente în dreapta"
+                    ],
+                    "dependencies": { "root_type": "array" }
+                }
+            },
             "structure": {
                 "type": "array",
                 "title": "Arbore Formular",
@@ -217,8 +230,17 @@
         let targetSchema = {};
 
         if (config.root_type === 'array') {
-            const itemsArray = (config.structure || []).map(item => parseNodeToSchema(item));
-            targetSchema = { type: "array", minItems: itemsArray.length, maxItems: itemsArray.length, items: itemsArray };
+            if (config.array_mode === 'list') {
+                // Un singur tip de element; lungime liberă în panoul din dreapta
+                const template = (config.structure && config.structure[0])
+                    ? parseNodeToSchema(config.structure[0])
+                    : { type: "string", title: "Element" };
+                targetSchema = { type: "array", title: "Listă", items: template };
+            } else {
+                // Tuple: fiecare câmp din structură = o poziție fixă
+                const itemsArray = (config.structure || []).map(item => parseNodeToSchema(item));
+                targetSchema = { type: "array", minItems: itemsArray.length, maxItems: itemsArray.length, items: itemsArray };
+            }
         } else {
             targetSchema = { type: "object", properties: {} };
             (config.structure || []).forEach(item => {
@@ -284,6 +306,7 @@
             const schemaExterna = JSON.parse(rawJson);
             let configuratieNoua = {
                 root_type: schemaExterna.type === 'array' ? 'array' : 'object',
+                array_mode: 'tuple',
                 structure: []
             };
 
@@ -293,10 +316,12 @@
                 }
             } else if (configuratieNoua.root_type === 'array' && schemaExterna.items) {
                 if (Array.isArray(schemaExterna.items)) {
+                    configuratieNoua.array_mode = 'tuple';
                     schemaExterna.items.forEach((item, index) => {
                         configuratieNoua.structure.push(inverseazaSchemaInConfig("item_" + index, item));
                     });
                 } else {
+                    configuratieNoua.array_mode = 'list';
                     configuratieNoua.structure.push(inverseazaSchemaInConfig("element", schemaExterna.items));
                 }
             } else {
