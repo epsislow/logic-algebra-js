@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor JSON Profesional</title>
+    
+    <!-- Înărcăm fișierul descărcat local de tine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/json-editor/2.15.1/jsoneditor.min.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; margin: 40px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; font-size: 20px; }
+        
+        #submit-btn { background-color: #007bff; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 20px; width: 100%; }
+        #submit-btn:hover { background-color: #0056b3; }
+        .output-box { margin-top: 30px; background: #272822; color: #f8f8f2; padding: 20px; border-radius: 6px; overflow-x: auto; display: none; }
+        pre { margin: 0; }
+
+        /* Ascundem titlul mare de la "root" */
+        [data-schemaid="root"] > .je-header { display: none !important; }
+
+        /* Containerul mare din jurul tuturor elementelor */
+        [data-schemaid="root"] > .je-indented-panel > div {
+            display: flex !important;
+            flex-wrap: wrap !important; 
+            gap: 15px !important;       
+            padding: 15px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        /* Forțăm elementele listei să ocupe o treime din rând */
+        [data-schemaid="root"] > .je-indented-panel > div > .je-indented-panel {
+            flex: 1 1 calc(33.333% - 15px) !important; 
+            min-width: 180px !important;               
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+        }
+
+        /* Obiectul final cu ID-ul îl forțăm să ocupe tot rândul de jos ca și container */
+        .je-object__container {
+            flex: 1 1 100% !important; 
+            border-top: 1px dashed #ccc !important;
+            padding-top: 15px !important;
+            margin-top: 10px !important;
+        }
+
+        /* Ascundem titlul "item 7" */
+        .je-object__title { display: none !important; }
+
+        /* Curățăm containerele interne de la obiecte ca să nu adauge margini extra */
+        .je-object__container > .je-indented-panel,
+        .je-object__container > .je-indented-panel > div,
+        .je-object__container .row {
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Etichetele de text */
+        label { 
+            font-weight: 600; 
+            font-size: 13px; 
+            color: #555; 
+            display: block !important;
+            margin-bottom: 6px !important; 
+        }
+        
+        /* ------------------------------------------------------------- */
+        /* REGULĂ GLOBALĂ: VALABILĂ INDIFERENT DE SCHEMĂ                */
+        /* ------------------------------------------------------------- */
+        /* Forțăm ABSOLUT TOATE inputurile, selecturile și text-area-urile 
+           din editor să aibă o lățime maximă mică, potrivită pentru date compacte */
+        #editor_holder input[type="text"], 
+        #editor_holder input[type="number"], 
+        #editor_holder select { 
+            width: 100% !important; 
+            max-width: 180px !important; /* 👈 Această linie le face pe toate mici, inclusiv ID-ul */
+            padding: 8px 10px; 
+            margin: 0 !important; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+            font-size: 14px;
+            background-color: #fff;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Interfață Vizuală Configurare</h2>
+    <div id="editor_holder"></div>
+    <button id="submit-btn">Generează și Extrage JSON</button>
+
+    <div id="output_container" class="output-box">
+        <h3>JSON-ul tău generat:</h3>
+        <pre id="output_json"></pre>
+    </div>
+</div>
+
+<script>
+    const schemaConfig = {
+  "type": "array",
+  "minItems": 7,
+  "maxItems": 7,
+  "items": [
+        { "title": "Setare 1", "type": "integer", "enum":[1,2,3], "default": 1 },
+        { "title": "Setare 2", "type": "integer", "enum":[1,2,3], "default": 2 },
+        { "title": "Setare 3", "type": "integer", "enum":[1,2,3], "default": 3 },
+    { "title": "Valoare Liberă 4", "type": "integer", "default": 4 },
+    { "title": "Valoare Liberă 5", "type": "integer", "default": 5 },
+    { "title": "Valoare Liberă 6", "type": "integer", "default": 6 },
+    {
+      "type": "object",
+      "properties": {
+        "id": { "title": "ID Unic", "type": "integer", "default": 7 },
+        "lista_nume": {
+          "title": "Listă Utilizatori",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "title": "Nume"
+          }
+        },
+        "detalii_tehnice": {
+          "title": "Detalii Tehnice Sistem",
+          "type": "object",
+          "properties": {
+            "port": { "title": "Port Conexiune", "type": "integer", "default": 8080 },
+            "protocol": { "title": "Protocol", "type": "string", "enum": ["HTTP", "HTTPS", "FTP"], "default": "HTTPS" },
+            "activat": { "title": "Status Rețea", "type": "string", "enum": ["DA", "NU"], "default": "DA" }
+          },
+          "required": ["port", "protocol"]
+        }
+      },
+      "required": ["id", "detalii_tehnice"]
+    }
+  ]
+}
+;
+
+    const element = document.getElementById('editor_holder');
+    const editor = new JSONEditor(element, {
+        schema: schemaConfig,
+        disable_collapse: true,
+        disable_edit_json: true,
+        disable_properties: true,
+        disable_array_reorder: true,
+        theme: 'html'
+    });
+
+    // Curățarea indicilor automați (ex: "Setare 1 1" -> "Setare 1")
+    editor.on('ready', () => {
+        document.querySelectorAll('.je-form-input-label').forEach((label) => {
+            let text = label.textContent.trim();
+            let parti = text.split(' ');
+            if (parti.length > 1 && !isNaN(parti[parti.length - 1])) {
+                parti.pop(); 
+                label.textContent = parti.join(' ');
+            }
+        });
+    });
+
+    document.getElementById('submit-btn').addEventListener('click', function() {
+        const jsonRezultat = editor.getValue();
+        const outputBox = document.getElementById('output_container');
+        const outputPre = document.getElementById('output_json');
+        
+        outputPre.textContent = JSON.stringify(jsonRezultat, null, 2);
+        outputBox.style.display = 'block';
+    });
+</script>
+
+</body>
+</html>
