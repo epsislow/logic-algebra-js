@@ -28,6 +28,9 @@
         .output-box { margin-top: 15px; background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; }
         .schema-box { margin-top: 25px; background: #1e1e1e; color: #a6e22e; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid #333; }
         pre { margin: 0; font-size: 12px; font-family: monospace; }
+        .copy-btn { margin-top: 8px; background: #495057; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+        .copy-btn:hover { background: #343a40; }
+        .copy-btn.copied { background: #28a745; }
 
         /* Stiluri ierarhice pentru configuratorul din stânga */
         #schema_editor_holder .je-object__container, 
@@ -67,6 +70,7 @@
         <div class="schema-box">
             <h3>[LIVE] JSON Schema Generat:</h3>
             <pre id="output_schema">{}</pre>
+            <button type="button" class="copy-btn" data-copy-target="output_schema">Copiază Schema</button>
         </div>
     </div>
     
@@ -80,6 +84,7 @@
         <div class="output-box">
             <h3>JSON Rezultat:</h3>
             <pre id="output_json">{}</pre>
+            <button type="button" class="copy-btn" data-copy-target="output_json">Copiază JSON</button>
         </div>
     </div>
 </div>
@@ -340,6 +345,31 @@
         if (dataEditor) {
             document.getElementById('output_json').textContent = JSON.stringify(dataEditor.getValue(), null, 2);
         }
+    });
+
+    async function copiazaTextDin(elementId, buton) {
+        const text = document.getElementById(elementId).textContent || '';
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (e) {
+            const zona = document.createElement('textarea');
+            zona.value = text;
+            document.body.appendChild(zona);
+            zona.select();
+            document.execCommand('copy');
+            document.body.removeChild(zona);
+        }
+        const eticheta = buton.textContent;
+        buton.textContent = 'Copiat!';
+        buton.classList.add('copied');
+        setTimeout(() => {
+            buton.textContent = eticheta;
+            buton.classList.remove('copied');
+        }, 1500);
+    }
+
+    document.querySelectorAll('.copy-btn').forEach(buton => {
+        buton.addEventListener('click', () => copiazaTextDin(buton.getAttribute('data-copy-target'), buton));
     });
 </script>
 
