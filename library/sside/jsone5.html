@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constructor JSON Profesional Simplificat</title>
+    
+    <!-- JSON-Editor CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/json-editor/2.15.1/jsoneditor.min.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        .main-layout { display: flex; gap: 20px; max-width: 1600px; margin: 0 auto; }
+        .column { flex: 1; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); min-width: 350px; }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; font-size: 18px; color: #007bff; }
+        h3 { font-size: 14px; margin-top: 15px; }
+        
+        #submit-btn { background-color: #28a745; color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 20px; width: 100%; }
+        #submit-btn:hover { background-color: #218838; }
+        
+        .output-box { margin-top: 20px; background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        pre { margin: 0; font-size: 12px; }
+
+        /* Marcaje ierarhice curate în stânga pentru sub-câmpuri */
+        #schema_editor_holder .je-object__container, 
+        #schema_editor_holder .je-indented-panel {
+            margin-left: 10px !important;
+            border-left: 3px solid #007bff22 !important;
+            padding-left: 12px !important;
+            margin-bottom: 8px !important;
+            background: rgba(0, 0, 0, 0.005);
+        }
+
+        /* Inputuri aliniate corect */
+        input[type="text"], input[type="number"], select { 
+            width: 100% !important; max-width: 300px !important; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; margin-bottom: 6px; display: block;
+        }
+        
+        /* Butoane de control */
+        .json-editor-btn-add, .json-editor-btntype-add, .json-editor-btntype-properties { background: #007bff !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 11px !important; margin: 4px 2px !important; }
+        .json-editor-btntype-delete, .json-editor-btntype-deletelast { background: #dc3545 !important; color: white !important; border: none !important; padding: 4px 10px !important; border-radius: 4px !important; font-size: 11px !important; margin: 4px 2px !important; }
+        .json-editor-btntype-toggle { background: #6c757d !important; color: white !important; border: none !important; padding: 2px 6px !important; border-radius: 4px !important; font-size: 10px !important; cursor: pointer; }
+
+        #data_editor_holder [data-schemaid="root"] > .je-header { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div class="main-layout">
+    <!-- STÂNGA: Constructorul simplificat de structură -->
+    <div class="column">
+        <h2>1. Configurează Structura Formularului (Schema)</h2>
+        <div id="schema_editor_holder"></div>
+    </div>
+    
+    <!-- DREAPTA: Formularul final rezultat -->
+    <div class="column">
+        <h2>2. Completează Datele Formularului Generat</h2>
+        <div id="data_editor_holder"></div>
+        
+        <button id="submit-btn">Generează JSON Final</button>
+
+        <div class="output-box">
+            <h3>JSON Rezultat:</h3>
+            <pre id="output_json">{}</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Definiția curată a unui singur element din formular (fără dubluri sau setări inutile de rădăcină)
+    const nodeSchema = {
+        "type": "object",
+        "title": "Câmp Formular",
+        "headerTemplate": "{{self.key}} [{{self.type}}]",
+        "properties": {
+            "key": { "type": "string", "title": "Cheie în JSON (ex: register, data, text)", "default": "camp_nou" },
+            "title": { "type": "string", "title": "Etichetă Vizuală (Nume afișat)", "default": "Etichetă Nouă" },
+            "type": { 
+                "type": "string", 
+                "title": "Tip Dată / Structură", 
+                "enum": ["string", "integer", "number", "boolean", "object", "array"], 
+                "default": "string" 
+            },
+            "default": { "type": "string", "title": "Valoare Implicită (Opțional)" },
+            // Secțiunea de sub-proprietăți apare doar dacă tipul este setat pe 'object'
+            "sub_properties": {
+                "type": "array",
+                "title": "Proprietăți din interiorul acestui Obiect:",
+                "items": { "$ref": "#" },
+                "options": { "dependencies": { "type": "object" } } // 👈 Ascundere automată inteligentă!
+            },
+            // Secțiunea de configurare rând apare doar dacă tipul este setat pe 'array'
+            "array_items": {
+                "type": "object",
+                "title": "Structură rând din această Listă (Array):",
+                "$ref": "#",
+                "options": { "dependencies": { "type": "array" } } // 👈 Ascundere automată inteligentă!
+            }
+        },
+        "required": ["key", "title", "type"]
+    };
+
+    // Rădăcina conține doar tipul global și lista de elemente
+    const rootMetaSchema = {
+        "type": "object",
+        "title": "Configurație Generală",
+        "properties": {
+            "root_type": { "type": "string", "title": "Tipul Principal al JSON-ului Final", "enum": ["object", "array"], "default": "object" },
+            "structure": {
+                "type": "array",
+                "title": "Lista de Câmpuri",
+                "items": nodeSchema
+            }
+        }
+    };
+
+    // Structura exactă din exemplul tău, gata încărcată
+    const initialStructure = {
+        "root_type": "object",
+        "structure": [
+            {
+                "key": "register",
+                "title": "Grup Înregistrare",
+                "type": "object",
+                "sub_properties": [
+                    {
+                        "key": "data",
+                        "title": "Date Interne (Data)",
+                        "type": "object",
+                        "sub_properties": [
+                            {
+                                "key": "label",
+                                "title": "Etichetă Obiect (Label)",
+                                "type": "object",
+                                "sub_properties": [
+                                    { "key": "text", "title": "Textul Mesajului", "type": "string", "default": "hello" }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "cancel",
+                "title": "Grup Cancel",
+                "type": "object",
+                "sub_properties": []
+            }
+        ]
+    };
+
+    let schemaEditor = new JSONEditor(document.getElementById('schema_editor_holder'), {
+        schema: rootMetaSchema,
+        theme: 'html',
+        disable_collapse: false,
+        disable_edit_json: true,
+        disable_properties: false,
+        startval: initialStructure
+    });
+
+    let dataEditor;
+
+    // Automatizare: Scriptul ascultă când schimbi tipul unui câmp în "object" și adaugă automat un element sub el
+    schemaEditor.on('change', () => {
+        const currentFormValues = schemaEditor.getValue();
+        
+        let transformat = false;
+        function autoPopulateObjects(items) {
+            if (!items || !Array.isArray(items)) return;
+            items.forEach(item => {
+                if (item.type === 'object' && (!item.sub_properties || item.sub_properties.length === 0)) {
+                    item.sub_properties = [{ "key": "camp_nou", "title": "Câmp Nou", "type": "string" }];
+                    transformat = true;
+                }
+                if (item.type === 'array' && !item.array_items) {
+                    item.array_items = { "key": "element", "title": "Element", "type": "string" };
+                    transformat = true;
+                }
+                autoPopulateObjects(item.sub_properties);
+                if (item.array_items) autoPopulateObjects([item.array_items]);
+            });
+        }
+        
+        autoPopulateObjects(currentFormValues.structure);
+        
+        // Dacă JavaScript a adăugat automat un sub-câmp, actualizăm editorul din stânga fără să pierdem focusul
+        if (transformat) {
+            schemaEditor.setValue(currentFormValues);
+            return; 
+        }
+
+        updateDataEditor(currentFormValues);
+    });
+
+    // Funcția care generează schema dinamică pentru formularul din dreapta
+    function parseNodeToSchema(node) {
+        let schemaNode = { title: node.title, type: node.type };
+
+        if (node.type === 'object') {
+            schemaNode.properties = {};
+            if (node.sub_properties && node.sub_properties.length > 0) {
+                node.sub_properties.forEach(subNode => {
+                    schemaNode.properties[subNode.key] = parseNodeToSchema(subNode);
+                });
+            }
+        } else if (node.type === 'array') {
+            if (node.array_items) {
+                schemaNode.items = parseNodeToSchema(node.array_items);
+            } else {
+                schemaNode.items = { type: "string" };
+            }
+        } else {
+            if (node.default) schemaNode.default = (node.type === 'integer' || node.type === 'number') ? Number(node.default) : node.default;
+        }
+
+        return schemaNode;
+    }
+
+    function updateDataEditor(config) {
+        let targetSchema = {};
+
+        if (config.root_type === 'array') {
+            const itemsArray = (config.structure || []).map(item => parseNodeToSchema(item));
+            targetSchema = { type: "array", minItems: itemsArray.length, maxItems: itemsArray.length, items: itemsArray };
+        } else {
+            targetSchema = { type: "object", properties: {} };
+            (config.structure || []).forEach(item => {
+                targetSchema.properties[item.key] = parseNodeToSchema(item);
+            });
+        }
+
+        if (dataEditor) { dataEditor.destroy(); }
+
+        dataEditor = new JSONEditor(document.getElementById('data_editor_holder'), {
+            schema: targetSchema,
+            theme: 'html',
+            disable_collapse: true,
+            disable_edit_json: true,
+            disable_properties: true,
+            disable_array_reorder: true
+        });
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', function() {
+        if (dataEditor) {
+            document.getElementById('output_json').textContent = JSON.stringify(dataEditor.getValue(), null, 2);
+        }
+    });
+</script>
+
+</body>
+</html>
