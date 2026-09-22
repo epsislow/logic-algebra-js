@@ -100,15 +100,16 @@
                     "enum": ["string", "integer", "number", "boolean", "object", "array"], 
                     "default": "string" 
                 },
-                "default": { "type": "string", "title": "Valoare Implicită" },
+                "default": { "type": "string", "title": "Valoare Implicită", "default": "" },
                 "enum": {
                     "type": "array",
                     "title": "Opțiuni fixe limitate (Enum - Opțional):",
                     "item_title": "Opțiune",
+                    "default": [],
                     "items": { "type": "string", "title": "Valoare fixă" }
                 }
             },
-            "required": ["key", "title", "type"]
+            "required": ["key", "title", "type", "default", "enum"]
         };
 
         if (nivel < 5) {
@@ -123,7 +124,7 @@
                 "title": "Configurare elemente din Listă (Array):",
                 "target": "properties",
                 "properties": genereazaNodCimp(nivel + 1).properties,
-                "required": ["title", "type"],
+                "required": ["title", "type", "default", "enum"],
                 "options": { "dependencies": { "type": "array" } }
             };
         }
