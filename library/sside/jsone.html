@@ -10,7 +10,7 @@
     
     <style>
         body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        .main-layout { display: flex; flex-direction: column; gap: 16px; max-width: 1100px; margin: 0 auto; }
+        .main-layout { display: flex; flex-direction: column; gap: 16px; max-width: 1280px; margin: 0 auto; }
         .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; font-size: 18px; color: #007bff; }
         h3 { font-size: 14px; margin-top: 15px; color: #555; }
@@ -39,13 +39,116 @@
         .panel.collapsed .panel-body { display: none; }
         .panel.collapsed .panel-header { border-bottom: none; padding-bottom: 0; }
 
-        #schema_editor_holder .je-object__container, 
-        #schema_editor_holder .je-indented-panel {
+        /* Master-detail: tree stânga + formular nod dreapta */
+        .schema-master-detail {
+            display: flex;
+            gap: 14px;
+            align-items: stretch;
+            min-height: 360px;
+        }
+        .schema-tree {
+            width: 280px;
+            flex-shrink: 0;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            background: #f8f9fa;
+            padding: 8px 6px;
+            overflow: auto;
+            max-height: 70vh;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
+            line-height: 1.45;
+            user-select: none;
+        }
+        .schema-tree-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .schema-tree-row:hover { background: #e9ecef; }
+        .schema-tree-row.is-selected {
+            background: #007bff;
+            color: #fff;
+        }
+        .schema-tree-row.is-selected .schema-tree-twist {
+            color: #fff;
+            border-color: rgba(255,255,255,0.55);
+			background: #007bff;
+        }
+        .schema-tree-twist {
+            flex: 0 0 22px;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #adb5bd;
+            border-radius: 3px;
+            background: #fff;
+            color: #495057;
+            font-size: 12px;
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+        .schema-tree-twist.is-leaf {
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .schema-tree-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .schema-tree-children { margin-left: 14px; border-left: 1px dotted #ced4da; padding-left: 4px; }
+        .schema-detail-col {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            background: #fff;
+        }
+        .schema-detail-pane { min-height: 40px; }
+        .schema-master-detail.show-node #schema_editor_holder {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            border: 0 !important;
+        }
+
+        #schema_editor_holder .je-object__container,
+        #schema_editor_holder .je-indented-panel,
+        #schema_detail_pane .je-object__container,
+        #schema_detail_pane .je-indented-panel {
             margin-left: 10px !important;
             border-left: 3px solid #007bff22 !important;
             padding-left: 10px !important;
             margin-bottom: 5px !important;
             background: rgba(0, 0, 0, 0.005);
+        }
+
+        /* La root: ascunde formularele copiilor (rămân Add / tip rădăcină) */
+        #schema_editor_holder.md-root-view .je-child-editor-holder.je-object__container {
+            display: none !important;
+        }
+        /* În detaliu nod: ascunde sub-nodurile (obiecte imbricate), nu câmpurile simple */
+        #schema_detail_pane .md-detail-node .je-object__container {
+            display: none !important;
+        }
+        #schema_detail_pane .md-detail-node .je-child-editor-holder {
+            display: none !important;
+        }
+        #schema_detail_pane .md-detail-node {
+            margin-left: 0 !important;
+            border-left: none !important;
+            padding-left: 0 !important;
         }
 
         input[type="text"], input[type="number"], select { 
@@ -73,7 +176,13 @@
             <button type="button" class="toggle-btn" data-panel="panel-schema">Collapse</button>
         </div>
         <div class="panel-body">
-            <div id="schema_editor_holder"></div>
+            <div class="schema-master-detail" id="schema_master_detail">
+                <aside id="schema_tree" class="schema-tree" aria-label="Arbore structură formular"></aside>
+                <div class="schema-detail-col">
+                    <div id="schema_detail_pane" class="schema-detail-pane"></div>
+                    <div id="schema_editor_holder"></div>
+                </div>
+            </div>
             <div class="schema-box">
                 <h3>[LIVE] JSON Schema Generat:</h3>
                 <pre id="output_schema">{}</pre>
@@ -211,6 +320,318 @@
     });
 
     let dataEditor;
+
+    // --- Navigare master-detail: tree stânga + detaliu nod dreapta ---
+    (function initSchemaTreeNav() {
+        const master = document.getElementById('schema_master_detail');
+        const treeEl = document.getElementById('schema_tree');
+        const detailPane = document.getElementById('schema_detail_pane');
+        const holder = document.getElementById('schema_editor_holder');
+
+        let selectedPath = 'root';
+        let expanded = new Set(['root']);
+        let moved = null;
+        let lastTreeSig = '';
+        let applyingSelection = false;
+
+        function nodeLabel(node, fallback) {
+            const key = (node && node.key) ? node.key : fallback;
+            const type = (node && node.type) ? node.type : '?';
+            return key + ' [' + type + ']';
+        }
+
+        function collectChildren(node, basePath) {
+            const kids = [];
+            if (!node) return kids;
+            if (node.type === 'object' && Array.isArray(node.sub_properties)) {
+                node.sub_properties.forEach((child, i) => {
+                    kids.push({
+                        path: basePath + '.sub_properties.' + i,
+                        label: nodeLabel(child, 'field_' + i),
+                        node: child
+                    });
+                });
+            }
+            if (node.type === 'array' && node.array_items && typeof node.array_items === 'object') {
+                kids.push({
+                    path: basePath + '.array_items',
+                    label: 'items [' + (node.array_items.type || 'object') + ']',
+                    node: node.array_items
+                });
+            }
+            return kids;
+        }
+
+        function buildTreeNodes(config) {
+            return (config.structure || []).map((item, i) => ({
+                path: 'root.structure.' + i,
+                label: nodeLabel(item, 'item_' + i),
+                node: item
+            }));
+        }
+
+        function treeSignature(config) {
+            // Doar structură (tipuri + număr copii), nu etichete — ca să nu re-mutăm DOM-ul la fiecare tastă
+            function walk(node) {
+                if (!node) return '';
+                let s = (node.type || '') + ';';
+                if (node.type === 'object' && Array.isArray(node.sub_properties)) {
+                    s += 'sp' + node.sub_properties.length + '[' + node.sub_properties.map(walk).join(',') + ']';
+                }
+                if (node.type === 'array' && node.array_items) {
+                    s += 'ai[' + walk(node.array_items) + ']';
+                }
+                return s;
+            }
+            return (config.root_type || '') + '#' + (config.structure || []).length + '|' + (config.structure || []).map(walk).join('|');
+        }
+
+        function ensureAncestorsExpanded(path) {
+            expanded.add('root');
+            if (path === 'root') return;
+            const rest = path.replace(/^root\./, '');
+            const tokens = rest.match(/structure\.\d+|sub_properties\.\d+|array_items/g) || [];
+            let acc = 'root';
+            tokens.forEach(tok => {
+                acc += '.' + tok;
+                if (acc !== path) expanded.add(acc);
+            });
+        }
+
+        function pathExists(config, path) {
+            if (path === 'root') return true;
+            if (!path.startsWith('root.')) return false;
+            const parts = path.slice('root.'.length).split('.');
+            let cur = config;
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i];
+                if (p === 'structure' || p === 'sub_properties') {
+                    const idx = Number(parts[++i]);
+                    if (!cur[p] || !cur[p][idx]) return false;
+                    cur = cur[p][idx];
+                } else if (p === 'array_items') {
+                    if (!cur.array_items) return false;
+                    cur = cur.array_items;
+                } else {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function restoreMoved() {
+            if (!moved) return;
+            const el = moved.el;
+            const parent = moved.parent;
+            const next = moved.next;
+            moved = null;
+            if (!el) return;
+            el.classList.remove('md-detail-node');
+            if (!el.isConnected && !(parent && parent.isConnected)) {
+                return; // DOM recreat de JSON Editor — nodul vechi e invalid
+            }
+            if (parent && parent.isConnected) {
+                try {
+                    if (next && next.parentNode === parent) {
+                        parent.insertBefore(el, next);
+                    } else {
+                        parent.appendChild(el);
+                    }
+                } catch (e) { /* ignore */ }
+            }
+        }
+
+        function applySelection() {
+            applyingSelection = true;
+            try {
+                restoreMoved();
+                holder.classList.remove('md-root-view');
+                master.classList.remove('show-node');
+                while (detailPane.firstChild) {
+                    detailPane.removeChild(detailPane.firstChild);
+                }
+
+                const config = schemaEditor.getValue();
+                if (!pathExists(config, selectedPath)) {
+                    selectedPath = 'root';
+                }
+
+                if (selectedPath === 'root') {
+                    holder.classList.add('md-root-view');
+                    highlightTreeSelection();
+                    return;
+                }
+
+                const ed = schemaEditor.getEditor(selectedPath);
+                if (!ed || !ed.container) {
+                    selectedPath = 'root';
+                    holder.classList.add('md-root-view');
+                    highlightTreeSelection();
+                    return;
+                }
+
+                const el = ed.container;
+                el.classList.add('md-detail-node');
+                moved = { el: el, parent: el.parentNode, next: el.nextSibling };
+                detailPane.appendChild(el);
+                master.classList.add('show-node');
+                highlightTreeSelection();
+            } finally {
+                applyingSelection = false;
+            }
+        }
+
+        function highlightTreeSelection() {
+            treeEl.querySelectorAll('.schema-tree-row').forEach(row => {
+                row.classList.toggle('is-selected', row.getAttribute('data-path') === selectedPath);
+            });
+        }
+
+        function renderTreeNode(item, into) {
+            const kids = collectChildren(item.node, item.path);
+            const hasKids = kids.length > 0;
+            const isOpen = expanded.has(item.path);
+
+            const row = document.createElement('div');
+            row.className = 'schema-tree-row';
+            row.setAttribute('data-path', item.path);
+            if (item.path === selectedPath) row.classList.add('is-selected');
+
+            const twist = document.createElement('button');
+            twist.type = 'button';
+            twist.className = 'schema-tree-twist' + (hasKids ? '' : ' is-leaf');
+            twist.textContent = hasKids ? (isOpen ? '-' : '+') : '';
+            twist.title = hasKids ? (isOpen ? 'Collapse' : 'Expand') : '';
+            twist.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                if (!hasKids) return;
+                if (expanded.has(item.path)) expanded.delete(item.path);
+                else expanded.add(item.path);
+                renderTree();
+            });
+
+            const label = document.createElement('span');
+            label.className = 'schema-tree-label';
+            label.textContent = item.label;
+
+            row.appendChild(twist);
+            row.appendChild(label);
+            row.addEventListener('click', () => {
+                selectedPath = item.path;
+                ensureAncestorsExpanded(item.path);
+                applySelection();
+                highlightTreeSelection();
+            });
+            into.appendChild(row);
+
+            if (hasKids && isOpen) {
+                const childWrap = document.createElement('div');
+                childWrap.className = 'schema-tree-children';
+                kids.forEach(k => renderTreeNode(k, childWrap));
+                into.appendChild(childWrap);
+            }
+        }
+
+        function renderTree() {
+            const config = schemaEditor.getValue();
+            treeEl.innerHTML = '';
+
+            const rootRow = {
+                path: 'root',
+                label: 'root [' + (config.root_type || 'object') + ']',
+                node: null
+            };
+
+            const rootKids = buildTreeNodes(config);
+            const rootHasKids = rootKids.length > 0;
+            const rootOpen = expanded.has('root');
+
+            const row = document.createElement('div');
+            row.className = 'schema-tree-row';
+            row.setAttribute('data-path', 'root');
+            if (selectedPath === 'root') row.classList.add('is-selected');
+
+            const twist = document.createElement('button');
+            twist.type = 'button';
+            twist.className = 'schema-tree-twist' + (rootHasKids ? '' : ' is-leaf');
+            twist.textContent = rootHasKids ? (rootOpen ? '-' : '+') : '';
+            twist.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                if (!rootHasKids) return;
+                if (expanded.has('root')) expanded.delete('root');
+                else expanded.add('root');
+                renderTree();
+            });
+
+            const label = document.createElement('span');
+            label.className = 'schema-tree-label';
+            label.textContent = rootRow.label;
+
+            row.appendChild(twist);
+            row.appendChild(label);
+            row.addEventListener('click', () => {
+                selectedPath = 'root';
+                applySelection();
+                highlightTreeSelection();
+            });
+            treeEl.appendChild(row);
+
+            if (rootHasKids && rootOpen) {
+                const childWrap = document.createElement('div');
+                childWrap.className = 'schema-tree-children';
+                rootKids.forEach(k => renderTreeNode(k, childWrap));
+                treeEl.appendChild(childWrap);
+            }
+        }
+
+        function refreshTreeNav(forceSelection) {
+            if (applyingSelection) return;
+            const config = schemaEditor.getValue();
+            const sig = treeSignature(config);
+            const structureChanged = sig !== lastTreeSig;
+            lastTreeSig = sig;
+
+            if (structureChanged) {
+                restoreMoved();
+                while (detailPane.firstChild) {
+                    detailPane.removeChild(detailPane.firstChild);
+                }
+                master.classList.remove('show-node');
+            } else if (moved && moved.el && !moved.el.isConnected) {
+                moved = null;
+            }
+
+            if (!pathExists(config, selectedPath)) {
+                selectedPath = 'root';
+                forceSelection = true;
+            }
+
+            renderTree();
+
+            if (structureChanged || forceSelection) {
+                requestAnimationFrame(() => applySelection());
+            } else {
+                highlightTreeSelection();
+            }
+        }
+
+        schemaEditor.on('ready', () => {
+            lastTreeSig = treeSignature(schemaEditor.getValue());
+            renderTree();
+            applySelection();
+        });
+
+        schemaEditor.on('change', () => {
+            refreshTreeNav(false);
+        });
+
+        // dacă ready a trecut deja (unele versiuni), inițializează acum
+        if (schemaEditor.ready) {
+            lastTreeSig = treeSignature(schemaEditor.getValue());
+            renderTree();
+            applySelection();
+        }
+    })();
 
     function parseNodeToSchema(node) {
         let schemaNode = { title: node.title, type: node.type };
