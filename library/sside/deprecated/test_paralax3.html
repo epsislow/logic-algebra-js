@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spațiu Ierarhic 3D pe Axa Z</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b0f19;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            /* Perspectivă globală pentru a vedea efectul 3D */
+            perspective: 1500px; 
+        }
+
+        .tree-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 40px;
+            /* Păstrează spațiul 3D pentru elementele din interior */
+            transform-style: preserve-3d;
+            /* Tranziție pentru o mișcare fluidă a întregului bloc */
+            transition: transform 0.1s ease-out;
+        }
+
+        .node {
+            background: linear-gradient(135deg, #1e293b, #151f32);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            
+            /* Toate încep aliniate perfect la stânga */
+            margin-left: 0px; 
+            width: 100%;
+
+            /* Tranziție separată pentru tranziția lină între straturi pe axa Z */
+            transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s, background 0.3s;
+            cursor: crosshair;
+            
+            /* Împiedică artefactele vizuale la rotație */
+            backface-visibility: hidden; 
+        }
+
+        /* Marcăm vizual nivelurile discret doar prin culori de margine */
+        .node[data-level="1"] { border-left: 4px solid #64748b; }
+        .node[data-level="2"] { border-left: 4px solid #475569; }
+        .node[data-level="3"] { border-left: 4px solid #334155; }
+
+        /* Nodul activ primește feedback vizual suplimentar */
+        .node.active {
+            border-color: #38bdf8;
+            border-left-color: #38bdf8;
+            background: #0369a1;
+            box-shadow: 0 15px 30px rgba(3, 105, 161, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tree-container">
+        <!-- Structură liniară în HTML, ierarhia se vede doar în 3D space -->
+        <div class="node" id="div1" data-level="1">Nod 1 (Nivel 1)</div>
+        <div class="node" id="div2" data-level="2">Nod 2 (Nivel 2 - Copil)</div>
+        <div class="node" id="div3" data-level="3">Nod 3 (Nivel 3 - Nepot)</div>
+        <div class="node" id="div4" data-level="2">Nod 4 (Nivel 2 - Frate cu 2)</div>
+        <div class="node" id="div5" data-level="1">Nod 5 (Nivel 1 - Frate cu 1)</div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.tree-container');
+        const nodes = document.querySelectorAll('.node');
+
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            // Calculăm mijlocul ecranului
+            const centerX = window.innerWidth / 2;
+            const normalizedX = (mouseX - centerX) / centerX; // Valoare între -1 și 1
+
+            // 1. Rotația globală: Tot containerul se rotește în același sens
+            // Limităm rotația la maximum 25 de grade stânga/dreapta pentru realism
+            const globalRotateY = normalizedX * 25; 
+            container.style.transform = `rotateY(${globalRotateY}deg)`;
+
+            // 2. Detectăm pe verticală ce nod este sub mouse pentru a seta focusul
+            let activeNode = null;
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                if (mouseY >= rect.top && mouseY <= rect.bottom) {
+                    activeNode = node;
+                }
+            });
+
+            if (!activeNode) return;
+
+            const activeId = activeNode.id;
+            const activeLevel = parseInt(activeNode.getAttribute('data-level'));
+
+            // 3. Distribuim elementele pe axa Z (adâncime) în funcție de nodul focusat
+            nodes.forEach(node => {
+                node.classList.remove('active');
+                
+                const currentId = node.id;
+                const currentLevel = parseInt(node.getAttribute('data-level'));
+                
+                let targetZ = 0; // Adâncimea implicită în pixeli (0 înseamnă linia de bază)
+
+                // --- CAZUL 1: Mouse pe div1 ---
+                if (activeId === 'div1') {
+                    if (currentId === 'div1' || currentId === 'div5') {
+                        targetZ = 60;   // Nivelul principal vine cel mai în față
+                    } else if (currentId === 'div2' || currentId === 'div4') {
+                        targetZ = 0;    // Nivelul 2 stă la mijloc
+                    } else if (currentId === 'div3') {
+                        targetZ = -60;  // Nepotul se duce cel mai în spate
+                    }
+                }
+
+                // --- CAZUL 2: Mouse pe div2 ---
+                else if (activeId === 'div2') {
+                    if (currentId === 'div2' || currentId === 'div4') {
+                        targetZ = 60;   // Divul 2 și fratele lui 4 vin în față de tot
+                    } else if (currentId === 'div3') {
+                        targetZ = 0;    // Copilul lui se retrage un pas în spate (față de el)
+                    } else if (currentId === 'div1' || currentId === 'div5') {
+                        targetZ = -40;  // Nivelul superior se retrage în spate
+                    }
+                }
+
+                // --- CAZUL GENERAL (Pentru restul nodurilor) ---
+                else {
+                    if (currentId === activeId) {
+                        targetZ = 60; // Focusatul vine mereu în față
+                    } else if (currentLevel === activeLevel) {
+                        targetZ = 60; // Frații de nivel vin și ei în față
+                    } else if (currentLevel > activeLevel) {
+                        // Mai adânci în structură -> mai în spate în ecran
+                        targetZ = 60 - (currentLevel - activeLevel) * 50;
+                    } else if (currentLevel < activeLevel) {
+                        // Mai înalți în structură -> se retrag ușor în spate pentru focus
+                        targetZ = 60 - (activeLevel - currentLevel) * 40;
+                    }
+                }
+
+                if (node === activeNode) {
+                    node.classList.add('active');
+                }
+
+                // Aplicăm doar translația pe axa Z. Toate păstrează unghiul dictat de container!
+                node.style.transform = `translateZ(${targetZ}px)`;
+            });
+        });
+
+        // Resetare completă când mouse-ul părăsește fereastra
+        document.addEventListener('mouseleave', () => {
+            container.style.transform = 'rotateY(0deg)';
+            nodes.forEach(node => {
+                node.style.transform = 'translateZ(0px)';
+                node.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

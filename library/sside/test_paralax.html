@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ierarhie 3D Unitară - Soluție Ierarhică Relativă</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b0f19;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1500px; /* Perspectivă stabilă */
+        }
+
+        .tree-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+
+        .node {
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(71, 85, 105, 0.7);
+            border-radius: 8px;
+            padding: 20px;
+            font-weight: 500;
+            margin-top: 15px;
+            width: 100%;
+            
+            /* Animare fluidă pe axa Z */
+            transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s, background-color 0.2s;
+            
+            /* CRUCIAL: Păstrează spațiul 3D deschis în interiorul ierarhiei */
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            position: relative;
+        }
+
+        /* Culori de identificare pe margini */
+        .node[data-level="1"] { border-left: 4px solid #38bdf8; }
+        .node[data-level="2"] { border-left: 4px solid #a855f7; }
+        .node[data-level="3"] { border-left: 4px solid #f43f5e; }
+
+        /* Când un nod devine activ, îi creștem opacitatea și intensitatea culorii */
+        .node.active {
+            border-color: #38bdf8 !important;
+            background-color: rgba(30, 58, 138, 0.9) !important;
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tree-container">
+        <!-- STRUCTURA IERARHICĂ REALĂ (DIV ÎN DIV) -->
+        <div class="node" id="div1" data-level="1">
+            Nod 1 (Nivel 1)
+            
+            <div class="node" id="div2" data-level="2">
+                Nod 2 (Nivel 2 - Copil din 1)
+                
+                <div class="node" id="div3" data-level="3">
+                    Nod 3 (Nivel 3 - Nepot din 2)
+                </div>
+            </div>
+
+            <div class="node" id="div4" data-level="2">
+                Nod 4 (Nivel 2 - Frate cu 2, Copil din 1)
+            </div>
+        </div>
+        
+        <div class="node" id="div5" data-level="1">
+            Nod 5 (Nivel 1 - Frate cu 1)
+        </div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.tree-container');
+        const nodes = document.querySelectorAll('.node');
+
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            const centerX = window.innerWidth / 2;
+            const normalizedX = (mouseX - centerX) / centerX;
+
+            // Rotația generală unitară a panoului pe axa Y
+            const globalRotateY = normalizedX * 25; 
+            container.style.transform = `rotateY(${globalRotateY}deg)`;
+
+            // Detecția precisă a nodului de la cel mai adânc nivel de sub mouse
+            let activeNode = null;
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                if (mouseY >= rect.top && mouseY <= rect.bottom) {
+                    if (!activeNode || parseInt(node.getAttribute('data-level')) > parseInt(activeNode.getAttribute('data-level'))) {
+                        activeNode = node;
+                    }
+                }
+            });
+
+            if (!activeNode) return;
+
+            const activeLevel = parseInt(activeNode.getAttribute('data-level'));
+            
+            // Mapă temporară în care salvăm valorile Absolute calculate pe ecran
+            const absoluteZMap = new Map();
+
+            // PASUL 1: Calculăm valoarea ABSOLUTĂ (finală) pe care o dorim pentru fiecare nod pe ecran
+            nodes.forEach(node => {
+                const currentLevel = parseInt(node.getAttribute('data-level'));
+                
+                // Formula ta: aducem diferența la nivelul dorit
+                // Înmulțim cu 60px distanța dintre planuri pentru vizibilitate optimă
+                let absZ = (currentLevel - activeLevel) * 60; 
+                
+                absoluteZMap.set(node.id, absZ);
+            });
+
+            // PASUL 2: Convertim valoarea absolută într-o valoare RELATIVĂ în funcție de părintele nodului
+            nodes.forEach(node => {
+                node.classList.remove('active');
+                
+                let finalZ = absoluteZMap.get(node.id);
+                
+                // Verificăm dacă elementul curent este închis fizic în alt DIV de tip rând (node)
+                const parentNode = node.parentElement.closest('.node');
+                
+                if (parentNode) {
+                    // Compensăm mișcarea: valoarea copilului minus valoarea părintelui!
+                    finalZ = finalZ - absoluteZMap.get(parentNode.id);
+                }
+
+                // Aplicăm translația Z corectată relativ la părintele său direct
+                node.style.transform = `translateZ(${finalZ}px)`;
+            });
+
+            activeNode.classList.add('active');
+        });
+
+        // Resetare completă la părăsirea ferestrei
+        document.addEventListener('mouseleave', () => {
+            container.style.transform = 'rotateY(0deg)';
+            nodes.forEach(node => {
+                node.style.transform = 'translateZ(0px)';
+                node.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

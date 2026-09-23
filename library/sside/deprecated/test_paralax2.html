@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotație Ierarhică 3D Relativă</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b0f19;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            
+            /* Creează spațiul 3D general. Cu cât valoarea e mai mică, cu atât efectul 3D e mai pronunțat */
+            perspective: 1200px; 
+        }
+
+        .tree-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px;
+            /* Permite elementelor copii să își păstreze poziționarea 3D */
+            transform-style: preserve-3d; 
+        }
+
+        .node {
+            background: linear-gradient(135deg, #1e293b, #151f32);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 18px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: relative;
+            
+            /* Toate încep din aceeași poziție pe orizontală, FĂRĂ margin-left */
+            margin-left: 0px; 
+
+            /* Schimbăm punctul de ancoră al rotației în centrul elementului */
+            transform-origin: center center;
+
+            /* Tranziție fluidă pentru rotații cursive */
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s, background 0.3s;
+            cursor: crosshair;
+            backface-visibility: hidden;
+        }
+
+        /* Stil diferențiat doar prin culori subtile pentru a recunoaște nivelul, nu prin spațiere */
+        .node[data-level="1"] { border-left: 4px solid #64748b; }
+        .node[data-level="2"] { border-left: 4px solid #475569; }
+        .node[data-level="3"] { border-left: 4px solid #334155; }
+
+        /* Stil pentru nodul activ de sub mouse */
+        .node.active {
+            border-color: #38bdf8;
+            border-left-color: #38bdf8;
+            background: #0369a1;
+            box-shadow: 0 10px 25px rgba(3, 105, 161, 0.3);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tree-container">
+        <!-- Structura pornește complet aliniată la stânga -->
+        <div class="node" id="div1" data-level="1">Nod 1 (Nivel 1)</div>
+        <div class="node" id="div2" data-level="2">Nod 2 (Nivel 2 - Copil)</div>
+        <div class="node" id="div3" data-level="3">Nod 3 (Nivel 3 - Nepot)</div>
+        <div class="node" id="div4" data-level="2">Nod 4 (Nivel 2 - Frate cu 2)</div>
+        <div class="node" id="div5" data-level="1">Nod 5 (Nivel 1 - Frate cu 1)</div>
+    </div>
+
+    <script>
+        const nodes = document.querySelectorAll('.node');
+
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            const centerX = window.innerWidth / 2;
+            const normalizedX = (mouseX - centerX) / centerX; // Valoare între -1 și 1
+
+            let activeNode = null;
+
+            // 1. Identificăm ce nod este sub mouse pe axa Y
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                if (mouseY >= rect.top && mouseY <= rect.bottom) {
+                    activeNode = node;
+                }
+            });
+
+            if (!activeNode) return;
+
+            const activeId = activeNode.id;
+            const activeLevel = parseInt(activeNode.getAttribute('data-level'));
+
+            // 2. Calculăm factorul de rotație (grade) în loc de translație
+            nodes.forEach(node => {
+                node.classList.remove('active');
+                
+                const currentId = node.id;
+                const currentLevel = parseInt(node.getAttribute('data-level'));
+                
+                let rotateFactor = 0; // Exprimat în grade de rotație maximă
+
+                // --- CAZUL 1: Mouse pe div1 ---
+                if (activeId === 'div1') {
+                    if (currentId === 'div1' || currentId === 'div5') {
+                        rotateFactor = 0;  // Rămân plate (nu se rotesc)
+                    } else if (currentId === 'div2' || currentId === 'div4') {
+                        rotateFactor = 15; // Rotație moderată
+                    } else if (currentId === 'div3') {
+                        rotateFactor = 30; // Rotație mai accentuată (nepotul)
+                    }
+                }
+
+                // --- CAZUL 2: Mouse pe div2 ---
+                else if (activeId === 'div2') {
+                    if (currentId === 'div2' || currentId === 'div4') {
+                        rotateFactor = 0;  // Focusatul și fratele lui rămân perfect drepți
+                    } else if (currentId === 'div3') {
+                        rotateFactor = 18; // Copilul se rotește în față/direcția mouse-ului
+                    } else if (currentId === 'div1' || currentId === 'div5') {
+                        rotateFactor = -12; // Părinții se rotesc în SENS INVERS (semnul minus)
+                    }
+                }
+
+                // --- CAZUL GENERAL (Pentru restul nodurilor) ---
+                else {
+                    if (currentId === activeId || currentLevel === activeLevel) {
+                        rotateFactor = 0;
+                    } else if (currentLevel > activeLevel) {
+                        rotateFactor = (currentLevel - activeLevel) * 15; // Rotație pozitivă spre mouse
+                    } else if (currentLevel < activeLevel) {
+                        rotateFactor = (currentLevel - activeLevel) * 12; // Rotație inversă
+                    }
+                }
+
+                if (node === activeNode) {
+                    node.classList.add('active');
+                }
+                
+                // Calculăm unghiul final în grade (ex: dacă normalizedX este 0.5 și rotateFactor este 30, va fi 15 grade)
+                const finalRotateY = normalizedX * rotateFactor;
+                
+                // Aplicăm rotația pe axa Y. Adăugăm și un mic translateZ de efect pentru elementul activ.
+                if (node === activeNode) {
+                    node.style.transform = `rotateY(${finalRotateY}deg) translateZ(15px)`;
+                } else {
+                    node.style.transform = `rotateY(${finalRotateY}deg)`;
+                }
+            });
+        });
+
+        // Resetare la părăsirea ecranului
+        document.addEventListener('mouseleave', () => {
+            nodes.forEach(node => {
+                node.style.transform = 'rotateY(0deg) translateZ(0px)';
+                node.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

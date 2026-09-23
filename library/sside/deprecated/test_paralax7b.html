@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ierarhie UX Stabilă - Structură Imbricată</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b0f19;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1200px;
+        }
+
+        .tree-container {
+            width: 100%;
+            max-width: 500px;
+            padding: 40px;
+            /* Întregul bloc se va roti curat pe axa Y */
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* STRUCTURA NATIVĂ COMPLET ALINIATĂ LA STÂNGA (AȘA CUM O FACE JSONEDITOR) */
+        .node {
+            background-color: rgba(30, 41, 59, 0.4);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            font-weight: 500;
+            margin-top: 15px;
+            width: 100%;
+            position: relative;
+            margin-left: 0px !important;
+            padding-left: 20px !important;
+            
+            /* TRANZIȚIE ULTRA-FINĂ PENTRU EFECTUL DE ADÂNCIME */
+            transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+        }
+
+        /* Linii discrete pe marginea din stânga pentru identificarea nivelului */
+        .node[data-level="1"] { border-left: 4px solid #38bdf8; }
+        .node[data-level="2"] { border-left: 4px solid #a855f7; }
+        .node[data-level="3"] { border-left: 4px solid #f43f5e; }
+
+        /* Nodul focusat de sub mouse primește iluminare puternică */
+        .node.active {
+            border-color: #38bdf8 !important;
+            background-color: rgba(30, 58, 138, 0.8) !important;
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tree-container">
+        <!-- STRUCTURĂ AUTOMATĂ TIP DIV ÎN DIV (EXACT CA ÎN JSONEDITOR) -->
+        <div class="node" id="div1" data-level="1">
+            Nod 1 (Nivel 1)
+            
+            <div class="node" id="div2" data-level="2">
+                Nod 2 (Nivel 2 - Copil din 1)
+                
+                <div class="node" id="div3" data-level="3">
+                    Nod 3 (Nivel 3 - Nepot din 2)
+                </div>
+            </div>
+
+            <div class="node" id="div4" data-level="2">
+                Nod 4 (Nivel 2 - Frate cu 2, Copil din 1)
+            </div>
+        </div>
+        
+        <div class="node" id="div5" data-level="1">
+            Nod 5 (Nivel 1 - Frate cu 1)
+        </div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.tree-container');
+        const nodes = document.querySelectorAll('.node');
+
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            const centerX = window.innerWidth / 2;
+            const normalizedX = (mouseX - centerX) / centerX; // Valoare între -1 și 1
+
+            // 1. Rotația unitară a întregului formular pe Y (funcționează perfect pentru că e rigidă)
+            const globalRotateY = normalizedX * 25; 
+            container.style.transform = `rotateY(${globalRotateY}deg)`;
+
+            // 2. Detecția precisă a nodului activ cel mai adânc de sub mouse
+            let activeNode = null;
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                if (mouseY >= rect.top && mouseY <= rect.bottom) {
+                    if (!activeNode || parseInt(node.getAttribute('data-level')) > parseInt(activeNode.getAttribute('data-level'))) {
+                        activeNode = node;
+                    }
+                }
+            });
+
+            if (!activeNode) return;
+
+            const activeLevel = parseInt(activeNode.getAttribute('data-level'));
+
+            // 3. LOGICA PARALAXEI PRIN SIMULARE DE ADÂNCIME (FĂRĂ REFAZARE PE AXA Z GLOBALĂ)
+            nodes.forEach(node => {
+                node.classList.remove('active');
+                const currentLevel = parseInt(node.getAttribute('data-level'));
+                
+                // Calculăm poziția relativă bazată pe schița ta
+                let nivelRelativ = currentLevel - activeLevel;
+
+                // Aplicăm un efect pseudo-3D prin deplasare fină pe X și scalare în funcție de rotație.
+                // Aceasta simulează perfect adâncimea structurală unitară, fără să lase elementele să se taie!
+                let shiftX = nivelRelativ * normalizedX * -15; 
+                let scaleFactor = 1 - (nivelRelativ * 0.04);
+
+                // Forțăm o umbră dinamică opacă pentru a evidenția ierarhia curentă
+                if (nivelRelativ === 0) {
+                    node.style.boxShadow = "0 12px 25px rgba(0,0,0,0.5)";
+                } else if (nivelRelativ > 0) {
+                    node.style.boxShadow = "inset 0 0 20px rgba(0,0,0,0.4)"; // Copiii par îngropați în interior
+                } else {
+                    node.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)"; // Părinții cad în fundal discret
+                }
+
+                node.style.transform = `translateX(${shiftX}px) scale(${scaleFactor})`;
+            });
+
+            activeNode.classList.add('active');
+        });
+
+        // Resetare completă la părăsirea ferestrei
+        document.addEventListener('mouseleave', () => {
+            container.style.transform = 'rotateY(0deg)';
+            nodes.forEach(node => {
+                node.style.transform = 'translateX(0px) scale(1)';
+                node.style.boxShadow = "0 4px 10px rgba(0,0,0,0.4)";
+                node.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

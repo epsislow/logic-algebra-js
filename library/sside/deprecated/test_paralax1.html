@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paralaxă Ierarhică Relativă</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #0b0f19;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .tree-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .node {
+            background: linear-gradient(135deg, #1e293b, #1e293b);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            position: relative;
+            /* Tranziție fină pe X pentru mișcări cursive, rapidă pentru a fi responsivă */
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s, background 0.3s;
+            cursor: crosshair;
+        }
+
+        /* Indentări vizuale în funcție de nivel (exact ca în exemplul tău) */
+        .node[data-level="1"] { margin-left: 0px; background: #1e293b; }
+        .node[data-level="2"] { margin-left: 30px; background: #273549; }
+        .node[data-level="3"] { margin-left: 60px; background: #334661; }
+
+        /* Stil special pentru nodul activ de sub mouse */
+        .node.active {
+            border-color: #38bdf8;
+            background: #0369a1 !important;
+            box-shadow: 0 10px 20px rgba(3, 105, 161, 0.4);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tree-container">
+        <!-- Recreăm structura din exemplul tău utilizând ID-uri și Niveluri ierarhice -->
+        <div class="node" id="div1" data-level="1">Nod 1 (Nivel 1)</div>
+        <div class="node" id="div2" data-level="2">└─ Nod 2 (Nivel 2 - Copil)</div>
+        <div class="node" id="div3" data-level="3">   └─ Nod 3 (Nivel 3 - Nepot)</div>
+        <div class="node" id="div4" data-level="2">└─ Nod 4 (Nivel 2 - Frate cu 2)</div>
+        <div class="node" id="div5" data-level="1">Nod 5 (Nivel 1 - Frate cu 1)</div>
+    </div>
+
+    <script>
+        const nodes = document.querySelectorAll('.node');
+
+        window.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            const centerX = window.innerWidth / 2;
+            // Valoare între -1 și 1 în funcție de poziția mouse-ului față de mijloc
+            const normalizedX = (mouseX - centerX) / centerX; 
+
+            let activeNode = null;
+
+            // 1. Detectăm pe verticală ce nod se află sub mouse
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                if (mouseY >= rect.top && mouseY <= rect.bottom) {
+                    activeNode = node;
+                }
+            });
+
+            // Dacă mouse-ul nu este peste niciun div, nu aplicăm modificări
+            if (!activeNode) return;
+
+            // Datele nodului focusat curent
+            const activeId = activeNode.id;
+            const activeLevel = parseInt(activeNode.getAttribute('data-level'));
+
+            // 2. Aplicăm algoritmul de paralaxă ierarhică relativă
+            nodes.forEach(node => {
+                node.classList.remove('active');
+                
+                const currentId = node.id;
+                const currentLevel = parseInt(node.getAttribute('data-level'));
+                
+                let moveFactor = 0;
+
+                // --- CAZUL 1: Suntem cu mouse-ul pe div1 ---
+                if (activeId === 'div1') {
+                    if (currentId === 'div1' || currentId === 'div5') {
+                        moveFactor = 0; // div1 nu se mișcă, div5 e la același nivel extern, stă pe loc
+                    } else if (currentId === 'div2' || currentId === 'div4') {
+                        moveFactor = 25; // se mișcă, dar nu repede
+                    } else if (currentId === 'div3') {
+                        moveFactor = 55; // se mișcă mai repede decât div2
+                    }
+                }
+
+                // --- CAZUL 2: Suntem cu mouse-ul pe div2 ---
+                else if (activeId === 'div2') {
+                    if (currentId === 'div2' || currentId === 'div4') {
+                        moveFactor = 0; // div2 (focusat) și div4 (fratele de pe același nivel) NU se mișcă
+                    } else if (currentId === 'div3') {
+                        moveFactor = 30; // copilul (mai adânc) se mișcă înainte, nu foarte repede
+                    } else if (currentId === 'div1' || currentId === 'div5') {
+                        moveFactor = -20; // Părintele/Nivelul superior se mișcă în SENS INVERS (semnul minus) și încet
+                    }
+                }
+
+                // --- CAZUL GENERAL (Dacă mouse-ul ajunge pe div3, div4 sau div5) ---
+                // Aplică o logică matematică automată bazată pe diferența de niveluri
+                else {
+                    if (currentId === activeId) {
+                        moveFactor = 0;
+                    } else if (currentLevel === activeLevel) {
+                        moveFactor = 0; // Frații de nivel stau pe loc
+                    } else if (currentLevel > activeLevel) {
+                        // Elementele mai adânce (copii) se mișcă în direcția mouse-ului
+                        moveFactor = (currentLevel - activeLevel) * 30;
+                    } else if (currentLevel < activeLevel) {
+                        // Elementele mai înalte (părinți) se mișcă în sens invers
+                        moveFactor = (currentLevel - activeLevel) * 20;
+                    }
+                }
+
+                // Aplicăm mișcarea finală pe axa X
+                if (node === activeNode) {
+                    node.classList.add('active');
+                }
+                
+                const finalX = normalizedX * moveFactor;
+                node.style.transform = `translateX(${finalX}px)`;
+            });
+        });
+
+        // Revenire la starea inițială când mouse-ul iese din ecran
+        document.addEventListener('mouseleave', () => {
+            nodes.forEach(node => {
+                node.style.transform = 'translateX(0px)';
+                node.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>
