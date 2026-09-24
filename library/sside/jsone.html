@@ -243,13 +243,34 @@
                 "items": genereazaNodCimp(nivel + 1),
                 "options": { "dependencies": { "type": "object" } }
             };
+            definitie.properties.array_mode = {
+                "type": "string",
+                "title": "Mod Array",
+                "enum": ["list", "tuple"],
+                "default": "list",
+                "options": {
+                    "enum_titles": [
+                        "listă variabilă (un tip de element)",
+                        "tuple — poziții fixe"
+                    ],
+                    "dependencies": { "type": "array" }
+                }
+            };
+            // Listă omogenă: un singur șablon de element
             definitie.properties.array_items = {
                 "type": "object",
-                "title": "Configurare elemente din Listă (Array):",
+                "title": "Șablon element (listă):",
                 "target": "properties",
                 "properties": genereazaNodCimp(nivel + 1).properties,
                 "required": ["title", "type", "default", "enum"],
-                "options": { "dependencies": { "type": "array" } }
+                "options": { "dependencies": { "type": "array", "array_mode": "list" } }
+            };
+            // Tuple: câte un schema pe fiecare poziție
+            definitie.properties.array_tuple_items = {
+                "type": "array",
+                "title": "Poziții tuple (fixe):",
+                "items": genereazaNodCimp(nivel + 1),
+                "options": { "dependencies": { "type": "array", "array_mode": "tuple" } }
             };
         }
 
@@ -336,7 +357,11 @@
 
         function nodeLabel(node, fallback) {
             const key = (node && node.key) ? node.key : fallback;
-            const type = (node && node.type) ? node.type : '?';
+            let type = (node && node.type) ? node.type : '?';
+            if (type === 'array') {
+                const mode = (node && node.array_mode) ? node.array_mode : 'list';
+                type = 'array:' + mode;
+            }
             return key + ' [' + type + ']';
         }
 
@@ -352,12 +377,23 @@
                     });
                 });
             }
-            if (node.type === 'array' && node.array_items && typeof node.array_items === 'object') {
-                kids.push({
-                    path: basePath + '.array_items',
-                    label: 'items [' + (node.array_items.type || 'object') + ']',
-                    node: node.array_items
-                });
+            if (node.type === 'array') {
+                const mode = node.array_mode || 'list';
+                if (mode === 'tuple' && Array.isArray(node.array_tuple_items)) {
+                    node.array_tuple_items.forEach((child, i) => {
+                        kids.push({
+                            path: basePath + '.array_tuple_items.' + i,
+                            label: '[' + i + '] ' + nodeLabel(child, 'pos_' + i),
+                            node: child
+                        });
+                    });
+                } else if (node.array_items && typeof node.array_items === 'object') {
+                    kids.push({
+                        path: basePath + '.array_items',
+                        label: 'items [' + (node.array_items.type || '?') + ']',
+                        node: node.array_items
+                    });
+                }
             }
             return kids;
         }
@@ -378,8 +414,14 @@
                 if (node.type === 'object' && Array.isArray(node.sub_properties)) {
                     s += 'sp' + node.sub_properties.length + '[' + node.sub_properties.map(walk).join(',') + ']';
                 }
-                if (node.type === 'array' && node.array_items) {
-                    s += 'ai[' + walk(node.array_items) + ']';
+                if (node.type === 'array') {
+                    const mode = node.array_mode || 'list';
+                    s += 'am:' + mode + ';';
+                    if (mode === 'tuple' && Array.isArray(node.array_tuple_items)) {
+                        s += 'at' + node.array_tuple_items.length + '[' + node.array_tuple_items.map(walk).join(',') + ']';
+                    } else if (node.array_items) {
+                        s += 'ai[' + walk(node.array_items) + ']';
+                    }
                 }
                 return s;
             }
@@ -390,7 +432,7 @@
             expanded.add('root');
             if (path === 'root') return;
             const rest = path.replace(/^root\./, '');
-            const tokens = rest.match(/structure\.\d+|sub_properties\.\d+|array_items/g) || [];
+            const tokens = rest.match(/structure\.\d+|sub_properties\.\d+|array_tuple_items\.\d+|array_items/g) || [];
             let acc = 'root';
             tokens.forEach(tok => {
                 acc += '.' + tok;
@@ -405,7 +447,7 @@
             let cur = config;
             for (let i = 0; i < parts.length; i++) {
                 const p = parts[i];
-                if (p === 'structure' || p === 'sub_properties') {
+                if (p === 'structure' || p === 'sub_properties' || p === 'array_tuple_items') {
                     const idx = Number(parts[++i]);
                     if (!cur[p] || !cur[p][idx]) return false;
                     cur = cur[p][idx];
@@ -644,7 +686,13 @@
                 });
             }
         } else if (node.type === 'array') {
-            if (node.array_items) {
+            const mode = node.array_mode || 'list';
+            if (mode === 'tuple' && Array.isArray(node.array_tuple_items)) {
+                const itemsArray = node.array_tuple_items.map(item => parseNodeToSchema(item));
+                schemaNode.items = itemsArray;
+                schemaNode.minItems = itemsArray.length;
+                schemaNode.maxItems = itemsArray.length;
+            } else if (node.array_items) {
                 schemaNode.items = parseNodeToSchema(node.array_items);
             } else {
                 schemaNode.items = { type: "string", title: "Element" };
@@ -661,7 +709,69 @@
         return schemaNode;
     }
 
+    let enforcingRootListLimit = false;
+
+    function syncRootArrayListLock(config) {
+        const structureEd = schemaEditor.getEditor('root.structure');
+        if (!structureEd) return false;
+
+        const isList = config.root_type === 'array_list';
+
+        if (isList) {
+            structureEd.schema.maxItems = 1;
+            if ((config.structure || []).length > 1) {
+                if (enforcingRootListLimit) return false;
+                enforcingRootListLimit = true;
+                try {
+                    schemaEditor.setValue(Object.assign({}, config, {
+                        structure: config.structure.slice(0, 1)
+                    }));
+                } finally {
+                    enforcingRootListLimit = false;
+                }
+                return true;
+            }
+        } else {
+            delete structureEd.schema.maxItems;
+        }
+
+        // Ascunde / reactivează butonul Add pe array-ul din root
+        const canAdd = !isList || (config.structure || []).length < 1;
+        if (structureEd.add_row_button && typeof structureEd.setButtonState === 'function') {
+            structureEd.setButtonState(structureEd.add_row_button, canAdd && !structureEd.hide_add_button);
+        } else if (structureEd.container) {
+            structureEd.container.querySelectorAll('.json-editor-btntype-add, .json-editor-btn-add').forEach(btn => {
+                // doar butoanele de pe acest array, nu cele din sub-editori mutați în detaliu
+                const inChildRow = btn.closest('.je-child-editor-holder');
+                if (inChildRow && structureEd.container.contains(inChildRow)) return;
+                btn.style.display = canAdd ? '' : 'none';
+                btn.disabled = !canAdd;
+            });
+        }
+
+        if (structureEd.schema) {
+            if (isList) {
+                structureEd.schema.title = 'Șablon element listă (un singur tip)';
+            } else if (config.root_type === 'array_tuple' || config.root_type === 'array') {
+                structureEd.schema.title = 'Poziții tuple (fixe)';
+            } else {
+                structureEd.schema.title = 'Arbore Formular';
+            }
+            if (typeof structureEd.updateHeaderText === 'function') {
+                structureEd.updateHeaderText();
+            } else if (structureEd.header_text) {
+                structureEd.header_text.textContent = structureEd.schema.title;
+            }
+        }
+
+        return false;
+    }
+
     function updateDataEditor(config) {
+        if (syncRootArrayListLock(config)) {
+            return; // setValue va re-declanșa change
+        }
+
         let targetSchema = {};
 
         if (config.root_type === 'array_list') {
@@ -721,8 +831,24 @@
             for (let subCheie in schemaNod.properties) {
                 nodConfig.sub_properties.push(inverseazaSchemaInConfig(subCheie, schemaNod.properties[subCheie]));
             }
-        } else if (schemaNod.type === 'array' && schemaNod.items) {
-            nodConfig.array_items = inverseazaSchemaInConfig("element", schemaNod.items);
+        } else if (schemaNod.type === 'array' && schemaNod.items !== undefined) {
+            if (Array.isArray(schemaNod.items)) {
+                nodConfig.array_mode = 'tuple';
+                nodConfig.array_tuple_items = schemaNod.items.map((item, index) =>
+                    inverseazaSchemaInConfig("item_" + index, item)
+                );
+            } else if (schemaNod.items && typeof schemaNod.items === 'object') {
+                nodConfig.array_mode = 'list';
+                nodConfig.array_items = inverseazaSchemaInConfig("element", schemaNod.items);
+            } else {
+                nodConfig.array_mode = 'list';
+                nodConfig.array_items = {
+                    key: "element",
+                    title: "Element",
+                    type: "string",
+                    default: ""
+                };
+            }
         }
 
         return nodConfig;
