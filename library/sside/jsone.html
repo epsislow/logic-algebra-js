@@ -44,21 +44,24 @@
             display: flex;
             gap: 14px;
             align-items: stretch;
-            min-height: 360px;
+            height: min(70vh, 640px);
+            min-height: 320px;
         }
         .schema-tree {
             width: 280px;
-            flex-shrink: 0;
+            flex: 0 0 280px;
             border: 1px solid #ced4da;
             border-radius: 6px;
             background: #f8f9fa;
             padding: 8px 6px;
             overflow: auto;
-            max-height: 70vh;
+            height: 100%;
+            max-height: none;
             font-family: Consolas, "Courier New", monospace;
             font-size: 13px;
             line-height: 1.45;
             user-select: none;
+            box-sizing: border-box;
         }
         .schema-tree-row {
             display: flex;
@@ -110,6 +113,9 @@
             border-radius: 6px;
             padding: 12px;
             background: #fff;
+            height: 100%;
+            overflow: auto;
+            box-sizing: border-box;
         }
         .schema-detail-pane { min-height: 40px; }
         .schema-master-detail.show-node #schema_editor_holder {
@@ -153,6 +159,41 @@
 
         input[type="text"], input[type="number"], select { 
             width: 100% !important; max-width: 280px !important; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; margin-bottom: 4px; display: block;
+        }
+
+        /* Mobil: tree deasupra, detaliu pe lățime plină dedesubt */
+        @media (max-width: 800px) {
+            body { margin: 10px; }
+            .main-layout { max-width: 100%; }
+            .panel { padding: 12px; }
+            .schema-master-detail {
+                flex-direction: column;
+                height: auto;
+                min-height: 0;
+                gap: 10px;
+            }
+            .schema-tree {
+                width: 100%;
+                flex: 0 0 auto;
+                height: 200px;
+                max-height: 32vh;
+            }
+            .schema-detail-col {
+                width: 100%;
+                height: min(58vh, 520px);
+                min-height: 260px;
+            }
+            .schema-detail-col input[type="text"],
+            .schema-detail-col input[type="number"],
+            .schema-detail-col select,
+            #schema_editor_holder input[type="text"],
+            #schema_editor_holder input[type="number"],
+            #schema_editor_holder select,
+            #schema_detail_pane input[type="text"],
+            #schema_detail_pane input[type="number"],
+            #schema_detail_pane select {
+                max-width: 100% !important;
+            }
         }
         
         .json-editor-btn-add, .json-editor-btntype-add, .json-editor-btntype-properties { background: #007bff !important; color: white !important; border: none !important; padding: 4px 8px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 11px !important; margin: 2px 1px !important; display: inline-block; }
@@ -529,6 +570,14 @@
             });
         }
 
+        function scrollDetailIntoViewOnMobile() {
+            if (!window.matchMedia('(max-width: 800px)').matches) return;
+            const detailCol = document.querySelector('.schema-detail-col');
+            if (detailCol) {
+                detailCol.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
         function renderTreeNode(item, into) {
             const kids = collectChildren(item.node, item.path);
             const hasKids = kids.length > 0;
@@ -563,6 +612,7 @@
                 ensureAncestorsExpanded(item.path);
                 applySelection();
                 highlightTreeSelection();
+                scrollDetailIntoViewOnMobile();
             });
             into.appendChild(row);
 
@@ -615,6 +665,7 @@
                 selectedPath = 'root';
                 applySelection();
                 highlightTreeSelection();
+                scrollDetailIntoViewOnMobile();
             });
             treeEl.appendChild(row);
 
