@@ -133,6 +133,56 @@
             background: var(--input-bg); color: var(--text); border-color: var(--input-border);
             max-width: 100%;
         }
+        .schema-preview-block {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .schema-preview-block h3 {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: var(--accent);
+        }
+        #schema-data-preview-holder {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            min-height: 80px;
+            max-height: 420px;
+            overflow: auto;
+        }
+        #schema-data-preview-holder input,
+        #schema-data-preview-holder select {
+            background: var(--input-bg);
+            color: var(--text);
+            border-color: var(--input-border);
+            max-width: 100%;
+        }
+        .preview-json-box {
+            margin-top: 12px;
+            background: var(--bg-code);
+            color: #a6e22e;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .preview-json-box h3 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: inherit;
+        }
+        .preview-json-box pre {
+            border: none;
+            background: transparent;
+            color: inherit;
+            min-height: 0;
+            padding: 0;
+        }
+        html[data-theme="dark"] #schema-data-preview-holder .je-indented-panel {
+            border-color: var(--border) !important;
+        }
 
         .schema-master-detail { display: flex; gap: 12px; align-items: stretch; height: 420px; min-height: 280px; }
         .schema-tree {
@@ -257,9 +307,17 @@
                                 <div id="schema_editor_holder"></div>
                             </div>
                         </div>
-                        <div style="margin-top:8px;">
-                            <h3 style="margin:0 0 6px;font-size:13px;">Schema JSON generată</h3>
+                        <div class="schema-preview-block">
+                            <h3>1. Schema JSON generată</h3>
                             <pre id="schema-live-preview">{}</pre>
+                        </div>
+                        <div class="schema-preview-block">
+                            <h3>2. Preview formular (completează date)</h3>
+                            <div id="schema-data-preview-holder"></div>
+                        </div>
+                        <div class="preview-json-box">
+                            <h3>JSON generat din preview:</h3>
+                            <pre id="schema-data-preview-json">{}</pre>
                         </div>
                     </div>
                 </div>
@@ -333,6 +391,9 @@
         let dataFormEditor = null;
         let schemaMetaEditor = null;
         let schemaTreeNav = null;
+        let schemaDataPreviewEditor = null;
+        let schemaPreviewDebounce = null;
+        let lastSchemaPreviewSig = '';
         let dynamicJsonEditor = null;
 
         (function initThemeToggle() {
@@ -599,19 +660,32 @@
         }
 
         function distrugeEditori() {
+            if (schemaPreviewDebounce) {
+                clearTimeout(schemaPreviewDebounce);
+                schemaPreviewDebounce = null;
+            }
             if (dataFormEditor) {
                 try { dataFormEditor.destroy(); } catch (e) {}
                 dataFormEditor = null;
+            }
+            if (schemaDataPreviewEditor) {
+                try { schemaDataPreviewEditor.destroy(); } catch (e) {}
+                schemaDataPreviewEditor = null;
             }
             if (schemaMetaEditor) {
                 try { schemaMetaEditor.destroy(); } catch (e) {}
                 schemaMetaEditor = null;
             }
             schemaTreeNav = null;
+            lastSchemaPreviewSig = '';
             document.getElementById('data-form-holder').innerHTML = '';
             document.getElementById('schema_editor_holder').innerHTML = '';
             document.getElementById('schema_detail_pane').innerHTML = '';
             document.getElementById('schema_tree').innerHTML = '';
+            const previewHolder = document.getElementById('schema-data-preview-holder');
+            if (previewHolder) previewHolder.innerHTML = '';
+            const previewJson = document.getElementById('schema-data-preview-json');
+            if (previewJson) previewJson.textContent = '{}';
             document.getElementById('schema_master_detail').classList.remove('show-node');
         }
 
@@ -915,6 +989,9 @@
                 document.getElementById('rezultat-citire').innerText = document.getElementById('raw-json-editor').value;
                 if (infoCheieCurenta.tip === 'schema') {
                     document.getElementById('schema-live-preview').textContent = JSON.stringify(payload, null, 2);
+                    if (modEditare === 'form') {
+                        programeazaPreviewDateSchema(payload);
+                    }
                 }
                 alert('Salvat: ' + cheieCurenta);
                 await scaneazaToateCampurile();
@@ -1257,9 +1334,16 @@
             if (schemaMetaEditor) {
                 try { schemaMetaEditor.destroy(); } catch (e) {}
             }
+            if (schemaDataPreviewEditor) {
+                try { schemaDataPreviewEditor.destroy(); } catch (e) {}
+                schemaDataPreviewEditor = null;
+            }
             document.getElementById('schema_editor_holder').innerHTML = '';
             document.getElementById('schema_detail_pane').innerHTML = '';
             document.getElementById('schema_tree').innerHTML = '';
+            document.getElementById('schema-data-preview-holder').innerHTML = '';
+            document.getElementById('schema-data-preview-json').textContent = '{}';
+            lastSchemaPreviewSig = '';
 
             schemaMetaEditor = new JSONEditor(document.getElementById('schema_editor_holder'), {
                 schema: rootMetaSchema,
@@ -1274,10 +1358,84 @@
                 try {
                     const live = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
                     document.getElementById('schema-live-preview').textContent = JSON.stringify(live, null, 2);
+                    programeazaPreviewDateSchema(live);
                 } catch (e) {}
             });
 
             initSchemaTreeNavFor(schemaMetaEditor);
+            // preview inițial
+            programeazaPreviewDateSchema(schemaObj);
+        }
+
+        function programeazaPreviewDateSchema(schemaObj) {
+            if (schemaPreviewDebounce) clearTimeout(schemaPreviewDebounce);
+            schemaPreviewDebounce = setTimeout(() => {
+                actualizeazaPreviewDateSchema(schemaObj);
+            }, 280);
+        }
+
+        function actualizeazaPreviewDateSchema(schemaObj) {
+            const holder = document.getElementById('schema-data-preview-holder');
+            const out = document.getElementById('schema-data-preview-json');
+            if (!holder || !out) return;
+
+            let schema = schemaObj;
+            try {
+                schema = JSON.parse(JSON.stringify(schemaObj));
+            } catch (e) {
+                schema = { type: 'object', properties: {} };
+            }
+
+            const sig = JSON.stringify(schema);
+            // păstrăm valorile din preview dacă schema e neschimbată
+            let prevVal = null;
+            if (schemaDataPreviewEditor && sig === lastSchemaPreviewSig) {
+                try { prevVal = schemaDataPreviewEditor.getValue(); } catch (e) {}
+                return;
+            }
+
+            if (schemaDataPreviewEditor && sig !== lastSchemaPreviewSig) {
+                try { prevVal = schemaDataPreviewEditor.getValue(); } catch (e) {}
+                try { schemaDataPreviewEditor.destroy(); } catch (e) {}
+                schemaDataPreviewEditor = null;
+            }
+            lastSchemaPreviewSig = sig;
+            holder.innerHTML = '';
+
+            let startval = valoareImplicitaDinSchema(schema);
+            if (prevVal != null && esteCompatibilCuSchema(prevVal, schema) && !trebuieRegenaratStartval(prevVal, schema)) {
+                startval = prevVal;
+            }
+
+            const opts = {
+                schema: schema,
+                theme: 'html',
+                disable_collapse: true,
+                disable_edit_json: true,
+                disable_properties: true,
+                disable_array_reorder: true,
+                use_default_values: true,
+                display_required_only: false
+            };
+            if (startval !== undefined && startval !== null) {
+                opts.startval = startval;
+            }
+
+            try {
+                schemaDataPreviewEditor = new JSONEditor(holder, opts);
+                const syncJson = () => {
+                    try {
+                        out.textContent = JSON.stringify(schemaDataPreviewEditor.getValue(), null, 2);
+                    } catch (e) {
+                        out.textContent = '{}';
+                    }
+                };
+                schemaDataPreviewEditor.on('ready', syncJson);
+                schemaDataPreviewEditor.on('change', syncJson);
+            } catch (e) {
+                holder.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">Preview indisponibil pentru schema curentă.</p>';
+                out.textContent = '{}';
+            }
         }
 
         function initSchemaTreeNavFor(editor) {
