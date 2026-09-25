@@ -4,38 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor JSON Profesional - Soluție Integrată și Stabilă</title>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('sside-theme');
+                if (t !== 'dark' && t !== 'light') t = 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     
     <!-- JSON-Editor CDN -->
     <script src="jsoneditor.min.js"></script>
     
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
+        :root {
+            --bg: #f4f4f9;
+            --bg-panel: #ffffff;
+            --bg-muted: #e9ecef;
+            --bg-tree: #f8f9fa;
+            --bg-detail: #ffffff;
+            --bg-code: #1e1e1e;
+            --bg-code-alt: #272822;
+            --text: #333333;
+            --text-muted: #555555;
+            --border: #ced4da;
+            --border-soft: #e9ecef;
+            --accent: #007bff;
+            --accent-hover: #0069d9;
+            --shadow: 0 4px 10px rgba(0,0,0,0.05);
+            --input-bg: #ffffff;
+            --input-border: #cccccc;
+            --twist-bg: #ffffff;
+            --twist-border: #adb5bd;
+            --tree-hover: #e9ecef;
+            --tree-selected: #007bff;
+            --toggle-bg: #6c757d;
+            --toggle-hover: #5a6268;
+            --theme-btn-bg: #ffffff;
+            --theme-btn-border: #ced4da;
+        }
+        html[data-theme="dark"] {
+            --bg: #12151a;
+            --bg-panel: #1c2128;
+            --bg-muted: #252b34;
+            --bg-tree: #171b22;
+            --bg-detail: #1c2128;
+            --bg-code: #0d1117;
+            --bg-code-alt: #161b22;
+            --text: #e6edf3;
+            --text-muted: #9da7b3;
+            --border: #3d4754;
+            --border-soft: #2d3540;
+            --accent: #4da3ff;
+            --accent-hover: #6bb0ff;
+            --shadow: 0 4px 14px rgba(0,0,0,0.35);
+            --input-bg: #0f1318;
+            --input-border: #3d4754;
+            --twist-bg: #252b34;
+            --twist-border: #4a5563;
+            --tree-hover: #252b34;
+            --tree-selected: #2563eb;
+            --toggle-bg: #3d4754;
+            --toggle-hover: #4a5563;
+            --theme-btn-bg: #252b34;
+            --theme-btn-border: #3d4754;
+        }
+
+        body { font-family: sans-serif; margin: 20px; background-color: var(--bg); color: var(--text); }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            max-width: 1280px;
+            margin: 0 auto 12px;
+        }
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--theme-btn-bg);
+            color: var(--text);
+            border: 1px solid var(--theme-btn-border);
+            padding: 8px 14px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+        .theme-toggle:hover { border-color: var(--accent); }
+        .theme-toggle .theme-icon { font-size: 15px; line-height: 1; }
         .main-layout { display: flex; flex-direction: column; gap: 16px; max-width: 1280px; margin: 0 auto; }
-        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; font-size: 18px; color: #007bff; }
-        h3 { font-size: 14px; margin-top: 15px; color: #555; }
+        .panel { background: var(--bg-panel); padding: 20px; border-radius: 8px; box-shadow: var(--shadow); border: 1px solid var(--border-soft); }
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-top: 0; font-size: 18px; color: var(--accent); }
+        h3 { font-size: 14px; margin-top: 15px; color: var(--text-muted); }
         
-        .import-box { background: #e9ecef; padding: 15px; border-radius: 6px; border: 1px solid #ced4da; }
-        .import-textarea { width: 100%; height: 100px; font-family: monospace; font-size: 12px; box-sizing: border-box; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; resize: vertical; }
+        .import-box { background: var(--bg-muted); padding: 15px; border-radius: 6px; border: 1px solid var(--border); }
+        .import-textarea { width: 100%; height: 100px; font-family: monospace; font-size: 12px; box-sizing: border-box; padding: 8px; border: 1px solid var(--border); border-radius: 4px; resize: vertical; background: var(--input-bg); color: var(--text); }
         
         .btn-green { background-color: #28a745 !important; color: white !important; }
         .btn-green:hover { background-color: #218838 !important; }
-        .btn-blue { background-color: #007bff !important; color: white !important; }
-        .btn-blue:hover { background-color: #0069d9 !important; }
+        .btn-blue { background-color: var(--accent) !important; color: white !important; }
+        .btn-blue:hover { background-color: var(--accent-hover) !important; }
         
         #submit-btn, .action-btn { color: white; border: none; padding: 12px 20px; font-size: 15px; border-radius: 4px; cursor: pointer; margin-top: 10px; width: 100%; display: block; text-align: center; box-sizing: border-box; }
         
-        .output-box { margin-top: 15px; background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; }
-        .schema-box { margin-top: 25px; background: #1e1e1e; color: #a6e22e; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid #333; }
+        .output-box { margin-top: 15px; background: var(--bg-code-alt); color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid var(--border-soft); }
+        .schema-box { margin-top: 25px; background: var(--bg-code); color: #a6e22e; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid var(--border); }
+        .output-box h3, .schema-box h3 { color: inherit; }
         pre { margin: 0; font-size: 12px; font-family: monospace; }
         .copy-btn { margin-top: 8px; background: #495057; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; }
         .copy-btn:hover { background: #343a40; }
         .copy-btn.copied { background: #28a745; }
 
-        .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
         .panel-header h2 { border-bottom: none; padding-bottom: 0; margin: 0; flex: 1; }
-        .toggle-btn { background: #6c757d; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
-        .toggle-btn:hover { background: #5a6268; }
+        .toggle-btn { background: var(--toggle-bg); color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        .toggle-btn:hover { background: var(--toggle-hover); }
         .panel.collapsed .panel-body { display: none; }
         .panel.collapsed .panel-header { border-bottom: none; padding-bottom: 0; }
 
@@ -50,9 +137,9 @@
         .schema-tree {
             width: 280px;
             flex: 0 0 280px;
-            border: 1px solid #ced4da;
+            border: 1px solid var(--border);
             border-radius: 6px;
-            background: #f8f9fa;
+            background: var(--bg-tree);
             padding: 8px 6px;
             overflow: auto;
             height: 100%;
@@ -72,15 +159,15 @@
             cursor: pointer;
             white-space: nowrap;
         }
-        .schema-tree-row:hover { background: #e9ecef; }
+        .schema-tree-row:hover { background: var(--tree-hover); }
         .schema-tree-row.is-selected {
-            background: #007bff;
+            background: var(--tree-selected);
             color: #fff;
         }
         .schema-tree-row.is-selected .schema-tree-twist {
             color: #fff;
             border-color: rgba(255,255,255,0.55);
-			background: #007bff;
+			background: var(--tree-selected);
         }
         .schema-tree-twist {
             flex: 0 0 22px;
@@ -89,10 +176,10 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #adb5bd;
+            border: 1px solid var(--twist-border);
             border-radius: 3px;
-            background: #fff;
-            color: #495057;
+            background: var(--twist-bg);
+            color: var(--text);
             font-size: 12px;
             font-weight: bold;
             line-height: 1;
@@ -104,18 +191,19 @@
             pointer-events: none;
         }
         .schema-tree-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-        .schema-tree-children { margin-left: 14px; border-left: 1px dotted #ced4da; padding-left: 4px; }
+        .schema-tree-children { margin-left: 14px; border-left: 1px dotted var(--border); padding-left: 4px; }
         .schema-detail-col {
             flex: 1;
             min-width: 0;
             position: relative;
-            border: 1px solid #e9ecef;
+            border: 1px solid var(--border-soft);
             border-radius: 6px;
             padding: 12px;
-            background: #fff;
+            background: var(--bg-detail);
             height: 100%;
             overflow: auto;
             box-sizing: border-box;
+            color: var(--text);
         }
         .schema-detail-pane { min-height: 40px; }
         .schema-master-detail.show-node #schema_editor_holder {
@@ -134,10 +222,16 @@
         #schema_detail_pane .je-object__container,
         #schema_detail_pane .je-indented-panel {
             margin-left: 10px !important;
-            border-left: 3px solid #007bff22 !important;
+            border-left: 3px solid rgba(0, 123, 255, 0.15) !important;
             padding-left: 10px !important;
             margin-bottom: 5px !important;
-            background: rgba(0, 0, 0, 0.005);
+            background: transparent;
+        }
+        html[data-theme="dark"] #schema_editor_holder .je-object__container,
+        html[data-theme="dark"] #schema_editor_holder .je-indented-panel,
+        html[data-theme="dark"] #schema_detail_pane .je-object__container,
+        html[data-theme="dark"] #schema_detail_pane .je-indented-panel {
+            border-left-color: rgba(77, 163, 255, 0.3) !important;
         }
 
         /* La root: ascunde formularele copiilor (rămân Add / tip rădăcină) */
@@ -158,13 +252,17 @@
         }
 
         input[type="text"], input[type="number"], select { 
-            width: 100% !important; max-width: 280px !important; padding: 5px 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; margin-bottom: 4px; display: block;
+            width: 100% !important; max-width: 280px !important; padding: 5px 8px; border: 1px solid var(--input-border); border-radius: 4px; box-sizing: border-box; font-size: 13px; margin-bottom: 4px; display: block;
+            background: var(--input-bg); color: var(--text);
         }
+        label, .je-form-input-label, .je-object__title { color: var(--text); }
+        #schema_editor_holder, #schema_detail_pane, #data_editor_holder { color: var(--text); }
 
         /* Mobil: tree deasupra, detaliu pe lățime plină dedesubt */
         @media (max-width: 800px) {
             body { margin: 10px; }
             .main-layout { max-width: 100%; }
+            .top-bar { max-width: 100%; }
             .panel { padding: 12px; }
             .schema-master-detail {
                 flex-direction: column;
@@ -196,13 +294,40 @@
             }
         }
         
-        .json-editor-btn-add, .json-editor-btntype-add, .json-editor-btntype-properties { background: #007bff !important; color: white !important; border: none !important; padding: 4px 8px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 11px !important; margin: 2px 1px !important; display: inline-block; }
+        .json-editor-btn-add, .json-editor-btntype-add, .json-editor-btntype-properties { background: var(--accent) !important; color: white !important; border: none !important; padding: 4px 8px !important; border-radius: 4px !important; cursor: pointer !important; font-size: 11px !important; margin: 2px 1px !important; display: inline-block; }
         .json-editor-btn-delete, .json-editor-btntype-delete, .json-editor-btntype-deletelast { background: #dc3545 !important; color: white !important; border: none !important; padding: 4px 8px !important; border-radius: 4px !important; font-size: 11px !important; margin: 2px 1px !important; display: inline-block; }
 
         #data_editor_holder [data-schemaid="root"] > .je-header { display: none !important; }
+
+        /* Override stiluri din jsoneditor (theme html) — border #ddd etc. */
+        html[data-theme="dark"] #data_editor_holder .je-indented-panel,
+        html[data-theme="dark"] #data_editor_holder .je-indented-panel--top,
+        html[data-theme="dark"] #schema_editor_holder .je-indented-panel,
+        html[data-theme="dark"] #schema_editor_holder .je-indented-panel--top,
+        html[data-theme="dark"] #schema_detail_pane .je-indented-panel,
+        html[data-theme="dark"] #schema_detail_pane .je-indented-panel--top,
+        html[data-theme="dark"] div[data-theme="html"] .je-indented-panel,
+        html[data-theme="dark"] div[data-theme="html"] .je-indented-panel--top {
+            border-color: var(--border) !important;
+        }
+        html[data-theme="dark"] #data_editor_holder table,
+        html[data-theme="dark"] #data_editor_holder td,
+        html[data-theme="dark"] #data_editor_holder th,
+        html[data-theme="dark"] div[data-theme="html"] table,
+        html[data-theme="dark"] div[data-theme="html"] td,
+        html[data-theme="dark"] div[data-theme="html"] th {
+            border-color: var(--border) !important;
+        }
     </style>
 </head>
 <body>
+
+<div class="top-bar">
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Comută tema">
+        <span class="theme-icon" id="theme-icon">🌙</span>
+        <span id="theme-label">Dark</span>
+    </button>
+</div>
 
 <div class="main-layout">
     <div class="panel import-box">
@@ -987,6 +1112,29 @@
             buton.textContent = collapsed ? 'Expand' : 'Collapse';
         });
     });
+
+    (function initThemeToggle() {
+        const btn = document.getElementById('theme-toggle');
+        const icon = document.getElementById('theme-icon');
+        const label = document.getElementById('theme-label');
+        if (!btn) return;
+
+        function syncThemeUi() {
+            const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            icon.textContent = dark ? '☀️' : '🌙';
+            label.textContent = dark ? 'Light' : 'Dark';
+            btn.setAttribute('aria-label', dark ? 'Comută la tema light' : 'Comută la tema dark');
+        }
+
+        btn.addEventListener('click', () => {
+            const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            try { localStorage.setItem('sside-theme', next); } catch (e) {}
+            syncThemeUi();
+        });
+
+        syncThemeUi();
+    })();
 </script>
 
 </body>

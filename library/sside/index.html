@@ -4,34 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>In-House Storage Securizat</title>
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('sside-theme');
+                if (t !== 'dark' && t !== 'light') t = 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
 	
     <script src="https://cdnjs.cloudflare.com/ajax/libs/json-editor/2.15.1/jsoneditor.min.js"></script>
 	
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; background: #fdfdfd; }
-        .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 5px; background: white; }
-        .box-auth { border: 2px solid #007bff; background: #f8f9fa; text-align: center; }
-        select, input, button { padding: 10px; margin: 6px 0; display: block; width: 100%; box-sizing: border-box; border-radius: 4px; }
-        input { border: 1px solid #aaa; }
+        :root {
+            --bg: #fdfdfd;
+            --bg-panel: #ffffff;
+            --bg-muted: #f8f9fa;
+            --bg-user: #e9ecef;
+            --bg-code: #f4f4f4;
+            --bg-editor: #fafafa;
+            --bg-warn: #fffdf6;
+            --text: #222222;
+            --text-muted: #555555;
+            --border: #cccccc;
+            --border-code: #dddddd;
+            --accent: #007bff;
+            --input-bg: #ffffff;
+            --input-border: #aaaaaa;
+            --theme-btn-bg: #ffffff;
+            --theme-btn-border: #cccccc;
+            --shadow: none;
+        }
+        html[data-theme="dark"] {
+            --bg: #12151a;
+            --bg-panel: #1c2128;
+            --bg-muted: #1a2332;
+            --bg-user: #252b34;
+            --bg-code: #0d1117;
+            --bg-editor: #171b22;
+            --bg-warn: #2a2418;
+            --text: #e6edf3;
+            --text-muted: #9da7b3;
+            --border: #3d4754;
+            --border-code: #3d4754;
+            --accent: #4da3ff;
+            --input-bg: #0f1318;
+            --input-border: #3d4754;
+            --theme-btn-bg: #252b34;
+            --theme-btn-border: #3d4754;
+            --shadow: 0 4px 14px rgba(0,0,0,0.35);
+        }
+
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; background: var(--bg); color: var(--text); }
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--theme-btn-bg);
+            color: var(--text);
+            border: 1px solid var(--theme-btn-border);
+            padding: 8px 14px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+            font-weight: normal;
+            box-shadow: var(--shadow);
+        }
+        .theme-toggle:hover { border-color: var(--accent); background: var(--theme-btn-bg); }
+        .theme-toggle .theme-icon { font-size: 15px; line-height: 1; }
+        h2, h3 { color: var(--text); }
+        .box { border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; border-radius: 5px; background: var(--bg-panel); box-shadow: var(--shadow); }
+        .box-auth { border: 2px solid var(--accent); background: var(--bg-muted); text-align: center; }
+        select, input, button, textarea { padding: 10px; margin: 6px 0; display: block; width: 100%; box-sizing: border-box; border-radius: 4px; }
+        input, select, textarea { border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text); }
         button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 15px; }
         button:hover { background: #218838; }
-        pre { background: #f4f4f4; padding: 10px; overflow-x: auto; min-height: 40px; border: 1px solid #ddd; }
-        .btn-albastru { background: #007bff; }
+        pre { background: var(--bg-code); color: var(--text); padding: 10px; overflow-x: auto; min-height: 40px; border: 1px solid var(--border-code); }
+        .btn-albastru { background: var(--accent); }
         .btn-albastru:hover { background: #0056b3; }
+        html[data-theme="dark"] .btn-albastru:hover { background: #6bb0ff; }
         .btn-rosu { background: #dc3545; }
         .btn-rosu:hover { background: #bd2130; }
-        .zona-utilizator { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #e9ecef; padding: 10px; border-radius: 5px; }
+        .zona-utilizator { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: var(--bg-user); padding: 10px; border-radius: 5px; color: var(--text); }
         .badge { background: #6c757d; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
+        .card-editor {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            border-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+        #json-editor-holder {
+            margin-top: 20px;
+            padding: 10px;
+            background: var(--bg-editor);
+            border: 1px dashed var(--border);
+            color: var(--text);
+        }
+        #json-editor-holder input,
+        #json-editor-holder select,
+        #json-editor-holder textarea {
+            background: var(--input-bg);
+            color: var(--text);
+            border-color: var(--input-border);
+        }
+        .box-scan {
+            border-color: #ffc107;
+            background: var(--bg-warn);
+        }
+        p { color: var(--text-muted); }
+        label { color: var(--text); }
     </style>
 </head>
 <body>
+
+    <div class="top-bar">
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Comută tema">
+            <span class="theme-icon" id="theme-icon">🌙</span>
+            <span id="theme-label">Dark</span>
+        </button>
+    </div>
 
     <h2>Sistem Gestiune In-House (Cloudflare + Upstash)</h2>
 
     <!-- ECRAN 1: FORMULARUL DE LOGIN -->
     <div id="ecran-login" class="box box-auth">
         <h3>🔒 Autentificare Necesară</h3>
-        <p style="font-size: 13px; color: #555;">Sistem securizat server-side. Token-urile sunt ascunse în Cloudflare.</p>
+        <p style="font-size: 13px;">Sistem securizat server-side. Token-urile sunt ascunse în Cloudflare.</p>
         <input type="text" id="login-username" placeholder="Utilizator (ex: admin)">
         <input type="password" id="login-password" placeholder="Parolă">
         <button onclick="executaLogin()" class="btn-albastru">Conectează-te</button>
@@ -46,7 +157,7 @@
         </div>
 
         <!-- CĂUTARE WILDCARD ȘI SELECTARE CÂMP -->
-        <div class="box" style="border-color: #ffc107; background: #fffdf6;">
+        <div class="box box-scan">
             <h3>🔍 Scanează și Filtrează Câmpuri</h3>
             <input type="text" id="input-search" value="*" placeholder="Filtru wildcard (ex: * sau set*)">
             <button onclick="scaneazaToateCampurile()" style="background: #ffc107; color: #333;">Caută în Baza de Date</button>
@@ -65,7 +176,7 @@
         </div>
 
         <!-- EDITOR DINAMIC -->
-		<div class="card" style="margin-top: 20px; padding: 20px; border: 1px solid #ccc; background: #fff; border-radius: 4px;">
+		<div class="card-editor">
 			<h3><i class="fa fa-edit"></i> Editor Dinamic (schema)</h3>
 			
 			<div style="margin-bottom: 15px;">
@@ -78,7 +189,7 @@
 			</button>
 
 			<!-- Zona unde va apărea formularul editabil -->
-			<div id="json-editor-holder" style="margin-top: 20px; padding: 10px; background: #fafafa; border: 1px dashed #bbb;"></div>
+			<div id="json-editor-holder"></div>
 
 			<button id="save-editor-btn" type="button" onclick="salveazaDateEditor()" style="display:none; margin-top: 15px; background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
 				Salvează Datele din Formular
@@ -113,6 +224,29 @@
         // CONFIGURARE: Pune aici link-ul tău primit de la Cloudflare
         // ========================================================
         const WORKER_URL = "https://little-darkness-9133.ady25626.workers.dev";
+
+        (function initThemeToggle() {
+            const btn = document.getElementById('theme-toggle');
+            const icon = document.getElementById('theme-icon');
+            const label = document.getElementById('theme-label');
+            if (!btn) return;
+
+            function syncThemeUi() {
+                const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+                icon.textContent = dark ? '☀️' : '🌙';
+                label.textContent = dark ? 'Light' : 'Dark';
+                btn.setAttribute('aria-label', dark ? 'Comută la tema light' : 'Comută la tema dark');
+            }
+
+            btn.addEventListener('click', () => {
+                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                try { localStorage.setItem('sside-theme', next); } catch (e) {}
+                syncThemeUi();
+            });
+
+            syncThemeUi();
+        })();
 
         // La pornirea paginii, verificăm dacă avem sesiune salvată
         window.onload = function() {
