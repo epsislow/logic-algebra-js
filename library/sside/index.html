@@ -15,9 +15,9 @@
             }
         })();
     </script>
-	
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/json-editor/2.15.1/jsoneditor.min.js"></script>
-	
+
+    <script src="jsoneditor.min.js"></script>
+
     <style>
         :root {
             --bg: #fdfdfd;
@@ -27,6 +27,7 @@
             --bg-code: #f4f4f4;
             --bg-editor: #fafafa;
             --bg-warn: #fffdf6;
+            --bg-tree: #f8f9fa;
             --text: #222222;
             --text-muted: #555555;
             --border: #cccccc;
@@ -37,6 +38,10 @@
             --theme-btn-bg: #ffffff;
             --theme-btn-border: #cccccc;
             --shadow: none;
+            --row-hover: #f0f4f8;
+            --badge-schema: #6f42c1;
+            --badge-data: #0d6efd;
+            --badge-liber: #6c757d;
         }
         html[data-theme="dark"] {
             --bg: #12151a;
@@ -46,6 +51,7 @@
             --bg-code: #0d1117;
             --bg-editor: #171b22;
             --bg-warn: #2a2418;
+            --bg-tree: #171b22;
             --text: #e6edf3;
             --text-muted: #9da7b3;
             --border: #3d4754;
@@ -56,33 +62,22 @@
             --theme-btn-bg: #252b34;
             --theme-btn-border: #3d4754;
             --shadow: 0 4px 14px rgba(0,0,0,0.35);
+            --row-hover: #252b34;
+            --badge-schema: #8b5cf6;
+            --badge-data: #3b82f6;
+            --badge-liber: #6b7280;
         }
 
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 0 10px; background: var(--bg); color: var(--text); }
-        .top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-bottom: 12px;
-        }
+        body { font-family: sans-serif; max-width: 960px; margin: 20px auto; padding: 0 10px; background: var(--bg); color: var(--text); }
+        .top-bar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 12px; }
         .theme-toggle {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--theme-btn-bg);
-            color: var(--text);
-            border: 1px solid var(--theme-btn-border);
-            padding: 8px 14px;
-            font-size: 13px;
-            border-radius: 6px;
-            cursor: pointer;
-            width: auto;
-            margin: 0;
-            font-weight: normal;
-            box-shadow: var(--shadow);
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--theme-btn-bg); color: var(--text);
+            border: 1px solid var(--theme-btn-border); padding: 8px 14px;
+            font-size: 13px; border-radius: 6px; cursor: pointer;
+            width: auto; margin: 0; font-weight: normal; box-shadow: var(--shadow);
         }
         .theme-toggle:hover { border-color: var(--accent); background: var(--theme-btn-bg); }
-        .theme-toggle .theme-icon { font-size: 15px; line-height: 1; }
         h2, h3 { color: var(--text); }
         .box { border: 1px solid var(--border); padding: 15px; margin-bottom: 15px; border-radius: 5px; background: var(--bg-panel); box-shadow: var(--shadow); }
         .box-auth { border: 2px solid var(--accent); background: var(--bg-muted); text-align: center; }
@@ -90,42 +85,112 @@
         input, select, textarea { border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text); }
         button { background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 15px; }
         button:hover { background: #218838; }
-        pre { background: var(--bg-code); color: var(--text); padding: 10px; overflow-x: auto; min-height: 40px; border: 1px solid var(--border-code); }
+        pre { background: var(--bg-code); color: var(--text); padding: 10px; overflow-x: auto; min-height: 40px; border: 1px solid var(--border-code); margin: 0; font-size: 12px; }
         .btn-albastru { background: var(--accent); }
         .btn-albastru:hover { background: #0056b3; }
         html[data-theme="dark"] .btn-albastru:hover { background: #6bb0ff; }
         .btn-rosu { background: #dc3545; }
         .btn-rosu:hover { background: #bd2130; }
+        .btn-gri { background: #6c757d; }
+        .btn-gri:hover { background: #5a6268; }
+        .btn-inline { width: auto; display: inline-block; margin: 0; padding: 6px 12px; font-size: 13px; }
         .zona-utilizator { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: var(--bg-user); padding: 10px; border-radius: 5px; color: var(--text); }
         .badge { background: #6c757d; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
-        .card-editor {
-            margin-top: 20px;
-            padding: 20px;
-            border: 1px solid var(--border);
-            background: var(--bg-panel);
-            border-radius: 4px;
-            box-shadow: var(--shadow);
-        }
-        #json-editor-holder {
-            margin-top: 20px;
-            padding: 10px;
-            background: var(--bg-editor);
-            border: 1px dashed var(--border);
-            color: var(--text);
-        }
-        #json-editor-holder input,
-        #json-editor-holder select,
-        #json-editor-holder textarea {
-            background: var(--input-bg);
-            color: var(--text);
-            border-color: var(--input-border);
-        }
-        .box-scan {
-            border-color: #ffc107;
-            background: var(--bg-warn);
-        }
+        .badge-schema { background: var(--badge-schema); }
+        .badge-data { background: var(--badge-data); }
+        .badge-liber { background: var(--badge-liber); }
         p { color: var(--text-muted); }
         label { color: var(--text); }
+
+        .toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .toolbar-row input[type="text"] { flex: 1; min-width: 140px; margin: 0; }
+        .toolbar-row button { margin: 0; }
+
+        .lista-chei { border: 1px solid var(--border); border-radius: 6px; max-height: 55vh; overflow: auto; background: var(--bg-panel); }
+        .key-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 12px; border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        .key-row:last-child { border-bottom: none; }
+        .key-row:hover { background: var(--row-hover); }
+        .key-row .key-name { flex: 1; min-width: 0; font-family: Consolas, monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .key-row .key-note { font-size: 11px; color: var(--text-muted); }
+
+        .detail-meta { margin-bottom: 12px; }
+        .detail-meta .meta-line { margin: 4px 0; font-size: 14px; }
+        .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .detail-actions button { margin: 0; width: auto; }
+
+        .mode-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+        .mode-tabs button { margin: 0; width: auto; padding: 6px 12px; font-size: 13px; background: var(--bg-muted); color: var(--text); }
+        .mode-tabs button.active { background: var(--accent); color: #fff; }
+
+        #raw-json-editor { width: 100%; min-height: 220px; font-family: Consolas, monospace; font-size: 12px; }
+        #data-form-holder, #schema-visual-wrap { background: var(--bg-editor); border: 1px dashed var(--border); border-radius: 6px; padding: 10px; color: var(--text); }
+        #data-form-holder input, #data-form-holder select,
+        #schema-visual-wrap input, #schema-visual-wrap select {
+            background: var(--input-bg); color: var(--text); border-color: var(--input-border);
+            max-width: 100%;
+        }
+
+        .schema-master-detail { display: flex; gap: 12px; align-items: stretch; height: 420px; min-height: 280px; }
+        .schema-tree {
+            width: 240px; flex: 0 0 240px; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--bg-tree); padding: 6px; overflow: auto; height: 100%; box-sizing: border-box;
+            font-family: Consolas, monospace; font-size: 12px; user-select: none;
+        }
+        .schema-detail-col {
+            flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px;
+            padding: 10px; background: var(--bg-panel); height: 100%; overflow: auto; box-sizing: border-box;
+        }
+        .schema-tree-row { display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+        .schema-tree-row:hover { background: var(--row-hover); }
+        .schema-tree-row.is-selected { background: var(--accent); color: #fff; }
+        .schema-tree-twist {
+            flex: 0 0 20px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid var(--border); border-radius: 3px; background: var(--input-bg); color: var(--text);
+            font-size: 11px; font-weight: bold; cursor: pointer; padding: 0;
+        }
+        .schema-tree-twist.is-leaf { visibility: hidden; pointer-events: none; }
+        .schema-tree-children { margin-left: 12px; border-left: 1px dotted var(--border); padding-left: 4px; }
+        .schema-master-detail.show-node #schema_editor_holder {
+            position: absolute !important; width: 1px !important; height: 1px !important;
+            overflow: hidden !important; clip: rect(0,0,0,0) !important; border: 0 !important;
+        }
+        #schema_editor_holder.md-root-view .je-child-editor-holder.je-object__container { display: none !important; }
+        #schema_detail_pane .md-detail-node .je-object__container,
+        #schema_detail_pane .md-detail-node .je-child-editor-holder { display: none !important; }
+        #schema_detail_pane .md-detail-node { margin-left: 0 !important; border-left: none !important; padding-left: 0 !important; }
+        .schema-detail-col { position: relative; }
+
+        html[data-theme="dark"] #data-form-holder .je-indented-panel,
+        html[data-theme="dark"] #schema-visual-wrap .je-indented-panel,
+        html[data-theme="dark"] div[data-theme="html"] .je-indented-panel {
+            border-color: var(--border) !important;
+        }
+
+        .modal-backdrop {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+            z-index: 1000; align-items: center; justify-content: center; padding: 16px;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal-card {
+            background: var(--bg-panel); color: var(--text); border: 1px solid var(--border);
+            border-radius: 8px; padding: 16px; width: 100%; max-width: 420px; box-shadow: var(--shadow);
+        }
+        .modal-card h3 { margin-top: 0; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+        .modal-actions button { width: auto; margin: 0; }
+
+        .compat-hidden { display: none !important; }
+
+        @media (max-width: 800px) {
+            body { margin: 10px; }
+            .schema-master-detail { flex-direction: column; height: auto; }
+            .schema-tree { width: 100%; flex: none; height: 180px; }
+            .schema-detail-col { height: min(50vh, 420px); }
+        }
     </style>
 </head>
 <body>
@@ -139,7 +204,6 @@
 
     <h2>Sistem Gestiune In-House (Cloudflare + Upstash)</h2>
 
-    <!-- ECRAN 1: FORMULARUL DE LOGIN -->
     <div id="ecran-login" class="box box-auth">
         <h3>🔒 Autentificare Necesară</h3>
         <p style="font-size: 13px;">Sistem securizat server-side. Token-urile sunt ascunse în Cloudflare.</p>
@@ -148,162 +212,183 @@
         <button onclick="executaLogin()" class="btn-albastru">Conectează-te</button>
     </div>
 
-    <!-- ECRAN 2: PANOUL DE CONTROL CRUD (Ascuns implicit până la login) -->
     <div id="panou-aplicatie" style="display: none;">
-        
+
         <div class="zona-utilizator">
             <span>Conectat ca: <strong id="nume-utilizator-afisat">...</strong></span>
-            <button onclick="executaLogout()" class="btn-rosu" style="width: auto; margin: 0; padding: 5px 10px; font-size: 13px;">Deconectare</button>
+            <button onclick="executaLogout()" class="btn-rosu btn-inline">Deconectare</button>
         </div>
 
-        <!-- CĂUTARE WILDCARD ȘI SELECTARE CÂMP -->
-        <div class="box box-scan">
-            <h3>🔍 Scanează și Filtrează Câmpuri</h3>
-            <input type="text" id="input-search" value="*" placeholder="Filtru wildcard (ex: * sau set*)">
-            <button onclick="scaneazaToateCampurile()" style="background: #ffc107; color: #333;">Caută în Baza de Date</button>
-            <p style="margin-top: 10px; font-size: 14px;">Câmpuri găsite: <span id="total-campuri" class="badge">0</span></p>
-            
-            <label for="select-citire">Alege din rezultate pentru a citi conținutul:</label>
-            <select id="select-citire" onchange="citesteContinutCamp()">
-                <option value="">-- Încarcă lista mai sus --</option>
+        <!-- ========== ECRAN LISTĂ ========== -->
+        <div id="ecran-lista">
+            <div class="box">
+                <div class="toolbar-row">
+                    <input type="text" id="input-search" value="*" placeholder="Filtru wildcard (ex: * sau _setari*)">
+                    <button type="button" onclick="scaneazaToateCampurile()" style="background:#ffc107;color:#333;width:auto;">Caută</button>
+                    <button type="button" class="btn-albastru btn-inline" onclick="deschideModalCheieNoua()">+ Cheie nouă</button>
+                </div>
+                <p style="margin: 0 0 8px;">Câmpuri: <span id="total-campuri" class="badge">0</span></p>
+                <div id="lista-chei" class="lista-chei"></div>
+            </div>
+        </div>
+
+        <!-- ========== ECRAN DETALIU ========== -->
+        <div id="ecran-detaliu" style="display: none;">
+            <div class="box">
+                <button type="button" class="btn-gri btn-inline" onclick="inapoiLaLista()">← Înapoi la listă</button>
+
+                <div class="detail-meta" id="detail-meta">
+                    <div class="meta-line"><strong>Cheie:</strong> <code id="detail-key-name"></code></div>
+                    <div class="meta-line"><strong>Tip:</strong> <span id="detail-type-badge"></span> <span id="detail-type-note" class="key-note"></span></div>
+                </div>
+
+                <div class="mode-tabs" id="detail-mode-tabs">
+                    <button type="button" id="tab-form" class="active" onclick="seteazaModEditare('form')">Formular</button>
+                    <button type="button" id="tab-raw" onclick="seteazaModEditare('raw')">JSON raw</button>
+                </div>
+
+                <div id="panel-form">
+                    <div id="data-form-holder" style="display:none;"></div>
+                    <div id="schema-visual-wrap" style="display:none;">
+                        <div class="schema-master-detail" id="schema_master_detail">
+                            <aside id="schema_tree" class="schema-tree"></aside>
+                            <div class="schema-detail-col">
+                                <div id="schema_detail_pane"></div>
+                                <div id="schema_editor_holder"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top:8px;">
+                            <h3 style="margin:0 0 6px;font-size:13px;">Schema JSON generată</h3>
+                            <pre id="schema-live-preview">{}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-raw" style="display:none;">
+                    <textarea id="raw-json-editor" spellcheck="false"></textarea>
+                </div>
+
+                <div class="detail-actions">
+                    <button type="button" onclick="salveazaCheieCurenta()">Salvează</button>
+                    <button type="button" class="btn-rosu" onclick="stergeCheieCurenta()">Șterge</button>
+                    <button type="button" class="btn-albastru" id="btn-deschide-schema" style="display:none;" onclick="deschideSchemaLegata()">Deschide schema</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Elemente ascunse pentru compatibilitate cu funcțiile vechi -->
+        <div class="compat-hidden" aria-hidden="true">
+            <select id="select-citire"></select>
+            <pre id="rezultat-citire"></pre>
+            <input type="text" id="nume-camp">
+            <input type="text" id="valoare-camp">
+            <input type="text" id="nume-camp-stergere">
+            <textarea id="schema-input"></textarea>
+            <div id="json-editor-holder"></div>
+            <button id="save-editor-btn" type="button"></button>
+        </div>
+    </div>
+
+    <!-- Modal cheie nouă -->
+    <div class="modal-backdrop" id="modal-cheie-noua">
+        <div class="modal-card">
+            <h3>Cheie nouă</h3>
+            <label>Tip</label>
+            <select id="new-key-type" onchange="actualizeazaFormCheieNoua()">
+                <option value="schema">Schemă (schema:_nume)</option>
+                <option value="data">Date pe schemă (_nume:instanță)</option>
+                <option value="liber">Liber / legacy</option>
             </select>
+            <div id="new-fields-schema">
+                <label>Nume schemă (fără prefix; `_` se adaugă automat)</label>
+                <input type="text" id="new-schema-name" placeholder="ex: setari">
+                <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-schema-preview">schema:_setari</code></p>
+            </div>
+            <div id="new-fields-data" style="display:none;">
+                <label>Schema</label>
+                <select id="new-data-schema"></select>
+                <label>Instanță (după `:`, poți folosi și `a:b:c`)</label>
+                <input type="text" id="new-data-instance" placeholder="ex: data sau site:ro">
+                <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-data-preview">—</code></p>
+            </div>
+            <div id="new-fields-liber" style="display:none;">
+                <label>Nume cheie (liber)</label>
+                <input type="text" id="new-liber-name" placeholder="ex: nume:nume1">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-gri" onclick="inchideModalCheieNoua()">Anulează</button>
+                <button type="button" class="btn-albastru" onclick="creeazaCheieNoua()">Creează</button>
+            </div>
         </div>
-
-        <!-- AFISARE REZULTAT READ -->
-        <div class="box">
-            <h3>📄 Conținut JSON (Citire)</h3>
-            <pre id="rezultat-citire">Selectează un câmp din lista de mai sus.</pre>
-        </div>
-
-        <!-- EDITOR DINAMIC -->
-		<div class="card-editor">
-			<h3><i class="fa fa-edit"></i> Editor Dinamic (schema)</h3>
-			
-			<div style="margin-bottom: 15px;">
-				<label><strong>Introdu Schema JSON (Aici pui regulile):</strong></label>
-				<textarea id="schema-input" rows="5" style="width:100%; font-family:monospace; margin-top:5px;" placeholder='Exemplu: {"type": "object", "properties": {"id": {"type": "integer"}}}'></textarea>
-			</div>
-			
-			<button type="button" onclick="genereazaFormularDinamic()" style="background: #2196F3; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
-				Generează Formular
-			</button>
-
-			<!-- Zona unde va apărea formularul editabil -->
-			<div id="json-editor-holder"></div>
-
-			<button id="save-editor-btn" type="button" onclick="salveazaDateEditor()" style="display:none; margin-top: 15px; background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-				Salvează Datele din Formular
-			</button>
-		</div>
-
-
-
-        <!-- CREATE / UPDATE -->
-        <div class="box">
-            <h3>💾 Adaugă sau Modifică un Câmp (CREATE / UPDATE)</h3>
-            <label for="nume-camp">Nume Câmp (Cheie):</label>
-            <input type="text" id="nume-camp" placeholder="ex: setari_aplicatie">
-            
-            <label for="valoare-camp">Conținut JSON:</label>
-            <input type="text" id="valoare-camp" placeholder='ex: {"tema": "dark", "limba": "ro"}'>
-            
-            <button onclick="salveazaCampInCloud()">Salvează Câmpul</button>
-        </div>
-
-        <!-- DELETE -->
-        <div class="box" style="border-color: #dc3545;">
-            <h3>🗑️ Șterge un Câmp (DELETE)</h3>
-            <input type="text" id="nume-camp-stergere" placeholder="Numele exact al câmpului de șters">
-            <button onclick="stergeCampDinCloud()" class="btn-rosu">Șterge Definitiv</button>
-        </div>
-
     </div>
 
     <script>
-        // ========================================================
-        // CONFIGURARE: Pune aici link-ul tău primit de la Cloudflare
-        // ========================================================
         const WORKER_URL = "https://little-darkness-9133.ady25626.workers.dev";
+
+        // --- stare UI nouă ---
+        let toateCheile = [];
+        let cheieCurenta = null;
+        let infoCheieCurenta = null;
+        let modEditare = 'form'; // form | raw
+        let dataFormEditor = null;
+        let schemaMetaEditor = null;
+        let schemaTreeNav = null;
+        let dynamicJsonEditor = null;
 
         (function initThemeToggle() {
             const btn = document.getElementById('theme-toggle');
             const icon = document.getElementById('theme-icon');
             const label = document.getElementById('theme-label');
             if (!btn) return;
-
             function syncThemeUi() {
                 const dark = document.documentElement.getAttribute('data-theme') === 'dark';
                 icon.textContent = dark ? '☀️' : '🌙';
                 label.textContent = dark ? 'Light' : 'Dark';
-                btn.setAttribute('aria-label', dark ? 'Comută la tema light' : 'Comută la tema dark');
             }
-
             btn.addEventListener('click', () => {
                 const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
                 try { localStorage.setItem('sside-theme', next); } catch (e) {}
                 syncThemeUi();
             });
-
             syncThemeUi();
         })();
 
-        // La pornirea paginii, verificăm dacă avem sesiune salvată
-        window.onload = function() {
+        window.onload = function () {
             const token = localStorage.getItem("session_token");
             const user = localStorage.getItem("session_user");
-            
-            if (token && user) {
-                arataPanouAplicatie(user);
-            }
+            if (token && user) arataPanouAplicatie(user);
         };
 
-        // Helper universal pentru a trimite cereri CRUD către Cloudflare Worker-ul tău
         async function apeleazaServerul(ruta, dateTrimise) {
             const token = localStorage.getItem("session_token");
-            
             const configurareCerere = {
                 method: "POST",
                 headers: { "Content-Type": "application/json" }
             };
-
-            // Dacă avem token de sesiune, îl atașăm în Header-ul securizat de Authorization
-            if (token) {
-                configurareCerere.headers["Authorization"] = `Bearer ${token}`;
-            }
-
+            if (token) configurareCerere.headers["Authorization"] = `Bearer ${token}`;
             configurareCerere.body = JSON.stringify(dateTrimise);
-
             const raspuns = await fetch(`${WORKER_URL}${ruta}`, configurareCerere);
-            
             if (raspuns.status === 401 || raspuns.status === 403) {
                 executaLogout();
                 throw new Error("Sesiune invalidă sau expirată. Te rog reconectează-te.");
             }
-            
             if (!raspuns.ok) {
                 const textEroare = await raspuns.text();
                 throw new Error(textEroare || "Eroare la server.");
             }
-
             return await raspuns.json();
         }
 
-        // ==========================================
-        // 🔐 FUNCȚIA DE AUTENTIFICARE (LOGIN)
-        // ==========================================
         async function executaLogin() {
             const user = document.getElementById("login-username").value.trim();
             const pass = document.getElementById("login-password").value.trim();
-
             if (!user || !pass) {
                 alert("Introdu utilizatorul și parola!");
                 return;
             }
-
             try {
                 const dateInapoi = await apeleazaServerul("/api/login", { username: user, password: pass });
-                
                 if (dateInapoi.succes) {
                     localStorage.setItem("session_token", dateInapoi.token);
                     localStorage.setItem("session_user", user);
@@ -318,7 +403,8 @@
             document.getElementById("ecran-login").style.display = "none";
             document.getElementById("panou-aplicatie").style.display = "block";
             document.getElementById("nume-utilizator-afisat").innerText = username;
-            scaneazaToateCampurile(); // Încarcă automat câmpurile la login succes
+            inapoiLaLista();
+            scaneazaToateCampurile();
         }
 
         function executaLogout() {
@@ -326,96 +412,152 @@
             localStorage.removeItem("session_user");
             document.getElementById("ecran-login").style.display = "block";
             document.getElementById("panou-aplicatie").style.display = "none";
+            distrugeEditori();
+            cheieCurenta = null;
         }
 
         // ==========================================
-        // 🔍 SCANARE ȘI FILTRARE CÂMPURI (KEYS wildcard)
+        // Convenție chei: schema:_X  |  _X:inst…  |  liber
+        // ==========================================
+        function normalizeSchemaName(name) {
+            let n = (name || '').trim();
+            if (!n) return '';
+            if (!n.startsWith('_')) n = '_' + n;
+            return n.replace(/:/g, '');
+        }
+
+        function isSchemaRedisKey(key) {
+            return /^schema:_[^:]+$/.test(key);
+        }
+
+        function clasificaCheie(key, setChei) {
+            if (isSchemaRedisKey(key)) {
+                return { tip: 'schema', schemaName: key.slice('schema:'.length), schemaKey: key };
+            }
+            const m = key.match(/^(_[^:]+):(.*)$/);
+            if (m && m[2] !== '') {
+                const schemaName = m[1];
+                const schemaKey = 'schema:' + schemaName;
+                if (setChei.has(schemaKey)) {
+                    return { tip: 'data', schemaName, schemaKey, instance: m[2] };
+                }
+                return { tip: 'liber', missingSchema: schemaName, schemaKey };
+            }
+            return { tip: 'liber' };
+        }
+
+        function etichetaTip(info) {
+            if (info.tip === 'schema') return { badge: 'schemă', cls: 'badge-schema', note: '' };
+            if (info.tip === 'data') return { badge: 'data', cls: 'badge-data', note: '→ ' + info.schemaKey };
+            if (info.missingSchema) {
+                return { badge: 'liber', cls: 'badge-liber', note: '(lipsa schema ' + info.missingSchema + ')' };
+            }
+            return { badge: 'liber', cls: 'badge-liber', note: '' };
+        }
+
+        // ==========================================
+        // LISTĂ
         // ==========================================
         async function scaneazaToateCampurile() {
             const filtru = document.getElementById("input-search").value.trim() || "*";
             const dropdown = document.getElementById("select-citire");
             const indicatorTotal = document.getElementById("total-campuri");
-            
+            const lista = document.getElementById("lista-chei");
+
+            lista.innerHTML = '<div class="key-row"><span class="key-name">Se încarcă…</span></div>';
             dropdown.innerHTML = "<option>Se încarcă lista...</option>";
 
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
                 const chei = date.rezultat || [];
-
-                // Filtrăm cheile de sistem pentru autentificare, ca să nu le stricăm din greșeală în interfața de câmpuri
                 const cheiFiltrate = chei.filter(c => !c.startsWith("user:") && !c.startsWith("session:"));
                 cheiFiltrate.sort();
+                toateCheile = cheiFiltrate;
 
                 indicatorTotal.innerText = cheiFiltrate.length;
                 dropdown.innerHTML = "";
+                lista.innerHTML = "";
 
                 if (cheiFiltrate.length === 0) {
                     dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
+                    lista.innerHTML = '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
                     document.getElementById("rezultat-citire").innerText = "Nu există date pentru filtrul introdus.";
                     return;
                 }
 
+                const setChei = new Set(cheiFiltrate);
                 cheiFiltrate.forEach(cheie => {
                     const opt = document.createElement("option");
                     opt.value = cheie;
                     opt.innerText = cheie;
                     dropdown.appendChild(opt);
-                });
 
-                citesteContinutCamp();
+                    const info = clasificaCheie(cheie, setChei);
+                    const et = etichetaTip(info);
+                    const row = document.createElement('div');
+                    row.className = 'key-row';
+                    row.innerHTML =
+                        '<span class="key-name"></span>' +
+                        '<span class="badge ' + et.cls + '"></span>' +
+                        (et.note ? '<span class="key-note"></span>' : '') +
+                        '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                    row.querySelector('.key-name').textContent = cheie;
+                    row.querySelector('.badge').textContent = et.badge;
+                    if (et.note) row.querySelector('.key-note').textContent = et.note;
+                    const go = () => deschideDetaliu(cheie);
+                    row.addEventListener('click', (ev) => {
+                        if (ev.target.tagName === 'BUTTON') return;
+                        go();
+                    });
+                    row.querySelector('button').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        go();
+                    });
+                    lista.appendChild(row);
+                });
             } catch (err) {
                 dropdown.innerHTML = "<option value=''>Eroare la citire</option>";
+                lista.innerHTML = '<div class="key-row"><span class="key-name"></span></div>';
+                lista.querySelector('.key-name').textContent = err.message;
                 document.getElementById("rezultat-citire").innerText = err.message;
             }
         }
 
-        // ==========================================
-        // 📄 CITEȘTE CONȚINUT CÂMP (GET)
-        // ==========================================
         async function citesteContinutCamp() {
             const cheie = document.getElementById("select-citire").value;
             const ecran = document.getElementById("rezultat-citire");
-
             if (!cheie) {
                 ecran.innerText = "Selectează un câmp din lista de mai sus.";
                 return;
             }
             ecran.innerText = "Se încarcă textul...";
-
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", cheie] });
-                
                 if (!date.rezultat) {
                     ecran.innerText = "Câmp gol.";
                     return;
                 }
-                
-                const obiectJSON = JSON.parse(date.rezultat);
-                ecran.innerText = JSON.stringify(obiectJSON, null, 2);
+                try {
+                    ecran.innerText = JSON.stringify(JSON.parse(date.rezultat), null, 2);
+                } catch (e) {
+                    ecran.innerText = String(date.rezultat);
+                }
             } catch (err) {
                 ecran.innerText = "Eroare la preluare date: " + err.message;
             }
         }
 
-        // ==========================================
-        // 💾 SALVEAZĂ SAU MODIFICĂ CÂMP (SET)
-        // ==========================================
         async function salveazaCampInCloud() {
             const cheie = document.getElementById("nume-camp").value.trim();
             const valoareRaw = document.getElementById("valoare-camp").value.trim();
-
             if (!cheie || !valoareRaw) {
                 alert("Te rog completează datele de salvare!");
                 return;
             }
-
             try {
-                // Validare JSON direct în browser înainte de trimitere
                 const jsonValidat = JSON.parse(valoareRaw);
-                
                 await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, JSON.stringify(jsonValidat)] });
                 alert(`Câmpul "${cheie}" a fost salvat securizat!`);
-                
                 document.getElementById("input-search").value = "*";
                 await scaneazaToateCampurile();
                 document.getElementById("select-citire").value = cheie;
@@ -425,22 +567,15 @@
             }
         }
 
-        // ==========================================
-        // 🗑️ ȘTERGE UN CÂMP (DEL)
-        // ==========================================
         async function stergeCampDinCloud() {
             const cheie = document.getElementById("nume-camp-stergere").value.trim();
-
             if (!cheie) {
                 alert("Scrie numele câmpului pe care vrei să îl ștergi!");
                 return;
             }
-
             if (!confirm(`Ești sigur că vrei să ștergi definitiv câmpul "${cheie}"?`)) return;
-
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheie] });
-                
                 if (date.rezultat > 0) {
                     alert(`Câmpul "${cheie}" a fost eliminat.`);
                     scaneazaToateCampurile();
@@ -451,217 +586,1055 @@
                 alert(err.message);
             }
         }
-		
-		async function adaugaStockLine(id, username, locatieId, dateObiect) {
-			try {
-				// Trimitem comenzile separat, una câte una, ca să fim siguri că Upstash le scrie corect
-				
-				// 1. Salvare obiect principal
-				const r1 = await apeleazaServerul("/api/comanda", {
-					comandaRedis: ["SET", `stock-line:${id}`, JSON.stringify(dateObiect)]
-				});
-				console.log(`SET stock-line:${id} ->`, r1);
-				
-				// 2. Adăugare în index user
-				const r2 = await apeleazaServerul("/api/comanda", {
-					comandaRedis: ["SADD", `user:${username}:stock-lines`, id]
-				});
-				console.log(`SADD user index ->`, r2);
-				
-				// 3. Adăugare în index locație
-				const r3 = await apeleazaServerul("/api/comanda", {
-					comandaRedis: ["SADD", `location:${locatieId}:stock-lines`, id]
-				});
-				console.log(`SADD location index ->`, r3);
 
-				console.log(`Stocul ${id} și indecșii au fost procesați.`);
-			} catch (err) {
-				console.error("Eroare la adăugarea stocului:", err);
-			}
-		}
+        // ==========================================
+        // NAVIGARE LISTĂ ↔ DETALIU
+        // ==========================================
+        function inapoiLaLista() {
+            distrugeEditori();
+            cheieCurenta = null;
+            infoCheieCurenta = null;
+            document.getElementById('ecran-detaliu').style.display = 'none';
+            document.getElementById('ecran-lista').style.display = 'block';
+        }
 
+        function distrugeEditori() {
+            if (dataFormEditor) {
+                try { dataFormEditor.destroy(); } catch (e) {}
+                dataFormEditor = null;
+            }
+            if (schemaMetaEditor) {
+                try { schemaMetaEditor.destroy(); } catch (e) {}
+                schemaMetaEditor = null;
+            }
+            schemaTreeNav = null;
+            document.getElementById('data-form-holder').innerHTML = '';
+            document.getElementById('schema_editor_holder').innerHTML = '';
+            document.getElementById('schema_detail_pane').innerHTML = '';
+            document.getElementById('schema_tree').innerHTML = '';
+            document.getElementById('schema_master_detail').classList.remove('show-node');
+        }
 
-		async function cautaStocuriDupaUtilizatorSiLocatie(username, locatieId) {
-			try {
-				// --- PASUL 1: Intersectăm seturile de indecși ---
-				const pasul1 = await apeleazaServerul("/api/comanda", {
-					comandaRedis: ["SINTER", `user:${username}:stock-lines`, `location:${locatieId}:stock-lines`]
-				});
+        async function deschideDetaliu(cheie) {
+            const setChei = new Set(toateCheile);
+            const info = clasificaCheie(cheie, setChei);
+            cheieCurenta = cheie;
+            infoCheieCurenta = info;
 
-				const iduriGasite = pasul1.rezultat || [];
-				
-				if (iduriGasite.length === 0) {
-					console.log("Nu s-a găsit niciun stoc pentru această combinație.");
-					return [];
-				}
+            document.getElementById('ecran-lista').style.display = 'none';
+            document.getElementById('ecran-detaliu').style.display = 'block';
+            document.getElementById('detail-key-name').textContent = cheie;
 
-				// --- PASUL 2: MGET în masă (CORECorectat aici: fără spațiu în nume) ---
-				const cheiStocReale = iduriGasite.map(id => `stock-line:${id}`);
+            const et = etichetaTip(info);
+            const badge = document.getElementById('detail-type-badge');
+            badge.className = 'badge ' + et.cls;
+            badge.textContent = et.badge;
+            document.getElementById('detail-type-note').textContent = et.note;
 
-				// Rulăm o singură comandă MGET cu toate cheile ca argumente
-				const pasul2 = await apeleazaServerul("/api/comanda", {
-					comandaRedis: ["MGET", ...cheiStocReale]
-				});
+            const btnSchema = document.getElementById('btn-deschide-schema');
+            btnSchema.style.display = (info.tip === 'data') ? 'inline-block' : 'none';
 
-				// În pasul2.rezultat vei avea un array cu toate obiectele JSON complete sub formă de string
-				const obiecteStoc = pasul2.rezultat.map(item => item ? JSON.parse(item) : null);
-				
-				console.log("Toate datele au fost aduse eficient:", obiecteStoc);
-				return obiecteStoc;
+            document.getElementById('select-citire').value = cheie;
+            document.getElementById('nume-camp').value = cheie;
+            document.getElementById('nume-camp-stergere').value = cheie;
 
-			} catch (err) {
-				console.error("Eroare la căutarea stocurilor: " + err.message);
-			}
-		}
-		
-		
-		/////////////////////
-		
-		
-		async function creeazaTabelStocuriSQL() {
-			await apeleazaServerul("/api/sql", {
-				sql: "CREATE TABLE IF NOT EXISTS stock_lines (id TEXT PRIMARY KEY, username TEXT, location_id TEXT, produs TEXT, cantitate INTEGER);"
-			});
-			// Adăugăm indexul automat pentru căutările combinate rapide
-			await apeleazaServerul("/api/sql", {
-				sql: "CREATE INDEX IF NOT EXISTS idx_user_loc ON stock_lines(username, location_id);"
-			});
-			console.log("Tabelul SQL D1 pentru stocuri a fost creat!");
-		}
+            distrugeEditori();
 
-		async function cautaStocuriSQL(username, locatieId) {
-			const raspuns = await apeleazaServerul("/api/sql", {
-				sql: "SELECT * FROM stock_lines WHERE username = ? AND location_id = ?;",
-				params: [username, locatieId]
-			});
-			console.log("Datele primite direct din SQL:", raspuns.rezultat);
-			return raspuns.rezultat;
-		}
-
-		async function salveazaStocSQL(id, username, locatieId, produs, cantitate) {
-			try {
-				const raspuns = await apeleazaServerul("/api/sql", {
-					sql: `INSERT INTO stock_lines (id, username, location_id, produs, cantitate) 
-						  VALUES (?, ?, ?, ?, ?) 
-						  ON CONFLICT(id) DO UPDATE SET 
-							username = excluded.username, 
-							location_id = excluded.location_id, 
-							produs = excluded.produs, 
-							cantitate = excluded.cantitate;`,
-					params: [id, username, locatieId, produs, cantitate]
-				});
-				
-				console.log(`[SQL D1] Stocul cu ID-ul ${id} a fost salvat cu succes!`, raspuns);
-			} catch (err) {
-				console.error("Eroare la salvarea în SQL D1:", err.message);
-			}
-		}
-
-// Variabilă globală pentru a ține instanța editorului activ
-let dynamicJsonEditor = null;
-
-// 1. Funcția care generează formularul pe baza schemei și a JSON-ului citit
-function genereazaFormularDinamic() {
-    const holder = document.getElementById('json-editor-holder');
-    const schemaTxt = document.getElementById('schema-input').value.trim();
-    
-    // Presupunem că în index.html ai un element (ex: o zonă de text/pre) care ține JSON-ul curent descărcat.
-    // Înlocuiește 'id_element_continut_json' cu ID-ul real din codul tău (unde scrie textul JSON-ului cu id: 7)
-    const currentJsonElement = document.getElementById('id_element_continut_json'); 
-    
-    if (!schemaTxt) {
-        alert("Te rog să introduci o schemă validă mai întâi!");
-        return;
-    }
-
-    try {
-        const schema = JSON.parse(schemaTxt);
-        let startValue = {};
-
-        // Încercăm să preluăm JSON-ul curent afișat în panoul de citire pentru a-l popula ca valori de pornire
-        if (currentJsonElement) {
+            let rawText = '{}';
             try {
-                startValue = JSON.parse(currentJsonElement.innerText || currentJsonElement.value);
-            } catch(e) {
-                console.log("Nu s-a putut parsa JSON-ul existent, pornim cu formular gol.");
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", cheie] });
+                if (date.rezultat != null && date.rezultat !== '') {
+                    const parsedVal = parseRedisJson(date.rezultat);
+                    if (parsedVal != null && typeof parsedVal === 'object') {
+                        rawText = JSON.stringify(parsedVal, null, 2);
+                    } else {
+                        rawText = String(date.rezultat);
+                    }
+                } else if (info.tip === 'schema') {
+                    rawText = JSON.stringify({ type: 'object', properties: {} }, null, 2);
+                } else {
+                    rawText = '{}';
+                }
+            } catch (err) {
+                alert(err.message);
+                inapoiLaLista();
+                return;
+            }
+
+            document.getElementById('raw-json-editor').value = rawText;
+            document.getElementById('rezultat-citire').innerText = rawText;
+            document.getElementById('valoare-camp').value = rawText;
+
+            const canForm = (info.tip === 'data') || (info.tip === 'schema');
+            document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
+
+            if (info.tip === 'data') {
+                await incarcaFormularDate(info, rawText);
+                seteazaModEditare('form');
+            } else if (info.tip === 'schema') {
+                await incarcaEditorSchemaVizual(rawText);
+                seteazaModEditare('form');
+            } else {
+                seteazaModEditare('raw');
             }
         }
 
-        // Dacă există deja un editor randat anterior, îl distrugem pentru a nu se suprapune
-        if (dynamicJsonEditor) {
-            dynamicJsonEditor.destroy();
+        function parseRedisJson(val) {
+            if (val == null || val === '') return null;
+            if (typeof val === 'object') return val;
+            if (typeof val !== 'string') return null;
+            try {
+                let parsed = JSON.parse(val);
+                // uneori valoarea e dublu-encodată ca string JSON
+                if (typeof parsed === 'string') {
+                    try { parsed = JSON.parse(parsed); } catch (e) { /* rămâne string */ }
+                }
+                return parsed;
+            } catch (e) {
+                return null;
+            }
         }
 
-        // Inițializăm JSON-Editor în containerul dedicat
-        dynamicJsonEditor = new JSONEditor(holder, {
-            schema: schema,
-            startval: startValue,
-            theme: 'bootstrap4', // sau tema pe care o preferi
-            iconlib: 'fontawesome5',
-            disable_collapse: true,
-            disable_edit_json: true,
-            disable_properties: true
-        });
-
-        // Afișăm butonul de salvare de sub editor
-        document.getElementById('save-editor-btn').style.display = 'block';
-
-    } catch (err) {
-        alert("Eroare la parsarea schemei JSON: " + err.message);
-    }
-}
-
-// 2. Funcția care preia datele din formular și le trimite către fluxul tău de salvare
-function salveazaDateEditor() {
-    if (!dynamicJsonEditor) return;
-
-    // Preluăm datele modificate din formularul vizual
-    const dateModificate = dynamicJsonEditor.getValue();
-    const jsonString = JSON.stringify(dateModificate, null, 2);
-
-    // Identificăm numele câmpului (cheia) pe care lucram în mod curent în aplicație.
-    // Înlocuiește 'nume_camp_input_id' cu ID-ul real al inputului tău pentru "Nume Câmp (Cheie)"
-    const inputCheie = document.getElementById('nume-camp'); 
-	const dropdown = document.getElementById("select-citire");
-	
-	inputCheie.value = dropdown.value;
-
-    if (inputCheie) {
-        // Populăm automat datele în formularul tău existent de CREATE/UPDATE de dedesubt ca să se trimită corect
-        // Înlocuiește 'continut_json_input_id' cu ID-ul inputului/textarea-ului tău pentru conținut JSON de la Update
-        const inputContinutUpdate = document.getElementById('valoare-camp');
-        if (inputContinutUpdate) {
-            inputContinutUpdate.value = jsonString;
+        function normalizeToJsonSchema(obj) {
+            if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+                return null;
+            }
+            // dacă din greșeală e salvată meta-configurația din editorul vizual
+            if (obj.root_type && Array.isArray(obj.structure)) {
+                return genereazaSchemaDinConfig(obj);
+            }
+            if (obj.type || obj.properties || obj.items || obj.$ref) {
+                return obj;
+            }
+            return null;
         }
 
-        // Executăm direct funcția ta nativă din index.html care salvează în Cloud.
-        // Înlocuiește 'salveazaCamp' cu numele exact al funcției asociate butonului verde "Salvează Câmpul"
-        if (typeof salveazaCampInCloud() === "function") {
-            salveazaCampInCloud();
-        } else {
-            //alert("Formularul a fost actualizat local! Apasă pe butonul verde de jos pentru a finaliza.");
+        /** Valoare de start compatibilă cu schema (ca „Generează JSON Final” din jsone, dar automat). */
+        function valoareImplicitaDinSchema(schema) {
+            if (!schema || typeof schema !== 'object') return null;
+            if (Object.prototype.hasOwnProperty.call(schema, 'default')) {
+                const d = schema.default;
+                // default: {} pe object cu properties → tot generăm din properties (altfel rămâne gol)
+                const emptyObjDefault = d !== null && typeof d === 'object' && !Array.isArray(d) && Object.keys(d).length === 0;
+                if (!(emptyObjDefault && schema.properties && Object.keys(schema.properties).length > 0)) {
+                    return d;
+                }
+            }
+            let t = schema.type;
+            if (Array.isArray(t)) t = t[0];
+
+            if (t === 'object' || (!t && schema.properties)) {
+                const obj = {};
+                if (schema.properties) {
+                    Object.keys(schema.properties).forEach(k => {
+                        const v = valoareImplicitaDinSchema(schema.properties[k]);
+                        if (v !== undefined) obj[k] = v;
+                    });
+                }
+                return obj;
+            }
+            if (t === 'array') {
+                if (Array.isArray(schema.items)) {
+                    return schema.items.map(itemSch => valoareImplicitaDinSchema(itemSch));
+                }
+                const min = schema.minItems || 0;
+                const arr = [];
+                for (let i = 0; i < min; i++) {
+                    arr.push(valoareImplicitaDinSchema(schema.items || { type: 'string' }));
+                }
+                return arr;
+            }
+            if (t === 'string') return '';
+            if (t === 'integer' || t === 'number') return 0;
+            if (t === 'boolean') return false;
+            if (t === 'null') return null;
+            return null;
         }
-    } else {
-        alert("Nu s-a putut detecta numele câmpului (cheia) curentă pentru salvare.");
-    }
-}
 
+        function esteCompatibilCuSchema(val, schema) {
+            if (!schema) return true;
+            let t = schema.type;
+            if (Array.isArray(t)) t = t[0];
+            if (!t) {
+                if (schema.properties) t = 'object';
+                else if (schema.items) t = 'array';
+                else return true;
+            }
+            if (val === undefined) return false;
+            if (t === 'array') return Array.isArray(val);
+            if (t === 'object') return val !== null && typeof val === 'object' && !Array.isArray(val);
+            if (t === 'string') return typeof val === 'string';
+            if (t === 'integer' || t === 'number') return typeof val === 'number' && !Number.isNaN(val);
+            if (t === 'boolean') return typeof val === 'boolean';
+            if (t === 'null') return val === null;
+            return true;
+        }
 
-/***
-await creeazaTabelStocuriSQL()
+        /** {} pe object cu properties = „gol”, trebuie umplut din schemă (ca în jsone). */
+        function trebuieRegenaratStartval(val, schema) {
+            if (!schema) return false;
+            if (!esteCompatibilCuSchema(val, schema)) return true;
+            let t = schema.type;
+            if (Array.isArray(t)) t = t[0];
+            if ((t === 'object' || schema.properties) && val && typeof val === 'object' && !Array.isArray(val)) {
+                const propKeys = schema.properties ? Object.keys(schema.properties) : [];
+                if (propKeys.length === 0) return false;
+                // lipsesc toate cheile din schemă (ex. valoare Redis = {})
+                return propKeys.every(k => !Object.prototype.hasOwnProperty.call(val, k));
+            }
+            return false;
+        }
 
+        async function incarcaFormularDate(info, rawText) {
+            const holder = document.getElementById('data-form-holder');
+            holder.style.display = 'block';
+            document.getElementById('schema-visual-wrap').style.display = 'none';
 
-// Încărcăm 4 linii de stoc diferite în tabelul tău din Cloudflare D1
-await salveazaStocSQL("100", "john", "1222", "Șuruburi M6", 500);
-await salveazaStocSQL("111", "john", "1222", "Piulițe M6", 250);
-await salveazaStocSQL("222", "maria", "1222", "Șuruburi M6", 100); // Alt user, aceeași locație
-await salveazaStocSQL("333", "john", "9999", "Ciocan", 5);         // Același user, altă locație
+            let schemaObj = null;
+            try {
+                const schResponse = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", info.schemaKey] });
+                const parsed = parseRedisJson(schResponse.rezultat);
+                schemaObj = normalizeToJsonSchema(parsed);
+                if (!schemaObj) {
+                    alert(
+                        'Nu pot construi formularul: schema „' + info.schemaKey +
+                        '” lipsește sau nu e un JSON Schema valid.\n\nDeschide schema și salveaz-o din nou (tab JSON raw sau Formular).'
+                    );
+                    seteazaModEditare('raw');
+                    return;
+                }
+            } catch (e) {
+                alert('Eroare la încărcarea schemei ' + info.schemaKey + ': ' + e.message);
+                seteazaModEditare('raw');
+                return;
+            }
 
-console.log("Toate datele de test au fost inserate în D1 SQL!");
+            let startval = parseRedisJson(rawText);
+            if (trebuieRegenaratStartval(startval, schemaObj)) {
+                startval = valoareImplicitaDinSchema(schemaObj);
+            }
 
-rezultate = await cautaStocuriSQL("john", "1222");
+            schemaObj = JSON.parse(JSON.stringify(schemaObj));
 
-*/
+            if (dataFormEditor) {
+                try { dataFormEditor.destroy(); } catch (e) {}
+                dataFormEditor = null;
+            }
+            holder.innerHTML = '';
+
+            const editorOpts = {
+                schema: schemaObj,
+                theme: 'html',
+                disable_collapse: false,
+                disable_edit_json: true,
+                disable_properties: true,
+                disable_array_reorder: true,
+                use_default_values: true,
+                display_required_only: false,
+                show_errors: 'interaction'
+            };
+            if (startval !== undefined && startval !== null) {
+                editorOpts.startval = startval;
+            }
+
+            try {
+                dataFormEditor = new JSONEditor(holder, editorOpts);
+                dataFormEditor.on('ready', () => {
+                    try {
+                        const rootEd = dataFormEditor.getEditor('root');
+                        const childKeys = rootEd && rootEd.editors ? Object.keys(rootEd.editors) : [];
+                        if (schemaObj.properties && Object.keys(schemaObj.properties).length > 0 && childKeys.length === 0) {
+                            try { dataFormEditor.destroy(); } catch (e) {}
+                            holder.innerHTML = '';
+                            dataFormEditor = new JSONEditor(holder, {
+                                schema: JSON.parse(JSON.stringify(schemaObj)),
+                                theme: 'html',
+                                disable_edit_json: true,
+                                disable_properties: true,
+                                use_default_values: true,
+                                display_required_only: false
+                            });
+                            dataFormEditor.on('ready', () => {
+                                document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
+                            });
+                            return;
+                        }
+                        document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
+                    } catch (e) { /* ignore */ }
+                });
+            } catch (e) {
+                alert('JSONEditor nu a putut randa schema: ' + e.message);
+                seteazaModEditare('raw');
+            }
+        }
+
+        function seteazaModEditare(mod) {
+            modEditare = mod;
+            const canForm = infoCheieCurenta && (infoCheieCurenta.tip === 'data' || infoCheieCurenta.tip === 'schema');
+            if (mod === 'form' && !canForm) mod = 'raw';
+
+            document.getElementById('tab-form').classList.toggle('active', mod === 'form');
+            document.getElementById('tab-raw').classList.toggle('active', mod === 'raw');
+            document.getElementById('panel-form').style.display = mod === 'form' ? 'block' : 'none';
+            document.getElementById('panel-raw').style.display = mod === 'raw' ? 'block' : 'none';
+
+            if (mod === 'raw' && infoCheieCurenta) {
+                // sync din editori către raw
+                try {
+                    if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                        document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
+                    } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
+                        const schema = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
+                        document.getElementById('raw-json-editor').value = JSON.stringify(schema, null, 2);
+                    }
+                } catch (e) {}
+            }
+        }
+
+        async function salveazaCheieCurenta() {
+            if (!cheieCurenta) return;
+            let payload;
+            try {
+                if (modEditare === 'form' && infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                    payload = dataFormEditor.getValue();
+                } else if (modEditare === 'form' && infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
+                    payload = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
+                } else {
+                    payload = JSON.parse(document.getElementById('raw-json-editor').value);
+                }
+            } catch (e) {
+                alert('JSON invalid: ' + e.message);
+                return;
+            }
+
+            const jsonString = JSON.stringify(payload);
+            try {
+                await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheieCurenta, jsonString] });
+                document.getElementById('raw-json-editor').value = JSON.stringify(payload, null, 2);
+                document.getElementById('valoare-camp').value = document.getElementById('raw-json-editor').value;
+                document.getElementById('rezultat-citire').innerText = document.getElementById('raw-json-editor').value;
+                if (infoCheieCurenta.tip === 'schema') {
+                    document.getElementById('schema-live-preview').textContent = JSON.stringify(payload, null, 2);
+                }
+                alert('Salvat: ' + cheieCurenta);
+                await scaneazaToateCampurile();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function stergeCheieCurenta() {
+            if (!cheieCurenta) return;
+            if (!confirm('Ștergi definitiv "' + cheieCurenta + '"?')) return;
+            document.getElementById('nume-camp-stergere').value = cheieCurenta;
+            try {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheieCurenta] });
+                if (date.rezultat > 0) {
+                    alert('Șters: ' + cheieCurenta);
+                    inapoiLaLista();
+                    await scaneazaToateCampurile();
+                } else {
+                    alert('Cheia nu a fost găsită.');
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function deschideSchemaLegata() {
+            if (infoCheieCurenta && infoCheieCurenta.schemaKey) {
+                deschideDetaliu(infoCheieCurenta.schemaKey);
+            }
+        }
+
+        // ==========================================
+        // CHEIE NOUĂ
+        // ==========================================
+        function deschideModalCheieNoua() {
+            const sel = document.getElementById('new-data-schema');
+            sel.innerHTML = '';
+            toateCheile.filter(isSchemaRedisKey).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = k;
+                sel.appendChild(opt);
+            });
+            actualizeazaFormCheieNoua();
+            document.getElementById('modal-cheie-noua').classList.add('open');
+        }
+
+        function inchideModalCheieNoua() {
+            document.getElementById('modal-cheie-noua').classList.remove('open');
+        }
+
+        function actualizeazaFormCheieNoua() {
+            const tip = document.getElementById('new-key-type').value;
+            document.getElementById('new-fields-schema').style.display = tip === 'schema' ? 'block' : 'none';
+            document.getElementById('new-fields-data').style.display = tip === 'data' ? 'block' : 'none';
+            document.getElementById('new-fields-liber').style.display = tip === 'liber' ? 'block' : 'none';
+
+            const sn = normalizeSchemaName(document.getElementById('new-schema-name').value || 'setari');
+            document.getElementById('new-schema-preview').textContent = 'schema:' + sn;
+
+            const schemaKey = document.getElementById('new-data-schema').value;
+            const inst = document.getElementById('new-data-instance').value.trim() || 'data';
+            if (schemaKey) {
+                const name = schemaKey.slice('schema:'.length);
+                document.getElementById('new-data-preview').textContent = name + ':' + inst;
+            } else {
+                document.getElementById('new-data-preview').textContent = '— (nu există scheme)';
+            }
+        }
+
+        document.getElementById('new-schema-name').addEventListener('input', actualizeazaFormCheieNoua);
+        document.getElementById('new-data-instance').addEventListener('input', actualizeazaFormCheieNoua);
+        document.getElementById('new-data-schema').addEventListener('change', actualizeazaFormCheieNoua);
+
+        async function creeazaCheieNoua() {
+            const tip = document.getElementById('new-key-type').value;
+            let cheie = '';
+            let initial = {};
+
+            if (tip === 'schema') {
+                const sn = normalizeSchemaName(document.getElementById('new-schema-name').value);
+                if (!sn || sn === '_') {
+                    alert('Nume schemă invalid.');
+                    return;
+                }
+                cheie = 'schema:' + sn;
+                initial = { type: 'object', properties: {} };
+            } else if (tip === 'data') {
+                const schemaKey = document.getElementById('new-data-schema').value;
+                const inst = document.getElementById('new-data-instance').value.trim();
+                if (!schemaKey) {
+                    alert('Nu există nicio schemă. Creează mai întâi o schemă.');
+                    return;
+                }
+                if (!inst) {
+                    alert('Completează instanța (partea după :).');
+                    return;
+                }
+                cheie = schemaKey.slice('schema:'.length) + ':' + inst;
+                initial = [];
+                try {
+                    const sch = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", schemaKey] });
+                    const parsed = parseRedisJson(sch.rezultat);
+                    const schemaObj = normalizeToJsonSchema(parsed);
+                    if (schemaObj) {
+                        initial = valoareImplicitaDinSchema(schemaObj);
+                        if (initial === undefined || initial === null) {
+                            initial = (schemaObj.type === 'array') ? [] : {};
+                        }
+                    } else {
+                        initial = {};
+                    }
+                } catch (e) {
+                    initial = {};
+                }
+            } else {
+                cheie = document.getElementById('new-liber-name').value.trim();
+                if (!cheie) {
+                    alert('Completează numele cheii.');
+                    return;
+                }
+                if (isSchemaRedisKey(cheie)) {
+                    alert('Pentru scheme folosește tipul „Schemă”.');
+                    return;
+                }
+                initial = {};
+            }
+
+            if (toateCheile.includes(cheie)) {
+                if (!confirm('Cheia există deja. O deschizi pentru editare?')) return;
+                inchideModalCheieNoua();
+                await deschideDetaliu(cheie);
+                return;
+            }
+
+            try {
+                await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, JSON.stringify(initial)] });
+                inchideModalCheieNoua();
+                await scaneazaToateCampurile();
+                await deschideDetaliu(cheie);
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // ==========================================
+        // Meta-schema (din jsone) — editor vizual scheme
+        // ==========================================
+        function genereazaNodCimp(nivel) {
+            let definitie = {
+                type: "object",
+                title: "Câmp Nivel " + nivel,
+                headerTemplate: "{{self.key}} [{{self.type}}]",
+                properties: {
+                    key: { type: "string", title: "Cheie în JSON", default: "cheie_noua" },
+                    title: { type: "string", title: "Nume Afișat", default: "Nume Câmp" },
+                    type: {
+                        type: "string",
+                        title: "Tip Dată",
+                        enum: ["string", "integer", "number", "boolean", "object", "array"],
+                        default: "string"
+                    },
+                    default: { type: "string", title: "Valoare Implicită", default: "" },
+                    enum: {
+                        type: "array",
+                        title: "Enum (opțional)",
+                        default: [],
+                        items: { type: "string", title: "Valoare" }
+                    }
+                },
+                required: ["key", "title", "type", "default", "enum"]
+            };
+            if (nivel < 5) {
+                definitie.properties.sub_properties = {
+                    type: "array",
+                    title: "Proprietăți obiect:",
+                    items: genereazaNodCimp(nivel + 1),
+                    options: { dependencies: { type: "object" } }
+                };
+                definitie.properties.array_mode = {
+                    type: "string",
+                    title: "Mod Array",
+                    enum: ["list", "tuple"],
+                    default: "list",
+                    options: {
+                        enum_titles: ["listă", "tuple"],
+                        dependencies: { type: "array" }
+                    }
+                };
+                definitie.properties.array_items = {
+                    type: "object",
+                    title: "Șablon listă:",
+                    target: "properties",
+                    properties: genereazaNodCimp(nivel + 1).properties,
+                    required: ["title", "type", "default", "enum"],
+                    options: { dependencies: { type: "array", array_mode: "list" } }
+                };
+                definitie.properties.array_tuple_items = {
+                    type: "array",
+                    title: "Poziții tuple:",
+                    items: genereazaNodCimp(nivel + 1),
+                    options: { dependencies: { type: "array", array_mode: "tuple" } }
+                };
+            }
+            return definitie;
+        }
+
+        const rootMetaSchema = {
+            type: "object",
+            title: "Configurație",
+            properties: {
+                root_type: {
+                    type: "string",
+                    title: "Tip rădăcină",
+                    enum: ["object", "array_tuple", "array_list"],
+                    default: "object",
+                    options: {
+                        enum_titles: ["object", "array — tuple", "array — listă"]
+                    }
+                },
+                structure: {
+                    type: "array",
+                    title: "Arbore",
+                    items: genereazaNodCimp(1)
+                }
+            }
+        };
+
+        function parseNodeToSchema(node) {
+            let schemaNode = { title: node.title, type: node.type };
+            if (node.type === 'object') {
+                schemaNode.properties = {};
+                (node.sub_properties || []).forEach(sub => {
+                    schemaNode.properties[sub.key] = parseNodeToSchema(sub);
+                });
+            } else if (node.type === 'array') {
+                const mode = node.array_mode || 'list';
+                if (mode === 'tuple' && Array.isArray(node.array_tuple_items)) {
+                    const itemsArray = node.array_tuple_items.map(parseNodeToSchema);
+                    schemaNode.items = itemsArray;
+                    schemaNode.minItems = itemsArray.length;
+                    schemaNode.maxItems = itemsArray.length;
+                } else if (node.array_items) {
+                    schemaNode.items = parseNodeToSchema(node.array_items);
+                } else {
+                    schemaNode.items = { type: "string", title: "Element" };
+                }
+            } else {
+                if (node.default !== undefined && node.default !== "") {
+                    schemaNode.default = (node.type === 'integer' || node.type === 'number') ? Number(node.default) : node.default;
+                }
+                if (node.enum && node.enum.length > 0) {
+                    schemaNode.enum = node.enum.map(v => (node.type === 'integer' || node.type === 'number') ? Number(v) : v);
+                }
+            }
+            return schemaNode;
+        }
+
+        function genereazaSchemaDinConfig(config) {
+            if (config.root_type === 'array_list') {
+                const template = (config.structure && config.structure[0])
+                    ? parseNodeToSchema(config.structure[0])
+                    : { type: "string", title: "Element" };
+                return { type: "array", title: "Listă", items: template };
+            }
+            if (config.root_type === 'array_tuple' || config.root_type === 'array') {
+                const itemsArray = (config.structure || []).map(parseNodeToSchema);
+                return { type: "array", minItems: itemsArray.length, maxItems: itemsArray.length, items: itemsArray };
+            }
+            const props = {};
+            (config.structure || []).forEach(item => {
+                props[item.key] = parseNodeToSchema(item);
+            });
+            return { type: "object", properties: props };
+        }
+
+        function inverseazaSchemaInConfig(cheie, schemaNod) {
+            let nodConfig = {
+                key: cheie || "cheie",
+                title: schemaNod.title || cheie || "Nume Câmp",
+                type: schemaNod.type || "string",
+                default: schemaNod.default !== undefined ? String(schemaNod.default) : ""
+            };
+            if (schemaNod.enum && Array.isArray(schemaNod.enum)) {
+                nodConfig.enum = schemaNod.enum.map(v => String(v));
+            }
+            if (schemaNod.type === 'object' && schemaNod.properties) {
+                nodConfig.sub_properties = [];
+                for (let subCheie in schemaNod.properties) {
+                    nodConfig.sub_properties.push(inverseazaSchemaInConfig(subCheie, schemaNod.properties[subCheie]));
+                }
+            } else if (schemaNod.type === 'array' && schemaNod.items !== undefined) {
+                if (Array.isArray(schemaNod.items)) {
+                    nodConfig.array_mode = 'tuple';
+                    nodConfig.array_tuple_items = schemaNod.items.map((item, i) =>
+                        inverseazaSchemaInConfig("item_" + i, item)
+                    );
+                } else if (schemaNod.items && typeof schemaNod.items === 'object') {
+                    nodConfig.array_mode = 'list';
+                    nodConfig.array_items = inverseazaSchemaInConfig("element", schemaNod.items);
+                }
+            }
+            return nodConfig;
+        }
+
+        function schemaToMetaConfig(schemaObj) {
+            const configuratie = { root_type: 'object', structure: [] };
+            if (!schemaObj || typeof schemaObj !== 'object') return configuratie;
+            if (schemaObj.type === 'object' && schemaObj.properties) {
+                configuratie.root_type = 'object';
+                for (let k in schemaObj.properties) {
+                    configuratie.structure.push(inverseazaSchemaInConfig(k, schemaObj.properties[k]));
+                }
+            } else if (schemaObj.type === 'array' && schemaObj.items) {
+                if (Array.isArray(schemaObj.items)) {
+                    configuratie.root_type = 'array_tuple';
+                    schemaObj.items.forEach((item, i) => {
+                        configuratie.structure.push(inverseazaSchemaInConfig("item_" + i, item));
+                    });
+                } else {
+                    configuratie.root_type = 'array_list';
+                    configuratie.structure.push(inverseazaSchemaInConfig("element", schemaObj.items));
+                }
+            }
+            return configuratie;
+        }
+
+        async function incarcaEditorSchemaVizual(rawText) {
+            document.getElementById('data-form-holder').style.display = 'none';
+            document.getElementById('schema-visual-wrap').style.display = 'block';
+
+            let schemaObj = { type: 'object', properties: {} };
+            const parsed = parseRedisJson(rawText);
+            const normalized = normalizeToJsonSchema(parsed);
+            if (normalized) schemaObj = normalized;
+            const startval = schemaToMetaConfig(schemaObj);
+            document.getElementById('schema-live-preview').textContent = JSON.stringify(schemaObj, null, 2);
+
+            if (schemaMetaEditor) {
+                try { schemaMetaEditor.destroy(); } catch (e) {}
+            }
+            document.getElementById('schema_editor_holder').innerHTML = '';
+            document.getElementById('schema_detail_pane').innerHTML = '';
+            document.getElementById('schema_tree').innerHTML = '';
+
+            schemaMetaEditor = new JSONEditor(document.getElementById('schema_editor_holder'), {
+                schema: rootMetaSchema,
+                theme: 'html',
+                disable_collapse: false,
+                disable_edit_json: true,
+                disable_properties: true,
+                startval: startval
+            });
+
+            schemaMetaEditor.on('change', () => {
+                try {
+                    const live = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
+                    document.getElementById('schema-live-preview').textContent = JSON.stringify(live, null, 2);
+                } catch (e) {}
+            });
+
+            initSchemaTreeNavFor(schemaMetaEditor);
+        }
+
+        function initSchemaTreeNavFor(editor) {
+            const master = document.getElementById('schema_master_detail');
+            const treeEl = document.getElementById('schema_tree');
+            const detailPane = document.getElementById('schema_detail_pane');
+            const holder = document.getElementById('schema_editor_holder');
+
+            let selectedPath = 'root';
+            let expanded = new Set(['root']);
+            let moved = null;
+            let lastTreeSig = '';
+            let applyingSelection = false;
+
+            function nodeLabel(node, fallback) {
+                const key = (node && node.key) ? node.key : fallback;
+                let type = (node && node.type) ? node.type : '?';
+                if (type === 'array') type = 'array:' + ((node && node.array_mode) || 'list');
+                return key + ' [' + type + ']';
+            }
+            function collectChildren(node, basePath) {
+                const kids = [];
+                if (!node) return kids;
+                if (node.type === 'object' && Array.isArray(node.sub_properties)) {
+                    node.sub_properties.forEach((child, i) => {
+                        kids.push({ path: basePath + '.sub_properties.' + i, label: nodeLabel(child, 'f' + i), node: child });
+                    });
+                }
+                if (node.type === 'array') {
+                    const mode = node.array_mode || 'list';
+                    if (mode === 'tuple' && Array.isArray(node.array_tuple_items)) {
+                        node.array_tuple_items.forEach((child, i) => {
+                            kids.push({ path: basePath + '.array_tuple_items.' + i, label: '[' + i + '] ' + nodeLabel(child, 'p' + i), node: child });
+                        });
+                    } else if (node.array_items) {
+                        kids.push({ path: basePath + '.array_items', label: 'items [' + (node.array_items.type || '?') + ']', node: node.array_items });
+                    }
+                }
+                return kids;
+            }
+            function treeSignature(config) {
+                function walk(node) {
+                    if (!node) return '';
+                    let s = (node.type || '') + ';';
+                    if (node.type === 'object' && Array.isArray(node.sub_properties)) {
+                        s += 'sp' + node.sub_properties.length + '[' + node.sub_properties.map(walk).join(',') + ']';
+                    }
+                    if (node.type === 'array') {
+                        const mode = node.array_mode || 'list';
+                        s += 'am:' + mode + ';';
+                        if (mode === 'tuple' && Array.isArray(node.array_tuple_items)) {
+                            s += 'at' + node.array_tuple_items.length + '[' + node.array_tuple_items.map(walk).join(',') + ']';
+                        } else if (node.array_items) s += 'ai[' + walk(node.array_items) + ']';
+                    }
+                    return s;
+                }
+                return (config.root_type || '') + '#' + (config.structure || []).length + '|' + (config.structure || []).map(walk).join('|');
+            }
+            function pathExists(config, path) {
+                if (path === 'root') return true;
+                if (!path.startsWith('root.')) return false;
+                const parts = path.slice(5).split('.');
+                let cur = config;
+                for (let i = 0; i < parts.length; i++) {
+                    const p = parts[i];
+                    if (p === 'structure' || p === 'sub_properties' || p === 'array_tuple_items') {
+                        const idx = Number(parts[++i]);
+                        if (!cur[p] || !cur[p][idx]) return false;
+                        cur = cur[p][idx];
+                    } else if (p === 'array_items') {
+                        if (!cur.array_items) return false;
+                        cur = cur.array_items;
+                    } else return false;
+                }
+                return true;
+            }
+            function restoreMoved() {
+                if (!moved) return;
+                const el = moved.el, parent = moved.parent, next = moved.next;
+                moved = null;
+                if (!el) return;
+                el.classList.remove('md-detail-node');
+                if (parent && parent.isConnected) {
+                    try {
+                        if (next && next.parentNode === parent) parent.insertBefore(el, next);
+                        else parent.appendChild(el);
+                    } catch (e) {}
+                }
+            }
+            function applySelection() {
+                applyingSelection = true;
+                try {
+                    restoreMoved();
+                    holder.classList.remove('md-root-view');
+                    master.classList.remove('show-node');
+                    while (detailPane.firstChild) detailPane.removeChild(detailPane.firstChild);
+                    const config = editor.getValue();
+                    if (!pathExists(config, selectedPath)) selectedPath = 'root';
+                    if (selectedPath === 'root') {
+                        holder.classList.add('md-root-view');
+                        highlight();
+                        return;
+                    }
+                    const ed = editor.getEditor(selectedPath);
+                    if (!ed || !ed.container) {
+                        selectedPath = 'root';
+                        holder.classList.add('md-root-view');
+                        highlight();
+                        return;
+                    }
+                    const el = ed.container;
+                    el.classList.add('md-detail-node');
+                    moved = { el, parent: el.parentNode, next: el.nextSibling };
+                    detailPane.appendChild(el);
+                    master.classList.add('show-node');
+                    highlight();
+                } finally {
+                    applyingSelection = false;
+                }
+            }
+            function highlight() {
+                treeEl.querySelectorAll('.schema-tree-row').forEach(row => {
+                    row.classList.toggle('is-selected', row.getAttribute('data-path') === selectedPath);
+                });
+            }
+            function renderNode(item, into) {
+                const kids = collectChildren(item.node, item.path);
+                const hasKids = kids.length > 0;
+                const isOpen = expanded.has(item.path);
+                const row = document.createElement('div');
+                row.className = 'schema-tree-row';
+                row.setAttribute('data-path', item.path);
+                const twist = document.createElement('button');
+                twist.type = 'button';
+                twist.className = 'schema-tree-twist' + (hasKids ? '' : ' is-leaf');
+                twist.textContent = hasKids ? (isOpen ? '-' : '+') : '';
+                twist.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    if (!hasKids) return;
+                    if (expanded.has(item.path)) expanded.delete(item.path);
+                    else expanded.add(item.path);
+                    renderTree();
+                });
+                const label = document.createElement('span');
+                label.textContent = item.label;
+                row.appendChild(twist);
+                row.appendChild(label);
+                row.addEventListener('click', () => {
+                    selectedPath = item.path;
+                    expanded.add('root');
+                    applySelection();
+                });
+                into.appendChild(row);
+                if (hasKids && isOpen) {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'schema-tree-children';
+                    kids.forEach(k => renderNode(k, wrap));
+                    into.appendChild(wrap);
+                }
+            }
+            function renderTree() {
+                const config = editor.getValue();
+                treeEl.innerHTML = '';
+                const rootKids = (config.structure || []).map((item, i) => ({
+                    path: 'root.structure.' + i,
+                    label: nodeLabel(item, 'item_' + i),
+                    node: item
+                }));
+                const row = document.createElement('div');
+                row.className = 'schema-tree-row';
+                row.setAttribute('data-path', 'root');
+                const twist = document.createElement('button');
+                twist.type = 'button';
+                twist.className = 'schema-tree-twist' + (rootKids.length ? '' : ' is-leaf');
+                twist.textContent = rootKids.length ? (expanded.has('root') ? '-' : '+') : '';
+                twist.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    if (expanded.has('root')) expanded.delete('root');
+                    else expanded.add('root');
+                    renderTree();
+                });
+                const label = document.createElement('span');
+                label.textContent = 'root [' + (config.root_type || 'object') + ']';
+                row.appendChild(twist);
+                row.appendChild(label);
+                row.addEventListener('click', () => { selectedPath = 'root'; applySelection(); });
+                treeEl.appendChild(row);
+                if (rootKids.length && expanded.has('root')) {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'schema-tree-children';
+                    rootKids.forEach(k => renderNode(k, wrap));
+                    treeEl.appendChild(wrap);
+                }
+                highlight();
+            }
+            function refresh(force) {
+                if (applyingSelection) return;
+                const config = editor.getValue();
+                const sig = treeSignature(config);
+                const changed = sig !== lastTreeSig;
+                lastTreeSig = sig;
+                if (changed) {
+                    restoreMoved();
+                    while (detailPane.firstChild) detailPane.removeChild(detailPane.firstChild);
+                    master.classList.remove('show-node');
+                }
+                if (!pathExists(config, selectedPath)) {
+                    selectedPath = 'root';
+                    force = true;
+                }
+                renderTree();
+                if (changed || force) requestAnimationFrame(applySelection);
+            }
+
+            editor.on('ready', () => { lastTreeSig = treeSignature(editor.getValue()); renderTree(); applySelection(); });
+            editor.on('change', () => refresh(false));
+            if (editor.ready) {
+                lastTreeSig = treeSignature(editor.getValue());
+                renderTree();
+                applySelection();
+            }
+            schemaTreeNav = { refresh };
+        }
+
+        // ==========================================
+        // Metode vechi (stock / SQL) — PĂSTRATE
+        // ==========================================
+        async function adaugaStockLine(id, username, locatieId, dateObiect) {
+            try {
+                const r1 = await apeleazaServerul("/api/comanda", {
+                    comandaRedis: ["SET", `stock-line:${id}`, JSON.stringify(dateObiect)]
+                });
+                console.log(`SET stock-line:${id} ->`, r1);
+                const r2 = await apeleazaServerul("/api/comanda", {
+                    comandaRedis: ["SADD", `user:${username}:stock-lines`, id]
+                });
+                console.log(`SADD user index ->`, r2);
+                const r3 = await apeleazaServerul("/api/comanda", {
+                    comandaRedis: ["SADD", `location:${locatieId}:stock-lines`, id]
+                });
+                console.log(`SADD location index ->`, r3);
+                console.log(`Stocul ${id} și indecșii au fost procesați.`);
+            } catch (err) {
+                console.error("Eroare la adăugarea stocului:", err);
+            }
+        }
+
+        async function cautaStocuriDupaUtilizatorSiLocatie(username, locatieId) {
+            try {
+                const pasul1 = await apeleazaServerul("/api/comanda", {
+                    comandaRedis: ["SINTER", `user:${username}:stock-lines`, `location:${locatieId}:stock-lines`]
+                });
+                const iduriGasite = pasul1.rezultat || [];
+                if (iduriGasite.length === 0) {
+                    console.log("Nu s-a găsit niciun stoc pentru această combinație.");
+                    return [];
+                }
+                const cheiStocReale = iduriGasite.map(id => `stock-line:${id}`);
+                const pasul2 = await apeleazaServerul("/api/comanda", {
+                    comandaRedis: ["MGET", ...cheiStocReale]
+                });
+                const obiecteStoc = pasul2.rezultat.map(item => item ? JSON.parse(item) : null);
+                console.log("Toate datele au fost aduse eficient:", obiecteStoc);
+                return obiecteStoc;
+            } catch (err) {
+                console.error("Eroare la căutarea stocurilor: " + err.message);
+            }
+        }
+
+        async function creeazaTabelStocuriSQL() {
+            await apeleazaServerul("/api/sql", {
+                sql: "CREATE TABLE IF NOT EXISTS stock_lines (id TEXT PRIMARY KEY, username TEXT, location_id TEXT, produs TEXT, cantitate INTEGER);"
+            });
+            await apeleazaServerul("/api/sql", {
+                sql: "CREATE INDEX IF NOT EXISTS idx_user_loc ON stock_lines(username, location_id);"
+            });
+            console.log("Tabelul SQL D1 pentru stocuri a fost creat!");
+        }
+
+        async function cautaStocuriSQL(username, locatieId) {
+            const raspuns = await apeleazaServerul("/api/sql", {
+                sql: "SELECT * FROM stock_lines WHERE username = ? AND location_id = ?;",
+                params: [username, locatieId]
+            });
+            console.log("Datele primite direct din SQL:", raspuns.rezultat);
+            return raspuns.rezultat;
+        }
+
+        async function salveazaStocSQL(id, username, locatieId, produs, cantitate) {
+            try {
+                const raspuns = await apeleazaServerul("/api/sql", {
+                    sql: `INSERT INTO stock_lines (id, username, location_id, produs, cantitate) 
+                          VALUES (?, ?, ?, ?, ?) 
+                          ON CONFLICT(id) DO UPDATE SET 
+                            username = excluded.username, 
+                            location_id = excluded.location_id, 
+                            produs = excluded.produs, 
+                            cantitate = excluded.cantitate;`,
+                    params: [id, username, locatieId, produs, cantitate]
+                });
+                console.log(`[SQL D1] Stocul cu ID-ul ${id} a fost salvat cu succes!`, raspuns);
+            } catch (err) {
+                console.error("Eroare la salvarea în SQL D1:", err.message);
+            }
+        }
+
+        function genereazaFormularDinamic() {
+            const holder = document.getElementById('json-editor-holder');
+            const schemaTxt = document.getElementById('schema-input').value.trim();
+            const currentJsonElement = document.getElementById('rezultat-citire');
+            if (!schemaTxt) {
+                alert("Te rog să introduci o schemă validă mai întâi!");
+                return;
+            }
+            try {
+                const schema = JSON.parse(schemaTxt);
+                let startValue = {};
+                if (currentJsonElement) {
+                    try { startValue = JSON.parse(currentJsonElement.innerText || ''); } catch (e) {}
+                }
+                if (dynamicJsonEditor) dynamicJsonEditor.destroy();
+                dynamicJsonEditor = new JSONEditor(holder, {
+                    schema: schema,
+                    startval: startValue,
+                    theme: 'html',
+                    disable_collapse: true,
+                    disable_edit_json: true,
+                    disable_properties: true
+                });
+                document.getElementById('save-editor-btn').style.display = 'block';
+            } catch (err) {
+                alert("Eroare la parsarea schemei JSON: " + err.message);
+            }
+        }
+
+        function salveazaDateEditor() {
+            if (!dynamicJsonEditor) return;
+            const dateModificate = dynamicJsonEditor.getValue();
+            const jsonString = JSON.stringify(dateModificate, null, 2);
+            const inputCheie = document.getElementById('nume-camp');
+            const dropdown = document.getElementById("select-citire");
+            if (dropdown && dropdown.value) inputCheie.value = dropdown.value;
+            const inputContinutUpdate = document.getElementById('valoare-camp');
+            if (inputContinutUpdate) inputContinutUpdate.value = jsonString;
+            if (typeof salveazaCampInCloud === "function") {
+                salveazaCampInCloud();
+            }
+        }
+
+        /**
+        await creeazaTabelStocuriSQL()
+        await salveazaStocSQL("100", "john", "1222", "Șuruburi M6", 500);
+        await salveazaStocSQL("111", "john", "1222", "Piulițe M6", 250);
+        await salveazaStocSQL("222", "maria", "1222", "Șuruburi M6", 100);
+        await salveazaStocSQL("333", "john", "9999", "Ciocan", 5);
+        rezultate = await cautaStocuriSQL("john", "1222");
+        */
     </script>
 </body>
 </html>
