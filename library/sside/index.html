@@ -125,9 +125,17 @@
         .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
         .detail-actions button { margin: 0; width: auto; }
 
-        .mode-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+        .mode-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .mode-tabs-left { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; flex: 1; }
         .mode-tabs button { margin: 0; width: auto; padding: 6px 12px; font-size: 13px; background: var(--bg-muted); color: var(--text); }
         .mode-tabs button.active { background: var(--accent); color: #fff; }
+        .mode-tabs .copy-btn { margin-left: auto; }
 
         #raw-json-editor {
             width: 100%; min-height: 220px; font-family: Consolas, monospace; font-size: 12px;
@@ -139,15 +147,13 @@
             border-color: #dc3545 !important;
             box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
         }
-        .raw-toolbar {
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 8px; margin-bottom: 6px; flex-wrap: wrap;
-        }
         .json-status-dot {
             display: none;
             width: 10px; height: 10px; border-radius: 50%;
             background: #dc3545;
             box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+            vertical-align: middle;
+            margin-left: 4px;
         }
         .json-status-dot.is-visible { display: inline-block; }
         .copy-btn {
@@ -323,11 +329,14 @@
                 </div>
 
                 <div class="mode-tabs" id="detail-mode-tabs">
-                    <button type="button" id="tab-form" class="active" onclick="seteazaModEditare('form')">Formular</button>
-                    <button type="button" id="tab-text" onclick="seteazaModEditare('text')">Text</button>
-                    <button type="button" id="tab-json" onclick="seteazaModEditare('json')">
-                        JSON <span class="json-status-dot" id="json-status-dot" aria-hidden="true"></span>
-                    </button>
+                    <div class="mode-tabs-left">
+                        <button type="button" id="tab-form" class="active" onclick="seteazaModEditare('form')">Formular</button>
+                        <button type="button" id="tab-text" onclick="seteazaModEditare('text')">Text</button>
+                        <button type="button" id="tab-json" onclick="seteazaModEditare('json')">
+                            JSON <span class="json-status-dot" id="json-status-dot" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <button type="button" class="copy-btn" id="btn-copy-raw" onclick="copiazaContinutRaw(this)">Copiază</button>
                 </div>
 
                 <div id="panel-form">
@@ -356,10 +365,6 @@
                 </div>
 
                 <div id="panel-raw" style="display:none;">
-                    <div class="raw-toolbar">
-                        <span id="raw-mode-label" style="font-size:12px;color:var(--text-muted);"></span>
-                        <button type="button" class="copy-btn" id="btn-copy-raw" onclick="copiazaContinutRaw(this)">Copiază</button>
-                    </div>
                     <textarea id="raw-json-editor" spellcheck="false"></textarea>
                 </div>
 
@@ -617,11 +622,9 @@
                     row.innerHTML =
                         '<span class="key-name"></span>' +
                         '<span class="badge ' + et.cls + '"></span>' +
-                        (et.note ? '<span class="key-note"></span>' : '') +
                         '<button type="button" class="btn-albastru btn-inline">Edit</button>';
                     row.querySelector('.key-name').textContent = cheie;
                     row.querySelector('.badge').textContent = et.badge;
-                    if (et.note) row.querySelector('.key-note').textContent = et.note;
                     const go = () => deschideDetaliu(cheie);
                     row.addEventListener('click', (ev) => {
                         if (ev.target.tagName === 'BUTTON') return;
@@ -771,6 +774,11 @@
 
             distrugeEditori();
 
+            // golește textarea imediat — evită flash cu valoarea cheii anterioare
+            document.getElementById('raw-json-editor').value = '';
+            document.getElementById('rezultat-citire').innerText = '';
+            document.getElementById('valoare-camp').value = '';
+
             let rawText = '';
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", cheie] });
@@ -852,6 +860,8 @@
         }
 
         async function copiazaContinutRaw(buton) {
+            // sincronizează din formular în textarea dacă e cazul
+            sincronizeazaRawDinEditori();
             const text = document.getElementById('raw-json-editor').value || '';
             try {
                 await navigator.clipboard.writeText(text);
@@ -870,6 +880,18 @@
                 buton.textContent = eticheta;
                 buton.classList.remove('copied');
             }, 1500);
+        }
+
+        function sincronizeazaRawDinEditori() {
+            if (!infoCheieCurenta) return;
+            try {
+                if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                    document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
+                } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
+                    const schema = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
+                    document.getElementById('raw-json-editor').value = JSON.stringify(schema, null, 2);
+                }
+            } catch (e) { /* păstrăm ce e deja în textarea */ }
         }
 
         function parseRedisJson(val) {
@@ -1072,20 +1094,8 @@
             document.getElementById('panel-form').style.display = mod === 'form' ? 'block' : 'none';
             document.getElementById('panel-raw').style.display = (mod === 'text' || mod === 'json') ? 'block' : 'none';
 
-            const label = document.getElementById('raw-mode-label');
-            if (label) {
-                label.textContent = mod === 'json' ? 'Mod JSON' : (mod === 'text' ? 'Mod text' : '');
-            }
-
-            if ((mod === 'text' || mod === 'json') && infoCheieCurenta) {
-                try {
-                    if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
-                        document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
-                    } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
-                        const schema = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
-                        document.getElementById('raw-json-editor').value = JSON.stringify(schema, null, 2);
-                    }
-                } catch (e) {}
+            if (mod === 'text' || mod === 'json') {
+                sincronizeazaRawDinEditori();
             }
 
             actualizeazaValidareJson();
