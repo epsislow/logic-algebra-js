@@ -797,6 +797,86 @@
             }
         }
 
+// Funcția care sparge textul după un operator (AND/OR) dar ignoră parantezele interioare
+function idxSpargeDupaOperator(text, operator) {
+  let rezultate = [];
+  let parantezeDeschise = 0;
+  let acumulat = "";
+  const token = " " + operator + " ";
+  
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === "(") parantezeDeschise++;
+    if (text[i] === ")") parantezeDeschise--;
+    
+    acumulat += text[i];
+    
+    if (parantezeDeschise === 0 && acumulat.endsWith(token)) {
+      rezultate.push(acumulat.substring(0, acumulat.length - token.length));
+      acumulat = "";
+    }
+  }
+  rezultate.push(acumulat);
+  return rezultate.filter(r => r.trim() !== "");
+}
+
+// Funcția principală care compilează textul tău într-un arbore JSON pentru Upstash
+function parseazaQueryComplex(text) {
+  text = text.trim();
+  
+  // Eliminăm parantezele exterioare dacă înconjoară toată expresia
+  if (text.startsWith("(") && text.endsWith(")")) {
+    text = text.substring(1, text.length - 1).trim();
+  }
+
+  // Verificăm operatorul OR
+  const partiOr = idxSpargeDupaOperator(text, "OR");
+  if (partiOr.length > 1) {
+    return { "$or": partiOr.map(p => compileazaTextInQueryJson(p)) };
+  }
+
+  // Verificăm operatorul AND
+  const partiAnd = idxSpargeDupaOperator(text, "AND");
+  if (partiAnd.length > 1) {
+    return { "$and": partiAnd.map(p => compileazaTextInQueryJson(p)) };
+  }
+
+  // Verificăm operatorul NOT (excludere cu "-")
+  if (text.startsWith("-")) {
+    return { "$not": compileazaTextInQueryJson(text.substring(1)) };
+  }
+
+  // Criteriu simplu de tip camp:valoare
+  if (text.includes(":")) {
+    const pozitieDouaPuncte = text.indexOf(":");
+    const camp = text.substring(0, pozitieDouaPuncte).trim();
+    let valoare = text.substring(pozitieDouaPuncte + 1).trim();
+    
+    // Curățăm ghilimelele
+    if ((valoare.startsWith('"') && valoare.endsWith('"')) || (valoare.startsWith("'") && valoare.endsWith("'"))) {
+      valoare = valoare.substring(1, valoare.length - 1);
+    }
+
+    let nodCriteriu = {};
+    
+    // Parsăm tipurile corecte (booleene, numere, text)
+    if (valoare.toLowerCase() === "true") {
+      nodCriteriu[camp] = true;
+    } else if (valoare.toLowerCase() === "false") {
+      nodCriteriu[camp] = false;
+    } else if (!isNaN(valoare) && valoare !== "") {
+      nodCriteriu[camp] = Number(valoare);
+    } else {
+      nodCriteriu[camp] = valoare; // text simplu pentru s.string()
+    }
+    return nodCriteriu;
+  }
+
+  // Căutare generală
+  return { "*": text };
+}
+
+
+
         // ==========================================
         // LISTĂ
         // ==========================================
@@ -809,10 +889,31 @@
             lista.innerHTML = '<div class="key-row"><span class="key-name">Se încarcă…</span></div>';
             dropdown.innerHTML = "<option>Se încarcă lista...</option>";
 
+
+
             try {
-                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
+                let cheiFiltrate = [];
+                let date;
+                if (filtru.startsWith('=')) {
+                    // Extragem query-ul real eliminând caracterul '=' de la început
+                   // const queryIndex = filtru.slice(1).trim() || "*";
+                    
+                    const textQuery = filtru.substring(1).trim();
+                    
+                    // Apelăm funcția globală pe care am adăugat-o mai sus
+                    const structuraQueryFinal = parseazaQueryComplex(textQuery);
+                    // Transformăm obiectul JSON rezultat într-un string text pentru Redis
+                    const jsonQueryString = JSON.stringify(structuraQueryFinal);
+                    console.log(jsonQueryString);
+                    lista.innerHTML = 'Se caută avansat …';
+                    date = await apeleazaServerul("/api/comanda", {comandaRedis: 
+                        ["FT.SEARCH", "idx_search_tags", jsonQueryString, "LIMIT", "0", "1000"]
+                    });
+                } else {
+                    date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
+                }
                 const chei = date.rezultat || [];
-                const cheiFiltrate = chei.filter(c => {
+                cheiFiltrate = chei.filter(c => {
                     if (!isCheieSistemAscunsa(c)) return true;
                     return esteAdmin(); // user:/session: doar pentru admin
                 });
@@ -871,6 +972,7 @@
                 lista.innerHTML = '<div class="key-row"><span class="key-name"></span></div>';
                 lista.querySelector('.key-name').textContent = err.message;
                 document.getElementById("rezultat-citire").innerText = err.message;
+                throw err;
             }
         }
 
