@@ -901,14 +901,15 @@ function parseazaQueryComplex(text) {
                     const textQuery = filtru.substring(1).trim();
                     
                     // Apelăm funcția globală pe care am adăugat-o mai sus
-                    const structuraQueryFinal = parseazaQueryComplex(textQuery);
+                    const jsonQuery = parseazaQueryComplex(textQuery);
                     // Transformăm obiectul JSON rezultat într-un string text pentru Redis
-                    const jsonQueryString = JSON.stringify(structuraQueryFinal);
+                    const jsonQueryString = JSON.stringify(jsonQuery);
                     console.log(jsonQueryString);
                     lista.innerHTML = 'Se caută avansat …';
                     date = await apeleazaServerul("/api/comanda", {comandaRedis: 
-                        ["FT.SEARCH", "idx_search_tags", jsonQueryString, "LIMIT", "0", "1000"]
+                        ["SEARCH.QUERY", "idx_search_tags", jsonQueryString, "LIMIT", "0", "1000"]
                     });
+                    console.log(date);
                 } else {
                     date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
                 }
