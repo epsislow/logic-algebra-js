@@ -105,6 +105,45 @@
         .badge-redis { background: #17a2b8; }
         .badge-redis-set { background: #6f42c1; }
         .badge-redis-other { background: #868e96; }
+        .badge-idx { background: #28a745; }
+        .btn-legenda {
+            background: #28a745; color: #fff; border: none;
+            padding: 10px 12px; border-radius: 4px; cursor: pointer;
+            font-size: 14px; width: auto; margin: 0;
+        }
+        .btn-legenda:hover { background: #218838; }
+        .btn-legenda.is-open { background: #1e7e34; }
+        .idx-legenda-panel {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-muted);
+            font-size: 13px;
+        }
+        .idx-legenda-panel.is-open { display: block; }
+        .idx-legenda-panel h4 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            color: var(--accent);
+        }
+        .idx-legenda-panel .idx-index-name {
+            font-family: Consolas, monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 0 0 10px;
+        }
+        .idx-legenda-panel dl {
+            margin: 0;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 16px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+        }
+        .idx-legenda-panel dt { color: #28a745; font-weight: 600; }
+        .idx-legenda-panel dd { margin: 0; color: var(--text-muted); }
         .key-row .badge { flex-shrink: 0; }
         p { color: var(--text-muted); }
         label { color: var(--text); }
@@ -456,7 +495,28 @@
 
                 <div id="panel-unsupported" class="set-unsupported" style="display:none;"></div>
 
+                <div id="panel-idx-legenda" class="idx-legenda-panel" aria-hidden="true">
+                    <h4>Câmpuri index Redis Search</h4>
+                    <p class="idx-index-name">Index: <code>idx_search_tags</code> — cheile cu aceste prefixe pot fi indexate (nu e sincronizat încă din UI).</p>
+                    <dl>
+                        <dt>s_prefix</dt><dd>string token</dd>
+                        <dt>s_name</dt><dd>string token</dd>
+                        <dt>s_app</dt><dd>string token</dd>
+                        <dt>s_type</dt><dd>string token</dd>
+                        <dt>s_perms</dt><dd>string token</dd>
+                        <dt>s_tag</dt><dd>string token</dd>
+                        <dt>s_tag2</dt><dd>string token</dd>
+                        <dt>s_num</dt><dd>number F64</dd>
+                        <dt>s_num2</dt><dd>number F64</dd>
+                        <dt>s_num3</dt><dd>number F64</dd>
+                        <dt>s_const</dt><dd>boolean</dd>
+                        <dt>s_path</dt><dd>path (facet)</dd>
+                        <dt>s_category</dt><dd>path (facet)</dd>
+                    </dl>
+                </div>
+
                 <div class="detail-actions" id="detail-actions-key">
+                    <button type="button" class="btn-legenda" id="btn-idx-legenda" style="display:none;" onclick="toggleIdxLegenda()">Legendă</button>
                     <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
                         Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
                     </button>
@@ -528,6 +588,7 @@
         let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
         let cheieCurenta = null;
         let infoCheieCurenta = null;
+        let cheieDataProvenienta = null; // data de pe care s-a deschis schema (pt. Înapoi la data)
         let redisTipCurent = 'string';
         let modEditare = 'text'; // form | text | json
         let valoareBaseline = ''; // ultima valoare încărcată / salvată (pt. indicator Salvează)
@@ -696,6 +757,34 @@
             return { badge: t, cls: 'badge-redis-other' };
         }
 
+        function esteCheieIdx(cheie) {
+            const prefixe = ['data:', 'info:', 'json:', 'schema:', 'search:', 'set:', 's:'];
+            return prefixe.some(p => (cheie || '').startsWith(p));
+        }
+
+        function seteazaVizibilitateIdxLegenda(vizibil) {
+            const btn = document.getElementById('btn-idx-legenda');
+            const panel = document.getElementById('panel-idx-legenda');
+            if (btn) btn.style.display = vizibil ? 'inline-block' : 'none';
+            if (!vizibil) {
+                if (btn) btn.classList.remove('is-open');
+                if (panel) {
+                    panel.classList.remove('is-open');
+                    panel.setAttribute('aria-hidden', 'true');
+                }
+            }
+        }
+
+        function toggleIdxLegenda() {
+            const btn = document.getElementById('btn-idx-legenda');
+            const panel = document.getElementById('panel-idx-legenda');
+            if (!panel || !btn) return;
+            const open = !panel.classList.contains('is-open');
+            panel.classList.toggle('is-open', open);
+            btn.classList.toggle('is-open', open);
+            panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+        }
+
         async function aflaTipRedis(cheie) {
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["TYPE", cheie] });
@@ -754,12 +843,14 @@
                     const info = clasificaCheie(cheie, setChei);
                     const et = etichetaTip(info);
                     const er = etichetaRedisTip(tipuriRedisChei[cheie]);
+                    const eIdx = esteCheieIdx(cheie);
                     const row = document.createElement('div');
                     row.className = 'key-row';
                     row.innerHTML =
                         '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
                         '<span class="key-name"></span>' +
                         '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
+                        (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
                         '<button type="button" class="btn-albastru btn-inline">Edit</button>';
                     row.querySelector('.key-name').textContent = cheie;
                     row.querySelector('[data-role="redis"]').textContent = er.badge;
@@ -855,6 +946,12 @@
                 anuleazaEditMembruSet();
                 return;
             }
+            if (cheieDataProvenienta && infoCheieCurenta && infoCheieCurenta.tip === 'schema') {
+                const dataKey = cheieDataProvenienta;
+                cheieDataProvenienta = null;
+                deschideDetaliu(dataKey);
+                return;
+            }
             inapoiLaLista();
         }
 
@@ -863,6 +960,8 @@
             if (!btn) return;
             if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
                 btn.textContent = '← Înapoi la set';
+            } else if (cheieDataProvenienta && infoCheieCurenta && infoCheieCurenta.tip === 'schema') {
+                btn.textContent = '← Înapoi la data';
             } else {
                 btn.textContent = '← Înapoi la listă';
             }
@@ -871,8 +970,10 @@
         function inapoiLaLista() {
             distrugeEditori();
             resetStareSet();
+            seteazaVizibilitateIdxLegenda(false);
             cheieCurenta = null;
             infoCheieCurenta = null;
+            cheieDataProvenienta = null;
             redisTipCurent = 'string';
             valoareBaseline = '';
             actualizeazaIndicatorModificat();
@@ -979,10 +1080,17 @@
             const listView = document.getElementById('set-list-view');
             const editor = document.getElementById('set-member-editor');
             const keyActions = document.getElementById('detail-actions-key');
+            const legendaPanel = document.getElementById('panel-idx-legenda');
             if (listView) listView.style.display = editMembru ? 'none' : 'block';
             if (editor) editor.style.display = editMembru ? 'block' : 'none';
             // pe pagina membru ascundem Șterge cheie (rămân Salvează/Șterge membru)
             if (keyActions) keyActions.style.display = (redisTipCurent === 'set' && editMembru) ? 'none' : 'flex';
+            if (editMembru && legendaPanel) {
+                legendaPanel.classList.remove('is-open');
+                legendaPanel.setAttribute('aria-hidden', 'true');
+                const btn = document.getElementById('btn-idx-legenda');
+                if (btn) btn.classList.remove('is-open');
+            }
             actualizeazaButonInapoiDetaliu();
         }
 
@@ -1195,6 +1303,16 @@
         async function deschideDetaliu(cheie) {
             const setChei = new Set(toateCheile);
             const info = clasificaCheie(cheie, setChei);
+
+            // păstrăm proveniența doar dacă deschidem schema legată (sau revenim la data)
+            if (cheieDataProvenienta) {
+                const infoProv = clasificaCheie(cheieDataProvenienta, setChei);
+                const schemaAsteptat = infoProv.schemaKey;
+                if (cheie !== schemaAsteptat && cheie !== cheieDataProvenienta) {
+                    cheieDataProvenienta = null;
+                }
+            }
+
             cheieCurenta = cheie;
             infoCheieCurenta = info;
 
@@ -1241,6 +1359,7 @@
 
             const btnSchema = document.getElementById('btn-deschide-schema');
             btnSchema.style.display = (info.tip === 'data' && redisTip === 'string') ? 'inline-block' : 'none';
+            seteazaVizibilitateIdxLegenda(esteCheieIdx(cheie));
 
             if (redisTip === 'set') {
                 try {
@@ -1732,6 +1851,7 @@
 
         function deschideSchemaLegata() {
             if (infoCheieCurenta && infoCheieCurenta.schemaKey) {
+                cheieDataProvenienta = cheieCurenta;
                 deschideDetaliu(infoCheieCurenta.schemaKey);
             }
         }
