@@ -831,18 +831,18 @@ function parseazaQueryComplex(text) {
   // Verificăm operatorul OR
   const partiOr = idxSpargeDupaOperator(text, "OR");
   if (partiOr.length > 1) {
-    return { "$or": partiOr.map(p => compileazaTextInQueryJson(p)) };
+    return { "$or": partiOr.map(p => parseazaQueryComplex(p)) };
   }
 
   // Verificăm operatorul AND
   const partiAnd = idxSpargeDupaOperator(text, "AND");
   if (partiAnd.length > 1) {
-    return { "$and": partiAnd.map(p => compileazaTextInQueryJson(p)) };
+    return { "$and": partiAnd.map(p => parseazaQueryComplex(p)) };
   }
 
   // Verificăm operatorul NOT (excludere cu "-")
   if (text.startsWith("-")) {
-    return { "$not": compileazaTextInQueryJson(text.substring(1)) };
+    return { "$not": parseazaQueryComplex(text.substring(1)) };
   }
 
   // Criteriu simplu de tip camp:valoare
