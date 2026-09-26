@@ -105,7 +105,7 @@
         .badge-redis { background: #17a2b8; }
         .badge-redis-set { background: #6f42c1; }
         .badge-redis-other { background: #868e96; }
-        .key-row .badges { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+        .key-row .badge { flex-shrink: 0; }
         p { color: var(--text-muted); }
         label { color: var(--text); }
 
@@ -374,7 +374,7 @@
         <!-- ========== ECRAN DETALIU ========== -->
         <div id="ecran-detaliu" style="display: none;">
             <div class="box">
-                <button type="button" class="btn-gri btn-inline" onclick="inapoiLaLista()">← Înapoi la listă</button>
+                <button type="button" class="btn-gri btn-inline" id="btn-inapoi-detaliu" onclick="navigareInapoiDetaliu()">← Înapoi la listă</button>
 
                 <div class="detail-meta" id="detail-meta">
                     <div class="meta-line"><strong>Cheie:</strong> <code id="detail-key-name"></code></div>
@@ -427,11 +427,13 @@
                 </div>
 
                 <div id="panel-set" style="display:none;">
-                    <div class="set-toolbar">
-                        <span class="set-count" id="set-count-label">0 membri</span>
-                        <button type="button" class="btn-albastru btn-inline" id="btn-set-add" onclick="incepeAdaugareMembruSet()">+ Membru</button>
+                    <div id="set-list-view">
+                        <div class="set-toolbar">
+                            <span class="set-count" id="set-count-label">0 membri</span>
+                            <button type="button" class="btn-albastru btn-inline" id="btn-set-add" onclick="incepeAdaugareMembruSet()">+ Membru</button>
+                        </div>
+                        <div id="set-members-list" class="set-members-list"></div>
                     </div>
-                    <div id="set-members-list" class="set-members-list"></div>
                     <div id="set-member-editor" style="display:none;">
                         <div class="mode-tabs" id="set-member-mode-tabs">
                             <div class="mode-tabs-left">
@@ -447,7 +449,6 @@
                             <button type="button" id="btn-salveaza-membru" onclick="salveazaMembruSet()">
                                 Salvează membru <span class="save-dirty-dot" id="set-save-dirty-dot" aria-hidden="true"></span>
                             </button>
-                            <button type="button" class="btn-gri" onclick="anuleazaEditMembruSet()">Anulează</button>
                             <button type="button" class="btn-rosu" id="btn-sterge-membru" onclick="stergeMembruSetCurent()">Șterge membru</button>
                         </div>
                     </div>
@@ -756,16 +757,13 @@
                     const row = document.createElement('div');
                     row.className = 'key-row';
                     row.innerHTML =
+                        '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
                         '<span class="key-name"></span>' +
-                        '<span class="badges">' +
-                            '<span class="badge ' + et.cls + '"></span>' +
-                            '<span class="badge ' + er.cls + '"></span>' +
-                        '</span>' +
+                        '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
                         '<button type="button" class="btn-albastru btn-inline">Edit</button>';
                     row.querySelector('.key-name').textContent = cheie;
-                    const badges = row.querySelectorAll('.badge');
-                    badges[0].textContent = et.badge;
-                    badges[1].textContent = er.badge;
+                    row.querySelector('[data-role="redis"]').textContent = er.badge;
+                    row.querySelector('[data-role="conv"]').textContent = et.badge;
                     const go = () => deschideDetaliu(cheie);
                     row.addEventListener('click', (ev) => {
                         if (ev.target.tagName === 'BUTTON') return;
@@ -852,6 +850,24 @@
         // ==========================================
         // NAVIGARE LISTĂ ↔ DETALIU
         // ==========================================
+        function navigareInapoiDetaliu() {
+            if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
+                anuleazaEditMembruSet();
+                return;
+            }
+            inapoiLaLista();
+        }
+
+        function actualizeazaButonInapoiDetaliu() {
+            const btn = document.getElementById('btn-inapoi-detaliu');
+            if (!btn) return;
+            if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
+                btn.textContent = '← Înapoi la set';
+            } else {
+                btn.textContent = '← Înapoi la listă';
+            }
+        }
+
         function inapoiLaLista() {
             distrugeEditori();
             resetStareSet();
@@ -905,10 +921,12 @@
                 ta.value = '';
                 ta.classList.remove('json-invalid');
             }
-            const ed = document.getElementById('set-member-editor');
-            if (ed) ed.style.display = 'none';
             const list = document.getElementById('set-members-list');
             if (list) list.innerHTML = '';
+            const listView = document.getElementById('set-list-view');
+            if (listView) listView.style.display = 'block';
+            const ed = document.getElementById('set-member-editor');
+            if (ed) ed.style.display = 'none';
         }
 
         function previzualizareMembruSet(membru) {
@@ -938,11 +956,34 @@
             document.getElementById('panel-set').style.display = isSet ? 'block' : 'none';
             document.getElementById('panel-unsupported').style.display = supported ? 'none' : 'block';
             document.getElementById('btn-salveaza').style.display = isString ? 'inline-block' : 'none';
+            document.getElementById('detail-actions-key').style.display = 'flex';
 
             if (!supported) {
                 document.getElementById('panel-unsupported').textContent =
                     'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia, iar tipurile list/hash/zset vor veni pe rând.';
             }
+
+            if (isSet) {
+                actualizeazaVizualizareSet();
+            } else {
+                const listView = document.getElementById('set-list-view');
+                const editor = document.getElementById('set-member-editor');
+                if (listView) listView.style.display = 'block';
+                if (editor) editor.style.display = 'none';
+                actualizeazaButonInapoiDetaliu();
+            }
+        }
+
+        function actualizeazaVizualizareSet() {
+            const editMembru = redisTipCurent === 'set' && setMembruEditIndex !== -1;
+            const listView = document.getElementById('set-list-view');
+            const editor = document.getElementById('set-member-editor');
+            const keyActions = document.getElementById('detail-actions-key');
+            if (listView) listView.style.display = editMembru ? 'none' : 'block';
+            if (editor) editor.style.display = editMembru ? 'block' : 'none';
+            // pe pagina membru ascundem Șterge cheie (rămân Salvează/Șterge membru)
+            if (keyActions) keyActions.style.display = (redisTipCurent === 'set' && editMembru) ? 'none' : 'flex';
+            actualizeazaButonInapoiDetaliu();
         }
 
         function randeazaListaMembriSet() {
@@ -958,7 +999,7 @@
 
             setMembri.forEach((membru, idx) => {
                 const row = document.createElement('div');
-                row.className = 'set-member-row' + (idx === setMembruEditIndex ? ' is-active' : '');
+                row.className = 'set-member-row';
                 const kind = membruPareJson(membru) ? 'json' : 'text';
                 row.innerHTML =
                     '<span class="set-member-preview"></span>' +
@@ -991,8 +1032,8 @@
             }
             setMembri.sort((a, b) => a.localeCompare(b));
             setMembruEditIndex = -1;
-            document.getElementById('set-member-editor').style.display = 'none';
             randeazaListaMembriSet();
+            actualizeazaVizualizareSet();
         }
 
         function seteazaModMembruSet(mod) {
@@ -1029,11 +1070,10 @@
             setMembruOriginal = '';
             setMembruBaseline = '';
             document.getElementById('set-member-textarea').value = '';
-            document.getElementById('set-member-editor').style.display = 'block';
             document.getElementById('btn-sterge-membru').style.display = 'none';
             seteazaModMembruSet('text');
             actualizeazaIndicatorModificatMembruSet();
-            randeazaListaMembriSet();
+            actualizeazaVizualizareSet();
             document.getElementById('set-member-textarea').focus();
         }
 
@@ -1049,11 +1089,10 @@
             }
             document.getElementById('set-member-textarea').value = afisat;
             setMembruBaseline = afisat;
-            document.getElementById('set-member-editor').style.display = 'block';
             document.getElementById('btn-sterge-membru').style.display = 'inline-block';
             seteazaModMembruSet(asJson ? 'json' : 'text');
             actualizeazaIndicatorModificatMembruSet();
-            randeazaListaMembriSet();
+            actualizeazaVizualizareSet();
         }
 
         function anuleazaEditMembruSet() {
@@ -1061,10 +1100,10 @@
             setMembruOriginal = '';
             setMembruBaseline = '';
             document.getElementById('set-member-textarea').value = '';
-            document.getElementById('set-member-editor').style.display = 'none';
             actualizeazaValidareJsonMembruSet();
             actualizeazaIndicatorModificatMembruSet();
             randeazaListaMembriSet();
+            actualizeazaVizualizareSet();
         }
 
         async function salveazaMembruSet() {
@@ -1191,6 +1230,7 @@
                 return;
             }
             redisTipCurent = redisTip;
+            actualizeazaButonInapoiDetaliu();
 
             const er = etichetaRedisTip(redisTip);
             const redisBadge = document.getElementById('detail-redis-badge');
