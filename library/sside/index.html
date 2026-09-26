@@ -156,6 +156,16 @@
             margin-left: 4px;
         }
         .json-status-dot.is-visible { display: inline-block; }
+		.json-editor-btn-delete { width: 100px; }
+        .save-dirty-dot {
+            display: none;
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #fd7e14;
+            box-shadow: 0 0 0 2px rgba(253, 126, 20, 0.35);
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+        .save-dirty-dot.is-visible { display: inline-block; }
         .copy-btn {
             background: #495057; color: white; border: none;
             padding: 6px 12px; font-size: 12px; border-radius: 4px;
@@ -369,7 +379,9 @@
                 </div>
 
                 <div class="detail-actions">
-                    <button type="button" onclick="salveazaCheieCurenta()">Salvează</button>
+                    <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
+                        Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
+                    </button>
                     <button type="button" class="btn-rosu" onclick="stergeCheieCurenta()">Șterge</button>
                     <button type="button" class="btn-albastru" id="btn-deschide-schema" style="display:none;" onclick="deschideSchemaLegata()">Deschide schema</button>
                 </div>
@@ -430,6 +442,7 @@
         let cheieCurenta = null;
         let infoCheieCurenta = null;
         let modEditare = 'text'; // form | text | json
+        let valoareBaseline = ''; // ultima valoare încărcată / salvată (pt. indicator Salvează)
         let dataFormEditor = null;
         let schemaMetaEditor = null;
         let schemaTreeNav = null;
@@ -459,6 +472,7 @@
 
         document.getElementById('raw-json-editor').addEventListener('input', () => {
             if (modEditare === 'json') actualizeazaValidareJson();
+            actualizeazaIndicatorModificat();
         });
 
         window.onload = function () {
@@ -715,6 +729,8 @@
             distrugeEditori();
             cheieCurenta = null;
             infoCheieCurenta = null;
+            valoareBaseline = '';
+            actualizeazaIndicatorModificat();
             document.getElementById('ecran-detaliu').style.display = 'none';
             document.getElementById('ecran-lista').style.display = 'block';
         }
@@ -778,6 +794,8 @@
             document.getElementById('raw-json-editor').value = '';
             document.getElementById('rezultat-citire').innerText = '';
             document.getElementById('valoare-camp').value = '';
+            valoareBaseline = '';
+            actualizeazaIndicatorModificat();
 
             let rawText = '';
             try {
@@ -807,14 +825,17 @@
                 const pretty = valoareCaJsonPretty(rawText);
                 await incarcaFormularDate(info, pretty);
                 seteazaModEditare('form');
+                marcheazaCurentCaBaseline();
             } else if (canForm && info.tip === 'schema') {
                 const pretty = valoareCaJsonPretty(rawText) || JSON.stringify({ type: 'object', properties: {} }, null, 2);
                 document.getElementById('raw-json-editor').value = pretty;
                 await incarcaEditorSchemaVizual(pretty);
                 seteazaModEditare('form');
+                marcheazaCurentCaBaseline();
             } else {
                 // liber / admin → default Text
                 seteazaModEditare('text');
+                marcheazaCurentCaBaseline();
             }
         }
 
@@ -857,6 +878,34 @@
             const valid = esteJsonValid(ta.value);
             ta.classList.toggle('json-invalid', !valid);
             if (dot) dot.classList.toggle('is-visible', !valid);
+        }
+
+        function obtineValoareCurentaPentruComparatie() {
+            try {
+                if (modEditare === 'form' && infoCheieCurenta) {
+                    if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                        return JSON.stringify(dataFormEditor.getValue(), null, 2);
+                    }
+                    if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
+                        return JSON.stringify(genereazaSchemaDinConfig(schemaMetaEditor.getValue()), null, 2);
+                    }
+                }
+            } catch (e) { /* fallback la textarea */ }
+            return document.getElementById('raw-json-editor').value || '';
+        }
+
+        function marcheazaCurentCaBaseline() {
+            valoareBaseline = obtineValoareCurentaPentruComparatie();
+            actualizeazaIndicatorModificat();
+        }
+
+        function actualizeazaIndicatorModificat() {
+            const dot = document.getElementById('save-dirty-dot');
+            if (!dot) return;
+            const dirty = obtineValoareCurentaPentruComparatie() !== valoareBaseline;
+            dot.classList.toggle('is-visible', dirty);
+            const btn = document.getElementById('btn-salveaza');
+            if (btn) btn.title = dirty ? 'Există modificări nesalvate' : '';
         }
 
         async function copiazaContinutRaw(buton) {
@@ -1071,10 +1120,14 @@
                             });
                             dataFormEditor.on('ready', () => {
                                 document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
+                                dataFormEditor.on('change', actualizeazaIndicatorModificat);
+                                marcheazaCurentCaBaseline();
                             });
                             return;
                         }
                         document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
+                        dataFormEditor.on('change', actualizeazaIndicatorModificat);
+                        marcheazaCurentCaBaseline();
                     } catch (e) { /* ignore */ }
                 });
             } catch (e) {
@@ -1099,6 +1152,7 @@
             }
 
             actualizeazaValidareJson();
+            actualizeazaIndicatorModificat();
         }
 
         async function salveazaCheieCurenta() {
@@ -1112,6 +1166,7 @@
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheieCurenta, textBrut] });
                     document.getElementById('valoare-camp').value = textBrut;
                     document.getElementById('rezultat-citire').innerText = textBrut;
+                    marcheazaCurentCaBaseline();
                     alert('Salvat: ' + cheieCurenta);
                     await scaneazaToateCampurile();
                 } catch (err) {
@@ -1143,6 +1198,7 @@
                     if (infoCheieCurenta.tip === 'schema') {
                         document.getElementById('schema-live-preview').textContent = rawEl.value;
                     }
+                    marcheazaCurentCaBaseline();
                     alert('Salvat: ' + cheieCurenta);
                     await scaneazaToateCampurile();
                 } catch (err) {
@@ -1176,6 +1232,7 @@
                     document.getElementById('schema-live-preview').textContent = JSON.stringify(payload, null, 2);
                     programeazaPreviewDateSchema(payload);
                 }
+                marcheazaCurentCaBaseline();
                 alert('Salvat: ' + cheieCurenta);
                 await scaneazaToateCampurile();
             } catch (err) {
@@ -1544,6 +1601,11 @@
                     document.getElementById('schema-live-preview').textContent = JSON.stringify(live, null, 2);
                     programeazaPreviewDateSchema(live);
                 } catch (e) {}
+                actualizeazaIndicatorModificat();
+            });
+
+            schemaMetaEditor.on('ready', () => {
+                marcheazaCurentCaBaseline();
             });
 
             initSchemaTreeNavFor(schemaMetaEditor);
