@@ -102,6 +102,10 @@
         .badge-data { background: var(--badge-data); }
         .badge-liber { background: var(--badge-liber); }
         .badge-admin { background: var(--badge-admin); color: #111; }
+        .badge-redis { background: #17a2b8; }
+        .badge-redis-set { background: #6f42c1; }
+        .badge-redis-other { background: #868e96; }
+        .key-row .badges { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
         p { color: var(--text-muted); }
         label { color: var(--text); }
 
@@ -166,6 +170,45 @@
             margin-left: 6px;
         }
         .save-dirty-dot.is-visible { display: inline-block; }
+
+        .set-toolbar {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-bottom: 10px;
+        }
+        .set-toolbar .set-count { font-size: 13px; color: var(--text-muted); }
+        .set-members-list {
+            border: 1px solid var(--border); border-radius: 6px;
+            max-height: 40vh; overflow: auto; background: var(--bg-panel);
+            margin-bottom: 12px;
+        }
+        .set-member-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px; border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        .set-member-row:last-child { border-bottom: none; }
+        .set-member-row:hover { background: var(--row-hover); }
+        .set-member-row.is-active { background: var(--row-hover); outline: 1px solid var(--accent); }
+        .set-member-preview {
+            flex: 1; min-width: 0; font-family: Consolas, monospace; font-size: 12px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .set-member-kind { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+        #set-member-textarea {
+            width: 100%; min-height: 180px; font-family: Consolas, monospace; font-size: 12px;
+            border: 1px solid var(--input-border); border-radius: 4px;
+            background: var(--input-bg); color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        #set-member-textarea.json-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+        }
+        .set-unsupported {
+            padding: 16px; border: 1px dashed var(--border); border-radius: 6px;
+            color: var(--text-muted); font-size: 14px;
+        }
+
         .copy-btn {
             background: #495057; color: white; border: none;
             padding: 6px 12px; font-size: 12px; border-radius: 4px;
@@ -335,7 +378,12 @@
 
                 <div class="detail-meta" id="detail-meta">
                     <div class="meta-line"><strong>Cheie:</strong> <code id="detail-key-name"></code></div>
-                    <div class="meta-line"><strong>Tip:</strong> <span id="detail-type-badge"></span> <span id="detail-type-note" class="key-note"></span></div>
+                    <div class="meta-line">
+                        <strong>Tip:</strong>
+                        <span id="detail-type-badge"></span>
+                        <span id="detail-redis-badge" class="badge badge-redis"></span>
+                        <span id="detail-type-note" class="key-note"></span>
+                    </div>
                 </div>
 
                 <div class="mode-tabs" id="detail-mode-tabs">
@@ -378,7 +426,36 @@
                     <textarea id="raw-json-editor" spellcheck="false"></textarea>
                 </div>
 
-                <div class="detail-actions">
+                <div id="panel-set" style="display:none;">
+                    <div class="set-toolbar">
+                        <span class="set-count" id="set-count-label">0 membri</span>
+                        <button type="button" class="btn-albastru btn-inline" id="btn-set-add" onclick="incepeAdaugareMembruSet()">+ Membru</button>
+                    </div>
+                    <div id="set-members-list" class="set-members-list"></div>
+                    <div id="set-member-editor" style="display:none;">
+                        <div class="mode-tabs" id="set-member-mode-tabs">
+                            <div class="mode-tabs-left">
+                                <button type="button" id="tab-set-text" class="active" onclick="seteazaModMembruSet('text')">Text</button>
+                                <button type="button" id="tab-set-json" onclick="seteazaModMembruSet('json')">
+                                    JSON <span class="json-status-dot" id="set-json-status-dot" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                            <button type="button" class="copy-btn" id="btn-copy-set-member" onclick="copiazaMembruSet(this)">Copiază</button>
+                        </div>
+                        <textarea id="set-member-textarea" spellcheck="false"></textarea>
+                        <div class="detail-actions" style="margin-top:8px;">
+                            <button type="button" id="btn-salveaza-membru" onclick="salveazaMembruSet()">
+                                Salvează membru <span class="save-dirty-dot" id="set-save-dirty-dot" aria-hidden="true"></span>
+                            </button>
+                            <button type="button" class="btn-gri" onclick="anuleazaEditMembruSet()">Anulează</button>
+                            <button type="button" class="btn-rosu" id="btn-sterge-membru" onclick="stergeMembruSetCurent()">Șterge membru</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="panel-unsupported" class="set-unsupported" style="display:none;"></div>
+
+                <div class="detail-actions" id="detail-actions-key">
                     <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
                         Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
                     </button>
@@ -407,9 +484,10 @@
             <h3>Cheie nouă</h3>
             <label>Tip</label>
             <select id="new-key-type" onchange="actualizeazaFormCheieNoua()">
-                <option value="schema">Schemă (schema:_nume)</option>
-                <option value="data">Date pe schemă (_nume:instanță)</option>
-                <option value="liber">Liber / legacy</option>
+                <option value="schema">Schemă (schema:_nume) — String</option>
+                <option value="data">Date pe schemă (_nume:instanță) — String</option>
+                <option value="liber">Liber / legacy — String</option>
+                <option value="set">Set (Redis SET)</option>
             </select>
             <div id="new-fields-schema">
                 <label>Nume schemă (fără prefix; `_` se adaugă automat)</label>
@@ -427,6 +505,13 @@
                 <label>Nume cheie (liber)</label>
                 <input type="text" id="new-liber-name" placeholder="ex: nume:nume1">
             </div>
+            <div id="new-fields-set" style="display:none;">
+                <label>Nume cheie Set</label>
+                <input type="text" id="new-set-name" placeholder="ex: user:john:stock-lines">
+                <label>Primul membru</label>
+                <input type="text" id="new-set-first-member" placeholder="ex: 100 sau un text/JSON">
+                <p style="font-size:12px;margin:0;">Redis creează Set-ul la primul SADD (membru obligatoriu).</p>
+            </div>
             <div class="modal-actions">
                 <button type="button" class="btn-gri" onclick="inchideModalCheieNoua()">Anulează</button>
                 <button type="button" class="btn-albastru" onclick="creeazaCheieNoua()">Creează</button>
@@ -439,8 +524,10 @@
 
         // --- stare UI nouă ---
         let toateCheile = [];
+        let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
         let cheieCurenta = null;
         let infoCheieCurenta = null;
+        let redisTipCurent = 'string';
         let modEditare = 'text'; // form | text | json
         let valoareBaseline = ''; // ultima valoare încărcată / salvată (pt. indicator Salvează)
         let dataFormEditor = null;
@@ -450,6 +537,13 @@
         let schemaPreviewDebounce = null;
         let lastSchemaPreviewSig = '';
         let dynamicJsonEditor = null;
+
+        // --- stare Set ---
+        let setMembri = [];
+        let setMembruEditIndex = -1; // -1 = niciunul; >=0 = edit; -2 = membru nou
+        let setMembruOriginal = '';
+        let setMembruMod = 'text'; // text | json
+        let setMembruBaseline = '';
 
         (function initThemeToggle() {
             const btn = document.getElementById('theme-toggle');
@@ -473,6 +567,11 @@
         document.getElementById('raw-json-editor').addEventListener('input', () => {
             if (modEditare === 'json') actualizeazaValidareJson();
             actualizeazaIndicatorModificat();
+        });
+
+        document.getElementById('set-member-textarea').addEventListener('input', () => {
+            if (setMembruMod === 'json') actualizeazaValidareJsonMembruSet();
+            actualizeazaIndicatorModificatMembruSet();
         });
 
         window.onload = function () {
@@ -589,6 +688,25 @@
             return { badge: 'liber', cls: 'badge-liber', note: '' };
         }
 
+        function etichetaRedisTip(redisTip) {
+            const t = (redisTip || 'string').toLowerCase();
+            if (t === 'set') return { badge: 'set', cls: 'badge-redis-set' };
+            if (t === 'string') return { badge: 'string', cls: 'badge-redis' };
+            return { badge: t, cls: 'badge-redis-other' };
+        }
+
+        async function aflaTipRedis(cheie) {
+            try {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["TYPE", cheie] });
+                const tip = String(date.rezultat || 'none').toLowerCase();
+                tipuriRedisChei[cheie] = tip;
+                return tip;
+            } catch (e) {
+                tipuriRedisChei[cheie] = 'unknown';
+                return 'unknown';
+            }
+        }
+
         // ==========================================
         // LISTĂ
         // ==========================================
@@ -611,6 +729,9 @@
                 cheiFiltrate.sort();
                 toateCheile = cheiFiltrate;
 
+                // tipuri Redis (TYPE) în paralel
+                await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie)));
+
                 indicatorTotal.innerText = cheiFiltrate.length;
                 dropdown.innerHTML = "";
                 lista.innerHTML = "";
@@ -631,14 +752,20 @@
 
                     const info = clasificaCheie(cheie, setChei);
                     const et = etichetaTip(info);
+                    const er = etichetaRedisTip(tipuriRedisChei[cheie]);
                     const row = document.createElement('div');
                     row.className = 'key-row';
                     row.innerHTML =
                         '<span class="key-name"></span>' +
-                        '<span class="badge ' + et.cls + '"></span>' +
+                        '<span class="badges">' +
+                            '<span class="badge ' + et.cls + '"></span>' +
+                            '<span class="badge ' + er.cls + '"></span>' +
+                        '</span>' +
                         '<button type="button" class="btn-albastru btn-inline">Edit</button>';
                     row.querySelector('.key-name').textContent = cheie;
-                    row.querySelector('.badge').textContent = et.badge;
+                    const badges = row.querySelectorAll('.badge');
+                    badges[0].textContent = et.badge;
+                    badges[1].textContent = er.badge;
                     const go = () => deschideDetaliu(cheie);
                     row.addEventListener('click', (ev) => {
                         if (ev.target.tagName === 'BUTTON') return;
@@ -727,8 +854,10 @@
         // ==========================================
         function inapoiLaLista() {
             distrugeEditori();
+            resetStareSet();
             cheieCurenta = null;
             infoCheieCurenta = null;
+            redisTipCurent = 'string';
             valoareBaseline = '';
             actualizeazaIndicatorModificat();
             document.getElementById('ecran-detaliu').style.display = 'none';
@@ -765,6 +894,265 @@
             document.getElementById('schema_master_detail').classList.remove('show-node');
         }
 
+        function resetStareSet() {
+            setMembri = [];
+            setMembruEditIndex = -1;
+            setMembruOriginal = '';
+            setMembruMod = 'text';
+            setMembruBaseline = '';
+            const ta = document.getElementById('set-member-textarea');
+            if (ta) {
+                ta.value = '';
+                ta.classList.remove('json-invalid');
+            }
+            const ed = document.getElementById('set-member-editor');
+            if (ed) ed.style.display = 'none';
+            const list = document.getElementById('set-members-list');
+            if (list) list.innerHTML = '';
+        }
+
+        function previzualizareMembruSet(membru) {
+            const s = String(membru == null ? '' : membru);
+            const oneLine = s.replace(/\s+/g, ' ').trim();
+            if (oneLine.length <= 80) return oneLine || '(gol)';
+            return oneLine.slice(0, 80) + '…';
+        }
+
+        function membruPareJson(membru) {
+            const s = String(membru == null ? '' : membru).trim();
+            if (!s) return false;
+            // doar obiect/array — numere/stringuri simple rămân „text” (ex. id-uri în index Set)
+            const c = s[0];
+            if (c !== '{' && c !== '[') return false;
+            return esteJsonValid(s);
+        }
+
+        function afiseazaPanouriDupaTipRedis(redisTip) {
+            const isSet = redisTip === 'set';
+            const isString = redisTip === 'string' || redisTip === 'none';
+            const supported = isSet || isString;
+
+            document.getElementById('detail-mode-tabs').style.display = isString ? 'flex' : 'none';
+            document.getElementById('panel-form').style.display = 'none';
+            document.getElementById('panel-raw').style.display = 'none';
+            document.getElementById('panel-set').style.display = isSet ? 'block' : 'none';
+            document.getElementById('panel-unsupported').style.display = supported ? 'none' : 'block';
+            document.getElementById('btn-salveaza').style.display = isString ? 'inline-block' : 'none';
+
+            if (!supported) {
+                document.getElementById('panel-unsupported').textContent =
+                    'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia, iar tipurile list/hash/zset vor veni pe rând.';
+            }
+        }
+
+        function randeazaListaMembriSet() {
+            const lista = document.getElementById('set-members-list');
+            const count = document.getElementById('set-count-label');
+            count.textContent = setMembri.length + (setMembri.length === 1 ? ' membru' : ' membri');
+            lista.innerHTML = '';
+
+            if (setMembri.length === 0) {
+                lista.innerHTML = '<div class="set-member-row"><span class="set-member-preview">Set gol — adaugă un membru.</span></div>';
+                return;
+            }
+
+            setMembri.forEach((membru, idx) => {
+                const row = document.createElement('div');
+                row.className = 'set-member-row' + (idx === setMembruEditIndex ? ' is-active' : '');
+                const kind = membruPareJson(membru) ? 'json' : 'text';
+                row.innerHTML =
+                    '<span class="set-member-preview"></span>' +
+                    '<span class="set-member-kind"></span>' +
+                    '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                row.querySelector('.set-member-preview').textContent = previzualizareMembruSet(membru);
+                row.querySelector('.set-member-kind').textContent = kind;
+                const go = () => editeazaMembruSet(idx);
+                row.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'BUTTON') return;
+                    go();
+                });
+                row.querySelector('button').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    go();
+                });
+                lista.appendChild(row);
+            });
+        }
+
+        async function incarcaSetMembri(cheie) {
+            const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["SMEMBERS", cheie] });
+            const membri = date.rezultat;
+            if (Array.isArray(membri)) {
+                setMembri = membri.map(m => valoareCaTextAfisat(m));
+            } else if (membri == null) {
+                setMembri = [];
+            } else {
+                setMembri = [valoareCaTextAfisat(membri)];
+            }
+            setMembri.sort((a, b) => a.localeCompare(b));
+            setMembruEditIndex = -1;
+            document.getElementById('set-member-editor').style.display = 'none';
+            randeazaListaMembriSet();
+        }
+
+        function seteazaModMembruSet(mod) {
+            setMembruMod = mod;
+            document.getElementById('tab-set-text').classList.toggle('active', mod === 'text');
+            document.getElementById('tab-set-json').classList.toggle('active', mod === 'json');
+            actualizeazaValidareJsonMembruSet();
+        }
+
+        function actualizeazaValidareJsonMembruSet() {
+            const ta = document.getElementById('set-member-textarea');
+            const dot = document.getElementById('set-json-status-dot');
+            if (!ta) return;
+            if (setMembruMod !== 'json') {
+                ta.classList.remove('json-invalid');
+                if (dot) dot.classList.remove('is-visible');
+                return;
+            }
+            const valid = esteJsonValid(ta.value);
+            ta.classList.toggle('json-invalid', !valid);
+            if (dot) dot.classList.toggle('is-visible', !valid);
+        }
+
+        function actualizeazaIndicatorModificatMembruSet() {
+            const dot = document.getElementById('set-save-dirty-dot');
+            if (!dot) return;
+            const ta = document.getElementById('set-member-textarea');
+            const dirty = (ta ? ta.value : '') !== setMembruBaseline;
+            dot.classList.toggle('is-visible', dirty);
+        }
+
+        function incepeAdaugareMembruSet() {
+            setMembruEditIndex = -2;
+            setMembruOriginal = '';
+            setMembruBaseline = '';
+            document.getElementById('set-member-textarea').value = '';
+            document.getElementById('set-member-editor').style.display = 'block';
+            document.getElementById('btn-sterge-membru').style.display = 'none';
+            seteazaModMembruSet('text');
+            actualizeazaIndicatorModificatMembruSet();
+            randeazaListaMembriSet();
+            document.getElementById('set-member-textarea').focus();
+        }
+
+        function editeazaMembruSet(idx) {
+            if (idx < 0 || idx >= setMembri.length) return;
+            setMembruEditIndex = idx;
+            setMembruOriginal = setMembri[idx];
+            const text = setMembruOriginal;
+            const asJson = membruPareJson(text);
+            let afisat = text;
+            if (asJson) {
+                try { afisat = JSON.stringify(JSON.parse(text), null, 2); } catch (e) { afisat = text; }
+            }
+            document.getElementById('set-member-textarea').value = afisat;
+            setMembruBaseline = afisat;
+            document.getElementById('set-member-editor').style.display = 'block';
+            document.getElementById('btn-sterge-membru').style.display = 'inline-block';
+            seteazaModMembruSet(asJson ? 'json' : 'text');
+            actualizeazaIndicatorModificatMembruSet();
+            randeazaListaMembriSet();
+        }
+
+        function anuleazaEditMembruSet() {
+            setMembruEditIndex = -1;
+            setMembruOriginal = '';
+            setMembruBaseline = '';
+            document.getElementById('set-member-textarea').value = '';
+            document.getElementById('set-member-editor').style.display = 'none';
+            actualizeazaValidareJsonMembruSet();
+            actualizeazaIndicatorModificatMembruSet();
+            randeazaListaMembriSet();
+        }
+
+        async function salveazaMembruSet() {
+            if (!cheieCurenta || redisTipCurent !== 'set') return;
+            const ta = document.getElementById('set-member-textarea');
+            let valoare = ta.value;
+
+            if (setMembruMod === 'json') {
+                actualizeazaValidareJsonMembruSet();
+                if (!esteJsonValid(valoare)) return;
+                try {
+                    valoare = JSON.stringify(JSON.parse(valoare));
+                } catch (e) {
+                    return;
+                }
+            }
+
+            try {
+                if (setMembruEditIndex >= 0) {
+                    // edit: dacă s-a schimbat, scoatem vechiul și adăugăm noul
+                    if (valoare !== setMembruOriginal) {
+                        if (setMembri.includes(valoare) && valoare !== setMembruOriginal) {
+                            alert('Membrul există deja în Set (unicitate Redis).');
+                            return;
+                        }
+                        await apeleazaServerul("/api/comanda", { comandaRedis: ["SREM", cheieCurenta, setMembruOriginal] });
+                        await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheieCurenta, valoare] });
+                    }
+                } else if (setMembruEditIndex === -2) {
+                    if (setMembri.includes(valoare)) {
+                        alert('Membrul există deja în Set.');
+                        return;
+                    }
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheieCurenta, valoare] });
+                } else {
+                    return;
+                }
+                tipuriRedisChei[cheieCurenta] = 'set';
+                await incarcaSetMembri(cheieCurenta);
+                anuleazaEditMembruSet();
+                if (!toateCheile.includes(cheieCurenta)) {
+                    await scaneazaToateCampurile();
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function stergeMembruSetCurent() {
+            if (!cheieCurenta || setMembruEditIndex < 0) return;
+            if (!confirm('Ștergi membrul din Set?')) return;
+            try {
+                await apeleazaServerul("/api/comanda", { comandaRedis: ["SREM", cheieCurenta, setMembruOriginal] });
+                await incarcaSetMembri(cheieCurenta);
+                anuleazaEditMembruSet();
+                // dacă Set-ul a rămas gol, cheia dispare din Redis
+                const tip = await aflaTipRedis(cheieCurenta);
+                if (tip === 'none') {
+                    alert('Set-ul a rămas gol — cheia a fost eliminată din Redis.');
+                    inapoiLaLista();
+                    await scaneazaToateCampurile();
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function copiazaMembruSet(buton) {
+            const text = document.getElementById('set-member-textarea').value || '';
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (e) {
+                const zona = document.createElement('textarea');
+                zona.value = text;
+                document.body.appendChild(zona);
+                zona.select();
+                document.execCommand('copy');
+                document.body.removeChild(zona);
+            }
+            const eticheta = buton.textContent;
+            buton.textContent = 'Copiat!';
+            buton.classList.add('copied');
+            setTimeout(() => {
+                buton.textContent = eticheta;
+                buton.classList.remove('copied');
+            }, 1500);
+        }
+
         async function deschideDetaliu(cheie) {
             const setChei = new Set(toateCheile);
             const info = clasificaCheie(cheie, setChei);
@@ -781,21 +1169,52 @@
             badge.textContent = et.badge;
             document.getElementById('detail-type-note').textContent = et.note;
 
-            const btnSchema = document.getElementById('btn-deschide-schema');
-            btnSchema.style.display = (info.tip === 'data') ? 'inline-block' : 'none';
-
             document.getElementById('select-citire').value = cheie;
             document.getElementById('nume-camp').value = cheie;
             document.getElementById('nume-camp-stergere').value = cheie;
 
             distrugeEditori();
+            resetStareSet();
 
-            // golește textarea imediat — evită flash cu valoarea cheii anterioare
             document.getElementById('raw-json-editor').value = '';
             document.getElementById('rezultat-citire').innerText = '';
             document.getElementById('valoare-camp').value = '';
             valoareBaseline = '';
             actualizeazaIndicatorModificat();
+
+            let redisTip = tipuriRedisChei[cheie];
+            try {
+                redisTip = await aflaTipRedis(cheie);
+            } catch (err) {
+                alert(err.message);
+                inapoiLaLista();
+                return;
+            }
+            redisTipCurent = redisTip;
+
+            const er = etichetaRedisTip(redisTip);
+            const redisBadge = document.getElementById('detail-redis-badge');
+            redisBadge.className = 'badge ' + er.cls;
+            redisBadge.textContent = er.badge;
+
+            afiseazaPanouriDupaTipRedis(redisTip);
+
+            const btnSchema = document.getElementById('btn-deschide-schema');
+            btnSchema.style.display = (info.tip === 'data' && redisTip === 'string') ? 'inline-block' : 'none';
+
+            if (redisTip === 'set') {
+                try {
+                    await incarcaSetMembri(cheie);
+                } catch (err) {
+                    alert(err.message);
+                    inapoiLaLista();
+                }
+                return;
+            }
+
+            if (redisTip !== 'string' && redisTip !== 'none') {
+                return;
+            }
 
             let rawText = '';
             try {
@@ -821,7 +1240,6 @@
             document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
 
             if (canForm && info.tip === 'data') {
-                // pentru formular folosim reprezentare pretty dacă e JSON obiect
                 const pretty = valoareCaJsonPretty(rawText);
                 await incarcaFormularDate(info, pretty);
                 seteazaModEditare('form');
@@ -833,7 +1251,6 @@
                 seteazaModEditare('form');
                 marcheazaCurentCaBaseline();
             } else {
-                // liber / admin → default Text
                 seteazaModEditare('text');
                 marcheazaCurentCaBaseline();
             }
@@ -1137,6 +1554,9 @@
         }
 
         function seteazaModEditare(mod) {
+            if (redisTipCurent === 'set' || (redisTipCurent !== 'string' && redisTipCurent !== 'none')) {
+                return;
+            }
             const canForm = infoCheieCurenta && (infoCheieCurenta.tip === 'data' || infoCheieCurenta.tip === 'schema') && !infoCheieCurenta.sistem;
             if (mod === 'form' && !canForm) mod = 'text';
             modEditare = mod;
@@ -1146,6 +1566,10 @@
             document.getElementById('tab-json').classList.toggle('active', mod === 'json');
             document.getElementById('panel-form').style.display = mod === 'form' ? 'block' : 'none';
             document.getElementById('panel-raw').style.display = (mod === 'text' || mod === 'json') ? 'block' : 'none';
+            document.getElementById('panel-set').style.display = 'none';
+            document.getElementById('panel-unsupported').style.display = 'none';
+            document.getElementById('detail-mode-tabs').style.display = 'flex';
+            document.getElementById('btn-salveaza').style.display = 'inline-block';
 
             if (mod === 'text' || mod === 'json') {
                 sincronizeazaRawDinEditori();
@@ -1157,6 +1581,14 @@
 
         async function salveazaCheieCurenta() {
             if (!cheieCurenta) return;
+            if (redisTipCurent === 'set') {
+                alert('Pentru Set salvează fiecare membru cu „Salvează membru”.');
+                return;
+            }
+            if (redisTipCurent !== 'string' && redisTipCurent !== 'none') {
+                alert('Tip Redis nesuportat pentru salvare: ' + redisTipCurent);
+                return;
+            }
             const rawEl = document.getElementById('raw-json-editor');
 
             // --- Text: salvează stringul brut, fără JSON ---
@@ -1289,6 +1721,7 @@
             document.getElementById('new-fields-schema').style.display = tip === 'schema' ? 'block' : 'none';
             document.getElementById('new-fields-data').style.display = tip === 'data' ? 'block' : 'none';
             document.getElementById('new-fields-liber').style.display = tip === 'liber' ? 'block' : 'none';
+            document.getElementById('new-fields-set').style.display = tip === 'set' ? 'block' : 'none';
 
             const sn = normalizeSchemaName(document.getElementById('new-schema-name').value || 'setari');
             document.getElementById('new-schema-preview').textContent = 'schema:' + sn;
@@ -1348,6 +1781,41 @@
                 } catch (e) {
                     initial = {};
                 }
+            } else if (tip === 'set') {
+                cheie = document.getElementById('new-set-name').value.trim();
+                const firstMember = document.getElementById('new-set-first-member').value;
+                if (!cheie) {
+                    alert('Completează numele cheii Set.');
+                    return;
+                }
+                if (firstMember === '') {
+                    alert('Completează primul membru (Redis creează Set-ul la SADD).');
+                    return;
+                }
+                if (toateCheile.includes(cheie)) {
+                    if (!confirm('Cheia există deja. O deschizi pentru editare?')) return;
+                    inchideModalCheieNoua();
+                    await deschideDetaliu(cheie);
+                    return;
+                }
+                try {
+                    const tipExistent = await aflaTipRedis(cheie);
+                    if (tipExistent && tipExistent !== 'none') {
+                        if (!confirm('Cheia există deja (' + tipExistent + '). O deschizi?')) return;
+                        inchideModalCheieNoua();
+                        await scaneazaToateCampurile();
+                        await deschideDetaliu(cheie);
+                        return;
+                    }
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheie, firstMember] });
+                    tipuriRedisChei[cheie] = 'set';
+                    inchideModalCheieNoua();
+                    await scaneazaToateCampurile();
+                    await deschideDetaliu(cheie);
+                } catch (err) {
+                    alert(err.message);
+                }
+                return;
             } else {
                 cheie = document.getElementById('new-liber-name').value.trim();
                 if (!cheie) {
@@ -1371,6 +1839,7 @@
             try {
                 const valoareSalvare = (typeof initial === 'string') ? initial : JSON.stringify(initial);
                 await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, valoareSalvare] });
+                tipuriRedisChei[cheie] = 'string';
                 inchideModalCheieNoua();
                 await scaneazaToateCampurile();
                 await deschideDetaliu(cheie);
