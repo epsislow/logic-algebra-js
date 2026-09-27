@@ -104,6 +104,7 @@
         .badge-admin { background: var(--badge-admin); color: #111; }
         .badge-redis { background: #17a2b8; }
         .badge-redis-set { background: #6f42c1; }
+        .badge-redis-json { background: #20c997; }
         .badge-redis-other { background: #868e96; }
         .badge-idx { background: #28a745; }
         .btn-legenda {
@@ -113,6 +114,11 @@
         }
         .btn-legenda:hover { background: #218838; }
         .btn-legenda.is-open { background: #1e7e34; }
+        .new-idx-check-label {
+            display: flex; align-items: center; gap: 8px;
+            margin: 10px 0 8px; font-weight: normal; cursor: pointer;
+        }
+        .new-idx-check-label input { width: auto; margin: 0; }
         .idx-legenda-panel {
             display: none;
             margin-top: 12px;
@@ -548,6 +554,7 @@
                 <option value="schema">Schemă (schema:_nume) — String</option>
                 <option value="data">Date pe schemă (_nume:instanță) — String</option>
                 <option value="liber">Liber / legacy — String</option>
+                <option value="json">JSON (RedisJSON)</option>
                 <option value="set">Set (Redis SET)</option>
             </select>
             <div id="new-fields-schema">
@@ -566,6 +573,24 @@
                 <label>Nume cheie (liber)</label>
                 <input type="text" id="new-liber-name" placeholder="ex: nume:nume1">
             </div>
+            <div id="new-fields-json" style="display:none;">
+                <label class="new-idx-check-label">
+                    <input type="checkbox" id="new-json-idx" onchange="actualizeazaFormCheieNoua()">
+                    Pentru index (idx)
+                </label>
+                <div id="new-json-idx-fields" style="display:none;">
+                    <label>Prefix idx</label>
+                    <select id="new-json-idx-prefix"></select>
+                    <label>Nume (după prefix)</label>
+                    <input type="text" id="new-json-idx-name" placeholder="ex: loc">
+                    <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-json-idx-preview">—</code></p>
+                </div>
+                <div id="new-json-liber-fields">
+                    <label>Nume cheie JSON</label>
+                    <input type="text" id="new-json-name" placeholder="ex: temp:config">
+                </div>
+                <p style="font-size:12px;margin:8px 0 0;color:var(--text-muted);">Se creează cu <code>JSON.SET</code> și valoare inițială <code>{}</code>.</p>
+            </div>
             <div id="new-fields-set" style="display:none;">
                 <label>Nume cheie Set</label>
                 <input type="text" id="new-set-name" placeholder="ex: user:john:stock-lines">
@@ -582,6 +607,9 @@
 
     <script>
         const WORKER_URL = "https://little-darkness-9133.ady25626.workers.dev";
+
+        /** Prefixe eligibile pentru indexul Upstash Search (idx_search_tags). */
+        const IDX_PREFIXES = ['data:', 'info:', 'json:', 'schema:', 'search:', 'set:', 's:'];
 
         // --- stare UI nouă ---
         let toateCheile = [];
@@ -751,15 +779,30 @@
         }
 
         function etichetaRedisTip(redisTip) {
-            const t = (redisTip || 'string').toLowerCase();
+            const t = normalizeazaTipRedis(redisTip);
             if (t === 'set') return { badge: 'set', cls: 'badge-redis-set' };
             if (t === 'string') return { badge: 'string', cls: 'badge-redis' };
+            if (t === 'json') return { badge: 'json', cls: 'badge-redis-json' };
             return { badge: t, cls: 'badge-redis-other' };
         }
 
-        function esteCheieIdx(cheie) {
-            const prefixe = ['data:', 'info:', 'json:', 'schema:', 'search:', 'set:', 's:'];
-            return prefixe.some(p => (cheie || '').startsWith(p));
+        /** Upstash/RedisJSON raportează TYPE ca "ReJSON-RL" sau "json" — unificăm la "json". */
+        function normalizeazaTipRedis(tip) {
+            const t = String(tip == null ? 'none' : tip).toLowerCase();
+            if (t === 'json' || t === 'rejson-rl' || t.indexOf('rejson') !== -1) return 'json';
+            return t;
+        }
+
+        function esteTipRedisJson(tip) {
+            return normalizeazaTipRedis(tip) === 'json';
+        }
+
+        function esteCheieIdx(cheie, redisTip) {
+            const tip = normalizeazaTipRedis(
+                redisTip != null ? redisTip : tipuriRedisChei[cheie]
+            );
+            if (!esteTipRedisJson(tip)) return false;
+            return IDX_PREFIXES.some(p => (cheie || '').startsWith(p));
         }
 
         function seteazaVizibilitateIdxLegenda(vizibil) {
@@ -788,13 +831,48 @@
         async function aflaTipRedis(cheie) {
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["TYPE", cheie] });
-                const tip = String(date.rezultat || 'none').toLowerCase();
+                const tip = normalizeazaTipRedis(date.rezultat || 'none');
                 tipuriRedisChei[cheie] = tip;
                 return tip;
             } catch (e) {
                 tipuriRedisChei[cheie] = 'unknown';
                 return 'unknown';
             }
+        }
+
+        /** Citește valoarea unei chei string sau RedisJSON ca text afișabil. */
+        async function citesteValoareCheieRedis(cheie, redisTip) {
+            const tip = normalizeazaTipRedis(redisTip);
+            if (tip === 'json') {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["JSON.GET", cheie, "$"] });
+                let v = date.rezultat;
+                if (typeof v === 'string') {
+                    try { v = JSON.parse(v); } catch (e) { /* rămâne string */ }
+                }
+                // JSON.GET $ → adesea [{ ... }]
+                if (Array.isArray(v) && v.length === 1) v = v[0];
+                return valoareCaTextAfisat(v);
+            }
+            const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", cheie] });
+            if (date.rezultat == null || date.rezultat === '') return '';
+            return valoareCaTextAfisat(date.rezultat);
+        }
+
+        /** Salvează text/JSON pe cheie string sau RedisJSON. */
+        async function salveazaValoareCheieRedis(cheie, redisTip, textSauObj) {
+            const tip = normalizeazaTipRedis(redisTip);
+            if (tip === 'json') {
+                let payload = textSauObj;
+                if (typeof payload === 'string') {
+                    payload = JSON.parse(payload);
+                }
+                const jsonString = JSON.stringify(payload);
+                await apeleazaServerul("/api/comanda", { comandaRedis: ["JSON.SET", cheie, "$", jsonString] });
+                return JSON.stringify(payload, null, 2);
+            }
+            const textBrut = typeof textSauObj === 'string' ? textSauObj : JSON.stringify(textSauObj);
+            await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, textBrut] });
+            return textBrut;
         }
 
 // Funcția care sparge textul după un operator (AND/OR) dar ignoră parantezele interioare
@@ -971,7 +1049,7 @@ function translateUpstashSearchResults(date) {
                     const info = clasificaCheie(cheie, setChei);
                     const et = etichetaTip(info);
                     const er = etichetaRedisTip(tipuriRedisChei[cheie]);
-                    const eIdx = esteCheieIdx(cheie);
+                    const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);
                     const row = document.createElement('div');
                     row.className = 'key-row';
                     row.innerHTML =
@@ -1176,16 +1254,17 @@ function translateUpstashSearchResults(date) {
         }
 
         function afiseazaPanouriDupaTipRedis(redisTip) {
-            const isSet = redisTip === 'set';
-            const isString = redisTip === 'string' || redisTip === 'none';
-            const supported = isSet || isString;
+            const tip = normalizeazaTipRedis(redisTip);
+            const isSet = tip === 'set';
+            const isDoc = tip === 'string' || tip === 'none' || tip === 'json';
+            const supported = isSet || isDoc;
 
-            document.getElementById('detail-mode-tabs').style.display = isString ? 'flex' : 'none';
+            document.getElementById('detail-mode-tabs').style.display = isDoc ? 'flex' : 'none';
             document.getElementById('panel-form').style.display = 'none';
             document.getElementById('panel-raw').style.display = 'none';
             document.getElementById('panel-set').style.display = isSet ? 'block' : 'none';
             document.getElementById('panel-unsupported').style.display = supported ? 'none' : 'block';
-            document.getElementById('btn-salveaza').style.display = isString ? 'inline-block' : 'none';
+            document.getElementById('btn-salveaza').style.display = isDoc ? 'inline-block' : 'none';
             document.getElementById('detail-actions-key').style.display = 'flex';
 
             if (!supported) {
@@ -1487,8 +1566,9 @@ function translateUpstashSearchResults(date) {
             afiseazaPanouriDupaTipRedis(redisTip);
 
             const btnSchema = document.getElementById('btn-deschide-schema');
-            btnSchema.style.display = (info.tip === 'data' && redisTip === 'string') ? 'inline-block' : 'none';
-            seteazaVizibilitateIdxLegenda(esteCheieIdx(cheie));
+            const tipDoc = (redisTip === 'string' || redisTip === 'json');
+            btnSchema.style.display = (info.tip === 'data' && tipDoc) ? 'inline-block' : 'none';
+            seteazaVizibilitateIdxLegenda(esteCheieIdx(cheie, redisTip));
 
             if (redisTip === 'set') {
                 try {
@@ -1500,19 +1580,15 @@ function translateUpstashSearchResults(date) {
                 return;
             }
 
-            if (redisTip !== 'string' && redisTip !== 'none') {
+            if (redisTip !== 'string' && redisTip !== 'none' && redisTip !== 'json') {
                 return;
             }
 
             let rawText = '';
             try {
-                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", cheie] });
-                if (date.rezultat != null && date.rezultat !== '') {
-                    rawText = valoareCaTextAfisat(date.rezultat);
-                } else if (info.tip === 'schema') {
+                rawText = await citesteValoareCheieRedis(cheie, redisTip);
+                if (!rawText && info.tip === 'schema') {
                     rawText = JSON.stringify({ type: 'object', properties: {} }, null, 2);
-                } else {
-                    rawText = '';
                 }
             } catch (err) {
                 alert(err.message);
@@ -1526,6 +1602,8 @@ function translateUpstashSearchResults(date) {
 
             const canForm = (info.tip === 'data' || info.tip === 'schema') && !info.sistem;
             document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
+            // RedisJSON: doar JSON (fără Text) — serverul nu acceptă non-JSON
+            document.getElementById('tab-text').style.display = (redisTip === 'json') ? 'none' : 'inline-block';
 
             if (canForm && info.tip === 'data') {
                 const pretty = valoareCaJsonPretty(rawText);
@@ -1539,7 +1617,7 @@ function translateUpstashSearchResults(date) {
                 seteazaModEditare('form');
                 marcheazaCurentCaBaseline();
             } else {
-                seteazaModEditare('text');
+                seteazaModEditare(redisTip === 'json' ? 'json' : 'text');
                 marcheazaCurentCaBaseline();
             }
         }
@@ -1842,16 +1920,22 @@ function translateUpstashSearchResults(date) {
         }
 
         function seteazaModEditare(mod) {
-            if (redisTipCurent === 'set' || (redisTipCurent !== 'string' && redisTipCurent !== 'none')) {
+            if (redisTipCurent === 'set') return;
+            if (redisTipCurent !== 'string' && redisTipCurent !== 'none' && redisTipCurent !== 'json') {
                 return;
             }
+            // RedisJSON: Text nu e disponibil
+            if (esteTipRedisJson(redisTipCurent) && mod === 'text') {
+                mod = 'json';
+            }
             const canForm = infoCheieCurenta && (infoCheieCurenta.tip === 'data' || infoCheieCurenta.tip === 'schema') && !infoCheieCurenta.sistem;
-            if (mod === 'form' && !canForm) mod = 'text';
+            if (mod === 'form' && !canForm) mod = esteTipRedisJson(redisTipCurent) ? 'json' : 'text';
             modEditare = mod;
 
             document.getElementById('tab-form').classList.toggle('active', mod === 'form');
             document.getElementById('tab-text').classList.toggle('active', mod === 'text');
             document.getElementById('tab-json').classList.toggle('active', mod === 'json');
+            document.getElementById('tab-text').style.display = esteTipRedisJson(redisTipCurent) ? 'none' : 'inline-block';
             document.getElementById('panel-form').style.display = mod === 'form' ? 'block' : 'none';
             document.getElementById('panel-raw').style.display = (mod === 'text' || mod === 'json') ? 'block' : 'none';
             document.getElementById('panel-set').style.display = 'none';
@@ -1873,19 +1957,25 @@ function translateUpstashSearchResults(date) {
                 alert('Pentru Set salvează fiecare membru cu „Salvează membru”.');
                 return;
             }
-            if (redisTipCurent !== 'string' && redisTipCurent !== 'none') {
+            if (redisTipCurent !== 'string' && redisTipCurent !== 'none' && redisTipCurent !== 'json') {
                 alert('Tip Redis nesuportat pentru salvare: ' + redisTipCurent);
                 return;
             }
             const rawEl = document.getElementById('raw-json-editor');
+            const eJsonRedis = esteTipRedisJson(redisTipCurent);
 
-            // --- Text: salvează stringul brut, fără JSON ---
+            // --- Text: pe String salvează brut; pe RedisJSON trebuie JSON valid ---
             if (modEditare === 'text') {
                 const textBrut = rawEl.value;
                 try {
-                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheieCurenta, textBrut] });
-                    document.getElementById('valoare-camp').value = textBrut;
-                    document.getElementById('rezultat-citire').innerText = textBrut;
+                    if (eJsonRedis && !esteJsonValid(textBrut)) {
+                        alert('Cheia e tip RedisJSON — textul trebuie să fie JSON valid.');
+                        return;
+                    }
+                    const salvat = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, textBrut);
+                    rawEl.value = eJsonRedis ? salvat : textBrut;
+                    document.getElementById('valoare-camp').value = rawEl.value;
+                    document.getElementById('rezultat-citire').innerText = rawEl.value;
                     marcheazaCurentCaBaseline();
                     alert('Salvat: ' + cheieCurenta);
                     await scaneazaToateCampurile();
@@ -1908,10 +1998,9 @@ function translateUpstashSearchResults(date) {
                     actualizeazaValidareJson();
                     return;
                 }
-                const jsonString = JSON.stringify(payload);
                 try {
-                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheieCurenta, jsonString] });
-                    rawEl.value = JSON.stringify(payload, null, 2);
+                    const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, payload);
+                    rawEl.value = pretty;
                     document.getElementById('valoare-camp').value = rawEl.value;
                     document.getElementById('rezultat-citire').innerText = rawEl.value;
                     actualizeazaValidareJson();
@@ -1942,14 +2031,13 @@ function translateUpstashSearchResults(date) {
                 return;
             }
 
-            const jsonString = JSON.stringify(payload);
             try {
-                await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheieCurenta, jsonString] });
-                rawEl.value = JSON.stringify(payload, null, 2);
+                const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, payload);
+                rawEl.value = pretty;
                 document.getElementById('valoare-camp').value = rawEl.value;
                 document.getElementById('rezultat-citire').innerText = rawEl.value;
                 if (infoCheieCurenta.tip === 'schema') {
-                    document.getElementById('schema-live-preview').textContent = JSON.stringify(payload, null, 2);
+                    document.getElementById('schema-live-preview').textContent = pretty;
                     programeazaPreviewDateSchema(payload);
                 }
                 marcheazaCurentCaBaseline();
@@ -1997,6 +2085,19 @@ function translateUpstashSearchResults(date) {
                 opt.textContent = k;
                 sel.appendChild(opt);
             });
+
+            const prefSel = document.getElementById('new-json-idx-prefix');
+            if (prefSel && prefSel.options.length === 0) {
+                IDX_PREFIXES.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = p;
+                    prefSel.appendChild(opt);
+                });
+            }
+
+            const idxCheck = document.getElementById('new-json-idx');
+            if (idxCheck) idxCheck.checked = false;
             actualizeazaFormCheieNoua();
             document.getElementById('modal-cheie-noua').classList.add('open');
         }
@@ -2010,6 +2111,7 @@ function translateUpstashSearchResults(date) {
             document.getElementById('new-fields-schema').style.display = tip === 'schema' ? 'block' : 'none';
             document.getElementById('new-fields-data').style.display = tip === 'data' ? 'block' : 'none';
             document.getElementById('new-fields-liber').style.display = tip === 'liber' ? 'block' : 'none';
+            document.getElementById('new-fields-json').style.display = tip === 'json' ? 'block' : 'none';
             document.getElementById('new-fields-set').style.display = tip === 'set' ? 'block' : 'none';
 
             const sn = normalizeSchemaName(document.getElementById('new-schema-name').value || 'setari');
@@ -2023,11 +2125,27 @@ function translateUpstashSearchResults(date) {
             } else {
                 document.getElementById('new-data-preview').textContent = '— (nu există scheme)';
             }
+
+            if (tip === 'json') {
+                const useIdx = document.getElementById('new-json-idx').checked;
+                document.getElementById('new-json-idx-fields').style.display = useIdx ? 'block' : 'none';
+                document.getElementById('new-json-liber-fields').style.display = useIdx ? 'none' : 'block';
+                if (useIdx) {
+                    const prefix = document.getElementById('new-json-idx-prefix').value || IDX_PREFIXES[0];
+                    let rest = document.getElementById('new-json-idx-name').value.trim();
+                    if (rest.startsWith(prefix)) rest = rest.slice(prefix.length);
+                    rest = rest.replace(/^:+/, '');
+                    document.getElementById('new-json-idx-preview').textContent =
+                        rest ? (prefix + rest) : (prefix + '…');
+                }
+            }
         }
 
         document.getElementById('new-schema-name').addEventListener('input', actualizeazaFormCheieNoua);
         document.getElementById('new-data-instance').addEventListener('input', actualizeazaFormCheieNoua);
         document.getElementById('new-data-schema').addEventListener('change', actualizeazaFormCheieNoua);
+        document.getElementById('new-json-idx-prefix').addEventListener('change', actualizeazaFormCheieNoua);
+        document.getElementById('new-json-idx-name').addEventListener('input', actualizeazaFormCheieNoua);
 
         async function creeazaCheieNoua() {
             const tip = document.getElementById('new-key-type').value;
@@ -2070,6 +2188,51 @@ function translateUpstashSearchResults(date) {
                 } catch (e) {
                     initial = {};
                 }
+            } else if (tip === 'json') {
+                const useIdx = document.getElementById('new-json-idx').checked;
+                if (useIdx) {
+                    const prefix = document.getElementById('new-json-idx-prefix').value || IDX_PREFIXES[0];
+                    let rest = document.getElementById('new-json-idx-name').value.trim();
+                    if (rest.startsWith(prefix)) rest = rest.slice(prefix.length);
+                    rest = rest.replace(/^:+/, '');
+                    if (!rest) {
+                        alert('Completează numele după prefixul idx.');
+                        return;
+                    }
+                    cheie = prefix + rest;
+                } else {
+                    cheie = document.getElementById('new-json-name').value.trim();
+                    if (!cheie) {
+                        alert('Completează numele cheii JSON.');
+                        return;
+                    }
+                }
+                if (toateCheile.includes(cheie)) {
+                    if (!confirm('Cheia există deja. O deschizi pentru editare?')) return;
+                    inchideModalCheieNoua();
+                    await deschideDetaliu(cheie);
+                    return;
+                }
+                try {
+                    const tipExistent = await aflaTipRedis(cheie);
+                    if (tipExistent && tipExistent !== 'none') {
+                        if (!confirm('Cheia există deja (' + tipExistent + '). O deschizi?')) return;
+                        inchideModalCheieNoua();
+                        await scaneazaToateCampurile();
+                        await deschideDetaliu(cheie);
+                        return;
+                    }
+                    await apeleazaServerul("/api/comanda", {
+                        comandaRedis: ["JSON.SET", cheie, "$", "{}"]
+                    });
+                    tipuriRedisChei[cheie] = 'json';
+                    inchideModalCheieNoua();
+                    await scaneazaToateCampurile();
+                    await deschideDetaliu(cheie);
+                } catch (err) {
+                    alert(err.message);
+                }
+                return;
             } else if (tip === 'set') {
                 cheie = document.getElementById('new-set-name').value.trim();
                 const firstMember = document.getElementById('new-set-first-member').value;
