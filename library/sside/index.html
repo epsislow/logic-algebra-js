@@ -921,6 +921,78 @@ function translateUpstashSearchResults(date) {
 }
 
 
+/**
+ * Traduce răspunsul imbricat (RESP3) de la Upstash SEARCH.QUERY 
+ * într-un array simplu de string-uri (ID-urile cheilor).
+ * 
+ * @param {Object} date - Răspunsul brut primit de la /api/comanda
+ * @returns {String[]} O listă curată cu numele cheilor găsite (ex: ["data:loc"])
+ */
+function translateUpstashSearchResults2(date) {
+  if (!date || !date.rezultat) return [];
+  
+  const raw = date.rezultat;
+  let cheiColectate = [];
+
+  // Verificăm dacă structura este de tipul array imbricat [[ "cheie", "scor", [...] ]]
+  if (Array.isArray(raw) && raw.length > 0 && Array.isArray(raw[0])) {
+    
+    // Iterăm prin elementele din primul array
+    raw[0].forEach(item => {
+      // Fiecare element valid care reprezintă un document este un array
+      // unde primul element (index 0) este numele cheii (ex: "data:loc")
+      if (Array.isArray(item) && item.length > 0 && typeof item[0] === 'string') {
+        cheiColectate.push(item[0]);
+      }
+    });
+
+    return cheiColectate;
+  }
+
+  // Fallback în cazul în care structura se schimbă sau vine în alt format standard
+  if (Array.isArray(raw)) {
+    for (let i = 1; i < raw.length; i += 2) {
+      if (typeof raw[i] === 'string') cheiColectate.push(raw[i]);
+    }
+    return cheiColectate;
+  }
+
+  return [];
+}
+
+/**
+ * Traduce răspunsul Upstash, indiferent dacă returnează o singură cheie sau mai multe.
+ */
+function translateUpstashSearchResults3(date) {
+  if (!date || !date.rezultat) return [];
+  
+  const raw = date.rezultat;
+  const cheiColectate = [];
+
+  if (Array.isArray(raw)) {
+    raw.forEach(item => {
+      // Cazul 1: Structură RESP3 imbricată (cea din consola ta)
+      // item = ["data:loc", "2.5753...", [...]]
+      if (Array.isArray(item) && item.length > 0) {
+        if (typeof item[0] === 'string') {
+          cheiColectate.push(item[0]);
+        }
+      } 
+      // Cazul 2: Structură de tip array plat intercalat ca fallback
+      // raw = [total, "cheie1", "valoare1", "cheie2", "valoare2"]
+      else if (typeof item === 'string' && (item.includes(':') || item.startsWith('data:'))) {
+        if (!cheiColectate.includes(item)) {
+          cheiColectate.push(item);
+        }
+      }
+    });
+  }
+
+  return cheiColectate;
+}
+
+
+
         // ==========================================
         // LISTĂ
         // ==========================================
@@ -953,8 +1025,9 @@ function translateUpstashSearchResults(date) {
                     dateR = await apeleazaServerul("/api/comanda", {comandaRedis: 
                         ["SEARCH.QUERY", "idx_search_tags", jsonQueryString, "LIMIT", "1000", "OFFSET", "0"]
                     });
-                    console.log(dateR);
-                    date = translateUpstashSearchResults(dateR);
+                    console.log(JSON.stringify(dateR));
+                    date = translateUpstashSearchResults3(dateR);
+                    console.log(JSON.stringify(date));
                 } else {
                     date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
                 }
