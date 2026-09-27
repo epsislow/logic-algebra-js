@@ -361,7 +361,7 @@
         .modal-backdrop.open { display: flex; }
         .modal-card {
             background: var(--bg-panel); color: var(--text); border: 1px solid var(--border);
-            border-radius: 8px; padding: 16px; width: 100%; max-width: 420px; box-shadow: var(--shadow);
+            border-radius: 8px; padding: 16px; width: 100%; max-width: 480px; box-shadow: var(--shadow);
         }
         .modal-card h3 { margin-top: 0; }
         .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
@@ -549,19 +549,29 @@
     <div class="modal-backdrop" id="modal-cheie-noua">
         <div class="modal-card">
             <h3>Cheie nouă</h3>
-            <label>Tip</label>
-            <select id="new-key-type" onchange="actualizeazaFormCheieNoua()">
-                <option value="schema">Schemă (schema:_nume) — String</option>
-                <option value="data">Date pe schemă (_nume:instanță) — String</option>
-                <option value="liber">Liber / legacy — String</option>
+
+            <label>Tip Redis</label>
+            <select id="new-redis-type" onchange="actualizeazaFormCheieNoua()">
+                <option value="string">String</option>
                 <option value="json">JSON (RedisJSON)</option>
-                <option value="set">Set (Redis SET)</option>
+                <option value="set">Set</option>
             </select>
-            <div id="new-fields-schema">
+
+            <div id="new-role-wrap">
+                <label>Rol</label>
+                <select id="new-key-role" onchange="actualizeazaFormCheieNoua()">
+                    <option value="schema">Schemă</option>
+                    <option value="data">Data pe schemă</option>
+                    <option value="liber">Liber</option>
+                </select>
+            </div>
+
+            <div id="new-fields-schema" style="display:none;">
                 <label>Nume schemă (fără prefix; `_` se adaugă automat)</label>
                 <input type="text" id="new-schema-name" placeholder="ex: setari">
                 <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-schema-preview">schema:_setari</code></p>
             </div>
+
             <div id="new-fields-data" style="display:none;">
                 <label>Schema</label>
                 <select id="new-data-schema"></select>
@@ -569,11 +579,13 @@
                 <input type="text" id="new-data-instance" placeholder="ex: data sau site:ro">
                 <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-data-preview">—</code></p>
             </div>
+
             <div id="new-fields-liber" style="display:none;">
                 <label>Nume cheie (liber)</label>
                 <input type="text" id="new-liber-name" placeholder="ex: nume:nume1">
             </div>
-            <div id="new-fields-json" style="display:none;">
+
+            <div id="new-fields-json-liber" style="display:none;">
                 <label class="new-idx-check-label">
                     <input type="checkbox" id="new-json-idx" onchange="actualizeazaFormCheieNoua()">
                     Pentru index (idx)
@@ -589,8 +601,8 @@
                     <label>Nume cheie JSON</label>
                     <input type="text" id="new-json-name" placeholder="ex: temp:config">
                 </div>
-                <p style="font-size:12px;margin:8px 0 0;color:var(--text-muted);">Se creează cu <code>JSON.SET</code> și valoare inițială <code>{}</code>.</p>
             </div>
+
             <div id="new-fields-set" style="display:none;">
                 <label>Nume cheie Set</label>
                 <input type="text" id="new-set-name" placeholder="ex: user:john:stock-lines">
@@ -598,6 +610,9 @@
                 <input type="text" id="new-set-first-member" placeholder="ex: 100 sau un text/JSON">
                 <p style="font-size:12px;margin:0;">Redis creează Set-ul la primul SADD (membru obligatoriu).</p>
             </div>
+
+            <p id="new-create-hint" style="font-size:12px;margin:10px 0 0;color:var(--text-muted);"></p>
+
             <div class="modal-actions">
                 <button type="button" class="btn-gri" onclick="inchideModalCheieNoua()">Anulează</button>
                 <button type="button" class="btn-albastru" onclick="creeazaCheieNoua()">Creează</button>
@@ -727,7 +742,11 @@
         }
 
         // ==========================================
-        // Convenție chei: schema:_X  |  _X:inst…  |  liber
+        // Convenție chei:
+        //   schema:_X
+        //   _X:inst…          (data String)
+        //   data:_X:inst…     (data JSON pe schemă)
+        //   liber / idx
         // ==========================================
         function normalizeSchemaName(name) {
             let n = (name || '').trim();
@@ -740,6 +759,13 @@
             return /^schema:_[^:]+$/.test(key);
         }
 
+        /** data:_schemaName:instance — data JSON pe schemă */
+        function parseDataJsonPeSchema(key) {
+            const m = (key || '').match(/^data:(_[^:]+):(.*)$/);
+            if (!m || m[2] === '') return null;
+            return { schemaName: m[1], instance: m[2], schemaKey: 'schema:' + m[1] };
+        }
+
         function esteAdmin() {
             return (localStorage.getItem('session_user') || '') === 'admin';
         }
@@ -749,13 +775,21 @@
         }
 
         function clasificaCheie(key, setChei) {
-            // chei de autentificare — vizibile doar pentru admin (filtrate în scanare)
             if (isCheieSistemAscunsa(key)) {
                 return { tip: 'liber', sistem: true };
             }
             if (isSchemaRedisKey(key)) {
                 return { tip: 'schema', schemaName: key.slice('schema:'.length), schemaKey: key };
             }
+            // JSON data pe schemă: data:_X:inst
+            const dj = parseDataJsonPeSchema(key);
+            if (dj) {
+                if (setChei.has(dj.schemaKey)) {
+                    return { tip: 'data', schemaName: dj.schemaName, schemaKey: dj.schemaKey, instance: dj.instance, dataJson: true };
+                }
+                return { tip: 'liber', missingSchema: dj.schemaName, schemaKey: dj.schemaKey, dataJson: true };
+            }
+            // String data pe schemă: _X:inst
             const m = key.match(/^(_[^:]+):(.*)$/);
             if (m && m[2] !== '') {
                 const schemaName = m[1];
@@ -766,6 +800,28 @@
                 return { tip: 'liber', missingSchema: schemaName, schemaKey };
             }
             return { tip: 'liber' };
+        }
+
+        function etichetaOptiuneSchema(schemaKey) {
+            const tip = normalizeazaTipRedis(tipuriRedisChei[schemaKey] || 'string');
+            return schemaKey + ' · ' + tip;
+        }
+
+        function populeazaSelectorScheme(sel) {
+            if (!sel) return;
+            sel.innerHTML = '';
+            toateCheile.filter(isSchemaRedisKey).forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = etichetaOptiuneSchema(k);
+                sel.appendChild(opt);
+            });
+        }
+
+        async function citesteObiectSchema(schemaKey) {
+            const tip = tipuriRedisChei[schemaKey] || await aflaTipRedis(schemaKey);
+            const text = await citesteValoareCheieRedis(schemaKey, tip);
+            return parseRedisJson(text);
         }
 
         function etichetaTip(info) {
@@ -1850,8 +1906,11 @@ function translateUpstashSearchResults(date) {
 
             let schemaObj = null;
             try {
-                const schResponse = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", info.schemaKey] });
-                const parsed = parseRedisJson(schResponse.rezultat);
+                const textSchema = await citesteValoareCheieRedis(
+                    info.schemaKey,
+                    tipuriRedisChei[info.schemaKey] || await aflaTipRedis(info.schemaKey)
+                );
+                const parsed = parseRedisJson(textSchema);
                 schemaObj = normalizeToJsonSchema(parsed);
                 if (!schemaObj) {
                     alert(
@@ -2088,14 +2147,7 @@ function translateUpstashSearchResults(date) {
         // CHEIE NOUĂ
         // ==========================================
         function deschideModalCheieNoua() {
-            const sel = document.getElementById('new-data-schema');
-            sel.innerHTML = '';
-            toateCheile.filter(isSchemaRedisKey).forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k;
-                opt.textContent = k;
-                sel.appendChild(opt);
-            });
+            populeazaSelectorScheme(document.getElementById('new-data-schema'));
 
             const prefSel = document.getElementById('new-json-idx-prefix');
             if (prefSel && prefSel.options.length === 0) {
@@ -2118,12 +2170,23 @@ function translateUpstashSearchResults(date) {
         }
 
         function actualizeazaFormCheieNoua() {
-            const tip = document.getElementById('new-key-type').value;
-            document.getElementById('new-fields-schema').style.display = tip === 'schema' ? 'block' : 'none';
-            document.getElementById('new-fields-data').style.display = tip === 'data' ? 'block' : 'none';
-            document.getElementById('new-fields-liber').style.display = tip === 'liber' ? 'block' : 'none';
-            document.getElementById('new-fields-json').style.display = tip === 'json' ? 'block' : 'none';
-            document.getElementById('new-fields-set').style.display = tip === 'set' ? 'block' : 'none';
+            const redisType = document.getElementById('new-redis-type').value;
+            const role = document.getElementById('new-key-role').value;
+            const isSet = redisType === 'set';
+            const isJson = redisType === 'json';
+
+            document.getElementById('new-role-wrap').style.display = isSet ? 'none' : 'block';
+            document.getElementById('new-fields-set').style.display = isSet ? 'block' : 'none';
+
+            const showSchema = !isSet && role === 'schema';
+            const showData = !isSet && role === 'data';
+            const showLiberStr = !isSet && role === 'liber' && !isJson;
+            const showLiberJson = !isSet && role === 'liber' && isJson;
+
+            document.getElementById('new-fields-schema').style.display = showSchema ? 'block' : 'none';
+            document.getElementById('new-fields-data').style.display = showData ? 'block' : 'none';
+            document.getElementById('new-fields-liber').style.display = showLiberStr ? 'block' : 'none';
+            document.getElementById('new-fields-json-liber').style.display = showLiberJson ? 'block' : 'none';
 
             const sn = normalizeSchemaName(document.getElementById('new-schema-name').value || 'setari');
             document.getElementById('new-schema-preview').textContent = 'schema:' + sn;
@@ -2132,12 +2195,14 @@ function translateUpstashSearchResults(date) {
             const inst = document.getElementById('new-data-instance').value.trim() || 'data';
             if (schemaKey) {
                 const name = schemaKey.slice('schema:'.length);
-                document.getElementById('new-data-preview').textContent = name + ':' + inst;
+                // String data: _X:inst | JSON data: data:_X:inst
+                document.getElementById('new-data-preview').textContent =
+                    isJson ? ('data:' + name + ':' + inst) : (name + ':' + inst);
             } else {
                 document.getElementById('new-data-preview').textContent = '— (nu există scheme)';
             }
 
-            if (tip === 'json') {
+            if (showLiberJson) {
                 const useIdx = document.getElementById('new-json-idx').checked;
                 document.getElementById('new-json-idx-fields').style.display = useIdx ? 'block' : 'none';
                 document.getElementById('new-json-liber-fields').style.display = useIdx ? 'none' : 'block';
@@ -2150,6 +2215,15 @@ function translateUpstashSearchResults(date) {
                         rest ? (prefix + rest) : (prefix + '…');
                 }
             }
+
+            const hint = document.getElementById('new-create-hint');
+            if (isSet) {
+                hint.textContent = 'Se creează cu SADD (membru obligatoriu).';
+            } else if (isJson) {
+                hint.textContent = 'Se creează cu JSON.SET. Schemele/data JSON cu prefix schema:/data:_ pot fi indexate (idx).';
+            } else {
+                hint.textContent = 'Se creează cu SET (String).';
+            }
         }
 
         document.getElementById('new-schema-name').addEventListener('input', actualizeazaFormCheieNoua);
@@ -2158,20 +2232,98 @@ function translateUpstashSearchResults(date) {
         document.getElementById('new-json-idx-prefix').addEventListener('change', actualizeazaFormCheieNoua);
         document.getElementById('new-json-idx-name').addEventListener('input', actualizeazaFormCheieNoua);
 
-        async function creeazaCheieNoua() {
-            const tip = document.getElementById('new-key-type').value;
-            let cheie = '';
-            let initial = {};
+        async function deschideDacaExistaSauContinua(cheie) {
+            if (toateCheile.includes(cheie)) {
+                if (!confirm('Cheia există deja. O deschizi pentru editare?')) return true;
+                inchideModalCheieNoua();
+                await deschideDetaliu(cheie);
+                return true;
+            }
+            try {
+                const tipExistent = await aflaTipRedis(cheie);
+                if (tipExistent && tipExistent !== 'none') {
+                    if (!confirm('Cheia există deja (' + tipExistent + '). O deschizi?')) return true;
+                    inchideModalCheieNoua();
+                    await scaneazaToateCampurile();
+                    await deschideDetaliu(cheie);
+                    return true;
+                }
+            } catch (e) { /* continuă create */ }
+            return false;
+        }
 
-            if (tip === 'schema') {
+        async function valoareInitialaDinSchemaKey(schemaKey) {
+            let initial = {};
+            try {
+                const parsed = await citesteObiectSchema(schemaKey);
+                const schemaObj = normalizeToJsonSchema(parsed);
+                if (schemaObj) {
+                    initial = valoareImplicitaDinSchema(schemaObj);
+                    if (initial === undefined || initial === null) {
+                        initial = (schemaObj.type === 'array') ? [] : {};
+                    }
+                }
+            } catch (e) {
+                initial = {};
+            }
+            return initial;
+        }
+
+        async function finalizeazaCreareCheie(cheie, redisType, payload) {
+            if (await deschideDacaExistaSauContinua(cheie)) return;
+            try {
+                if (redisType === 'json') {
+                    const jsonString = typeof payload === 'string' ? payload : JSON.stringify(payload);
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["JSON.SET", cheie, "$", jsonString] });
+                    tipuriRedisChei[cheie] = 'json';
+                } else if (redisType === 'set') {
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheie, payload] });
+                    tipuriRedisChei[cheie] = 'set';
+                } else {
+                    const text = typeof payload === 'string' ? payload : JSON.stringify(payload);
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, text] });
+                    tipuriRedisChei[cheie] = 'string';
+                }
+                inchideModalCheieNoua();
+                await scaneazaToateCampurile();
+                await deschideDetaliu(cheie);
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function creeazaCheieNoua() {
+            const redisType = document.getElementById('new-redis-type').value;
+            const role = document.getElementById('new-key-role').value;
+
+            if (redisType === 'set') {
+                const cheie = document.getElementById('new-set-name').value.trim();
+                const firstMember = document.getElementById('new-set-first-member').value;
+                if (!cheie) {
+                    alert('Completează numele cheii Set.');
+                    return;
+                }
+                if (firstMember === '') {
+                    alert('Completează primul membru (Redis creează Set-ul la SADD).');
+                    return;
+                }
+                await finalizeazaCreareCheie(cheie, 'set', firstMember);
+                return;
+            }
+
+            if (role === 'schema') {
                 const sn = normalizeSchemaName(document.getElementById('new-schema-name').value);
                 if (!sn || sn === '_') {
                     alert('Nume schemă invalid.');
                     return;
                 }
-                cheie = 'schema:' + sn;
-                initial = { type: 'object', properties: {} };
-            } else if (tip === 'data') {
+                const cheie = 'schema:' + sn;
+                const initial = { type: 'object', properties: {} };
+                await finalizeazaCreareCheie(cheie, redisType, initial);
+                return;
+            }
+
+            if (role === 'data') {
                 const schemaKey = document.getElementById('new-data-schema').value;
                 const inst = document.getElementById('new-data-instance').value.trim();
                 if (!schemaKey) {
@@ -2182,25 +2334,19 @@ function translateUpstashSearchResults(date) {
                     alert('Completează instanța (partea după :).');
                     return;
                 }
-                cheie = schemaKey.slice('schema:'.length) + ':' + inst;
-                initial = [];
-                try {
-                    const sch = await apeleazaServerul("/api/comanda", { comandaRedis: ["GET", schemaKey] });
-                    const parsed = parseRedisJson(sch.rezultat);
-                    const schemaObj = normalizeToJsonSchema(parsed);
-                    if (schemaObj) {
-                        initial = valoareImplicitaDinSchema(schemaObj);
-                        if (initial === undefined || initial === null) {
-                            initial = (schemaObj.type === 'array') ? [] : {};
-                        }
-                    } else {
-                        initial = {};
-                    }
-                } catch (e) {
-                    initial = {};
-                }
-            } else if (tip === 'json') {
+                const schemaName = schemaKey.slice('schema:'.length);
+                const cheie = redisType === 'json'
+                    ? ('data:' + schemaName + ':' + inst)
+                    : (schemaName + ':' + inst);
+                const initial = await valoareInitialaDinSchemaKey(schemaKey);
+                await finalizeazaCreareCheie(cheie, redisType, initial);
+                return;
+            }
+
+            // liber
+            if (redisType === 'json') {
                 const useIdx = document.getElementById('new-json-idx').checked;
+                let cheie = '';
                 if (useIdx) {
                     const prefix = document.getElementById('new-json-idx-prefix').value || IDX_PREFIXES[0];
                     let rest = document.getElementById('new-json-idx-name').value.trim();
@@ -2218,97 +2364,20 @@ function translateUpstashSearchResults(date) {
                         return;
                     }
                 }
-                if (toateCheile.includes(cheie)) {
-                    if (!confirm('Cheia există deja. O deschizi pentru editare?')) return;
-                    inchideModalCheieNoua();
-                    await deschideDetaliu(cheie);
-                    return;
-                }
-                try {
-                    const tipExistent = await aflaTipRedis(cheie);
-                    if (tipExistent && tipExistent !== 'none') {
-                        if (!confirm('Cheia există deja (' + tipExistent + '). O deschizi?')) return;
-                        inchideModalCheieNoua();
-                        await scaneazaToateCampurile();
-                        await deschideDetaliu(cheie);
-                        return;
-                    }
-                    await apeleazaServerul("/api/comanda", {
-                        comandaRedis: ["JSON.SET", cheie, "$", "{}"]
-                    });
-                    tipuriRedisChei[cheie] = 'json';
-                    inchideModalCheieNoua();
-                    await scaneazaToateCampurile();
-                    await deschideDetaliu(cheie);
-                } catch (err) {
-                    alert(err.message);
-                }
-                return;
-            } else if (tip === 'set') {
-                cheie = document.getElementById('new-set-name').value.trim();
-                const firstMember = document.getElementById('new-set-first-member').value;
-                if (!cheie) {
-                    alert('Completează numele cheii Set.');
-                    return;
-                }
-                if (firstMember === '') {
-                    alert('Completează primul membru (Redis creează Set-ul la SADD).');
-                    return;
-                }
-                if (toateCheile.includes(cheie)) {
-                    if (!confirm('Cheia există deja. O deschizi pentru editare?')) return;
-                    inchideModalCheieNoua();
-                    await deschideDetaliu(cheie);
-                    return;
-                }
-                try {
-                    const tipExistent = await aflaTipRedis(cheie);
-                    if (tipExistent && tipExistent !== 'none') {
-                        if (!confirm('Cheia există deja (' + tipExistent + '). O deschizi?')) return;
-                        inchideModalCheieNoua();
-                        await scaneazaToateCampurile();
-                        await deschideDetaliu(cheie);
-                        return;
-                    }
-                    await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheie, firstMember] });
-                    tipuriRedisChei[cheie] = 'set';
-                    inchideModalCheieNoua();
-                    await scaneazaToateCampurile();
-                    await deschideDetaliu(cheie);
-                } catch (err) {
-                    alert(err.message);
-                }
-                return;
-            } else {
-                cheie = document.getElementById('new-liber-name').value.trim();
-                if (!cheie) {
-                    alert('Completează numele cheii.');
-                    return;
-                }
-                if (isSchemaRedisKey(cheie)) {
-                    alert('Pentru scheme folosește tipul „Schemă”.');
-                    return;
-                }
-                initial = ''; // text liber, nu {}
-            }
-
-            if (toateCheile.includes(cheie)) {
-                if (!confirm('Cheia există deja. O deschizi pentru editare?')) return;
-                inchideModalCheieNoua();
-                await deschideDetaliu(cheie);
+                await finalizeazaCreareCheie(cheie, 'json', {});
                 return;
             }
 
-            try {
-                const valoareSalvare = (typeof initial === 'string') ? initial : JSON.stringify(initial);
-                await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, valoareSalvare] });
-                tipuriRedisChei[cheie] = 'string';
-                inchideModalCheieNoua();
-                await scaneazaToateCampurile();
-                await deschideDetaliu(cheie);
-            } catch (err) {
-                alert(err.message);
+            const cheie = document.getElementById('new-liber-name').value.trim();
+            if (!cheie) {
+                alert('Completează numele cheii.');
+                return;
             }
+            if (isSchemaRedisKey(cheie)) {
+                alert('Pentru scheme folosește rolul „Schemă”.');
+                return;
+            }
+            await finalizeazaCreareCheie(cheie, 'string', '');
         }
 
         // ==========================================
