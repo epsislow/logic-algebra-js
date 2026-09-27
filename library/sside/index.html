@@ -177,6 +177,28 @@
         .toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
         .toolbar-row input[type="text"] { flex: 1; min-width: 140px; margin: 0; }
         .toolbar-row button { margin: 0; }
+        .btn-star {
+            background: transparent; border: 1px solid var(--input-border);
+            color: var(--text); width: auto; margin: 0; padding: 6px 10px;
+            font-size: 18px; line-height: 1; border-radius: 4px; cursor: pointer;
+        }
+        .btn-star:hover { border-color: var(--accent); }
+        .btn-star.is-saved { color: #e6a800; border-color: #e6a800; }
+        .cautare-row {
+            display: flex; align-items: flex-start; gap: 8px;
+            padding: 10px 12px; border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        .cautare-row:last-child { border-bottom: none; }
+        .cautare-row:hover { background: var(--row-hover); }
+        .cautare-row .cautare-main { flex: 1; min-width: 0; }
+        .cautare-row .cautare-name { font-weight: 600; font-size: 14px; color: var(--text); }
+        .cautare-row .cautare-filter {
+            font-family: Consolas, monospace; font-size: 12px; color: var(--text-muted);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px;
+        }
+        .cautare-row .cautare-date { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        .cautare-row .cautare-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
         .lista-chei { border: 1px solid var(--border); border-radius: 6px; max-height: 55vh; overflow: auto; background: var(--bg-panel); }
         .key-row {
@@ -427,12 +449,33 @@
         <div id="ecran-lista">
             <div class="box">
                 <div class="toolbar-row">
-                    <input type="text" id="input-search" value="*" placeholder="Filtru wildcard (ex: * sau _setari*)">
+                    <input type="text" id="input-search" value="*" placeholder="Filtru wildcard (ex: * sau =s_prefix:…)">
+                    <button type="button" class="btn-star" id="btn-star-cautare" title="Salvează / șterge căutarea" onclick="toggleSalvareCautareCurenta()" aria-label="Salvează căutarea">☆</button>
                     <button type="button" onclick="scaneazaToateCampurile()" style="background:#ffc107;color:#333;width:auto;">Caută</button>
+                    <button type="button" class="btn-gri btn-inline" onclick="deschideEcranCautariSalvate()">★ Căutări</button>
+                </div>
+                <div class="toolbar-row" style="margin: 0 0 8px;">
+                    <p style="margin: 0; flex: 1;">Câmpuri: <span id="total-campuri" class="badge">0</span></p>
                     <button type="button" class="btn-albastru btn-inline" onclick="deschideModalCheieNoua()">+ Cheie nouă</button>
                 </div>
-                <p style="margin: 0 0 8px;">Câmpuri: <span id="total-campuri" class="badge">0</span></p>
                 <div id="lista-chei" class="lista-chei"></div>
+            </div>
+        </div>
+
+        <!-- ========== ECRAN CĂUTĂRI SALVATE ========== -->
+        <div id="ecran-cautari-salvate" style="display: none;">
+            <div class="box">
+                <button type="button" class="btn-gri btn-inline" onclick="inapoiLaListaDinCautari()">← Înapoi la listă</button>
+                <h3 style="margin: 12px 0 8px;">Căutări salvate</h3>
+                <div class="toolbar-row">
+                    <input type="text" id="input-filtru-cautari" value="*" placeholder="Filtru pe nume/filtru (* = orice, \* = caracter *)">
+                    <button type="button" onclick="randeazaListaCautariSalvate()" style="background:#ffc107;color:#333;width:auto;">Filtrează</button>
+                </div>
+                <div class="toolbar-row" style="margin: 0 0 8px;">
+                    <p style="margin: 0; flex: 1;">Salvate: <span id="total-cautari-salvate" class="badge">0</span></p>
+                    <button type="button" class="btn-gri btn-inline" onclick="reseteazaCautariSalvate()" title="Revine la cele 2 căutări implicite">Reset</button>
+                </div>
+                <div id="lista-cautari-salvate" class="lista-chei"></div>
             </div>
         </div>
 
@@ -636,6 +679,22 @@
         </div>
     </div>
 
+    <!-- Modal edit / salvare căutare -->
+    <div class="modal-backdrop" id="modal-cautare-salvata">
+        <div class="modal-card">
+            <h3 id="modal-cautare-titlu">Salvează căutarea</h3>
+            <input type="hidden" id="edit-cautare-id" value="">
+            <label>Nume</label>
+            <input type="text" id="edit-cautare-name" placeholder="ex: Toate">
+            <label>Filtru</label>
+            <input type="text" id="edit-cautare-filter" placeholder="ex: * sau =s_prefix:location">
+            <div class="modal-actions">
+                <button type="button" class="btn-gri" onclick="inchideModalCautareSalvata()">Anulează</button>
+                <button type="button" class="btn-albastru" onclick="confirmaSalvareCautare()">Salvează</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const WORKER_URL = "https://little-darkness-9133.ady25626.workers.dev";
 
@@ -660,6 +719,16 @@
         ];
 
         let idxLegendaDebounce = null;
+
+        const CAUTARI_STORAGE_KEY = 'sside-cautari-salvate';
+
+        function creeazaSeedCautari() {
+            const now = Date.now();
+            return [
+                { id: 'seed-toate', name: 'Toate', filter: '*', updatedAt: now },
+                { id: 'seed-idx-loc-stock', name: 'idx prefix locatie + stock', filter: '=s_prefix:location OR s_prefix:stock', updatedAt: now - 1 }
+            ];
+        }
 
         // --- stare UI nouă ---
         let toateCheile = [];
@@ -713,6 +782,33 @@
         document.getElementById('set-member-textarea').addEventListener('input', () => {
             if (setMembruMod === 'json') actualizeazaValidareJsonMembruSet();
             actualizeazaIndicatorModificatMembruSet();
+        });
+
+        document.getElementById('input-search').addEventListener('input', actualizeazaStelutaCautare);
+        document.getElementById('input-search').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                scaneazaToateCampurile();
+            }
+        });
+        document.getElementById('input-filtru-cautari').addEventListener('input', randeazaListaCautariSalvate);
+        document.getElementById('input-filtru-cautari').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                randeazaListaCautariSalvate();
+            }
+        });
+        document.getElementById('edit-cautare-name').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                confirmaSalvareCautare();
+            }
+        });
+        document.getElementById('edit-cautare-filter').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                confirmaSalvareCautare();
+            }
         });
 
         window.onload = function () {
@@ -1208,6 +1304,268 @@ function translateUpstashSearchResults(date) {
 
 
         // ==========================================
+        // CĂUTĂRI SALVATE (localStorage)
+        // ==========================================
+        function genIdCautare() {
+            return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+        }
+
+        function citesteCautariSalvate() {
+            try {
+                const raw = localStorage.getItem(CAUTARI_STORAGE_KEY);
+                if (raw == null) {
+                    const seed = creeazaSeedCautari();
+                    localStorage.setItem(CAUTARI_STORAGE_KEY, JSON.stringify(seed));
+                    return seed;
+                }
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return reparaTimestampuriCautari(parsed);
+            } catch (e) {
+                return creeazaSeedCautari();
+            }
+        }
+
+        /** Timestamps tip 1/2 (seed vechi) → data curentă, o singură dată. */
+        function reparaTimestampuriCautari(lista) {
+            const pragOk = Date.UTC(2000, 0, 1); // ms
+            let schimbat = false;
+            const now = Date.now();
+            const out = lista.map((c, i) => {
+                const ts = Number(c && c.updatedAt);
+                if (!Number.isFinite(ts) || ts < pragOk) {
+                    schimbat = true;
+                    return { ...c, updatedAt: now - i };
+                }
+                return c;
+            });
+            if (schimbat) scrieCautariSalvate(out);
+            return out;
+        }
+
+        function scrieCautariSalvate(lista) {
+            try {
+                localStorage.setItem(CAUTARI_STORAGE_KEY, JSON.stringify(lista || []));
+            } catch (e) { /* ignore quota */ }
+        }
+
+        function normalizeazaFiltruCautare(filtru) {
+            return (filtru == null ? '' : String(filtru)).trim() || '*';
+        }
+
+        function gasesteCautareDupaFiltru(filtru) {
+            const f = normalizeazaFiltruCautare(filtru);
+            return citesteCautariSalvate().find(c => normalizeazaFiltruCautare(c.filter) === f) || null;
+        }
+
+        /** * = orice; \* = caracter * literal. Potrivire pe întreg textul. */
+        function wildcardToRegExp(pattern) {
+            let result = '';
+            const p = String(pattern == null ? '*' : pattern);
+            for (let i = 0; i < p.length; i++) {
+                if (p[i] === '\\' && p[i + 1] === '*') {
+                    result += '\\*';
+                    i++;
+                } else if (p[i] === '*') {
+                    result += '.*';
+                } else if (/[.+?^${}()|[\]\\]/.test(p[i])) {
+                    result += '\\' + p[i];
+                } else {
+                    result += p[i];
+                }
+            }
+            return new RegExp('^' + result + '$', 'i');
+        }
+
+        function matchWildcardText(text, pattern) {
+            try {
+                return wildcardToRegExp(pattern).test(String(text == null ? '' : text));
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function formateazaDataCautare(ts) {
+            if (!ts) return '—';
+            try {
+                const d = new Date(ts);
+                if (isNaN(d.getTime())) return '—';
+                const pad = (n) => String(n).padStart(2, '0');
+                return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                    ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+            } catch (e) {
+                return '—';
+            }
+        }
+
+        function actualizeazaStelutaCautare() {
+            const btn = document.getElementById('btn-star-cautare');
+            if (!btn) return;
+            const filtru = normalizeazaFiltruCautare(document.getElementById('input-search').value);
+            const existent = gasesteCautareDupaFiltru(filtru);
+            btn.textContent = existent ? '★' : '☆';
+            btn.classList.toggle('is-saved', !!existent);
+            btn.title = existent ? 'Șterge căutarea salvată' : 'Salvează căutarea';
+        }
+
+        function toggleSalvareCautareCurenta() {
+            const filtru = normalizeazaFiltruCautare(document.getElementById('input-search').value);
+            const existent = gasesteCautareDupaFiltru(filtru);
+            if (existent) {
+                stergeCautareSalvata(existent.id, { silent: true });
+                actualizeazaStelutaCautare();
+                return;
+            }
+            document.getElementById('modal-cautare-titlu').textContent = 'Salvează căutarea';
+            document.getElementById('edit-cautare-id').value = '';
+            document.getElementById('edit-cautare-name').value = '';
+            document.getElementById('edit-cautare-filter').value = filtru;
+            document.getElementById('modal-cautare-salvata').classList.add('open');
+            document.getElementById('edit-cautare-name').focus();
+        }
+
+        function inchideModalCautareSalvata() {
+            document.getElementById('modal-cautare-salvata').classList.remove('open');
+        }
+
+        function confirmaSalvareCautare() {
+            const id = document.getElementById('edit-cautare-id').value.trim();
+            const name = document.getElementById('edit-cautare-name').value.trim();
+            const filter = normalizeazaFiltruCautare(document.getElementById('edit-cautare-filter').value);
+            if (!name) {
+                alert('Completează numele.');
+                return;
+            }
+            let lista = citesteCautariSalvate();
+            const now = Date.now();
+            if (id) {
+                const idx = lista.findIndex(c => c.id === id);
+                if (idx >= 0) {
+                    lista[idx] = { ...lista[idx], name, filter, updatedAt: now };
+                } else {
+                    lista.push({ id, name, filter, updatedAt: now });
+                }
+            } else {
+                // stea: dacă filtrul există deja (alt nume), actualizăm
+                const byFilter = lista.findIndex(c => normalizeazaFiltruCautare(c.filter) === filter);
+                if (byFilter >= 0) {
+                    lista[byFilter] = { ...lista[byFilter], name, filter, updatedAt: now };
+                } else {
+                    lista.push({ id: genIdCautare(), name, filter, updatedAt: now });
+                }
+            }
+            scrieCautariSalvate(lista);
+            inchideModalCautareSalvata();
+            actualizeazaStelutaCautare();
+            const ecran = document.getElementById('ecran-cautari-salvate');
+            if (ecran && ecran.style.display !== 'none') randeazaListaCautariSalvate();
+        }
+
+        function stergeCautareSalvata(id, opts) {
+            opts = opts || {};
+            let lista = citesteCautariSalvate().filter(c => c.id !== id);
+            scrieCautariSalvate(lista);
+            if (!opts.silent) {
+                randeazaListaCautariSalvate();
+            }
+            actualizeazaStelutaCautare();
+        }
+
+        function deschideEditCautareSalvata(id) {
+            const item = citesteCautariSalvate().find(c => c.id === id);
+            if (!item) return;
+            document.getElementById('modal-cautare-titlu').textContent = 'Edită căutarea';
+            document.getElementById('edit-cautare-id').value = item.id;
+            document.getElementById('edit-cautare-name').value = item.name || '';
+            document.getElementById('edit-cautare-filter').value = item.filter || '*';
+            document.getElementById('modal-cautare-salvata').classList.add('open');
+            document.getElementById('edit-cautare-name').focus();
+        }
+
+        function aplicaCautareSalvata(id) {
+            const item = citesteCautariSalvate().find(c => c.id === id);
+            if (!item) return;
+            const now = Date.now();
+            const lista = citesteCautariSalvate().map(c =>
+                c.id === id ? { ...c, updatedAt: now } : c
+            );
+            scrieCautariSalvate(lista);
+            document.getElementById('input-search').value = item.filter || '*';
+            document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            document.getElementById('ecran-lista').style.display = 'block';
+            actualizeazaStelutaCautare();
+            scaneazaToateCampurile();
+        }
+
+        function deschideEcranCautariSalvate() {
+            document.getElementById('ecran-lista').style.display = 'none';
+            document.getElementById('ecran-detaliu').style.display = 'none';
+            document.getElementById('ecran-cautari-salvate').style.display = 'block';
+            randeazaListaCautariSalvate();
+        }
+
+        function reseteazaCautariSalvate() {
+            if (!confirm('Resetezi căutările salvate la cele 2 implicite? Modificările tale se pierd.')) return;
+            const seed = creeazaSeedCautari();
+            scrieCautariSalvate(seed);
+            document.getElementById('input-filtru-cautari').value = '*';
+            randeazaListaCautariSalvate();
+            actualizeazaStelutaCautare();
+        }
+
+        function randeazaListaCautariSalvate() {
+            const listaEl = document.getElementById('lista-cautari-salvate');
+            const totalEl = document.getElementById('total-cautari-salvate');
+            const pattern = document.getElementById('input-filtru-cautari').value;
+            const pat = (pattern == null || String(pattern).trim() === '') ? '*' : String(pattern);
+
+            let items = citesteCautariSalvate()
+                .filter(c => matchWildcardText(c.name || '', pat) || matchWildcardText(c.filter || '', pat))
+                .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+            totalEl.textContent = String(items.length);
+            listaEl.innerHTML = '';
+
+            if (items.length === 0) {
+                listaEl.innerHTML = '<div class="key-row"><span class="key-name">Nicio căutare salvată pentru filtru.</span></div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'cautare-row';
+                row.innerHTML =
+                    '<div class="cautare-main">' +
+                        '<div class="cautare-name"></div>' +
+                        '<div class="cautare-filter"></div>' +
+                        '<div class="cautare-date"></div>' +
+                    '</div>' +
+                    '<div class="cautare-actions">' +
+                        '<button type="button" class="btn-albastru btn-inline">Edit</button>' +
+                        '<button type="button" class="btn-rosu btn-inline">Șterge</button>' +
+                    '</div>';
+                row.querySelector('.cautare-name').textContent = item.name || '(fără nume)';
+                row.querySelector('.cautare-filter').textContent = item.filter || '*';
+                row.querySelector('.cautare-date').textContent = formateazaDataCautare(item.updatedAt);
+                const [btnEdit, btnDel] = row.querySelectorAll('button');
+                row.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'BUTTON') return;
+                    aplicaCautareSalvata(item.id);
+                });
+                btnEdit.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    deschideEditCautareSalvata(item.id);
+                });
+                btnDel.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    if (!confirm('Ștergi căutarea salvată „' + (item.name || item.filter) + '”?')) return;
+                    stergeCautareSalvata(item.id);
+                });
+                listaEl.appendChild(row);
+            });
+        }
+
+        // ==========================================
         // LISTĂ
         // ==========================================
         async function scaneazaToateCampurile() {
@@ -1293,11 +1651,13 @@ function translateUpstashSearchResults(date) {
                     });
                     lista.appendChild(row);
                 });
+                actualizeazaStelutaCautare();
             } catch (err) {
                 dropdown.innerHTML = "<option value=''>Eroare la citire</option>";
                 lista.innerHTML = '<div class="key-row"><span class="key-name"></span></div>';
                 lista.querySelector('.key-name').textContent = err.message;
                 document.getElementById("rezultat-citire").innerText = err.message;
+                actualizeazaStelutaCautare();
                 throw err;
             }
         }
@@ -1406,7 +1766,15 @@ function translateUpstashSearchResults(date) {
             valoareBaseline = '';
             actualizeazaIndicatorModificat();
             document.getElementById('ecran-detaliu').style.display = 'none';
+            document.getElementById('ecran-cautari-salvate').style.display = 'none';
             document.getElementById('ecran-lista').style.display = 'block';
+            actualizeazaStelutaCautare();
+        }
+
+        function inapoiLaListaDinCautari() {
+            document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            document.getElementById('ecran-lista').style.display = 'block';
+            actualizeazaStelutaCautare();
         }
 
         function distrugeEditori() {
@@ -1787,6 +2155,7 @@ function translateUpstashSearchResults(date) {
             document.getElementById('detail-mode-tabs').style.display = 'none';
 
             document.getElementById('ecran-lista').style.display = 'none';
+            document.getElementById('ecran-cautari-salvate').style.display = 'none';
             document.getElementById('ecran-detaliu').style.display = 'block';
             document.getElementById('detail-key-name').textContent = cheie;
 
