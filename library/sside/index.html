@@ -228,6 +228,17 @@
         .mode-tabs button.active { background: var(--accent); color: #fff; }
         .mode-tabs .copy-btn { margin-left: auto; }
 
+        .formular-din-wrap {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-bottom: 10px;
+        }
+        .formular-din-wrap label {
+            margin: 0; font-size: 13px; color: var(--text-muted); white-space: nowrap;
+        }
+        .formular-din-wrap select {
+            flex: 1; min-width: 160px; margin: 0; max-width: 420px;
+        }
+
         #raw-json-editor {
             width: 100%; min-height: 220px; font-family: Consolas, monospace; font-size: 12px;
             border: 1px solid var(--input-border); border-radius: 4px;
@@ -495,6 +506,13 @@
                     </div>
                 </div>
 
+                <div class="formular-din-wrap" id="formular-din-wrap" style="display: none;">
+                    <label for="select-formular-din">Formular din</label>
+                    <select id="select-formular-din">
+                        <option value="">— niciuna —</option>
+                    </select>
+                </div>
+
                 <div class="mode-tabs" id="detail-mode-tabs">
                     <div class="mode-tabs-left">
                         <button type="button" id="tab-form" class="active" onclick="seteazaModEditare('form')">Formular</button>
@@ -544,8 +562,15 @@
                         <div id="set-members-list" class="set-members-list"></div>
                     </div>
                     <div id="set-member-editor" style="display:none;">
+                        <div class="formular-din-wrap" id="formular-din-set-wrap">
+                            <label for="select-formular-din-set">Formular din</label>
+                            <select id="select-formular-din-set">
+                                <option value="">— niciuna —</option>
+                            </select>
+                        </div>
                         <div class="mode-tabs" id="set-member-mode-tabs">
                             <div class="mode-tabs-left">
+                                <button type="button" id="tab-set-form" style="display:none;" onclick="seteazaModMembruSet('form')">Formular</button>
                                 <button type="button" id="tab-set-text" class="active" onclick="seteazaModMembruSet('text')">Text</button>
                                 <button type="button" id="tab-set-json" onclick="seteazaModMembruSet('json')">
                                     JSON <span class="json-status-dot" id="set-json-status-dot" aria-hidden="true"></span>
@@ -553,6 +578,7 @@
                             </div>
                             <button type="button" class="copy-btn" id="btn-copy-set-member" onclick="copiazaMembruSet(this)">Copiază</button>
                         </div>
+                        <div id="set-member-form-holder" style="display:none;"></div>
                         <textarea id="set-member-textarea" spellcheck="false"></textarea>
                         <div class="detail-actions" style="margin-top:8px;">
                             <button type="button" id="btn-salveaza-membru" onclick="salveazaMembruSet()">
@@ -751,8 +777,11 @@
         let setMembri = [];
         let setMembruEditIndex = -1; // -1 = niciunul; >=0 = edit; -2 = membru nou
         let setMembruOriginal = '';
-        let setMembruMod = 'text'; // text | json
+        let setMembruMod = 'text'; // text | json | form
         let setMembruBaseline = '';
+        let schemaTempKey = null; // schemă temporară pe Liber (doar UI)
+        let setMembruSchemaTempKey = null;
+        let setMembruFormEditor = null;
 
         (function initThemeToggle() {
             const btn = document.getElementById('theme-toggle');
@@ -809,6 +838,12 @@
                 ev.preventDefault();
                 confirmaSalvareCautare();
             }
+        });
+        document.getElementById('select-formular-din').addEventListener('change', () => {
+            peSchimbareFormularDinLiber();
+        });
+        document.getElementById('select-formular-din-set').addEventListener('change', () => {
+            peSchimbareFormularDinSet();
         });
 
         window.onload = function () {
@@ -947,6 +982,242 @@
                 opt.value = k;
                 opt.textContent = etichetaOptiuneSchema(k);
                 sel.appendChild(opt);
+            });
+        }
+
+        function populeazaSelectFormularDin(sel, selectedKey) {
+            if (!sel) return;
+            const keep = selectedKey || '';
+            sel.innerHTML = '';
+            const empty = document.createElement('option');
+            empty.value = '';
+            empty.textContent = '— niciuna —';
+            sel.appendChild(empty);
+            toateCheile.filter(isSchemaRedisKey).sort().forEach(k => {
+                const opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = etichetaOptiuneSchema(k);
+                sel.appendChild(opt);
+            });
+            if (keep && Array.from(sel.options).some(o => o.value === keep)) {
+                sel.value = keep;
+            } else {
+                sel.value = '';
+            }
+        }
+
+        function esteLiberCuFormularDin() {
+            return !!(infoCheieCurenta && infoCheieCurenta.tip === 'liber' && !infoCheieCurenta.sistem);
+        }
+
+        function poateModFormularCheie() {
+            if (!infoCheieCurenta || infoCheieCurenta.sistem) return false;
+            if (infoCheieCurenta.tip === 'data' || infoCheieCurenta.tip === 'schema') return true;
+            if (infoCheieCurenta.tip === 'liber' && schemaTempKey) return true;
+            return false;
+        }
+
+        function actualizeazaUiFormularDinLiber() {
+            const wrap = document.getElementById('formular-din-wrap');
+            const sel = document.getElementById('select-formular-din');
+            if (!wrap || !sel) return;
+            const show = esteLiberCuFormularDin() &&
+                (redisTipCurent === 'string' || redisTipCurent === 'none' || redisTipCurent === 'json');
+            wrap.style.display = show ? 'flex' : 'none';
+            if (show) {
+                populeazaSelectFormularDin(sel, schemaTempKey || '');
+            } else {
+                schemaTempKey = null;
+                sel.value = '';
+            }
+        }
+
+        function reseteazaSchemaTempLiber() {
+            schemaTempKey = null;
+            const sel = document.getElementById('select-formular-din');
+            if (sel) sel.value = '';
+            const wrap = document.getElementById('formular-din-wrap');
+            if (wrap) wrap.style.display = 'none';
+        }
+
+        function distrugeEditorMembruSetForm() {
+            if (setMembruFormEditor) {
+                try { setMembruFormEditor.destroy(); } catch (e) {}
+                setMembruFormEditor = null;
+            }
+            const holder = document.getElementById('set-member-form-holder');
+            if (holder) {
+                holder.innerHTML = '';
+                holder.style.display = 'none';
+            }
+        }
+
+        function reseteazaSchemaTempMembruSet() {
+            setMembruSchemaTempKey = null;
+            distrugeEditorMembruSetForm();
+            const sel = document.getElementById('select-formular-din-set');
+            if (sel) sel.value = '';
+            const tabForm = document.getElementById('tab-set-form');
+            if (tabForm) tabForm.style.display = 'none';
+        }
+
+        async function incarcaSchemaCaObiect(schemaKey) {
+            const citire = await citesteValoareCheieRedis(
+                schemaKey,
+                tipuriRedisChei[schemaKey] || await aflaTipRedis(schemaKey)
+            );
+            if (citire.stearsa) {
+                throw new Error('Schema stearsă: ' + schemaKey);
+            }
+            const parsed = parseRedisJson(citire.text);
+            const schemaObj = normalizeToJsonSchema(parsed);
+            if (!schemaObj) {
+                throw new Error(
+                    'Nu pot construi formularul: schema „' + schemaKey +
+                    '” lipsește sau nu e un JSON Schema valid.'
+                );
+            }
+            return schemaObj;
+        }
+
+        function startvalDinRawSiSchema(rawText, schemaObj) {
+            let startval = parseRedisJson(rawText);
+            if (trebuieRegenaratStartval(startval, schemaObj)) {
+                startval = valoareImplicitaDinSchema(schemaObj);
+            }
+            return startval;
+        }
+
+        async function peSchimbareFormularDinLiber() {
+            const sel = document.getElementById('select-formular-din');
+            if (!sel || !esteLiberCuFormularDin()) return;
+            const next = sel.value || '';
+            const prev = schemaTempKey || '';
+            if (next === prev) return;
+
+            if (prev && next !== prev) {
+                const dirty = obtineValoareCurentaPentruComparatie() !== valoareBaseline;
+                if (dirty && !confirm('Înlocuiești formularul? Modificările nesincronizate din formular se pierd.')) {
+                    sel.value = prev;
+                    return;
+                }
+            }
+
+            if (!next) {
+                sincronizeazaRawDinEditori();
+                schemaTempKey = null;
+                if (dataFormEditor) {
+                    try { dataFormEditor.destroy(); } catch (e) {}
+                    dataFormEditor = null;
+                }
+                const holder = document.getElementById('data-form-holder');
+                if (holder) {
+                    holder.innerHTML = '';
+                    holder.style.display = 'none';
+                }
+                document.getElementById('tab-form').style.display = 'none';
+                seteazaModEditare(esteTipRedisJson(redisTipCurent) ? 'json' : 'text');
+                marcheazaCurentCaBaseline();
+                return;
+            }
+
+            schemaTempKey = next;
+            document.getElementById('tab-form').style.display = 'inline-block';
+            const raw = document.getElementById('raw-json-editor').value;
+            await incarcaFormularDate({ tip: 'data', schemaKey: next }, raw);
+            if (!dataFormEditor) {
+                schemaTempKey = null;
+                sel.value = '';
+                document.getElementById('tab-form').style.display = 'none';
+                seteazaModEditare(esteTipRedisJson(redisTipCurent) ? 'json' : 'text');
+                return;
+            }
+            seteazaModEditare('form');
+        }
+
+        async function peSchimbareFormularDinSet() {
+            const sel = document.getElementById('select-formular-din-set');
+            if (!sel) return;
+            const next = sel.value || '';
+            const prev = setMembruSchemaTempKey || '';
+            if (next === prev) return;
+
+            if (prev && next !== prev) {
+                const ta = document.getElementById('set-member-textarea');
+                const dirty = (ta ? ta.value : '') !== setMembruBaseline ||
+                    (setMembruMod === 'form' && setMembruFormEditor);
+                if (dirty && !confirm('Înlocuiești formularul membrului?')) {
+                    sel.value = prev;
+                    return;
+                }
+            }
+
+            if (!next) {
+                if (setMembruFormEditor) {
+                    try {
+                        const pretty = JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                        document.getElementById('set-member-textarea').value = pretty;
+                    } catch (e) { /* keep textarea */ }
+                }
+                reseteazaSchemaTempMembruSet();
+                seteazaModMembruSet(membruPareJson(document.getElementById('set-member-textarea').value) ? 'json' : 'text');
+                actualizeazaIndicatorModificatMembruSet();
+                return;
+            }
+
+            setMembruSchemaTempKey = next;
+            document.getElementById('tab-set-form').style.display = 'inline-block';
+            try {
+                await incarcaFormularMembruSet(next, document.getElementById('set-member-textarea').value);
+                seteazaModMembruSet('form');
+            } catch (e) {
+                setMembruSchemaTempKey = null;
+                sel.value = '';
+                document.getElementById('tab-set-form').style.display = 'none';
+                distrugeEditorMembruSetForm();
+                alert(e.message || String(e));
+                seteazaModMembruSet('text');
+            }
+        }
+
+        async function incarcaFormularMembruSet(schemaKey, rawText) {
+            const holder = document.getElementById('set-member-form-holder');
+            const schemaObj = JSON.parse(JSON.stringify(await incarcaSchemaCaObiect(schemaKey)));
+            const startval = startvalDinRawSiSchema(rawText, schemaObj);
+
+            distrugeEditorMembruSetForm();
+            holder.style.display = 'block';
+            holder.innerHTML = '';
+
+            const editorOpts = {
+                schema: schemaObj,
+                theme: 'html',
+                disable_collapse: false,
+                disable_edit_json: true,
+                disable_properties: true,
+                disable_array_reorder: true,
+                use_default_values: true,
+                display_required_only: false,
+                show_errors: 'interaction'
+            };
+            if (startval !== undefined && startval !== null) {
+                editorOpts.startval = startval;
+            }
+
+            setMembruFormEditor = new JSONEditor(holder, editorOpts);
+            setMembruFormEditor.on('ready', () => {
+                try {
+                    const pretty = JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                    document.getElementById('set-member-textarea').value = pretty;
+                    setMembruFormEditor.on('change', () => {
+                        try {
+                            document.getElementById('set-member-textarea').value =
+                                JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                        } catch (e) { /* ignore */ }
+                        actualizeazaIndicatorModificatMembruSet();
+                    });
+                    actualizeazaIndicatorModificatMembruSet();
+                } catch (e) { /* ignore */ }
             });
         }
 
@@ -1758,6 +2029,7 @@ function translateUpstashSearchResults(date) {
         function inapoiLaLista() {
             distrugeEditori();
             resetStareSet();
+            reseteazaSchemaTempLiber();
             seteazaVizibilitateIdxLegenda(false);
             cheieCurenta = null;
             infoCheieCurenta = null;
@@ -1813,10 +2085,12 @@ function translateUpstashSearchResults(date) {
             setMembruOriginal = '';
             setMembruMod = 'text';
             setMembruBaseline = '';
+            reseteazaSchemaTempMembruSet();
             const ta = document.getElementById('set-member-textarea');
             if (ta) {
                 ta.value = '';
                 ta.classList.remove('json-invalid');
+                ta.style.display = '';
             }
             const list = document.getElementById('set-members-list');
             if (list) list.innerHTML = '';
@@ -1865,6 +2139,8 @@ function translateUpstashSearchResults(date) {
             }
 
             if (isSet) {
+                const wrapLiber = document.getElementById('formular-din-wrap');
+                if (wrapLiber) wrapLiber.style.display = 'none';
                 actualizeazaVizualizareSet();
             } else {
                 const listView = document.getElementById('set-list-view');
@@ -1976,10 +2252,31 @@ function translateUpstashSearchResults(date) {
         }
 
         function seteazaModMembruSet(mod) {
+            if (mod === 'form' && !setMembruSchemaTempKey) {
+                mod = 'json';
+            }
             setMembruMod = mod;
+            document.getElementById('tab-set-form').classList.toggle('active', mod === 'form');
             document.getElementById('tab-set-text').classList.toggle('active', mod === 'text');
             document.getElementById('tab-set-json').classList.toggle('active', mod === 'json');
+            document.getElementById('tab-set-form').style.display = setMembruSchemaTempKey ? 'inline-block' : 'none';
+
+            const ta = document.getElementById('set-member-textarea');
+            const formHolder = document.getElementById('set-member-form-holder');
+            if (mod === 'form') {
+                if (ta) ta.style.display = 'none';
+                if (formHolder) formHolder.style.display = 'block';
+            } else {
+                if (ta) ta.style.display = '';
+                if (formHolder) formHolder.style.display = 'none';
+                if (setMembruFormEditor && mod === 'json') {
+                    try {
+                        ta.value = JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                    } catch (e) { /* keep */ }
+                }
+            }
             actualizeazaValidareJsonMembruSet();
+            actualizeazaIndicatorModificatMembruSet();
         }
 
         function actualizeazaValidareJsonMembruSet() {
@@ -1999,8 +2296,19 @@ function translateUpstashSearchResults(date) {
         function actualizeazaIndicatorModificatMembruSet() {
             const dot = document.getElementById('set-save-dirty-dot');
             if (!dot) return;
-            const ta = document.getElementById('set-member-textarea');
-            const dirty = (ta ? ta.value : '') !== setMembruBaseline;
+            let cur = '';
+            try {
+                if (setMembruMod === 'form' && setMembruFormEditor) {
+                    cur = JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                } else {
+                    const ta = document.getElementById('set-member-textarea');
+                    cur = ta ? ta.value : '';
+                }
+            } catch (e) {
+                const ta = document.getElementById('set-member-textarea');
+                cur = ta ? ta.value : '';
+            }
+            const dirty = cur !== setMembruBaseline;
             dot.classList.toggle('is-visible', dirty);
         }
 
@@ -2008,6 +2316,8 @@ function translateUpstashSearchResults(date) {
             setMembruEditIndex = -2;
             setMembruOriginal = '';
             setMembruBaseline = '';
+            reseteazaSchemaTempMembruSet();
+            populeazaSelectFormularDin(document.getElementById('select-formular-din-set'), '');
             document.getElementById('set-member-textarea').value = '';
             document.getElementById('btn-sterge-membru').style.display = 'none';
             seteazaModMembruSet('text');
@@ -2026,6 +2336,8 @@ function translateUpstashSearchResults(date) {
             if (asJson) {
                 try { afisat = JSON.stringify(JSON.parse(text), null, 2); } catch (e) { afisat = text; }
             }
+            reseteazaSchemaTempMembruSet();
+            populeazaSelectFormularDin(document.getElementById('select-formular-din-set'), '');
             document.getElementById('set-member-textarea').value = afisat;
             setMembruBaseline = afisat;
             document.getElementById('btn-sterge-membru').style.display = 'inline-block';
@@ -2038,6 +2350,7 @@ function translateUpstashSearchResults(date) {
             setMembruEditIndex = -1;
             setMembruOriginal = '';
             setMembruBaseline = '';
+            reseteazaSchemaTempMembruSet();
             document.getElementById('set-member-textarea').value = '';
             actualizeazaValidareJsonMembruSet();
             actualizeazaIndicatorModificatMembruSet();
@@ -2050,7 +2363,15 @@ function translateUpstashSearchResults(date) {
             const ta = document.getElementById('set-member-textarea');
             let valoare = ta.value;
 
-            if (setMembruMod === 'json') {
+            if (setMembruMod === 'form' && setMembruFormEditor) {
+                try {
+                    valoare = JSON.stringify(setMembruFormEditor.getValue());
+                    ta.value = JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                } catch (e) {
+                    alert('Nu pot citi formularul membrului.');
+                    return;
+                }
+            } else if (setMembruMod === 'json') {
                 actualizeazaValidareJsonMembruSet();
                 if (!esteJsonValid(valoare)) return;
                 try {
@@ -2111,6 +2432,12 @@ function translateUpstashSearchResults(date) {
         }
 
         async function copiazaMembruSet(buton) {
+            if (setMembruMod === 'form' && setMembruFormEditor) {
+                try {
+                    document.getElementById('set-member-textarea').value =
+                        JSON.stringify(setMembruFormEditor.getValue(), null, 2);
+                } catch (e) { /* keep textarea */ }
+            }
             const text = document.getElementById('set-member-textarea').value || '';
             try {
                 await navigator.clipboard.writeText(text);
@@ -2171,6 +2498,7 @@ function translateUpstashSearchResults(date) {
 
             distrugeEditori();
             resetStareSet();
+            reseteazaSchemaTempLiber();
 
             document.getElementById('raw-json-editor').value = '';
             document.getElementById('rezultat-citire').innerText = '';
@@ -2258,16 +2586,19 @@ function translateUpstashSearchResults(date) {
             document.getElementById('rezultat-citire').innerText = rawText;
             document.getElementById('valoare-camp').value = rawText;
 
-            const canForm = (info.tip === 'data' || info.tip === 'schema') && !info.sistem && !stearsa;
+            const canFormBound = (info.tip === 'data' || info.tip === 'schema') && !info.sistem && !stearsa;
+            const canFormLiber = esteLiberCuFormularDin() && !!schemaTempKey && !stearsa;
+            const canForm = canFormBound || canFormLiber;
             document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
             document.getElementById('tab-text').style.display = (redisTip === 'json') ? 'none' : 'inline-block';
+            actualizeazaUiFormularDinLiber();
 
-            if (canForm && info.tip === 'data') {
+            if (canFormBound && info.tip === 'data') {
                 const pretty = valoareCaJsonPretty(rawText);
                 await incarcaFormularDate(info, pretty);
                 seteazaModEditare('form');
                 marcheazaCurentCaBaseline();
-            } else if (canForm && info.tip === 'schema') {
+            } else if (canFormBound && info.tip === 'schema') {
                 const pretty = valoareCaJsonPretty(rawText) || JSON.stringify({ type: 'object', properties: {} }, null, 2);
                 document.getElementById('raw-json-editor').value = pretty;
                 await incarcaEditorSchemaVizual(pretty);
@@ -2323,7 +2654,7 @@ function translateUpstashSearchResults(date) {
         function obtineValoareCurentaPentruComparatie() {
             try {
                 if (modEditare === 'form' && infoCheieCurenta) {
-                    if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                    if ((infoCheieCurenta.tip === 'data' || (infoCheieCurenta.tip === 'liber' && schemaTempKey)) && dataFormEditor) {
                         return JSON.stringify(dataFormEditor.getValue(), null, 2);
                     }
                     if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
@@ -2374,7 +2705,7 @@ function translateUpstashSearchResults(date) {
         function sincronizeazaRawDinEditori() {
             if (!infoCheieCurenta) return;
             try {
-                if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                if ((infoCheieCurenta.tip === 'data' || (infoCheieCurenta.tip === 'liber' && schemaTempKey)) && dataFormEditor) {
                     document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
                 } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
                     const schema = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
@@ -2599,13 +2930,14 @@ function translateUpstashSearchResults(date) {
             if (esteTipRedisJson(redisTipCurent) && mod === 'text') {
                 mod = 'json';
             }
-            const canForm = infoCheieCurenta && (infoCheieCurenta.tip === 'data' || infoCheieCurenta.tip === 'schema') && !infoCheieCurenta.sistem;
+            const canForm = poateModFormularCheie();
             if (mod === 'form' && !canForm) mod = esteTipRedisJson(redisTipCurent) ? 'json' : 'text';
             modEditare = mod;
 
             document.getElementById('tab-form').classList.toggle('active', mod === 'form');
             document.getElementById('tab-text').classList.toggle('active', mod === 'text');
             document.getElementById('tab-json').classList.toggle('active', mod === 'json');
+            document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
             document.getElementById('tab-text').style.display = esteTipRedisJson(redisTipCurent) ? 'none' : 'inline-block';
             document.getElementById('panel-form').style.display = mod === 'form' ? 'block' : 'none';
             document.getElementById('panel-raw').style.display = (mod === 'text' || mod === 'json') ? 'block' : 'none';
@@ -2613,6 +2945,7 @@ function translateUpstashSearchResults(date) {
             document.getElementById('panel-unsupported').style.display = 'none';
             document.getElementById('detail-mode-tabs').style.display = 'flex';
             document.getElementById('btn-salveaza').style.display = 'inline-block';
+            actualizeazaUiFormularDinLiber();
 
             if (mod === 'text' || mod === 'json') {
                 sincronizeazaRawDinEditori();
@@ -2690,7 +3023,7 @@ function translateUpstashSearchResults(date) {
             // --- Formular ---
             let payload;
             try {
-                if (infoCheieCurenta.tip === 'data' && dataFormEditor) {
+                if ((infoCheieCurenta.tip === 'data' || (infoCheieCurenta.tip === 'liber' && schemaTempKey)) && dataFormEditor) {
                     payload = dataFormEditor.getValue();
                 } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
                     payload = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
