@@ -114,6 +114,7 @@
         }
         .btn-legenda:hover { background: #218838; }
         .btn-legenda.is-open { background: #1e7e34; }
+        #btn-idx-legenda { margin-left: auto; }
         .new-idx-check-label {
             display: flex; align-items: center; gap: 8px;
             margin: 10px 0 8px; font-weight: normal; cursor: pointer;
@@ -130,7 +131,7 @@
         }
         .idx-legenda-panel.is-open { display: block; }
         .idx-legenda-panel h4 {
-            margin: 0 0 8px;
+            margin: 0 0 6px;
             font-size: 13px;
             color: var(--accent);
         }
@@ -140,16 +141,35 @@
             color: var(--text-muted);
             margin: 0 0 10px;
         }
-        .idx-legenda-panel dl {
-            margin: 0;
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 4px 16px;
+        .idx-fields-table {
+            width: auto;
+            max-width: 100%;
+            border-collapse: collapse;
             font-family: Consolas, monospace;
             font-size: 12px;
         }
-        .idx-legenda-panel dt { color: #28a745; font-weight: 600; }
-        .idx-legenda-panel dd { margin: 0; color: var(--text-muted); }
+        .idx-fields-table th {
+            text-align: left;
+            padding: 4px 12px 4px 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .idx-fields-table td {
+            padding: 4px 12px 4px 0;
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            color: var(--text);
+        }
+        .idx-fields-table th:last-child,
+        .idx-fields-table td:last-child {
+            padding-right: 0;
+        }
+        .idx-fields-table .idx-field-name { color: #28a745; font-weight: 600; white-space: nowrap; }
+        .idx-fields-table .idx-field-type { color: var(--text-muted); white-space: nowrap; }
+        .idx-fields-table .idx-field-val { word-break: break-word; max-width: 320px; }
+        .idx-fields-table .idx-val-err { color: #dc3545; font-weight: 600; }
         .key-row .badge { flex-shrink: 0; }
         p { color: var(--text-muted); }
         label { color: var(--text); }
@@ -502,33 +522,28 @@
 
                 <div id="panel-unsupported" class="set-unsupported" style="display:none;"></div>
 
-                <div id="panel-idx-legenda" class="idx-legenda-panel" aria-hidden="true">
-                    <h4>Câmpuri index Redis Search</h4>
-                    <p class="idx-index-name">Index: <code>idx_search_tags</code> — cheile cu aceste prefixe pot fi indexate (nu e sincronizat încă din UI).</p>
-                    <dl>
-                        <dt>s_prefix</dt><dd>string token</dd>
-                        <dt>s_name</dt><dd>string token</dd>
-                        <dt>s_app</dt><dd>string token</dd>
-                        <dt>s_type</dt><dd>string token</dd>
-                        <dt>s_perms</dt><dd>string token</dd>
-                        <dt>s_tag</dt><dd>string token</dd>
-                        <dt>s_tag2</dt><dd>string token</dd>
-                        <dt>s_num</dt><dd>number F64</dd>
-                        <dt>s_num2</dt><dd>number F64</dd>
-                        <dt>s_num3</dt><dd>number F64</dd>
-                        <dt>s_const</dt><dd>boolean</dd>
-                        <dt>s_path</dt><dd>path (facet)</dd>
-                        <dt>s_category</dt><dd>path (facet)</dd>
-                    </dl>
-                </div>
-
                 <div class="detail-actions" id="detail-actions-key">
-                    <button type="button" class="btn-legenda" id="btn-idx-legenda" style="display:none;" onclick="toggleIdxLegenda()">Legendă</button>
                     <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
                         Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
                     </button>
                     <button type="button" class="btn-rosu" onclick="stergeCheieCurenta()">Șterge</button>
                     <button type="button" class="btn-albastru" id="btn-deschide-schema" style="display:none;" onclick="deschideSchemaLegata()">Deschide schema</button>
+                    <button type="button" class="btn-legenda" id="btn-idx-legenda" style="display:none;" onclick="toggleIdxLegenda()">Indecși</button>
+                </div>
+
+                <div id="panel-idx-legenda" class="idx-legenda-panel" aria-hidden="true">
+                    <h4>Indecși</h4>
+                    <p class="idx-index-name">Index: <code>idx_search_tags</code></p>
+                    <table class="idx-fields-table">
+                        <thead>
+                            <tr>
+                                <th>Câmp</th>
+                                <th>Tip</th>
+                                <th>Valoare</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idx-fields-tbody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -627,6 +642,25 @@
         /** Prefixe eligibile pentru indexul Upstash Search (idx_search_tags). */
         const IDX_PREFIXES = ['data:', 'info:', 'json:', 'schema:', 'search:', 'set:', 's:'];
 
+        /** Schema câmpurilor din idx_search_tags (doar inspecție UI, fără scriere în index). */
+        const IDX_SEARCH_FIELDS = [
+            { key: 's_prefix', tip: 'string token', kind: 'string' },
+            { key: 's_name', tip: 'string token', kind: 'string' },
+            { key: 's_app', tip: 'string token', kind: 'string' },
+            { key: 's_type', tip: 'string token', kind: 'string' },
+            { key: 's_perms', tip: 'string token', kind: 'string' },
+            { key: 's_tag', tip: 'string token', kind: 'string' },
+            { key: 's_tag2', tip: 'string token', kind: 'string' },
+            { key: 's_num', tip: 'number F64', kind: 'number' },
+            { key: 's_num2', tip: 'number F64', kind: 'number' },
+            { key: 's_num3', tip: 'number F64', kind: 'number' },
+            { key: 's_const', tip: 'boolean', kind: 'boolean' },
+            { key: 's_path', tip: 'path (facet)', kind: 'facet' },
+            { key: 's_category', tip: 'path (facet)', kind: 'facet' }
+        ];
+
+        let idxLegendaDebounce = null;
+
         // --- stare UI nouă ---
         let toateCheile = [];
         let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
@@ -673,6 +707,7 @@
         document.getElementById('raw-json-editor').addEventListener('input', () => {
             if (modEditare === 'json') actualizeazaValidareJson();
             actualizeazaIndicatorModificat();
+            programeazaRefreshIdxLegenda();
         });
 
         document.getElementById('set-member-textarea').addEventListener('input', () => {
@@ -878,6 +913,83 @@
             }
         }
 
+        function obtineObiectCurentPentruIdx() {
+            try {
+                sincronizeazaRawDinEditori();
+            } catch (e) { /* ignore */ }
+            const text = (document.getElementById('raw-json-editor') || {}).value || '';
+            if (!text.trim()) return { obj: null, parseError: false };
+            try {
+                const parsed = JSON.parse(text);
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return { obj: parsed, parseError: false };
+                }
+                return { obj: null, parseError: true };
+            } catch (e) {
+                return { obj: null, parseError: true };
+            }
+        }
+
+        function evalueazaCampIdx(field, obj, parseError) {
+            if (parseError) return { status: 'type', text: 'type error' };
+            if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+                return { status: 'missing', text: 'missing' };
+            }
+            if (!Object.prototype.hasOwnProperty.call(obj, field.key)) {
+                return { status: 'missing', text: 'missing' };
+            }
+            const v = obj[field.key];
+            if (v === undefined) return { status: 'missing', text: 'missing' };
+
+            if (field.kind === 'string') {
+                if (typeof v !== 'string') return { status: 'type', text: 'type error' };
+                return { status: 'ok', text: JSON.stringify(v) };
+            }
+            if (field.kind === 'number') {
+                if (typeof v !== 'number' || Number.isNaN(v)) return { status: 'type', text: 'type error' };
+                return { status: 'ok', text: String(v) };
+            }
+            if (field.kind === 'boolean') {
+                if (typeof v !== 'boolean') return { status: 'type', text: 'type error' };
+                return { status: 'ok', text: String(v) };
+            }
+            if (field.kind === 'facet') {
+                if (typeof v === 'string') return { status: 'ok', text: JSON.stringify(v) };
+                if (typeof v === 'number' && !Number.isNaN(v)) return { status: 'ok', text: String(v) };
+                return { status: 'type', text: 'type error' };
+            }
+            return { status: 'type', text: 'type error' };
+        }
+
+        function randeazaTabelIdxLegenda() {
+            const tbody = document.getElementById('idx-fields-tbody');
+            if (!tbody) return;
+            const { obj, parseError } = obtineObiectCurentPentruIdx();
+            tbody.innerHTML = '';
+            IDX_SEARCH_FIELDS.forEach(field => {
+                const ev = evalueazaCampIdx(field, obj, parseError);
+                const tr = document.createElement('tr');
+                const valClass = ev.status === 'ok' ? 'idx-field-val' : 'idx-field-val idx-val-err';
+                tr.innerHTML =
+                    '<td class="idx-field-name"></td>' +
+                    '<td class="idx-field-type"></td>' +
+                    '<td class="' + valClass + '"></td>';
+                tr.children[0].textContent = field.key;
+                tr.children[1].textContent = field.tip;
+                tr.children[2].textContent = ev.text;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function programeazaRefreshIdxLegenda() {
+            const panel = document.getElementById('panel-idx-legenda');
+            if (!panel || !panel.classList.contains('is-open')) return;
+            if (idxLegendaDebounce) clearTimeout(idxLegendaDebounce);
+            idxLegendaDebounce = setTimeout(() => {
+                randeazaTabelIdxLegenda();
+            }, 200);
+        }
+
         function toggleIdxLegenda() {
             const btn = document.getElementById('btn-idx-legenda');
             const panel = document.getElementById('panel-idx-legenda');
@@ -886,6 +998,7 @@
             panel.classList.toggle('is-open', open);
             btn.classList.toggle('is-open', open);
             panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+            if (open) randeazaTabelIdxLegenda();
         }
 
         async function aflaTipRedis(cheie, opts) {
@@ -2086,13 +2199,19 @@ function translateUpstashSearchResults(date) {
                             });
                             dataFormEditor.on('ready', () => {
                                 document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
-                                dataFormEditor.on('change', actualizeazaIndicatorModificat);
+                                dataFormEditor.on('change', () => {
+                                    actualizeazaIndicatorModificat();
+                                    programeazaRefreshIdxLegenda();
+                                });
                                 marcheazaCurentCaBaseline();
                             });
                             return;
                         }
                         document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
-                        dataFormEditor.on('change', actualizeazaIndicatorModificat);
+                        dataFormEditor.on('change', () => {
+                            actualizeazaIndicatorModificat();
+                            programeazaRefreshIdxLegenda();
+                        });
                         marcheazaCurentCaBaseline();
                     } catch (e) { /* ignore */ }
                 });
@@ -2716,6 +2835,7 @@ function translateUpstashSearchResults(date) {
                     programeazaPreviewDateSchema(live);
                 } catch (e) {}
                 actualizeazaIndicatorModificat();
+                programeazaRefreshIdxLegenda();
             });
 
             schemaMetaEditor.on('ready', () => {
