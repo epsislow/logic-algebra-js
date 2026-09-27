@@ -1253,13 +1253,16 @@ function translateUpstashSearchResults(date) {
             return esteJsonValid(s);
         }
 
-        function afiseazaPanouriDupaTipRedis(redisTip) {
+        function afiseazaPanouriDupaTipRedis(redisTip, opts) {
+            opts = opts || {};
             const tip = normalizeazaTipRedis(redisTip);
             const isSet = tip === 'set';
             const isDoc = tip === 'string' || tip === 'none' || tip === 'json';
             const supported = isSet || isDoc;
+            const amanat = !!opts.amanatContinut;
 
-            document.getElementById('detail-mode-tabs').style.display = isDoc ? 'flex' : 'none';
+            // la deschidere string/json: tab-urile + raw rămân ascunse până după load
+            document.getElementById('detail-mode-tabs').style.display = (isDoc && !amanat) ? 'flex' : 'none';
             document.getElementById('panel-form').style.display = 'none';
             document.getElementById('panel-raw').style.display = 'none';
             document.getElementById('panel-set').style.display = isSet ? 'block' : 'none';
@@ -1524,6 +1527,13 @@ function translateUpstashSearchResults(date) {
             cheieCurenta = cheie;
             infoCheieCurenta = info;
 
+            // ascunde editorii înainte să arătăm detaliul — evită flicker (gol → ascuns → cu valoare)
+            document.getElementById('panel-raw').style.display = 'none';
+            document.getElementById('panel-form').style.display = 'none';
+            document.getElementById('panel-set').style.display = 'none';
+            document.getElementById('panel-unsupported').style.display = 'none';
+            document.getElementById('detail-mode-tabs').style.display = 'none';
+
             document.getElementById('ecran-lista').style.display = 'none';
             document.getElementById('ecran-detaliu').style.display = 'block';
             document.getElementById('detail-key-name').textContent = cheie;
@@ -1563,7 +1573,8 @@ function translateUpstashSearchResults(date) {
             redisBadge.className = 'badge ' + er.cls;
             redisBadge.textContent = er.badge;
 
-            afiseazaPanouriDupaTipRedis(redisTip);
+            // panourile de conținut rămân ascunse până după load (seteazaModEditare / set UI)
+            afiseazaPanouriDupaTipRedis(redisTip, { amanatContinut: true });
 
             const btnSchema = document.getElementById('btn-deschide-schema');
             const tipDoc = (redisTip === 'string' || redisTip === 'json');
@@ -1596,13 +1607,13 @@ function translateUpstashSearchResults(date) {
                 return;
             }
 
+            // setează valoarea cât timp textarea e încă ascuns, apoi arată o singură dată
             document.getElementById('raw-json-editor').value = rawText;
             document.getElementById('rezultat-citire').innerText = rawText;
             document.getElementById('valoare-camp').value = rawText;
 
             const canForm = (info.tip === 'data' || info.tip === 'schema') && !info.sistem;
             document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
-            // RedisJSON: doar JSON (fără Text) — serverul nu acceptă non-JSON
             document.getElementById('tab-text').style.display = (redisTip === 'json') ? 'none' : 'inline-block';
 
             if (canForm && info.tip === 'data') {
