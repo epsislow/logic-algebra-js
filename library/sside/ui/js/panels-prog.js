@@ -30,6 +30,39 @@
     return document.getElementById(id);
   }
 
+  const BTN_KINDS = [
+    { value: '', label: '— default (albastru) —' },
+    { value: 'blue', label: 'albastru' },
+    { value: 'red', label: 'roșu' },
+    { value: 'green', label: 'verde' },
+    { value: 'yellow', label: 'galben' },
+    { value: 'white', label: 'alb' },
+    { value: 'gray', label: 'gri' },
+    { value: 'black', label: 'negru' },
+  ];
+
+  /** Normalizează kind vechi (danger → red). */
+  function normalizeBtnKind(kind) {
+    const k = (kind || '').trim().toLowerCase();
+    if (!k || k === 'default') return '';
+    if (k === 'danger') return 'red';
+    if (BTN_KINDS.some((x) => x.value === k)) return k;
+    return '';
+  }
+
+  function fillBtnKindSelect(sel, current) {
+    if (!sel) return;
+    const cur = normalizeBtnKind(current);
+    sel.innerHTML = '';
+    BTN_KINDS.forEach((opt) => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  }
+
   /** Select pentru chei schema/alg/form (F5b) — fără input text. */
   function fillKeySelect(sel, kind, current) {
     if (!sel) return;
@@ -128,13 +161,14 @@
       obj.schema = row1.querySelector('[data-f="schema"]').value;
       obj.btns = [];
       btnsHost.querySelectorAll('.prog-step').forEach((el) => {
-        obj.btns.push({
+        const kind = normalizeBtnKind(el.querySelector('[data-b="kind"]').value);
+        const btn = {
           id: el.querySelector('[data-b="id"]').value.trim(),
           label: el.querySelector('[data-b="label"]').value.trim(),
           alg: el.querySelector('[data-b="alg"]').value.trim(),
-          kind: el.querySelector('[data-b="kind"]').value.trim() || undefined,
-        });
-        if (!obj.btns[obj.btns.length - 1].kind) delete obj.btns[obj.btns.length - 1].kind;
+        };
+        if (kind) btn.kind = kind;
+        obj.btns.push(btn);
       });
       scrieRaw(obj);
     }
@@ -148,7 +182,7 @@
         '<div class="prog-field"><label>id</label><input data-b="id"></div>' +
         '<div class="prog-field"><label>label</label><input data-b="label"></div>' +
         '<div class="prog-field"><label>alg</label><select data-b="alg"></select></div>' +
-        '<div class="prog-field"><label>kind</label><input data-b="kind" placeholder="danger?"></div>' +
+        '<div class="prog-field"><label>culoare</label><select data-b="kind"></select></div>' +
         '</div>';
       const rm = document.createElement('button');
       rm.type = 'button';
@@ -162,7 +196,7 @@
       el.querySelector('[data-b="id"]').value = btn.id || '';
       el.querySelector('[data-b="label"]').value = btn.label || '';
       fillKeySelect(el.querySelector('[data-b="alg"]'), 'alg', btn.alg || '');
-      el.querySelector('[data-b="kind"]').value = btn.kind || '';
+      fillBtnKindSelect(el.querySelector('[data-b="kind"]'), btn.kind || '');
       el.querySelectorAll('input,select').forEach((inp) => {
         inp.addEventListener('input', syncFromDom);
         inp.addEventListener('change', syncFromDom);

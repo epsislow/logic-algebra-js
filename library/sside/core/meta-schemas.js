@@ -39,7 +39,7 @@
             id: { type: 'string' },
             label: { type: 'string' },
             alg: { type: 'string', description: 'ex: alg:_save_item' },
-            kind: { type: 'string' },
+            kind: { type: 'string', description: 'culoare buton Live: blue|red|green|yellow|white|gray|black' },
           },
         },
       },

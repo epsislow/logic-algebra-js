@@ -292,8 +292,29 @@
             background: var(--bg-muted) !important; color: var(--text) !important;
             border: 1px solid var(--border);
         }
+        .prog-live-actions .btn-kind-blue,
+        .prog-live-actions .btn-albastru {
+            background: #0d6efd !important; color: #fff !important;
+        }
+        .prog-live-actions .btn-kind-red,
         .prog-live-actions .btn-danger-kind {
             background: #dc3545 !important; color: #fff !important;
+        }
+        .prog-live-actions .btn-kind-green {
+            background: #198754 !important; color: #fff !important;
+        }
+        .prog-live-actions .btn-kind-yellow {
+            background: #ffc107 !important; color: #212529 !important;
+        }
+        .prog-live-actions .btn-kind-white {
+            background: #f8f9fa !important; color: #212529 !important;
+            border: 1px solid #ced4da;
+        }
+        .prog-live-actions .btn-kind-gray {
+            background: #6c757d !important; color: #fff !important;
+        }
+        .prog-live-actions .btn-kind-black {
+            background: #212529 !important; color: #fff !important;
         }
         .prog-live-ui-tabs {
             display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;

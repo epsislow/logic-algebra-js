@@ -155,11 +155,22 @@
     };
     actionsEl.appendChild(btnReset);
 
+    // Prefetch alg-uri pe butoane (1 GET acum, 0 la click)
+    const algKeys = btns.map((btn) => btn.alg).filter(Boolean);
+    if (deps.loadJsonKey && algKeys.length) {
+      Promise.all(
+        algKeys.map((k) =>
+          deps.loadJsonKey(k).catch(() => null)
+        )
+      ).catch(() => {});
+    }
+
     btns.forEach((btn) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = btn.label || btn.id || 'Actiune';
-      if (btn.kind === 'danger') b.className = 'btn-danger-kind';
+      if (btn.kind === 'danger') b.className = 'btn-kind-red';
+      else if (btn.kind) b.className = 'btn-kind-' + String(btn.kind).toLowerCase();
       else b.className = 'btn-albastru';
       b.onclick = async () => {
         clearBanner(bannerEl);

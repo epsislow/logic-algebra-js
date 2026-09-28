@@ -49,6 +49,13 @@
         let schemeCacheKeys = [];
         /** Cache pickere prog (F5b): schema / alg / form / ui */
         let progKeysCache = { schema: [], alg: [], form: [], ui: [] };
+        /** Cache JSON alg/form/schema pentru Live (evită JSON.GET la fiecare click). */
+        let progJsonCache = Object.create(null);
+
+        function invalidateProgJsonCache(key) {
+            if (key) delete progJsonCache[key];
+            else progJsonCache = Object.create(null);
+        }
 
         const apiStats = { read: 0, type: 0, write: 0, advSearch: 0 };
         /** Istoric agregat consecutiv: [{ cmd, count, cat }, ...] — index 0 = cel mai recent. Max 10 evenimente. */
@@ -324,6 +331,8 @@
             cheieCurenta = null;
             schemeCacheReady = false;
             schemeCacheKeys = [];
+            progKeysCache = { schema: [], alg: [], form: [], ui: [] };
+            invalidateProgJsonCache();
             actualizeazaSemnalCacheScheme();
             seteazaVizibilitateStatisticiApi(false);
         }
@@ -2855,6 +2864,9 @@ function translateUpstashSearchResults(date) {
             const setChei = new Set(toateCheile);
             const info = clasificaCheie(cheie, setChei);
 
+            // cache Live doar pe durata acestui panou
+            invalidateProgJsonCache();
+
             // păstrăm proveniența doar dacă deschidem schema legată (sau revenim la data)
             if (cheieDataProvenienta) {
                 const infoProv = clasificaCheie(cheieDataProvenienta, setChei);
@@ -3220,17 +3232,23 @@ function translateUpstashSearchResults(date) {
 
         // Live form/ui (F3): deps pentru încărcare schema + default values
         if (window.SsideProgLive) {
-            async function liveLoadJsonKey(key) {
+            async function liveLoadJsonKey(key, opts) {
+                opts = opts || {};
+                if (!opts.force && progJsonCache[key]) {
+                    return JSON.parse(JSON.stringify(progJsonCache[key]));
+                }
                 const tip = tipuriRedisChei[key] || await aflaTipRedis(key);
                 const citire = await citesteValoareCheieRedis(key, tip);
                 if (citire.stearsa) {
+                    invalidateProgJsonCache(key);
                     throw new Error('Cheie stearsă: ' + key);
                 }
                 const parsed = parseRedisJson(citire.text);
                 if (parsed == null || typeof parsed !== 'object') {
                     throw new Error('JSON invalid: ' + key);
                 }
-                return parsed;
+                progJsonCache[key] = parsed;
+                return JSON.parse(JSON.stringify(parsed));
             }
 
             function createWorkerRedisAdapter() {
@@ -3526,6 +3544,7 @@ function translateUpstashSearchResults(date) {
                 }
                 try {
                     const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, textBrut);
+                    progJsonCache[cheieCurenta] = parsed;
                     rawEl.value = pretty;
                     document.getElementById('valoare-camp').value = pretty;
                     document.getElementById('rezultat-citire').innerText = pretty;
@@ -3553,6 +3572,7 @@ function translateUpstashSearchResults(date) {
                         return;
                     }
                     const salvat = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, textBrut);
+                    invalidateProgJsonCache(cheieCurenta);
                     rawEl.value = eJsonRedis ? salvat : textBrut;
                     document.getElementById('valoare-camp').value = rawEl.value;
                     document.getElementById('rezultat-citire').innerText = rawEl.value;
@@ -3582,6 +3602,7 @@ function translateUpstashSearchResults(date) {
                 }
                 try {
                     const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, payload);
+                    invalidateProgJsonCache(cheieCurenta);
                     rawEl.value = pretty;
                     document.getElementById('valoare-camp').value = rawEl.value;
                     document.getElementById('rezultat-citire').innerText = rawEl.value;
@@ -3617,6 +3638,7 @@ function translateUpstashSearchResults(date) {
 
             try {
                 const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, payload);
+                invalidateProgJsonCache(cheieCurenta);
                 rawEl.value = pretty;
                 document.getElementById('valoare-camp').value = rawEl.value;
                 document.getElementById('rezultat-citire').innerText = rawEl.value;
@@ -3643,6 +3665,7 @@ function translateUpstashSearchResults(date) {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheieSterse] });
                 if (date.rezultat > 0) {
                     if (isSchemaRedisKey(cheieSterse)) stergeSchemaDinCache(cheieSterse);
+                    invalidateProgJsonCache(cheieSterse);
                     alert('Șters: ' + cheieSterse);
                     inapoiLaLista();
                     await scaneazaToateCampurile();

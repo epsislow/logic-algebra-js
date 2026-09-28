@@ -9,7 +9,7 @@
   "schema": "schema:_item",
   "btns": [
     { "id": "save", "label": "Salveaza", "alg": "alg:_save_item" },
-    { "id": "del", "label": "Sterge", "alg": "alg:_del_item", "kind": "danger" }
+    { "id": "del", "label": "Sterge", "alg": "alg:_del_item", "kind": "red" }
   ]
 }
 ```
