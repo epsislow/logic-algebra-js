@@ -1,5 +1,5 @@
 /**
- * Panouri Edit / Live / Formular / Json pentru chei alg | form | ui (F2).
+ * Panouri Edit / Live / Formular / Json pentru chei alg | form | ui | list (F2 + F4l).
  * Depinde de: SsideKeys, SsideMeta, JSONEditor (Formular), raw-json-editor în DOM.
  */
 (function (root) {
@@ -11,17 +11,18 @@
     'scheck', 'sgen',
     'jset', 'jget',
     'search',
+    'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
   ];
 
   let modProg = 'edit';
-  let progKind = null; // alg | form | ui
+  let progKind = null; // alg | form | ui | list
   let progObj = null;
   let progFormularEditor = null;
   let dirtyHook = null;
   let deps = {
-    listKeys: null, // (kind: 'schema'|'alg'|'form'|'ui') => string[]
+    listKeys: null, // (kind: 'schema'|'alg'|'form'|'ui'|'list') => string[]
   };
 
   function setDeps(partial) {
@@ -93,7 +94,7 @@
   }
 
   function esteProgTip(tip) {
-    return tip === 'alg' || tip === 'form' || tip === 'ui';
+    return tip === 'alg' || tip === 'form' || tip === 'ui' || tip === 'list';
   }
 
   function parseObjDinRaw() {
@@ -369,6 +370,7 @@
     if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
     if (op === 'jget') return { op: 'jget', from: 'payload', path: '', to: '' };
     if (op === 'search') return { op: 'search', query: '', to: 'hits' };
+    if (op === 'ui') return { op: 'ui', do: 'refresh', listid: '' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
     if (op === 'redis') return { op: 'redis', do: 'get', key: '' };
     return { op: op };
@@ -484,7 +486,11 @@
     if (!host) return;
     if (kind === 'form') randeazaEditForm(host, obj);
     else if (kind === 'ui') randeazaEditUi(host, obj);
-    else randeazaEditAlg(host, obj);
+    else if (kind === 'list') {
+      host.innerHTML =
+        '<div class="prog-edit-card"><h4>List</h4>' +
+        '<p class="prog-live-stub">Editează <code>source</code>, <code>columns</code>, <code>pageSize</code>, <code>btns</code>/<code>rowBtns</code> în tab <b>Formular</b> sau <b>Json</b>.</p></div>';
+    } else randeazaEditAlg(host, obj);
   }
 
   function randeazaLive(kind) {
@@ -503,7 +509,10 @@
     }
     Live.destroyAll();
     const obj = asigurObj(kind);
-    const run = kind === 'ui' ? Live.renderUiLive(rootEl, obj) : Live.renderFormLive(rootEl, obj);
+    let run;
+    if (kind === 'ui') run = Live.renderUiLive(rootEl, obj);
+    else if (kind === 'list') run = Live.renderListLive(rootEl, obj, '');
+    else run = Live.renderFormLive(rootEl, obj);
     Promise.resolve(run).catch((e) => {
       rootEl.innerHTML =
         '<p class="prog-live-stub">' + (e && e.message ? e.message : String(e)) + '</p>';

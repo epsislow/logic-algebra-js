@@ -119,6 +119,50 @@ Variantă string (ca filtrul `=` din listă):
 
 La Live, `warehouse` e select cu etichete din hash values; valoarea trimisă în alg e field-ul (`WH1`).
 
+## Listă pe UI + refresh după salvare
+
+`list:_stock` + block pe `ui:_warehouse` + alg care reîmprospătează tabelul:
+
+```json
+{
+  "v": 1,
+  "title": "Stoc",
+  "source": { "from": "search", "query": { "s_prefix": "stock" } },
+  "columns": [
+    { "id": "k", "label": "Cheie", "path": "_key" },
+    { "id": "q", "label": "Qty", "path": "qty" }
+  ],
+  "pageSize": 20
+}
+```
+
+```json
+{
+  "v": 1,
+  "title": "Warehouse",
+  "tabs": [
+    {
+      "id": "main",
+      "blocks": [
+        { "type": "list", "id": "stockMain", "list": "list:_stock" },
+        { "type": "form", "id": "edit", "form": "form:_stock_edit" }
+      ]
+    }
+  ]
+}
+```
+
+```json
+{
+  "v": 1,
+  "steps": [
+    { "op": "ksave", "key": "form.key", "val": "form", "as": "json" },
+    { "op": "ui", "do": "refresh", "listid": "stockMain" },
+    { "op": "end", "msg": "Salvat" }
+  ]
+}
+```
+
 ## Tranzacție atomică
 
 ```json

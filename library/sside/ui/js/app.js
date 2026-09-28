@@ -48,7 +48,7 @@
         let schemeCacheReady = false;
         let schemeCacheKeys = [];
         /** Cache pickere prog (F5b): schema / alg / form / ui */
-        let progKeysCache = { schema: [], alg: [], form: [], ui: [] };
+        let progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
         /** Cache JSON alg/form/schema pentru Live (evită JSON.GET la fiecare click). */
         let progJsonCache = Object.create(null);
 
@@ -331,7 +331,7 @@
             cheieCurenta = null;
             schemeCacheReady = false;
             schemeCacheKeys = [];
-            progKeysCache = { schema: [], alg: [], form: [], ui: [] };
+            progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
             invalidateProgJsonCache();
             actualizeazaSemnalCacheScheme();
             seteazaVizibilitateStatisticiApi(false);
@@ -359,6 +359,9 @@
 
         function isUiRedisKey(key) {
             return SsideKeys.isUiRedisKey(key);
+        }
+        function isListRedisKey(key) {
+            return SsideKeys.isListRedisKey(key);
         }
 
         /** data:_schemaName:instance — data JSON pe schemă */
@@ -397,11 +400,13 @@
             const alg = new Set();
             const form = new Set();
             const ui = new Set();
+            const list = new Set();
             (chei || []).forEach(k => {
                 if (isSchemaRedisKey(k)) set.add(k);
                 if (isAlgRedisKey(k)) alg.add(k);
                 if (isFormRedisKey(k)) form.add(k);
                 if (isUiRedisKey(k)) ui.add(k);
+                if (isListRedisKey(k)) list.add(k);
             });
             schemeCacheKeys = Array.from(set).sort();
             progKeysCache = {
@@ -409,6 +414,7 @@
                 alg: Array.from(alg).sort(),
                 form: Array.from(form).sort(),
                 ui: Array.from(ui).sort(),
+                list: Array.from(list).sort(),
             };
             schemeCacheReady = true;
             actualizeazaSemnalCacheScheme();
@@ -439,6 +445,10 @@
             } else if (isUiRedisKey(cheie) && !progKeysCache.ui.includes(cheie)) {
                 progKeysCache.ui.push(cheie);
                 progKeysCache.ui.sort();
+            } else if (isListRedisKey(cheie) && !(progKeysCache.list || []).includes(cheie)) {
+                if (!progKeysCache.list) progKeysCache.list = [];
+                progKeysCache.list.push(cheie);
+                progKeysCache.list.sort();
             } else if (isSchemaRedisKey(cheie)) {
                 adaugaSchemaInCache(cheie);
             }
@@ -3200,6 +3210,13 @@ function translateUpstashSearchResults(date) {
                     },
                 });
                 if (result.err) return { err: result.err };
+                if (result.ui && window.SsideProgLive && typeof SsideProgLive.applyUiCommands === 'function') {
+                    try {
+                        await SsideProgLive.applyUiCommands(result.ui);
+                    } catch (e) {
+                        return { err: e.message || String(e) };
+                    }
+                }
                 if (result.msg) return { msg: result.msg };
                 return { msg: 'OK' };
             }
@@ -3227,7 +3244,9 @@ function translateUpstashSearchResults(date) {
                                 ? progKeysCache.form || []
                                 : kind === 'ui'
                                   ? progKeysCache.ui || []
-                                  : [];
+                                  : kind === 'list'
+                                    ? progKeysCache.list || []
+                                    : [];
                     const pred =
                         kind === 'schema'
                             ? isSchemaRedisKey
@@ -3237,7 +3256,9 @@ function translateUpstashSearchResults(date) {
                                 ? isFormRedisKey
                                 : kind === 'ui'
                                   ? isUiRedisKey
-                                  : null;
+                                  : kind === 'list'
+                                    ? isListRedisKey
+                                    : null;
                     const fromAll = pred
                         ? (toateCheile || []).filter(pred)
                         : [];
@@ -3625,7 +3646,7 @@ function translateUpstashSearchResults(date) {
             const redisTypeEl = document.getElementById('new-redis-type');
             let redisType = redisTypeEl.value;
             const role = document.getElementById('new-key-role').value;
-            const isProg = role === 'alg' || role === 'form' || role === 'ui';
+            const isProg = role === 'alg' || role === 'form' || role === 'ui' || role === 'list';
             const isColecție = esteTipColecțieLiberCreate(redisType);
 
             if (isProg && !isColecție) {
@@ -3668,6 +3689,9 @@ function translateUpstashSearchResults(date) {
                 } else if (role === 'form') {
                     label.textContent = 'Nume form (fără prefix; `_` se adaugă automat)';
                     ph.placeholder = 'ex: item_edit';
+                } else if (role === 'list') {
+                    label.textContent = 'Nume list (fără prefix; `_` se adaugă automat)';
+                    ph.placeholder = 'ex: stock';
                 } else {
                     label.textContent = 'Nume UI (fără prefix; `_` se adaugă automat)';
                     ph.placeholder = 'ex: warehouse';
@@ -3886,7 +3910,7 @@ function translateUpstashSearchResults(date) {
                 return;
             }
 
-            if (role === 'alg' || role === 'form' || role === 'ui') {
+            if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
                 const rawName = document.getElementById('new-prog-name').value;
                 const cheie = SsideKeys.cheieProgDinNume(role, rawName);
                 if (!cheie) {

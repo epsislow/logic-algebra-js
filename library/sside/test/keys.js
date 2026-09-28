@@ -34,8 +34,10 @@ module.exports = {
     },
     {
       id: 3,
-      desc: 'isAlgRedisKey / form / ui',
+      desc: 'isAlgRedisKey / form / ui / list',
       run() {
+        assert(Keys.isListRedisKey('list:_stock'));
+        assert(!Keys.isListRedisKey('list:stock'));
         assert(Keys.isAlgRedisKey('alg:_save_item'));
         assert(!Keys.isAlgRedisKey('alg:save'));
         assert(Keys.isFormRedisKey('form:_item_edit'));
@@ -45,12 +47,13 @@ module.exports = {
     },
     {
       id: 4,
-      desc: 'clasificaCheie alg/form/ui',
+      desc: 'clasificaCheie alg/form/ui/list',
       run() {
         const empty = new Set();
         assertEq(Keys.clasificaCheie('alg:_x', empty).tip, 'alg');
         assertEq(Keys.clasificaCheie('form:_y', empty).tip, 'form');
         assertEq(Keys.clasificaCheie('ui:_z', empty).tip, 'ui');
+        assertEq(Keys.clasificaCheie('list:_stock', empty).tip, 'list');
       },
     },
     {
@@ -79,6 +82,7 @@ module.exports = {
         assertEq(Keys.etichetaTip({ tip: 'alg' }).cls, 'badge-alg');
         assertEq(Keys.etichetaTip({ tip: 'form' }).cls, 'badge-form');
         assertEq(Keys.etichetaTip({ tip: 'ui' }).cls, 'badge-ui');
+        assertEq(Keys.etichetaTip({ tip: 'list' }).cls, 'badge-list');
         assertEq(Keys.etichetaTip({ tip: 'schema' }).badge, 'schemă');
       },
     },
@@ -89,12 +93,13 @@ module.exports = {
         assertEq(Keys.cheieProgDinNume('alg', 'save'), 'alg:_save');
         assertEq(Keys.cheieProgDinNume('form', '_edit'), 'form:_edit');
         assertEq(Keys.cheieProgDinNume('ui', 'warehouse'), 'ui:_warehouse');
+        assertEq(Keys.cheieProgDinNume('list', 'stock'), 'list:_stock');
         assertEq(Keys.cheieProgDinNume('alg', ''), '');
       },
     },
     {
       id: 9,
-      desc: 'seed alg/form/ui have v:1',
+      desc: 'seed alg/form/ui/list have v:1',
       run() {
         assertEq(Meta.seedAlg('x').v, 1);
         assert(Array.isArray(Meta.seedAlg('x').steps));
@@ -102,6 +107,8 @@ module.exports = {
         assert(Array.isArray(Meta.seedForm('t').btns));
         assertEq(Meta.seedUi('p').v, 1);
         assert(Array.isArray(Meta.seedUi('p').tabs));
+        assertEq(Meta.seedList('L').v, 1);
+        assert(Array.isArray(Meta.seedList('L').columns));
       },
     },
     {
@@ -111,18 +118,21 @@ module.exports = {
         assert(Meta.META_ALG && Meta.META_ALG.properties.steps);
         assert(Meta.META_FORM && Meta.META_FORM.properties.btns);
         assert(Meta.META_UI && Meta.META_UI.properties.tabs);
+        assert(Meta.META_LIST && Meta.META_LIST.properties.columns);
         assertEq(Meta.metaPentruRol('alg'), Meta.META_ALG);
+        assertEq(Meta.metaPentruRol('list'), Meta.META_LIST);
       },
     },
     {
       id: 11,
-      desc: 'IDX must not treat alg/form/ui as search prefixes (convention check)',
+      desc: 'IDX must not treat alg/form/ui/list as search prefixes (convention check)',
       run() {
         // Documented D2: these prefixes are not in IDX_PREFIXES in app.js
         const idx = ['data:', 'info:', 'json:', 'schema:', 'search:', 'set:', 's:'];
         assert(!idx.includes('alg:'));
         assert(!idx.includes('form:'));
         assert(!idx.includes('ui:'));
+        assert(!idx.includes('list:'));
       },
     },
   ],

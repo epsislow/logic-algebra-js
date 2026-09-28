@@ -1,6 +1,6 @@
 /**
  * Clasificare chei Redis (sside) — browser + Node.
- * Convenții: schema:_X, data:_X:inst, _X:inst, alg:_Y, form:_X, ui:_name
+ * Convenții: schema:_X, data:_X:inst, _X:inst, alg:_Y, form:_X, ui:_name, list:_X
  */
 (function (root) {
   'use strict';
@@ -34,6 +34,10 @@
     return /^ui:_[^:]+$/.test(key || '');
   }
 
+  function isListRedisKey(key) {
+    return /^list:_[^:]+$/.test(key || '');
+  }
+
   function parseDataJsonPeSchema(key) {
     const m = (key || '').match(/^data:(_[^:]+):(.*)$/);
     if (!m || m[2] === '') return null;
@@ -65,6 +69,9 @@
     }
     if (isUiRedisKey(key)) {
       return { tip: 'ui', name: key.slice('ui:'.length), uiKey: key };
+    }
+    if (isListRedisKey(key)) {
+      return { tip: 'list', name: key.slice('list:'.length), listKey: key };
     }
 
     const dj = parseDataJsonPeSchema(key);
@@ -107,6 +114,7 @@
     if (info.tip === 'alg') return { badge: 'alg', cls: 'badge-alg', note: '' };
     if (info.tip === 'form') return { badge: 'form', cls: 'badge-form', note: '' };
     if (info.tip === 'ui') return { badge: 'ui', cls: 'badge-ui', note: '' };
+    if (info.tip === 'list') return { badge: 'list', cls: 'badge-list', note: '' };
     if (info.missingSchema) {
       return { badge: 'liber', cls: 'badge-liber', note: '(lipsa schema ' + info.missingSchema + ')' };
     }
@@ -119,6 +127,7 @@
     if (kind === 'alg') return 'alg:' + n;
     if (kind === 'form') return 'form:' + n;
     if (kind === 'ui') return 'ui:' + n;
+    if (kind === 'list') return 'list:' + n;
     if (kind === 'schema') return 'schema:' + n;
     return '';
   }
@@ -130,6 +139,7 @@
     isAlgRedisKey,
     isFormRedisKey,
     isUiRedisKey,
+    isListRedisKey,
     parseDataJsonPeSchema,
     isCheieSistemAscunsa,
     clasificaCheie,

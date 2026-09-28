@@ -16,6 +16,7 @@
         msg: ctx._msg || undefined,
         err: ctx._err || undefined,
         vars: ctx.vars,
+        ui: ctx._ui || undefined,
         stopped: true,
       },
       extra || {}
@@ -31,6 +32,7 @@
       _stop: false,
       _msg: undefined,
       _err: undefined,
+      _ui: undefined,
     };
   }
 
@@ -207,6 +209,23 @@
       return;
     }
 
+    if (op === 'ui') {
+      const doCmd = step.do || 'refresh';
+      if (doCmd !== 'refresh' && doCmd !== 'clear') {
+        throw new Error('ui: do trebuie refresh|clear');
+      }
+      let ids = step.listid;
+      if (ids == null || ids === '') throw new Error('ui: lipsește listid');
+      if (!Array.isArray(ids)) ids = [ids];
+      if (!ctx._ui) ctx._ui = { refresh: [], clear: [] };
+      const bucket = doCmd === 'clear' ? 'clear' : 'refresh';
+      ids.forEach((id) => {
+        const s = id == null ? '' : String(getVal(ctx, id) || id);
+        if (s) ctx._ui[bucket].push(s);
+      });
+      return;
+    }
+
     if (op === 'ksave') {
       const key = String(getVal(ctx, step.key) || '');
       if (!key) throw new Error('ksave: key gol');
@@ -359,7 +378,13 @@
         ctx.inTx = false;
       }
       if (ctx._stop) return stoppedResult(ctx);
-      return { msg: ctx._msg, err: ctx._err, vars: ctx.vars, stopped: false };
+      return {
+        msg: ctx._msg,
+        err: ctx._err,
+        vars: ctx.vars,
+        ui: ctx._ui || undefined,
+        stopped: false,
+      };
     } catch (e) {
       if (ctx.inTx) {
         ctx.txBuf = [];

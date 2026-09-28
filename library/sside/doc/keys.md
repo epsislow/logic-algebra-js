@@ -8,19 +8,23 @@ Prefixuri Redis folosite de sside:
 | `data:` | `data:_item:42` | instanță pe schemă |
 | `alg:` | `alg:_save_item` | algoritm (DSL JSON) |
 | `form:` | `form:_item_edit` | formular: schemă + butoane → alg |
-| `ui:` | `ui:_warehouse` | pagină: taburi → formuri |
+| `list:` | `list:_stock` | tabel: sursă + coloane + paginare |
+| `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |
 
 ## Reguli
 
-- Numele după prefix începe cu `_` (ex. `ui:_warehouse`).
-- `alg:` / `form:` / `ui:` **nu** sunt indexate în Upstash Search.
+- Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).
+- `alg:` / `form:` / `ui:` / `list:` **nu** sunt indexate în Upstash Search.
 - Versiune obiect: doar **`v: 1`**.
 
 ## Legături tipice
 
 ```
 ui:_warehouse
-  └─ tab → form:_item_edit
-              ├─ schema:_item
-              └─ btn → alg:_save_item
+  └─ tab.blocks
+       ├─ list → list:_stock  (id: stockMain)
+       └─ form → form:_item_edit
+                    ├─ schema:_item
+                    └─ btn → alg:_save_item
+                               └─ { op: "ui", do: "refresh", listid: "stockMain" }
 ```

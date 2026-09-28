@@ -23,6 +23,7 @@
             --badge-alg: #198754;
             --badge-form: #0dcaf0;
             --badge-ui: #d63384;
+            --badge-list: #fd7e14;
             --badge-liber: #6c757d;
             --badge-admin: #fd7e14;
         }
@@ -51,6 +52,7 @@
             --badge-alg: #34d399;
             --badge-form: #22d3ee;
             --badge-ui: #f472b6;
+            --badge-list: #fb923c;
             --badge-liber: #6b7280;
             --badge-admin: #f59e0b;
         }
@@ -88,6 +90,7 @@
         .badge-alg { background: var(--badge-alg); }
         .badge-form { background: var(--badge-form); color: #04303a; }
         .badge-ui { background: var(--badge-ui); }
+        .badge-list { background: var(--badge-list); color: #1a0a00; }
         .badge-liber { background: var(--badge-liber); }
         .badge-admin { background: var(--badge-admin); color: #111; }
         .badge-redis { background: #17a2b8; }
@@ -327,6 +330,29 @@
             background: var(--accent); color: #fff;
         }
         .prog-live-forms-stack { display: flex; flex-direction: column; gap: 12px; }
+        .prog-list-wrap { display: flex; flex-direction: column; gap: 8px; }
+        .prog-list-table-wrap { overflow-x: auto; }
+        .prog-live-list table.prog-list-table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+        .prog-live-list table.prog-list-table th,
+        .prog-live-list table.prog-list-table td {
+            border: 1px solid var(--border); padding: 6px 8px; text-align: left;
+        }
+        .prog-live-list table.prog-list-table th { background: var(--bg-muted); }
+        .prog-live-list table.prog-list-table tr.is-selected td {
+            background: var(--row-hover);
+        }
+        .prog-list-pager {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            font-size: 13px; color: var(--text-muted);
+        }
+        .prog-list-row-btns { white-space: nowrap; }
+        .prog-list-row-btns .btn-inline,
+        .prog-list-pager .btn-inline,
+        .prog-live-actions .btn-inline {
+            width: auto; padding: 4px 10px; font-size: 12px; margin: 0 4px 0 0;
+        }
 
         .prog-edit-card {
             border: 1px solid var(--border); border-radius: 8px; padding: 12px;

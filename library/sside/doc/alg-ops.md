@@ -159,3 +159,19 @@ Nested `tstart` → eroare.
 `{ "op": "redis", "do": "GET", "args": ["mykey"], "to": "x" }`  
 Comenzi pe whitelist (`TYPE`, `EXISTS`, `JSON.GET`, …); nu e default în Edit — adaugă din tab JSON.  
 `args` rezolvă refs (`$key`, `form.x`).
+
+## ui (refresh / clear list) — F4l
+
+După ce un buton rulează alg, Live aplică `result.ui` pe tabelele montate (după `listid`).
+
+```json
+{ "op": "ui", "do": "refresh", "listid": "stockMain" }
+{ "op": "ui", "do": "clear", "listid": ["kvLeft", "kvRight"] }
+```
+
+| Câmp | Sens |
+|------|------|
+| `do` | `refresh` (reîncarcă sursa) sau `clear` (golește vizual) |
+| `listid` | string sau array — **id-ul block-ului** din `ui.tabs[].blocks[].id` |
+
+Nu împinge rânduri din alg; doar semnalează UI-ului să reîncarce.

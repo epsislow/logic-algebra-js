@@ -15,24 +15,26 @@ module.exports = {
   tests: [
     {
       id: 1,
-      desc: 'esteProgTip alg/form/ui',
+      desc: 'esteProgTip alg/form/ui/list',
       run() {
         assert(Prog.esteProgTip('alg'));
         assert(Prog.esteProgTip('form'));
         assert(Prog.esteProgTip('ui'));
+        assert(Prog.esteProgTip('list'));
         assert(!Prog.esteProgTip('schema'));
         assert(!Prog.esteProgTip('data'));
       },
     },
     {
       id: 2,
-      desc: 'ALG_OPS include ksave end tstart',
+      desc: 'ALG_OPS include ksave end tstart ui',
       run() {
         assert(Prog.ALG_OPS.indexOf('ksave') !== -1);
         assert(Prog.ALG_OPS.indexOf('end') !== -1);
         assert(Prog.ALG_OPS.indexOf('tstart') !== -1);
         assert(Prog.ALG_OPS.indexOf('scheck') !== -1);
         assert(Prog.ALG_OPS.indexOf('search') !== -1);
+        assert(Prog.ALG_OPS.indexOf('ui') !== -1);
       },
     },
     {

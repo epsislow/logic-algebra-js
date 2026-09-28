@@ -70,15 +70,68 @@ Path-uri: top-level (`location`) sau nested (`meta.wh`).
 
 ## ui:_…
 
+Preferat: `tabs[].blocks[]` (fiecare block are **`id` obligatoriu**). `forms[]` rămâne compat (Live îl normalizează la blocks).
+
 ```json
 {
   "v": 1,
   "title": "Warehouse",
   "tabs": [
-    { "id": "in", "label": "Intrari", "forms": ["form:_item_edit"] },
-    { "id": "bulk", "label": "Bulk", "forms": ["form:_bulk", "form:_item_edit"] }
+    {
+      "id": "main",
+      "label": "Stoc",
+      "blocks": [
+        { "type": "list", "id": "stockMain", "list": "list:_stock" },
+        { "type": "form", "id": "edit", "form": "form:_item_edit" }
+      ]
+    },
+    {
+      "id": "legacy",
+      "label": "Legacy",
+      "forms": ["form:_bulk"]
+    }
   ]
 }
 ```
 
-Live UI: taburi + stivă verticală de formuri.
+Live UI: taburi + stivă verticală de blocks (tabele + formuri).
+
+## list:_… (F4l)
+
+Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, `JSON.GET` pe cheile din pagină.
+
+```json
+{
+  "v": 1,
+  "title": "Stoc",
+  "source": {
+    "from": "search",
+    "query": { "s_prefix": "stock" }
+  },
+  "row": "object",
+  "columns": [
+    { "id": "key", "label": "Cheie", "path": "_key" },
+    { "id": "prod", "label": "Produs", "path": "product" },
+    { "id": "qty", "label": "Qty", "path": "qty" }
+  ],
+  "pageSize": 20,
+  "rowBtns": [
+    { "id": "del", "label": "Sterge", "alg": "alg:_del_stock", "kind": "red", "place": "row" }
+  ],
+  "btns": [
+    { "id": "refresh", "label": "Reincarca", "alg": "alg:_noop_refresh", "place": "below" }
+  ]
+}
+```
+
+| Câmp | Sens |
+|------|------|
+| `source.from` | `search` / `set` / `list` / `zset` / `hash` / `enum` (ca `fields.options`) |
+| `row` | `object` (path-uri câmp) sau `array` (path = index) |
+| `columns[].path` | path în rând; `_key` = cheia Redis |
+| `pageSize` | mărime pagină |
+| `rowBtns` / `btns` | butoane pe rând / sub tabel (`place`: `row` \| `below`) |
+
+**Paginare:** `search` folosește `LIMIT`/`OFFSET` pe index; colecțiile (`set`/…) se încarcă → sort → slice în UI.
+
+**Refresh din alg:** target pe **`listid`** (id-ul block-ului din `ui`), nu pe cheia `list:_…` — astfel aceeași definiție poate apărea de 2 ori pe pagină.

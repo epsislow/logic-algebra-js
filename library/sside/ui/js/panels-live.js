@@ -1,6 +1,5 @@
 /**
- * Live rendering pentru form: / ui: (F3 + F4k options).
- * deps: loadJsonKey, normalizeSchema, defaultFromSchema, onRunAlg, redis?
+ * Live rendering pentru form: / list: / ui: (F3 + F4k + F4l).
  */
 (function (root) {
   'use strict';
@@ -8,20 +7,24 @@
   const FormOpts =
     root.SsideFormOptions ||
     (typeof require !== 'undefined' ? require('../core/form-options.js') : null);
+  const ListLoad =
+    root.SsideListLoad ||
+    (typeof require !== 'undefined' ? require('../core/list-load.js') : null);
 
   let deps = {
     loadJsonKey: null,
     normalizeSchema: null,
     defaultFromSchema: null,
     onRunAlg: null,
-    /** @type {{ exec: Function }|null} */
     redis: null,
   };
 
   /** @type {Array<{ destroy: Function }>} */
   let liveInstances = [];
+  /** @type {Map<string, { refresh: Function, clear: Function }>} */
+  const listById = new Map();
 
-  function setDeps( partial ) {
+  function setDeps(partial) {
     deps = Object.assign({}, deps, partial || {});
   }
 
@@ -52,6 +55,21 @@
       } catch (e) { /* ignore */ }
     });
     liveInstances = [];
+    listById.clear();
+  }
+
+  function applyUiCommands(ui) {
+    if (!ui || typeof ui !== 'object') return;
+    const clears = [].concat(ui.clear || []);
+    const refreshes = [].concat(ui.refresh || []);
+    clears.forEach((id) => {
+      const inst = listById.get(String(id));
+      if (inst && inst.clear) inst.clear();
+    });
+    refreshes.forEach((id) => {
+      const inst = listById.get(String(id));
+      if (inst && inst.refresh) inst.refresh();
+    });
   }
 
   function createEditor(holder, schema, startval) {
@@ -71,10 +89,298 @@
     });
   }
 
+  function normalizeTabBlocks(tab) {
+    if (Array.isArray(tab.blocks) && tab.blocks.length) return tab.blocks;
+    if (Array.isArray(tab.forms)) {
+      return tab.forms.map((f, i) => ({
+        type: 'form',
+        id: 'form' + (i + 1),
+        form: f,
+      }));
+    }
+    return [];
+  }
+
+  function btnClass(btn) {
+    if (btn.kind === 'danger') return 'btn-kind-red';
+    if (btn.kind) return 'btn-kind-' + String(btn.kind).toLowerCase();
+    return 'btn-albastru';
+  }
+
+  function splitListBtns(listDef) {
+    const row = [];
+    const below = [];
+    (listDef.rowBtns || []).forEach((b) => row.push(Object.assign({}, b, { place: 'row' })));
+    (listDef.btns || []).forEach((b) => {
+      const place = b.place === 'row' ? 'row' : 'below';
+      if (place === 'row') row.push(b);
+      else below.push(b);
+    });
+    return { row, below };
+  }
+
+  async function runAlgForList(opts) {
+    const { algKey, formValue, btn, listDef, listid, rowKey, bannerEl } = opts;
+    if (typeof deps.onRunAlg !== 'function' || !algKey) {
+      showBanner(bannerEl, { err: algKey ? 'Runner lipsă' : 'Buton fără alg' });
+      return;
+    }
+    try {
+      const result = await deps.onRunAlg({
+        algKey,
+        form: formValue || {},
+        btn,
+        formDef: listDef,
+        listid,
+        list: listDef && listDef._key,
+        rowKey,
+      });
+      showBanner(bannerEl, result || { msg: 'OK' });
+      if (result && result.ui) applyUiCommands(result.ui);
+    } catch (e) {
+      showBanner(bannerEl, { err: e.message || String(e) });
+    }
+  }
+
   /**
-   * Randează un bloc Live pentru o definiție form (obiect JSON).
-   * @returns {{ destroy, getValue, reset, bannerEl }}
+   * @returns {{ destroy, refresh, clear }}
    */
+  async function mountListBlock(parent, listDef, opts) {
+    opts = opts || {};
+    const listid = String(opts.listid || opts.id || 'list1');
+    const listKey = opts.listKey || listDef._key || '';
+    if (listDef) listDef._key = listKey;
+
+    const title = (listDef && listDef.title) || listKey || listid;
+    const block = document.createElement('div');
+    block.className = 'prog-live-block prog-live-list';
+    block.setAttribute('data-listid', listid);
+    block.innerHTML =
+      '<h3></h3>' +
+      '<div class="prog-live-banner" style="display:none;"></div>' +
+      '<div class="prog-list-table-wrap"><table class="prog-list-table"><thead></thead><tbody></tbody></table></div>' +
+      '<div class="prog-list-pager"></div>' +
+      '<div class="prog-live-actions prog-list-below-btns"></div>';
+    block.querySelector('h3').textContent = title;
+    parent.appendChild(block);
+
+    const bannerEl = block.querySelector('.prog-live-banner');
+    const thead = block.querySelector('thead');
+    const tbody = block.querySelector('tbody');
+    const pagerEl = block.querySelector('.prog-list-pager');
+    const belowEl = block.querySelector('.prog-list-below-btns');
+
+    const columns = Array.isArray(listDef && listDef.columns) ? listDef.columns : [];
+    const { row: rowBtns, below: belowBtns } = splitListBtns(listDef || {});
+
+    let page = 1;
+    let selectedKey = null;
+    let lastPageData = null;
+    let destroyed = false;
+
+    function renderHead() {
+      thead.innerHTML = '';
+      const tr = document.createElement('tr');
+      columns.forEach((c) => {
+        const th = document.createElement('th');
+        th.textContent = c.label || c.id || c.path || '';
+        tr.appendChild(th);
+      });
+      if (rowBtns.length) {
+        const th = document.createElement('th');
+        th.textContent = '';
+        tr.appendChild(th);
+      }
+      thead.appendChild(tr);
+    }
+
+    function formFromRow(row) {
+      const v = row && row.value;
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        return JSON.parse(JSON.stringify(v));
+      }
+      return { value: v, _key: row && row.key };
+    }
+
+    async function reload() {
+      if (destroyed) return;
+      if (!ListLoad || !deps.redis) {
+        tbody.innerHTML =
+          '<tr><td colspan="99">list-load / redis lipsă</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="99">Se încarcă…</td></tr>';
+      try {
+        lastPageData = await ListLoad.loadListPage(listDef, deps.redis, page);
+        page = lastPageData.page;
+        renderBody();
+        renderPager();
+      } catch (e) {
+        tbody.innerHTML =
+          '<tr><td colspan="99">' +
+          (e && e.message ? e.message : String(e)) +
+          '</td></tr>';
+      }
+    }
+
+    function renderBody() {
+      tbody.innerHTML = '';
+      const rows = (lastPageData && lastPageData.rows) || [];
+      const rowMode = (lastPageData && lastPageData.rowMode) || 'object';
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="99">Niciun rând</td></tr>';
+        return;
+      }
+      rows.forEach((row) => {
+        const tr = document.createElement('tr');
+        if (row.key === selectedKey) tr.classList.add('is-selected');
+        tr.onclick = (ev) => {
+          if (ev.target && ev.target.closest && ev.target.closest('button')) return;
+          selectedKey = row.key;
+          Array.from(tbody.querySelectorAll('tr')).forEach((r) =>
+            r.classList.remove('is-selected')
+          );
+          tr.classList.add('is-selected');
+        };
+        columns.forEach((c) => {
+          const td = document.createElement('td');
+          let val = ListLoad.cellValue(row.value, c.path, rowMode);
+          if (c.path === '_key') val = row.key;
+          td.textContent = val == null ? '' : String(val);
+          tr.appendChild(td);
+        });
+        if (rowBtns.length) {
+          const td = document.createElement('td');
+          td.className = 'prog-list-row-btns';
+          rowBtns.forEach((btn) => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = btnClass(btn) + ' btn-inline';
+            b.textContent = btn.label || btn.id || '…';
+            b.onclick = (ev) => {
+              ev.stopPropagation();
+              selectedKey = row.key;
+              runAlgForList({
+                algKey: btn.alg,
+                formValue: formFromRow(row),
+                btn,
+                listDef,
+                listid,
+                rowKey: row.key,
+                bannerEl,
+              });
+            };
+            td.appendChild(b);
+          });
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderPager() {
+      pagerEl.innerHTML = '';
+      const info = document.createElement('span');
+      const total = lastPageData && lastPageData.total;
+      const hasMore = lastPageData && lastPageData.hasMore;
+      info.textContent =
+        'Pagina ' +
+        page +
+        (total != null ? ' / ' + Math.max(1, Math.ceil(total / (lastPageData.pageSize || 20))) : '') +
+        (total != null ? ' (' + total + ')' : hasMore ? '+' : '');
+      const prev = document.createElement('button');
+      prev.type = 'button';
+      prev.className = 'btn-gri btn-inline';
+      prev.textContent = '‹';
+      prev.disabled = page <= 1;
+      prev.onclick = () => {
+        if (page > 1) {
+          page -= 1;
+          reload();
+        }
+      };
+      const next = document.createElement('button');
+      next.type = 'button';
+      next.className = 'btn-gri btn-inline';
+      next.textContent = '›';
+      const canNext =
+        lastPageData &&
+        (lastPageData.hasMore ||
+          (lastPageData.total != null &&
+            page * lastPageData.pageSize < lastPageData.total));
+      next.disabled = !canNext;
+      next.onclick = () => {
+        page += 1;
+        reload();
+      };
+      pagerEl.appendChild(prev);
+      pagerEl.appendChild(info);
+      pagerEl.appendChild(next);
+    }
+
+    function renderBelow() {
+      belowEl.innerHTML = '';
+      belowBtns.forEach((btn) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = btnClass(btn);
+        b.textContent = btn.label || btn.id || 'Actiune';
+        b.onclick = () => {
+          const row =
+            lastPageData &&
+            lastPageData.rows &&
+            lastPageData.rows.find((r) => r.key === selectedKey);
+          if (!row) {
+            showBanner(bannerEl, { err: 'Selectează un rând' });
+            return;
+          }
+          runAlgForList({
+            algKey: btn.alg,
+            formValue: formFromRow(row),
+            btn,
+            listDef,
+            listid,
+            rowKey: row.key,
+            bannerEl,
+          });
+        };
+        belowEl.appendChild(b);
+      });
+    }
+
+    renderHead();
+    renderBelow();
+    await reload();
+
+    const api = {
+      destroy() {
+        destroyed = true;
+        listById.delete(listid);
+        block.remove();
+      },
+      refresh() {
+        return reload();
+      },
+      clear() {
+        lastPageData = {
+          page,
+          pageSize: listDef.pageSize || 20,
+          total: 0,
+          hasMore: false,
+          rows: [],
+          rowMode: listDef.row === 'array' ? 'array' : 'object',
+        };
+        selectedKey = null;
+        renderBody();
+        renderPager();
+      },
+      listid,
+    };
+    listById.set(listid, api);
+    liveInstances.push(api);
+    return api;
+  }
+
   async function mountFormBlock(parent, formDef, opts) {
     opts = opts || {};
     const title = (formDef && formDef.title) || opts.formKey || 'Form';
@@ -83,6 +389,7 @@
 
     const block = document.createElement('div');
     block.className = 'prog-live-block';
+    if (opts.id) block.setAttribute('data-blockid', opts.id);
     block.innerHTML =
       '<h3></h3>' +
       '<div class="prog-live-banner" style="display:none;"></div>' +
@@ -97,7 +404,7 @@
 
     if (!schemaKey) {
       fieldsEl.innerHTML = '<p class="prog-live-stub">Lipsește <code>schema</code> pe form.</p>';
-      return {
+      const inst = {
         destroy() {
           block.remove();
         },
@@ -107,11 +414,13 @@
         reset() {},
         bannerEl,
       };
+      liveInstances.push(inst);
+      return inst;
     }
 
     if (!deps.loadJsonKey || !deps.normalizeSchema) {
       fieldsEl.innerHTML = '<p class="prog-live-stub">Live deps neinițializate.</p>';
-      return {
+      const inst = {
         destroy() {
           block.remove();
         },
@@ -121,6 +430,8 @@
         reset() {},
         bannerEl,
       };
+      liveInstances.push(inst);
+      return inst;
     }
 
     fieldsEl.innerHTML = '<p class="prog-live-stub">Se încarcă schema…</p>';
@@ -162,9 +473,7 @@
       fieldsEl.innerHTML = '';
       editor = createEditor(fieldsEl, schemaObj, startval);
       if (optionsWarnings.length) {
-        showBanner(bannerEl, {
-          err: 'Options: ' + optionsWarnings.join('; '),
-        });
+        showBanner(bannerEl, { err: 'Options: ' + optionsWarnings.join('; ') });
       }
     } catch (e) {
       fieldsEl.innerHTML =
@@ -188,23 +497,18 @@
     };
     actionsEl.appendChild(btnReset);
 
-    // Prefetch alg-uri pe butoane (1 GET acum, 0 la click)
     const algKeys = btns.map((btn) => btn.alg).filter(Boolean);
     if (deps.loadJsonKey && algKeys.length) {
-      Promise.all(
-        algKeys.map((k) =>
-          deps.loadJsonKey(k).catch(() => null)
-        )
-      ).catch(() => {});
+      Promise.all(algKeys.map((k) => deps.loadJsonKey(k).catch(() => null))).catch(
+        () => {}
+      );
     }
 
     btns.forEach((btn) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = btn.label || btn.id || 'Actiune';
-      if (btn.kind === 'danger') b.className = 'btn-kind-red';
-      else if (btn.kind) b.className = 'btn-kind-' + String(btn.kind).toLowerCase();
-      else b.className = 'btn-albastru';
+      b.className = btnClass(btn);
       b.onclick = async () => {
         clearBanner(bannerEl);
         const algKey = btn.alg || '';
@@ -224,14 +528,13 @@
               formDef,
             });
             showBanner(bannerEl, result || { msg: 'OK' });
+            if (result && result.ui) applyUiCommands(result.ui);
           } catch (e) {
             showBanner(bannerEl, { err: e.message || String(e) });
           }
         } else {
           showBanner(bannerEl, {
-            err: algKey
-              ? 'Runner (F4) nu e activ încă — ' + algKey
-              : 'Buton fără alg',
+            err: algKey ? 'Runner lipsă — ' + algKey : 'Buton fără alg',
           });
         }
       };
@@ -270,6 +573,16 @@
     await mountFormBlock(rootEl, formDef, {});
   }
 
+  async function renderListLive(rootEl, listDef, listKey) {
+    destroyAll();
+    rootEl.innerHTML = '';
+    if (!listDef || typeof listDef !== 'object') {
+      rootEl.innerHTML = '<p class="prog-live-stub">Definiție list invalidă.</p>';
+      return;
+    }
+    await mountListBlock(rootEl, listDef, { listid: 'main', listKey: listKey || '' });
+  }
+
   async function renderUiLive(rootEl, uiDef) {
     destroyAll();
     rootEl.innerHTML = '';
@@ -301,40 +614,64 @@
     rootEl.appendChild(tabBar);
     rootEl.appendChild(stack);
 
-    let active = 0;
-
     async function showTab(idx) {
-      active = idx;
       Array.from(tabBar.children).forEach((btn, i) => {
         btn.classList.toggle('active', i === idx);
       });
       destroyAll();
       stack.innerHTML = '';
       const tab = tabs[idx] || {};
-      const formKeys = Array.isArray(tab.forms) ? tab.forms : [];
-      if (formKeys.length === 0) {
-        stack.innerHTML = '<p class="prog-live-stub">Tab fără forms[].</p>';
+      const blocks = normalizeTabBlocks(tab);
+      if (blocks.length === 0) {
+        stack.innerHTML = '<p class="prog-live-stub">Tab fără blocks/forms.</p>';
         return;
       }
-      for (const fk of formKeys) {
-        let formDef = null;
-        try {
-          formDef = deps.loadJsonKey ? await deps.loadJsonKey(fk) : null;
-        } catch (e) {
-          const err = document.createElement('p');
-          err.className = 'prog-live-stub';
-          err.textContent = (e && e.message) || String(e);
-          stack.appendChild(err);
-          continue;
+      for (const bl of blocks) {
+        if (bl.type === 'list') {
+          let listDef = null;
+          try {
+            listDef = deps.loadJsonKey ? await deps.loadJsonKey(bl.list) : null;
+          } catch (e) {
+            const err = document.createElement('p');
+            err.className = 'prog-live-stub';
+            err.textContent = (e && e.message) || String(e);
+            stack.appendChild(err);
+            continue;
+          }
+          if (!listDef) {
+            const err = document.createElement('p');
+            err.className = 'prog-live-stub';
+            err.textContent = 'Nu pot încărca ' + bl.list;
+            stack.appendChild(err);
+            continue;
+          }
+          await mountListBlock(stack, listDef, {
+            listid: bl.id,
+            listKey: bl.list,
+          });
+        } else {
+          let formDef = null;
+          try {
+            formDef = deps.loadJsonKey ? await deps.loadJsonKey(bl.form) : null;
+          } catch (e) {
+            const err = document.createElement('p');
+            err.className = 'prog-live-stub';
+            err.textContent = (e && e.message) || String(e);
+            stack.appendChild(err);
+            continue;
+          }
+          if (!formDef) {
+            const err = document.createElement('p');
+            err.className = 'prog-live-stub';
+            err.textContent = 'Nu pot încărca ' + bl.form;
+            stack.appendChild(err);
+            continue;
+          }
+          await mountFormBlock(stack, formDef, {
+            formKey: bl.form,
+            id: bl.id,
+          });
         }
-        if (!formDef) {
-          const err = document.createElement('p');
-          err.className = 'prog-live-stub';
-          err.textContent = 'Nu pot încărca ' + fk;
-          stack.appendChild(err);
-          continue;
-        }
-        await mountFormBlock(stack, formDef, { formKey: fk });
       }
     }
 
@@ -356,9 +693,12 @@
     showBanner,
     clearBanner,
     destroyAll,
+    applyUiCommands,
     renderFormLive,
+    renderListLive,
     renderUiLive,
     mountFormBlock,
+    mountListBlock,
   };
 
   if (typeof module !== 'undefined' && module.exports) {
@@ -367,6 +707,8 @@
       clearBanner,
       setDeps,
       destroyAll,
+      applyUiCommands,
+      normalizeTabBlocks,
     };
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this);

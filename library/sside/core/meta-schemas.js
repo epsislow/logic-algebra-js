@@ -1,5 +1,5 @@
 /**
- * Meta-scheme JSON (pentru tab Formular F2) + seed la creare cheie (F1c).
+ * Meta-scheme JSON (pentru tab Formular F2) + seed la creare cheie (F1c / F4l).
  */
 (function (root) {
   'use strict';
@@ -47,6 +47,42 @@
     additionalProperties: true,
   };
 
+  const META_LIST = {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    title: 'List / table',
+    type: 'object',
+    required: ['v', 'source', 'columns'],
+    properties: {
+      v: { type: 'integer', const: 1, default: 1 },
+      title: { type: 'string', default: '' },
+      source: {
+        type: 'object',
+        default: { from: 'search', query: { s_prefix: 'stock' } },
+      },
+      row: {
+        type: 'string',
+        enum: ['object', 'array'],
+        default: 'object',
+      },
+      columns: {
+        type: 'array',
+        default: [{ id: 'c1', label: 'Col', path: 'value' }],
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            label: { type: 'string' },
+            path: { type: 'string' },
+          },
+        },
+      },
+      pageSize: { type: 'integer', default: 20 },
+      btns: { type: 'array', default: [], items: { type: 'object' } },
+      rowBtns: { type: 'array', default: [], items: { type: 'object' } },
+    },
+    additionalProperties: true,
+  };
+
   const META_UI = {
     $schema: 'http://json-schema.org/draft-07/schema#',
     title: 'UI page',
@@ -66,7 +102,12 @@
             forms: {
               type: 'array',
               items: { type: 'string' },
-              description: 'ex: form:_item_edit',
+              description: 'legacy; prefer blocks',
+            },
+            blocks: {
+              type: 'array',
+              items: { type: 'object' },
+              description: 'ex: {type,id,list|form}',
             },
           },
         },
@@ -83,6 +124,22 @@
     return { v: 1, title: title || '', schema: '', btns: [] };
   }
 
+  function seedList(title) {
+    return {
+      v: 1,
+      title: title || '',
+      source: { from: 'search', query: { '*': '*' } },
+      row: 'object',
+      columns: [
+        { id: 'key', label: 'Cheie', path: '_key' },
+        { id: 'val', label: 'Valoare', path: 'value' },
+      ],
+      pageSize: 20,
+      btns: [],
+      rowBtns: [],
+    };
+  }
+
   function seedUi(title) {
     return { v: 1, title: title || '', tabs: [] };
   }
@@ -90,6 +147,7 @@
   function seedPentruRol(role, displayName) {
     if (role === 'alg') return seedAlg(displayName || '');
     if (role === 'form') return seedForm(displayName || '');
+    if (role === 'list') return seedList(displayName || '');
     if (role === 'ui') return seedUi(displayName || '');
     return { v: 1 };
   }
@@ -97,6 +155,7 @@
   function metaPentruRol(role) {
     if (role === 'alg') return META_ALG;
     if (role === 'form') return META_FORM;
+    if (role === 'list') return META_LIST;
     if (role === 'ui') return META_UI;
     return null;
   }
@@ -104,9 +163,11 @@
   const api = {
     META_ALG,
     META_FORM,
+    META_LIST,
     META_UI,
     seedAlg,
     seedForm,
+    seedList,
     seedUi,
     seedPentruRol,
     metaPentruRol,
