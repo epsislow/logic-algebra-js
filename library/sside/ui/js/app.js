@@ -3287,15 +3287,32 @@ function translateUpstashSearchResults(date) {
         if (window.SsideProgPanels) {
             SsideProgPanels.setDeps({
                 listKeys(kind) {
-                    if (kind === 'schema') {
-                        return (progKeysCache.schema && progKeysCache.schema.length)
-                            ? progKeysCache.schema.slice()
-                            : listeSchemeDinCache();
-                    }
-                    if (kind === 'alg') return (progKeysCache.alg || []).slice();
-                    if (kind === 'form') return (progKeysCache.form || []).slice();
-                    if (kind === 'ui') return (progKeysCache.ui || []).slice();
-                    return [];
+                    const fromCache =
+                        kind === 'schema'
+                            ? (progKeysCache.schema && progKeysCache.schema.length
+                                ? progKeysCache.schema
+                                : listeSchemeDinCache())
+                            : kind === 'alg'
+                              ? progKeysCache.alg || []
+                              : kind === 'form'
+                                ? progKeysCache.form || []
+                                : kind === 'ui'
+                                  ? progKeysCache.ui || []
+                                  : [];
+                    const pred =
+                        kind === 'schema'
+                            ? isSchemaRedisKey
+                            : kind === 'alg'
+                              ? isAlgRedisKey
+                              : kind === 'form'
+                                ? isFormRedisKey
+                                : kind === 'ui'
+                                  ? isUiRedisKey
+                                  : null;
+                    const fromAll = pred
+                        ? (toateCheile || []).filter(pred)
+                        : [];
+                    return Array.from(new Set([].concat(fromCache, fromAll))).sort();
                 },
             });
         }

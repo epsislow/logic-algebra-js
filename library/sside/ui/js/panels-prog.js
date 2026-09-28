@@ -30,24 +30,31 @@
     return document.getElementById(id);
   }
 
-  /** Datalist pentru pickere chei (F5b). */
-  function attachKeyPicker(input, kind, listId) {
-    if (!input || !deps.listKeys) return;
-    const keys = deps.listKeys(kind) || [];
-    let dl = document.getElementById(listId);
-    if (!dl) {
-      dl = document.createElement('datalist');
-      dl.id = listId;
-      document.body.appendChild(dl);
-    }
-    dl.innerHTML = '';
+  /** Select pentru chei schema/alg/form (F5b) — fără input text. */
+  function fillKeySelect(sel, kind, current) {
+    if (!sel) return;
+    const keys = deps.listKeys ? deps.listKeys(kind) || [] : [];
+    const cur = (current || '').trim();
+    sel.innerHTML = '';
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = keys.length ? '— alege ' + kind + ': —' : '— nicio cheie ' + kind + ' în cache —';
+    sel.appendChild(empty);
+    const seen = new Set();
     keys.forEach((k) => {
-      const opt = document.createElement('option');
-      opt.value = k;
-      dl.appendChild(opt);
+      seen.add(k);
+      const o = document.createElement('option');
+      o.value = k;
+      o.textContent = k;
+      sel.appendChild(o);
     });
-    input.setAttribute('list', listId);
-    input.setAttribute('autocomplete', 'off');
+    if (cur && !seen.has(cur)) {
+      const o = document.createElement('option');
+      o.value = cur;
+      o.textContent = cur + ' (curent)';
+      sel.appendChild(o);
+    }
+    sel.value = cur || '';
   }
 
   function esteProgTip(tip) {
@@ -107,11 +114,10 @@
     row1.className = 'prog-row';
     row1.innerHTML =
       '<div class="prog-field"><label>title</label><input type="text" data-f="title"></div>' +
-      '<div class="prog-field"><label>schema</label><input type="text" data-f="schema" placeholder="schema:_item"></div>';
+      '<div class="prog-field"><label>schema</label><select data-f="schema"></select></div>';
     card.appendChild(row1);
     row1.querySelector('[data-f="title"]').value = obj.title || '';
-    row1.querySelector('[data-f="schema"]').value = obj.schema || '';
-    attachKeyPicker(row1.querySelector('[data-f="schema"]'), 'schema', 'dl-prog-schema');
+    fillKeySelect(row1.querySelector('[data-f="schema"]'), 'schema', obj.schema || '');
 
     const btnsHost = document.createElement('div');
     btnsHost.className = 'prog-steps';
@@ -141,7 +147,7 @@
         '<div class="prog-row">' +
         '<div class="prog-field"><label>id</label><input data-b="id"></div>' +
         '<div class="prog-field"><label>label</label><input data-b="label"></div>' +
-        '<div class="prog-field"><label>alg</label><input data-b="alg" placeholder="alg:_save"></div>' +
+        '<div class="prog-field"><label>alg</label><select data-b="alg"></select></div>' +
         '<div class="prog-field"><label>kind</label><input data-b="kind" placeholder="danger?"></div>' +
         '</div>';
       const rm = document.createElement('button');
@@ -155,10 +161,12 @@
       el.appendChild(rm);
       el.querySelector('[data-b="id"]').value = btn.id || '';
       el.querySelector('[data-b="label"]').value = btn.label || '';
-      el.querySelector('[data-b="alg"]').value = btn.alg || '';
+      fillKeySelect(el.querySelector('[data-b="alg"]'), 'alg', btn.alg || '');
       el.querySelector('[data-b="kind"]').value = btn.kind || '';
-      attachKeyPicker(el.querySelector('[data-b="alg"]'), 'alg', 'dl-prog-alg');
-      el.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
+      el.querySelectorAll('input,select').forEach((inp) => {
+        inp.addEventListener('input', syncFromDom);
+        inp.addEventListener('change', syncFromDom);
+      });
       btnsHost.appendChild(el);
     }
 
@@ -177,7 +185,10 @@
     toolbar.appendChild(add);
     card.appendChild(toolbar);
 
-    row1.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
+    row1.querySelectorAll('input,select').forEach((inp) => {
+      inp.addEventListener('input', syncFromDom);
+      inp.addEventListener('change', syncFromDom);
+    });
     host.appendChild(card);
   }
 
@@ -203,10 +214,8 @@
       obj.title = row1.querySelector('[data-f="title"]').value;
       obj.tabs = [];
       tabsHost.querySelectorAll('.prog-step').forEach((el) => {
-        const formsRaw = el.querySelector('[data-t="forms"]').value;
-        const forms = formsRaw
-          .split(/[\n,]+/)
-          .map((s) => s.trim())
+        const forms = Array.from(el.querySelectorAll('.prog-forms-picks select'))
+          .map((s) => s.value.trim())
           .filter(Boolean);
         obj.tabs.push({
           id: el.querySelector('[data-t="id"]').value.trim(),
@@ -217,6 +226,52 @@
       scrieRaw(obj);
     }
 
+    function mountFormsPicks(el, initialForms) {
+      const wrap = document.createElement('div');
+      wrap.className = 'prog-forms-picks';
+      const label = document.createElement('label');
+      label.textContent = 'forms';
+      label.style.display = 'block';
+      label.style.marginBottom = '4px';
+      wrap.appendChild(label);
+      const stack = document.createElement('div');
+      stack.className = 'prog-forms-stack-edit';
+      wrap.appendChild(stack);
+      el.appendChild(wrap);
+
+      function readForms() {
+        return Array.from(stack.querySelectorAll('select'))
+          .map((s) => s.value.trim())
+          .filter(Boolean);
+      }
+
+      function rebuild(forms) {
+        stack.innerHTML = '';
+        const list = Array.isArray(forms) ? forms.filter(Boolean) : [];
+        list.forEach((f) => addOne(f));
+        addOne(''); // mereu un select gol la final
+      }
+
+      function addOne(value) {
+        const row = document.createElement('div');
+        row.className = 'prog-field';
+        const n = stack.children.length + 1;
+        const lab = document.createElement('label');
+        lab.textContent = 'form ' + n;
+        row.appendChild(lab);
+        const sel = document.createElement('select');
+        fillKeySelect(sel, 'form', value || '');
+        sel.onchange = () => {
+          rebuild(readForms());
+          syncFromDom();
+        };
+        row.appendChild(sel);
+        stack.appendChild(row);
+      }
+
+      rebuild(initialForms || []);
+    }
+
     function addTabRow(tab) {
       tab = tab || { id: '', label: '', forms: [] };
       const el = document.createElement('div');
@@ -225,9 +280,7 @@
         '<div class="prog-row">' +
         '<div class="prog-field"><label>id</label><input data-t="id"></div>' +
         '<div class="prog-field"><label>label</label><input data-t="label"></div>' +
-        '</div>' +
-        '<div class="prog-row"><div class="prog-field"><label>forms (virgula / linii)</label>' +
-        '<textarea data-t="forms" placeholder="form:_a&#10;form:_b"></textarea></div></div>';
+        '</div>';
       const rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'btn-gri btn-inline btn-inline-danger';
@@ -239,33 +292,8 @@
       el.appendChild(rm);
       el.querySelector('[data-t="id"]').value = tab.id || '';
       el.querySelector('[data-t="label"]').value = tab.label || '';
-      el.querySelector('[data-t="forms"]').value = (tab.forms || []).join('\n');
-      // picker: select care adaugă form: pe o linie
-      const pickRow = document.createElement('div');
-      pickRow.className = 'prog-row';
-      const pickWrap = document.createElement('div');
-      pickWrap.className = 'prog-field';
-      pickWrap.innerHTML = '<label>adaugă form</label>';
-      const sel = document.createElement('select');
-      sel.innerHTML = '<option value="">— alege form: —</option>';
-      (deps.listKeys ? deps.listKeys('form') : []).forEach((k) => {
-        const o = document.createElement('option');
-        o.value = k;
-        o.textContent = k;
-        sel.appendChild(o);
-      });
-      sel.onchange = () => {
-        if (!sel.value) return;
-        const ta = el.querySelector('[data-t="forms"]');
-        const cur = (ta.value || '').trim();
-        ta.value = cur ? cur + '\n' + sel.value : sel.value;
-        sel.value = '';
-        syncFromDom();
-      };
-      pickWrap.appendChild(sel);
-      pickRow.appendChild(pickWrap);
-      el.appendChild(pickRow);
-      el.querySelectorAll('input,textarea').forEach((inp) => inp.addEventListener('input', syncFromDom));
+      mountFormsPicks(el, tab.forms || []);
+      el.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
       tabsHost.appendChild(el);
     }
 
