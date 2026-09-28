@@ -1,0 +1,15 @@
+{
+  "title": "sside docs",
+  "sections": [
+    {
+      "id": "keys",
+      "label": "Chei",
+      "file": "keys.md"
+    },
+    {
+      "id": "alg-ops",
+      "label": "Operații alg",
+      "file": "alg-ops.md"
+    }
+  ]
+}
