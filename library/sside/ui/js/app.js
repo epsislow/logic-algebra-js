@@ -189,6 +189,13 @@
 
         document.getElementById('raw-json-editor').addEventListener('input', () => {
             if (modEditare === 'json') actualizeazaValidareJson();
+            if (window.SsideProgPanels && SsideProgPanels.getKind() && SsideProgPanels.getMod() === 'json') {
+                const ta = document.getElementById('raw-json-editor');
+                const valid = esteJsonValid(ta.value);
+                ta.classList.toggle('json-invalid', !valid);
+                const dot = document.getElementById('prog-json-status-dot');
+                if (dot) dot.classList.toggle('is-visible', !valid);
+            }
             actualizeazaIndicatorModificat();
             programeazaRefreshIdxLegenda();
         });
@@ -2835,6 +2842,7 @@ function translateUpstashSearchResults(date) {
             document.getElementById('col-item-editor').style.display = 'none';
             document.getElementById('panel-unsupported').style.display = 'none';
             document.getElementById('detail-mode-tabs').style.display = 'none';
+            if (window.SsideProgPanels) SsideProgPanels.ascunde();
 
             document.getElementById('ecran-lista').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
@@ -2956,6 +2964,17 @@ function translateUpstashSearchResults(date) {
             document.getElementById('rezultat-citire').innerText = rawText;
             document.getElementById('valoare-camp').value = rawText;
 
+            if (SsideProgPanels && SsideProgPanels.esteProgTip(info.tip)) {
+                const pretty = valoareCaJsonPretty(rawText) || JSON.stringify(SsideMeta.seedPentruRol(info.tip, ''), null, 2);
+                document.getElementById('raw-json-editor').value = pretty;
+                document.getElementById('formular-din-wrap').style.display = 'none';
+                SsideProgPanels.activeaza(info, pretty, {
+                    onDirty: () => actualizeazaIndicatorModificat()
+                });
+                marcheazaCurentCaBaseline();
+                return;
+            }
+
             const canFormBound = (info.tip === 'data' || info.tip === 'schema') && !info.sistem && !stearsa;
             const canFormLiber = esteLiberCuFormularDin() && !!schemaTempKey && !stearsa;
             const canForm = canFormBound || canFormLiber;
@@ -3023,6 +3042,10 @@ function translateUpstashSearchResults(date) {
 
         function obtineValoareCurentaPentruComparatie() {
             try {
+                if (SsideProgPanels && infoCheieCurenta && SsideProgPanels.esteProgTip(infoCheieCurenta.tip) && SsideProgPanels.getKind()) {
+                    SsideProgPanels.sincronizeazaInRaw();
+                    return document.getElementById('raw-json-editor').value || '';
+                }
                 if (modEditare === 'form' && infoCheieCurenta) {
                     if ((infoCheieCurenta.tip === 'data' || (infoCheieCurenta.tip === 'liber' && schemaTempKey)) && dataFormEditor) {
                         return JSON.stringify(dataFormEditor.getValue(), null, 2);
@@ -3075,6 +3098,10 @@ function translateUpstashSearchResults(date) {
         function sincronizeazaRawDinEditori() {
             if (!infoCheieCurenta) return;
             try {
+                if (SsideProgPanels && SsideProgPanels.esteProgTip(infoCheieCurenta.tip) && SsideProgPanels.getKind()) {
+                    SsideProgPanels.sincronizeazaInRaw();
+                    return;
+                }
                 if ((infoCheieCurenta.tip === 'data' || (infoCheieCurenta.tip === 'liber' && schemaTempKey)) && dataFormEditor) {
                     document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
                 } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
@@ -3339,6 +3366,33 @@ function translateUpstashSearchResults(date) {
                 alert('Tip Redis nesuportat pentru salvare: ' + redisTipCurent);
                 return;
             }
+
+            // alg/form/ui: sync Edit/Formular → raw, apoi salvare ca JSON
+            if (SsideProgPanels && infoCheieCurenta && SsideProgPanels.esteProgTip(infoCheieCurenta.tip) && SsideProgPanels.getKind()) {
+                SsideProgPanels.sincronizeazaInRaw();
+                const rawEl = document.getElementById('raw-json-editor');
+                const textBrut = rawEl.value;
+                if (!esteJsonValid(textBrut)) {
+                    alert('JSON invalid — corectează în tab Json sau Edit.');
+                    return;
+                }
+                try {
+                    const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, textBrut);
+                    rawEl.value = pretty;
+                    document.getElementById('valoare-camp').value = pretty;
+                    document.getElementById('rezultat-citire').innerText = pretty;
+                    SsideProgPanels.activeaza(infoCheieCurenta, pretty, {
+                        onDirty: () => actualizeazaIndicatorModificat()
+                    });
+                    marcheazaCurentCaBaseline();
+                    alert('Salvat: ' + cheieCurenta);
+                    await refreshTtlDinServer({ silent: true });
+                } catch (err) {
+                    alert(err.message);
+                }
+                return;
+            }
+
             const rawEl = document.getElementById('raw-json-editor');
             const eJsonRedis = esteTipRedisJson(redisTipCurent);
 

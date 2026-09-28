@@ -249,6 +249,38 @@
         .mode-tabs button.active { background: var(--accent); color: #fff; }
         .mode-tabs .copy-btn { margin-left: auto; }
 
+        .panel-prog { margin-bottom: 12px; }
+        .prog-live-stub {
+            padding: 14px; background: var(--bg-muted); border-radius: 6px;
+            color: var(--text-muted); font-size: 13px; margin: 0;
+        }
+        .prog-edit-card {
+            border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+            margin-bottom: 10px; background: var(--bg-panel);
+        }
+        .prog-edit-card h4 { margin: 0 0 10px; font-size: 14px; }
+        .prog-row {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 8px;
+        }
+        .prog-row label { font-size: 12px; color: var(--text-muted); display: block; margin: 0 0 2px; }
+        .prog-row .prog-field { flex: 1; min-width: 120px; }
+        .prog-row input, .prog-row select, .prog-row textarea {
+            width: 100%; margin: 0; box-sizing: border-box; font-size: 13px;
+        }
+        .prog-row textarea { min-height: 52px; font-family: ui-monospace, monospace; }
+        .prog-steps { display: flex; flex-direction: column; gap: 8px; }
+        .prog-step {
+            border: 1px dashed var(--border); border-radius: 6px; padding: 8px;
+            background: var(--bg-muted);
+        }
+        .prog-step-head {
+            display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;
+        }
+        .prog-step-head code { font-size: 12px; }
+        .prog-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; align-items: center; }
+        .prog-toolbar select { width: auto; margin: 0; min-width: 140px; }
+        .btn-inline-danger { background: #dc3545 !important; color: #fff !important; }
+
         .formular-din-wrap {
             display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
             margin-bottom: 10px;
@@ -437,6 +469,91 @@
         html[data-theme="dark"] #schema-visual-wrap .je-indented-panel,
         html[data-theme="dark"] div[data-theme="html"] .je-indented-panel {
             border-color: var(--border) !important;
+        }
+
+        /* Tab Formular (alg/form/ui) — același theme html ca restul app; dark mode lizibil, fără animații */
+        #prog-formular-holder {
+            background: var(--bg-editor);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            color: var(--text);
+        }
+        #prog-formular-holder,
+        #prog-formular-holder * {
+            animation: none !important;
+            transition: none !important;
+        }
+        #prog-formular-holder label,
+        #prog-formular-holder .je-form-input-label,
+        #prog-formular-holder .je-object__title,
+        #prog-formular-holder .je-header,
+        #prog-formular-holder h3,
+        #prog-formular-holder h4 {
+            color: var(--text) !important;
+        }
+        #prog-formular-holder .je-indented-panel,
+        #prog-formular-holder .je-indented-panel--top,
+        #prog-formular-holder .je-object__container,
+        #prog-formular-holder .je-child-editor-holder {
+            background: var(--bg-panel) !important;
+            border-color: var(--border) !important;
+            color: var(--text) !important;
+        }
+        #prog-formular-holder input,
+        #prog-formular-holder select,
+        #prog-formular-holder textarea {
+            background: var(--input-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        #prog-formular-holder .je-type,
+        #prog-formular-holder .badge,
+        #prog-formular-holder span[class*="type"] {
+            background: var(--bg-muted) !important;
+            color: var(--text-muted) !important;
+            border-color: var(--border) !important;
+        }
+        html[data-theme="dark"] #prog-formular-holder .je-indented-panel,
+        html[data-theme="dark"] #prog-formular-holder .je-indented-panel--top {
+            background: var(--bg-panel) !important;
+            border-color: var(--border) !important;
+        }
+
+        /* Object Properties popup (JSONEditor .je-modal) — alb pe alb pe dark */
+        html[data-theme="dark"] .je-modal,
+        #prog-formular-holder .je-modal {
+            background: var(--bg-panel) !important;
+            border: 1px solid var(--border) !important;
+            box-shadow: var(--shadow) !important;
+            color: var(--text) !important;
+        }
+        html[data-theme="dark"] .je-modal *,
+        #prog-formular-holder .je-modal * {
+            color: var(--text) !important;
+        }
+        html[data-theme="dark"] .je-modal .property-selector,
+        #prog-formular-holder .je-modal .property-selector {
+            background: var(--bg-muted) !important;
+            border-color: var(--border) !important;
+            color: var(--text) !important;
+        }
+        html[data-theme="dark"] .je-modal label,
+        html[data-theme="dark"] .je-modal .je-form-input-label,
+        #prog-formular-holder .je-modal label {
+            color: var(--text) !important;
+        }
+        html[data-theme="dark"] .je-modal input[type="text"],
+        html[data-theme="dark"] .je-modal input:not([type]),
+        #prog-formular-holder .je-modal input[type="text"] {
+            background: var(--input-bg) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--border) !important;
+        }
+        html[data-theme="dark"] .je-modal input::placeholder,
+        #prog-formular-holder .je-modal input::placeholder {
+            color: var(--text-muted) !important;
+            opacity: 1;
         }
 
         .modal-backdrop {

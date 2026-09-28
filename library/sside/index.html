@@ -130,6 +130,26 @@
                     <button type="button" class="copy-btn" id="btn-copy-raw" onclick="copiazaContinutRaw(this)">Copiază</button>
                 </div>
 
+                <div class="mode-tabs" id="prog-mode-tabs" style="display:none;">
+                    <div class="mode-tabs-left">
+                        <button type="button" id="tab-prog-edit" class="active" onclick="seteazaModProg('edit')">Edit</button>
+                        <button type="button" id="tab-prog-live" onclick="seteazaModProg('live')">Live</button>
+                        <button type="button" id="tab-prog-formular" onclick="seteazaModProg('formular')">Formular</button>
+                        <button type="button" id="tab-prog-json" onclick="seteazaModProg('json')">
+                            Json <span class="json-status-dot" id="prog-json-status-dot" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                    <button type="button" class="copy-btn" onclick="copiazaContinutRaw(this)">Copiază</button>
+                </div>
+
+                <div id="panel-prog-edit" class="panel-prog" style="display:none;"></div>
+                <div id="panel-prog-live" class="panel-prog" style="display:none;">
+                    <p class="prog-live-stub" id="prog-live-stub">Live — stub (F3). Pentru alg e ascuns până la Test run (D8).</p>
+                </div>
+                <div id="panel-prog-formular" class="panel-prog" style="display:none;">
+                    <div id="prog-formular-holder"></div>
+                </div>
+
                 <div id="panel-form">
                     <div id="data-form-holder" style="display:none;"></div>
                     <div id="schema-visual-wrap" style="display:none;">
@@ -454,6 +474,7 @@
 
     <script src="core/keys.js"></script>
     <script src="core/meta-schemas.js"></script>
+    <script src="ui/js/panels-prog.js"></script>
     <script src="ui/js/app.js"></script>
 </body>
 </html>
