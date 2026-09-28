@@ -1859,7 +1859,7 @@ function translateUpstashSearchResults(date) {
                     const jsonQueryString = JSON.stringify(jsonQuery);
                     lista.innerHTML = '<div class="key-row"><span class="key-name">Se caută avansat…</span></div>';
                     const dateR = await apeleazaServerul("/api/comanda", {
-                        comandaRedis: ["SEARCH.QUERY", "idx_search_tags", jsonQueryString, "LIMIT", "1000", "OFFSET", "0"]
+                        comandaRedis: ["SEARCH.QUERY", "idx_search_tags", jsonQueryString, "LIMIT", "1000", "OFFSET", "0", "NOCONTENT"]
                     });
                     // translate* returnează array de chei — îl împachetăm ca {rezultat} (ca la KEYS)
                     const cheiSearch = translateUpstashSearchResults(dateR);
