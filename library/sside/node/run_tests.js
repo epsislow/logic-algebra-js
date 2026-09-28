@@ -4,6 +4,7 @@
  * Usage:
  *   node node/run_tests.js
  *   node node/run_tests.js smoke[1-10,3]
+ *   node node/run_tests.js -w 40
  *   node node/run_tests.js -h
  */
 'use strict';
@@ -18,6 +19,9 @@ const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
 const RESET = '\x1b[0m';
 
+/** Default: câte simboluri (. / F) pe o linie de progres. */
+const DEFAULT_PROGRESS_WIDTH = 40;
+
 function printHelp() {
   console.log(`Run sside tests (Node).
 
@@ -29,14 +33,25 @@ Filters:
   (omit filters = all categories, all ids)
 
 Options:
-  -h, --help        show help
-  -v, --verbose     list failed tests with messages
+  -h, --help                 show this help and exit
+  -v, --verbose              list failed tests with messages
+  -e, --each                 progress grouped per suite/file
+  -w, --progress-width N     max progress characters per line (default: ${DEFAULT_PROGRESS_WIDTH})
 
 Examples:
   node node/run_tests.js
+  node node/run_tests.js -e
+  node node/run_tests.js -e -w 20
+  node node/run_tests.js -w 20
+  node node/run_tests.js --progress-width=50
   node node/run_tests.js smoke[1]
   node node/run_tests.js when[1-5] tx[1] -v
 `);
+}
+
+function parsePositiveInt(value, fallback) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
 function parseTestIdSpec(spec) {
@@ -65,15 +80,36 @@ function parseTestIdSpec(spec) {
   return ids;
 }
 
-/** @returns {{ filters: Map<string, Set<number>|null>, verbose: boolean, help: boolean }} */
+/**
+ * @returns {{ filters: Map<string, Set<number>|null>, verbose: boolean, help: boolean, each: boolean, progressWidth: number }}
+ */
 function parseArgs(argv) {
-  const opts = { filters: new Map(), verbose: false, help: false };
+  const opts = {
+    filters: new Map(),
+    verbose: false,
+    help: false,
+    each: false,
+    progressWidth: DEFAULT_PROGRESS_WIDTH,
+  };
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '-h' || arg === '--help') {
       opts.help = true;
     } else if (arg === '-v' || arg === '--verbose') {
       opts.verbose = true;
+    } else if (arg === '-e' || arg === '--each') {
+      opts.each = true;
+    } else if (
+      arg === '-w' ||
+      arg === '--progress-width' ||
+      arg.startsWith('--progress-width=')
+    ) {
+      const value = arg.startsWith('--progress-width=')
+        ? arg.split('=')[1]
+        : argv[++i];
+      opts.progressWidth = parsePositiveInt(value, opts.progressWidth);
+    } else if (arg.startsWith('-w') && arg.length > 2) {
+      opts.progressWidth = parsePositiveInt(arg.slice(2), opts.progressWidth);
     } else {
       const m = arg.match(/^([a-zA-Z0-9_-]+)\[([^\]]*)\]$/);
       if (!m) {
@@ -86,6 +122,32 @@ function parseArgs(argv) {
     }
   }
   return opts;
+}
+
+/**
+ * Progres pe linii: ...... (n/total) — inspirat din logTscript _run_test_suite_node.
+ */
+function createProgressReporter(total, width) {
+  let testsRun = 0;
+  let charsOnLine = 0;
+
+  function endLine() {
+    process.stdout.write(` (${testsRun}/${total})\n`);
+    charsOnLine = 0;
+  }
+
+  return {
+    onResult(ok) {
+      testsRun++;
+      process.stdout.write(ok ? `${GREEN}.${RESET}` : `${RED}F${RESET}`);
+      charsOnLine++;
+      if (charsOnLine >= width) endLine();
+    },
+    finish() {
+      if (charsOnLine > 0) endLine();
+      else if (testsRun === 0) process.stdout.write(` (0/${total})\n`);
+    },
+  };
 }
 
 function loadSuites() {
@@ -146,30 +208,66 @@ function main() {
   let failed = 0;
   const failures = [];
 
-  process.stdout.write('Tests: ');
+  /** Grupează în ordine: [{ name, items: [{ suite, test }] }] */
+  function groupBySuite(list) {
+    const groups = [];
+    const index = new Map();
+    for (const item of list) {
+      let g = index.get(item.suite);
+      if (!g) {
+        g = { name: item.suite, items: [] };
+        index.set(item.suite, g);
+        groups.push(g);
+      }
+      g.items.push(item);
+    }
+    return groups;
+  }
+
+  async function runOne({ suite, test }) {
+    const label = `${suite}#${test.id}`;
+    try {
+      const ret = test.run();
+      if (ret && typeof ret.then === 'function') {
+        await ret;
+      }
+      if (ret === false) throw new Error('run() returned false');
+      passed++;
+      return true;
+    } catch (e) {
+      failed++;
+      failures.push({
+        label,
+        desc: test.desc || '',
+        message: e && e.message ? e.message : String(e),
+      });
+      return false;
+    }
+  }
+
+  console.log('Running:');
+  if (opts.each) console.log('');
 
   async function runAll() {
-    for (const { suite, test } of toRun) {
-      const label = `${suite}#${test.id}`;
-      try {
-        const ret = test.run();
-        if (ret && typeof ret.then === 'function') {
-          await ret;
+    if (opts.each) {
+      const groups = groupBySuite(toRun);
+      for (const g of groups) {
+        console.log(`${g.name}:`);
+        const progress = createProgressReporter(g.items.length, opts.progressWidth);
+        for (const item of g.items) {
+          const ok = await runOne(item);
+          progress.onResult(ok);
         }
-        if (ret === false) throw new Error('run() returned false');
-        process.stdout.write(`${GREEN}.${RESET}`);
-        passed++;
-      } catch (e) {
-        process.stdout.write(`${RED}F${RESET}`);
-        failed++;
-        failures.push({
-          label,
-          desc: test.desc || '',
-          message: e && e.message ? e.message : String(e),
-        });
+        progress.finish();
       }
+    } else {
+      const progress = createProgressReporter(toRun.length, opts.progressWidth);
+      for (const item of toRun) {
+        const ok = await runOne(item);
+        progress.onResult(ok);
+      }
+      progress.finish();
     }
-    process.stdout.write('\n');
 
     if (failures.length && opts.verbose) {
       console.log('');
@@ -185,8 +283,7 @@ function main() {
       console.log('(use -v for error messages)');
     }
 
-    const total = passed + failed;
-    console.log(`Passed: ${passed} Failed: ${failed} Total: ${total}`);
+    console.log(`Passed: ${passed} Failed: ${failed} Total: ${passed + failed}`);
     process.exit(failed ? 1 : 0);
   }
 

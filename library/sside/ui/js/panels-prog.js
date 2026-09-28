@@ -18,9 +18,36 @@
   let progObj = null;
   let progFormularEditor = null;
   let dirtyHook = null;
+  let deps = {
+    listKeys: null, // (kind: 'schema'|'alg'|'form'|'ui') => string[]
+  };
+
+  function setDeps(partial) {
+    deps = Object.assign({}, deps, partial || {});
+  }
 
   function $(id) {
     return document.getElementById(id);
+  }
+
+  /** Datalist pentru pickere chei (F5b). */
+  function attachKeyPicker(input, kind, listId) {
+    if (!input || !deps.listKeys) return;
+    const keys = deps.listKeys(kind) || [];
+    let dl = document.getElementById(listId);
+    if (!dl) {
+      dl = document.createElement('datalist');
+      dl.id = listId;
+      document.body.appendChild(dl);
+    }
+    dl.innerHTML = '';
+    keys.forEach((k) => {
+      const opt = document.createElement('option');
+      opt.value = k;
+      dl.appendChild(opt);
+    });
+    input.setAttribute('list', listId);
+    input.setAttribute('autocomplete', 'off');
   }
 
   function esteProgTip(tip) {
@@ -84,6 +111,7 @@
     card.appendChild(row1);
     row1.querySelector('[data-f="title"]').value = obj.title || '';
     row1.querySelector('[data-f="schema"]').value = obj.schema || '';
+    attachKeyPicker(row1.querySelector('[data-f="schema"]'), 'schema', 'dl-prog-schema');
 
     const btnsHost = document.createElement('div');
     btnsHost.className = 'prog-steps';
@@ -129,6 +157,7 @@
       el.querySelector('[data-b="label"]').value = btn.label || '';
       el.querySelector('[data-b="alg"]').value = btn.alg || '';
       el.querySelector('[data-b="kind"]').value = btn.kind || '';
+      attachKeyPicker(el.querySelector('[data-b="alg"]'), 'alg', 'dl-prog-alg');
       el.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
       btnsHost.appendChild(el);
     }
@@ -211,6 +240,31 @@
       el.querySelector('[data-t="id"]').value = tab.id || '';
       el.querySelector('[data-t="label"]').value = tab.label || '';
       el.querySelector('[data-t="forms"]').value = (tab.forms || []).join('\n');
+      // picker: select care adaugă form: pe o linie
+      const pickRow = document.createElement('div');
+      pickRow.className = 'prog-row';
+      const pickWrap = document.createElement('div');
+      pickWrap.className = 'prog-field';
+      pickWrap.innerHTML = '<label>adaugă form</label>';
+      const sel = document.createElement('select');
+      sel.innerHTML = '<option value="">— alege form: —</option>';
+      (deps.listKeys ? deps.listKeys('form') : []).forEach((k) => {
+        const o = document.createElement('option');
+        o.value = k;
+        o.textContent = k;
+        sel.appendChild(o);
+      });
+      sel.onchange = () => {
+        if (!sel.value) return;
+        const ta = el.querySelector('[data-t="forms"]');
+        const cur = (ta.value || '').trim();
+        ta.value = cur ? cur + '\n' + sel.value : sel.value;
+        sel.value = '';
+        syncFromDom();
+      };
+      pickWrap.appendChild(sel);
+      pickRow.appendChild(pickWrap);
+      el.appendChild(pickRow);
       el.querySelectorAll('input,textarea').forEach((inp) => inp.addEventListener('input', syncFromDom));
       tabsHost.appendChild(el);
     }
@@ -549,6 +603,7 @@
     sincronizeazaInRaw,
     getMod,
     getKind,
+    setDeps,
     ALG_OPS,
   };
 

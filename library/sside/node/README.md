@@ -19,6 +19,7 @@ node node/<fisier>.js
 |--------|-----|
 | `README.md` | acest fișier |
 | `run_tests.js` | rulează suite-ul din `../test/` |
+| `gen_doc_data.js` | bundle `doc/*.md` → `ui/js/doc-data_generated.js` |
 
 *(Actualizează acest tabel când apar fișiere noi.)*
 
@@ -26,6 +27,10 @@ node node/<fisier>.js
 
 ```text
 node node/run_tests.js
+node node/run_tests.js -e
+node node/run_tests.js -e -w 20
+node node/run_tests.js -w 20
 node node/run_tests.js smoke[1]
+node node/gen_doc_data.js
 node node/run_tests.js -h
 ```

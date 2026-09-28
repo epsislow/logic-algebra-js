@@ -47,6 +47,8 @@
         /** Cache scheme (doar chei + tip via tipuriRedisChei). ready=false = necunoscut (încă fără * / schema:*). */
         let schemeCacheReady = false;
         let schemeCacheKeys = [];
+        /** Cache pickere prog (F5b): schema / alg / form / ui */
+        let progKeysCache = { schema: [], alg: [], form: [], ui: [] };
 
         const apiStats = { read: 0, type: 0, write: 0, advSearch: 0 };
         /** Istoric agregat consecutiv: [{ cmd, count, cat }, ...] — index 0 = cel mai recent. Max 10 evenimente. */
@@ -383,10 +385,22 @@
 
         function rebuildSchemeCacheDinChei(chei) {
             const set = new Set();
+            const alg = new Set();
+            const form = new Set();
+            const ui = new Set();
             (chei || []).forEach(k => {
                 if (isSchemaRedisKey(k)) set.add(k);
+                if (isAlgRedisKey(k)) alg.add(k);
+                if (isFormRedisKey(k)) form.add(k);
+                if (isUiRedisKey(k)) ui.add(k);
             });
             schemeCacheKeys = Array.from(set).sort();
+            progKeysCache = {
+                schema: schemeCacheKeys.slice(),
+                alg: Array.from(alg).sort(),
+                form: Array.from(form).sort(),
+                ui: Array.from(ui).sort(),
+            };
             schemeCacheReady = true;
             actualizeazaSemnalCacheScheme();
         }
@@ -398,13 +412,33 @@
                 schemeCacheKeys.push(cheie);
                 schemeCacheKeys.sort();
             }
+            if (!progKeysCache.schema.includes(cheie)) {
+                progKeysCache.schema.push(cheie);
+                progKeysCache.schema.sort();
+            }
             schemeCacheReady = true;
             actualizeazaSemnalCacheScheme();
+        }
+
+        function adaugaProgKeyInCache(cheie) {
+            if (isAlgRedisKey(cheie) && !progKeysCache.alg.includes(cheie)) {
+                progKeysCache.alg.push(cheie);
+                progKeysCache.alg.sort();
+            } else if (isFormRedisKey(cheie) && !progKeysCache.form.includes(cheie)) {
+                progKeysCache.form.push(cheie);
+                progKeysCache.form.sort();
+            } else if (isUiRedisKey(cheie) && !progKeysCache.ui.includes(cheie)) {
+                progKeysCache.ui.push(cheie);
+                progKeysCache.ui.sort();
+            } else if (isSchemaRedisKey(cheie)) {
+                adaugaSchemaInCache(cheie);
+            }
         }
 
         function stergeSchemaDinCache(cheie) {
             if (!isSchemaRedisKey(cheie)) return;
             schemeCacheKeys = schemeCacheKeys.filter(k => k !== cheie);
+            progKeysCache.schema = progKeysCache.schema.filter(k => k !== cheie);
             // ready rămâne true (poate fi listă goală = chiar 0 scheme)
             actualizeazaSemnalCacheScheme();
         }
@@ -1517,6 +1551,7 @@ function translateUpstashSearchResults(date) {
             actualizeazaIndicatorModificat();
             document.getElementById('ecran-detaliu').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            if (window.SsideDocs) SsideDocs.ascunde();
             document.getElementById('ecran-lista').style.display = 'block';
             actualizeazaStelutaCautare();
         }
@@ -3249,6 +3284,22 @@ function translateUpstashSearchResults(date) {
             });
         }
 
+        if (window.SsideProgPanels) {
+            SsideProgPanels.setDeps({
+                listKeys(kind) {
+                    if (kind === 'schema') {
+                        return (progKeysCache.schema && progKeysCache.schema.length)
+                            ? progKeysCache.schema.slice()
+                            : listeSchemeDinCache();
+                    }
+                    if (kind === 'alg') return (progKeysCache.alg || []).slice();
+                    if (kind === 'form') return (progKeysCache.form || []).slice();
+                    if (kind === 'ui') return (progKeysCache.ui || []).slice();
+                    return [];
+                },
+            });
+        }
+
         function esteCompatibilCuSchema(val, schema) {
             if (!schema) return true;
             let t = schema.type;
@@ -3441,6 +3492,20 @@ function translateUpstashSearchResults(date) {
                 if (!esteJsonValid(textBrut)) {
                     alert('JSON invalid — corectează în tab Json sau Edit.');
                     return;
+                }
+                let parsed;
+                try {
+                    parsed = JSON.parse(textBrut);
+                } catch (e) {
+                    alert('JSON invalid.');
+                    return;
+                }
+                if (window.SsideProgValidate) {
+                    const vr = SsideProgValidate.validateProg(infoCheieCurenta.tip, parsed);
+                    if (!vr.ok) {
+                        alert('Validare: ' + vr.err);
+                        return;
+                    }
                 }
                 try {
                     const pretty = await salveazaValoareCheieRedis(cheieCurenta, redisTipCurent, textBrut);
@@ -3778,6 +3843,8 @@ function translateUpstashSearchResults(date) {
                 inchideModalCheieNoua();
                 if (isSchemaRedisKey(cheie)) {
                     adaugaSchemaInCache(cheie, redisType === 'json' ? 'json' : 'string');
+                } else {
+                    adaugaProgKeyInCache(cheie);
                 }
                 await scaneazaToateCampurile();
                 await deschideDetaliu(cheie);

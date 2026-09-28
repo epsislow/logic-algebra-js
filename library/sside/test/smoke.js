@@ -65,5 +65,17 @@ module.exports = {
         assert(fs.existsSync(path.join(ROOT, 'core', 'alg-ops.js')));
       },
     },
+    {
+      id: 7,
+      desc: 'docs generated + viewer',
+      run() {
+        assert(fs.existsSync(path.join(ROOT, 'ui', 'js', 'doc-data_generated.js')));
+        assert(fs.existsSync(path.join(ROOT, 'ui', 'js', 'doc-viewer.js')));
+        assert(fs.existsSync(path.join(ROOT, 'node', 'gen_doc_data.js')));
+        const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+        assert(html.includes('doc-viewer.js'));
+        assert(html.includes('deschideDocs'));
+      },
+    },
   ],
 };

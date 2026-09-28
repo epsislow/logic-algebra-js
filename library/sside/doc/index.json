@@ -1,15 +1,10 @@
 {
   "title": "sside docs",
   "sections": [
-    {
-      "id": "keys",
-      "label": "Chei",
-      "file": "keys.md"
-    },
-    {
-      "id": "alg-ops",
-      "label": "Operații alg",
-      "file": "alg-ops.md"
-    }
+    { "id": "keys", "label": "Chei", "file": "keys.md" },
+    { "id": "alg-ops", "label": "Operații alg", "file": "alg-ops.md" },
+    { "id": "when", "label": "when", "file": "when.md" },
+    { "id": "form-ui", "label": "Form / UI", "file": "form-ui.md" },
+    { "id": "examples", "label": "Exemple", "file": "examples.md" }
   ]
 }
