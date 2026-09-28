@@ -227,6 +227,25 @@
 
         .detail-meta { margin-bottom: 12px; }
         .detail-meta .meta-line { margin: 4px 0; font-size: 14px; }
+        .detail-meta .meta-ttl {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+        }
+        .detail-meta #detail-ttl-display {
+            font-family: Consolas, ui-monospace, monospace;
+            font-weight: 600; font-variant-numeric: tabular-nums;
+            color: var(--accent);
+            min-width: 4em;
+        }
+        .detail-meta #detail-ttl-display.is-none { color: var(--text-muted); font-weight: 500; }
+        .detail-meta #detail-ttl-display.is-expired { color: #dc3545; }
+        .ttl-actions, .ttl-edit { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .ttl-edit input {
+            width: auto; min-width: 120px; max-width: 160px; margin: 0; padding: 4px 8px;
+            font-size: 12px;
+        }
+        .ttl-edit button, .ttl-actions button {
+            margin: 0; width: auto; padding: 4px 8px !important; font-size: 11px !important;
+        }
         .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
         .detail-actions button { margin: 0; width: auto; }
 
@@ -627,6 +646,19 @@
                         <span id="detail-idx-badge" class="badge badge-idx" style="display:none;">idx</span>
                         <span id="detail-type-note" class="key-note"></span>
                     </div>
+                    <div class="meta-line meta-ttl" id="detail-ttl-line">
+                        <strong>TTL:</strong>
+                        <span id="detail-ttl-display" class="is-none">no</span>
+                        <span id="detail-ttl-actions" class="ttl-actions">
+                            <button type="button" class="btn-gri btn-inline" onclick="incepeEditTtl()">Setează</button>
+                            <button type="button" class="btn-gri btn-inline" id="btn-ttl-persist" onclick="aplicaPersistTtl()" style="display:none;">Permanent</button>
+                        </span>
+                        <span id="detail-ttl-edit" class="ttl-edit" style="display:none;">
+                            <input type="text" id="ttl-input" placeholder="ex: 3600 sau 2h" autocomplete="off">
+                            <button type="button" class="btn-albastru btn-inline" onclick="aplicaExpireTtl()">Aplică</button>
+                            <button type="button" class="btn-gri btn-inline" onclick="anuleazaEditTtl()">Anulează</button>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="formular-din-wrap" id="formular-din-wrap" style="display: none;">
@@ -998,6 +1030,13 @@
         let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
         /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
         let listareCuType = false;
+        /** TTL pe cheia din detaliu: ms rămase; -1 = no expire; -2 = cheie lipsă; null = necunoscut. */
+        let ttlMsRemaining = null;
+        let ttlTimerId = null;
+        let ttlLastServerSync = 0;
+        let ttlEditOpen = false;
+        let ttlExpiredAlerted = false;
+        const TTL_RESYNC_MS = 15000;
         /** Cache scheme (doar chei + tip via tipuriRedisChei). ready=false = necunoscut (încă fără * / schema:*). */
         let schemeCacheReady = false;
         let schemeCacheKeys = [];
@@ -1014,8 +1053,9 @@
             if (c === 'SET' || c === 'JSON.SET' || c === 'SADD' || c === 'SREM' || c === 'DEL' ||
                 c === 'HSET' || c === 'HDEL' ||
                 c === 'LPUSH' || c === 'RPUSH' || c === 'LSET' || c === 'LREM' ||
-                c === 'ZADD' || c === 'ZREM') return 'write';
-            // GET, JSON.GET, KEYS, SMEMBERS, HGETALL, LRANGE, ZRANGE, MGET, SINTER, …
+                c === 'ZADD' || c === 'ZREM' ||
+                c === 'EXPIRE' || c === 'PEXPIRE' || c === 'PERSIST') return 'write';
+            // GET, JSON.GET, KEYS, SMEMBERS, HGETALL, LRANGE, ZRANGE, PTTL, TTL, MGET, SINTER, …
             return 'read';
         }
 
@@ -1192,6 +1232,12 @@
         });
         document.getElementById('col-hash-field').addEventListener('input', actualizeazaIndicatorModificatCol);
         document.getElementById('col-zset-score').addEventListener('input', actualizeazaIndicatorModificatCol);
+        document.getElementById('ttl-input').addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') {
+                ev.preventDefault();
+                aplicaExpireTtl();
+            }
+        });
 
         window.onload = function () {
             const token = localStorage.getItem("session_token");
@@ -1866,7 +1912,8 @@
                 return JSON.stringify(payload, null, 2);
             }
             const textBrut = typeof textSauObj === 'string' ? textSauObj : JSON.stringify(textSauObj);
-            await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, textBrut] });
+            // KEEPTTL: salvează conținutul fără a reseta expirarea (Upstash suportă)
+            await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, textBrut, "KEEPTTL"] });
             tipuriRedisChei[cheie] = 'string';
             return textBrut;
         }
@@ -2466,6 +2513,8 @@ function translateUpstashSearchResults(date) {
         }
 
         function inapoiLaLista() {
+            opresteTimerTtl();
+            anuleazaEditTtl({ silent: true });
             distrugeEditori();
             resetStareSet();
             resetStareCol();
@@ -2476,6 +2525,7 @@ function translateUpstashSearchResults(date) {
             cheieDataProvenienta = null;
             redisTipCurent = 'string';
             valoareBaseline = '';
+            ttlMsRemaining = null;
             actualizeazaIndicatorModificat();
             document.getElementById('ecran-detaliu').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
@@ -3582,6 +3632,202 @@ function translateUpstashSearchResults(date) {
             });
         }
 
+        // ==========================================
+        // TTL (PTTL / EXPIRE / PERSIST) — separat de Salvează conținut
+        // ==========================================
+        function opresteTimerTtl() {
+            if (ttlTimerId) {
+                clearInterval(ttlTimerId);
+                ttlTimerId = null;
+            }
+        }
+
+        function formateazaTtlMs(ms) {
+            if (ms === -1) return 'no';
+            if (ms === -2 || ms == null) return '—';
+            if (ms <= 0) return 'expirat';
+            let sec = Math.ceil(ms / 1000);
+            const d = Math.floor(sec / 86400);
+            sec %= 86400;
+            const h = Math.floor(sec / 3600);
+            sec %= 3600;
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            const pad = (n) => String(n).padStart(2, '0');
+            if (d > 0) return d + 'd ' + h + 'h ' + pad(m) + 'm ' + pad(s) + 's';
+            if (h > 0) return h + 'h ' + pad(m) + 'm ' + pad(s) + 's';
+            if (m > 0) return m + 'm ' + pad(s) + 's';
+            return s + 's';
+        }
+
+        function parseTtlInputToSeconds(raw) {
+            const s = String(raw || '').trim().toLowerCase();
+            if (!s) return null;
+            if (/^\d+$/.test(s)) {
+                const n = parseInt(s, 10);
+                return n > 0 ? n : null;
+            }
+            let total = 0;
+            let found = false;
+            const re = /(\d+)\s*([dhms])/g;
+            let m;
+            while ((m = re.exec(s))) {
+                found = true;
+                const n = parseInt(m[1], 10);
+                if (m[2] === 'd') total += n * 86400;
+                else if (m[2] === 'h') total += n * 3600;
+                else if (m[2] === 'm') total += n * 60;
+                else total += n;
+            }
+            if (!found || total <= 0) return null;
+            return total;
+        }
+
+        function actualizeazaUiTtl() {
+            const disp = document.getElementById('detail-ttl-display');
+            const btnPersist = document.getElementById('btn-ttl-persist');
+            if (!disp) return;
+            const text = formateazaTtlMs(ttlMsRemaining);
+            disp.textContent = text;
+            disp.classList.toggle('is-none', ttlMsRemaining === -1);
+            disp.classList.toggle('is-expired', ttlMsRemaining === -2 || (ttlMsRemaining != null && ttlMsRemaining >= 0 && ttlMsRemaining <= 0) || text === 'expirat');
+            if (btnPersist) {
+                btnPersist.style.display = (ttlMsRemaining != null && ttlMsRemaining > 0) ? 'inline-block' : 'none';
+            }
+        }
+
+        function pornesteTimerTtl() {
+            opresteTimerTtl();
+            ttlTimerId = setInterval(() => {
+                if (!cheieCurenta) {
+                    opresteTimerTtl();
+                    return;
+                }
+                if (ttlMsRemaining == null || ttlMsRemaining < 0) {
+                    // -1 no expire, -2 missing — nu numărăm
+                    if (Date.now() - ttlLastServerSync > TTL_RESYNC_MS) {
+                        refreshTtlDinServer({ silent: true });
+                    }
+                    return;
+                }
+                ttlMsRemaining = Math.max(0, ttlMsRemaining - 1000);
+                actualizeazaUiTtl();
+                if (ttlMsRemaining <= 0) {
+                    ttlMsRemaining = -2;
+                    actualizeazaUiTtl();
+                    opresteTimerTtl();
+                    if (!ttlExpiredAlerted) {
+                        ttlExpiredAlerted = true;
+                        alert('TTL a expirat — cheia a fost ștearsă din Redis.');
+                    }
+                    return;
+                }
+                if (Date.now() - ttlLastServerSync > TTL_RESYNC_MS) {
+                    refreshTtlDinServer({ silent: true });
+                }
+            }, 1000);
+        }
+
+        async function refreshTtlDinServer(opts) {
+            opts = opts || {};
+            if (!cheieCurenta) return;
+            try {
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["PTTL", cheieCurenta] });
+                let ms = Number(date.rezultat);
+                if (!Number.isFinite(ms)) ms = -2;
+                ttlLastServerSync = Date.now();
+                const prevPositive = ttlMsRemaining != null && ttlMsRemaining > 0;
+                ttlMsRemaining = ms;
+                actualizeazaUiTtl();
+
+                if (ms === -2 && prevPositive && !ttlExpiredAlerted) {
+                    ttlExpiredAlerted = true;
+                    opresteTimerTtl();
+                    alert('TTL a expirat — cheia a fost ștearsă din Redis.');
+                } else if (ms > 0) {
+                    if (!ttlTimerId) pornesteTimerTtl();
+                } else {
+                    // -1 permanent sau lipsă
+                    if (ms !== -1) opresteTimerTtl();
+                    else opresteTimerTtl();
+                }
+            } catch (e) {
+                if (!opts.silent) alert(e.message);
+            }
+        }
+
+        async function incarcaTtlLaDeschidere() {
+            opresteTimerTtl();
+            ttlEditOpen = false;
+            ttlExpiredAlerted = false;
+            ttlMsRemaining = null;
+            anuleazaEditTtl({ silent: true });
+            actualizeazaUiTtl();
+            await refreshTtlDinServer({ silent: true });
+            if (ttlMsRemaining > 0) pornesteTimerTtl();
+        }
+
+        function incepeEditTtl() {
+            if (!cheieCurenta) return;
+            ttlEditOpen = true;
+            document.getElementById('detail-ttl-actions').style.display = 'none';
+            document.getElementById('detail-ttl-edit').style.display = 'inline-flex';
+            const inp = document.getElementById('ttl-input');
+            inp.value = '';
+            inp.focus();
+        }
+
+        function anuleazaEditTtl(opts) {
+            opts = opts || {};
+            ttlEditOpen = false;
+            const edit = document.getElementById('detail-ttl-edit');
+            const actions = document.getElementById('detail-ttl-actions');
+            if (edit) edit.style.display = 'none';
+            if (actions) actions.style.display = 'inline-flex';
+            const inp = document.getElementById('ttl-input');
+            if (inp) inp.value = '';
+            actualizeazaUiTtl();
+        }
+
+        async function aplicaExpireTtl() {
+            if (!cheieCurenta) return;
+            const sec = parseTtlInputToSeconds(document.getElementById('ttl-input').value);
+            if (sec == null) {
+                alert('TTL invalid. Folosește secunde (ex: 3600) sau 2h, 30m, 1d.');
+                return;
+            }
+            try {
+                const date = await apeleazaServerul("/api/comanda", {
+                    comandaRedis: ["EXPIRE", cheieCurenta, String(sec)]
+                });
+                if (!date.rezultat) {
+                    alert('EXPIRE a eșuat (cheia lipsește?).');
+                    await refreshTtlDinServer({ silent: true });
+                    return;
+                }
+                anuleazaEditTtl({ silent: true });
+                ttlExpiredAlerted = false;
+                await refreshTtlDinServer({ silent: true });
+                if (ttlMsRemaining > 0) pornesteTimerTtl();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function aplicaPersistTtl() {
+            if (!cheieCurenta) return;
+            if (!confirm('Elimini expirarea? Cheia rămâne permanentă (TTL: no).')) return;
+            try {
+                await apeleazaServerul("/api/comanda", { comandaRedis: ["PERSIST", cheieCurenta] });
+                anuleazaEditTtl({ silent: true });
+                ttlExpiredAlerted = false;
+                await refreshTtlDinServer({ silent: true });
+                opresteTimerTtl();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
         async function deschideDetaliu(cheie) {
             const setChei = new Set(toateCheile);
             const info = clasificaCheie(cheie, setChei);
@@ -3613,6 +3859,8 @@ function translateUpstashSearchResults(date) {
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
             document.getElementById('ecran-detaliu').style.display = 'block';
             document.getElementById('detail-key-name').textContent = cheie;
+
+            await incarcaTtlLaDeschidere();
 
             const et = etichetaTip(info);
             const badge = document.getElementById('detail-type-badge');
@@ -4127,6 +4375,8 @@ function translateUpstashSearchResults(date) {
                     document.getElementById('rezultat-citire').innerText = rawEl.value;
                     marcheazaCurentCaBaseline();
                     alert('Salvat: ' + cheieCurenta);
+                    await refreshTtlDinServer({ silent: true });
+                    if (ttlMsRemaining > 0) pornesteTimerTtl();
                     await scaneazaToateCampurile();
                 } catch (err) {
                     alert(err.message);
@@ -4158,6 +4408,8 @@ function translateUpstashSearchResults(date) {
                     }
                     marcheazaCurentCaBaseline();
                     alert('Salvat: ' + cheieCurenta);
+                    await refreshTtlDinServer({ silent: true });
+                    if (ttlMsRemaining > 0) pornesteTimerTtl();
                     await scaneazaToateCampurile();
                 } catch (err) {
                     alert(err.message);
@@ -4191,6 +4443,8 @@ function translateUpstashSearchResults(date) {
                 }
                 marcheazaCurentCaBaseline();
                 alert('Salvat: ' + cheieCurenta);
+                await refreshTtlDinServer({ silent: true });
+                if (ttlMsRemaining > 0) pornesteTimerTtl();
                 await scaneazaToateCampurile();
             } catch (err) {
                 alert(err.message);
