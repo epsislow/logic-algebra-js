@@ -104,6 +104,9 @@
         .badge-admin { background: var(--badge-admin); color: #111; }
         .badge-redis { background: #17a2b8; }
         .badge-redis-set { background: #6f42c1; }
+        .badge-redis-hash { background: #0d9488; }
+        .badge-redis-list { background: #ea580c; }
+        .badge-redis-zset { background: #db2777; }
         .badge-redis-json { background: #20c997; }
         .badge-redis-other { background: #868e96; }
         .badge-idx { background: #28a745; }
@@ -302,7 +305,14 @@
             background: var(--input-bg); color: var(--text);
             transition: border-color 0.15s, box-shadow 0.15s;
         }
-        #set-member-textarea.json-invalid {
+        #col-value-textarea {
+            width: 100%; min-height: 180px; font-family: Consolas, monospace; font-size: 12px;
+            border: 1px solid var(--input-border); border-radius: 4px;
+            background: var(--input-bg); color: var(--text);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        #set-member-textarea.json-invalid,
+        #col-value-textarea.json-invalid {
             border-color: #dc3545 !important;
             box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
         }
@@ -468,18 +478,57 @@
         .api-stats-sep {
             width: 1px; height: 12px; background: var(--border); flex-shrink: 0;
         }
+        .api-stats-trailing {
+            margin-left: auto;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+            justify-content: flex-end; min-width: 0;
+        }
+        .api-stats-recent {
+            display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+            justify-content: flex-end; max-width: min(480px, 100%);
+            min-height: 18px;
+        }
+        .api-stats-recent:empty { display: none; }
+        .api-cmd-chip {
+            display: inline-block;
+            font-family: Consolas, ui-monospace, monospace;
+            font-size: 9px; font-weight: 600; line-height: 1.35;
+            padding: 1px 5px; border-radius: 3px;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+        .api-cmd-chip.is-read {
+            color: #0f766e; background: rgba(13, 148, 136, 0.12);
+            border-color: rgba(13, 148, 136, 0.28);
+        }
+        .api-cmd-chip.is-type {
+            color: #a16207; background: rgba(202, 138, 4, 0.14);
+            border-color: rgba(202, 138, 4, 0.3);
+        }
+        .api-cmd-chip.is-write {
+            color: #b91c1c; background: rgba(220, 38, 38, 0.12);
+            border-color: rgba(220, 38, 38, 0.28);
+        }
+        .api-cmd-chip.is-search {
+            color: #6d28d9; background: rgba(124, 58, 237, 0.12);
+            border-color: rgba(124, 58, 237, 0.28);
+        }
+        html[data-theme="dark"] .api-cmd-chip.is-read { color: #5eead4; }
+        html[data-theme="dark"] .api-cmd-chip.is-type { color: #fbbf24; }
+        html[data-theme="dark"] .api-cmd-chip.is-write { color: #f87171; }
+        html[data-theme="dark"] .api-cmd-chip.is-search { color: #c4b5fd; }
         .api-stats-reset {
-            margin-left: auto; width: auto; margin-top: 0; margin-bottom: 0;
+            margin-left: 0; width: auto; margin-top: 0; margin-bottom: 0;
             padding: 2px 8px !important; font-size: 10px !important; font-weight: 600;
             line-height: 1.4; border-radius: 4px; cursor: pointer;
             background: transparent !important; color: var(--text-muted) !important;
-            border: 1px solid var(--border) !important;
+            border: 1px solid var(--border) !important; flex-shrink: 0;
         }
         .api-stats-reset:hover {
             border-color: var(--accent) !important; color: var(--accent) !important;
             background: transparent !important;
         }
-        body.has-api-stats { padding-bottom: 48px; }
+        body.has-api-stats { padding-bottom: 52px; }
 
         @media (max-width: 800px) {
             body { margin: 10px; }
@@ -648,6 +697,74 @@
                     </div>
                 </div>
 
+                <div id="panel-hash" style="display:none;">
+                    <div id="hash-list-view">
+                        <div class="set-toolbar">
+                            <span class="set-count" id="hash-count-label">0 câmpuri</span>
+                            <button type="button" class="btn-albastru btn-inline" onclick="incepeAdaugareColItem()">+ Câmp</button>
+                        </div>
+                        <div id="hash-fields-list" class="set-members-list"></div>
+                    </div>
+                </div>
+
+                <div id="panel-list" style="display:none;">
+                    <div id="list-list-view">
+                        <div class="set-toolbar">
+                            <span class="set-count" id="list-count-label">0 elemente</span>
+                            <button type="button" class="btn-albastru btn-inline" onclick="incepeAdaugareColItem()">+ Element (coadă)</button>
+                        </div>
+                        <div id="list-items-list" class="set-members-list"></div>
+                    </div>
+                </div>
+
+                <div id="panel-zset" style="display:none;">
+                    <div id="zset-list-view">
+                        <div class="set-toolbar">
+                            <span class="set-count" id="zset-count-label">0 membri</span>
+                            <button type="button" class="btn-albastru btn-inline" onclick="incepeAdaugareColItem()">+ Membru</button>
+                        </div>
+                        <div id="zset-members-list" class="set-members-list"></div>
+                    </div>
+                </div>
+
+                <div id="col-item-editor" style="display:none;">
+                    <div id="col-meta-hash" style="display:none;margin-bottom:10px;">
+                        <label for="col-hash-field">Câmp (field)</label>
+                        <input type="text" id="col-hash-field" placeholder="ex: name">
+                    </div>
+                    <div id="col-meta-zset" style="display:none;margin-bottom:10px;">
+                        <label for="col-zset-score">Score</label>
+                        <input type="number" id="col-zset-score" step="any" value="0">
+                    </div>
+                    <div id="col-meta-list" style="display:none;margin-bottom:8px;">
+                        <p style="margin:0;font-size:13px;color:var(--text-muted);" id="col-list-meta-label"></p>
+                    </div>
+                    <div class="formular-din-wrap" id="formular-din-col-wrap">
+                        <label for="select-formular-din-col">Formular din</label>
+                        <select id="select-formular-din-col">
+                            <option value="">— niciuna —</option>
+                        </select>
+                    </div>
+                    <div class="mode-tabs" id="col-item-mode-tabs">
+                        <div class="mode-tabs-left">
+                            <button type="button" id="tab-col-form" style="display:none;" onclick="seteazaModColValue('form')">Formular</button>
+                            <button type="button" id="tab-col-text" class="active" onclick="seteazaModColValue('text')">Text</button>
+                            <button type="button" id="tab-col-json" onclick="seteazaModColValue('json')">
+                                JSON <span class="json-status-dot" id="col-json-status-dot" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                        <button type="button" class="copy-btn" onclick="copiazaColValue(this)">Copiază</button>
+                    </div>
+                    <div id="col-value-form-holder" style="display:none;"></div>
+                    <textarea id="col-value-textarea" spellcheck="false"></textarea>
+                    <div class="detail-actions" style="margin-top:8px;">
+                        <button type="button" id="btn-salveaza-col" onclick="salveazaColItem()">
+                            Salvează <span class="save-dirty-dot" id="col-save-dirty-dot" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="btn-rosu" id="btn-sterge-col" onclick="stergeColItemCurent()">Șterge</button>
+                    </div>
+                </div>
+
                 <div id="panel-unsupported" class="set-unsupported" style="display:none;"></div>
 
                 <div class="detail-actions" id="detail-actions-key">
@@ -697,7 +814,10 @@
             <span class="api-stat api-stat-search"><span class="api-stat-label">Adv.Search</span> <strong id="stat-search">0</strong></span>
             <span class="api-stats-sep" aria-hidden="true"></span>
             <span class="api-stat api-stat-sum"><span class="api-stat-label">Σ</span> <strong id="stat-sum">0</strong></span>
-            <button type="button" class="api-stats-reset" onclick="reseteazaStatisticiApi()" title="Resetează contoarele">Reset</button>
+            <div class="api-stats-trailing">
+                <div class="api-stats-recent" id="api-stats-recent" title="Ultimele comenzi Redis (cele mai noi în stânga)"></div>
+                <button type="button" class="api-stats-reset" onclick="reseteazaStatisticiApi()" title="Resetează contoarele și istoricul">Reset</button>
+            </div>
         </div>
     </footer>
 
@@ -711,6 +831,9 @@
                 <option value="string">String</option>
                 <option value="json">JSON (RedisJSON)</option>
                 <option value="set">Set</option>
+                <option value="hash">Hash</option>
+                <option value="list">List</option>
+                <option value="zset">Sorted Set</option>
             </select>
 
             <div id="new-role-wrap">
@@ -765,6 +888,34 @@
                 <label>Primul membru</label>
                 <input type="text" id="new-set-first-member" placeholder="ex: 100 sau un text/JSON">
                 <p style="font-size:12px;margin:0;">Redis creează Set-ul la primul SADD (membru obligatoriu).</p>
+            </div>
+
+            <div id="new-fields-hash" style="display:none;">
+                <label>Nume cheie Hash</label>
+                <input type="text" id="new-hash-name" placeholder="ex: user:42:profile">
+                <label>Primul câmp</label>
+                <input type="text" id="new-hash-field" placeholder="ex: name">
+                <label>Valoare</label>
+                <input type="text" id="new-hash-value" placeholder="ex: Ana">
+                <p style="font-size:12px;margin:0;">Redis creează Hash-ul la primul HSET.</p>
+            </div>
+
+            <div id="new-fields-list" style="display:none;">
+                <label>Nume cheie List</label>
+                <input type="text" id="new-list-name" placeholder="ex: queue:jobs">
+                <label>Primul element</label>
+                <input type="text" id="new-list-first" placeholder="ex: item-1">
+                <p style="font-size:12px;margin:0;">Se adaugă la coadă (RPUSH).</p>
+            </div>
+
+            <div id="new-fields-zset" style="display:none;">
+                <label>Nume cheie Sorted Set</label>
+                <input type="text" id="new-zset-name" placeholder="ex: leaderboard:weekly">
+                <label>Score</label>
+                <input type="number" id="new-zset-score" step="any" value="0">
+                <label>Membru</label>
+                <input type="text" id="new-zset-member" placeholder="ex: player:1">
+                <p style="font-size:12px;margin:0;">Redis creează ZSet-ul la primul ZADD.</p>
             </div>
 
             <p id="new-create-hint" style="font-size:12px;margin:10px 0 0;color:var(--text-muted);"></p>
@@ -835,14 +986,43 @@
         let schemeCacheKeys = [];
 
         const apiStats = { read: 0, type: 0, write: 0, advSearch: 0 };
+        /** Istoric agregat consecutiv: [{ cmd, count, cat }, ...] — index 0 = cel mai recent. Max 10 evenimente. */
+        const API_CMD_HISTORY_MAX = 10;
+        let apiCmdHistory = [];
 
         function clasificaComandaRedis(cmd) {
             const c = String(cmd || '').toUpperCase();
             if (c === 'SEARCH.QUERY') return 'advSearch';
             if (c === 'TYPE') return 'type';
-            if (c === 'SET' || c === 'JSON.SET' || c === 'SADD' || c === 'SREM' || c === 'DEL') return 'write';
-            // GET, JSON.GET, KEYS, SMEMBERS, MGET, SINTER, …
+            if (c === 'SET' || c === 'JSON.SET' || c === 'SADD' || c === 'SREM' || c === 'DEL' ||
+                c === 'HSET' || c === 'HDEL' ||
+                c === 'LPUSH' || c === 'RPUSH' || c === 'LSET' || c === 'LREM' ||
+                c === 'ZADD' || c === 'ZREM') return 'write';
+            // GET, JSON.GET, KEYS, SMEMBERS, HGETALL, LRANGE, ZRANGE, MGET, SINTER, …
             return 'read';
+        }
+
+        function chipClassPentruCat(cat) {
+            if (cat === 'type') return 'is-type';
+            if (cat === 'write') return 'is-write';
+            if (cat === 'advSearch') return 'is-search';
+            return 'is-read';
+        }
+
+        function actualizeazaUiIstoricComenzi() {
+            const box = document.getElementById('api-stats-recent');
+            if (!box) return;
+            box.innerHTML = '';
+            apiCmdHistory.forEach(ev => {
+                const chip = document.createElement('span');
+                chip.className = 'api-cmd-chip ' + chipClassPentruCat(ev.cat);
+                const label = ev.count > 1 ? (ev.cmd + '×' + ev.count) : ev.cmd;
+                chip.textContent = label;
+                chip.title = ev.count > 1
+                    ? (ev.cmd + ' × ' + ev.count + ' (consecutive)')
+                    : ev.cmd;
+                box.appendChild(chip);
+            });
         }
 
         function actualizeazaUiStatisticiApi() {
@@ -853,14 +1033,26 @@
             if (el('stat-search')) el('stat-search').textContent = String(apiStats.advSearch);
             const sum = apiStats.read + apiStats.type + apiStats.write + apiStats.advSearch;
             if (el('stat-sum')) el('stat-sum').textContent = String(sum);
+            actualizeazaUiIstoricComenzi();
         }
 
         function inregistreazaComandaRedis(cmd) {
-            const cat = clasificaComandaRedis(cmd);
+            const raw = String(cmd || '');
+            const c = raw.toUpperCase();
+            const cat = clasificaComandaRedis(c);
             if (cat === 'advSearch') apiStats.advSearch++;
             else if (cat === 'type') apiStats.type++;
             else if (cat === 'write') apiStats.write++;
             else apiStats.read++;
+
+            if (apiCmdHistory.length && apiCmdHistory[0].cmd === c) {
+                apiCmdHistory[0].count++;
+            } else {
+                apiCmdHistory.unshift({ cmd: c, count: 1, cat: cat });
+                if (apiCmdHistory.length > API_CMD_HISTORY_MAX) {
+                    apiCmdHistory.length = API_CMD_HISTORY_MAX;
+                }
+            }
             actualizeazaUiStatisticiApi();
         }
 
@@ -869,6 +1061,7 @@
             apiStats.type = 0;
             apiStats.write = 0;
             apiStats.advSearch = 0;
+            apiCmdHistory = [];
             actualizeazaUiStatisticiApi();
         }
 
@@ -900,6 +1093,16 @@
         let schemaTempKey = null; // schemă temporară pe Liber (doar UI)
         let setMembruSchemaTempKey = null;
         let setMembruFormEditor = null;
+
+        // --- colecții Hash / List / Sorted Set (panouri separate, editor partajat) ---
+        let colKind = null; // 'hash' | 'list' | 'zset' | null
+        let colItems = [];
+        let colEditIndex = -1; // -1 none; -2 new; >=0 edit
+        let colOriginal = null;
+        let colValueMod = 'text';
+        let colValueBaseline = '';
+        let colSchemaTempKey = null;
+        let colFormEditor = null;
 
         (function initThemeToggle() {
             const btn = document.getElementById('theme-toggle');
@@ -963,6 +1166,15 @@
         document.getElementById('select-formular-din-set').addEventListener('change', () => {
             peSchimbareFormularDinSet();
         });
+        document.getElementById('select-formular-din-col').addEventListener('change', () => {
+            peSchimbareFormularDinCol();
+        });
+        document.getElementById('col-value-textarea').addEventListener('input', () => {
+            if (colValueMod === 'json') actualizeazaValidareJsonCol();
+            actualizeazaIndicatorModificatCol();
+        });
+        document.getElementById('col-hash-field').addEventListener('input', actualizeazaIndicatorModificatCol);
+        document.getElementById('col-zset-score').addEventListener('input', actualizeazaIndicatorModificatCol);
 
         window.onload = function () {
             const token = localStorage.getItem("session_token");
@@ -1142,7 +1354,7 @@
 
         function actualizeazaSemnalCacheScheme() {
             const unknown = !schemeCacheReady;
-            ['select-formular-din', 'select-formular-din-set', 'new-data-schema'].forEach(id => {
+            ['select-formular-din', 'select-formular-din-set', 'select-formular-din-col', 'new-data-schema'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.toggle('scheme-cache-unknown', unknown);
             });
@@ -1417,6 +1629,9 @@
         function etichetaRedisTip(redisTip) {
             const t = normalizeazaTipRedis(redisTip);
             if (t === 'set') return { badge: 'set', cls: 'badge-redis-set' };
+            if (t === 'hash') return { badge: 'hash', cls: 'badge-redis-hash' };
+            if (t === 'list') return { badge: 'list', cls: 'badge-redis-list' };
+            if (t === 'zset') return { badge: 'zset', cls: 'badge-redis-zset' };
             if (t === 'string') return { badge: 'string', cls: 'badge-redis' };
             if (t === 'json') return { badge: 'json', cls: 'badge-redis-json' };
             return { badge: t, cls: 'badge-redis-other' };
@@ -2186,6 +2401,10 @@ function translateUpstashSearchResults(date) {
                 anuleazaEditMembruSet();
                 return;
             }
+            if (esteTipColecțieCol(redisTipCurent) && colEditIndex !== -1) {
+                anuleazaEditColItem();
+                return;
+            }
             if (cheieDataProvenienta && infoCheieCurenta && infoCheieCurenta.tip === 'schema') {
                 const dataKey = cheieDataProvenienta;
                 cheieDataProvenienta = null;
@@ -2200,6 +2419,10 @@ function translateUpstashSearchResults(date) {
             if (!btn) return;
             if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
                 btn.textContent = '← Înapoi la set';
+            } else if (esteTipColecțieCol(redisTipCurent) && colEditIndex !== -1) {
+                if (redisTipCurent === 'hash') btn.textContent = '← Înapoi la hash';
+                else if (redisTipCurent === 'list') btn.textContent = '← Înapoi la listă';
+                else btn.textContent = '← Înapoi la zset';
             } else if (cheieDataProvenienta && infoCheieCurenta && infoCheieCurenta.tip === 'schema') {
                 btn.textContent = '← Înapoi la data';
             } else {
@@ -2210,6 +2433,7 @@ function translateUpstashSearchResults(date) {
         function inapoiLaLista() {
             distrugeEditori();
             resetStareSet();
+            resetStareCol();
             reseteazaSchemaTempLiber();
             seteazaVizibilitateIdxLegenda(false);
             cheieCurenta = null;
@@ -2301,28 +2525,35 @@ function translateUpstashSearchResults(date) {
             opts = opts || {};
             const tip = normalizeazaTipRedis(redisTip);
             const isSet = tip === 'set';
+            const isCol = esteTipColecțieCol(tip);
             const isDoc = tip === 'string' || tip === 'none' || tip === 'json';
-            const supported = isSet || isDoc;
+            const supported = isSet || isCol || isDoc;
             const amanat = !!opts.amanatContinut;
 
-            // la deschidere string/json: tab-urile + raw rămân ascunse până după load
             document.getElementById('detail-mode-tabs').style.display = (isDoc && !amanat) ? 'flex' : 'none';
             document.getElementById('panel-form').style.display = 'none';
             document.getElementById('panel-raw').style.display = 'none';
             document.getElementById('panel-set').style.display = isSet ? 'block' : 'none';
+            document.getElementById('panel-hash').style.display = tip === 'hash' ? 'block' : 'none';
+            document.getElementById('panel-list').style.display = tip === 'list' ? 'block' : 'none';
+            document.getElementById('panel-zset').style.display = tip === 'zset' ? 'block' : 'none';
+            document.getElementById('col-item-editor').style.display = 'none';
             document.getElementById('panel-unsupported').style.display = supported ? 'none' : 'block';
             document.getElementById('btn-salveaza').style.display = isDoc ? 'inline-block' : 'none';
             document.getElementById('detail-actions-key').style.display = 'flex';
 
             if (!supported) {
                 document.getElementById('panel-unsupported').textContent =
-                    'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia, iar tipurile list/hash/zset vor veni pe rând.';
+                    'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia.';
             }
 
+            const wrapLiber = document.getElementById('formular-din-wrap');
+            if (wrapLiber && (isSet || isCol)) wrapLiber.style.display = 'none';
+
             if (isSet) {
-                const wrapLiber = document.getElementById('formular-din-wrap');
-                if (wrapLiber) wrapLiber.style.display = 'none';
                 actualizeazaVizualizareSet();
+            } else if (isCol) {
+                actualizeazaVizualizareCol();
             } else {
                 const listView = document.getElementById('set-list-view');
                 const editor = document.getElementById('set-member-editor');
@@ -2639,6 +2870,683 @@ function translateUpstashSearchResults(date) {
             }, 1500);
         }
 
+        // ==========================================
+        // HASH / LIST / ZSET — panouri + editor partajat
+        // ==========================================
+        function esteTipColecțieCol(tip) {
+            const t = normalizeazaTipRedis(tip);
+            return t === 'hash' || t === 'list' || t === 'zset';
+        }
+
+        function esteTipColecțieLiberCreate(tip) {
+            const t = normalizeazaTipRedis(tip);
+            return t === 'set' || t === 'hash' || t === 'list' || t === 'zset';
+        }
+
+        function distrugeEditorColForm() {
+            if (colFormEditor) {
+                try { colFormEditor.destroy(); } catch (e) {}
+                colFormEditor = null;
+            }
+            const holder = document.getElementById('col-value-form-holder');
+            if (holder) {
+                holder.innerHTML = '';
+                holder.style.display = 'none';
+            }
+        }
+
+        function reseteazaSchemaTempCol() {
+            colSchemaTempKey = null;
+            distrugeEditorColForm();
+            const sel = document.getElementById('select-formular-din-col');
+            if (sel) sel.value = '';
+            const tabForm = document.getElementById('tab-col-form');
+            if (tabForm) tabForm.style.display = 'none';
+        }
+
+        function resetStareCol() {
+            colKind = null;
+            colItems = [];
+            colEditIndex = -1;
+            colOriginal = null;
+            colValueMod = 'text';
+            colValueBaseline = '';
+            reseteazaSchemaTempCol();
+            const ta = document.getElementById('col-value-textarea');
+            if (ta) {
+                ta.value = '';
+                ta.classList.remove('json-invalid');
+                ta.style.display = '';
+            }
+            const ed = document.getElementById('col-item-editor');
+            if (ed) ed.style.display = 'none';
+            ['panel-hash', 'panel-list', 'panel-zset'].forEach(id => {
+                const p = document.getElementById(id);
+                if (p) p.style.display = 'none';
+            });
+            ['hash-list-view', 'list-list-view', 'zset-list-view'].forEach(id => {
+                const v = document.getElementById(id);
+                if (v) v.style.display = 'block';
+            });
+            const hf = document.getElementById('col-hash-field');
+            if (hf) hf.value = '';
+            const zs = document.getElementById('col-zset-score');
+            if (zs) zs.value = '0';
+        }
+
+        function parseHashRezultat(rez) {
+            const out = [];
+            if (Array.isArray(rez)) {
+                for (let i = 0; i + 1 < rez.length; i += 2) {
+                    out.push({
+                        field: String(rez[i] == null ? '' : rez[i]),
+                        value: valoareCaTextAfisat(rez[i + 1])
+                    });
+                }
+            } else if (rez && typeof rez === 'object') {
+                Object.keys(rez).forEach(k => {
+                    out.push({ field: k, value: valoareCaTextAfisat(rez[k]) });
+                });
+            }
+            out.sort((a, b) => a.field.localeCompare(b.field));
+            return out;
+        }
+
+        function parseZsetRezultat(rez) {
+            const out = [];
+            if (!Array.isArray(rez)) return out;
+            for (let i = 0; i + 1 < rez.length; i += 2) {
+                const member = valoareCaTextAfisat(rez[i]);
+                const score = Number(rez[i + 1]);
+                out.push({ member, score: Number.isFinite(score) ? score : 0 });
+            }
+            return out;
+        }
+
+        function parseListRezultat(rez) {
+            if (!Array.isArray(rez)) {
+                if (rez == null) return [];
+                return [valoareCaTextAfisat(rez)];
+            }
+            return rez.map(v => valoareCaTextAfisat(v));
+        }
+
+        async function incarcaColItems(cheie, kind) {
+            colKind = kind;
+            colEditIndex = -1;
+            colOriginal = null;
+            try {
+                let date;
+                if (kind === 'hash') {
+                    date = await apeleazaServerul("/api/comanda", { comandaRedis: ["HGETALL", cheie] });
+                    colItems = parseHashRezultat(date.rezultat);
+                } else if (kind === 'list') {
+                    date = await apeleazaServerul("/api/comanda", { comandaRedis: ["LRANGE", cheie, "0", "-1"] });
+                    colItems = parseListRezultat(date.rezultat);
+                } else if (kind === 'zset') {
+                    date = await apeleazaServerul("/api/comanda", { comandaRedis: ["ZRANGE", cheie, "0", "-1", "WITHSCORES"] });
+                    colItems = parseZsetRezultat(date.rezultat);
+                } else {
+                    colItems = [];
+                }
+
+                if (colItems.length === 0) {
+                    const tipFresh = await aflaTipRedis(cheie, { force: true });
+                    if (tipFresh === 'none' || tipFresh === 'unknown' || tipFresh !== kind) {
+                        tipuriRedisChei[cheie] = kind;
+                        randeazaListaCol();
+                        actualizeazaVizualizareCol();
+                        return { stearsa: true };
+                    }
+                }
+                tipuriRedisChei[cheie] = kind;
+                randeazaListaCol();
+                actualizeazaVizualizareCol();
+                return { stearsa: false };
+            } catch (e) {
+                const tipFresh = await aflaTipRedis(cheie, { force: true });
+                if (tipFresh === 'none' || tipFresh === 'unknown' || tipFresh !== kind) {
+                    tipuriRedisChei[cheie] = kind;
+                    colItems = [];
+                    randeazaListaCol();
+                    actualizeazaVizualizareCol();
+                    return { stearsa: true };
+                }
+                colItems = [];
+                randeazaListaCol();
+                actualizeazaVizualizareCol();
+                throw e;
+            }
+        }
+
+        function randeazaListaCol() {
+            if (colKind === 'hash') randeazaListaHash();
+            else if (colKind === 'list') randeazaListaList();
+            else if (colKind === 'zset') randeazaListaZset();
+        }
+
+        function randeazaListaHash() {
+            const lista = document.getElementById('hash-fields-list');
+            const count = document.getElementById('hash-count-label');
+            count.textContent = colItems.length + (colItems.length === 1 ? ' câmp' : ' câmpuri');
+            lista.innerHTML = '';
+            if (colItems.length === 0) {
+                lista.innerHTML = '<div class="set-member-row"><span class="set-member-preview">Hash gol — adaugă un câmp.</span></div>';
+                return;
+            }
+            colItems.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'set-member-row';
+                const kind = membruPareJson(item.value) ? 'json' : 'text';
+                row.innerHTML =
+                    '<span class="set-member-preview"></span>' +
+                    '<span class="set-member-kind"></span>' +
+                    '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                row.querySelector('.set-member-preview').textContent =
+                    item.field + ' → ' + previzualizareMembruSet(item.value);
+                row.querySelector('.set-member-kind').textContent = kind;
+                const go = () => editeazaColItem(idx);
+                row.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'BUTTON') return;
+                    go();
+                });
+                row.querySelector('button').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    go();
+                });
+                lista.appendChild(row);
+            });
+        }
+
+        function randeazaListaList() {
+            const lista = document.getElementById('list-items-list');
+            const count = document.getElementById('list-count-label');
+            count.textContent = colItems.length + (colItems.length === 1 ? ' element' : ' elemente');
+            lista.innerHTML = '';
+            if (colItems.length === 0) {
+                lista.innerHTML = '<div class="set-member-row"><span class="set-member-preview">Listă goală — adaugă un element.</span></div>';
+                return;
+            }
+            colItems.forEach((val, idx) => {
+                const row = document.createElement('div');
+                row.className = 'set-member-row';
+                const kind = membruPareJson(val) ? 'json' : 'text';
+                row.innerHTML =
+                    '<span class="set-member-kind">[' + idx + ']</span>' +
+                    '<span class="set-member-preview"></span>' +
+                    '<span class="set-member-kind"></span>' +
+                    '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                const kinds = row.querySelectorAll('.set-member-kind');
+                kinds[1].textContent = kind;
+                row.querySelector('.set-member-preview').textContent = previzualizareMembruSet(val);
+                const go = () => editeazaColItem(idx);
+                row.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'BUTTON') return;
+                    go();
+                });
+                row.querySelector('button').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    go();
+                });
+                lista.appendChild(row);
+            });
+        }
+
+        function randeazaListaZset() {
+            const lista = document.getElementById('zset-members-list');
+            const count = document.getElementById('zset-count-label');
+            count.textContent = colItems.length + (colItems.length === 1 ? ' membru' : ' membri');
+            lista.innerHTML = '';
+            if (colItems.length === 0) {
+                lista.innerHTML = '<div class="set-member-row"><span class="set-member-preview">Sorted Set gol — adaugă un membru.</span></div>';
+                return;
+            }
+            colItems.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'set-member-row';
+                const kind = membruPareJson(item.member) ? 'json' : 'text';
+                row.innerHTML =
+                    '<span class="set-member-kind"></span>' +
+                    '<span class="set-member-preview"></span>' +
+                    '<span class="set-member-kind"></span>' +
+                    '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                const kinds = row.querySelectorAll('.set-member-kind');
+                kinds[0].textContent = 'score ' + item.score;
+                kinds[1].textContent = kind;
+                row.querySelector('.set-member-preview').textContent = previzualizareMembruSet(item.member);
+                const go = () => editeazaColItem(idx);
+                row.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'BUTTON') return;
+                    go();
+                });
+                row.querySelector('button').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    go();
+                });
+                lista.appendChild(row);
+            });
+        }
+
+        function actualizeazaVizualizareCol() {
+            const edit = esteTipColecțieCol(redisTipCurent) && colEditIndex !== -1;
+            const keyActions = document.getElementById('detail-actions-key');
+            const ed = document.getElementById('col-item-editor');
+            const legendaPanel = document.getElementById('panel-idx-legenda');
+
+            document.getElementById('panel-hash').style.display = (redisTipCurent === 'hash' && !edit) ? 'block' : 'none';
+            document.getElementById('panel-list').style.display = (redisTipCurent === 'list' && !edit) ? 'block' : 'none';
+            document.getElementById('panel-zset').style.display = (redisTipCurent === 'zset' && !edit) ? 'block' : 'none';
+
+            if (redisTipCurent === 'hash') {
+                document.getElementById('hash-list-view').style.display = 'block';
+            }
+            if (redisTipCurent === 'list') {
+                document.getElementById('list-list-view').style.display = 'block';
+            }
+            if (redisTipCurent === 'zset') {
+                document.getElementById('zset-list-view').style.display = 'block';
+            }
+
+            if (ed) ed.style.display = edit ? 'block' : 'none';
+            if (keyActions) keyActions.style.display = edit ? 'none' : 'flex';
+            if (edit && legendaPanel) {
+                legendaPanel.classList.remove('is-open');
+                legendaPanel.setAttribute('aria-hidden', 'true');
+                const btn = document.getElementById('btn-idx-legenda');
+                if (btn) btn.classList.remove('is-open');
+            }
+            actualizeazaButonInapoiDetaliu();
+        }
+
+        function pregăteșteMetaColEditor() {
+            document.getElementById('col-meta-hash').style.display = colKind === 'hash' ? 'block' : 'none';
+            document.getElementById('col-meta-zset').style.display = colKind === 'zset' ? 'block' : 'none';
+            document.getElementById('col-meta-list').style.display = colKind === 'list' ? 'block' : 'none';
+        }
+
+        function seteazaModColValue(mod) {
+            if (mod === 'form' && !colSchemaTempKey) mod = 'json';
+            colValueMod = mod;
+            document.getElementById('tab-col-form').classList.toggle('active', mod === 'form');
+            document.getElementById('tab-col-text').classList.toggle('active', mod === 'text');
+            document.getElementById('tab-col-json').classList.toggle('active', mod === 'json');
+            document.getElementById('tab-col-form').style.display = colSchemaTempKey ? 'inline-block' : 'none';
+            const ta = document.getElementById('col-value-textarea');
+            const formHolder = document.getElementById('col-value-form-holder');
+            if (mod === 'form') {
+                if (ta) ta.style.display = 'none';
+                if (formHolder) formHolder.style.display = 'block';
+            } else {
+                if (ta) ta.style.display = '';
+                if (formHolder) formHolder.style.display = 'none';
+                if (colFormEditor && mod === 'json') {
+                    try {
+                        ta.value = JSON.stringify(colFormEditor.getValue(), null, 2);
+                    } catch (e) { /* keep */ }
+                }
+            }
+            actualizeazaValidareJsonCol();
+            actualizeazaIndicatorModificatCol();
+        }
+
+        function actualizeazaValidareJsonCol() {
+            const ta = document.getElementById('col-value-textarea');
+            const dot = document.getElementById('col-json-status-dot');
+            if (!ta) return;
+            if (colValueMod !== 'json') {
+                ta.classList.remove('json-invalid');
+                if (dot) dot.classList.remove('is-visible');
+                return;
+            }
+            const valid = esteJsonValid(ta.value);
+            ta.classList.toggle('json-invalid', !valid);
+            if (dot) dot.classList.toggle('is-visible', !valid);
+        }
+
+        function actualizeazaIndicatorModificatCol() {
+            const dot = document.getElementById('col-save-dirty-dot');
+            if (!dot) return;
+            let cur = '';
+            try {
+                if (colValueMod === 'form' && colFormEditor) {
+                    cur = JSON.stringify(colFormEditor.getValue(), null, 2);
+                } else {
+                    cur = document.getElementById('col-value-textarea').value || '';
+                }
+            } catch (e) {
+                cur = document.getElementById('col-value-textarea').value || '';
+            }
+            if (colKind === 'hash') {
+                cur = (document.getElementById('col-hash-field').value || '') + '\0' + cur;
+            } else if (colKind === 'zset') {
+                cur = (document.getElementById('col-zset-score').value || '') + '\0' + cur;
+            }
+            dot.classList.toggle('is-visible', cur !== colValueBaseline);
+        }
+
+        function incepeAdaugareColItem() {
+            if (!esteTipColecțieCol(redisTipCurent)) return;
+            colKind = redisTipCurent;
+            colEditIndex = -2;
+            colOriginal = null;
+            colValueBaseline = '';
+            reseteazaSchemaTempCol();
+            populeazaSelectFormularDin(document.getElementById('select-formular-din-col'), '');
+            pregăteșteMetaColEditor();
+            document.getElementById('col-value-textarea').value = '';
+            document.getElementById('col-hash-field').value = '';
+            document.getElementById('col-zset-score').value = '0';
+            if (colKind === 'list') {
+                document.getElementById('col-list-meta-label').textContent = 'Element nou (se adaugă la coadă / RPUSH)';
+            }
+            document.getElementById('btn-sterge-col').style.display = 'none';
+            seteazaModColValue('text');
+            if (colKind === 'hash') {
+                colValueBaseline = '\0';
+            } else if (colKind === 'zset') {
+                colValueBaseline = '0\0';
+            } else {
+                colValueBaseline = '';
+            }
+            actualizeazaIndicatorModificatCol();
+            actualizeazaVizualizareCol();
+            document.getElementById('col-value-textarea').focus();
+        }
+
+        function editeazaColItem(idx) {
+            if (idx < 0 || idx >= colItems.length) return;
+            colKind = redisTipCurent;
+            colEditIndex = idx;
+            reseteazaSchemaTempCol();
+            populeazaSelectFormularDin(document.getElementById('select-formular-din-col'), '');
+            pregăteșteMetaColEditor();
+
+            let text = '';
+            if (colKind === 'hash') {
+                colOriginal = { field: colItems[idx].field, value: colItems[idx].value };
+                document.getElementById('col-hash-field').value = colOriginal.field;
+                text = colOriginal.value;
+            } else if (colKind === 'list') {
+                colOriginal = colItems[idx];
+                text = colOriginal;
+                document.getElementById('col-list-meta-label').textContent = 'Element la index [' + idx + '] (LSET)';
+            } else if (colKind === 'zset') {
+                colOriginal = { member: colItems[idx].member, score: colItems[idx].score };
+                document.getElementById('col-zset-score').value = String(colOriginal.score);
+                text = colOriginal.member;
+            }
+
+            const asJson = membruPareJson(text);
+            let afisat = text;
+            if (asJson) {
+                try { afisat = JSON.stringify(JSON.parse(text), null, 2); } catch (e) { afisat = text; }
+            }
+            document.getElementById('col-value-textarea').value = afisat;
+            if (colKind === 'hash') {
+                colValueBaseline = (document.getElementById('col-hash-field').value || '') + '\0' + afisat;
+            } else if (colKind === 'zset') {
+                colValueBaseline = (document.getElementById('col-zset-score').value || '') + '\0' + afisat;
+            } else {
+                colValueBaseline = afisat;
+            }
+            document.getElementById('btn-sterge-col').style.display = 'inline-block';
+            seteazaModColValue(asJson ? 'json' : 'text');
+            actualizeazaIndicatorModificatCol();
+            actualizeazaVizualizareCol();
+        }
+
+        function anuleazaEditColItem() {
+            colEditIndex = -1;
+            colOriginal = null;
+            colValueBaseline = '';
+            reseteazaSchemaTempCol();
+            document.getElementById('col-value-textarea').value = '';
+            actualizeazaValidareJsonCol();
+            actualizeazaIndicatorModificatCol();
+            randeazaListaCol();
+            actualizeazaVizualizareCol();
+        }
+
+        function obtineValoareColPentruSalvare() {
+            const ta = document.getElementById('col-value-textarea');
+            let valoare = ta.value;
+            if (colValueMod === 'form' && colFormEditor) {
+                valoare = JSON.stringify(colFormEditor.getValue());
+                ta.value = JSON.stringify(colFormEditor.getValue(), null, 2);
+            } else if (colValueMod === 'json') {
+                actualizeazaValidareJsonCol();
+                if (!esteJsonValid(valoare)) return null;
+                valoare = JSON.stringify(JSON.parse(valoare));
+            }
+            return valoare;
+        }
+
+        async function salveazaColItem() {
+            if (!cheieCurenta || !esteTipColecțieCol(redisTipCurent)) return;
+            let valoare;
+            try {
+                valoare = obtineValoareColPentruSalvare();
+            } catch (e) {
+                alert('Nu pot citi valoarea.');
+                return;
+            }
+            if (valoare == null) return;
+
+            try {
+                if (colKind === 'hash') {
+                    const field = document.getElementById('col-hash-field').value.trim();
+                    if (!field) {
+                        alert('Completează numele câmpului.');
+                        return;
+                    }
+                    if (colEditIndex >= 0) {
+                        const oldField = colOriginal.field;
+                        if (field !== oldField) {
+                            const exista = colItems.some((it, i) => i !== colEditIndex && it.field === field);
+                            if (exista) {
+                                alert('Câmpul există deja în Hash.');
+                                return;
+                            }
+                            await apeleazaServerul("/api/comanda", { comandaRedis: ["HDEL", cheieCurenta, oldField] });
+                        }
+                        await apeleazaServerul("/api/comanda", { comandaRedis: ["HSET", cheieCurenta, field, valoare] });
+                    } else if (colEditIndex === -2) {
+                        if (colItems.some(it => it.field === field)) {
+                            alert('Câmpul există deja în Hash.');
+                            return;
+                        }
+                        await apeleazaServerul("/api/comanda", { comandaRedis: ["HSET", cheieCurenta, field, valoare] });
+                    }
+                } else if (colKind === 'list') {
+                    if (colEditIndex >= 0) {
+                        await apeleazaServerul("/api/comanda", {
+                            comandaRedis: ["LSET", cheieCurenta, String(colEditIndex), valoare]
+                        });
+                    } else if (colEditIndex === -2) {
+                        await apeleazaServerul("/api/comanda", { comandaRedis: ["RPUSH", cheieCurenta, valoare] });
+                    }
+                } else if (colKind === 'zset') {
+                    const score = Number(document.getElementById('col-zset-score').value);
+                    if (!Number.isFinite(score)) {
+                        alert('Score invalid.');
+                        return;
+                    }
+                    if (colEditIndex >= 0) {
+                        const oldMember = colOriginal.member;
+                        if (valoare !== oldMember) {
+                            const exista = colItems.some((it, i) => i !== colEditIndex && it.member === valoare);
+                            if (exista) {
+                                alert('Membrul există deja în Sorted Set.');
+                                return;
+                            }
+                            await apeleazaServerul("/api/comanda", { comandaRedis: ["ZREM", cheieCurenta, oldMember] });
+                        }
+                        await apeleazaServerul("/api/comanda", {
+                            comandaRedis: ["ZADD", cheieCurenta, String(score), valoare]
+                        });
+                    } else if (colEditIndex === -2) {
+                        if (colItems.some(it => it.member === valoare)) {
+                            alert('Membrul există deja în Sorted Set.');
+                            return;
+                        }
+                        await apeleazaServerul("/api/comanda", {
+                            comandaRedis: ["ZADD", cheieCurenta, String(score), valoare]
+                        });
+                    }
+                } else {
+                    return;
+                }
+
+                tipuriRedisChei[cheieCurenta] = colKind;
+                await incarcaColItems(cheieCurenta, colKind);
+                anuleazaEditColItem();
+                if (!toateCheile.includes(cheieCurenta)) {
+                    await scaneazaToateCampurile();
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function stergeColItemCurent() {
+            if (!cheieCurenta || colEditIndex < 0 || !colKind) return;
+            const label = colKind === 'hash' ? 'câmpul' : (colKind === 'list' ? 'elementul' : 'membrul');
+            if (!confirm('Ștergi ' + label + '?')) return;
+            try {
+                if (colKind === 'hash') {
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["HDEL", cheieCurenta, colOriginal.field] });
+                } else if (colKind === 'list') {
+                    // ștergere pe index: sentinel + LREM (LREM pe valoare ar putea lovi alt element)
+                    const sentinel = '__sside_del_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                    await apeleazaServerul("/api/comanda", {
+                        comandaRedis: ["LSET", cheieCurenta, String(colEditIndex), sentinel]
+                    });
+                    await apeleazaServerul("/api/comanda", {
+                        comandaRedis: ["LREM", cheieCurenta, "1", sentinel]
+                    });
+                } else if (colKind === 'zset') {
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["ZREM", cheieCurenta, colOriginal.member] });
+                }
+                await incarcaColItems(cheieCurenta, colKind);
+                anuleazaEditColItem();
+                const tip = await aflaTipRedis(cheieCurenta, { force: true });
+                if (tip === 'none') {
+                    tipuriRedisChei[cheieCurenta] = colKind;
+                    alert('Cheie stearsa. Salveaza pt recreare!');
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        async function copiazaColValue(buton) {
+            if (colValueMod === 'form' && colFormEditor) {
+                try {
+                    document.getElementById('col-value-textarea').value =
+                        JSON.stringify(colFormEditor.getValue(), null, 2);
+                } catch (e) { /* keep */ }
+            }
+            const text = document.getElementById('col-value-textarea').value || '';
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (e) {
+                const zona = document.createElement('textarea');
+                zona.value = text;
+                document.body.appendChild(zona);
+                zona.select();
+                document.execCommand('copy');
+                document.body.removeChild(zona);
+            }
+            const eticheta = buton.textContent;
+            buton.textContent = 'Copiat!';
+            buton.classList.add('copied');
+            setTimeout(() => {
+                buton.textContent = eticheta;
+                buton.classList.remove('copied');
+            }, 1500);
+        }
+
+        async function peSchimbareFormularDinCol() {
+            const sel = document.getElementById('select-formular-din-col');
+            if (!sel) return;
+            const next = sel.value || '';
+            const prev = colSchemaTempKey || '';
+            if (next === prev) return;
+
+            if (prev && next !== prev) {
+                const ta = document.getElementById('col-value-textarea');
+                const dirty = (ta ? ta.value : '') !== colValueBaseline.split('\0').pop() ||
+                    (colValueMod === 'form' && colFormEditor);
+                if (dirty && !confirm('Înlocuiești formularul?')) {
+                    sel.value = prev;
+                    return;
+                }
+            }
+
+            if (!next) {
+                if (colFormEditor) {
+                    try {
+                        document.getElementById('col-value-textarea').value =
+                            JSON.stringify(colFormEditor.getValue(), null, 2);
+                    } catch (e) { /* keep */ }
+                }
+                reseteazaSchemaTempCol();
+                seteazaModColValue(membruPareJson(document.getElementById('col-value-textarea').value) ? 'json' : 'text');
+                actualizeazaIndicatorModificatCol();
+                return;
+            }
+
+            colSchemaTempKey = next;
+            document.getElementById('tab-col-form').style.display = 'inline-block';
+            try {
+                await incarcaFormularCol(next, document.getElementById('col-value-textarea').value);
+                seteazaModColValue('form');
+            } catch (e) {
+                colSchemaTempKey = null;
+                sel.value = '';
+                document.getElementById('tab-col-form').style.display = 'none';
+                distrugeEditorColForm();
+                alert(e.message || String(e));
+                seteazaModColValue('text');
+            }
+        }
+
+        async function incarcaFormularCol(schemaKey, rawText) {
+            const holder = document.getElementById('col-value-form-holder');
+            const schemaObj = JSON.parse(JSON.stringify(await incarcaSchemaCaObiect(schemaKey)));
+            const startval = startvalDinRawSiSchema(rawText, schemaObj);
+            distrugeEditorColForm();
+            holder.style.display = 'block';
+            holder.innerHTML = '';
+            const editorOpts = {
+                schema: schemaObj,
+                theme: 'html',
+                disable_collapse: false,
+                disable_edit_json: true,
+                disable_properties: true,
+                disable_array_reorder: true,
+                use_default_values: true,
+                display_required_only: false,
+                show_errors: 'interaction'
+            };
+            if (startval !== undefined && startval !== null) editorOpts.startval = startval;
+            colFormEditor = new JSONEditor(holder, editorOpts);
+            colFormEditor.on('ready', () => {
+                try {
+                    const pretty = JSON.stringify(colFormEditor.getValue(), null, 2);
+                    document.getElementById('col-value-textarea').value = pretty;
+                    colFormEditor.on('change', () => {
+                        try {
+                            document.getElementById('col-value-textarea').value =
+                                JSON.stringify(colFormEditor.getValue(), null, 2);
+                        } catch (e) { /* ignore */ }
+                        actualizeazaIndicatorModificatCol();
+                    });
+                    actualizeazaIndicatorModificatCol();
+                } catch (e) { /* ignore */ }
+            });
+        }
+
         async function deschideDetaliu(cheie) {
             const setChei = new Set(toateCheile);
             const info = clasificaCheie(cheie, setChei);
@@ -2659,6 +3567,10 @@ function translateUpstashSearchResults(date) {
             document.getElementById('panel-raw').style.display = 'none';
             document.getElementById('panel-form').style.display = 'none';
             document.getElementById('panel-set').style.display = 'none';
+            document.getElementById('panel-hash').style.display = 'none';
+            document.getElementById('panel-list').style.display = 'none';
+            document.getElementById('panel-zset').style.display = 'none';
+            document.getElementById('col-item-editor').style.display = 'none';
             document.getElementById('panel-unsupported').style.display = 'none';
             document.getElementById('detail-mode-tabs').style.display = 'none';
 
@@ -2679,6 +3591,7 @@ function translateUpstashSearchResults(date) {
 
             distrugeEditori();
             resetStareSet();
+            resetStareCol();
             reseteazaSchemaTempLiber();
 
             document.getElementById('raw-json-editor').value = '';
@@ -2717,6 +3630,18 @@ function translateUpstashSearchResults(date) {
                 try {
                     const setLoad = await incarcaSetMembri(cheie);
                     if (setLoad && setLoad.stearsa) {
+                        alert('Cheie stearsa. Salveaza pt recreare!');
+                    }
+                } catch (err) {
+                    alert(err.message);
+                }
+                return;
+            }
+
+            if (esteTipColecțieCol(redisTip)) {
+                try {
+                    const colLoad = await incarcaColItems(cheie, redisTip);
+                    if (colLoad && colLoad.stearsa) {
                         alert('Cheie stearsa. Salveaza pt recreare!');
                     }
                 } catch (err) {
@@ -3103,7 +4028,7 @@ function translateUpstashSearchResults(date) {
         }
 
         function seteazaModEditare(mod) {
-            if (redisTipCurent === 'set') return;
+            if (redisTipCurent === 'set' || esteTipColecțieCol(redisTipCurent)) return;
             if (redisTipCurent !== 'string' && redisTipCurent !== 'none' && redisTipCurent !== 'json') {
                 return;
             }
@@ -3140,6 +4065,10 @@ function translateUpstashSearchResults(date) {
             if (!cheieCurenta) return;
             if (redisTipCurent === 'set') {
                 alert('Pentru Set salvează fiecare membru cu „Salvează membru”.');
+                return;
+            }
+            if (esteTipColecțieCol(redisTipCurent)) {
+                alert('Pentru Hash / List / Sorted Set salvează fiecare element din editorul dedicat.');
                 return;
             }
             if (redisTipCurent !== 'string' && redisTipCurent !== 'none' && redisTipCurent !== 'json') {
@@ -3289,16 +4218,19 @@ function translateUpstashSearchResults(date) {
         function actualizeazaFormCheieNoua() {
             const redisType = document.getElementById('new-redis-type').value;
             const role = document.getElementById('new-key-role').value;
-            const isSet = redisType === 'set';
+            const isColecție = esteTipColecțieLiberCreate(redisType);
             const isJson = redisType === 'json';
 
-            document.getElementById('new-role-wrap').style.display = isSet ? 'none' : 'block';
-            document.getElementById('new-fields-set').style.display = isSet ? 'block' : 'none';
+            document.getElementById('new-role-wrap').style.display = isColecție ? 'none' : 'block';
+            document.getElementById('new-fields-set').style.display = redisType === 'set' ? 'block' : 'none';
+            document.getElementById('new-fields-hash').style.display = redisType === 'hash' ? 'block' : 'none';
+            document.getElementById('new-fields-list').style.display = redisType === 'list' ? 'block' : 'none';
+            document.getElementById('new-fields-zset').style.display = redisType === 'zset' ? 'block' : 'none';
 
-            const showSchema = !isSet && role === 'schema';
-            const showData = !isSet && role === 'data';
-            const showLiberStr = !isSet && role === 'liber' && !isJson;
-            const showLiberJson = !isSet && role === 'liber' && isJson;
+            const showSchema = !isColecție && role === 'schema';
+            const showData = !isColecție && role === 'data';
+            const showLiberStr = !isColecție && role === 'liber' && !isJson;
+            const showLiberJson = !isColecție && role === 'liber' && isJson;
 
             document.getElementById('new-fields-schema').style.display = showSchema ? 'block' : 'none';
             document.getElementById('new-fields-data').style.display = showData ? 'block' : 'none';
@@ -3312,7 +4244,6 @@ function translateUpstashSearchResults(date) {
             const inst = document.getElementById('new-data-instance').value.trim() || 'data';
             if (schemaKey) {
                 const name = schemaKey.slice('schema:'.length);
-                // String data: _X:inst | JSON data: data:_X:inst
                 document.getElementById('new-data-preview').textContent =
                     isJson ? ('data:' + name + ':' + inst) : (name + ':' + inst);
             } else {
@@ -3334,8 +4265,14 @@ function translateUpstashSearchResults(date) {
             }
 
             const hint = document.getElementById('new-create-hint');
-            if (isSet) {
+            if (redisType === 'set') {
                 hint.textContent = 'Se creează cu SADD (membru obligatoriu).';
+            } else if (redisType === 'hash') {
+                hint.textContent = 'Se creează cu HSET (câmp + valoare).';
+            } else if (redisType === 'list') {
+                hint.textContent = 'Se creează cu RPUSH (primul element).';
+            } else if (redisType === 'zset') {
+                hint.textContent = 'Se creează cu ZADD (score + membru).';
             } else if (isJson) {
                 hint.textContent = 'Se creează cu JSON.SET. Schemele/data JSON cu prefix schema:/data:_ pot fi indexate (idx).';
             } else {
@@ -3396,6 +4333,19 @@ function translateUpstashSearchResults(date) {
                 } else if (redisType === 'set') {
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheie, payload] });
                     tipuriRedisChei[cheie] = 'set';
+                } else if (redisType === 'hash') {
+                    await apeleazaServerul("/api/comanda", {
+                        comandaRedis: ["HSET", cheie, payload.field, payload.value]
+                    });
+                    tipuriRedisChei[cheie] = 'hash';
+                } else if (redisType === 'list') {
+                    await apeleazaServerul("/api/comanda", { comandaRedis: ["RPUSH", cheie, payload] });
+                    tipuriRedisChei[cheie] = 'list';
+                } else if (redisType === 'zset') {
+                    await apeleazaServerul("/api/comanda", {
+                        comandaRedis: ["ZADD", cheie, String(payload.score), payload.member]
+                    });
+                    tipuriRedisChei[cheie] = 'zset';
                 } else {
                     const text = typeof payload === 'string' ? payload : JSON.stringify(payload);
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, text] });
@@ -3428,6 +4378,57 @@ function translateUpstashSearchResults(date) {
                     return;
                 }
                 await finalizeazaCreareCheie(cheie, 'set', firstMember);
+                return;
+            }
+
+            if (redisType === 'hash') {
+                const cheie = document.getElementById('new-hash-name').value.trim();
+                const field = document.getElementById('new-hash-field').value.trim();
+                const value = document.getElementById('new-hash-value').value;
+                if (!cheie) {
+                    alert('Completează numele cheii Hash.');
+                    return;
+                }
+                if (!field) {
+                    alert('Completează primul câmp.');
+                    return;
+                }
+                await finalizeazaCreareCheie(cheie, 'hash', { field, value });
+                return;
+            }
+
+            if (redisType === 'list') {
+                const cheie = document.getElementById('new-list-name').value.trim();
+                const first = document.getElementById('new-list-first').value;
+                if (!cheie) {
+                    alert('Completează numele cheii List.');
+                    return;
+                }
+                if (first === '') {
+                    alert('Completează primul element.');
+                    return;
+                }
+                await finalizeazaCreareCheie(cheie, 'list', first);
+                return;
+            }
+
+            if (redisType === 'zset') {
+                const cheie = document.getElementById('new-zset-name').value.trim();
+                const score = Number(document.getElementById('new-zset-score').value);
+                const member = document.getElementById('new-zset-member').value;
+                if (!cheie) {
+                    alert('Completează numele cheii Sorted Set.');
+                    return;
+                }
+                if (!Number.isFinite(score)) {
+                    alert('Score invalid.');
+                    return;
+                }
+                if (member === '') {
+                    alert('Completează membrul.');
+                    return;
+                }
+                await finalizeazaCreareCheie(cheie, 'zset', { score, member });
                 return;
             }
 
