@@ -238,6 +238,10 @@
         .formular-din-wrap select {
             flex: 1; min-width: 160px; margin: 0; max-width: 420px;
         }
+        select.scheme-cache-unknown {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.22);
+        }
 
         #raw-json-editor {
             width: 100%; min-height: 220px; font-family: Consolas, monospace; font-size: 12px;
@@ -759,6 +763,9 @@
         // --- stare UI nouă ---
         let toateCheile = [];
         let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
+        /** Cache scheme (doar chei + tip via tipuriRedisChei). ready=false = necunoscut (încă fără * / schema:*). */
+        let schemeCacheReady = false;
+        let schemeCacheKeys = [];
         let cheieCurenta = null;
         let infoCheieCurenta = null;
         let cheieDataProvenienta = null; // data de pe care s-a deschis schema (pt. Înapoi la data)
@@ -906,6 +913,9 @@
             document.getElementById("panou-aplicatie").style.display = "none";
             distrugeEditori();
             cheieCurenta = null;
+            schemeCacheReady = false;
+            schemeCacheKeys = [];
+            actualizeazaSemnalCacheScheme();
         }
 
         // ==========================================
@@ -974,15 +984,61 @@
             return schemaKey + ' · ' + tip;
         }
 
+        function esteFiltruRebuildSchemeCache(filtru) {
+            const f = (filtru == null ? '' : String(filtru)).trim() || '*';
+            return f === '*' || f === 'schema:*';
+        }
+
+        function listeSchemeDinCache() {
+            return schemeCacheKeys.slice().sort();
+        }
+
+        function rebuildSchemeCacheDinChei(chei) {
+            const set = new Set();
+            (chei || []).forEach(k => {
+                if (isSchemaRedisKey(k)) set.add(k);
+            });
+            schemeCacheKeys = Array.from(set).sort();
+            schemeCacheReady = true;
+            actualizeazaSemnalCacheScheme();
+        }
+
+        function adaugaSchemaInCache(cheie, tipRedis) {
+            if (!isSchemaRedisKey(cheie)) return;
+            if (tipRedis) tipuriRedisChei[cheie] = normalizeazaTipRedis(tipRedis);
+            if (!schemeCacheKeys.includes(cheie)) {
+                schemeCacheKeys.push(cheie);
+                schemeCacheKeys.sort();
+            }
+            schemeCacheReady = true;
+            actualizeazaSemnalCacheScheme();
+        }
+
+        function stergeSchemaDinCache(cheie) {
+            if (!isSchemaRedisKey(cheie)) return;
+            schemeCacheKeys = schemeCacheKeys.filter(k => k !== cheie);
+            // ready rămâne true (poate fi listă goală = chiar 0 scheme)
+            actualizeazaSemnalCacheScheme();
+        }
+
+        function actualizeazaSemnalCacheScheme() {
+            const unknown = !schemeCacheReady;
+            ['select-formular-din', 'select-formular-din-set', 'new-data-schema'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('scheme-cache-unknown', unknown);
+            });
+        }
+
         function populeazaSelectorScheme(sel) {
             if (!sel) return;
             sel.innerHTML = '';
-            toateCheile.filter(isSchemaRedisKey).forEach(k => {
+            listeSchemeDinCache().forEach(k => {
                 const opt = document.createElement('option');
                 opt.value = k;
                 opt.textContent = etichetaOptiuneSchema(k);
                 sel.appendChild(opt);
             });
+            actualizeazaSemnalCacheScheme();
         }
 
         function populeazaSelectFormularDin(sel, selectedKey) {
@@ -993,7 +1049,7 @@
             empty.value = '';
             empty.textContent = '— niciuna —';
             sel.appendChild(empty);
-            toateCheile.filter(isSchemaRedisKey).sort().forEach(k => {
+            listeSchemeDinCache().forEach(k => {
                 const opt = document.createElement('option');
                 opt.value = k;
                 opt.textContent = etichetaOptiuneSchema(k);
@@ -1004,6 +1060,7 @@
             } else {
                 sel.value = '';
             }
+            actualizeazaSemnalCacheScheme();
         }
 
         function esteLiberCuFormularDin() {
@@ -1878,6 +1935,10 @@ function translateUpstashSearchResults(date) {
                 // tipuri Redis (TYPE) în paralel — force ca lista să fie la zi
                 await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie, { force: true })));
 
+                if (esteFiltruRebuildSchemeCache(filtru)) {
+                    rebuildSchemeCacheDinChei(cheiFiltrate);
+                }
+
                 indicatorTotal.innerText = cheiFiltrate.length;
                 dropdown.innerHTML = "";
                 lista.innerHTML = "";
@@ -1886,6 +1947,7 @@ function translateUpstashSearchResults(date) {
                     dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
                     lista.innerHTML = '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
                     document.getElementById("rezultat-citire").innerText = "Nu există date pentru filtrul introdus.";
+                    actualizeazaStelutaCautare();
                     return;
                 }
 
@@ -3055,11 +3117,13 @@ function translateUpstashSearchResults(date) {
         async function stergeCheieCurenta() {
             if (!cheieCurenta) return;
             if (!confirm('Ștergi definitiv "' + cheieCurenta + '"?')) return;
-            document.getElementById('nume-camp-stergere').value = cheieCurenta;
+            const cheieSterse = cheieCurenta;
+            document.getElementById('nume-camp-stergere').value = cheieSterse;
             try {
-                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheieCurenta] });
+                const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheieSterse] });
                 if (date.rezultat > 0) {
-                    alert('Șters: ' + cheieCurenta);
+                    if (isSchemaRedisKey(cheieSterse)) stergeSchemaDinCache(cheieSterse);
+                    alert('Șters: ' + cheieSterse);
                     inapoiLaLista();
                     await scaneazaToateCampurile();
                 } else {
@@ -3219,6 +3283,9 @@ function translateUpstashSearchResults(date) {
                     tipuriRedisChei[cheie] = 'string';
                 }
                 inchideModalCheieNoua();
+                if (isSchemaRedisKey(cheie)) {
+                    adaugaSchemaInCache(cheie, redisType === 'json' ? 'json' : 'string');
+                }
                 await scaneazaToateCampurile();
                 await deschideDetaliu(cheie);
             } catch (err) {
