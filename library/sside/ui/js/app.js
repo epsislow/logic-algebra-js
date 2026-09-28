@@ -320,28 +320,32 @@
         }
 
         // ==========================================
-        // Convenție chei:
-        //   schema:_X
-        //   _X:inst…          (data String)
-        //   data:_X:inst…     (data JSON pe schemă)
-        //   liber / idx
+        // Convenție chei (core/keys.js):
+        //   schema:_X | data:_X:inst | _X:inst | alg:_Y | form:_X | ui:_name
         // ==========================================
         function normalizeSchemaName(name) {
-            let n = (name || '').trim();
-            if (!n) return '';
-            if (!n.startsWith('_')) n = '_' + n;
-            return n.replace(/:/g, '');
+            return SsideKeys.normalizeSchemaName(name);
         }
 
         function isSchemaRedisKey(key) {
-            return /^schema:_[^:]+$/.test(key);
+            return SsideKeys.isSchemaRedisKey(key);
+        }
+
+        function isAlgRedisKey(key) {
+            return SsideKeys.isAlgRedisKey(key);
+        }
+
+        function isFormRedisKey(key) {
+            return SsideKeys.isFormRedisKey(key);
+        }
+
+        function isUiRedisKey(key) {
+            return SsideKeys.isUiRedisKey(key);
         }
 
         /** data:_schemaName:instance — data JSON pe schemă */
         function parseDataJsonPeSchema(key) {
-            const m = (key || '').match(/^data:(_[^:]+):(.*)$/);
-            if (!m || m[2] === '') return null;
-            return { schemaName: m[1], instance: m[2], schemaKey: 'schema:' + m[1] };
+            return SsideKeys.parseDataJsonPeSchema(key);
         }
 
         function esteAdmin() {
@@ -349,35 +353,11 @@
         }
 
         function isCheieSistemAscunsa(key) {
-            return key.startsWith('user:') || key.startsWith('session:');
+            return SsideKeys.isCheieSistemAscunsa(key);
         }
 
         function clasificaCheie(key, setChei) {
-            if (isCheieSistemAscunsa(key)) {
-                return { tip: 'liber', sistem: true };
-            }
-            if (isSchemaRedisKey(key)) {
-                return { tip: 'schema', schemaName: key.slice('schema:'.length), schemaKey: key };
-            }
-            // JSON data pe schemă: data:_X:inst
-            const dj = parseDataJsonPeSchema(key);
-            if (dj) {
-                if (setChei.has(dj.schemaKey)) {
-                    return { tip: 'data', schemaName: dj.schemaName, schemaKey: dj.schemaKey, instance: dj.instance, dataJson: true };
-                }
-                return { tip: 'liber', missingSchema: dj.schemaName, schemaKey: dj.schemaKey, dataJson: true };
-            }
-            // String data pe schemă: _X:inst
-            const m = key.match(/^(_[^:]+):(.*)$/);
-            if (m && m[2] !== '') {
-                const schemaName = m[1];
-                const schemaKey = 'schema:' + schemaName;
-                if (setChei.has(schemaKey)) {
-                    return { tip: 'data', schemaName, schemaKey, instance: m[2] };
-                }
-                return { tip: 'liber', missingSchema: schemaName, schemaKey };
-            }
-            return { tip: 'liber' };
+            return SsideKeys.clasificaCheie(key, setChei);
         }
 
         function etichetaOptiuneSchema(schemaKey) {
@@ -687,13 +667,7 @@
         }
 
         function etichetaTip(info) {
-            if (info.sistem) return { badge: 'admin', cls: 'badge-admin', note: '(user/session)' };
-            if (info.tip === 'schema') return { badge: 'schemă', cls: 'badge-schema', note: '' };
-            if (info.tip === 'data') return { badge: 'data', cls: 'badge-data', note: '→ ' + info.schemaKey };
-            if (info.missingSchema) {
-                return { badge: 'liber', cls: 'badge-liber', note: '(lipsa schema ' + info.missingSchema + ')' };
-            }
-            return { badge: 'liber', cls: 'badge-liber', note: '' };
+            return SsideKeys.etichetaTip(info);
         }
 
         function etichetaRedisTip(redisTip) {
@@ -3512,9 +3486,20 @@ function translateUpstashSearchResults(date) {
         }
 
         function actualizeazaFormCheieNoua() {
-            const redisType = document.getElementById('new-redis-type').value;
+            const redisTypeEl = document.getElementById('new-redis-type');
+            let redisType = redisTypeEl.value;
             const role = document.getElementById('new-key-role').value;
+            const isProg = role === 'alg' || role === 'form' || role === 'ui';
             const isColecție = esteTipColecțieLiberCreate(redisType);
+
+            if (isProg && !isColecție) {
+                redisTypeEl.value = 'json';
+                redisType = 'json';
+                redisTypeEl.disabled = true;
+            } else {
+                redisTypeEl.disabled = false;
+            }
+
             const isJson = redisType === 'json';
 
             document.getElementById('new-role-wrap').style.display = isColecție ? 'none' : 'block';
@@ -3525,16 +3510,36 @@ function translateUpstashSearchResults(date) {
 
             const showSchema = !isColecție && role === 'schema';
             const showData = !isColecție && role === 'data';
+            const showProg = !isColecție && isProg;
             const showLiberStr = !isColecție && role === 'liber' && !isJson;
             const showLiberJson = !isColecție && role === 'liber' && isJson;
 
             document.getElementById('new-fields-schema').style.display = showSchema ? 'block' : 'none';
             document.getElementById('new-fields-data').style.display = showData ? 'block' : 'none';
+            document.getElementById('new-fields-prog').style.display = showProg ? 'block' : 'none';
             document.getElementById('new-fields-liber').style.display = showLiberStr ? 'block' : 'none';
             document.getElementById('new-fields-json-liber').style.display = showLiberJson ? 'block' : 'none';
 
             const sn = normalizeSchemaName(document.getElementById('new-schema-name').value || 'setari');
             document.getElementById('new-schema-preview').textContent = 'schema:' + sn;
+
+            if (showProg) {
+                const label = document.getElementById('new-prog-label');
+                const ph = document.getElementById('new-prog-name');
+                if (role === 'alg') {
+                    label.textContent = 'Nume algorithm (fără prefix; `_` se adaugă automat)';
+                    ph.placeholder = 'ex: save_item';
+                } else if (role === 'form') {
+                    label.textContent = 'Nume form (fără prefix; `_` se adaugă automat)';
+                    ph.placeholder = 'ex: item_edit';
+                } else {
+                    label.textContent = 'Nume UI (fără prefix; `_` se adaugă automat)';
+                    ph.placeholder = 'ex: warehouse';
+                }
+                const previewKey = SsideKeys.cheieProgDinNume(role, ph.value);
+                document.getElementById('new-prog-preview').textContent =
+                    previewKey || (role + ':_…');
+            }
 
             const schemaKey = document.getElementById('new-data-schema').value;
             const inst = document.getElementById('new-data-instance').value.trim() || 'data';
@@ -3569,6 +3574,8 @@ function translateUpstashSearchResults(date) {
                 hint.textContent = 'Se creează cu RPUSH (primul element).';
             } else if (redisType === 'zset') {
                 hint.textContent = 'Se creează cu ZADD (score + membru).';
+            } else if (isProg) {
+                hint.textContent = 'JSON.SET cu seed v:1 (alg/form/ui). Nu se indexează în Upstash Search.';
             } else if (isJson) {
                 hint.textContent = 'Se creează cu JSON.SET. Schemele/data JSON cu prefix schema:/data:_ pot fi indexate (idx).';
             } else {
@@ -3577,6 +3584,7 @@ function translateUpstashSearchResults(date) {
         }
 
         document.getElementById('new-schema-name').addEventListener('input', actualizeazaFormCheieNoua);
+        document.getElementById('new-prog-name').addEventListener('input', actualizeazaFormCheieNoua);
         document.getElementById('new-data-instance').addEventListener('input', actualizeazaFormCheieNoua);
         document.getElementById('new-data-schema').addEventListener('change', actualizeazaFormCheieNoua);
         document.getElementById('new-json-idx-prefix').addEventListener('change', actualizeazaFormCheieNoua);
@@ -3737,6 +3745,19 @@ function translateUpstashSearchResults(date) {
                 const cheie = 'schema:' + sn;
                 const initial = { type: 'object', properties: {} };
                 await finalizeazaCreareCheie(cheie, redisType, initial);
+                return;
+            }
+
+            if (role === 'alg' || role === 'form' || role === 'ui') {
+                const rawName = document.getElementById('new-prog-name').value;
+                const cheie = SsideKeys.cheieProgDinNume(role, rawName);
+                if (!cheie) {
+                    alert('Nume invalid pentru ' + role + '.');
+                    return;
+                }
+                const display = normalizeSchemaName(rawName).replace(/^_/, '');
+                const seed = SsideMeta.seedPentruRol(role, display);
+                await finalizeazaCreareCheie(cheie, 'json', seed);
                 return;
             }
 

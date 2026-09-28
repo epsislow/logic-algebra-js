@@ -17,8 +17,6 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-
-
     <link rel="stylesheet" href="ui/css/app.css">
 </head>
 <body>
@@ -341,6 +339,9 @@
                 <select id="new-key-role" onchange="actualizeazaFormCheieNoua()">
                     <option value="schema">Schemă</option>
                     <option value="data">Data pe schemă</option>
+                    <option value="alg">Algorithm (alg:_)</option>
+                    <option value="form">Form (form:_)</option>
+                    <option value="ui">UI (ui:_)</option>
                     <option value="liber">Liber</option>
                 </select>
             </div>
@@ -349,6 +350,13 @@
                 <label>Nume schemă (fără prefix; `_` se adaugă automat)</label>
                 <input type="text" id="new-schema-name" placeholder="ex: setari">
                 <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-schema-preview">schema:_setari</code></p>
+            </div>
+
+            <div id="new-fields-prog" style="display:none;">
+                <label id="new-prog-label">Nume (fără prefix; `_` se adaugă automat)</label>
+                <input type="text" id="new-prog-name" placeholder="ex: save_item">
+                <p style="font-size:12px;margin:0;">Cheie finală: <code id="new-prog-preview">—</code></p>
+                <p style="font-size:12px;margin:6px 0 0;color:var(--text-muted);">Se creează ca JSON cu seed <code>v:1</code>.</p>
             </div>
 
             <div id="new-fields-data" style="display:none;">
@@ -444,6 +452,8 @@
     </div>
 
 
+    <script src="core/keys.js"></script>
+    <script src="core/meta-schemas.js"></script>
     <script src="ui/js/app.js"></script>
 </body>
 </html>

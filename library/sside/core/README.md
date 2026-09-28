@@ -1,5 +1,12 @@
 # core/
 
-Logică partajată (Redis helpers, clasificare chei, alg runner) — modulele apar treptat din **F1** / **F4**.
+Logică partajată (testabilă din Node + încărcată în browser).
 
-În F0 directorul există ca schelet; aplicația rulează încă din `ui/js/app.js` (extras monolit din `index.html`).
+| Fișier | Rol |
+|--------|-----|
+| `keys.js` | Clasificare chei, badge tip, `alg:`/`form:`/`ui:_` |
+| `meta-schemas.js` | Meta JSON Schema + seed `v:1` pentru alg/form/ui |
+| `README.md` | acest fișier |
+
+Browser: `<script src="core/….js">` înainte de `ui/js/app.js` (expune `SsideKeys` / `SsideMeta`).  
+Node: `require('../core/keys.js')`.
