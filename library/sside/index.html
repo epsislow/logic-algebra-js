@@ -95,9 +95,9 @@
         .btn-rosu:hover { background: #bd2130; }
         .btn-gri { background: #6c757d; }
         .btn-gri:hover { background: #5a6268; }
-        .btn-inline { width: auto; display: inline-block; margin: 0; padding: 6px 12px; font-size: 13px; }
+        .btn-inline { width: auto; display: inline-block; margin: 0; padding: 2px 9px; font-size: 13px; }
         .zona-utilizator { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: var(--bg-user); padding: 10px; border-radius: 5px; color: var(--text); }
-        .badge { background: #6c757d; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
+        .badge { background: #6c757d; width:40px; text-align: center; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
         .badge-schema { background: var(--badge-schema); }
         .badge-data { background: var(--badge-data); }
         .badge-liber { background: var(--badge-liber); }
@@ -180,6 +180,17 @@
         .toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
         .toolbar-row input[type="text"] { flex: 1; min-width: 140px; margin: 0; }
         .toolbar-row button { margin: 0; }
+        .listare-type-toggle {
+            display: inline-flex; align-items: center; gap: 5px;
+            margin: 0; font-size: 12px; color: var(--text-muted);
+            cursor: pointer; user-select: none; white-space: nowrap;
+            width: auto;
+        }
+        .listare-type-toggle input {
+            width: auto; margin: 0; padding: 0;
+            accent-color: var(--accent); cursor: pointer;
+        }
+        .listare-type-toggle span { font-weight: 600; letter-spacing: 0.02em; }
         .btn-star {
             background: transparent; border: 1px solid var(--input-border);
             color: var(--text); width: auto; margin: 0; padding: 6px 10px;
@@ -206,7 +217,7 @@
         .lista-chei { border: 1px solid var(--border); border-radius: 6px; max-height: 55vh; overflow: auto; background: var(--bg-panel); }
         .key-row {
             display: flex; align-items: center; gap: 8px;
-            padding: 10px 12px; border-bottom: 1px solid var(--border);
+            padding: 3px 9px; border-bottom: 1px solid var(--border);
             cursor: pointer;
         }
         .key-row:last-child { border-bottom: none; }
@@ -575,6 +586,10 @@
                 </div>
                 <div class="toolbar-row" style="margin: 0 0 8px;">
                     <p style="margin: 0; flex: 1;">Câmpuri: <span id="total-campuri" class="badge">0</span></p>
+                    <label class="listare-type-toggle" title="Când e debifat, listarea nu apelează TYPE (fără badge Redis/idx)">
+                        <input type="checkbox" id="chk-listare-type" onchange="peSchimbareListareCuType()">
+                        <span>Type</span>
+                    </label>
                     <button type="button" class="btn-albastru btn-inline" onclick="deschideModalCheieNoua()">+ Cheie nouă</button>
                 </div>
                 <div id="lista-chei" class="lista-chei"></div>
@@ -981,6 +996,8 @@
         // --- stare UI nouă ---
         let toateCheile = [];
         let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
+        /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
+        let listareCuType = false;
         /** Cache scheme (doar chei + tip via tipuriRedisChei). ready=false = necunoscut (încă fără * / schema:*). */
         let schemeCacheReady = false;
         let schemeCacheKeys = [];
@@ -2266,8 +2283,10 @@ function translateUpstashSearchResults(date) {
                 cheiFiltrate.sort();
                 toateCheile = cheiFiltrate;
 
-                // tipuri Redis (TYPE) în paralel — force ca lista să fie la zi
-                await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie, { force: true })));
+                // tipuri Redis (TYPE) în paralel — doar dacă toggle Type e activ
+                if (listareCuType) {
+                    await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie, { force: true })));
+                }
 
                 if (esteFiltruRebuildSchemeCache(filtru)) {
                     rebuildSchemeCacheDinChei(cheiFiltrate);
@@ -2294,18 +2313,25 @@ function translateUpstashSearchResults(date) {
 
                     const info = clasificaCheie(cheie, setChei);
                     const et = etichetaTip(info);
-                    const er = etichetaRedisTip(tipuriRedisChei[cheie]);
-                    const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);
                     const row = document.createElement('div');
                     row.className = 'key-row';
-                    row.innerHTML =
-                        '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
-                        '<span class="key-name"></span>' +
-                        '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
-                        (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
-                        '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                    if (listareCuType) {
+                        const er = etichetaRedisTip(tipuriRedisChei[cheie]);
+                        const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);
+                        row.innerHTML =
+                            '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
+                            '<span class="key-name"></span>' +
+                            '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
+                            (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
+                            '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                        row.querySelector('[data-role="redis"]').textContent = er.badge;
+                    } else {
+                        row.innerHTML =
+                            '<span class="key-name"></span>' +
+                            '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
+                            '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                    }
                     row.querySelector('.key-name').textContent = cheie;
-                    row.querySelector('[data-role="redis"]').textContent = er.badge;
                     row.querySelector('[data-role="conv"]').textContent = et.badge;
                     const go = () => deschideDetaliu(cheie);
                     row.addEventListener('click', (ev) => {
@@ -2326,6 +2352,15 @@ function translateUpstashSearchResults(date) {
                 document.getElementById("rezultat-citire").innerText = err.message;
                 actualizeazaStelutaCautare();
                 throw err;
+            }
+        }
+
+        function peSchimbareListareCuType() {
+            const chk = document.getElementById('chk-listare-type');
+            listareCuType = !!(chk && chk.checked);
+            // re-scan: cu Type on umple tipurile; cu Type off redesenează lista fără TYPE
+            if (document.getElementById('panou-aplicatie').style.display !== 'none') {
+                scaneazaToateCampurile();
             }
         }
 
