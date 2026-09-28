@@ -1,12 +1,14 @@
 /**
- * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops, s-ops, redis, tstart/tdo/tstop.
- * deps: SsideWhen, SsideAlgOps (browser) sau require.
+ * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops, s-ops, jset/jget, search, redis, tstart/tdo/tstop.
+ * deps: SsideWhen, SsideAlgOps, SsideSearchQuery (browser) sau require.
  */
 (function (root) {
   'use strict';
 
   const When = root.SsideWhen || (typeof require !== 'undefined' ? require('./when.js') : null);
   const Ops = root.SsideAlgOps || (typeof require !== 'undefined' ? require('./alg-ops.js') : null);
+  const SearchQ =
+    root.SsideSearchQuery || (typeof require !== 'undefined' ? require('./search-query.js') : null);
 
   function stoppedResult(ctx, extra) {
     return Object.assign(
@@ -163,12 +165,45 @@
         redisType = await env.redis.type(key);
       }
       const argv = Ops.buildKgetArgv(key, as, redisType);
-      const raw = await enqueueOrExec(ctx, env, argv);
-      // kget în tx nu are sens util (fără rezultat) — totuși permitem buffer
+      // citire live chiar în tx (D22) — nu buffer
+      const raw = await env.redis.exec(argv);
       let val = raw;
       if (argv[0] === 'JSON.GET') val = Ops.unwrapJsonGet(raw);
       else if (as === 'auto' || as === 'json') val = Ops.parseMaybeJson(raw);
       Ops.setVar(ctx, step.to, val);
+      return;
+    }
+
+    if (op === 'search') {
+      if (!SearchQ) throw new Error('search: SsideSearchQuery lipsă');
+      const to = step.to;
+      if (!to || typeof to !== 'string') throw new Error('search: lipsește to');
+      let qIn;
+      if (step.query != null && typeof step.query === 'object') {
+        qIn = step.query;
+      } else if (Object.prototype.hasOwnProperty.call(step, 'query')) {
+        qIn = getVal(ctx, step.query);
+      } else {
+        throw new Error('search: lipsește query');
+      }
+      const qObj = SearchQ.normalizeQuery(qIn);
+      const index =
+        step.index != null && step.index !== ''
+          ? String(getVal(ctx, step.index) || step.index)
+          : 'idx_search_tags';
+      const limit =
+        step.limit != null ? Number(getVal(ctx, step.limit)) : 1000;
+      const offset =
+        step.offset != null ? Number(getVal(ctx, step.offset)) : 0;
+      const argv = SearchQ.buildSearchArgv(
+        index,
+        qObj,
+        Number.isFinite(limit) ? limit : 1000,
+        Number.isFinite(offset) ? offset : 0
+      );
+      // citire live chiar în tx (D22=B) — nu intră în txBuf
+      const raw = await env.redis.exec(argv);
+      Ops.setVar(ctx, to, SearchQ.unwrapSearchKeys(raw));
       return;
     }
 

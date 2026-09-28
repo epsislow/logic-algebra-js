@@ -9,6 +9,7 @@
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',
+    'search',
     'tstart', 'tdo', 'tstop',
     'redis',
   ]);

@@ -91,5 +91,22 @@ module.exports = {
         assert(evalWhen(expr, get));
       },
     },
+    {
+      id: 9,
+      desc: 'empty array / string / null',
+      run() {
+        const ctx = { a: [], b: [1], c: '', d: 'x', e: null, f: {} };
+        const get = (t) =>
+          typeof t === 'string' && Object.prototype.hasOwnProperty.call(ctx, t)
+            ? ctx[t]
+            : t;
+        assert(evalWhen(['empty', 'a'], get));
+        assert(!evalWhen(['empty', 'b'], get));
+        assert(evalWhen(['empty', 'c'], get));
+        assert(!evalWhen(['empty', 'd'], get));
+        assert(evalWhen(['empty', 'e'], get));
+        assert(evalWhen(['empty', 'f'], get));
+      },
+    },
   ],
 };

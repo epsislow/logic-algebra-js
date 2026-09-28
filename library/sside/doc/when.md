@@ -10,9 +10,12 @@ Expresii condiționale pentru `if`.
 ["lte", "qty", 0]
 ["gt", "a", "b"]
 ["truthy", "form.ok"]
+["empty", "hits"]
 ```
 
 Valorile string pot fi refs (`form.x`, `$var`, nume var) sau literale.
+
+`empty` — `null`/`undefined`, `[]`, `""`, `{}`.
 
 ## Compoziție
 

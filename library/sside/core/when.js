@@ -1,5 +1,5 @@
 /**
- * Evaluare expresii `when` (D6): eq/neq/gt/… + and/or/not + truthy.
+ * Evaluare expresii `when` (D6): eq/neq/gt/… + and/or/not + truthy + empty.
  * getVal(token) rezolvă refs / literale.
  */
 (function (root) {
@@ -52,6 +52,14 @@
     if (op === 'truthy') {
       if (expr.length !== 2) throw new Error('truthy needs 1 arg');
       return !!getVal(expr[1]);
+    }
+    if (op === 'empty') {
+      if (expr.length !== 2) throw new Error('empty needs 1 arg');
+      const v = getVal(expr[1]);
+      if (v == null) return true;
+      if (Array.isArray(v) || typeof v === 'string') return v.length === 0;
+      if (typeof v === 'object') return Object.keys(v).length === 0;
+      return false;
     }
 
     const a = getVal(expr[1]);

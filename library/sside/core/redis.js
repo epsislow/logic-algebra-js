@@ -8,10 +8,49 @@
   function createMemoryRedis() {
     /** @type {Map<string, { tip: string, val: any }>} */
     const store = new Map();
+    /** @type {Map<string, object>} tags s_* pentru SEARCH.QUERY mock */
+    const searchIndex = new Map();
 
     function typeOf(key) {
       const e = store.get(key);
       return e ? e.tip : 'none';
+    }
+
+    function indexTagsFromJson(key, payload) {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        searchIndex.delete(key);
+        return;
+      }
+      const tags = {};
+      let n = 0;
+      for (const k of Object.keys(payload)) {
+        if (k.indexOf('s_') === 0) {
+          tags[k] = payload[k];
+          n++;
+        }
+      }
+      if (n) searchIndex.set(key, tags);
+      else searchIndex.delete(key);
+    }
+
+    function matchSearchQuery(tags, query) {
+      if (!query || typeof query !== 'object') return false;
+      if (query.$and) {
+        return Array.isArray(query.$and) && query.$and.every((q) => matchSearchQuery(tags, q));
+      }
+      if (query.$or) {
+        return Array.isArray(query.$or) && query.$or.some((q) => matchSearchQuery(tags, q));
+      }
+      if (Object.prototype.hasOwnProperty.call(query, '$not')) {
+        return !matchSearchQuery(tags, query.$not);
+      }
+      if (Object.prototype.hasOwnProperty.call(query, '*')) return true;
+      const keys = Object.keys(query);
+      if (!keys.length) return false;
+      for (const k of keys) {
+        if (tags[k] !== query[k]) return false;
+      }
+      return true;
     }
 
     function execOne(argv) {
@@ -38,6 +77,7 @@
         let n = 0;
         for (const k of a) {
           if (store.delete(k)) n++;
+          searchIndex.delete(k);
         }
         return n;
       }
@@ -59,7 +99,40 @@
           } catch (e) { /* keep */ }
         }
         store.set(key, { tip: 'json', val: payload });
+        indexTagsFromJson(key, payload);
         return 'OK';
+      }
+
+      if (cmd === 'SEARCH.QUERY') {
+        // SEARCH.QUERY index jsonQuery LIMIT n OFFSET m NOCONTENT
+        let queryObj = a[1];
+        if (typeof queryObj === 'string') {
+          try {
+            queryObj = JSON.parse(queryObj);
+          } catch (e) {
+            throw new Error('SEARCH.QUERY: json invalid');
+          }
+        }
+        let limit = 1000;
+        let offset = 0;
+        for (let i = 2; i < a.length; i++) {
+          const t = String(a[i]).toUpperCase();
+          if (t === 'LIMIT' && a[i + 1] != null) {
+            limit = parseInt(a[i + 1], 10) || 1000;
+            i++;
+          } else if (t === 'OFFSET' && a[i + 1] != null) {
+            offset = parseInt(a[i + 1], 10) || 0;
+            i++;
+          }
+        }
+        const hits = [];
+        for (const [key, tags] of searchIndex.entries()) {
+          if (matchSearchQuery(tags, queryObj)) hits.push(key);
+        }
+        hits.sort();
+        const sliced = hits.slice(offset, offset + limit);
+        // format RESP-like: [ [key, score, …], … ] — unwrap ia item[0]
+        return sliced.map((k) => [k, '1.0', []]);
       }
 
       if (cmd === 'SADD') {

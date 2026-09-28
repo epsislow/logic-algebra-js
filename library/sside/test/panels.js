@@ -32,6 +32,7 @@ module.exports = {
         assert(Prog.ALG_OPS.indexOf('end') !== -1);
         assert(Prog.ALG_OPS.indexOf('tstart') !== -1);
         assert(Prog.ALG_OPS.indexOf('scheck') !== -1);
+        assert(Prog.ALG_OPS.indexOf('search') !== -1);
       },
     },
     {

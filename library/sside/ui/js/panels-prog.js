@@ -10,6 +10,7 @@
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',
+    'search',
     'tstart', 'tdo', 'tstop',
     'redis',
   ];
@@ -367,6 +368,7 @@
     if (op === 'sgen') return { op: 'sgen', schema: '', to: 'draft' };
     if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
     if (op === 'jget') return { op: 'jget', from: 'payload', path: '', to: '' };
+    if (op === 'search') return { op: 'search', query: '', to: 'hits' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
     if (op === 'redis') return { op: 'redis', do: 'get', key: '' };
     return { op: op };

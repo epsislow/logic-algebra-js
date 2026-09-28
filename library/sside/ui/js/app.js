@@ -949,113 +949,20 @@
             return textBrut;
         }
 
-// Funcția care sparge textul după un operator (AND/OR) dar ignoră parantezele interioare
+// Parser query (=…) + unwrap SEARCH.QUERY — din core/search-query.js (F4j)
 function idxSpargeDupaOperator(text, operator) {
-  let rezultate = [];
-  let parantezeDeschise = 0;
-  let acumulat = "";
-  const token = " " + operator + " ";
-  
-  for (let i = 0; i < text.length; i++) {
-    if (text[i] === "(") parantezeDeschise++;
-    if (text[i] === ")") parantezeDeschise--;
-    
-    acumulat += text[i];
-    
-    if (parantezeDeschise === 0 && acumulat.endsWith(token)) {
-      rezultate.push(acumulat.substring(0, acumulat.length - token.length));
-      acumulat = "";
-    }
-  }
-  rezultate.push(acumulat);
-  return rezultate.filter(r => r.trim() !== "");
+  return window.SsideSearchQuery.splitByOperator(text, operator);
 }
 
-// Funcția principală care compilează textul tău într-un arbore JSON pentru Upstash
 function parseazaQueryComplex(text) {
-  text = text.trim();
-  
-  // Eliminăm parantezele exterioare dacă înconjoară toată expresia
-  if (text.startsWith("(") && text.endsWith(")")) {
-    text = text.substring(1, text.length - 1).trim();
-  }
-
-  // Verificăm operatorul OR
-  const partiOr = idxSpargeDupaOperator(text, "OR");
-  if (partiOr.length > 1) {
-    return { "$or": partiOr.map(p => parseazaQueryComplex(p)) };
-  }
-
-  // Verificăm operatorul AND
-  const partiAnd = idxSpargeDupaOperator(text, "AND");
-  if (partiAnd.length > 1) {
-    return { "$and": partiAnd.map(p => parseazaQueryComplex(p)) };
-  }
-
-  // Verificăm operatorul NOT (excludere cu "-")
-  if (text.startsWith("-")) {
-    return { "$not": parseazaQueryComplex(text.substring(1)) };
-  }
-
-  // Criteriu simplu de tip camp:valoare
-  if (text.includes(":")) {
-    const pozitieDouaPuncte = text.indexOf(":");
-    const camp = text.substring(0, pozitieDouaPuncte).trim();
-    let valoare = text.substring(pozitieDouaPuncte + 1).trim();
-    
-    // Curățăm ghilimelele
-    if ((valoare.startsWith('"') && valoare.endsWith('"')) || (valoare.startsWith("'") && valoare.endsWith("'"))) {
-      valoare = valoare.substring(1, valoare.length - 1);
-    }
-
-    let nodCriteriu = {};
-    
-    // Parsăm tipurile corecte (booleene, numere, text)
-    if (valoare.toLowerCase() === "true") {
-      nodCriteriu[camp] = true;
-    } else if (valoare.toLowerCase() === "false") {
-      nodCriteriu[camp] = false;
-    } else if (!isNaN(valoare) && valoare !== "") {
-      nodCriteriu[camp] = Number(valoare);
-    } else {
-      nodCriteriu[camp] = valoare; // text simplu pentru s.string()
-    }
-    return nodCriteriu;
-  }
-
-  // Căutare generală
-  return { "*": text };
+  return window.SsideSearchQuery.parseQueryText(text);
 }
 
 /**
  * Traduce răspunsul Upstash SEARCH.QUERY într-un array de chei.
  */
 function translateUpstashSearchResults(date) {
-  if (!date || !date.rezultat) return [];
-
-  const raw = date.rezultat;
-  const cheiColectate = [];
-
-  if (Array.isArray(raw)) {
-    raw.forEach(item => {
-      // Cazul 1: Structură RESP3 imbricată
-      // item = ["data:loc", "2.5753...", [...]]
-      if (Array.isArray(item) && item.length > 0) {
-        if (typeof item[0] === 'string') {
-          cheiColectate.push(item[0]);
-        }
-      }
-      // Cazul 2: Structură de tip array plat intercalat ca fallback
-      // raw = [total, "cheie1", "valoare1", "cheie2", "valoare2"]
-      else if (typeof item === 'string' && (item.includes(':') || item.startsWith('data:'))) {
-        if (!cheiColectate.includes(item)) {
-          cheiColectate.push(item);
-        }
-      }
-    });
-  }
-
-  return cheiColectate;
+  return window.SsideSearchQuery.unwrapSearchKeys(date);
 }
 
 
