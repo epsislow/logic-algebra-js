@@ -367,15 +367,26 @@
   }
 
   function randeazaLive(kind) {
-    const stub = $('prog-live-stub');
-    if (!stub) return;
+    const rootEl = $('prog-live-root');
+    if (!rootEl) return;
     if (kind === 'alg') {
-      stub.textContent = 'Live pentru alg — amânat (D8). Folosește Edit / Formular / Json.';
-    } else if (kind === 'form') {
-      stub.textContent = 'Live form — stub F3: aici va randa câmpurile din schema + butoane.';
-    } else {
-      stub.textContent = 'Live UI — stub F3: taburi + formuri în pagină.';
+      rootEl.innerHTML =
+        '<p class="prog-live-stub">Live pentru alg — amânat (D8). Folosește Edit / Formular / Json.</p>';
+      return;
     }
+    rootEl.innerHTML = '<p class="prog-live-stub">Se încarcă Live…</p>';
+    const Live = root.SsideProgLive;
+    if (!Live) {
+      rootEl.innerHTML = '<p class="prog-live-stub">panels-live.js lipsă.</p>';
+      return;
+    }
+    Live.destroyAll();
+    const obj = asigurObj(kind);
+    const run = kind === 'ui' ? Live.renderUiLive(rootEl, obj) : Live.renderFormLive(rootEl, obj);
+    Promise.resolve(run).catch((e) => {
+      rootEl.innerHTML =
+        '<p class="prog-live-stub">' + (e && e.message ? e.message : String(e)) + '</p>';
+    });
   }
 
   function randeazaFormular(kind, obj) {
@@ -425,9 +436,15 @@
     if (modProg === 'edit' || modProg === 'formular') {
       sincronizeazaInRaw();
     }
-    if (mod === 'json') {
+    if (modProg === 'json' || mod === 'json') {
       const parsed = parseObjDinRaw();
       if (parsed) progObj = parsed;
+    }
+
+    if (modProg === 'live' && mod !== 'live' && root.SsideProgLive) {
+      root.SsideProgLive.destroyAll();
+      const liveRoot = $('prog-live-root');
+      if (liveRoot) liveRoot.innerHTML = '';
     }
 
     modProg = mod;
@@ -479,6 +496,9 @@
       if (el) el.style.display = 'none';
     });
     distrugeFormularEditor();
+    if (root.SsideProgLive) root.SsideProgLive.destroyAll();
+    const liveRoot = $('prog-live-root');
+    if (liveRoot) liveRoot.innerHTML = '';
     progKind = null;
     progObj = null;
     modProg = 'edit';

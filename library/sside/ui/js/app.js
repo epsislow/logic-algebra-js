@@ -3183,6 +3183,27 @@ function translateUpstashSearchResults(date) {
             return null;
         }
 
+        // Live form/ui (F3): deps pentru încărcare schema + default values
+        if (window.SsideProgLive) {
+            SsideProgLive.setDeps({
+                async loadJsonKey(key) {
+                    const tip = tipuriRedisChei[key] || await aflaTipRedis(key);
+                    const citire = await citesteValoareCheieRedis(key, tip);
+                    if (citire.stearsa) {
+                        throw new Error('Cheie stearsă: ' + key);
+                    }
+                    const parsed = parseRedisJson(citire.text);
+                    if (parsed == null || typeof parsed !== 'object') {
+                        throw new Error('JSON invalid: ' + key);
+                    }
+                    return parsed;
+                },
+                normalizeSchema: normalizeToJsonSchema,
+                defaultFromSchema: valoareImplicitaDinSchema,
+                onRunAlg: null, // F4
+            });
+        }
+
         function esteCompatibilCuSchema(val, schema) {
             if (!schema) return true;
             let t = schema.type;

@@ -254,6 +254,59 @@
             padding: 14px; background: var(--bg-muted); border-radius: 6px;
             color: var(--text-muted); font-size: 13px; margin: 0;
         }
+        .prog-live-block {
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 12px; margin-bottom: 14px; background: var(--bg-panel);
+        }
+        .prog-live-block h3 {
+            margin: 0 0 10px; font-size: 16px;
+        }
+        .prog-live-banner {
+            display: none; margin: 0 0 10px; padding: 8px 10px; border-radius: 6px;
+            font-size: 13px; border: 1px solid transparent;
+        }
+        .prog-live-banner.is-ok {
+            display: block; background: rgba(25, 135, 84, 0.15);
+            border-color: #198754; color: #75b798;
+        }
+        html[data-theme="light"] .prog-live-banner.is-ok { color: #0f5132; background: #d1e7dd; }
+        .prog-live-banner.is-err {
+            display: block; background: rgba(220, 53, 69, 0.15);
+            border-color: #dc3545; color: #f1aeb5;
+        }
+        html[data-theme="light"] .prog-live-banner.is-err { color: #842029; background: #f8d7da; }
+        .prog-live-fields {
+            background: var(--bg-editor); border: 1px dashed var(--border);
+            border-radius: 6px; padding: 10px; margin-bottom: 10px; color: var(--text);
+        }
+        .prog-live-fields,
+        .prog-live-fields * {
+            animation: none !important;
+            transition: none !important;
+        }
+        .prog-live-actions {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+        .prog-live-actions button { margin: 0; width: auto; }
+        .prog-live-actions .btn-reset {
+            background: var(--bg-muted) !important; color: var(--text) !important;
+            border: 1px solid var(--border);
+        }
+        .prog-live-actions .btn-danger-kind {
+            background: #dc3545 !important; color: #fff !important;
+        }
+        .prog-live-ui-tabs {
+            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+        }
+        .prog-live-ui-tabs button {
+            margin: 0; width: auto; padding: 6px 12px; font-size: 13px;
+            background: var(--bg-muted); color: var(--text);
+        }
+        .prog-live-ui-tabs button.active {
+            background: var(--accent); color: #fff;
+        }
+        .prog-live-forms-stack { display: flex; flex-direction: column; gap: 12px; }
+
         .prog-edit-card {
             border: 1px solid var(--border); border-radius: 8px; padding: 12px;
             margin-bottom: 10px; background: var(--bg-panel);
