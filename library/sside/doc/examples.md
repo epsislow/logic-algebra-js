@@ -18,6 +18,27 @@
 }
 ```
 
+## Salvare stoc (jset + scheck)
+
+Formularul are `location` / `product` / `qty`; payload-ul de Redis e altceva (include `s_prefix`).
+
+```json
+{
+  "v": 1,
+  "name": "save_stock",
+  "steps": [
+    { "op": "jset", "to": "payload", "path": "location", "from": "form.location" },
+    { "op": "jset", "to": "payload", "path": "product", "from": "form.product" },
+    { "op": "jset", "to": "payload", "path": "qty", "from": "form.qty" },
+    { "op": "jset", "to": "payload", "path": "s_prefix", "val": "stock" },
+    { "op": "scheck", "schema": "schema:_stock", "val": "payload" },
+    { "op": "cat", "to": "key", "parts": ["data:_stock:", "form.product", ":", "form.location"] },
+    { "op": "ksave", "key": "$key", "val": "payload", "as": "json" },
+    { "op": "end", "msg": "Stoc salvat" }
+  ]
+}
+```
+
 ## Tranzacție atomică
 
 ```json

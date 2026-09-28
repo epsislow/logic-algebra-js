@@ -236,6 +236,43 @@
       return;
     }
 
+    if (op === 'jset') {
+      const to = step.to;
+      if (!to || typeof to !== 'string') throw new Error('jset: lipsește to');
+      const path = step.path != null ? String(step.path) : '';
+      let val;
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        val = step.val;
+      } else if (Object.prototype.hasOwnProperty.call(step, 'from')) {
+        val = getVal(ctx, step.from);
+      } else {
+        throw new Error('jset: lipsește from|val');
+      }
+      const name = to.charAt(0) === '$' ? to.slice(1) : to;
+      if (!path) {
+        Ops.setVar(ctx, name, val);
+        return;
+      }
+      let obj = Ops.getPath(ctx.vars, name);
+      if (obj == null || typeof obj !== 'object' || Array.isArray(obj)) {
+        obj = {};
+        Ops.setVar(ctx, name, obj);
+      }
+      Ops.setPath(obj, path, val);
+      return;
+    }
+
+    if (op === 'jget') {
+      const from = step.from;
+      if (from == null || from === '') throw new Error('jget: lipsește from');
+      if (!step.to) throw new Error('jget: lipsește to');
+      const path = step.path != null ? String(step.path) : '';
+      const src = getVal(ctx, from);
+      const v = path ? Ops.getPath(src, path) : src;
+      Ops.setVar(ctx, step.to, v);
+      return;
+    }
+
     if (op === 'redis') {
       const doCmd = step.do || step.cmd;
       const cmd = Ops.assertRedisAllowed(doCmd);

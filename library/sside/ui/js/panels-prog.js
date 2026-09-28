@@ -9,6 +9,7 @@
     'assign', 'cat', 'if', 'foreach', 'end',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
+    'jset', 'jget',
     'tstart', 'tdo', 'tstop',
     'redis',
   ];
@@ -364,6 +365,8 @@
     if (op === 'kadd' || op === 'krm') return { op: op, key: '', val: '' };
     if (op === 'scheck') return { op: 'scheck', schema: '', val: 'form' };
     if (op === 'sgen') return { op: 'sgen', schema: '', to: 'draft' };
+    if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
+    if (op === 'jget') return { op: 'jget', from: 'payload', path: '', to: '' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
     if (op === 'redis') return { op: 'redis', do: 'get', key: '' };
     return { op: op };

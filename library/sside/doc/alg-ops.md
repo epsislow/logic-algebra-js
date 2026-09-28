@@ -51,6 +51,38 @@ Tupluri nested:
 - `scheck` — validează `val` pe `schema`; fail → ca `end`+`err`
 - `sgen` — default din schemă → `to`
 
+## JSON în vars (`jset` / `jget`)
+
+Construiești / citești obiecte pe căi (dot path), separat de formular.
+
+### jset
+```json
+{ "op": "jset", "to": "payload", "path": "qty", "from": "form.qty" }
+{ "op": "jset", "to": "payload", "path": "s_prefix", "val": "stock" }
+{ "op": "jset", "to": "payload", "path": "meta.by", "val": "test0" }
+```
+- creează `payload` ca `{}` dacă lipsește
+- fără `path` → înlocuiește tot obiectul (`val` sau `from`)
+
+### jget
+```json
+{ "op": "jget", "from": "payload", "path": "qty", "to": "q" }
+```
+
+### Exemplu stoc
+```json
+[
+  { "op": "jset", "to": "payload", "path": "location", "from": "form.location" },
+  { "op": "jset", "to": "payload", "path": "product", "from": "form.product" },
+  { "op": "jset", "to": "payload", "path": "qty", "from": "form.qty" },
+  { "op": "jset", "to": "payload", "path": "s_prefix", "val": "stock" },
+  { "op": "scheck", "schema": "schema:_stock", "val": "payload" },
+  { "op": "cat", "to": "key", "parts": ["data:_stock:", "form.product", ":", "form.location"] },
+  { "op": "ksave", "key": "$key", "val": "payload", "as": "json" },
+  { "op": "end", "msg": "Stoc salvat" }
+]
+```
+
 ## Tranzacție (buffer local)
 
 1. `tstart` — începe buffer

@@ -256,6 +256,7 @@
     resolveRef,
     setVar,
     getPath,
+    setPath,
     defaultFromSchema,
     checkSchema,
     assertRedisAllowed,

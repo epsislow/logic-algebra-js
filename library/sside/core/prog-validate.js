@@ -8,6 +8,7 @@
     'assign', 'cat', 'if', 'foreach', 'end',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
+    'jset', 'jget',
     'tstart', 'tdo', 'tstop',
     'redis',
   ]);
