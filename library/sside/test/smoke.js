@@ -64,6 +64,7 @@ module.exports = {
         assert(fs.existsSync(path.join(ROOT, 'core', 'when.js')));
         assert(fs.existsSync(path.join(ROOT, 'core', 'alg-ops.js')));
         assert(fs.existsSync(path.join(ROOT, 'core', 'search-query.js')));
+        assert(fs.existsSync(path.join(ROOT, 'core', 'form-options.js')));
       },
     },
     {

@@ -3209,6 +3209,7 @@ function translateUpstashSearchResults(date) {
                 normalizeSchema: normalizeToJsonSchema,
                 defaultFromSchema: valoareImplicitaDinSchema,
                 onRunAlg,
+                redis: createWorkerRedisAdapter(),
             });
         }
 

@@ -209,6 +209,48 @@
         return removed;
       }
 
+      if (cmd === 'LRANGE') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'list') return [];
+        let start = parseInt(a[1], 10) || 0;
+        let stop = parseInt(a[2], 10);
+        if (Number.isNaN(stop)) stop = -1;
+        const arr = e.val;
+        if (start < 0) start = Math.max(0, arr.length + start);
+        if (stop < 0) stop = arr.length + stop;
+        return arr.slice(start, stop + 1);
+      }
+
+      if (cmd === 'ZADD') {
+        const key = a[0];
+        let e = store.get(key);
+        if (!e) {
+          e = { tip: 'zset', val: new Map() };
+          store.set(key, e);
+        }
+        if (e.tip !== 'zset') throw new Error('WRONGTYPE');
+        let n = 0;
+        for (let i = 1; i + 1 < a.length; i += 2) {
+          const score = Number(a[i]);
+          const member = String(a[i + 1]);
+          if (!e.val.has(member)) n++;
+          e.val.set(member, score);
+        }
+        return n;
+      }
+
+      if (cmd === 'ZRANGE') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'zset') return [];
+        const entries = Array.from(e.val.entries()).sort((x, y) => x[1] - y[1]);
+        let start = parseInt(a[1], 10) || 0;
+        let stop = parseInt(a[2], 10);
+        if (Number.isNaN(stop)) stop = -1;
+        if (start < 0) start = Math.max(0, entries.length + start);
+        if (stop < 0) stop = entries.length + stop;
+        return entries.slice(start, stop + 1).map((pair) => pair[0]);
+      }
+
       if (cmd === 'HSET') {
         const key = a[0];
         let e = store.get(key);
@@ -219,6 +261,24 @@
         if (e.tip !== 'hash') throw new Error('WRONGTYPE');
         e.val[a[1]] = String(a[2]);
         return 1;
+      }
+
+      if (cmd === 'HGETALL') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'hash') return {};
+        return Object.assign({}, e.val);
+      }
+
+      if (cmd === 'HKEYS') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'hash') return [];
+        return Object.keys(e.val);
+      }
+
+      if (cmd === 'HVALS') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'hash') return [];
+        return Object.keys(e.val).map((k) => e.val[k]);
       }
 
       if (cmd === 'HDEL') {
@@ -253,6 +313,7 @@
           if (v.tip === 'set') val = new Set(v.val);
           else if (v.tip === 'list') val = v.val.slice();
           else if (v.tip === 'hash') val = Object.assign({}, v.val);
+          else if (v.tip === 'zset') val = new Map(v.val);
           else if (v.tip === 'json') val = JSON.parse(JSON.stringify(v.val));
           snap.set(k, { tip: v.tip, val });
         }

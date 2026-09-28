@@ -51,6 +51,17 @@
         }
       }
     }
+    if (obj.fields != null) {
+      const FormOpts =
+        root.SsideFormOptions ||
+        (typeof require !== 'undefined' ? require('./form-options.js') : null);
+      if (FormOpts && typeof FormOpts.validateFieldsConfig === 'function') {
+        const fe = FormOpts.validateFieldsConfig(obj.fields);
+        if (fe) return err(fe);
+      } else if (typeof obj.fields !== 'object' || Array.isArray(obj.fields)) {
+        return err('form.fields trebuie să fie obiect');
+      }
+    }
     return ok();
   }
 

@@ -100,6 +100,25 @@ Variantă string (ca filtrul `=` din listă):
 
 **Tx + search:** poți căuta în timpul unui `tstart` (ex. locații deja în Redis); scrierile din buffer nu apar în `search` până la `tdo`.
 
+## Form cu select din Redis (`fields.options`)
+
+```json
+{
+  "v": 1,
+  "title": "Stoc",
+  "schema": "schema:_stock",
+  "fields": {
+    "location": { "options": { "from": "set", "key": "set:_locations" } },
+    "warehouse": { "options": { "from": "hash", "key": "hash:_warehouses" } }
+  },
+  "btns": [
+    { "id": "save", "label": "Salveaza", "alg": "alg:_save_stock" }
+  ]
+}
+```
+
+La Live, `warehouse` e select cu etichete din hash values; valoarea trimisă în alg e field-ul (`WH1`).
+
 ## Tranzacție atomică
 
 ```json

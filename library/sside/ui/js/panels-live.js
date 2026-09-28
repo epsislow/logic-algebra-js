@@ -1,15 +1,21 @@
 /**
- * Live rendering pentru form: / ui: (F3).
- * deps setate din app.js: loadJsonKey, normalizeSchema, defaultFromSchema, onRunAlg?
+ * Live rendering pentru form: / ui: (F3 + F4k options).
+ * deps: loadJsonKey, normalizeSchema, defaultFromSchema, onRunAlg, redis?
  */
 (function (root) {
   'use strict';
+
+  const FormOpts =
+    root.SsideFormOptions ||
+    (typeof require !== 'undefined' ? require('../core/form-options.js') : null);
 
   let deps = {
     loadJsonKey: null,
     normalizeSchema: null,
     defaultFromSchema: null,
     onRunAlg: null,
+    /** @type {{ exec: Function }|null} */
+    redis: null,
   };
 
   /** @type {Array<{ destroy: Function }>} */
@@ -121,11 +127,33 @@
     let schemaObj = null;
     let startval = {};
     let editor = null;
+    let optionsWarnings = [];
 
     try {
       const rawSchema = await deps.loadJsonKey(schemaKey);
       schemaObj = deps.normalizeSchema(rawSchema);
       if (!schemaObj) throw new Error('Schema invalidă: ' + schemaKey);
+
+      if (
+        FormOpts &&
+        formDef.fields &&
+        typeof formDef.fields === 'object' &&
+        deps.redis &&
+        typeof deps.redis.exec === 'function'
+      ) {
+        try {
+          const built = await FormOpts.buildSchemaWithOptions(
+            schemaObj,
+            formDef.fields,
+            deps.redis
+          );
+          schemaObj = built.schema;
+          optionsWarnings = built.warnings || [];
+        } catch (eOpt) {
+          optionsWarnings = [eOpt && eOpt.message ? eOpt.message : String(eOpt)];
+        }
+      }
+
       startval =
         typeof deps.defaultFromSchema === 'function'
           ? deps.defaultFromSchema(schemaObj)
@@ -133,6 +161,11 @@
       if (startval === undefined || startval === null) startval = {};
       fieldsEl.innerHTML = '';
       editor = createEditor(fieldsEl, schemaObj, startval);
+      if (optionsWarnings.length) {
+        showBanner(bannerEl, {
+          err: 'Options: ' + optionsWarnings.join('; '),
+        });
+      }
     } catch (e) {
       fieldsEl.innerHTML =
         '<p class="prog-live-stub">' + (e && e.message ? e.message : String(e)) + '</p>';
