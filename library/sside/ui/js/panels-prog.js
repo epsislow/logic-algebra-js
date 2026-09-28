@@ -539,6 +539,12 @@
 
   function sincronizeazaInRaw() {
     if (!progKind) return;
+    // pe Json, textarea e sursa de adevăr — nu o rescriem din progObj
+    if (modProg === 'json') {
+      const parsed = parseObjDinRaw();
+      if (parsed) progObj = parsed;
+      return;
+    }
     if (modProg === 'formular' && progFormularEditor) {
       try {
         progObj = progFormularEditor.getValue();

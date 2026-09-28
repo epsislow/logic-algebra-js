@@ -3090,6 +3090,9 @@ function translateUpstashSearchResults(date) {
         function obtineValoareCurentaPentruComparatie() {
             try {
                 if (SsideProgPanels && infoCheieCurenta && SsideProgPanels.esteProgTip(infoCheieCurenta.tip) && SsideProgPanels.getKind()) {
+                    if (SsideProgPanels.getMod() === 'json') {
+                        return document.getElementById('raw-json-editor').value || '';
+                    }
                     SsideProgPanels.sincronizeazaInRaw();
                     return document.getElementById('raw-json-editor').value || '';
                 }
