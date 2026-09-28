@@ -1,0 +1,311 @@
+/**
+ * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops, s-ops, redis, tstart/tdo/tstop.
+ * deps: SsideWhen, SsideAlgOps (browser) sau require.
+ */
+(function (root) {
+  'use strict';
+
+  const When = root.SsideWhen || (typeof require !== 'undefined' ? require('./when.js') : null);
+  const Ops = root.SsideAlgOps || (typeof require !== 'undefined' ? require('./alg-ops.js') : null);
+
+  function stoppedResult(ctx, extra) {
+    return Object.assign(
+      {
+        msg: ctx._msg || undefined,
+        err: ctx._err || undefined,
+        vars: ctx.vars,
+        stopped: true,
+      },
+      extra || {}
+    );
+  }
+
+  function makeCtx(form, vars) {
+    return {
+      form: form && typeof form === 'object' ? form : {},
+      vars: vars && typeof vars === 'object' ? vars : {},
+      inTx: false,
+      txBuf: [],
+      _stop: false,
+      _msg: undefined,
+      _err: undefined,
+    };
+  }
+
+  function getVal(ctx, token) {
+    return Ops.resolveRef(token, ctx);
+  }
+
+  async function runSteps(steps, ctx, env) {
+    if (!Array.isArray(steps)) return;
+    for (const step of steps) {
+      if (ctx._stop) return;
+      await runStep(step, ctx, env);
+    }
+  }
+
+  async function enqueueOrExec(ctx, env, argv) {
+    if (ctx.inTx) {
+      ctx.txBuf.push(argv);
+      return null;
+    }
+    return env.redis.exec(argv);
+  }
+
+  async function runStep(step, ctx, env) {
+    if (!step || typeof step !== 'object') throw new Error('step invalid');
+    const op = step.op;
+    if (!op) throw new Error('step fără op');
+
+    if (op === 'assign') {
+      let val;
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        // val = literal (nu se rezolvă ca ref)
+        val = step.val;
+      } else if (Object.prototype.hasOwnProperty.call(step, 'from')) {
+        val = getVal(ctx, step.from);
+      } else {
+        throw new Error('assign: lipsește from|val');
+      }
+      Ops.setVar(ctx, step.to, val);
+      return;
+    }
+
+    if (op === 'cat') {
+      const parts = Array.isArray(step.parts) ? step.parts : [];
+      const s = parts.map((p) => {
+        const v = getVal(ctx, p);
+        return v === undefined || v === null ? '' : String(v);
+      }).join('');
+      Ops.setVar(ctx, step.to, s);
+      return;
+    }
+
+    if (op === 'end') {
+      if (ctx.inTx) {
+        ctx.txBuf = [];
+        ctx.inTx = false;
+      }
+      // msg/err: literal, sau ref doar dacă form.* / $var
+      function endText(x) {
+        if (x == null) return '';
+        if (typeof x !== 'string') return String(x);
+        if (x === 'form' || x.indexOf('form.') === 0 || x.charAt(0) === '$') {
+          const v = getVal(ctx, x);
+          return v == null ? '' : String(v);
+        }
+        return x;
+      }
+      if (step.err != null && step.err !== '') {
+        ctx._err = endText(step.err);
+      } else if (step.msg != null) {
+        ctx._msg = endText(step.msg);
+      }
+      ctx._stop = true;
+      return;
+    }
+
+    if (op === 'if') {
+      const ok = When.evalWhen(step.when, (t) => getVal(ctx, t));
+      if (ok) await runSteps(step.then || [], ctx, env);
+      else await runSteps(step.else || [], ctx, env);
+      return;
+    }
+
+    if (op === 'foreach') {
+      const list = getVal(ctx, step.in);
+      if (!Array.isArray(list)) throw new Error('foreach: in nu e array');
+      const as = step.as || 'item';
+      for (const item of list) {
+        if (ctx._stop) return;
+        Ops.setVar(ctx, as, item);
+        await runSteps(step.do || [], ctx, env);
+      }
+      return;
+    }
+
+    if (op === 'tstart') {
+      if (ctx.inTx) {
+        ctx._err = 'tstart nested interzis';
+        ctx._stop = true;
+        return;
+      }
+      ctx.inTx = true;
+      ctx.txBuf = [];
+      return;
+    }
+
+    if (op === 'tstop') {
+      ctx.txBuf = [];
+      ctx.inTx = false;
+      return;
+    }
+
+    if (op === 'tdo') {
+      if (!ctx.inTx) throw new Error('tdo în afara tstart');
+      const buf = ctx.txBuf.slice();
+      ctx.txBuf = [];
+      ctx.inTx = false;
+      if (buf.length && env.redis.execTx) {
+        await env.redis.execTx(buf);
+      } else if (buf.length) {
+        for (const argv of buf) await env.redis.exec(argv);
+      }
+      return;
+    }
+
+    if (op === 'kget') {
+      const key = String(getVal(ctx, step.key) || '');
+      if (!key) throw new Error('kget: key gol');
+      const as = Ops.normalizeAs(step.as);
+      let redisType = 'none';
+      if (as === 'auto' && env.redis.type) {
+        redisType = await env.redis.type(key);
+      }
+      const argv = Ops.buildKgetArgv(key, as, redisType);
+      const raw = await enqueueOrExec(ctx, env, argv);
+      // kget în tx nu are sens util (fără rezultat) — totuși permitem buffer
+      let val = raw;
+      if (argv[0] === 'JSON.GET') val = Ops.unwrapJsonGet(raw);
+      else if (as === 'auto' || as === 'json') val = Ops.parseMaybeJson(raw);
+      Ops.setVar(ctx, step.to, val);
+      return;
+    }
+
+    if (op === 'ksave') {
+      const key = String(getVal(ctx, step.key) || '');
+      if (!key) throw new Error('ksave: key gol');
+      const val = getVal(ctx, step.val);
+      const argv = Ops.buildKsaveArgv(key, val, step.as);
+      await enqueueOrExec(ctx, env, argv);
+      return;
+    }
+
+    if (op === 'kdel') {
+      const key = String(getVal(ctx, step.key) || '');
+      if (!key) throw new Error('kdel: key gol');
+      await enqueueOrExec(ctx, env, ['DEL', key]);
+      return;
+    }
+
+    if (op === 'kadd') {
+      const key = String(getVal(ctx, step.key) || '');
+      const member = getVal(ctx, step.val != null ? step.val : step.member);
+      let redisType = 'none';
+      if (env.redis.type) redisType = await env.redis.type(key);
+      const argv = Ops.buildKaddArgv(key, member, redisType);
+      await enqueueOrExec(ctx, env, argv);
+      return;
+    }
+
+    if (op === 'krm') {
+      const key = String(getVal(ctx, step.key) || '');
+      const member = getVal(ctx, step.val != null ? step.val : step.member);
+      let redisType = 'none';
+      if (env.redis.type) redisType = await env.redis.type(key);
+      const argv = Ops.buildKrmArgv(key, member, redisType);
+      await enqueueOrExec(ctx, env, argv);
+      return;
+    }
+
+    if (op === 'scheck') {
+      const schemaKey = String(getVal(ctx, step.schema) || step.schema || '');
+      if (!schemaKey) throw new Error('scheck: lipsește schema');
+      if (!env.loadSchema) throw new Error('scheck: loadSchema lipsă');
+      const schema = await env.loadSchema(schemaKey);
+      const val = getVal(ctx, step.val != null ? step.val : 'form');
+      const res = Ops.checkSchema(val, schema);
+      if (!res.ok) {
+        ctx._err = res.err || 'scheck fail';
+        if (ctx.inTx) {
+          ctx.txBuf = [];
+          ctx.inTx = false;
+        }
+        ctx._stop = true;
+      }
+      return;
+    }
+
+    if (op === 'sgen') {
+      const schemaKey = String(getVal(ctx, step.schema) || step.schema || '');
+      if (!schemaKey) throw new Error('sgen: lipsește schema');
+      if (!env.loadSchema) throw new Error('sgen: loadSchema lipsă');
+      const schema = await env.loadSchema(schemaKey);
+      const draft = Ops.defaultFromSchema(schema);
+      Ops.setVar(ctx, step.to || 'draft', draft);
+      return;
+    }
+
+    if (op === 'redis') {
+      const doCmd = step.do || step.cmd;
+      const cmd = Ops.assertRedisAllowed(doCmd);
+      const args = Array.isArray(step.args) ? step.args : [];
+      const argv = [cmd].concat(
+        args.map((a) => {
+          const v = getVal(ctx, a);
+          if (v === undefined || v === null) return '';
+          if (typeof v === 'object') return JSON.stringify(v);
+          return String(v);
+        })
+      );
+      const raw = await enqueueOrExec(ctx, env, argv);
+      if (step.to) Ops.setVar(ctx, step.to, raw);
+      return;
+    }
+
+    throw new Error('op necunoscut: ' + op);
+  }
+
+  /**
+   * @param {object} alg { v, steps }
+   * @param {object} options { form, vars?, redis, loadSchema? }
+   * @returns {Promise<{ msg?, err?, vars, stopped }>}
+   */
+  async function run(alg, options) {
+    options = options || {};
+    if (!alg || typeof alg !== 'object') {
+      return { err: 'alg invalid', vars: {}, stopped: true };
+    }
+    if (alg.v != null && alg.v !== 1) {
+      return { err: 'Versiune alg nesuportată: ' + alg.v, vars: {}, stopped: true };
+    }
+    if (!options.redis || typeof options.redis.exec !== 'function') {
+      return { err: 'redis adapter lipsă', vars: {}, stopped: true };
+    }
+
+    const ctx = makeCtx(options.form, options.vars);
+    const env = {
+      redis: options.redis,
+      loadSchema: options.loadSchema || null,
+    };
+
+    try {
+      await runSteps(Array.isArray(alg.steps) ? alg.steps : [], ctx, env);
+      if (ctx.inTx) {
+        // end implicit: discard
+        ctx.txBuf = [];
+        ctx.inTx = false;
+      }
+      if (ctx._stop) return stoppedResult(ctx);
+      return { msg: ctx._msg, err: ctx._err, vars: ctx.vars, stopped: false };
+    } catch (e) {
+      if (ctx.inTx) {
+        ctx.txBuf = [];
+        ctx.inTx = false;
+      }
+      return {
+        err: e && e.message ? e.message : String(e),
+        vars: ctx.vars,
+        stopped: true,
+      };
+    }
+  }
+
+  const api = { run, runSteps, runStep };
+
+  root.SsideAlg = api;
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -56,5 +56,14 @@ module.exports = {
         assert(j && Array.isArray(j.sections));
       },
     },
+    {
+      id: 6,
+      desc: 'core alg-runner + when exist',
+      run() {
+        assert(fs.existsSync(path.join(ROOT, 'core', 'alg-runner.js')));
+        assert(fs.existsSync(path.join(ROOT, 'core', 'when.js')));
+        assert(fs.existsSync(path.join(ROOT, 'core', 'alg-ops.js')));
+      },
+    },
   ],
 };

@@ -147,45 +147,50 @@ function main() {
   const failures = [];
 
   process.stdout.write('Tests: ');
-  for (const { suite, test } of toRun) {
-    const label = `${suite}#${test.id}`;
-    try {
-      const ret = test.run();
-      if (ret && typeof ret.then === 'function') {
-        throw new Error('async tests not supported yet; use sync run()');
+
+  async function runAll() {
+    for (const { suite, test } of toRun) {
+      const label = `${suite}#${test.id}`;
+      try {
+        const ret = test.run();
+        if (ret && typeof ret.then === 'function') {
+          await ret;
+        }
+        if (ret === false) throw new Error('run() returned false');
+        process.stdout.write(`${GREEN}.${RESET}`);
+        passed++;
+      } catch (e) {
+        process.stdout.write(`${RED}F${RESET}`);
+        failed++;
+        failures.push({
+          label,
+          desc: test.desc || '',
+          message: e && e.message ? e.message : String(e),
+        });
       }
-      if (ret === false) throw new Error('run() returned false');
-      process.stdout.write(`${GREEN}.${RESET}`);
-      passed++;
-    } catch (e) {
-      process.stdout.write(`${RED}F${RESET}`);
-      failed++;
-      failures.push({
-        label,
-        desc: test.desc || '',
-        message: e && e.message ? e.message : String(e),
-      });
     }
-  }
-  process.stdout.write('\n');
+    process.stdout.write('\n');
 
-  if (failures.length && opts.verbose) {
-    console.log('');
-    for (const f of failures) {
-      console.log(`${RED}FAIL${RESET} ${f.label} — ${f.desc}`);
-      console.log('  ', f.message);
+    if (failures.length && opts.verbose) {
+      console.log('');
+      for (const f of failures) {
+        console.log(`${RED}FAIL${RESET} ${f.label} — ${f.desc}`);
+        console.log('  ', f.message);
+      }
+    } else if (failures.length) {
+      console.log('');
+      for (const f of failures) {
+        console.log(`${RED}FAIL${RESET} ${f.label} — ${f.desc}`);
+      }
+      console.log('(use -v for error messages)');
     }
-  } else if (failures.length) {
-    console.log('');
-    for (const f of failures) {
-      console.log(`${RED}FAIL${RESET} ${f.label} — ${f.desc}`);
-    }
-    console.log('(use -v for error messages)');
+
+    const total = passed + failed;
+    console.log(`Passed: ${passed} Failed: ${failed} Total: ${total}`);
+    process.exit(failed ? 1 : 0);
   }
 
-  const total = passed + failed;
-  console.log(`Passed: ${passed} Failed: ${failed} Total: ${total}`);
-  process.exit(failed ? 1 : 0);
+  runAll();
 }
 
 main();

@@ -1,0 +1,206 @@
+/**
+ * Mock Redis in-memory + helper adapter — pentru teste F4 + eventual demo.
+ * Browser: app.js furnizează adapter pe worker HTTP.
+ */
+(function (root) {
+  'use strict';
+
+  function createMemoryRedis() {
+    /** @type {Map<string, { tip: string, val: any }>} */
+    const store = new Map();
+
+    function typeOf(key) {
+      const e = store.get(key);
+      return e ? e.tip : 'none';
+    }
+
+    function execOne(argv) {
+      if (!Array.isArray(argv) || !argv.length) throw new Error('argv gol');
+      const cmd = String(argv[0]).toUpperCase();
+      const a = argv.slice(1);
+
+      if (cmd === 'TYPE') return typeOf(a[0]);
+
+      if (cmd === 'GET') {
+        const e = store.get(a[0]);
+        if (!e) return null;
+        if (e.tip === 'string') return e.val;
+        if (e.tip === 'json') return JSON.stringify(e.val);
+        return null;
+      }
+
+      if (cmd === 'SET') {
+        store.set(a[0], { tip: 'string', val: a[1] == null ? '' : String(a[1]) });
+        return 'OK';
+      }
+
+      if (cmd === 'DEL') {
+        let n = 0;
+        for (const k of a) {
+          if (store.delete(k)) n++;
+        }
+        return n;
+      }
+
+      if (cmd === 'JSON.GET') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'json') return null;
+        // compatibil cu $ → [value]
+        return JSON.stringify([e.val]);
+      }
+
+      if (cmd === 'JSON.SET') {
+        const key = a[0];
+        // a[1]=path, a[2]=json
+        let payload = a[2];
+        if (typeof payload === 'string') {
+          try {
+            payload = JSON.parse(payload);
+          } catch (e) { /* keep */ }
+        }
+        store.set(key, { tip: 'json', val: payload });
+        return 'OK';
+      }
+
+      if (cmd === 'SADD') {
+        const key = a[0];
+        let e = store.get(key);
+        if (!e) {
+          e = { tip: 'set', val: new Set() };
+          store.set(key, e);
+        }
+        if (e.tip !== 'set') throw new Error('WRONGTYPE');
+        let n = 0;
+        for (let i = 1; i < a.length; i++) {
+          const before = e.val.size;
+          e.val.add(String(a[i]));
+          if (e.val.size > before) n++;
+        }
+        return n;
+      }
+
+      if (cmd === 'SREM') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'set') return 0;
+        let n = 0;
+        for (let i = 1; i < a.length; i++) {
+          if (e.val.delete(String(a[i]))) n++;
+        }
+        return n;
+      }
+
+      if (cmd === 'SMEMBERS') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'set') return [];
+        return Array.from(e.val);
+      }
+
+      if (cmd === 'RPUSH') {
+        const key = a[0];
+        let e = store.get(key);
+        if (!e) {
+          e = { tip: 'list', val: [] };
+          store.set(key, e);
+        }
+        if (e.tip !== 'list') throw new Error('WRONGTYPE');
+        for (let i = 1; i < a.length; i++) e.val.push(String(a[i]));
+        return e.val.length;
+      }
+
+      if (cmd === 'LREM') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'list') return 0;
+        const count = parseInt(a[1], 10) || 0;
+        const member = String(a[2]);
+        let removed = 0;
+        if (count === 0) {
+          const next = e.val.filter((x) => {
+            if (x === member) {
+              removed++;
+              return false;
+            }
+            return true;
+          });
+          e.val = next;
+        } else {
+          const next = [];
+          for (const x of e.val) {
+            if (x === member && removed < count) {
+              removed++;
+            } else {
+              next.push(x);
+            }
+          }
+          e.val = next;
+        }
+        return removed;
+      }
+
+      if (cmd === 'HSET') {
+        const key = a[0];
+        let e = store.get(key);
+        if (!e) {
+          e = { tip: 'hash', val: {} };
+          store.set(key, e);
+        }
+        if (e.tip !== 'hash') throw new Error('WRONGTYPE');
+        e.val[a[1]] = String(a[2]);
+        return 1;
+      }
+
+      if (cmd === 'HDEL') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'hash') return 0;
+        let n = 0;
+        for (let i = 1; i < a.length; i++) {
+          if (Object.prototype.hasOwnProperty.call(e.val, a[i])) {
+            delete e.val[a[i]];
+            n++;
+          }
+        }
+        return n;
+      }
+
+      throw new Error('mem redis: cmd nesuportat ' + cmd);
+    }
+
+    return {
+      store,
+      async exec(argv) {
+        return execOne(argv);
+      },
+      async type(key) {
+        return typeOf(key);
+      },
+      async execTx(list) {
+        // atomic simulat: rulează tot sau nimic (shallow clone store)
+        const snap = new Map();
+        for (const [k, v] of store.entries()) {
+          let val = v.val;
+          if (v.tip === 'set') val = new Set(v.val);
+          else if (v.tip === 'list') val = v.val.slice();
+          else if (v.tip === 'hash') val = Object.assign({}, v.val);
+          else if (v.tip === 'json') val = JSON.parse(JSON.stringify(v.val));
+          snap.set(k, { tip: v.tip, val });
+        }
+        try {
+          const results = [];
+          for (const argv of list) {
+            results.push(execOne(argv));
+          }
+          return results;
+        } catch (e) {
+          store.clear();
+          for (const [k, v] of snap) store.set(k, v);
+          throw e;
+        }
+      },
+    };
+  }
+
+  root.SsideRedis = { createMemoryRedis };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { createMemoryRedis };
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this);

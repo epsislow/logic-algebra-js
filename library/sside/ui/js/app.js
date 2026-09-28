@@ -3185,22 +3185,67 @@ function translateUpstashSearchResults(date) {
 
         // Live form/ui (F3): deps pentru încărcare schema + default values
         if (window.SsideProgLive) {
+            async function liveLoadJsonKey(key) {
+                const tip = tipuriRedisChei[key] || await aflaTipRedis(key);
+                const citire = await citesteValoareCheieRedis(key, tip);
+                if (citire.stearsa) {
+                    throw new Error('Cheie stearsă: ' + key);
+                }
+                const parsed = parseRedisJson(citire.text);
+                if (parsed == null || typeof parsed !== 'object') {
+                    throw new Error('JSON invalid: ' + key);
+                }
+                return parsed;
+            }
+
+            function createWorkerRedisAdapter() {
+                return {
+                    async exec(argv) {
+                        const date = await apeleazaServerul('/api/comanda', { comandaRedis: argv });
+                        return date.rezultat;
+                    },
+                    async type(key) {
+                        const date = await apeleazaServerul('/api/comanda', { comandaRedis: ['TYPE', key] });
+                        return date.rezultat;
+                    },
+                    async execTx(commands) {
+                        const date = await apeleazaServerul('/api/comanda', { tranzactie: commands });
+                        return date.rezultat;
+                    },
+                };
+            }
+
+            async function onRunAlg({ algKey, form }) {
+                if (!window.SsideAlg) {
+                    return { err: 'alg-runner lipsă' };
+                }
+                if (!algKey) {
+                    return { err: 'Buton fără alg' };
+                }
+                let alg;
+                try {
+                    alg = await liveLoadJsonKey(algKey);
+                } catch (e) {
+                    return { err: e.message || String(e) };
+                }
+                const redis = createWorkerRedisAdapter();
+                const result = await SsideAlg.run(alg, {
+                    form: form || {},
+                    redis,
+                    loadSchema: async (schemaKey) => {
+                        return incarcaSchemaCaObiect(schemaKey);
+                    },
+                });
+                if (result.err) return { err: result.err };
+                if (result.msg) return { msg: result.msg };
+                return { msg: 'OK' };
+            }
+
             SsideProgLive.setDeps({
-                async loadJsonKey(key) {
-                    const tip = tipuriRedisChei[key] || await aflaTipRedis(key);
-                    const citire = await citesteValoareCheieRedis(key, tip);
-                    if (citire.stearsa) {
-                        throw new Error('Cheie stearsă: ' + key);
-                    }
-                    const parsed = parseRedisJson(citire.text);
-                    if (parsed == null || typeof parsed !== 'object') {
-                        throw new Error('JSON invalid: ' + key);
-                    }
-                    return parsed;
-                },
+                loadJsonKey: liveLoadJsonKey,
                 normalizeSchema: normalizeToJsonSchema,
                 defaultFromSchema: valoareImplicitaDinSchema,
-                onRunAlg: null, // F4
+                onRunAlg,
             });
         }
 
