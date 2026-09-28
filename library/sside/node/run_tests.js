@@ -17,6 +17,8 @@ const TEST_DIR = path.join(ROOT, 'test');
 
 const GREEN = '\x1b[32m';
 const RED = '\x1b[31m';
+const LIGHT_YELLOW = '\x1b[93m';
+const YELLOW = '\x1b[33m';
 const RESET = '\x1b[0m';
 
 /** Default: câte simboluri (. / F) pe o linie de progres. */
@@ -252,7 +254,7 @@ function main() {
     if (opts.each) {
       const groups = groupBySuite(toRun);
       for (const g of groups) {
-        console.log(`${g.name}:`);
+        console.log(`${LIGHT_YELLOW}${g.name}:${RESET}`);
         const progress = createProgressReporter(g.items.length, opts.progressWidth);
         for (const item of g.items) {
           const ok = await runOne(item);
@@ -283,7 +285,9 @@ function main() {
       console.log('(use -v for error messages)');
     }
 
-    console.log(`Passed: ${passed} Failed: ${failed} Total: ${passed + failed}`);
+    console.log(
+      `Passed: ${YELLOW}${passed}${RESET} Failed: ${YELLOW}${failed}${RESET} Total: ${YELLOW}${passed + failed}${RESET}`
+    );
     process.exit(failed ? 1 : 0);
   }
 
