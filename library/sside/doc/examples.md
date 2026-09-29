@@ -159,12 +159,13 @@ La Live, `warehouse` e select cu etichete din hash values; valoarea trimisă în
   "v": 1,
   "steps": [
     { "op": "ksave", "key": "form.key", "val": "form", "as": "json" },
-    { "op": "ui", "do": "refresh", "listid": "stockMain" },
+    { "op": "ui", "do": "refresh", "listid": "_self" },
     { "op": "end", "msg": "Salvat" }
   ]
 }
 ```
 
+Același alg pe orice listă: `"_self"` = lista butonului. Alternativ `"_1"` (prima listă pe tab) sau id literal `"stockMain"`.
 ## Tranzacție atomică
 
 ```json

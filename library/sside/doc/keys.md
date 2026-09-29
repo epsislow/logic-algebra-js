@@ -28,5 +28,5 @@ ui:_warehouse
        └─ form → form:_item_edit
                     ├─ schema:_item
                     └─ btn → alg:_save_item
-                               └─ { op: "ui", do: "refresh", listid: "stockMain" }
+                               └─ { op: "ui", do: "refresh", listid: "_self" }
 ```

@@ -15,6 +15,9 @@
     'redis',
   ]);
 
+  const UiListRef =
+    root.SsideUiListRef || (typeof require !== 'undefined' ? require('./ui-list-ref.js') : null);
+
   function err(msg) {
     return { ok: false, err: msg };
   }
@@ -134,6 +137,26 @@
         if (d !== 'refresh' && d !== 'clear') {
           return err('steps[' + i + ']: ui.do trebuie refresh|clear');
         }
+        const toks = Array.isArray(s.listid) ? s.listid : [s.listid];
+        for (let j = 0; j < toks.length; j++) {
+          const tok = toks[j];
+          if (typeof tok === 'number') {
+            return err(
+              'steps[' + i + '].listid[' + j + ']: folosește string „_1” nu număr'
+            );
+          }
+          if (typeof tok !== 'string') {
+            return err('steps[' + i + '].listid trebuie string|string[]');
+          }
+          const t = tok.trim();
+          if (t.charAt(0) === '$' || t === 'form' || t.indexOf('form.') === 0) {
+            continue;
+          }
+          if (UiListRef && typeof UiListRef.validateListIdToken === 'function') {
+            const le = UiListRef.validateListIdToken(t);
+            if (le) return err('steps[' + i + '].listid: ' + le);
+          }
+        }
       }
     }
     return ok();
@@ -143,6 +166,12 @@
     if (!b || typeof b !== 'object') return err(path + ' invalid');
     if (!b.id || typeof b.id !== 'string' || !String(b.id).trim()) {
       return err(path + '.id obligatoriu');
+    }
+    if (UiListRef && typeof UiListRef.validateBlockId === 'function') {
+      const ide = UiListRef.validateBlockId(b.id);
+      if (ide) return err(path + '.id: ' + ide);
+    } else if (String(b.id).trim().charAt(0) === '_') {
+      return err(path + '.id: nu poate începe cu _');
     }
     if (b.type === 'list') {
       if (!b.list || typeof b.list !== 'string' || !/^list:_[^:]+$/.test(b.list)) {

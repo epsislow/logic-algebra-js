@@ -46,6 +46,7 @@ module.exports = {
         assertEq(Prog.defaultStep('ksave').as, 'auto');
         assertEq(Prog.defaultStep('tstart').op, 'tstart');
         assertEq(Prog.defaultStep('ui').do, 'refresh');
+        assertEq(Prog.defaultStep('ui').listid, '_self');
       },
     },
     {

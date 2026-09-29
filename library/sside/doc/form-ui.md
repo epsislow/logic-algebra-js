@@ -152,4 +152,4 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 
 **Nu confunda** cu filtrul din lista de chei: acolo `*` = `KEYS *`, iar `=s_prefix:…` = `SEARCH.QUERY`. La `list.source`, la fel: „toate cheile” = `{ "from": "keys", "pattern": "*" }`; indexul = `{ "from": "search", "query": { "s_prefix": "stock" } }`. Seed-ul vechi `{ "from":"search", "query": { "*": "*" } }` e tratat ca `KEYS *` (compat).
 
-**Refresh din alg:** target pe **`listid`** (id-ul block-ului din `ui`), nu pe cheia `list:_…` — astfel aceeași definiție poate apărea de 2 ori pe pagină.
+**Refresh din alg:** `listid` = id block, sau `"_self"` (lista butonului), sau `"_1"`/`"_2"` (a N-a listă pe tabul activ). Id-urile de block nu încep cu `_`.

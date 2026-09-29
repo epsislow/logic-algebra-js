@@ -3206,7 +3206,7 @@ function translateUpstashSearchResults(date) {
                 };
             }
 
-            async function onRunAlg({ algKey, form }) {
+            async function onRunAlg({ algKey, form, uiContext }) {
                 if (!window.SsideAlg) {
                     return { err: 'alg-runner lipsă' };
                 }
@@ -3223,6 +3223,7 @@ function translateUpstashSearchResults(date) {
                 const result = await SsideAlg.run(alg, {
                     form: form || {},
                     redis,
+                    uiContext: uiContext || null,
                     loadSchema: async (schemaKey) => {
                         return incarcaSchemaCaObiect(schemaKey);
                     },

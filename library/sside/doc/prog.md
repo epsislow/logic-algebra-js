@@ -35,7 +35,7 @@ Reguli comune:
   "steps": [
     { "op": "assign", "to": "qty", "from": "form.qty" },
     { "op": "ksave", "key": "form.key", "val": "form", "as": "json" },
-    { "op": "ui", "do": "refresh", "listid": "stockMain" },
+    { "op": "ui", "do": "refresh", "listid": "_self" },
     { "op": "end", "msg": "Salvat" }
   ]
 }
@@ -51,7 +51,7 @@ Comportament:
 - rulează în browser cu Redis via worker
 - context: `form` (date Live) + `vars`
 - `end` cu `msg` → banner verde; `err` → roșu (prioritate pe `err`)
-- `ui` `refresh`/`clear` → acumulează pe `result.ui`; Live aplică pe **`listid`** (id block), nu pe cheia `list:_…`
+- `ui` `refresh`/`clear` → `listid` string: id block, sau ref `"_self"` / `"_1"`… (tab activ); Live aplică pe instanță, nu pe cheia `list:_…`
 - în tx: scrierile în buffer; `kget`/`search` citesc Redis actual
 
 Ops: vezi Docs → **Operații alg**.

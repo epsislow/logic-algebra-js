@@ -357,7 +357,7 @@
           '<div class="prog-row">' +
           '<div class="prog-field"><label>type</label><select data-b="type">' +
           '<option value="form">form</option><option value="list">list</option></select></div>' +
-          '<div class="prog-field"><label>id</label><input data-b="id" placeholder="ex: stockMain"></div>' +
+          '<div class="prog-field"><label>id</label><input data-b="id" placeholder="ex: stockMain (fără _ la început)"></div>' +
           '<div class="prog-field"><label data-b="keylab">form</label><select data-b="key"></select></div>' +
           '</div>';
         const typeSel = row.querySelector('[data-b="type"]');
@@ -505,7 +505,7 @@
     if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
     if (op === 'jget') return { op: 'jget', from: 'payload', path: '', to: '' };
     if (op === 'search') return { op: 'search', query: '', to: 'hits' };
-    if (op === 'ui') return { op: 'ui', do: 'refresh', listid: '' };
+    if (op === 'ui') return { op: 'ui', do: 'refresh', listid: '_self' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
     if (op === 'redis') return { op: 'redis', do: 'TYPE', args: [''], to: '' };
     return { op: op };

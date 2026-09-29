@@ -164,18 +164,25 @@ Nested `tstart` → eroare.
 Comenzi pe whitelist (`TYPE`, `EXISTS`, `JSON.GET`, …); nu e default în Edit — adaugă din tab JSON.  
 `args` rezolvă refs (`$key`, `form.x`).
 
-## ui (refresh / clear list) — F4l
+## ui (refresh / clear list) — F4l + refs
 
-După ce un buton rulează alg, Live aplică `result.ui` pe tabelele montate (după `listid`).
+După ce un buton rulează alg, Live aplică `result.ui` pe tabelele montate.
+
+`listid` e **mereu string** (sau array de stringuri), obligatoriu:
 
 ```json
-{ "op": "ui", "do": "refresh", "listid": "stockMain" }
-{ "op": "ui", "do": "clear", "listid": ["kvLeft", "kvRight"] }
+{ "op": "ui", "do": "refresh", "listid": "_self" }
+{ "op": "ui", "do": "refresh", "listid": "_1" }
+{ "op": "ui", "do": "refresh", "listid": ["_self", "_2"] }
+{ "op": "ui", "do": "clear", "listid": "stockMain" }
 ```
 
-| Câmp | Sens |
-|------|------|
-| `do` | `refresh` (reîncarcă sursa) sau `clear` (golește vizual) |
-| `listid` | string sau array — **id-ul block-ului** din `ui.tabs[].blocks[].id` |
+| Valoare | Sens |
+|---------|------|
+| `"_self"` | lista pe care stă butonul (rowBtn / btns list). **Nu** e alias la `_1`. Pe form fără listă → eroare. |
+| `"_1"`, `"_2"`, … | a N-a listă din **tabul UI activ** (ordine blocks `type:list`, 1-based). Lipsă → eroare. |
+| `"stockMain"` | id block literal din `ui.tabs[].blocks[].id` |
+
+Id-urile de block **nu pot începe cu `_`** (rezervat refs). Fără omitere `listid`, fără numere JSON (`1` — folosește `"_1"`).
 
 Nu împinge rânduri din alg; doar semnalează UI-ului să reîncarce.

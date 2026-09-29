@@ -9,6 +9,8 @@
   const Ops = root.SsideAlgOps || (typeof require !== 'undefined' ? require('./alg-ops.js') : null);
   const SearchQ =
     root.SsideSearchQuery || (typeof require !== 'undefined' ? require('./search-query.js') : null);
+  const UiListRef =
+    root.SsideUiListRef || (typeof require !== 'undefined' ? require('./ui-list-ref.js') : null);
 
   function stoppedResult(ctx, extra) {
     return Object.assign(
@@ -219,9 +221,20 @@
       if (!Array.isArray(ids)) ids = [ids];
       if (!ctx._ui) ctx._ui = { refresh: [], clear: [] };
       const bucket = doCmd === 'clear' ? 'clear' : 'refresh';
-      ids.forEach((id) => {
-        const s = id == null ? '' : String(getVal(ctx, id) || id);
-        if (s) ctx._ui[bucket].push(s);
+      const uiCtx = env.uiContext || {};
+      ids.forEach((idTok) => {
+        let raw = getVal(ctx, idTok);
+        if (raw === undefined || raw === null) raw = idTok;
+        if (typeof raw === 'object') {
+          throw new Error('ui: listid trebuie string (nu obiect)');
+        }
+        const s = String(raw).trim();
+        if (!s) throw new Error('ui: listid gol');
+        let resolved = s;
+        if (UiListRef && typeof UiListRef.resolveListId === 'function') {
+          resolved = UiListRef.resolveListId(s, uiCtx);
+        }
+        if (resolved) ctx._ui[bucket].push(resolved);
       });
       return;
     }
@@ -368,6 +381,7 @@
     const env = {
       redis: options.redis,
       loadSchema: options.loadSchema || null,
+      uiContext: options.uiContext || null,
     };
 
     try {

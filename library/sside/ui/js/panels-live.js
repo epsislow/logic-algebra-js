@@ -23,9 +23,27 @@
   let liveInstances = [];
   /** @type {Map<string, { refresh: Function, clear: Function }>} */
   const listById = new Map();
+  /** Ordinea listelor pe tabul / view-ul activ (pt. _1, _2, …). */
+  let activeListOrder = [];
 
   function setDeps(partial) {
     deps = Object.assign({}, deps, partial || {});
+  }
+
+  function resetActiveListOrder() {
+    activeListOrder = [];
+  }
+
+  function registerActiveList(listid) {
+    const id = String(listid || '').trim();
+    if (id && activeListOrder.indexOf(id) === -1) activeListOrder.push(id);
+  }
+
+  function makeUiContext(selfListId) {
+    return {
+      listIds: activeListOrder.slice(),
+      selfListId: selfListId != null && selfListId !== '' ? String(selfListId) : null,
+    };
   }
 
   function showBanner(el, result) {
@@ -56,6 +74,7 @@
     });
     liveInstances = [];
     listById.clear();
+    resetActiveListOrder();
   }
 
   function applyUiCommands(ui) {
@@ -141,6 +160,7 @@
         listid,
         list: listDef && listDef._key,
         rowKey,
+        uiContext: makeUiContext(listid),
       });
       showBanner(bannerEl, result || { msg: 'OK' });
       if (result && result.ui) applyUiCommands(result.ui);
@@ -157,6 +177,7 @@
     const listid = String(opts.listid || opts.id || 'list1');
     const listKey = opts.listKey || listDef._key || '';
     if (listDef) listDef._key = listKey;
+    registerActiveList(listid);
 
     const title = (listDef && listDef.title) || listKey || listid;
     const block = document.createElement('div');
@@ -551,6 +572,7 @@
               form: formValue,
               btn,
               formDef,
+              uiContext: makeUiContext(null),
             });
             showBanner(bannerEl, result || { msg: 'OK' });
             if (result && result.ui) applyUiCommands(result.ui);
@@ -605,6 +627,7 @@
       rootEl.innerHTML = '<p class="prog-live-stub">Definiție list invalidă.</p>';
       return;
     }
+    resetActiveListOrder();
     await mountListBlock(rootEl, listDef, { listid: 'main', listKey: listKey || '' });
   }
 
@@ -644,6 +667,7 @@
         btn.classList.toggle('active', i === idx);
       });
       destroyAll();
+      resetActiveListOrder();
       stack.innerHTML = '';
       const tab = tabs[idx] || {};
       const blocks = normalizeTabBlocks(tab);
