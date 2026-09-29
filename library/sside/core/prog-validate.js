@@ -89,7 +89,11 @@
     for (let i = 0; i < obj.columns.length; i++) {
       const c = obj.columns[i];
       if (!c || typeof c !== 'object') return err('columns[' + i + '] invalid');
-      if (c.path == null || c.path === '') return err('columns[' + i + '].path lipsă');
+      const hasConst = Object.prototype.hasOwnProperty.call(c, 'const');
+      const hasPath = c.path != null && String(c.path).trim() !== '';
+      if (!hasConst && !hasPath) {
+        return err('columns[' + i + ']: path sau const obligatoriu');
+      }
     }
     if (obj.row != null && obj.row !== 'object' && obj.row !== 'array') {
       return err('list.row trebuie object|array');

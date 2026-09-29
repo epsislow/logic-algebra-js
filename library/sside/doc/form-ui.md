@@ -126,12 +126,27 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 
 | Câmp | Sens |
 |------|------|
-| `source.from` | `search` / `set` / `list` / `zset` / `hash` / `enum` (ca `fields.options`) |
+| `source.from` | `keys` (pattern KEYS, ca lista UI) / `search` / `set` / `list` / `zset` / `hash` / `enum` |
+| `source.pattern` | doar la `keys`: glob Redis (default `*`) |
 | `row` | `object` (path-uri câmp) sau `array` (path = index) |
-| `columns[].path` | path în rând; `_key` = cheia Redis |
+| `columns[].path` | `_key` / `_type` / `_json` / câmp din JSON |
+| `columns[].const` | valoare **statică** (ex. `"stock"`) — fără citire pe rând |
 | `pageSize` | mărime pagină |
 | `rowBtns` / `btns` | butoane pe rând / sub tabel (`place`: `row` \| `below`) |
 
-**Paginare:** `search` folosește `LIMIT`/`OFFSET` pe index; colecțiile (`set`/…) se încarcă → sort → slice în UI.
+**Fetch pe pagină:** doar ce cer coloanele — `_key` + `const` → zero `TYPE`/`JSON.GET`; `path: "_type"` → doar `TYPE`; path-uri de câmp / `_json` → `TYPE` + `GET`/`JSON.GET`.
+
+**Exemple coloane:**
+
+```json
+"columns": [
+  { "id": "k", "label": "Cheie", "path": "_key" },
+  { "id": "kind", "label": "Kind", "const": "stock" },
+  { "id": "t", "label": "Type", "path": "_type" }
+]
+```
+
+
+**Nu confunda** cu filtrul din lista de chei: acolo `*` = `KEYS *`, iar `=s_prefix:…` = `SEARCH.QUERY`. La `list.source`, la fel: „toate cheile” = `{ "from": "keys", "pattern": "*" }`; indexul = `{ "from": "search", "query": { "s_prefix": "stock" } }`. Seed-ul vechi `{ "from":"search", "query": { "*": "*" } }` e tratat ca `KEYS *` (compat).
 
 **Refresh din alg:** target pe **`listid`** (id-ul block-ului din `ui`), nu pe cheia `list:_…` — astfel aceeași definiție poate apărea de 2 ori pe pagină.

@@ -294,6 +294,22 @@
         return n;
       }
 
+      if (cmd === 'KEYS') {
+        const pat = a[0] == null ? '*' : String(a[0]);
+        const all = Array.from(store.keys());
+        if (pat === '*') return all;
+        // glob simplu: * și ?
+        const re = new RegExp(
+          '^' +
+            pat
+              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+              .replace(/\*/g, '.*')
+              .replace(/\?/g, '.') +
+            '$'
+        );
+        return all.filter((k) => re.test(k));
+      }
+
       throw new Error('mem redis: cmd nesuportat ' + cmd);
     }
 

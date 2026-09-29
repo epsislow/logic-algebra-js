@@ -57,7 +57,7 @@
       title: { type: 'string', default: '' },
       source: {
         type: 'object',
-        default: { from: 'search', query: { s_prefix: 'stock' } },
+        default: { from: 'keys', pattern: '*' },
       },
       row: {
         type: 'string',
@@ -72,7 +72,8 @@
           properties: {
             id: { type: 'string' },
             label: { type: 'string' },
-            path: { type: 'string' },
+            path: { type: 'string', description: '_key|_type|_json|câmp; sau omite dacă ai const' },
+            const: { description: 'valoare statică pe coloană' },
           },
         },
       },
@@ -128,11 +129,11 @@
     return {
       v: 1,
       title: title || '',
-      source: { from: 'search', query: { '*': '*' } },
+      source: { from: 'keys', pattern: '*' },
       row: 'object',
       columns: [
         { id: 'key', label: 'Cheie', path: '_key' },
-        { id: 'val', label: 'Valoare', path: 'value' },
+        { id: 'val', label: 'Valoare', path: '_json' },
       ],
       pageSize: 20,
       btns: [],

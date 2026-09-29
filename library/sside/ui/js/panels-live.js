@@ -244,8 +244,17 @@
         };
         columns.forEach((c) => {
           const td = document.createElement('td');
-          let val = ListLoad.cellValue(row.value, c.path, rowMode);
-          if (c.path === '_key') val = row.key;
+          const meta = { key: row.key, type: row.type };
+          let val;
+          if (ListLoad && typeof ListLoad.cellValue === 'function') {
+            val = ListLoad.cellValue(row.value, c, rowMode, meta);
+          } else if (c && Object.prototype.hasOwnProperty.call(c, 'const')) {
+            val = c.const;
+          } else if (c && String(c.path || '').trim() === '_key') {
+            val = row.key;
+          } else if (c && String(c.path || '').trim() === '_type') {
+            val = row.type;
+          }
           td.textContent = val == null ? '' : String(val);
           tr.appendChild(td);
         });

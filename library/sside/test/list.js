@@ -37,7 +37,8 @@ module.exports = {
         assertEq(Keys.cheieProgDinNume('list', 'stock'), 'list:_stock');
         const seed = Meta.seedList('Stoc');
         assertEq(seed.v, 1);
-        assert(seed.source && seed.source.from);
+        assert(seed.source && seed.source.from === 'keys');
+        assertEq(seed.source.pattern, '*');
         assert(Array.isArray(seed.columns) && seed.columns.length > 0);
         assert(Meta.META_LIST && Meta.META_LIST.properties.columns);
         assertEq(Meta.metaPentruRol('list'), Meta.META_LIST);
@@ -127,12 +128,36 @@ module.exports = {
     },
     {
       id: 5,
-      desc: 'cellValue object / array / _key',
+      desc: 'cellValue object / array / _key / $',
       run() {
         assertEq(ListLoad.cellValue({ qty: 3, _key: 'k1' }, 'qty', 'object'), 3);
         assertEq(ListLoad.cellValue({ qty: 3, _key: 'k1' }, '_key', 'object'), 'k1');
         assertEq(ListLoad.cellValue(['a', 'b'], '1', 'array'), 'b');
         assertEq(ListLoad.cellValue('plain', 'value', 'object'), 'plain');
+        assertEq(
+          ListLoad.cellValue({ qty: 3, _key: 'k1' }, '$', 'object'),
+          JSON.stringify({ qty: 3 })
+        );
+        assertEq(
+          ListLoad.cellValue({ qty: 3, _key: 'k1' }, '_json', 'object'),
+          JSON.stringify({ qty: 3 })
+        );
+        assertEq(ListLoad.cellValue({}, { const: 'stock' }, 'object'), 'stock');
+        assertEq(
+          ListLoad.cellValue({}, '_type', 'object', { type: 'json' }),
+          'json'
+        );
+        assertDeep(ListLoad.analyzeColumnNeeds([
+          { path: '_key' },
+          { const: 'stock' },
+        ]), { needsValue: false, needsType: false });
+        assertDeep(ListLoad.analyzeColumnNeeds([
+          { path: '_key' },
+          { path: '_type' },
+        ]), { needsValue: false, needsType: true });
+        assertDeep(ListLoad.analyzeColumnNeeds([
+          { path: 'qty' },
+        ]), { needsValue: true, needsType: false });
       },
     },
     {
@@ -254,6 +279,161 @@ module.exports = {
           { form: {}, redis }
         );
         assertDeep(r.ui.refresh, ['fromVar']);
+      },
+    },
+    {
+      id: 10,
+      desc: 'source keys + search {*} {*} → KEYS *',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec([
+          'JSON.SET',
+          'data:_a:1',
+          '$',
+          JSON.stringify({ name: 'A' }),
+        ]);
+        await redis.exec([
+          'JSON.SET',
+          'data:_b:2',
+          '$',
+          JSON.stringify({ name: 'B' }),
+        ]);
+        const viaKeys = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'keys', pattern: 'data:_a:*' },
+            columns: [{ id: 'k', path: '_key' }],
+            pageSize: 20,
+          },
+          redis,
+          1
+        );
+        assertEq(viaKeys.total, 1);
+        assertEq(viaKeys.rows[0].key, 'data:_a:1');
+
+        const viaLegacy = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'search', query: { '*': '*' } },
+            columns: [{ id: 'k', path: '_key' }],
+            pageSize: 20,
+          },
+          redis,
+          1
+        );
+        assertEq(viaLegacy.total, 2);
+      },
+    },
+    {
+      id: 11,
+      desc: '_key+const fără TYPE/JSON.GET; _type doar TYPE',
+      async run() {
+        const base = createMemoryRedis();
+        await base.exec([
+          'JSON.SET',
+          'data:_stock:1',
+          '$',
+          JSON.stringify({ product: 'A', qty: 1 }),
+        ]);
+        let typeN = 0;
+        let getN = 0;
+        const redis = {
+          async type(key) {
+            typeN++;
+            return base.type(key);
+          },
+          async exec(argv) {
+            const cmd = String(argv[0] || '').toUpperCase();
+            if (cmd === 'JSON.GET' || cmd === 'GET') getN++;
+            return base.exec(argv);
+          },
+        };
+
+        typeN = 0;
+        getN = 0;
+        const light = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'keys', pattern: 'data:_stock:*' },
+            columns: [
+              { id: 'k', path: '_key' },
+              { id: 'kind', const: 'stock' },
+            ],
+            pageSize: 20,
+          },
+          redis,
+          1
+        );
+        assertEq(light.rows.length, 1);
+        assertEq(
+          ListLoad.cellValue(light.rows[0].value, { const: 'stock' }, 'object', {
+            key: light.rows[0].key,
+          }),
+          'stock'
+        );
+        assertEq(typeN, 0);
+        assertEq(getN, 0);
+        assert(!light.fetch.needsValue);
+        assert(!light.fetch.needsType);
+
+        typeN = 0;
+        getN = 0;
+        const typed = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'keys', pattern: 'data:_stock:*' },
+            columns: [
+              { id: 'k', path: '_key' },
+              { id: 't', path: '_type' },
+            ],
+            pageSize: 20,
+          },
+          redis,
+          1
+        );
+        assertEq(typed.rows[0].type, 'json');
+        assertEq(
+          ListLoad.cellValue(typed.rows[0].value, '_type', 'object', {
+            type: typed.rows[0].type,
+          }),
+          'json'
+        );
+        assertEq(typeN, 1);
+        assertEq(getN, 0);
+
+        typeN = 0;
+        getN = 0;
+        await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'keys', pattern: 'data:_stock:*' },
+            columns: [
+              { id: 'k', path: '_key' },
+              { id: 'q', path: 'qty' },
+            ],
+            pageSize: 20,
+          },
+          redis,
+          1
+        );
+        assert(typeN >= 1);
+        assert(getN >= 1);
+      },
+    },
+    {
+      id: 12,
+      desc: 'validateList acceptă const fără path',
+      run() {
+        assert(
+          V.validateList({
+            v: 1,
+            source: { from: 'keys', pattern: '*' },
+            columns: [
+              { id: 'k', path: '_key' },
+              { id: 'kind', const: 'stock' },
+            ],
+          }).ok
+        );
       },
     },
   ],

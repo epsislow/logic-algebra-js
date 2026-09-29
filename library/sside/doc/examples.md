@@ -127,7 +127,7 @@ La Live, `warehouse` e select cu etichete din hash values; valoarea trimisă în
 {
   "v": 1,
   "title": "Stoc",
-  "source": { "from": "search", "query": { "s_prefix": "stock" } },
+  "source": { "from": "keys", "pattern": "data:_stock:*" },
   "columns": [
     { "id": "k", "label": "Cheie", "path": "_key" },
     { "id": "q", "label": "Qty", "path": "qty" }

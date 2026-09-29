@@ -43,21 +43,90 @@
 
   /**
    * Celulă din rând (object | array).
+   * path special: `_key` | `_type` | `$`/`_json`/`_raw`
+   * col.const = valoare statică (fără citire Redis pe rând)
+   * @param {*} rowVal
+   * @param {string|object} pathOrCol path sau obiect column
+   * @param {string} rowMode
+   * @param {{ type?: string, key?: string }} [meta]
    */
-  function cellValue(rowVal, path, rowMode) {
-    if (path === '_key' && rowVal && typeof rowVal === 'object' && rowVal._key != null) {
-      return rowVal._key;
+  function cellValue(rowVal, pathOrCol, rowMode, meta) {
+    meta = meta || {};
+    let col = null;
+    let p = '';
+    if (pathOrCol && typeof pathOrCol === 'object' && !Array.isArray(pathOrCol)) {
+      col = pathOrCol;
+      if (Object.prototype.hasOwnProperty.call(col, 'const')) {
+        return col.const;
+      }
+      p = col.path == null ? '' : String(col.path).trim();
+    } else {
+      p = pathOrCol == null ? '' : String(pathOrCol).trim();
+    }
+
+    if (p === '_key') {
+      if (meta.key != null) return meta.key;
+      if (rowVal && typeof rowVal === 'object' && rowVal._key != null) return rowVal._key;
+      return undefined;
+    }
+    if (p === '_type') {
+      return meta.type != null ? meta.type : '';
+    }
+    if (p === '$' || p === '_json' || p === '_raw') {
+      if (rowVal == null) return '';
+      if (typeof rowVal !== 'object') return String(rowVal);
+      if (Array.isArray(rowVal)) return JSON.stringify(rowVal);
+      const copy = Object.assign({}, rowVal);
+      delete copy._key;
+      delete copy._type;
+      return JSON.stringify(copy);
     }
     if (rowMode === 'array') {
-      const idx = parseInt(path, 10);
+      const idx = parseInt(p, 10);
       if (!Array.isArray(rowVal)) return undefined;
       return Number.isFinite(idx) ? rowVal[idx] : undefined;
     }
     if (rowVal == null) return undefined;
     if (typeof rowVal !== 'object') {
-      return path === 'value' || path === '0' ? rowVal : undefined;
+      return p === 'value' || p === '0' ? rowVal : undefined;
     }
-    return getPath(rowVal, path);
+    return getPath(rowVal, p);
+  }
+
+  /** Ce citiri Redis sunt necesare pentru columns. */
+  function analyzeColumnNeeds(columns) {
+    let needsValue = false;
+    let needsType = false;
+    (columns || []).forEach((c) => {
+      if (!c || typeof c !== 'object') return;
+      if (Object.prototype.hasOwnProperty.call(c, 'const')) return;
+      const p = c.path == null ? '' : String(c.path).trim();
+      if (!p || p === '_key') return;
+      if (p === '_type') {
+        needsType = true;
+        return;
+      }
+      needsValue = true;
+    });
+    return { needsValue, needsType };
+  }
+
+  function isMatchAllSearchQuery(q) {
+    if (q === '*' || q === '') return true;
+    if (!q || typeof q !== 'object' || Array.isArray(q)) return false;
+    const keys = Object.keys(q);
+    return keys.length === 1 && keys[0] === '*' && (q['*'] === '*' || q['*'] === '');
+  }
+
+  async function resolveKeysPattern(redis, pattern, pageOpts) {
+    pageOpts = pageOpts || {};
+    const pat = pattern == null || pattern === '' ? '*' : String(pattern);
+    const raw = await redis.exec(['KEYS', pat]);
+    let keys = Array.isArray(raw) ? raw.map(String) : [];
+    keys.sort();
+    const maxScan = pageOpts.maxScan != null ? Number(pageOpts.maxScan) : 2000;
+    if (keys.length > maxScan) keys = keys.slice(0, maxScan);
+    return { keys, total: keys.length, hasMore: false, pagedAtSource: false };
   }
 
   async function resolveSourceKeys(source, redis, pageOpts) {
@@ -66,7 +135,21 @@
       throw new Error('list.source lipsă');
     }
     const from = source.from;
+
+    // Ca lista din UI: `*` / pattern → KEYS (nu SEARCH.QUERY)
+    if (from === 'keys') {
+      return resolveKeysPattern(redis, source.pattern != null ? source.pattern : '*', {
+        maxScan: source.maxScan != null ? source.maxScan : pageOpts.maxScan,
+      });
+    }
+
     if (from === 'search' && SearchQ) {
+      // seed vechi { "*": "*" } / query "*" → același comportament ca KEYS *
+      if (isMatchAllSearchQuery(source.query)) {
+        return resolveKeysPattern(redis, '*', {
+          maxScan: source.maxScan != null ? source.maxScan : pageOpts.maxScan,
+        });
+      }
       const pageSize = pageOpts.pageSize || 20;
       const page = pageOpts.page || 1;
       const offset = (page - 1) * pageSize;
@@ -94,9 +177,15 @@
     return { keys, total: keys.length, hasMore: false, pagedAtSource: false };
   }
 
-  async function loadRowValue(key, redis, rowMode) {
-    let tip = 'none';
-    if (redis.type) tip = await redis.type(key);
+  /**
+   * @param {string} [knownType] dacă e deja cunoscut, nu mai apelează TYPE
+   */
+  async function loadRowValue(key, redis, rowMode, knownType) {
+    let tip = knownType;
+    if (tip == null || tip === '') {
+      tip = 'none';
+      if (redis.type) tip = await redis.type(key);
+    }
     if (tip === 'json' || tip === 'ReJSON-RL') {
       const raw = await redis.exec(['JSON.GET', key, '$']);
       return unwrapJsonGet(raw);
@@ -118,7 +207,7 @@
   }
 
   /**
-   * @returns {Promise<{ page, pageSize, total, hasMore, rows: {key, value}[] }>}
+   * @returns {Promise<{ page, pageSize, total, hasMore, rows: {key, value, type}[], rowMode, fetch }>}
    */
   async function loadListPage(listDef, redis, page) {
     if (!listDef || typeof listDef !== 'object') {
@@ -130,6 +219,7 @@
     const pageSize = Math.max(1, Number(listDef.pageSize) || 20);
     let pageNum = Math.max(1, Number(page) || 1);
     const rowMode = listDef.row === 'array' ? 'array' : 'object';
+    const needs = analyzeColumnNeeds(listDef.columns);
 
     const src = await resolveSourceKeys(listDef.source, redis, {
       page: pageNum,
@@ -163,16 +253,34 @@
 
     const rows = [];
     for (const key of pageKeys) {
-      let value;
-      try {
-        value = await loadRowValue(key, redis, rowMode);
-      } catch (e) {
-        value = rowMode === 'array' ? [key] : { value: key };
+      let tip = null;
+      if (needs.needsType || needs.needsValue) {
+        tip = 'none';
+        if (redis.type) {
+          try {
+            tip = await redis.type(key);
+          } catch (e) {
+            tip = 'none';
+          }
+        }
       }
+
+      let value;
+      if (needs.needsValue) {
+        try {
+          value = await loadRowValue(key, redis, rowMode, tip);
+        } catch (e) {
+          value = rowMode === 'array' ? [key] : { value: key };
+        }
+      } else {
+        value = rowMode === 'array' ? [] : {};
+      }
+
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         value = Object.assign({ _key: key }, value);
+        if (tip != null) value._type = tip;
       }
-      rows.push({ key, value });
+      rows.push({ key, value, type: tip });
     }
 
     return {
@@ -182,11 +290,13 @@
       hasMore,
       rows,
       rowMode,
+      fetch: needs,
     };
   }
 
   const api = {
     cellValue,
+    analyzeColumnNeeds,
     loadRowValue,
     resolveSourceKeys,
     loadListPage,
