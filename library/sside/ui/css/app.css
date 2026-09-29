@@ -472,6 +472,12 @@
         .prog-step-insert {
             margin-left: auto; display: flex; gap: 6px; align-items: center;
         }
+        .prog-step-move {
+            display: inline-flex; gap: 4px; align-items: center; margin-left: 10px;
+        }
+        .prog-step-move button:disabled {
+            opacity: 0.35; cursor: default;
+        }
         .prog-step-body { margin-top: 4px; }
         .prog-step-hint {
             font-size: 12px; color: var(--text-muted); margin: 0 0 6px;

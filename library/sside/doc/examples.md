@@ -1,6 +1,6 @@
 # Exemple
 
-În **Edit** pe `alg:`: ops plate au câmpuri; `if`/`foreach` se deschid ca bloc (then/else/do). Insert pe rând: `[+ step]` înainte de un pas. Tab **Json** rămâne disponibil.
+În **Edit** pe `alg:`: ops plate au câmpuri; `if`/`foreach` se deschid ca bloc (then/else/do). Insert pe rând: `[+ step]` înainte de un pas. Reordonare: **↑↓** (fără wrap; pe bloc mută tot interiorul). Tab **Json** rămâne disponibil.
 
 ## Salvare item
 

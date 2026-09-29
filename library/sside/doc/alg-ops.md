@@ -20,7 +20,7 @@ sau `"val": 7` (literal).
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
 
-`else` e opțional. În **Edit** (F2-alg-B): `if` e un **bloc** — Deschide → panou cu `when` (JSON) + carduri **then** / **else** (drill-in); ← Înapoi. Ștergerea blocului șterge și interiorul (confirm).
+`else` e opțional. În **Edit** (F2-alg-B): `if` e un **bloc** — Deschide → panou cu `when` (JSON) + carduri **then** / **else** (drill-in); ← Înapoi. Ștergerea blocului șterge și interiorul (confirm). Pe liste: **↑↓** reordonare (disabled la capete).
 
 ### foreach
 `{ "op": "foreach", "in": "form.items", "as": "it", "do": [...] }`

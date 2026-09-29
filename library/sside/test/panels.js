@@ -228,5 +228,29 @@ module.exports = {
         assertEq(ok.length, 2);
       },
     },
+    {
+      id: 12,
+      desc: 'moveStep ↑↓ fără wrap (D35)',
+      run() {
+        const steps = [
+          Prog.defaultStep('assign'),
+          Prog.defaultStep('ksave'),
+          Prog.defaultStep('end'),
+        ];
+        assert(!Prog.moveStep(steps, 0, -1), 'primul ↑ disabled logic');
+        assert(!Prog.moveStep(steps, 2, 1), 'ultimul ↓ disabled logic');
+        assert(Prog.moveStep(steps, 1, -1));
+        assertEq(steps.map((s) => s.op).join(','), 'ksave,assign,end');
+        assert(Prog.moveStep(steps, 0, 1));
+        assertEq(steps.map((s) => s.op).join(','), 'assign,ksave,end');
+        const block = Prog.defaultStep('if');
+        block.then.push(Prog.defaultStep('end'));
+        steps.push(block);
+        assert(Prog.moveStep(steps, 3, -1));
+        assertEq(steps[2].op, 'if');
+        assertEq(steps[2].then.length, 1);
+        assertEq(steps[3].op, 'end');
+      },
+    },
   ],
 };

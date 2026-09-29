@@ -612,8 +612,25 @@
   }
 
   /**
+   * Mută pasul la index cu delta (-1 = ↑, +1 = ↓). Fără wrap.
+   * @returns {boolean} true dacă s-a mutat
+   */
+  function moveStep(steps, index, delta) {
+    if (!Array.isArray(steps)) throw new Error('moveStep: steps trebuie array');
+    const d = delta === -1 || delta === 1 ? delta : 0;
+    if (!d) return false;
+    const i = index | 0;
+    const j = i + d;
+    if (i < 0 || i >= steps.length || j < 0 || j >= steps.length) return false;
+    const tmp = steps[i];
+    steps[i] = steps[j];
+    steps[j] = tmp;
+    return true;
+  }
+
+  /**
    * Înlocuiește conținutul array-ului (ca readStepsInto după flush).
-   * După append/insert NU apela cu snapshot din DOM vechi — pierde mutația.
+   * După append/insert/move NU apela cu snapshot din DOM vechi — pierde mutația.
    */
   function replaceStepsContents(targetArr, nextList) {
     if (!Array.isArray(targetArr)) throw new Error('replaceStepsContents: target trebuie array');
@@ -1290,6 +1307,7 @@
             rebuild();
           };
           head.appendChild(rm);
+          mountMoveBtns(head, index);
         } else {
           const opSel = document.createElement('select');
           opSel.setAttribute('data-s', 'op');
@@ -1317,6 +1335,39 @@
             rebuild();
           };
           head.appendChild(rm);
+          mountMoveBtns(head, index);
+        }
+
+        function mountMoveBtns(headEl, idx) {
+          const wrap = document.createElement('span');
+          wrap.className = 'prog-step-move';
+          const up = document.createElement('button');
+          up.type = 'button';
+          up.className = 'btn-gri btn-inline';
+          up.textContent = '↑';
+          up.title = 'Mută în sus';
+          up.disabled = idx <= 0;
+          up.onclick = (ev) => {
+            ev.stopPropagation();
+            flushCurrentView();
+            const i = Array.from(stepsHost.children).indexOf(el);
+            if (moveStep(stepsArr, i >= 0 ? i : idx, -1)) rebuild();
+          };
+          const down = document.createElement('button');
+          down.type = 'button';
+          down.className = 'btn-gri btn-inline';
+          down.textContent = '↓';
+          down.title = 'Mută în jos';
+          down.disabled = idx >= stepsArr.length - 1;
+          down.onclick = (ev) => {
+            ev.stopPropagation();
+            flushCurrentView();
+            const i = Array.from(stepsHost.children).indexOf(el);
+            if (moveStep(stepsArr, i >= 0 ? i : idx, 1)) rebuild();
+          };
+          wrap.appendChild(up);
+          wrap.appendChild(down);
+          headEl.appendChild(wrap);
         }
 
         const insertWrap = document.createElement('div');
@@ -2105,6 +2156,7 @@
       previewBlock,
       insertStepAt,
       appendStep,
+      moveStep,
       replaceStepsContents,
       parseMaybeLiteral,
       normalizeUiTabBlocks,
