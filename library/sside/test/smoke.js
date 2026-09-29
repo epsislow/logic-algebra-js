@@ -50,10 +50,12 @@ module.exports = {
     },
     {
       id: 5,
-      desc: 'doc/index.json parseable',
+      desc: 'doc/index.json parseable + prog section',
       run() {
         const j = JSON.parse(fs.readFileSync(path.join(ROOT, 'doc', 'index.json'), 'utf8'));
         assert(j && Array.isArray(j.sections));
+        assert(j.sections.some((s) => s.id === 'prog' && s.file === 'prog.md'));
+        assert(fs.existsSync(path.join(ROOT, 'doc', 'prog.md')));
       },
     },
     {

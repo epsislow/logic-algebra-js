@@ -377,6 +377,15 @@
         .prog-forms-stack-edit select {
             width: 100%; margin: 0; box-sizing: border-box; font-size: 13px;
         }
+        .prog-blocks-picks { margin-top: 8px; }
+        .prog-blocks-stack-edit {
+            display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;
+        }
+        .prog-block-edit {
+            border: 1px solid var(--border); border-radius: 4px;
+            padding: 8px; background: var(--bg-editor);
+            margin-bottom: 6px;
+        }
         .prog-row textarea { min-height: 52px; font-family: ui-monospace, monospace; }
         .prog-steps { display: flex; flex-direction: column; gap: 8px; }
         .prog-step {

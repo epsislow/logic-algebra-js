@@ -11,6 +11,8 @@ Prefixuri Redis folosite de sside:
 | `list:` | `list:_stock` | tabel: sursă + coloane + paginare |
 | `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |
 
+Forme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.
+
 ## Reguli
 
 - Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).

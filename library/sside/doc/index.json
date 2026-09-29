@@ -2,6 +2,7 @@
   "title": "sside docs",
   "sections": [
     { "id": "keys", "label": "Chei", "file": "keys.md" },
+    { "id": "prog", "label": "Prog (alg/form/list/ui)", "file": "prog.md" },
     { "id": "alg-ops", "label": "Operații alg", "file": "alg-ops.md" },
     { "id": "when", "label": "when", "file": "when.md" },
     { "id": "form-ui", "label": "Form / UI", "file": "form-ui.md" },

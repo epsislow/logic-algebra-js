@@ -1,5 +1,8 @@
 # Form / UI
 
+Prezentare generală a tipurilor prog: Docs → **Prog (alg/form/list/ui)**.  
+Aici: detalii Live form, `fields.options`, list fetch.
+
 ## form:_…
 
 ```json

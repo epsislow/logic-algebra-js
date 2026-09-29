@@ -229,7 +229,28 @@
     host.appendChild(card);
   }
 
-  // ---------- UI edit ----------
+  // ---------- UI edit (tabs → blocks form|list) ----------
+  function normalizeUiTabBlocks(tab) {
+    if (Array.isArray(tab && tab.blocks) && tab.blocks.length) {
+      return tab.blocks.map((b, i) => {
+        const type = b && b.type === 'list' ? 'list' : 'form';
+        const id = (b && b.id) || type + (i + 1);
+        if (type === 'list') {
+          return { type: 'list', id: String(id), list: (b && b.list) || '' };
+        }
+        return { type: 'form', id: String(id), form: (b && b.form) || '' };
+      });
+    }
+    if (Array.isArray(tab && tab.forms)) {
+      return tab.forms.filter(Boolean).map((f, i) => ({
+        type: 'form',
+        id: 'form' + (i + 1),
+        form: f,
+      }));
+    }
+    return [];
+  }
+
   function randeazaEditUi(host, obj) {
     if (!Array.isArray(obj.tabs)) obj.tabs = [];
     host.innerHTML = '';
@@ -250,69 +271,115 @@
     function syncFromDom() {
       obj.title = row1.querySelector('[data-f="title"]').value;
       obj.tabs = [];
-      tabsHost.querySelectorAll('.prog-step').forEach((el) => {
-        const forms = Array.from(el.querySelectorAll('.prog-forms-picks select'))
-          .map((s) => s.value.trim())
-          .filter(Boolean);
-        obj.tabs.push({
+      tabsHost.querySelectorAll('.prog-step[data-tab]').forEach((el) => {
+        const blocks = [];
+        el.querySelectorAll('.prog-block-edit').forEach((bEl) => {
+          const type = bEl.querySelector('[data-b="type"]').value === 'list' ? 'list' : 'form';
+          const id = (bEl.querySelector('[data-b="id"]').value || '').trim();
+          const key = (bEl.querySelector('[data-b="key"]').value || '').trim();
+          if (type === 'list') {
+            blocks.push({ type: 'list', id: id || 'list', list: key });
+          } else {
+            blocks.push({ type: 'form', id: id || 'form', form: key });
+          }
+        });
+        const tab = {
           id: el.querySelector('[data-t="id"]').value.trim(),
           label: el.querySelector('[data-t="label"]').value.trim(),
-          forms,
-        });
+          blocks,
+        };
+        // nu mai scriem forms[] — blocks e sursa de adevăr
+        obj.tabs.push(tab);
       });
       scrieRaw(obj);
     }
 
-    function mountFormsPicks(el, initialForms) {
+    function mountBlocksEditor(tabEl, initialBlocks) {
       const wrap = document.createElement('div');
-      wrap.className = 'prog-forms-picks';
+      wrap.className = 'prog-blocks-picks';
       const label = document.createElement('label');
-      label.textContent = 'forms';
+      label.textContent = 'blocks';
       label.style.display = 'block';
       label.style.marginBottom = '4px';
       wrap.appendChild(label);
       const stack = document.createElement('div');
-      stack.className = 'prog-forms-stack-edit';
+      stack.className = 'prog-blocks-stack-edit';
       wrap.appendChild(stack);
-      el.appendChild(wrap);
+      tabEl.appendChild(wrap);
 
-      function readForms() {
-        return Array.from(stack.querySelectorAll('select'))
-          .map((s) => s.value.trim())
-          .filter(Boolean);
-      }
-
-      function rebuild(forms) {
-        stack.innerHTML = '';
-        const list = Array.isArray(forms) ? forms.filter(Boolean) : [];
-        list.forEach((f) => addOne(f));
-        addOne(''); // mereu un select gol la final
-      }
-
-      function addOne(value) {
+      function addBlockRow(block) {
+        block = block || { type: 'form', id: '', form: '' };
+        const type = block.type === 'list' ? 'list' : 'form';
         const row = document.createElement('div');
-        row.className = 'prog-field';
-        const n = stack.children.length + 1;
-        const lab = document.createElement('label');
-        lab.textContent = 'form ' + n;
-        row.appendChild(lab);
-        const sel = document.createElement('select');
-        fillKeySelect(sel, 'form', value || '');
-        sel.onchange = () => {
-          rebuild(readForms());
+        row.className = 'prog-block-edit';
+        row.innerHTML =
+          '<div class="prog-row">' +
+          '<div class="prog-field"><label>type</label><select data-b="type">' +
+          '<option value="form">form</option><option value="list">list</option></select></div>' +
+          '<div class="prog-field"><label>id</label><input data-b="id" placeholder="ex: stockMain"></div>' +
+          '<div class="prog-field"><label data-b="keylab">form</label><select data-b="key"></select></div>' +
+          '</div>';
+        const typeSel = row.querySelector('[data-b="type"]');
+        const idInp = row.querySelector('[data-b="id"]');
+        const keySel = row.querySelector('[data-b="key"]');
+        const keyLab = row.querySelector('[data-b="keylab"]');
+        typeSel.value = type;
+        idInp.value = block.id || '';
+
+        function refillKey(prefer) {
+          const t = typeSel.value === 'list' ? 'list' : 'form';
+          keyLab.textContent = t;
+          let cur = prefer != null ? prefer : '';
+          if (prefer == null) {
+            cur =
+              t === 'list'
+                ? (block && block.list) || ''
+                : (block && block.form) || '';
+          }
+          fillKeySelect(keySel, t, cur);
+        }
+        refillKey(
+          type === 'list' ? block.list || '' : block.form || ''
+        );
+
+        typeSel.onchange = () => {
+          refillKey('');
           syncFromDom();
         };
-        row.appendChild(sel);
+        keySel.onchange = syncFromDom;
+        idInp.addEventListener('input', syncFromDom);
+
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'btn-gri btn-inline btn-inline-danger';
+        rm.textContent = 'Șterge block';
+        rm.onclick = () => {
+          row.remove();
+          syncFromDom();
+        };
+        row.appendChild(rm);
         stack.appendChild(row);
       }
 
-      rebuild(initialForms || []);
+      (initialBlocks || []).forEach(addBlockRow);
+
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn-albastru btn-inline';
+      addBtn.textContent = '+ Block';
+      addBtn.onclick = () => {
+        const n = stack.querySelectorAll('.prog-block-edit').length + 1;
+        addBlockRow({ type: 'form', id: 'block' + n, form: '' });
+        syncFromDom();
+      };
+      wrap.appendChild(addBtn);
     }
 
     function addTabRow(tab) {
-      tab = tab || { id: '', label: '', forms: [] };
+      tab = tab || { id: '', label: '', blocks: [] };
       const el = document.createElement('div');
       el.className = 'prog-step';
+      el.setAttribute('data-tab', '1');
       el.innerHTML =
         '<div class="prog-row">' +
         '<div class="prog-field"><label>id</label><input data-t="id"></div>' +
@@ -329,8 +396,10 @@
       el.appendChild(rm);
       el.querySelector('[data-t="id"]').value = tab.id || '';
       el.querySelector('[data-t="label"]').value = tab.label || '';
-      mountFormsPicks(el, tab.forms || []);
-      el.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
+      mountBlocksEditor(el, normalizeUiTabBlocks(tab));
+      el.querySelectorAll('input[data-t]').forEach((inp) =>
+        inp.addEventListener('input', syncFromDom)
+      );
       tabsHost.appendChild(el);
     }
 
@@ -343,7 +412,8 @@
     add.className = 'btn-albastru btn-inline';
     add.textContent = '+ Tab';
     add.onclick = () => {
-      addTabRow({ id: 't' + (obj.tabs.length + 1), label: 'Tab', forms: [] });
+      const n = tabsHost.querySelectorAll('.prog-step[data-tab]').length + 1;
+      addTabRow({ id: 't' + n, label: 'Tab', blocks: [] });
       syncFromDom();
     };
     toolbar.appendChild(add);
@@ -687,6 +757,7 @@
     getKind,
     setDeps,
     ALG_OPS,
+    normalizeUiTabBlocks,
   };
 
   root.seteazaModProg = function (mod) {
@@ -698,6 +769,7 @@
       esteProgTip,
       ALG_OPS,
       defaultStep,
+      normalizeUiTabBlocks,
     };
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this);

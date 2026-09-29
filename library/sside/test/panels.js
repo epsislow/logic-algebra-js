@@ -45,6 +45,32 @@ module.exports = {
         assertEq(Prog.defaultStep('end').op, 'end');
         assertEq(Prog.defaultStep('ksave').as, 'auto');
         assertEq(Prog.defaultStep('tstart').op, 'tstart');
+        assertEq(Prog.defaultStep('ui').do, 'refresh');
+      },
+    },
+    {
+      id: 4,
+      desc: 'normalizeUiTabBlocks forms→blocks + list',
+      run() {
+        assert(typeof Prog.normalizeUiTabBlocks === 'function');
+        const fromForms = Prog.normalizeUiTabBlocks({
+          forms: ['form:_a', 'form:_b'],
+        });
+        assertEq(fromForms.length, 2);
+        assertEq(fromForms[0].type, 'form');
+        assertEq(fromForms[0].form, 'form:_a');
+        assertEq(fromForms[0].id, 'form1');
+
+        const fromBlocks = Prog.normalizeUiTabBlocks({
+          blocks: [
+            { type: 'list', id: 'stockMain', list: 'list:_stock' },
+            { type: 'form', id: 'edit', form: 'form:_x' },
+          ],
+        });
+        assertEq(fromBlocks.length, 2);
+        assertEq(fromBlocks[0].type, 'list');
+        assertEq(fromBlocks[0].list, 'list:_stock');
+        assertEq(fromBlocks[1].form, 'form:_x');
       },
     },
   ],
