@@ -26,6 +26,7 @@
             --badge-list: #fd7e14;
             --badge-liber: #6c757d;
             --badge-admin: #fd7e14;
+            --prog-op-color: #088;
         }
         html[data-theme="dark"] {
             --bg: #12151a;
@@ -55,6 +56,7 @@
             --badge-list: #fb923c;
             --badge-liber: #6b7280;
             --badge-admin: #f59e0b;
+            --prog-op-color: #ff9;
         }
 
         body { font-family: sans-serif; max-width: 960px; margin: 20px auto; padding: 0 10px; background: var(--bg); color: var(--text); }
@@ -467,8 +469,16 @@
         .prog-step-head {
             display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap;
         }
-        .prog-step-head code { font-size: 12px; }
-        .prog-step-op { width: auto; margin: 0; min-width: 120px; font-size: 13px; }
+        .prog-step-head code { font-size: 12px; color: var(--prog-op-color); }
+        .prog-step-op {
+            width: auto; margin: 0; min-width: 120px; font-size: 13px;
+            color: var(--prog-op-color);
+        }
+        .prog-step-op-label {
+            font-size: 12px;
+            min-width: 4.5em;
+            color: var(--prog-op-color);
+        }
         .prog-step-insert {
             margin-left: auto; display: flex; gap: 6px; align-items: center;
         }
@@ -479,6 +489,24 @@
             opacity: 0.35; cursor: default;
         }
         .prog-step-body { margin-top: 4px; }
+        .prog-step-view { cursor: pointer; }
+        .prog-step-view:hover { background: var(--row-hover); }
+        .prog-step-editing {
+            border-color: var(--accent, #3b82f6);
+        }
+        .prog-step-preview {
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            padding: 2px 0;
+            line-height: 1.35;
+        }
+        .prog-step-view-btn {
+            min-width: 2em;
+            font-size: 14px;
+            line-height: 1;
+        }
         .prog-step-hint {
             font-size: 12px; color: var(--text-muted); margin: 0 0 6px;
         }

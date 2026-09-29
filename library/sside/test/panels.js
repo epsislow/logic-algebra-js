@@ -253,5 +253,57 @@ module.exports = {
         assertEq(steps[3].op, 'end');
       },
     },
+    {
+      id: 13,
+      desc: 'previewStep bogat (F2-alg-D / D53)',
+      run() {
+        const a = Prog.previewStep({ op: 'assign', to: 'qty', from: 'form.qty' });
+        assert(a.indexOf('assign') !== -1);
+        assert(a.indexOf('qty') !== -1);
+        assert(a.indexOf('form.qty') !== -1);
+        assert(a.indexOf('{') === -1, 'fără {');
+        assert(a.indexOf('}') === -1, 'fără }');
+
+        const k = Prog.previewStep({
+          op: 'ksave',
+          key: '$key',
+          val: 'form',
+          as: 'auto',
+        });
+        assert(k.indexOf('ksave') !== -1);
+        assert(k.indexOf('$key') !== -1);
+        assert(k.indexOf('form') !== -1);
+        assert(k.indexOf('auto') !== -1);
+
+        const e = Prog.previewStep({ op: 'end', err: 'Cantitate invalida' });
+        assert(e.indexOf('err') !== -1);
+        assert(e.indexOf('Cantitate invalida') !== -1);
+
+        const c = Prog.previewStep({
+          op: 'cat',
+          to: 'key',
+          parts: ['data:_item:', 'form.id'],
+        });
+        assert(c.indexOf('data:_item:') !== -1);
+        assert(c.indexOf('+') !== -1);
+
+        const iff = Prog.previewStep({
+          op: 'if',
+          when: ['lte', 'qty', 0],
+          then: [{ op: 'end', err: 'x' }],
+        });
+        assert(iff.indexOf('if') !== -1);
+        assert(iff.indexOf('qty') !== -1 || iff.indexOf('<=') !== -1);
+
+        const u = Prog.previewStep({ op: 'ui', do: 'refresh', listid: '_self' });
+        assert(u.indexOf('refresh') !== -1);
+        assert(u.indexOf('_self') !== -1);
+
+        // mai bun decât JSON brut: conține datele, fără virgule de obiect
+        const jsonish = JSON.stringify({ op: 'assign', to: 'qty', from: 'form.qty' });
+        assert(a !== jsonish);
+        assert(a.length > 5);
+      },
+    },
   ],
 };

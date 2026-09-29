@@ -21,7 +21,7 @@ sau `"val": 7` (literal).
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
 
-`else` e opțional. În **Edit** (F2-alg-B): `if` e un **bloc** — Deschide → panou cu `when` (text expresie, F2-alg-C) + carduri **then** / **else** (drill-in); ← Înapoi. Ștergerea blocului șterge și interiorul (confirm). Pe liste: **↑↓** reordonare (disabled la capete).
+`else` e opțional. În **Edit** (F2-alg-B/D): `if` e un **bloc** — Deschide → panou cu `when` (text expresie, F2-alg-C) + carduri **then** / **else** (drill-in). Pașii din liste: **view** text → click editează un pas; **👁** înapoi la view.
 
 Exemplu `when` text: `qty <= 0 or form.id == ""` (vezi Docs → **when**).
 

@@ -615,6 +615,184 @@
     return '';
   }
 
+  /** Valoare în preview view — fără {} [] , inutile unde e posibil (D53). */
+  function previewVal(v) {
+    if (v === null) return 'null';
+    if (v === undefined) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+    if (Array.isArray(v)) {
+      return v
+        .map((x) => previewVal(x))
+        .filter((s) => s !== '')
+        .join(' ');
+    }
+    if (typeof v === 'object') {
+      try {
+        return JSON.stringify(v);
+      } catch (e) {
+        return String(v);
+      }
+    }
+    return String(v);
+  }
+
+  /**
+   * Text bogat pentru rând view (F2-alg-D / D53): conținutul op-ului, mai citibil decât JSON.
+   */
+  function previewStep(step) {
+    if (!step || typeof step !== 'object') return '—';
+    const op = step.op != null ? String(step.op) : '?';
+
+    if (op === 'if' || op === 'foreach') {
+      const pb = previewBlock(step);
+      return pb ? op + '  ' + pb : op;
+    }
+
+    if (op === 'assign') {
+      const to = step.to != null ? String(step.to) : '';
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        return 'assign  ' + to + ' ← ' + previewVal(step.val) + '  val';
+      }
+      return 'assign  ' + to + ' ← ' + (step.from != null ? String(step.from) : '');
+    }
+
+    if (op === 'cat') {
+      const to = step.to != null ? String(step.to) : '';
+      const parts = Array.isArray(step.parts)
+        ? step.parts.map((p) => previewVal(p)).join(' + ')
+        : '';
+      return 'cat  ' + to + ' ← ' + parts;
+    }
+
+    if (op === 'end') {
+      if (step.err != null && step.err !== '') {
+        return 'end  err ' + previewVal(step.err);
+      }
+      if (step.msg != null && step.msg !== '') {
+        return 'end  msg ' + previewVal(step.msg);
+      }
+      return 'end';
+    }
+
+    if (op === 'kget') {
+      return (
+        'kget  ' +
+        previewVal(step.key) +
+        ' → ' +
+        previewVal(step.to) +
+        (step.as ? '  as ' + previewVal(step.as) : '')
+      );
+    }
+
+    if (op === 'ksave') {
+      return (
+        'ksave  ' +
+        previewVal(step.key) +
+        ' ← ' +
+        previewVal(step.val) +
+        (step.as ? '  as ' + previewVal(step.as) : '')
+      );
+    }
+
+    if (op === 'kdel') {
+      return 'kdel  ' + previewVal(step.key);
+    }
+
+    if (op === 'kadd' || op === 'krm') {
+      return op + '  ' + previewVal(step.key) + '  ' + previewVal(step.val);
+    }
+
+    if (op === 'scheck') {
+      return (
+        'scheck  ' +
+        previewVal(step.schema) +
+        '  val ' +
+        previewVal(step.val != null ? step.val : 'form')
+      );
+    }
+
+    if (op === 'sgen') {
+      return (
+        'sgen  ' +
+        previewVal(step.schema) +
+        ' → ' +
+        previewVal(step.to != null ? step.to : 'draft')
+      );
+    }
+
+    if (op === 'jset') {
+      const bits = ['jset', previewVal(step.to)];
+      if (step.path != null && step.path !== '') bits.push('path ' + previewVal(step.path));
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        bits.push('← ' + previewVal(step.val) + ' val');
+      } else if (step.from != null) {
+        bits.push('← ' + previewVal(step.from));
+      }
+      return bits.join('  ');
+    }
+
+    if (op === 'jget') {
+      return (
+        'jget  ' +
+        previewVal(step.from) +
+        (step.path != null && step.path !== '' ? '  path ' + previewVal(step.path) : '') +
+        ' → ' +
+        previewVal(step.to)
+      );
+    }
+
+    if (op === 'search') {
+      const q =
+        step.query != null && typeof step.query === 'object'
+          ? previewVal(step.query)
+          : previewVal(step.query);
+      return (
+        'search  ' +
+        q +
+        (step.to != null ? ' → ' + previewVal(step.to) : '') +
+        (step.index ? '  index ' + previewVal(step.index) : '')
+      );
+    }
+
+    if (op === 'ui') {
+      return (
+        'ui  ' +
+        previewVal(step.do) +
+        (step.listid != null && step.listid !== ''
+          ? '  listid ' + previewVal(step.listid)
+          : '')
+      );
+    }
+
+    if (op === 'tstart' || op === 'tdo' || op === 'tstop') {
+      return op;
+    }
+
+    if (op === 'redis') {
+      const args = Array.isArray(step.args)
+        ? step.args.map((a) => previewVal(a)).join(' ')
+        : previewVal(step.key);
+      return (
+        'redis  ' +
+        previewVal(step.do) +
+        (args ? '  ' + args : '') +
+        (step.to != null && step.to !== '' ? ' → ' + previewVal(step.to) : '')
+      );
+    }
+
+    // fallback: toate cheile utile, spațiate (nu JSON cu {} ,)
+    const bits = [op];
+    Object.keys(step).forEach((k) => {
+      if (k === 'op') return;
+      if (k === 'then' || k === 'else' || k === 'do') return;
+      const v = step[k];
+      if (v == null || v === '') return;
+      bits.push(k + ' ' + previewVal(v));
+    });
+    return bits.join('  ');
+  }
+
   /** Inserează înainte de index (D34). Returnează noul step. */
   function insertStepAt(steps, index, op) {
     if (!Array.isArray(steps)) throw new Error('insertStepAt: steps trebuie array');
@@ -1124,7 +1302,9 @@
     const next = [];
     els.forEach((el) => {
       const mode = el.getAttribute('data-mode') || 'flat';
-      if (mode === 'block') {
+      const editing = el.getAttribute('data-editing') === '1';
+      if (mode === 'block' || !editing) {
+        // view sau bloc: păstrează referința (F2-alg-D)
         if (el._stepRef && typeof el._stepRef === 'object') next.push(el._stepRef);
         return;
       }
@@ -1292,20 +1472,41 @@
       stepsHost.setAttribute('data-alg-list', '1');
       parent.appendChild(stepsHost);
 
+      const frame = currentFrame();
+      if (typeof frame.editIndex !== 'number') frame.editIndex = null;
+      // clamp dacă lista s-a scurtat
+      if (
+        frame.editIndex != null &&
+        (frame.editIndex < 0 || frame.editIndex >= stepsArr.length)
+      ) {
+        frame.editIndex = null;
+      }
+
       function rebuild() {
-        // stepsArr e deja sursa de adevăr după mutație — NU re-citim DOM-ul vechi
-        // (flush înainte de push/splice, altfel overwrite șterge noul pas).
         persistMeta();
         renderView();
         scrieRaw(obj);
       }
 
+      function setEditIndex(nextIdx) {
+        flushCurrentView();
+        frame.editIndex = nextIdx;
+        rebuild();
+      }
+
       function addStepRow(step, index) {
         step = step && typeof step === 'object' ? step : defaultStep('assign');
         const mode = stepEditMode(step);
+        const isBlock = mode === 'block';
+        const isEditing = !isBlock && frame.editIndex === index;
         const el = document.createElement('div');
-        el.className = 'prog-step' + (mode === 'block' ? ' prog-step-block' : '');
+        el.className =
+          'prog-step' +
+          (isBlock ? ' prog-step-block' : '') +
+          (!isBlock && !isEditing ? ' prog-step-view' : '') +
+          (isEditing ? ' prog-step-editing' : '');
         el.setAttribute('data-mode', mode);
+        el.setAttribute('data-editing', isEditing ? '1' : '0');
         el._stepRef = step;
 
         const head = document.createElement('div');
@@ -1316,7 +1517,73 @@
         idx.textContent = '#' + (index + 1);
         head.appendChild(idx);
 
-        if (mode === 'block') {
+        function mountMoveBtns(headEl, idxPos) {
+          const wrap = document.createElement('span');
+          wrap.className = 'prog-step-move';
+          const up = document.createElement('button');
+          up.type = 'button';
+          up.className = 'btn-gri btn-inline';
+          up.textContent = '↑';
+          up.title = 'Mută în sus';
+          up.disabled = idxPos <= 0;
+          up.onclick = (ev) => {
+            ev.stopPropagation();
+            flushCurrentView();
+            const i = Array.from(stepsHost.children).indexOf(el);
+            const from = i >= 0 ? i : idxPos;
+            if (moveStep(stepsArr, from, -1)) {
+              if (frame.editIndex === from) frame.editIndex = from - 1;
+              else if (frame.editIndex === from - 1) frame.editIndex = from;
+              rebuild();
+            }
+          };
+          const down = document.createElement('button');
+          down.type = 'button';
+          down.className = 'btn-gri btn-inline';
+          down.textContent = '↓';
+          down.title = 'Mută în jos';
+          down.disabled = idxPos >= stepsArr.length - 1;
+          down.onclick = (ev) => {
+            ev.stopPropagation();
+            flushCurrentView();
+            const i = Array.from(stepsHost.children).indexOf(el);
+            const from = i >= 0 ? i : idxPos;
+            if (moveStep(stepsArr, from, 1)) {
+              if (frame.editIndex === from) frame.editIndex = from + 1;
+              else if (frame.editIndex === from + 1) frame.editIndex = from;
+              rebuild();
+            }
+          };
+          wrap.appendChild(up);
+          wrap.appendChild(down);
+          headEl.appendChild(wrap);
+        }
+
+        function mountDeleteBtn(headEl) {
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'btn-gri btn-inline btn-inline-danger';
+          rm.textContent = 'Șterge';
+          rm.onclick = (ev) => {
+            ev.stopPropagation();
+            if (isBlock && !confirmDeleteBlock(step)) return;
+            flushCurrentView();
+            const i = stepsArr.indexOf(step);
+            const delAt = i >= 0 ? i : index;
+            stepsArr.splice(delAt, 1);
+            if (frame.editIndex == null) {
+              /* keep */
+            } else if (frame.editIndex === delAt) {
+              frame.editIndex = null;
+            } else if (frame.editIndex > delAt) {
+              frame.editIndex -= 1;
+            }
+            rebuild();
+          };
+          headEl.appendChild(rm);
+        }
+
+        if (isBlock) {
           const lab = document.createElement('code');
           lab.className = 'prog-block-op';
           lab.textContent = step.op;
@@ -1329,6 +1596,7 @@
           openBtn.onclick = (ev) => {
             ev.stopPropagation();
             flushCurrentView();
+            frame.editIndex = null;
             pushNav({
               kind: 'block',
               label: step.op + '#' + (index + 1),
@@ -1336,23 +1604,9 @@
             });
           };
           head.appendChild(openBtn);
-
-          const rm = document.createElement('button');
-          rm.type = 'button';
-          rm.className = 'btn-gri btn-inline btn-inline-danger';
-          rm.textContent = 'Șterge';
-          rm.onclick = (ev) => {
-            ev.stopPropagation();
-            if (!confirmDeleteBlock(step)) return;
-            flushCurrentView();
-            const i = stepsArr.indexOf(step);
-            if (i >= 0) stepsArr.splice(i, 1);
-            else stepsArr.splice(index, 1);
-            rebuild();
-          };
-          head.appendChild(rm);
+          mountDeleteBtn(head);
           mountMoveBtns(head, index);
-        } else {
+        } else if (isEditing) {
           const opSel = document.createElement('select');
           opSel.setAttribute('data-s', 'op');
           opSel.className = 'prog-step-op';
@@ -1361,57 +1615,34 @@
             const next = defaultStep(opSel.value);
             const i = Array.from(stepsHost.children).indexOf(el);
             flushCurrentView();
-            if (i >= 0) {
-              stepsArr[i] = next;
-            }
+            if (i >= 0) stepsArr[i] = next;
+            frame.editIndex = i >= 0 ? i : index;
             rebuild();
           });
           head.appendChild(opSel);
 
-          const rm = document.createElement('button');
-          rm.type = 'button';
-          rm.className = 'btn-gri btn-inline btn-inline-danger';
-          rm.textContent = 'Șterge';
-          rm.onclick = () => {
-            flushCurrentView();
-            const i = Array.from(stepsHost.children).indexOf(el);
-            if (i >= 0) stepsArr.splice(i, 1);
-            rebuild();
+          const viewBtn = document.createElement('button');
+          viewBtn.type = 'button';
+          viewBtn.className = 'btn-gri btn-inline prog-step-view-btn';
+          viewBtn.textContent = '👁';
+          viewBtn.title = 'Înapoi la view';
+          viewBtn.setAttribute('aria-label', 'Înapoi la view');
+          viewBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            setEditIndex(null);
           };
-          head.appendChild(rm);
-          mountMoveBtns(head, index);
-        }
+          head.appendChild(viewBtn);
 
-        function mountMoveBtns(headEl, idx) {
-          const wrap = document.createElement('span');
-          wrap.className = 'prog-step-move';
-          const up = document.createElement('button');
-          up.type = 'button';
-          up.className = 'btn-gri btn-inline';
-          up.textContent = '↑';
-          up.title = 'Mută în sus';
-          up.disabled = idx <= 0;
-          up.onclick = (ev) => {
-            ev.stopPropagation();
-            flushCurrentView();
-            const i = Array.from(stepsHost.children).indexOf(el);
-            if (moveStep(stepsArr, i >= 0 ? i : idx, -1)) rebuild();
-          };
-          const down = document.createElement('button');
-          down.type = 'button';
-          down.className = 'btn-gri btn-inline';
-          down.textContent = '↓';
-          down.title = 'Mută în jos';
-          down.disabled = idx >= stepsArr.length - 1;
-          down.onclick = (ev) => {
-            ev.stopPropagation();
-            flushCurrentView();
-            const i = Array.from(stepsHost.children).indexOf(el);
-            if (moveStep(stepsArr, i >= 0 ? i : idx, 1)) rebuild();
-          };
-          wrap.appendChild(up);
-          wrap.appendChild(down);
-          headEl.appendChild(wrap);
+          mountDeleteBtn(head);
+          mountMoveBtns(head, index);
+        } else {
+          // view: op ca text (D52)
+          const lab = document.createElement('code');
+          lab.className = 'prog-step-op-label';
+          lab.textContent = step.op || '?';
+          head.appendChild(lab);
+          mountDeleteBtn(head);
+          mountMoveBtns(head, index);
         }
 
         const insertWrap = document.createElement('div');
@@ -1424,10 +1655,13 @@
         insBtn.className = 'btn-gri btn-inline';
         insBtn.textContent = '+ step';
         insBtn.title = 'Inserează înainte de acest pas';
-        insBtn.onclick = () => {
+        insBtn.onclick = (ev) => {
+          ev.stopPropagation();
           flushCurrentView();
           const i = Array.from(stepsHost.children).indexOf(el);
-          insertStepAt(stepsArr, i >= 0 ? i : index, insSel.value);
+          const at = i >= 0 ? i : index;
+          insertStepAt(stepsArr, at, insSel.value);
+          frame.editIndex = at; // pas nou → edit (D)
           rebuild();
         };
         insertWrap.appendChild(insBtn);
@@ -1440,7 +1674,7 @@
         body.className = 'prog-step-body';
         el.appendChild(body);
 
-        if (mode === 'block') {
+        if (isBlock) {
           const prev = document.createElement('div');
           prev.className = 'prog-block-preview';
           prev.textContent = previewBlock(step);
@@ -1450,11 +1684,27 @@
               return;
             }
             flushCurrentView();
+            frame.editIndex = null;
             pushNav({
               kind: 'block',
               label: step.op + '#' + (index + 1),
               step: step,
             });
+          });
+        } else if (!isEditing) {
+          const prev = document.createElement('div');
+          prev.className = 'prog-step-preview';
+          prev.textContent = previewStep(step);
+          body.appendChild(prev);
+          el.addEventListener('click', (ev) => {
+            if (
+              ev.target &&
+              ev.target.closest &&
+              ev.target.closest('button, select')
+            ) {
+              return;
+            }
+            setEditIndex(index);
           });
         } else if (mode === 'raw') {
           const hint = document.createElement('div');
@@ -1499,6 +1749,7 @@
       add.onclick = () => {
         flushCurrentView();
         stepsArr.push(defaultStep(sel.value));
+        frame.editIndex = stepsArr.length - 1;
         rebuild();
       };
       toolbar.appendChild(sel);
@@ -2240,6 +2491,8 @@
       countNestedOps,
       previewWhen,
       previewBlock,
+      previewStep,
+      previewVal,
       insertStepAt,
       appendStep,
       moveStep,

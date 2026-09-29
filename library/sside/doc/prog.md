@@ -185,7 +185,7 @@ Comportament:
 - nu împinge rows din alg — doar reîncarcă sursa
 - **Edit UI:** pe fiecare tab → **+ Block**, `type` = `form` \| `list`, `id` obligatoriu, select cheie `form:_` / `list:_` (legacy `forms[]` se citește și se convertește la blocks)
 - **Edit list:** title / source (`from` + pattern|query|key) / columns (`path`|`const`) / rowBtns / btns — ca form/ui (tab Formular rămâne, direcție: Edit-first)
-- **Edit alg (A+B+C):** câmpuri flat pe ops simple; `if`/`foreach` = **bloc** (Deschide → drill-in, Înapoi, breadcrumb); `then`/`else`/`do` ca liste de steps; `when` = **text expresie** (parse ↔ AST; Docs → when); `[+ step]` pe rând = insert înainte; **↑↓** mută în listă (disabled la capete; blocul se mută întreg); toolbar = append; ștergere bloc = tot interiorul + confirm
+- **Edit alg (A–D):** listă pași în **view** (text cu conținutul op) — click pe rând → **edit** acel pas; **👁** → înapoi view; click alt rând = switch. **↑↓** / **Șterge** / **[+ step]** pe fiecare rând fără edit. `if`/`foreach` = **bloc** (Deschide → drill-in); `when` = text expresie; toolbar = append (pas nou → edit)
 - `search` cu query-obiect / `ui.listid` array → JSON pe step (sau construiește query via `jset` + `"query":"$q"`)
 
 ---
