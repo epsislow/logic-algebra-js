@@ -35,7 +35,8 @@
     return null;
   }
 
-  function validateBtns(btns, label) {
+  function validateBtns(btns, label, opts) {
+    opts = opts || {};
     if (btns == null) return null;
     if (!Array.isArray(btns)) return err(label + ' trebuie să fie array');
     for (let i = 0; i < btns.length; i++) {
@@ -49,6 +50,12 @@
       if (b.place != null && b.place !== 'row' && b.place !== 'below') {
         return err(label + '[' + i + '].place trebuie row|below');
       }
+      if (opts.allowNeedsRow) {
+        if (b.needsRow != null && typeof b.needsRow !== 'boolean') {
+          return err(label + '[' + i + '].needsRow trebuie boolean');
+        }
+      }
+      // pe rowBtns, needsRow e ignorat (nu e eroare)
     }
     return null;
   }
@@ -104,7 +111,7 @@
     if (obj.pageSize != null && (!Number.isFinite(Number(obj.pageSize)) || Number(obj.pageSize) < 1)) {
       return err('list.pageSize invalid');
     }
-    const b1 = validateBtns(obj.btns, 'list.btns');
+    const b1 = validateBtns(obj.btns, 'list.btns', { allowNeedsRow: true });
     if (b1) return b1;
     const b2 = validateBtns(obj.rowBtns, 'list.rowBtns');
     if (b2) return b2;

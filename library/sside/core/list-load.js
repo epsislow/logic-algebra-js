@@ -294,12 +294,77 @@
     };
   }
 
+  /** Max pagini ca în UI „Pagina N / M”. */
+  function computePageMax(pageData) {
+    const page = Math.max(1, Number(pageData && pageData.page) || 1);
+    const pageSize = Math.max(1, Number(pageData && pageData.pageSize) || 20);
+    const total = pageData && pageData.total;
+    if (total != null && Number.isFinite(Number(total))) {
+      return Math.max(1, Math.ceil(Number(total) / pageSize));
+    }
+    return Math.max(1, page);
+  }
+
+  /**
+   * form din rând listă: value + _key (id rând) dacă lipsește.
+   */
+  function formFromRow(row) {
+    const key = row && row.key != null ? String(row.key) : '';
+    const v = row && row.value;
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      const form = JSON.parse(JSON.stringify(v));
+      if (key && !Object.prototype.hasOwnProperty.call(form, '_key')) {
+        form._key = key;
+      }
+      return form;
+    }
+    return { value: v, _key: key };
+  }
+
+  /**
+   * Context `list` pentru alg (pagina curentă din Live).
+   * @param {{ pageData, listid?, listDefKey? }} opts
+   */
+  function buildListContext(opts) {
+    opts = opts || {};
+    const pageData = opts.pageData || {};
+    const rows = Array.isArray(pageData.rows) ? pageData.rows : [];
+    const pageSize = Math.max(1, Number(pageData.pageSize) || 20);
+    const page = Math.max(1, Number(pageData.page) || 1);
+    const total =
+      pageData.total != null && Number.isFinite(Number(pageData.total))
+        ? Number(pageData.total)
+        : null;
+    return {
+      page: page,
+      pageMax: computePageMax(pageData),
+      pageSize: pageSize,
+      total: total,
+      hasMore: !!pageData.hasMore,
+      keys: rows.map((r) => (r && r.key != null ? String(r.key) : '')),
+      rows: rows.map((r) => {
+        const v = r && r.value;
+        if (v == null) return null;
+        try {
+          return JSON.parse(JSON.stringify(v));
+        } catch (e) {
+          return v;
+        }
+      }),
+      id: opts.listid != null ? String(opts.listid) : '',
+      def: opts.listDefKey != null ? String(opts.listDefKey) : '',
+    };
+  }
+
   const api = {
     cellValue,
     analyzeColumnNeeds,
     loadRowValue,
     resolveSourceKeys,
     loadListPage,
+    computePageMax,
+    formFromRow,
+    buildListContext,
   };
 
   root.SsideListLoad = api;

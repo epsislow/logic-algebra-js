@@ -122,7 +122,8 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
     { "id": "del", "label": "Sterge", "alg": "alg:_del_stock", "kind": "red", "place": "row" }
   ],
   "btns": [
-    { "id": "refresh", "label": "Reincarca", "alg": "alg:_noop_refresh", "place": "below" }
+    { "id": "refresh", "label": "Reincarca", "alg": "alg:_list_refresh", "kind": "gray", "needsRow": false },
+    { "id": "del", "label": "Sterge", "alg": "alg:_del_stock", "kind": "red" }
   ]
 }
 ```
@@ -135,7 +136,10 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 | `columns[].path` | `_key` / `_type` / `_json` / câmp din JSON |
 | `columns[].const` | valoare **statică** (ex. `"stock"`) — fără citire pe rând |
 | `pageSize` | mărime pagină |
-| `rowBtns` / `btns` | butoane pe rând / în dreapta paginatiei; `kind` ca form; `place`: `row` \| `below` |
+| `rowBtns` | pe rând (mereu cu rând → `form`); `kind` ca form |
+| `btns` | sub tabel; `needsRow` default `true`; `false` = fără selecție (`form` = `{}`) |
+
+**Context alg (buton pe listă):** `form` = rândul + `form._key` (id rând); `list.page` / `list.pageMax` / `list.pageSize` / `list.total` / `list.hasMore` / `list.keys` / `list.rows` / `list.id` / `list.def`. `pageMax` = numărul după `/` din „Pagina 1 / 3”. `list.rows` = valorile pe pagina curentă (deja în Live).
 
 **Fetch pe pagină:** doar ce cer coloanele — `_key` + `const` → zero `TYPE`/`JSON.GET`; `path: "_type"` → doar `TYPE`; path-uri de câmp / `_json` → `TYPE` + `GET`/`JSON.GET`.
 

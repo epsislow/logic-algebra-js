@@ -436,5 +436,108 @@ module.exports = {
         );
       },
     },
+    {
+      id: 13,
+      desc: 'formFromRow setează _key dacă lipsește; nu suprascrie',
+      run() {
+        const a = ListLoad.formFromRow({
+          key: 'data:_x',
+          value: { qty: 1 },
+        });
+        assertEq(a._key, 'data:_x');
+        assertEq(a.qty, 1);
+        const b = ListLoad.formFromRow({
+          key: 'data:_y',
+          value: { _key: 'keep', qty: 2 },
+        });
+        assertEq(b._key, 'keep');
+      },
+    },
+    {
+      id: 14,
+      desc: 'computePageMax + buildListContext',
+      run() {
+        assertEq(
+          ListLoad.computePageMax({ page: 1, pageSize: 20, total: 47 }),
+          3
+        );
+        assertEq(
+          ListLoad.computePageMax({ page: 2, pageSize: 20, total: null }),
+          2
+        );
+        const ctx = ListLoad.buildListContext({
+          pageData: {
+            page: 1,
+            pageSize: 20,
+            total: 2,
+            hasMore: false,
+            rows: [
+              { key: 'k1', value: { a: 1, _key: 'k1' } },
+              { key: 'k2', value: { a: 2 } },
+            ],
+          },
+          listid: 'stockMain',
+          listDefKey: 'list:_stock',
+        });
+        assertEq(ctx.page, 1);
+        assertEq(ctx.pageMax, 1);
+        assertEq(ctx.total, 2);
+        assertDeep(ctx.keys, ['k1', 'k2']);
+        assertEq(ctx.rows.length, 2);
+        assertEq(ctx.rows[0].a, 1);
+        assertEq(ctx.id, 'stockMain');
+        assertEq(ctx.def, 'list:_stock');
+      },
+    },
+    {
+      id: 15,
+      desc: 'validateList btns.needsRow boolean; runner list.*',
+      async run() {
+        assert(
+          V.validateList({
+            v: 1,
+            source: { from: 'enum', values: ['a'] },
+            columns: [{ id: 'k', path: '_key' }],
+            btns: [{ id: 'r', alg: 'alg:_x', needsRow: false }],
+          }).ok
+        );
+        assert(
+          !V.validateList({
+            v: 1,
+            source: { from: 'enum', values: ['a'] },
+            columns: [{ id: 'k', path: '_key' }],
+            btns: [{ id: 'r', alg: 'alg:_x', needsRow: 'no' }],
+          }).ok
+        );
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'p', from: 'list.page' },
+              { op: 'assign', to: 'pm', from: 'list.pageMax' },
+              { op: 'assign', to: 'k0', from: 'list.keys' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          {
+            form: {},
+            list: {
+              page: 2,
+              pageMax: 5,
+              keys: ['a', 'b'],
+              rows: [{ x: 1 }],
+              id: 'main',
+              def: 'list:_t',
+            },
+            redis,
+          }
+        );
+        assert(!r.err, r.err);
+        assertEq(r.vars.p, 2);
+        assertEq(r.vars.pm, 5);
+        assertDeep(r.vars.k0, ['a', 'b']);
+      },
+    },
   ],
 };

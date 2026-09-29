@@ -146,7 +146,7 @@
   }
 
   async function runAlgForList(opts) {
-    const { algKey, formValue, btn, listDef, listid, rowKey, bannerEl } = opts;
+    const { algKey, formValue, btn, listDef, listid, rowKey, bannerEl, listContext } = opts;
     if (typeof deps.onRunAlg !== 'function' || !algKey) {
       showBanner(bannerEl, { err: algKey ? 'Runner lipsă' : 'Buton fără alg' });
       return;
@@ -155,10 +155,11 @@
       const result = await deps.onRunAlg({
         algKey,
         form: formValue || {},
+        list: listContext || {},
         btn,
         formDef: listDef,
         listid,
-        list: listDef && listDef._key,
+        listDefKey: listDef && listDef._key,
         rowKey,
         uiContext: makeUiContext(listid),
       });
@@ -225,11 +226,41 @@
     }
 
     function formFromRow(row) {
-      const v = row && row.value;
-      if (v && typeof v === 'object' && !Array.isArray(v)) {
-        return JSON.parse(JSON.stringify(v));
+      if (ListLoad && typeof ListLoad.formFromRow === 'function') {
+        return ListLoad.formFromRow(row);
       }
-      return { value: v, _key: row && row.key };
+      const v = row && row.value;
+      const key = row && row.key != null ? String(row.key) : '';
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        const form = JSON.parse(JSON.stringify(v));
+        if (key && !Object.prototype.hasOwnProperty.call(form, '_key')) form._key = key;
+        return form;
+      }
+      return { value: v, _key: key };
+    }
+
+    function currentListContext() {
+      if (ListLoad && typeof ListLoad.buildListContext === 'function') {
+        return ListLoad.buildListContext({
+          pageData: lastPageData || { page: page, pageSize: listDef.pageSize || 20, rows: [] },
+          listid: listid,
+          listDefKey: listKey || (listDef && listDef._key) || '',
+        });
+      }
+      return { page: page, pageMax: 1, pageSize: 20, keys: [], rows: [], id: listid, def: '' };
+    }
+
+    function runListBtn(btn, row) {
+      runAlgForList({
+        algKey: btn.alg,
+        formValue: row ? formFromRow(row) : {},
+        btn,
+        listDef,
+        listid,
+        rowKey: row ? row.key : null,
+        bannerEl,
+        listContext: currentListContext(),
+      });
     }
 
     async function reload() {
@@ -299,15 +330,7 @@
             b.onclick = (ev) => {
               ev.stopPropagation();
               selectedKey = row.key;
-              runAlgForList({
-                algKey: btn.alg,
-                formValue: formFromRow(row),
-                btn,
-                listDef,
-                listid,
-                rowKey: row.key,
-                bannerEl,
-              });
+              runListBtn(btn, row);
             };
             td.appendChild(b);
           });
@@ -364,7 +387,12 @@
         b.type = 'button';
         b.className = btnClass(btn);
         b.textContent = btn.label || btn.id || 'Actiune';
+        const needsRow = btn.needsRow !== false;
         b.onclick = () => {
+          if (!needsRow) {
+            runListBtn(btn, null);
+            return;
+          }
           const row =
             lastPageData &&
             lastPageData.rows &&
@@ -373,15 +401,7 @@
             showBanner(bannerEl, { err: 'Selectează un rând' });
             return;
           }
-          runAlgForList({
-            algKey: btn.alg,
-            formValue: formFromRow(row),
-            btn,
-            listDef,
-            listid,
-            rowKey: row.key,
-            bannerEl,
-          });
+          runListBtn(btn, row);
         };
         belowEl.appendChild(b);
       });

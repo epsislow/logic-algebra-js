@@ -4,7 +4,8 @@ Context: `form` (date din Live) + `vars` (locale).
 
 ## Referințe
 
-- `form` / `form.qty` — câmpuri din formular
+- `form` / `form.qty` — câmpuri din formular **sau** din rândul de listă (buton list)
+- `list` / `list.page` / `list.keys` / `list.rows` — context listă (buton pe list:); vezi Form/UI
 - `$key` / `qty` — variabile (`$` sau nume dacă există în vars)
 - literale: numere, bool, stringuri care nu sunt vars
 

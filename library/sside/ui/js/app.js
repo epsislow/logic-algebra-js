@@ -3206,7 +3206,7 @@ function translateUpstashSearchResults(date) {
                 };
             }
 
-            async function onRunAlg({ algKey, form, uiContext }) {
+            async function onRunAlg({ algKey, form, list, uiContext }) {
                 if (!window.SsideAlg) {
                     return { err: 'alg-runner lipsă' };
                 }
@@ -3222,6 +3222,7 @@ function translateUpstashSearchResults(date) {
                 const redis = createWorkerRedisAdapter();
                 const result = await SsideAlg.run(alg, {
                     form: form || {},
+                    list: list || {},
                     redis,
                     uiContext: uiContext || null,
                     loadSchema: async (schemaKey) => {

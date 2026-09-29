@@ -114,12 +114,18 @@ module.exports = {
     },
     {
       id: 6,
-      desc: 'resolveRef form.$var literal',
+      desc: 'resolveRef form / list / $var literal',
       run() {
-        const ctx = { form: { id: '9' }, vars: { key: 'data:9' } };
+        const ctx = {
+          form: { id: '9' },
+          vars: { key: 'data:9' },
+          list: { page: 2, keys: ['a'] },
+        };
         assertEq(Ops.resolveRef('form.id', ctx), '9');
         assertEq(Ops.resolveRef('$key', ctx), 'data:9');
         assertEq(Ops.resolveRef('data:_item:', ctx), 'data:_item:');
+        assertEq(Ops.resolveRef('list.page', ctx), 2);
+        assertEq(JSON.stringify(Ops.resolveRef('list.keys', ctx)), JSON.stringify(['a']));
       },
     },
   ],

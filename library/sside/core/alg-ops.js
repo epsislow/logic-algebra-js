@@ -51,6 +51,10 @@
     if (ref.indexOf('form.') === 0) {
       return getPath(ctx.form, ref.slice(5));
     }
+    if (ref === 'list') return ctx.list;
+    if (ref.indexOf('list.') === 0) {
+      return getPath(ctx.list || {}, ref.slice(5));
+    }
     if (ref.charAt(0) === '$') {
       return getPath(ctx.vars, ref.slice(1));
     }

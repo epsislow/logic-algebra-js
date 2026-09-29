@@ -1793,7 +1793,7 @@
         obj.columns.push(col);
       });
 
-      function readBtns(host) {
+      function readBtns(host, withNeedsRow) {
         const out = [];
         host.querySelectorAll('.prog-step[data-btn]').forEach((el) => {
           const kind = normalizeBtnKind(el.querySelector('[data-b="kind"]').value);
@@ -1803,12 +1803,16 @@
             alg: el.querySelector('[data-b="alg"]').value.trim(),
           };
           if (kind) btn.kind = kind;
+          if (withNeedsRow) {
+            const nrEl = el.querySelector('[data-b="needsRow"]');
+            if (nrEl && nrEl.value === 'false') btn.needsRow = false;
+          }
           out.push(btn);
         });
         return out;
       }
-      obj.rowBtns = readBtns(rowBtnsHost);
-      obj.btns = readBtns(btnsHost);
+      obj.rowBtns = readBtns(rowBtnsHost, false);
+      obj.btns = readBtns(btnsHost, true);
       scrieRaw(obj);
     }
 
@@ -1843,7 +1847,7 @@
       colsHost.appendChild(el);
     }
 
-    function addListBtnRow(host, btn) {
+    function addListBtnRow(host, btn, withNeedsRow) {
       btn = btn || { id: '', label: '', alg: '', kind: '' };
       const el = document.createElement('div');
       el.className = 'prog-step';
@@ -1854,6 +1858,12 @@
         '<div class="prog-field"><label>label</label><input data-b="label"></div>' +
         '<div class="prog-field"><label>alg</label><select data-b="alg"></select></div>' +
         '<div class="prog-field"><label>culoare</label><select data-b="kind"></select></div>' +
+        (withNeedsRow
+          ? '<div class="prog-field"><label>needsRow</label><select data-b="needsRow">' +
+            '<option value="true">da (rând selectat)</option>' +
+            '<option value="false">nu (fără selecție)</option>' +
+            '</select></div>'
+          : '') +
         '</div>';
       const rm = document.createElement('button');
       rm.type = 'button';
@@ -1869,6 +1879,10 @@
       const algSel = el.querySelector('[data-b="alg"]');
       fillKeySelect(algSel, 'alg', btn.alg || '');
       fillBtnKindSelect(el.querySelector('[data-b="kind"]'), btn.kind || '');
+      if (withNeedsRow) {
+        const nr = el.querySelector('[data-b="needsRow"]');
+        nr.value = btn.needsRow === false ? 'false' : 'true';
+      }
       mountSelectWithOpen(algSel, { beforeOpen: syncFromDom });
       el.querySelectorAll('input,select').forEach((inp) => {
         inp.addEventListener('input', syncFromDom);
@@ -1889,8 +1903,8 @@
     (obj.columns.length ? obj.columns : [{ id: 'key', label: 'Cheie', path: '_key' }]).forEach(
       addColRow
     );
-    (obj.rowBtns || []).forEach((b) => addListBtnRow(rowBtnsHost, b));
-    (obj.btns || []).forEach((b) => addListBtnRow(btnsHost, b));
+    (obj.rowBtns || []).forEach((b) => addListBtnRow(rowBtnsHost, b, false));
+    (obj.btns || []).forEach((b) => addListBtnRow(btnsHost, b, true));
 
     const toolbar = document.createElement('div');
     toolbar.className = 'prog-toolbar';
@@ -1907,19 +1921,28 @@
       syncFromDom();
     });
     toolBtn('+ rowBtn', 'btn-albastru', () => {
-      addListBtnRow(rowBtnsHost, {
-        id: 'rb' + (rowBtnsHost.querySelectorAll('[data-btn]').length + 1),
-        label: 'Actiune',
-        alg: '',
-      });
+      addListBtnRow(
+        rowBtnsHost,
+        {
+          id: 'rb' + (rowBtnsHost.querySelectorAll('[data-btn]').length + 1),
+          label: 'Actiune',
+          alg: '',
+        },
+        false
+      );
       syncFromDom();
     });
     toolBtn('+ btn', 'btn-albastru', () => {
-      addListBtnRow(btnsHost, {
-        id: 'b' + (btnsHost.querySelectorAll('[data-btn]').length + 1),
-        label: 'Actiune',
-        alg: '',
-      });
+      addListBtnRow(
+        btnsHost,
+        {
+          id: 'b' + (btnsHost.querySelectorAll('[data-btn]').length + 1),
+          label: 'Actiune',
+          alg: '',
+          needsRow: true,
+        },
+        true
+      );
       syncFromDom();
     });
     card.appendChild(toolbar);

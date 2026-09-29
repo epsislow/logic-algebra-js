@@ -147,7 +147,7 @@ Fiecare coloană: **`path` sau `const`** (sau ambele; `const` câștigă la afi�
 |------|--------|
 | `row` | `object` (default) sau `array` (path = index) |
 | `pageSize` | ≥ 1 (default 20) |
-| `rowBtns` / `btns` | ca form (`kind`); `btns` în dreapta paginatiei; `place`: `row` \| `below` |
+| `rowBtns` / `btns` | `kind`; `btns.needsRow` (default true); context `form` + `list.*` la run |
 
 Paginare: `search` = `LIMIT`/`OFFSET` pe index; `keys`/colecții = sort + slice în UI (`maxScan`).
 

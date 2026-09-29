@@ -25,10 +25,11 @@
     );
   }
 
-  function makeCtx(form, vars) {
+  function makeCtx(form, vars, list) {
     return {
       form: form && typeof form === 'object' ? form : {},
       vars: vars && typeof vars === 'object' ? vars : {},
+      list: list && typeof list === 'object' && !Array.isArray(list) ? list : {},
       inTx: false,
       txBuf: [],
       _stop: false,
@@ -362,7 +363,7 @@
 
   /**
    * @param {object} alg { v, steps }
-   * @param {object} options { form, vars?, redis, loadSchema? }
+   * @param {object} options { form, vars?, list?, redis, loadSchema?, uiContext? }
    * @returns {Promise<{ msg?, err?, vars, stopped }>}
    */
   async function run(alg, options) {
@@ -377,7 +378,7 @@
       return { err: 'redis adapter lipsă', vars: {}, stopped: true };
     }
 
-    const ctx = makeCtx(options.form, options.vars);
+    const ctx = makeCtx(options.form, options.vars, options.list);
     const env = {
       redis: options.redis,
       loadSchema: options.loadSchema || null,
