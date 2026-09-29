@@ -23,6 +23,7 @@
   let dirtyHook = null;
   let deps = {
     listKeys: null, // (kind: 'schema'|'alg'|'form'|'ui'|'list') => string[]
+    onOpenRelatedKey: null, // (redisKey) => void — ↗ din Edit ui/form
   };
 
   function setDeps(partial) {
@@ -345,9 +346,33 @@
         typeSel.onchange = () => {
           refillKey('');
           syncFromDom();
+          syncOpenBtn();
         };
-        keySel.onchange = syncFromDom;
+        keySel.onchange = () => {
+          syncFromDom();
+          syncOpenBtn();
+        };
         idInp.addEventListener('input', syncFromDom);
+
+        const openBtn = document.createElement('button');
+        openBtn.type = 'button';
+        openBtn.className = 'btn-gri btn-inline btn-open-related';
+        openBtn.textContent = '↗';
+        openBtn.title = 'Deschide cheia';
+        function syncOpenBtn() {
+          const k = (keySel.value || '').trim();
+          openBtn.disabled = !k;
+          openBtn.title = k ? 'Deschide ' + k : 'Alege o cheie';
+        }
+        openBtn.onclick = () => {
+          const k = (keySel.value || '').trim();
+          if (!k) return;
+          syncFromDom();
+          if (typeof deps.onOpenRelatedKey === 'function') {
+            deps.onOpenRelatedKey(k);
+          }
+        };
+        syncOpenBtn();
 
         const rm = document.createElement('button');
         rm.type = 'button';
@@ -357,6 +382,16 @@
           row.remove();
           syncFromDom();
         };
+        // pune ↗ lângă select (în rândul de field-uri)
+        const keyField = keySel.closest('.prog-field');
+        if (keyField) {
+          const actions = document.createElement('div');
+          actions.className = 'prog-field-actions';
+          keyField.appendChild(actions);
+          actions.appendChild(openBtn);
+        } else {
+          row.appendChild(openBtn);
+        }
         row.appendChild(rm);
         stack.appendChild(row);
       }
@@ -736,7 +771,8 @@
     const liveBtn = $('tab-prog-live');
     if (liveBtn) liveBtn.style.display = progKind === 'alg' ? 'none' : 'inline-block';
 
-    seteazaMod('edit');
+    const prefer = hooks.preferMod || 'edit';
+    seteazaMod(prefer === 'live' || prefer === 'formular' || prefer === 'json' ? prefer : 'edit');
   }
 
   function getMod() {

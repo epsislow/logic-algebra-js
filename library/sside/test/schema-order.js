@@ -12,6 +12,12 @@ function assertEq(a, b, msg) {
   }
 }
 
+function assertDeep(a, b, msg) {
+  const sa = JSON.stringify(a);
+  const sb = JSON.stringify(b);
+  if (sa !== sb) throw new Error((msg || 'deep') + ': ' + sa + ' !== ' + sb);
+}
+
 module.exports = {
   name: 'schema-order',
   tests: [
@@ -30,11 +36,12 @@ module.exports = {
         assertEq(s.properties.location.propertyOrder, 10);
         assertEq(s.properties.product.propertyOrder, 20);
         assertEq(s.properties.qty.propertyOrder, 30);
+        assertDeep(Object.keys(s.properties), ['location', 'product', 'qty']);
       },
     },
     {
       id: 2,
-      desc: 'propertyOrder array pe obiect controlează ordinea',
+      desc: 'propertyOrder array pe obiect controlează ordinea + șterge array-ul',
       run() {
         const s = Order.withPropertyOrder({
           type: 'object',
@@ -45,6 +52,8 @@ module.exports = {
             qty: { type: 'integer' },
           },
         });
+        assertEq(s.propertyOrder, undefined);
+        assertDeep(Object.keys(s.properties), ['qty', 'location', 'product']);
         assertEq(s.properties.qty.propertyOrder, 10);
         assertEq(s.properties.location.propertyOrder, 20);
         assertEq(s.properties.product.propertyOrder, 30);
@@ -52,19 +61,33 @@ module.exports = {
     },
     {
       id: 3,
-      desc: 'nu mută inputul; respectă propertyOrder numeric deja setat',
+      desc: 'respectă propertyOrder numeric chiar dacă keys vin permutați',
       run() {
-        const input = {
+        const s = Order.withPropertyOrder({
           type: 'object',
           properties: {
-            a: { type: 'string', propertyOrder: 5 },
-            b: { type: 'string' },
+            product: { type: 'string', propertyOrder: 20 },
+            qty: { type: 'integer', propertyOrder: 30 },
+            location: { type: 'string', propertyOrder: 10 },
           },
-        };
-        const s = Order.withPropertyOrder(input);
-        assert(input.properties.b.propertyOrder === undefined);
-        assertEq(s.properties.a.propertyOrder, 5);
-        assertEq(s.properties.b.propertyOrder, 20);
+        });
+        assertDeep(Object.keys(s.properties), ['location', 'product', 'qty']);
+        assertEq(s.properties.location.propertyOrder, 10);
+      },
+    },
+    {
+      id: 4,
+      desc: 'propertyOrder string numeric e respectat',
+      run() {
+        const s = Order.withPropertyOrder({
+          type: 'object',
+          properties: {
+            b: { type: 'string', propertyOrder: '20' },
+            a: { type: 'string', propertyOrder: '10' },
+          },
+        });
+        assertDeep(Object.keys(s.properties), ['a', 'b']);
+        assertEq(s.properties.a.propertyOrder, 10);
       },
     },
   ],

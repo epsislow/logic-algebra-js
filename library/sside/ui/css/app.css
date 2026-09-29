@@ -386,6 +386,16 @@
             padding: 8px; background: var(--bg-editor);
             margin-bottom: 6px;
         }
+        .prog-field-actions {
+            display: flex; gap: 4px; margin-top: 4px; align-items: center;
+        }
+        .btn-open-related {
+            width: auto !important; min-width: 28px; padding: 2px 8px !important;
+            font-size: 14px; line-height: 1.2; margin: 0 !important;
+        }
+        .btn-open-related:disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
         .prog-row textarea { min-height: 52px; font-family: ui-monospace, monospace; }
         .prog-steps { display: flex; flex-direction: column; gap: 8px; }
         .prog-step {

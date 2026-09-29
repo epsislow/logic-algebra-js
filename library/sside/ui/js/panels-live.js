@@ -486,6 +486,13 @@
           ? deps.defaultFromSchema(schemaObj)
           : {};
       if (startval === undefined || startval === null) startval = {};
+      // ordine stabilă + startval pe aceleași chei (după options overlay)
+      if (
+        root.SsideSchemaOrder &&
+        typeof root.SsideSchemaOrder.withPropertyOrder === 'function'
+      ) {
+        schemaObj = root.SsideSchemaOrder.withPropertyOrder(schemaObj);
+      }
       fieldsEl.innerHTML = '';
       editor = createEditor(fieldsEl, schemaObj, startval);
       if (optionsWarnings.length) {

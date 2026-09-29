@@ -145,7 +145,8 @@
         }
         let cheieCurenta = null;
         let infoCheieCurenta = null;
-        let cheieDataProvenienta = null; // data de pe care s-a deschis schema (pt. Înapoi la data)
+        /** Stivă Înapoi: ui→form/list→schema (push la ↗ / Deschide schema). */
+        let navProvenientaStack = [];
         let redisTipCurent = 'string';
         let modEditare = 'text'; // form | text | json
         let valoareBaseline = ''; // ultima valoare încărcată / salvată (pt. indicator Salvează)
@@ -1426,6 +1427,22 @@ function translateUpstashSearchResults(date) {
         // ==========================================
         // NAVIGARE LISTĂ ↔ DETALIU
         // ==========================================
+        function etichetaInapoiPentruCheie(cheie) {
+            const tip = clasificaCheie(cheie, new Set(toateCheile || [])).tip;
+            if (tip === 'ui') return '← Înapoi la UI';
+            if (tip === 'form') return '← Înapoi la form';
+            if (tip === 'list') return '← Înapoi la list';
+            if (tip === 'alg') return '← Înapoi la alg';
+            if (tip === 'data') return '← Înapoi la data';
+            if (tip === 'schema') return '← Înapoi la schemă';
+            return '← Înapoi';
+        }
+
+        function deschideDetaliuDinNav(cheie) {
+            if (cheieCurenta) navProvenientaStack.push(cheieCurenta);
+            return deschideDetaliu(cheie, { keepNav: true, preferProgMod: 'edit' });
+        }
+
         function navigareInapoiDetaliu() {
             if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
                 anuleazaEditMembruSet();
@@ -1435,10 +1452,9 @@ function translateUpstashSearchResults(date) {
                 anuleazaEditColItem();
                 return;
             }
-            if (cheieDataProvenienta && infoCheieCurenta && infoCheieCurenta.tip === 'schema') {
-                const dataKey = cheieDataProvenienta;
-                cheieDataProvenienta = null;
-                deschideDetaliu(dataKey);
+            if (navProvenientaStack.length) {
+                const prev = navProvenientaStack.pop();
+                deschideDetaliu(prev, { keepNav: true, fromNavBack: true, preferProgMod: 'edit' });
                 return;
             }
             inapoiLaLista();
@@ -1449,14 +1465,19 @@ function translateUpstashSearchResults(date) {
             if (!btn) return;
             if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
                 btn.textContent = '← Înapoi la set';
+                btn.title = '';
             } else if (esteTipColecțieCol(redisTipCurent) && colEditIndex !== -1) {
                 if (redisTipCurent === 'hash') btn.textContent = '← Înapoi la hash';
                 else if (redisTipCurent === 'list') btn.textContent = '← Înapoi la listă';
                 else btn.textContent = '← Înapoi la zset';
-            } else if (cheieDataProvenienta && infoCheieCurenta && infoCheieCurenta.tip === 'schema') {
-                btn.textContent = '← Înapoi la data';
+                btn.title = '';
+            } else if (navProvenientaStack.length) {
+                const prev = navProvenientaStack[navProvenientaStack.length - 1];
+                btn.textContent = etichetaInapoiPentruCheie(prev);
+                btn.title = prev || '';
             } else {
                 btn.textContent = '← Înapoi la listă';
+                btn.title = '';
             }
         }
 
@@ -1470,7 +1491,7 @@ function translateUpstashSearchResults(date) {
             seteazaVizibilitateIdxLegenda(false);
             cheieCurenta = null;
             infoCheieCurenta = null;
-            cheieDataProvenienta = null;
+            navProvenientaStack = [];
             redisTipCurent = 'string';
             valoareBaseline = '';
             ttlMsRemaining = null;
@@ -2777,20 +2798,16 @@ function translateUpstashSearchResults(date) {
             }
         }
 
-        async function deschideDetaliu(cheie) {
+        async function deschideDetaliu(cheie, opts) {
+            opts = opts || {};
             const setChei = new Set(toateCheile);
             const info = clasificaCheie(cheie, setChei);
 
             // cache Live doar pe durata acestui panou
             invalidateProgJsonCache();
 
-            // păstrăm proveniența doar dacă deschidem schema legată (sau revenim la data)
-            if (cheieDataProvenienta) {
-                const infoProv = clasificaCheie(cheieDataProvenienta, setChei);
-                const schemaAsteptat = infoProv.schemaKey;
-                if (cheie !== schemaAsteptat && cheie !== cheieDataProvenienta) {
-                    cheieDataProvenienta = null;
-                }
+            if (!opts.keepNav && !opts.fromNavBack) {
+                navProvenientaStack = [];
             }
 
             cheieCurenta = cheie;
@@ -2933,7 +2950,8 @@ function translateUpstashSearchResults(date) {
                 document.getElementById('raw-json-editor').value = pretty;
                 document.getElementById('formular-din-wrap').style.display = 'none';
                 SsideProgPanels.activeaza(info, pretty, {
-                    onDirty: () => actualizeazaIndicatorModificat()
+                    onDirty: () => actualizeazaIndicatorModificat(),
+                    preferMod: opts.preferProgMod || 'edit',
                 });
                 marcheazaCurentCaBaseline();
                 return;
@@ -3263,6 +3281,10 @@ function translateUpstashSearchResults(date) {
                         ? (toateCheile || []).filter(pred)
                         : [];
                     return Array.from(new Set([].concat(fromCache, fromAll))).sort();
+                },
+                onOpenRelatedKey(key) {
+                    if (!key) return;
+                    deschideDetaliuDinNav(key);
                 },
             });
         }
@@ -3614,8 +3636,7 @@ function translateUpstashSearchResults(date) {
 
         function deschideSchemaLegata() {
             if (infoCheieCurenta && infoCheieCurenta.schemaKey) {
-                cheieDataProvenienta = cheieCurenta;
-                deschideDetaliu(infoCheieCurenta.schemaKey);
+                deschideDetaliuDinNav(infoCheieCurenta.schemaKey);
             }
         }
 

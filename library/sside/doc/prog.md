@@ -184,6 +184,7 @@ Comportament:
 - după alg: `result.ui.refresh` / `.clear` pe acele `listid`
 - nu împinge rows din alg — doar reîncarcă sursa
 - **Edit UI:** pe fiecare tab → **+ Block**, `type` = `form` \| `list`, `id` obligatoriu, select cheie `form:_` / `list:_` (legacy `forms[]` se citește și se convertește la blocks)
+- **↗** pe block → deschide form/list; **← Înapoi la UI** revine (stivă nav, ca data↔schema)
 
 ---
 
