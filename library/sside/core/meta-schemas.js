@@ -78,6 +78,11 @@
         },
       },
       pageSize: { type: 'integer', default: 20 },
+      autoload: {
+        type: 'boolean',
+        default: true,
+        description: 'false = nu încarcă source la open Live (doar la refresh)',
+      },
       btns: { type: 'array', default: [], items: { type: 'object' } },
       rowBtns: { type: 'array', default: [], items: { type: 'object' } },
     },

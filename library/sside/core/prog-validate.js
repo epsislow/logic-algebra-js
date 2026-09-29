@@ -111,6 +111,9 @@
     if (obj.pageSize != null && (!Number.isFinite(Number(obj.pageSize)) || Number(obj.pageSize) < 1)) {
       return err('list.pageSize invalid');
     }
+    if (obj.autoload != null && typeof obj.autoload !== 'boolean') {
+      return err('list.autoload trebuie boolean');
+    }
     const b1 = validateBtns(obj.btns, 'list.btns', { allowNeedsRow: true });
     if (b1) return b1;
     const b2 = validateBtns(obj.rowBtns, 'list.rowBtns');

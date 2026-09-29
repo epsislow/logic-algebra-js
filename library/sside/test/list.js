@@ -539,5 +539,30 @@ module.exports = {
         assertDeep(r.vars.k0, ['a', 'b']);
       },
     },
+    {
+      id: 16,
+      desc: 'shouldAutoload + validateList.autoload',
+      run() {
+        assert(ListLoad.shouldAutoload({}));
+        assert(ListLoad.shouldAutoload({ autoload: true }));
+        assert(!ListLoad.shouldAutoload({ autoload: false }));
+        assert(
+          V.validateList({
+            v: 1,
+            source: { from: 'enum', values: ['a'] },
+            columns: [{ id: 'k', path: '_key' }],
+            autoload: false,
+          }).ok
+        );
+        assert(
+          !V.validateList({
+            v: 1,
+            source: { from: 'enum', values: ['a'] },
+            columns: [{ id: 'k', path: '_key' }],
+            autoload: 'no',
+          }).ok
+        );
+      },
+    },
   ],
 };

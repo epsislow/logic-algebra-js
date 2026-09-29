@@ -1974,11 +1974,16 @@
       '<div class="prog-field"><label>title</label><input type="text" data-f="title"></div>' +
       '<div class="prog-field"><label>row</label><select data-f="row">' +
       '<option value="object">object</option><option value="array">array</option></select></div>' +
-      '<div class="prog-field"><label>pageSize</label><input type="number" min="1" step="1" data-f="pageSize"></div>';
+      '<div class="prog-field"><label>pageSize</label><input type="number" min="1" step="1" data-f="pageSize"></div>' +
+      '<div class="prog-field"><label>autoload</label><select data-f="autoload">' +
+      '<option value="true">true</option>' +
+      '<option value="false">false</option></select></div>';
     card.appendChild(rowHead);
     rowHead.querySelector('[data-f="title"]').value = obj.title || '';
     rowHead.querySelector('[data-f="row"]').value = obj.row === 'array' ? 'array' : 'object';
     rowHead.querySelector('[data-f="pageSize"]').value = obj.pageSize;
+    rowHead.querySelector('[data-f="autoload"]').value =
+      obj.autoload === false ? 'false' : 'true';
 
     const srcCard = document.createElement('div');
     srcCard.className = 'prog-step';
@@ -2086,6 +2091,11 @@
       obj.row = rowHead.querySelector('[data-f="row"]').value === 'array' ? 'array' : 'object';
       const ps = parseInt(rowHead.querySelector('[data-f="pageSize"]').value, 10);
       obj.pageSize = Number.isFinite(ps) && ps >= 1 ? ps : 20;
+      if (rowHead.querySelector('[data-f="autoload"]').value === 'false') {
+        obj.autoload = false;
+      } else {
+        delete obj.autoload;
+      }
       obj.source = readSourceFromDom();
 
       obj.columns = [];

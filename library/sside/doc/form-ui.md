@@ -136,6 +136,7 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 | `columns[].path` | `_key` / `_type` / `_json` / câmp din JSON |
 | `columns[].const` | valoare **statică** (ex. `"stock"`) — fără citire pe rând |
 | `pageSize` | mărime pagină |
+| `autoload` | default `true`; `false` = **nu** încarcă `source` la open Live (tabel gol până la refresh / Reîncarcă) |
 | `rowBtns` | pe rând (mereu cu rând → `form`); `kind` ca form |
 | `btns` | sub tabel; `needsRow` default `true`; `false` = fără selecție (`form` = `{}`) |
 

@@ -356,6 +356,13 @@
     };
   }
 
+  /**
+   * Default true. `autoload: false` → Live nu apelează source la open (doar refresh).
+   */
+  function shouldAutoload(listDef) {
+    return !(listDef && listDef.autoload === false);
+  }
+
   const api = {
     cellValue,
     analyzeColumnNeeds,
@@ -365,6 +372,7 @@
     computePageMax,
     formFromRow,
     buildListContext,
+    shouldAutoload,
   };
 
   root.SsideListLoad = api;

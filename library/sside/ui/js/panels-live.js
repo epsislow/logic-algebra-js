@@ -409,7 +409,24 @@
 
     renderHead();
     renderBelow();
-    await reload();
+    const doAutoload =
+      ListLoad && typeof ListLoad.shouldAutoload === 'function'
+        ? ListLoad.shouldAutoload(listDef)
+        : listDef.autoload !== false;
+    if (doAutoload) {
+      await reload();
+    } else {
+      lastPageData = {
+        page: 1,
+        pageSize: listDef.pageSize || 20,
+        total: 0,
+        hasMore: false,
+        rows: [],
+        rowMode: listDef.row === 'array' ? 'array' : 'object',
+      };
+      tbody.innerHTML = '<tr><td colspan="99">Neinițializat</td></tr>';
+      renderPager();
+    }
 
     const api = {
       destroy() {
