@@ -75,22 +75,25 @@ module.exports = {
     },
     {
       id: 5,
-      desc: 'stepEditMode flat vs raw (F2-alg-A)',
+      desc: 'stepEditMode flat / block / raw (F2-alg-A/B)',
       run() {
         assertEq(Prog.stepEditMode({ op: 'assign', to: 'a', from: 'b' }), 'flat');
         assertEq(Prog.stepEditMode({ op: 'ksave', key: 'k', val: 'form' }), 'flat');
         assertEq(Prog.stepEditMode({ op: 'end', msg: 'ok' }), 'flat');
         assertEq(Prog.stepEditMode({ op: 'tstart' }), 'flat');
-        assertEq(Prog.stepEditMode({ op: 'if', when: ['eq', 'a', 1], then: [] }), 'raw');
-        assertEq(Prog.stepEditMode({ op: 'foreach', in: 'x', as: 'it', do: [] }), 'raw');
+        assertEq(Prog.stepEditMode({ op: 'if', when: ['eq', 'a', 1], then: [] }), 'block');
+        assertEq(Prog.stepEditMode({ op: 'foreach', in: 'x', as: 'it', do: [] }), 'block');
         assertEq(Prog.stepEditMode({ op: 'search', query: { a: 1 }, to: 'hits' }), 'raw');
         assertEq(Prog.stepEditMode({ op: 'ui', do: 'refresh', listid: ['a', 'b'] }), 'raw');
         assertEq(Prog.stepEditMode({ op: 'search', query: 'x', to: 'hits' }), 'flat');
+        assert(Prog.isBlockOp('if'));
+        assert(Prog.isBlockOp('foreach'));
+        assert(!Prog.isBlockOp('assign'));
       },
     },
     {
       id: 6,
-      desc: 'parseMaybeLiteral + defaultStep redis args',
+      desc: 'parseMaybeLiteral + defaultStep redis / if fără else',
       run() {
         assertEq(Prog.parseMaybeLiteral('7'), 7);
         assertEq(Prog.parseMaybeLiteral('true'), true);
@@ -98,6 +101,76 @@ module.exports = {
         const r = Prog.defaultStep('redis');
         assertEq(r.do, 'TYPE');
         assert(Array.isArray(r.args));
+        const iff = Prog.defaultStep('if');
+        assertEq(iff.op, 'if');
+        assert(Array.isArray(iff.then));
+        assert(!Object.prototype.hasOwnProperty.call(iff, 'else'));
+      },
+    },
+    {
+      id: 7,
+      desc: 'countNestedOps + previewBlock (F2-alg-B)',
+      run() {
+        assertEq(Prog.countNestedOps({ op: 'if', then: [], when: [] }), 0);
+        assertEq(
+          Prog.countNestedOps({
+            op: 'if',
+            when: ['eq', 'a', 1],
+            then: [{ op: 'end', msg: 'x' }],
+            else: [{ op: 'assign', to: 'a', from: 'b' }],
+          }),
+          2
+        );
+        assertEq(
+          Prog.countNestedOps({
+            op: 'if',
+            then: [
+              {
+                op: 'foreach',
+                in: 'items',
+                as: 'it',
+                do: [{ op: 'end', msg: '1' }, { op: 'end', msg: '2' }],
+              },
+            ],
+          }),
+          3
+        );
+        const prev = Prog.previewBlock({
+          op: 'if',
+          when: ['lte', 'qty', 0],
+          then: [{ op: 'end', err: 'x' }],
+        });
+        assert(prev.indexOf('lte') !== -1);
+        assert(prev.indexOf('then(1)') !== -1);
+        assert(prev.indexOf('else') === -1);
+        const fe = Prog.previewBlock({
+          op: 'foreach',
+          in: 'form.items',
+          as: 'it',
+          do: [],
+        });
+        assert(fe.indexOf('form.items') !== -1);
+        assert(fe.indexOf('do(0)') !== -1);
+        assert(Prog.previewWhen(['eq', 'a', 1]).indexOf('eq') !== -1);
+      },
+    },
+    {
+      id: 8,
+      desc: 'insertStepAt înainte de index (D34)',
+      run() {
+        const steps = [
+          Prog.defaultStep('assign'),
+          Prog.defaultStep('ksave'),
+        ];
+        const added = Prog.insertStepAt(steps, 1, 'end');
+        assertEq(steps.length, 3);
+        assertEq(steps[1].op, 'end');
+        assertEq(steps[0].op, 'assign');
+        assertEq(steps[2].op, 'ksave');
+        assertEq(added.op, 'end');
+        Prog.insertStepAt(steps, 0, 'if');
+        assertEq(steps[0].op, 'if');
+        assert(Array.isArray(steps[0].then));
       },
     },
   ],

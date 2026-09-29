@@ -470,8 +470,8 @@
     host.appendChild(card);
   }
 
-  // ---------- Alg edit (F2-alg-A: câmpuri flat; if/foreach = raw JSON) ----------
-  const ALG_RAW_OPS = new Set(['if', 'foreach']);
+  // ---------- Alg edit (F2-alg-A flat + F2-alg-B bloc/drill-in) ----------
+  const ALG_BLOCK_OPS = new Set(['if', 'foreach']);
   const AS_OPTS = [
     { value: 'auto', label: 'auto' },
     { value: 'json', label: 'json' },
@@ -493,7 +493,7 @@
     op = op || 'assign';
     if (op === 'assign') return { op: 'assign', to: '', from: '' };
     if (op === 'cat') return { op: 'cat', to: '', parts: [''] };
-    if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [], else: [] };
+    if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
     if (op === 'kget') return { op: 'kget', key: '', to: '', as: 'auto' };
@@ -511,15 +511,96 @@
     return { op: op };
   }
 
-  /** 'raw' = textarea JSON; 'flat' = câmpuri per op (faza A). */
+  /** 'block' = if/foreach card; 'raw' = textarea; 'flat' = câmpuri (F2-alg-A). */
   function stepEditMode(step) {
     if (!step || typeof step !== 'object' || !step.op) return 'raw';
-    if (ALG_RAW_OPS.has(step.op)) return 'raw';
+    if (ALG_BLOCK_OPS.has(step.op)) return 'block';
     if (step.op === 'search' && step.query != null && typeof step.query === 'object') {
       return 'raw';
     }
     if (step.op === 'ui' && Array.isArray(step.listid)) return 'raw';
     return 'flat';
+  }
+
+  function isBlockOp(op) {
+    return ALG_BLOCK_OPS.has(op);
+  }
+
+  /** Pași nested în then/else/do (recursiv), fără pasul blocului însuși. */
+  function countNestedOps(step) {
+    if (!step || typeof step !== 'object') return 0;
+    let n = 0;
+    function walk(s) {
+      if (!s || typeof s !== 'object') return;
+      if (s.op === 'if') {
+        (Array.isArray(s.then) ? s.then : []).forEach((x) => {
+          n += 1;
+          walk(x);
+        });
+        (Array.isArray(s.else) ? s.else : []).forEach((x) => {
+          n += 1;
+          walk(x);
+        });
+      } else if (s.op === 'foreach') {
+        (Array.isArray(s.do) ? s.do : []).forEach((x) => {
+          n += 1;
+          walk(x);
+        });
+      }
+    }
+    walk(step);
+    return n;
+  }
+
+  function previewWhen(when, maxLen) {
+    maxLen = maxLen == null ? 72 : maxLen;
+    let s;
+    try {
+      s = JSON.stringify(when);
+    } catch (e) {
+      s = String(when);
+    }
+    if (!s) return '—';
+    if (s.length <= maxLen) return s;
+    return s.slice(0, maxLen - 1) + '…';
+  }
+
+  function previewBlock(step) {
+    if (!step || typeof step !== 'object') return '';
+    if (step.op === 'if') {
+      const tn = Array.isArray(step.then) ? step.then.length : 0;
+      const hasElse = Array.isArray(step.else);
+      const en = hasElse ? step.else.length : 0;
+      return (
+        previewWhen(step.when) +
+        ' · then(' +
+        tn +
+        ')' +
+        (hasElse ? ' else(' + en + ')' : '')
+      );
+    }
+    if (step.op === 'foreach') {
+      const dn = Array.isArray(step.do) ? step.do.length : 0;
+      return (
+        'in: ' +
+        (step.in != null ? String(step.in) : '') +
+        ' · as: ' +
+        (step.as != null ? String(step.as) : '') +
+        ' · do(' +
+        dn +
+        ')'
+      );
+    }
+    return '';
+  }
+
+  /** Inserează înainte de index (D34). Returnează noul step. */
+  function insertStepAt(steps, index, op) {
+    if (!Array.isArray(steps)) throw new Error('insertStepAt: steps trebuie array');
+    const step = defaultStep(op);
+    const i = Math.max(0, Math.min(index, steps.length));
+    steps.splice(i, 0, step);
+    return step;
   }
 
   function parseMaybeLiteral(s) {
@@ -580,6 +661,23 @@
     }
     sel.value = cur;
     return sel;
+  }
+
+  function fillOpSelect(sel, current, opts) {
+    opts = opts || {};
+    sel.innerHTML = '';
+    ALG_OPS.forEach((op) => {
+      const o = document.createElement('option');
+      o.value = op;
+      o.textContent = isBlockOp(op) ? op + ' (bloc)' : op;
+      sel.appendChild(o);
+    });
+    const cur = current && ALG_OPS.indexOf(current) !== -1 ? current : 'assign';
+    sel.value = cur;
+    if (opts.locked) {
+      sel.disabled = true;
+      sel.title = 'op bloc — nu se schimbă (F2-alg-B)';
+    }
   }
 
   function mountPartsList(row, parts, onChange, label, dataSf) {
@@ -651,10 +749,12 @@
     if (op === 'assign') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
       const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
-      const srcSel = wire(mkSelect('_src', srcMode, [
-        { value: 'from', label: 'from (ref)' },
-        { value: 'val', label: 'val (literal)' },
-      ]));
+      const srcSel = wire(
+        mkSelect('_src', srcMode, [
+          { value: 'from', label: 'from (ref)' },
+          { value: 'val', label: 'val (literal)' },
+        ])
+      );
       row.appendChild(mkField('sursă', srcSel));
       const fromInp = wire(mkInput('from', step.from != null ? step.from : ''));
       const valInp = wire(mkInput('val', literalToInput(step.val)));
@@ -680,10 +780,12 @@
 
     if (op === 'end') {
       const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
-      const modeSel = wire(mkSelect('_end', mode, [
-        { value: 'msg', label: 'msg (ok)' },
-        { value: 'err', label: 'err (fail)' },
-      ]));
+      const modeSel = wire(
+        mkSelect('_end', mode, [
+          { value: 'msg', label: 'msg (ok)' },
+          { value: 'err', label: 'err (fail)' },
+        ])
+      );
       row.appendChild(mkField('tip', modeSel));
       const text = mode === 'err' ? step.err : step.msg;
       const textInp = wire(mkInput('text', text != null ? text : ''));
@@ -700,7 +802,9 @@
 
     if (op === 'ksave') {
       row.appendChild(mkField('key', wire(mkInput('key', step.key))));
-      row.appendChild(mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form'))));
+      row.appendChild(
+        mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form')))
+      );
       row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'auto', AS_OPTS))));
       return;
     }
@@ -721,13 +825,14 @@
       sel.setAttribute('data-sf', 'schema');
       fillKeySelect(sel, 'schema', step.schema || '');
       wire(sel);
-      const f = mkField('schema', sel);
-      row.appendChild(f);
+      row.appendChild(mkField('schema', sel));
       mountSelectWithOpen(sel, {
         getKey: () => sel.value,
         title: 'Deschide schema',
       });
-      row.appendChild(mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form'))));
+      row.appendChild(
+        mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form')))
+      );
       return;
     }
 
@@ -741,18 +846,26 @@
         getKey: () => sel.value,
         title: 'Deschide schema',
       });
-      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : 'draft'))));
+      row.appendChild(
+        mkField('to', wire(mkInput('to', step.to != null ? step.to : 'draft')))
+      );
       return;
     }
 
     if (op === 'jset') {
-      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : 'payload'))));
-      row.appendChild(mkField('path', wire(mkInput('path', step.path != null ? step.path : ''))));
+      row.appendChild(
+        mkField('to', wire(mkInput('to', step.to != null ? step.to : 'payload')))
+      );
+      row.appendChild(
+        mkField('path', wire(mkInput('path', step.path != null ? step.path : '')))
+      );
       const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
-      const srcSel = wire(mkSelect('_src', srcMode, [
-        { value: 'from', label: 'from (ref)' },
-        { value: 'val', label: 'val (literal)' },
-      ]));
+      const srcSel = wire(
+        mkSelect('_src', srcMode, [
+          { value: 'from', label: 'from (ref)' },
+          { value: 'val', label: 'val (literal)' },
+        ])
+      );
       row.appendChild(mkField('sursă', srcSel));
       const fromInp = wire(mkInput('from', step.from != null ? step.from : ''));
       const valInp = wire(mkInput('val', literalToInput(step.val)));
@@ -772,31 +885,28 @@
 
     if (op === 'jget') {
       row.appendChild(mkField('from', wire(mkInput('from', step.from))));
-      row.appendChild(mkField('path', wire(mkInput('path', step.path != null ? step.path : ''))));
+      row.appendChild(
+        mkField('path', wire(mkInput('path', step.path != null ? step.path : '')))
+      );
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
       return;
     }
 
     if (op === 'search') {
-      row.appendChild(mkField('query', wire(mkInput('query', step.query != null ? step.query : ''))));
-      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : 'hits'))));
       row.appendChild(
-        mkField(
-          'limit',
-          wire(mkInput('limit', step.limit != null ? step.limit : ''))
-        )
+        mkField('query', wire(mkInput('query', step.query != null ? step.query : '')))
       );
       row.appendChild(
-        mkField(
-          'offset',
-          wire(mkInput('offset', step.offset != null ? step.offset : ''))
-        )
+        mkField('to', wire(mkInput('to', step.to != null ? step.to : 'hits')))
       );
       row.appendChild(
-        mkField(
-          'index',
-          wire(mkInput('index', step.index != null ? step.index : ''))
-        )
+        mkField('limit', wire(mkInput('limit', step.limit != null ? step.limit : '')))
+      );
+      row.appendChild(
+        mkField('offset', wire(mkInput('offset', step.offset != null ? step.offset : '')))
+      );
+      row.appendChild(
+        mkField('index', wire(mkInput('index', step.index != null ? step.index : '')))
       );
       return;
     }
@@ -831,7 +941,6 @@
       return;
     }
 
-    // fallback
     const ta = document.createElement('textarea');
     ta.setAttribute('data-s', 'json');
     ta.value = JSON.stringify(step, null, 2);
@@ -938,7 +1047,8 @@
     }
     if (op === 'redis') {
       step.do = sf(el, 'do') || 'TYPE';
-      const argsHost = el.querySelector('[data-sf="args"]') || el.querySelector('[data-sf="parts"]');
+      const argsHost =
+        el.querySelector('[data-sf="args"]') || el.querySelector('[data-sf="parts"]');
       step.args = argsHost && argsHost._readParts ? argsHost._readParts() : [];
       const to = sf(el, 'to').trim();
       if (to) step.to = to;
@@ -947,14 +1057,39 @@
     return step;
   }
 
-  function readStepFromEl(el) {
-    const ta = el.querySelector('textarea[data-s="json"]');
-    if (ta) {
-      const step = JSON.parse(ta.value);
-      if (!step || typeof step !== 'object') throw new Error('step invalid');
-      return step;
-    }
-    return readFlatStep(el);
+  /**
+   * Citește pașii dintr-un host (doar copii .prog-step) în array-ul țintă (in-place).
+   * Blocurile păstrează referința (_stepRef).
+   */
+  function readStepsInto(stepsHost, targetArr) {
+    const els = Array.from(stepsHost.children).filter(
+      (ch) => ch.classList && ch.classList.contains('prog-step')
+    );
+    const next = [];
+    els.forEach((el) => {
+      const mode = el.getAttribute('data-mode') || 'flat';
+      if (mode === 'block') {
+        if (el._stepRef && typeof el._stepRef === 'object') next.push(el._stepRef);
+        return;
+      }
+      const ta = el.querySelector('textarea[data-s="json"]');
+      try {
+        if (mode === 'raw' || ta) {
+          const step = JSON.parse(ta.value);
+          if (step && typeof step === 'object') {
+            if (ta) ta.classList.remove('json-invalid');
+            next.push(step);
+          }
+        } else {
+          next.push(readFlatStep(el));
+        }
+      } catch (e) {
+        if (ta) ta.classList.add('json-invalid');
+        if (el._stepRef) next.push(el._stepRef);
+      }
+    });
+    targetArr.length = 0;
+    next.forEach((s) => targetArr.push(s));
   }
 
   function randeazaEditAlg(host, obj) {
@@ -973,141 +1108,446 @@
     row1.querySelector('[data-f="v"]').value = obj.v != null ? obj.v : 1;
     card.appendChild(row1);
 
-    const stepsHost = document.createElement('div');
-    stepsHost.className = 'prog-steps';
-    card.appendChild(stepsHost);
+    const navEl = document.createElement('div');
+    navEl.className = 'prog-alg-nav';
+    card.appendChild(navEl);
 
-    function renumber() {
-      Array.from(stepsHost.children).forEach((ch, i) => {
-        const sp = ch.querySelector('.prog-step-head [data-s="idx"]');
-        if (sp) sp.textContent = '#' + (i + 1);
-      });
+    const viewHost = document.createElement('div');
+    viewHost.className = 'prog-alg-view';
+    card.appendChild(viewHost);
+
+    /** @type {{ kind:'steps'|'block', label:string, steps?:object[], step?:object }[]} */
+    const navStack = [{ kind: 'steps', label: 'steps', steps: obj.steps }];
+
+    function currentFrame() {
+      return navStack[navStack.length - 1];
     }
 
-    function syncFromDom() {
+    function persistMeta() {
       obj.name = row1.querySelector('[data-f="name"]').value;
       const v = parseInt(row1.querySelector('[data-f="v"]').value, 10);
       obj.v = Number.isFinite(v) ? v : 1;
-      const next = [];
-      stepsHost.querySelectorAll('.prog-step').forEach((el) => {
-        const ta = el.querySelector('textarea[data-s="json"]');
-        try {
-          const step = readStepFromEl(el);
-          if (ta) ta.classList.remove('json-invalid');
-          next.push(step);
-        } catch (e) {
-          if (ta) ta.classList.add('json-invalid');
-        }
-      });
-      obj.steps = next;
-      scrieRaw(obj);
     }
 
-    function fillBody(el, step) {
-      const body = el.querySelector('.prog-step-body');
-      if (!body) return;
-      body.innerHTML = '';
-      if (stepEditMode(step) === 'raw') {
-        const hint = document.createElement('div');
-        hint.className = 'prog-step-hint';
-        hint.textContent =
-          step.op === 'if' || step.op === 'foreach'
-            ? 'Nested steps — JSON (faza B: editor nested). when/then/else/do.'
-            : 'Formă complexă — editează JSON (sau tab Json).';
-        body.appendChild(hint);
-        const ta = document.createElement('textarea');
-        ta.setAttribute('data-s', 'json');
-        ta.value = JSON.stringify(step, null, 2);
-        ta.addEventListener('input', () => {
-          ta.classList.remove('json-invalid');
+    function flushCurrentView() {
+      const frame = currentFrame();
+      const stepsHost = viewHost.querySelector('.prog-steps[data-alg-list]');
+      if (frame.kind === 'steps' && stepsHost && Array.isArray(frame.steps)) {
+        readStepsInto(stepsHost, frame.steps);
+      }
+      if (frame.kind === 'block' && frame.step) {
+        const whenTa = viewHost.querySelector('textarea[data-block="when"]');
+        if (whenTa) {
           try {
-            JSON.parse(ta.value);
-            syncFromDom();
+            frame.step.when = JSON.parse(whenTa.value);
+            whenTa.classList.remove('json-invalid');
           } catch (e) {
-            ta.classList.add('json-invalid');
+            whenTa.classList.add('json-invalid');
           }
-        });
-        body.appendChild(ta);
-      } else {
-        renderFlatFields(body, step, syncFromDom);
+        }
+        const inInp = viewHost.querySelector('[data-block="in"]');
+        const asInp = viewHost.querySelector('[data-block="as"]');
+        if (inInp) frame.step.in = inInp.value;
+        if (asInp) frame.step.as = asInp.value;
       }
     }
 
-    function addStepRow(step, index) {
-      step = step && typeof step === 'object' ? step : defaultStep('assign');
-      const el = document.createElement('div');
-      el.className = 'prog-step';
-
-      const head = document.createElement('div');
-      head.className = 'prog-step-head';
-      const idx = document.createElement('span');
-      idx.setAttribute('data-s', 'idx');
-      idx.textContent = '#' + (index + 1);
-      head.appendChild(idx);
-
-      const opSel = document.createElement('select');
-      opSel.setAttribute('data-s', 'op');
-      opSel.className = 'prog-step-op';
-      ALG_OPS.forEach((op) => {
-        const o = document.createElement('option');
-        o.value = op;
-        o.textContent = ALG_RAW_OPS.has(op) ? op + ' (json)' : op;
-        opSel.appendChild(o);
-      });
-      opSel.value = step.op && ALG_OPS.indexOf(step.op) !== -1 ? step.op : 'assign';
-      opSel.addEventListener('change', () => {
-        const next = defaultStep(opSel.value);
-        fillBody(el, next);
-        syncFromDom();
-      });
-      head.appendChild(opSel);
-
-      const rm = document.createElement('button');
-      rm.type = 'button';
-      rm.className = 'btn-gri btn-inline btn-inline-danger';
-      rm.textContent = 'Șterge';
-      rm.onclick = () => {
-        el.remove();
-        renumber();
-        syncFromDom();
-      };
-      head.appendChild(rm);
-      el.appendChild(head);
-
-      const body = document.createElement('div');
-      body.className = 'prog-step-body';
-      el.appendChild(body);
-      fillBody(el, step);
-
-      stepsHost.appendChild(el);
+    function syncAll() {
+      persistMeta();
+      flushCurrentView();
+      scrieRaw(obj);
     }
 
-    obj.steps.forEach((s, i) => addStepRow(s, i));
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'prog-toolbar';
-    const sel = document.createElement('select');
-    ALG_OPS.forEach((op) => {
-      const o = document.createElement('option');
-      o.value = op;
-      o.textContent = ALG_RAW_OPS.has(op) ? op + ' (json)' : op;
-      sel.appendChild(o);
-    });
-    const add = document.createElement('button');
-    add.type = 'button';
-    add.className = 'btn-albastru btn-inline';
-    add.textContent = '+ Step';
-    add.onclick = () => {
-      const step = defaultStep(sel.value);
-      obj.steps.push(step);
-      addStepRow(step, obj.steps.length - 1);
+    function pushNav(frame) {
+      flushCurrentView();
+      navStack.push(frame);
+      renderView();
       scrieRaw(obj);
-    };
-    toolbar.appendChild(sel);
-    toolbar.appendChild(add);
-    card.appendChild(toolbar);
+    }
 
-    row1.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
+    function popNav() {
+      if (navStack.length <= 1) return;
+      flushCurrentView();
+      navStack.pop();
+      renderView();
+      scrieRaw(obj);
+    }
+
+    function renderNav() {
+      navEl.innerHTML = '';
+      if (navStack.length <= 1) {
+        navEl.style.display = 'none';
+        return;
+      }
+      navEl.style.display = '';
+      const back = document.createElement('button');
+      back.type = 'button';
+      back.className = 'btn-gri btn-inline';
+      back.textContent = '← Înapoi';
+      back.onclick = () => popNav();
+      navEl.appendChild(back);
+      const crumb = document.createElement('span');
+      crumb.className = 'prog-alg-crumb';
+      crumb.textContent = navStack.map((f) => f.label).join(' › ');
+      navEl.appendChild(crumb);
+    }
+
+    function confirmDeleteBlock(step) {
+      const nested = countNestedOps(step);
+      const msg =
+        nested > 0
+          ? 'Ștergi blocul ' +
+            step.op +
+            ' și cei ' +
+            nested +
+            ' pași din interior?'
+          : 'Ștergi blocul ' + step.op + ' (gol)?';
+      return typeof window !== 'undefined' && window.confirm
+        ? window.confirm(msg)
+        : true;
+    }
+
+    function mountStepsList(parent, stepsArr) {
+      const stepsHost = document.createElement('div');
+      stepsHost.className = 'prog-steps';
+      stepsHost.setAttribute('data-alg-list', '1');
+      parent.appendChild(stepsHost);
+
+      function rebuild() {
+        flushCurrentView();
+        renderView();
+        scrieRaw(obj);
+      }
+
+      function addStepRow(step, index) {
+        step = step && typeof step === 'object' ? step : defaultStep('assign');
+        const mode = stepEditMode(step);
+        const el = document.createElement('div');
+        el.className = 'prog-step' + (mode === 'block' ? ' prog-step-block' : '');
+        el.setAttribute('data-mode', mode);
+        el._stepRef = step;
+
+        const head = document.createElement('div');
+        head.className = 'prog-step-head';
+
+        const idx = document.createElement('span');
+        idx.setAttribute('data-s', 'idx');
+        idx.textContent = '#' + (index + 1);
+        head.appendChild(idx);
+
+        if (mode === 'block') {
+          const lab = document.createElement('code');
+          lab.className = 'prog-block-op';
+          lab.textContent = step.op;
+          head.appendChild(lab);
+
+          const openBtn = document.createElement('button');
+          openBtn.type = 'button';
+          openBtn.className = 'btn-albastru btn-inline';
+          openBtn.textContent = 'Deschide';
+          openBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            flushCurrentView();
+            pushNav({
+              kind: 'block',
+              label: step.op + '#' + (index + 1),
+              step: step,
+            });
+          };
+          head.appendChild(openBtn);
+
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'btn-gri btn-inline btn-inline-danger';
+          rm.textContent = 'Șterge';
+          rm.onclick = (ev) => {
+            ev.stopPropagation();
+            if (!confirmDeleteBlock(step)) return;
+            flushCurrentView();
+            const i = stepsArr.indexOf(step);
+            if (i >= 0) stepsArr.splice(i, 1);
+            else stepsArr.splice(index, 1);
+            rebuild();
+          };
+          head.appendChild(rm);
+        } else {
+          const opSel = document.createElement('select');
+          opSel.setAttribute('data-s', 'op');
+          opSel.className = 'prog-step-op';
+          fillOpSelect(opSel, step.op);
+          opSel.addEventListener('change', () => {
+            const next = defaultStep(opSel.value);
+            const i = Array.from(stepsHost.children).indexOf(el);
+            flushCurrentView();
+            if (i >= 0) {
+              stepsArr[i] = next;
+            }
+            rebuild();
+          });
+          head.appendChild(opSel);
+
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'btn-gri btn-inline btn-inline-danger';
+          rm.textContent = 'Șterge';
+          rm.onclick = () => {
+            flushCurrentView();
+            const i = Array.from(stepsHost.children).indexOf(el);
+            if (i >= 0) stepsArr.splice(i, 1);
+            rebuild();
+          };
+          head.appendChild(rm);
+        }
+
+        const insertWrap = document.createElement('div');
+        insertWrap.className = 'prog-step-insert';
+        const insSel = document.createElement('select');
+        insSel.className = 'prog-step-op';
+        fillOpSelect(insSel, 'assign');
+        const insBtn = document.createElement('button');
+        insBtn.type = 'button';
+        insBtn.className = 'btn-gri btn-inline';
+        insBtn.textContent = '+ step';
+        insBtn.title = 'Inserează înainte de acest pas';
+        insBtn.onclick = () => {
+          flushCurrentView();
+          const i = Array.from(stepsHost.children).indexOf(el);
+          insertStepAt(stepsArr, i >= 0 ? i : index, insSel.value);
+          rebuild();
+        };
+        insertWrap.appendChild(insBtn);
+        insertWrap.appendChild(insSel);
+        head.appendChild(insertWrap);
+
+        el.appendChild(head);
+
+        const body = document.createElement('div');
+        body.className = 'prog-step-body';
+        el.appendChild(body);
+
+        if (mode === 'block') {
+          const prev = document.createElement('div');
+          prev.className = 'prog-block-preview';
+          prev.textContent = previewBlock(step);
+          body.appendChild(prev);
+          el.addEventListener('click', (ev) => {
+            if (ev.target && ev.target.closest && ev.target.closest('button, select')) {
+              return;
+            }
+            flushCurrentView();
+            pushNav({
+              kind: 'block',
+              label: step.op + '#' + (index + 1),
+              step: step,
+            });
+          });
+        } else if (mode === 'raw') {
+          const hint = document.createElement('div');
+          hint.className = 'prog-step-hint';
+          hint.textContent = 'Formă complexă — editează JSON (sau tab Json).';
+          body.appendChild(hint);
+          const ta = document.createElement('textarea');
+          ta.setAttribute('data-s', 'json');
+          ta.value = JSON.stringify(step, null, 2);
+          ta.addEventListener('input', () => {
+            ta.classList.remove('json-invalid');
+            try {
+              const parsed = JSON.parse(ta.value);
+              if (parsed && typeof parsed === 'object') {
+                el._stepRef = parsed;
+                const i = Array.from(stepsHost.children).indexOf(el);
+                if (i >= 0) stepsArr[i] = parsed;
+              }
+              syncAll();
+            } catch (e) {
+              ta.classList.add('json-invalid');
+            }
+          });
+          body.appendChild(ta);
+        } else {
+          renderFlatFields(body, step, syncAll);
+        }
+
+        stepsHost.appendChild(el);
+      }
+
+      stepsArr.forEach((s, i) => addStepRow(s, i));
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'prog-toolbar';
+      const sel = document.createElement('select');
+      fillOpSelect(sel, 'assign');
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'btn-albastru btn-inline';
+      add.textContent = '+ Step';
+      add.onclick = () => {
+        flushCurrentView();
+        stepsArr.push(defaultStep(sel.value));
+        rebuild();
+      };
+      toolbar.appendChild(sel);
+      toolbar.appendChild(add);
+      parent.appendChild(toolbar);
+    }
+
+    function mountBranchCard(parent, label, count, onOpen, extraBtns) {
+      const cardB = document.createElement('div');
+      cardB.className = 'prog-branch-card';
+      const title = document.createElement('div');
+      title.className = 'prog-branch-card-title';
+      title.innerHTML =
+        '<strong>' + label + '</strong> <span class="prog-branch-count">(' + count + ')</span>';
+      cardB.appendChild(title);
+      const actions = document.createElement('div');
+      actions.className = 'prog-branch-card-actions';
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.className = 'btn-albastru btn-inline';
+      open.textContent = 'Deschide';
+      open.onclick = onOpen;
+      actions.appendChild(open);
+      (extraBtns || []).forEach((b) => actions.appendChild(b));
+      cardB.appendChild(actions);
+      cardB.addEventListener('click', (ev) => {
+        if (ev.target && ev.target.closest && ev.target.closest('button')) return;
+        onOpen();
+      });
+      parent.appendChild(cardB);
+    }
+
+    function mountBlockPanel(parent, step) {
+      const wrap = document.createElement('div');
+      wrap.className = 'prog-block-panel';
+      parent.appendChild(wrap);
+
+      if (step.op === 'if') {
+        const whenLab = document.createElement('div');
+        whenLab.className = 'prog-step-hint';
+        whenLab.textContent = 'when (JSON — editor condiții în F2-alg-C)';
+        wrap.appendChild(whenLab);
+        const whenTa = document.createElement('textarea');
+        whenTa.setAttribute('data-block', 'when');
+        whenTa.className = 'prog-when-ta';
+        try {
+          whenTa.value = JSON.stringify(
+            step.when != null ? step.when : ['eq', '', ''],
+            null,
+            2
+          );
+        } catch (e) {
+          whenTa.value = '["eq","",""]';
+        }
+        whenTa.addEventListener('input', () => {
+          whenTa.classList.remove('json-invalid');
+          try {
+            step.when = JSON.parse(whenTa.value);
+            syncAll();
+          } catch (e) {
+            whenTa.classList.add('json-invalid');
+          }
+        });
+        wrap.appendChild(whenTa);
+
+        if (!Array.isArray(step.then)) step.then = [];
+        mountBranchCard(wrap, 'then', step.then.length, () => {
+          flushCurrentView();
+          pushNav({ kind: 'steps', label: 'then', steps: step.then });
+        });
+
+        if (Array.isArray(step.else)) {
+          const rmElse = document.createElement('button');
+          rmElse.type = 'button';
+          rmElse.className = 'btn-gri btn-inline btn-inline-danger';
+          rmElse.textContent = 'Șterge else';
+          rmElse.onclick = (ev) => {
+            ev.stopPropagation();
+            const n = step.else.length;
+            const ok =
+              typeof window !== 'undefined' && window.confirm
+                ? window.confirm(
+                    n
+                      ? 'Ștergi ramura else și cei ' + n + ' pași?'
+                      : 'Ștergi ramura else?'
+                  )
+                : true;
+            if (!ok) return;
+            flushCurrentView();
+            delete step.else;
+            renderView();
+            scrieRaw(obj);
+          };
+          mountBranchCard(
+            wrap,
+            'else',
+            step.else.length,
+            () => {
+              flushCurrentView();
+              pushNav({ kind: 'steps', label: 'else', steps: step.else });
+            },
+            [rmElse]
+          );
+        } else {
+          const addElse = document.createElement('button');
+          addElse.type = 'button';
+          addElse.className = 'btn-albastru btn-inline';
+          addElse.textContent = 'Adaugă else';
+          addElse.onclick = () => {
+            flushCurrentView();
+            step.else = [];
+            renderView();
+            scrieRaw(obj);
+          };
+          const row = document.createElement('div');
+          row.className = 'prog-toolbar';
+          row.appendChild(addElse);
+          wrap.appendChild(row);
+        }
+        return;
+      }
+
+      if (step.op === 'foreach') {
+        const row = document.createElement('div');
+        row.className = 'prog-row';
+        const inInp = mkInput('in', step.in != null ? step.in : '');
+        inInp.setAttribute('data-block', 'in');
+        inInp.removeAttribute('data-sf');
+        inInp.addEventListener('input', syncAll);
+        const asInp = mkInput('as', step.as != null ? step.as : 'it');
+        asInp.setAttribute('data-block', 'as');
+        asInp.removeAttribute('data-sf');
+        asInp.addEventListener('input', syncAll);
+        row.appendChild(mkField('in', inInp));
+        row.appendChild(mkField('as', asInp));
+        wrap.appendChild(row);
+        if (!Array.isArray(step.do)) step.do = [];
+        mountBranchCard(wrap, 'do', step.do.length, () => {
+          flushCurrentView();
+          pushNav({ kind: 'steps', label: 'do', steps: step.do });
+        });
+      }
+    }
+
+    function renderView() {
+      persistMeta();
+      renderNav();
+      viewHost.innerHTML = '';
+      const frame = currentFrame();
+      if (frame.kind === 'block' && frame.step) {
+        mountBlockPanel(viewHost, frame.step);
+      } else if (frame.kind === 'steps' && Array.isArray(frame.steps)) {
+        mountStepsList(viewHost, frame.steps);
+      }
+    }
+
+    row1.querySelectorAll('input').forEach((inp) =>
+      inp.addEventListener('input', () => {
+        persistMeta();
+        scrieRaw(obj);
+      })
+    );
+
+    renderView();
     host.appendChild(card);
   }
 
@@ -1630,9 +2070,14 @@
     module.exports = {
       esteProgTip,
       ALG_OPS,
-      ALG_RAW_OPS,
+      ALG_BLOCK_OPS,
       defaultStep,
       stepEditMode,
+      isBlockOp,
+      countNestedOps,
+      previewWhen,
+      previewBlock,
+      insertStepAt,
       parseMaybeLiteral,
       normalizeUiTabBlocks,
     };

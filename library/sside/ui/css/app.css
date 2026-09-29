@@ -469,9 +469,43 @@
         }
         .prog-step-head code { font-size: 12px; }
         .prog-step-op { width: auto; margin: 0; min-width: 120px; font-size: 13px; }
+        .prog-step-insert {
+            margin-left: auto; display: flex; gap: 6px; align-items: center;
+        }
         .prog-step-body { margin-top: 4px; }
         .prog-step-hint {
             font-size: 12px; color: var(--text-muted); margin: 0 0 6px;
+        }
+        .prog-step-block {
+            cursor: pointer; border-style: solid; border-color: var(--accent);
+        }
+        .prog-step-block:hover { background: var(--row-hover); }
+        .prog-block-op { font-weight: bold; }
+        .prog-block-preview {
+            font-size: 12px; color: var(--text-muted); font-family: ui-monospace, Consolas, monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .prog-alg-nav {
+            display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+            margin: 0 0 10px; padding: 6px 0; border-bottom: 1px dashed var(--border);
+        }
+        .prog-alg-crumb { font-size: 13px; color: var(--text-muted); }
+        .prog-branch-card {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            flex-wrap: wrap; border: 1px solid var(--border); border-radius: 6px;
+            padding: 10px; margin: 8px 0; background: var(--bg-muted); cursor: pointer;
+        }
+        .prog-branch-card:hover { background: var(--row-hover); }
+        .prog-branch-card-title { font-size: 14px; }
+        .prog-branch-count { color: var(--text-muted); font-size: 13px; }
+        .prog-branch-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .prog-when-ta {
+            width: 100%; min-height: 72px; margin: 0 0 8px; box-sizing: border-box;
+            font-family: ui-monospace, Consolas, monospace; font-size: 12px;
+        }
+        .prog-when-ta.json-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
         }
         .prog-step textarea[data-s="json"] {
             width: 100%; min-height: 100px; margin: 0; box-sizing: border-box;
