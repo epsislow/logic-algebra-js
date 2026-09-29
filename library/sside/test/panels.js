@@ -73,5 +73,32 @@ module.exports = {
         assertEq(fromBlocks[1].form, 'form:_x');
       },
     },
+    {
+      id: 5,
+      desc: 'stepEditMode flat vs raw (F2-alg-A)',
+      run() {
+        assertEq(Prog.stepEditMode({ op: 'assign', to: 'a', from: 'b' }), 'flat');
+        assertEq(Prog.stepEditMode({ op: 'ksave', key: 'k', val: 'form' }), 'flat');
+        assertEq(Prog.stepEditMode({ op: 'end', msg: 'ok' }), 'flat');
+        assertEq(Prog.stepEditMode({ op: 'tstart' }), 'flat');
+        assertEq(Prog.stepEditMode({ op: 'if', when: ['eq', 'a', 1], then: [] }), 'raw');
+        assertEq(Prog.stepEditMode({ op: 'foreach', in: 'x', as: 'it', do: [] }), 'raw');
+        assertEq(Prog.stepEditMode({ op: 'search', query: { a: 1 }, to: 'hits' }), 'raw');
+        assertEq(Prog.stepEditMode({ op: 'ui', do: 'refresh', listid: ['a', 'b'] }), 'raw');
+        assertEq(Prog.stepEditMode({ op: 'search', query: 'x', to: 'hits' }), 'flat');
+      },
+    },
+    {
+      id: 6,
+      desc: 'parseMaybeLiteral + defaultStep redis args',
+      run() {
+        assertEq(Prog.parseMaybeLiteral('7'), 7);
+        assertEq(Prog.parseMaybeLiteral('true'), true);
+        assertEq(Prog.parseMaybeLiteral('hello'), 'hello');
+        const r = Prog.defaultStep('redis');
+        assertEq(r.do, 'TYPE');
+        assert(Array.isArray(r.args));
+      },
+    },
   ],
 };

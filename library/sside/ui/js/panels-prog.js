@@ -470,7 +470,25 @@
     host.appendChild(card);
   }
 
-  // ---------- Alg edit ----------
+  // ---------- Alg edit (F2-alg-A: câmpuri flat; if/foreach = raw JSON) ----------
+  const ALG_RAW_OPS = new Set(['if', 'foreach']);
+  const AS_OPTS = [
+    { value: 'auto', label: 'auto' },
+    { value: 'json', label: 'json' },
+    { value: 'string', label: 'string' },
+  ];
+  const UI_DO_OPTS = [
+    { value: 'refresh', label: 'refresh' },
+    { value: 'clear', label: 'clear' },
+  ];
+  const REDIS_DO_OPTS = [
+    'TYPE', 'EXISTS', 'GET', 'SET', 'DEL', 'TTL',
+    'JSON.GET', 'JSON.SET', 'JSON.DEL',
+    'SMEMBERS', 'SADD', 'SREM',
+    'HGETALL', 'HGET', 'HSET',
+    'LRANGE', 'ZRANGE', 'INCR',
+  ];
+
   function defaultStep(op) {
     op = op || 'assign';
     if (op === 'assign') return { op: 'assign', to: '', from: '' };
@@ -478,7 +496,7 @@
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [], else: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
-    if (op === 'kget') return { op: 'kget', key: '', to: '' };
+    if (op === 'kget') return { op: 'kget', key: '', to: '', as: 'auto' };
     if (op === 'ksave') return { op: 'ksave', key: '', val: 'form', as: 'auto' };
     if (op === 'kdel') return { op: 'kdel', key: '' };
     if (op === 'kadd' || op === 'krm') return { op: op, key: '', val: '' };
@@ -489,8 +507,454 @@
     if (op === 'search') return { op: 'search', query: '', to: 'hits' };
     if (op === 'ui') return { op: 'ui', do: 'refresh', listid: '' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
-    if (op === 'redis') return { op: 'redis', do: 'get', key: '' };
+    if (op === 'redis') return { op: 'redis', do: 'TYPE', args: [''], to: '' };
     return { op: op };
+  }
+
+  /** 'raw' = textarea JSON; 'flat' = câmpuri per op (faza A). */
+  function stepEditMode(step) {
+    if (!step || typeof step !== 'object' || !step.op) return 'raw';
+    if (ALG_RAW_OPS.has(step.op)) return 'raw';
+    if (step.op === 'search' && step.query != null && typeof step.query === 'object') {
+      return 'raw';
+    }
+    if (step.op === 'ui' && Array.isArray(step.listid)) return 'raw';
+    return 'flat';
+  }
+
+  function parseMaybeLiteral(s) {
+    if (s == null) return '';
+    const t = String(s).trim();
+    if (t === '') return '';
+    if (t === 'true') return true;
+    if (t === 'false') return false;
+    if (t === 'null') return null;
+    if (/^-?\d+(\.\d+)?$/.test(t)) return Number(t);
+    return String(s);
+  }
+
+  function literalToInput(v) {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+    try {
+      return JSON.stringify(v);
+    } catch (e) {
+      return String(v);
+    }
+  }
+
+  function mkField(label, ctrl) {
+    const wrap = document.createElement('div');
+    wrap.className = 'prog-field';
+    const lab = document.createElement('label');
+    lab.textContent = label;
+    wrap.appendChild(lab);
+    wrap.appendChild(ctrl);
+    return wrap;
+  }
+
+  function mkInput(attr, value) {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.setAttribute('data-sf', attr);
+    inp.value = value == null ? '' : String(value);
+    return inp;
+  }
+
+  function mkSelect(attr, value, options) {
+    const sel = document.createElement('select');
+    sel.setAttribute('data-sf', attr);
+    (options || []).forEach((opt) => {
+      const o = document.createElement('option');
+      o.value = typeof opt === 'string' ? opt : opt.value;
+      o.textContent = typeof opt === 'string' ? opt : opt.label;
+      sel.appendChild(o);
+    });
+    const cur = value == null ? '' : String(value);
+    if (cur && !Array.from(sel.options).some((o) => o.value === cur)) {
+      const o = document.createElement('option');
+      o.value = cur;
+      o.textContent = cur;
+      sel.appendChild(o);
+    }
+    sel.value = cur;
+    return sel;
+  }
+
+  function mountPartsList(row, parts, onChange, label, dataSf) {
+    const host = document.createElement('div');
+    host.className = 'prog-parts';
+    host.setAttribute('data-sf', dataSf || 'parts');
+
+    function redraw(list) {
+      host.innerHTML = '';
+      list.forEach((p, i) => {
+        const line = document.createElement('div');
+        line.className = 'prog-parts-row';
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.value = p == null ? '' : String(p);
+        inp.setAttribute('data-part', String(i));
+        inp.addEventListener('input', onChange);
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'btn-gri btn-inline btn-inline-danger';
+        rm.textContent = '×';
+        rm.onclick = () => {
+          const next = readParts();
+          next.splice(i, 1);
+          if (!next.length) next.push('');
+          redraw(next);
+          onChange();
+        };
+        line.appendChild(inp);
+        line.appendChild(rm);
+        host.appendChild(line);
+      });
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'btn-gri btn-inline';
+      add.textContent = '+ ' + (dataSf === 'args' ? 'arg' : 'part');
+      add.onclick = () => {
+        const next = readParts();
+        next.push('');
+        redraw(next);
+        onChange();
+      };
+      host.appendChild(add);
+    }
+
+    function readParts() {
+      return Array.from(host.querySelectorAll('input[data-part]')).map((inp) => inp.value);
+    }
+
+    host._readParts = readParts;
+    redraw(Array.isArray(parts) && parts.length ? parts.slice() : ['']);
+    row.appendChild(mkField(label || 'parts', host));
+    return host;
+  }
+
+  function renderFlatFields(body, step, onChange) {
+    body.innerHTML = '';
+    const row = document.createElement('div');
+    row.className = 'prog-row prog-step-fields';
+    body.appendChild(row);
+    const op = step.op;
+
+    function wire(el) {
+      el.addEventListener('input', onChange);
+      el.addEventListener('change', onChange);
+      return el;
+    }
+
+    if (op === 'assign') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
+      const srcSel = wire(mkSelect('_src', srcMode, [
+        { value: 'from', label: 'from (ref)' },
+        { value: 'val', label: 'val (literal)' },
+      ]));
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', step.from != null ? step.from : ''));
+      const valInp = wire(mkInput('val', literalToInput(step.val)));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      function toggleSrc() {
+        const m = srcSel.value;
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      srcSel.addEventListener('change', toggleSrc);
+      toggleSrc();
+      return;
+    }
+
+    if (op === 'cat') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      mountPartsList(row, step.parts, onChange, 'parts', 'parts');
+      return;
+    }
+
+    if (op === 'end') {
+      const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
+      const modeSel = wire(mkSelect('_end', mode, [
+        { value: 'msg', label: 'msg (ok)' },
+        { value: 'err', label: 'err (fail)' },
+      ]));
+      row.appendChild(mkField('tip', modeSel));
+      const text = mode === 'err' ? step.err : step.msg;
+      const textInp = wire(mkInput('text', text != null ? text : ''));
+      row.appendChild(mkField('text', textInp));
+      return;
+    }
+
+    if (op === 'kget') {
+      row.appendChild(mkField('key', wire(mkInput('key', step.key))));
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'auto', AS_OPTS))));
+      return;
+    }
+
+    if (op === 'ksave') {
+      row.appendChild(mkField('key', wire(mkInput('key', step.key))));
+      row.appendChild(mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form'))));
+      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'auto', AS_OPTS))));
+      return;
+    }
+
+    if (op === 'kdel') {
+      row.appendChild(mkField('key', wire(mkInput('key', step.key))));
+      return;
+    }
+
+    if (op === 'kadd' || op === 'krm') {
+      row.appendChild(mkField('key', wire(mkInput('key', step.key))));
+      row.appendChild(mkField('val', wire(mkInput('val', step.val))));
+      return;
+    }
+
+    if (op === 'scheck') {
+      const sel = document.createElement('select');
+      sel.setAttribute('data-sf', 'schema');
+      fillKeySelect(sel, 'schema', step.schema || '');
+      wire(sel);
+      const f = mkField('schema', sel);
+      row.appendChild(f);
+      mountSelectWithOpen(sel, {
+        getKey: () => sel.value,
+        title: 'Deschide schema',
+      });
+      row.appendChild(mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form'))));
+      return;
+    }
+
+    if (op === 'sgen') {
+      const sel = document.createElement('select');
+      sel.setAttribute('data-sf', 'schema');
+      fillKeySelect(sel, 'schema', step.schema || '');
+      wire(sel);
+      row.appendChild(mkField('schema', sel));
+      mountSelectWithOpen(sel, {
+        getKey: () => sel.value,
+        title: 'Deschide schema',
+      });
+      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : 'draft'))));
+      return;
+    }
+
+    if (op === 'jset') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : 'payload'))));
+      row.appendChild(mkField('path', wire(mkInput('path', step.path != null ? step.path : ''))));
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
+      const srcSel = wire(mkSelect('_src', srcMode, [
+        { value: 'from', label: 'from (ref)' },
+        { value: 'val', label: 'val (literal)' },
+      ]));
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', step.from != null ? step.from : ''));
+      const valInp = wire(mkInput('val', literalToInput(step.val)));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      function toggleSrc() {
+        const m = srcSel.value;
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      srcSel.addEventListener('change', toggleSrc);
+      toggleSrc();
+      return;
+    }
+
+    if (op === 'jget') {
+      row.appendChild(mkField('from', wire(mkInput('from', step.from))));
+      row.appendChild(mkField('path', wire(mkInput('path', step.path != null ? step.path : ''))));
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      return;
+    }
+
+    if (op === 'search') {
+      row.appendChild(mkField('query', wire(mkInput('query', step.query != null ? step.query : ''))));
+      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : 'hits'))));
+      row.appendChild(
+        mkField(
+          'limit',
+          wire(mkInput('limit', step.limit != null ? step.limit : ''))
+        )
+      );
+      row.appendChild(
+        mkField(
+          'offset',
+          wire(mkInput('offset', step.offset != null ? step.offset : ''))
+        )
+      );
+      row.appendChild(
+        mkField(
+          'index',
+          wire(mkInput('index', step.index != null ? step.index : ''))
+        )
+      );
+      return;
+    }
+
+    if (op === 'ui') {
+      row.appendChild(mkField('do', wire(mkSelect('do', step.do || 'refresh', UI_DO_OPTS))));
+      row.appendChild(
+        mkField('listid', wire(mkInput('listid', step.listid != null ? step.listid : '')))
+      );
+      return;
+    }
+
+    if (op === 'tstart' || op === 'tdo' || op === 'tstop') {
+      const hint = document.createElement('div');
+      hint.className = 'prog-step-hint';
+      hint.textContent = 'Fără parametri.';
+      body.appendChild(hint);
+      return;
+    }
+
+    if (op === 'redis') {
+      const doOpts = REDIS_DO_OPTS.map((c) => ({ value: c, label: c }));
+      const doSel = wire(mkSelect('do', step.do || 'TYPE', doOpts));
+      row.appendChild(mkField('do', doSel));
+      const argsList = Array.isArray(step.args)
+        ? step.args
+        : step.key != null && step.key !== ''
+          ? [step.key]
+          : [''];
+      mountPartsList(row, argsList, onChange, 'args', 'args');
+      row.appendChild(mkField('to', wire(mkInput('to', step.to != null ? step.to : ''))));
+      return;
+    }
+
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.setAttribute('data-s', 'json');
+    ta.value = JSON.stringify(step, null, 2);
+    ta.addEventListener('input', onChange);
+    body.appendChild(ta);
+  }
+
+  function sf(el, name) {
+    const n = el.querySelector('[data-sf="' + name + '"]');
+    return n ? n.value : '';
+  }
+
+  function readFlatStep(el) {
+    const opSel = el.querySelector('[data-s="op"]');
+    const op = opSel ? opSel.value : 'assign';
+    const step = { op: op };
+
+    if (op === 'assign') {
+      step.to = sf(el, 'to');
+      if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
+      else step.from = sf(el, 'from');
+      return step;
+    }
+    if (op === 'cat') {
+      step.to = sf(el, 'to');
+      const partsHost = el.querySelector('[data-sf="parts"]');
+      step.parts = partsHost && partsHost._readParts ? partsHost._readParts() : [''];
+      return step;
+    }
+    if (op === 'end') {
+      const text = sf(el, 'text');
+      if (sf(el, '_end') === 'err') step.err = text;
+      else step.msg = text;
+      return step;
+    }
+    if (op === 'kget') {
+      step.key = sf(el, 'key');
+      step.to = sf(el, 'to');
+      step.as = sf(el, 'as') || 'auto';
+      return step;
+    }
+    if (op === 'ksave') {
+      step.key = sf(el, 'key');
+      step.val = sf(el, 'val');
+      step.as = sf(el, 'as') || 'auto';
+      return step;
+    }
+    if (op === 'kdel') {
+      step.key = sf(el, 'key');
+      return step;
+    }
+    if (op === 'kadd' || op === 'krm') {
+      step.key = sf(el, 'key');
+      step.val = sf(el, 'val');
+      return step;
+    }
+    if (op === 'scheck') {
+      step.schema = sf(el, 'schema');
+      step.val = sf(el, 'val') || 'form';
+      return step;
+    }
+    if (op === 'sgen') {
+      step.schema = sf(el, 'schema');
+      step.to = sf(el, 'to') || 'draft';
+      return step;
+    }
+    if (op === 'jset') {
+      step.to = sf(el, 'to');
+      step.path = sf(el, 'path');
+      if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
+      else step.from = sf(el, 'from');
+      return step;
+    }
+    if (op === 'jget') {
+      step.from = sf(el, 'from');
+      step.path = sf(el, 'path');
+      step.to = sf(el, 'to');
+      return step;
+    }
+    if (op === 'search') {
+      step.query = sf(el, 'query');
+      step.to = sf(el, 'to') || 'hits';
+      const lim = sf(el, 'limit').trim();
+      const off = sf(el, 'offset').trim();
+      const idx = sf(el, 'index').trim();
+      if (lim !== '') {
+        const n = parseInt(lim, 10);
+        if (Number.isFinite(n)) step.limit = n;
+      }
+      if (off !== '') {
+        const n = parseInt(off, 10);
+        if (Number.isFinite(n)) step.offset = n;
+      }
+      if (idx) step.index = idx;
+      return step;
+    }
+    if (op === 'ui') {
+      step.do = sf(el, 'do') || 'refresh';
+      step.listid = sf(el, 'listid');
+      return step;
+    }
+    if (op === 'tstart' || op === 'tdo' || op === 'tstop') {
+      return step;
+    }
+    if (op === 'redis') {
+      step.do = sf(el, 'do') || 'TYPE';
+      const argsHost = el.querySelector('[data-sf="args"]') || el.querySelector('[data-sf="parts"]');
+      step.args = argsHost && argsHost._readParts ? argsHost._readParts() : [];
+      const to = sf(el, 'to').trim();
+      if (to) step.to = to;
+      return step;
+    }
+    return step;
+  }
+
+  function readStepFromEl(el) {
+    const ta = el.querySelector('textarea[data-s="json"]');
+    if (ta) {
+      const step = JSON.parse(ta.value);
+      if (!step || typeof step !== 'object') throw new Error('step invalid');
+      return step;
+    }
+    return readFlatStep(el);
   }
 
   function randeazaEditAlg(host, obj) {
@@ -513,59 +977,108 @@
     stepsHost.className = 'prog-steps';
     card.appendChild(stepsHost);
 
+    function renumber() {
+      Array.from(stepsHost.children).forEach((ch, i) => {
+        const sp = ch.querySelector('.prog-step-head [data-s="idx"]');
+        if (sp) sp.textContent = '#' + (i + 1);
+      });
+    }
+
     function syncFromDom() {
       obj.name = row1.querySelector('[data-f="name"]').value;
       const v = parseInt(row1.querySelector('[data-f="v"]').value, 10);
       obj.v = Number.isFinite(v) ? v : 1;
       const next = [];
       stepsHost.querySelectorAll('.prog-step').forEach((el) => {
+        const ta = el.querySelector('textarea[data-s="json"]');
         try {
-          const raw = el.querySelector('[data-s="json"]').value;
-          const step = JSON.parse(raw);
-          if (step && typeof step === 'object') next.push(step);
+          const step = readStepFromEl(el);
+          if (ta) ta.classList.remove('json-invalid');
+          next.push(step);
         } catch (e) {
-          el.querySelector('[data-s="json"]').classList.add('json-invalid');
+          if (ta) ta.classList.add('json-invalid');
         }
       });
       obj.steps = next;
       scrieRaw(obj);
     }
 
+    function fillBody(el, step) {
+      const body = el.querySelector('.prog-step-body');
+      if (!body) return;
+      body.innerHTML = '';
+      if (stepEditMode(step) === 'raw') {
+        const hint = document.createElement('div');
+        hint.className = 'prog-step-hint';
+        hint.textContent =
+          step.op === 'if' || step.op === 'foreach'
+            ? 'Nested steps — JSON (faza B: editor nested). when/then/else/do.'
+            : 'Formă complexă — editează JSON (sau tab Json).';
+        body.appendChild(hint);
+        const ta = document.createElement('textarea');
+        ta.setAttribute('data-s', 'json');
+        ta.value = JSON.stringify(step, null, 2);
+        ta.addEventListener('input', () => {
+          ta.classList.remove('json-invalid');
+          try {
+            JSON.parse(ta.value);
+            syncFromDom();
+          } catch (e) {
+            ta.classList.add('json-invalid');
+          }
+        });
+        body.appendChild(ta);
+      } else {
+        renderFlatFields(body, step, syncFromDom);
+      }
+    }
+
     function addStepRow(step, index) {
       step = step && typeof step === 'object' ? step : defaultStep('assign');
       const el = document.createElement('div');
       el.className = 'prog-step';
+
       const head = document.createElement('div');
       head.className = 'prog-step-head';
-      head.innerHTML = '<span>#' + (index + 1) + '</span> <code>' + (step.op || '?') + '</code>';
+      const idx = document.createElement('span');
+      idx.setAttribute('data-s', 'idx');
+      idx.textContent = '#' + (index + 1);
+      head.appendChild(idx);
+
+      const opSel = document.createElement('select');
+      opSel.setAttribute('data-s', 'op');
+      opSel.className = 'prog-step-op';
+      ALG_OPS.forEach((op) => {
+        const o = document.createElement('option');
+        o.value = op;
+        o.textContent = ALG_RAW_OPS.has(op) ? op + ' (json)' : op;
+        opSel.appendChild(o);
+      });
+      opSel.value = step.op && ALG_OPS.indexOf(step.op) !== -1 ? step.op : 'assign';
+      opSel.addEventListener('change', () => {
+        const next = defaultStep(opSel.value);
+        fillBody(el, next);
+        syncFromDom();
+      });
+      head.appendChild(opSel);
+
       const rm = document.createElement('button');
       rm.type = 'button';
       rm.className = 'btn-gri btn-inline btn-inline-danger';
       rm.textContent = 'Șterge';
       rm.onclick = () => {
         el.remove();
-        // re-number heads
-        Array.from(stepsHost.children).forEach((ch, i) => {
-          const sp = ch.querySelector('.prog-step-head span');
-          if (sp) sp.textContent = '#' + (i + 1);
-        });
+        renumber();
         syncFromDom();
       };
       head.appendChild(rm);
       el.appendChild(head);
-      const ta = document.createElement('textarea');
-      ta.setAttribute('data-s', 'json');
-      ta.value = JSON.stringify(step, null, 2);
-      ta.addEventListener('input', () => {
-        ta.classList.remove('json-invalid');
-        try {
-          JSON.parse(ta.value);
-          syncFromDom();
-        } catch (e) {
-          ta.classList.add('json-invalid');
-        }
-      });
-      el.appendChild(ta);
+
+      const body = document.createElement('div');
+      body.className = 'prog-step-body';
+      el.appendChild(body);
+      fillBody(el, step);
+
       stepsHost.appendChild(el);
     }
 
@@ -577,7 +1090,7 @@
     ALG_OPS.forEach((op) => {
       const o = document.createElement('option');
       o.value = op;
-      o.textContent = op;
+      o.textContent = ALG_RAW_OPS.has(op) ? op + ' (json)' : op;
       sel.appendChild(o);
     });
     const add = document.createElement('button');
@@ -1117,7 +1630,10 @@
     module.exports = {
       esteProgTip,
       ALG_OPS,
+      ALG_RAW_OPS,
       defaultStep,
+      stepEditMode,
+      parseMaybeLiteral,
       normalizeUiTabBlocks,
     };
   }

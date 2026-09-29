@@ -185,6 +185,7 @@ Comportament:
 - nu împinge rows din alg — doar reîncarcă sursa
 - **Edit UI:** pe fiecare tab → **+ Block**, `type` = `form` \| `list`, `id` obligatoriu, select cheie `form:_` / `list:_` (legacy `forms[]` se citește și se convertește la blocks)
 - **Edit list:** title / source (`from` + pattern|query|key) / columns (`path`|`const`) / rowBtns / btns — ca form/ui (tab Formular rămâne, direcție: Edit-first)
+- **Edit alg (A):** câmpuri pe op (`assign`, `k*`, `j*`, `end`, …); `if`/`foreach` (și `search` cu query-obiect) rămân JSON până la faza B/C
 
 ---
 
