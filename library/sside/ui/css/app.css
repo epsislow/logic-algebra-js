@@ -490,7 +490,7 @@
         }
         .prog-step-body { margin-top: 4px; }
         .prog-step-view { cursor: pointer; }
-        .prog-step-view:hover { background: var(--row-hover); }
+        .prog-step-view:hover { background: var(--row-hover) !important; }
         .prog-step-editing {
             border-color: var(--accent, #3b82f6);
         }
@@ -514,8 +514,13 @@
             padding: 0 0 2px;
             font-style: italic;
         }
-        .prog-step-off {
-            opacity: 0.55;
+        html[data-theme="dark"] .prog-step-off {
+            opacity: 1;
+            background-color: #112;
+        }
+        html[data-theme="light"] .prog-step-off {
+            opacity: 1;
+            background-color: #dee;
         }
         .prog-step-off .prog-step-preview,
         .prog-step-off .prog-block-preview {
