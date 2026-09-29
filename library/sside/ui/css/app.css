@@ -387,11 +387,29 @@
             margin-bottom: 6px;
         }
         .prog-field-actions {
-            display: flex; gap: 4px; margin-top: 4px; align-items: center;
+            display: none;
+        }
+        .prog-select-with-open {
+            display: flex;
+            align-items: stretch;
+            gap: 4px;
+            width: 100%;
+        }
+        .prog-select-with-open select {
+            flex: 1;
+            min-width: 0;
+            width: auto !important;
+            margin: 0;
         }
         .btn-open-related {
-            width: auto !important; min-width: 28px; padding: 2px 8px !important;
-            font-size: 14px; line-height: 1.2; margin: 0 !important;
+            width: auto !important;
+            min-width: 32px;
+            padding: 4px 8px !important;
+            font-size: 14px;
+            line-height: 1.2;
+            margin: 0 !important;
+            flex: 0 0 auto;
+            align-self: stretch;
         }
         .btn-open-related:disabled {
             opacity: 0.4; cursor: not-allowed;

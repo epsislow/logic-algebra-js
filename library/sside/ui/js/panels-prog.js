@@ -138,6 +138,41 @@
     return progObj;
   }
 
+  /** Select + buton ↗ pe același rând (deschide cheia legată). */
+  function mountSelectWithOpen(sel, opts) {
+    opts = opts || {};
+    const wrap = document.createElement('div');
+    wrap.className = 'prog-select-with-open';
+    const parent = sel.parentNode;
+    if (parent) parent.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'btn-gri btn-inline btn-open-related';
+    openBtn.textContent = '↗';
+    wrap.appendChild(openBtn);
+
+    function currentKey() {
+      if (typeof opts.getKey === 'function') return String(opts.getKey() || '').trim();
+      return String(sel.value || '').trim();
+    }
+    function syncOpenBtn() {
+      const k = currentKey();
+      openBtn.disabled = !k;
+      openBtn.title = k ? 'Deschide ' + k : 'Alege o cheie';
+    }
+    openBtn.onclick = () => {
+      const k = currentKey();
+      if (!k) return;
+      if (typeof opts.beforeOpen === 'function') opts.beforeOpen();
+      if (typeof deps.onOpenRelatedKey === 'function') deps.onOpenRelatedKey(k);
+    };
+    sel.addEventListener('change', syncOpenBtn);
+    syncOpenBtn();
+    return { openBtn, syncOpenBtn, wrap };
+  }
+
   // ---------- Form edit ----------
   function randeazaEditForm(host, obj) {
     if (!Array.isArray(obj.btns)) obj.btns = [];
@@ -154,7 +189,8 @@
       '<div class="prog-field"><label>schema</label><select data-f="schema"></select></div>';
     card.appendChild(row1);
     row1.querySelector('[data-f="title"]').value = obj.title || '';
-    fillKeySelect(row1.querySelector('[data-f="schema"]'), 'schema', obj.schema || '');
+    const schemaSel = row1.querySelector('[data-f="schema"]');
+    fillKeySelect(schemaSel, 'schema', obj.schema || '');
 
     const btnsHost = document.createElement('div');
     btnsHost.className = 'prog-steps';
@@ -162,7 +198,7 @@
 
     function syncFromDom() {
       obj.title = row1.querySelector('[data-f="title"]').value;
-      obj.schema = row1.querySelector('[data-f="schema"]').value;
+      obj.schema = schemaSel.value;
       obj.btns = [];
       btnsHost.querySelectorAll('.prog-step').forEach((el) => {
         const kind = normalizeBtnKind(el.querySelector('[data-b="kind"]').value);
@@ -176,6 +212,8 @@
       });
       scrieRaw(obj);
     }
+
+    mountSelectWithOpen(schemaSel, { beforeOpen: syncFromDom });
 
     function addBtnRow(btn) {
       btn = btn || { id: '', label: '', alg: '', kind: '' };
@@ -199,8 +237,10 @@
       el.appendChild(rm);
       el.querySelector('[data-b="id"]').value = btn.id || '';
       el.querySelector('[data-b="label"]').value = btn.label || '';
-      fillKeySelect(el.querySelector('[data-b="alg"]'), 'alg', btn.alg || '');
+      const algSel = el.querySelector('[data-b="alg"]');
+      fillKeySelect(algSel, 'alg', btn.alg || '');
       fillBtnKindSelect(el.querySelector('[data-b="kind"]'), btn.kind || '');
+      mountSelectWithOpen(algSel, { beforeOpen: syncFromDom });
       el.querySelectorAll('input,select').forEach((inp) => {
         inp.addEventListener('input', syncFromDom);
         inp.addEventListener('change', syncFromDom);
@@ -343,36 +383,18 @@
           type === 'list' ? block.list || '' : block.form || ''
         );
 
+        const openCtl = mountSelectWithOpen(keySel, { beforeOpen: syncFromDom });
+
         typeSel.onchange = () => {
           refillKey('');
           syncFromDom();
-          syncOpenBtn();
+          openCtl.syncOpenBtn();
         };
         keySel.onchange = () => {
           syncFromDom();
-          syncOpenBtn();
+          openCtl.syncOpenBtn();
         };
         idInp.addEventListener('input', syncFromDom);
-
-        const openBtn = document.createElement('button');
-        openBtn.type = 'button';
-        openBtn.className = 'btn-gri btn-inline btn-open-related';
-        openBtn.textContent = '↗';
-        openBtn.title = 'Deschide cheia';
-        function syncOpenBtn() {
-          const k = (keySel.value || '').trim();
-          openBtn.disabled = !k;
-          openBtn.title = k ? 'Deschide ' + k : 'Alege o cheie';
-        }
-        openBtn.onclick = () => {
-          const k = (keySel.value || '').trim();
-          if (!k) return;
-          syncFromDom();
-          if (typeof deps.onOpenRelatedKey === 'function') {
-            deps.onOpenRelatedKey(k);
-          }
-        };
-        syncOpenBtn();
 
         const rm = document.createElement('button');
         rm.type = 'button';
@@ -382,16 +404,6 @@
           row.remove();
           syncFromDom();
         };
-        // pune ↗ lângă select (în rândul de field-uri)
-        const keyField = keySel.closest('.prog-field');
-        if (keyField) {
-          const actions = document.createElement('div');
-          actions.className = 'prog-field-actions';
-          keyField.appendChild(actions);
-          actions.appendChild(openBtn);
-        } else {
-          row.appendChild(openBtn);
-        }
         row.appendChild(rm);
         stack.appendChild(row);
       }
