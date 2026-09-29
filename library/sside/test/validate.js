@@ -52,6 +52,52 @@ module.exports = {
     },
     {
       id: 5,
+      desc: 'alg comment + note/off/thenOff validate (F2-alg-E)',
+      run() {
+        assert(
+          V.validateAlg({
+            v: 1,
+            steps: [
+              { op: 'comment', note: 'x' },
+              { op: 'assign', to: 'a', val: 1, off: true },
+              {
+                op: 'if',
+                when: ['eq', 1, 1],
+                then: [],
+                thenOff: true,
+                elseOff: false,
+              },
+            ],
+          }).ok
+        );
+        assert(
+          !V.validateAlg({
+            v: 1,
+            steps: [{ op: 'assign', to: 'a', from: 'b', note: 1 }],
+          }).ok
+        );
+        assert(
+          !V.validateAlg({
+            v: 1,
+            steps: [{ op: 'assign', to: 'a', from: 'b', off: 'yes' }],
+          }).ok
+        );
+        assert(
+          !V.validateAlg({
+            v: 1,
+            steps: [{ op: 'assign', to: 'a', from: 'b', thenOff: true }],
+          }).ok
+        );
+        assert(
+          !V.validateAlg({
+            v: 1,
+            steps: [{ op: 'nope' }],
+          }).ok
+        );
+      },
+    },
+    {
+      id: 6,
       desc: 'ui forms ok',
       run() {
         const r = V.validateUi({
@@ -62,7 +108,7 @@ module.exports = {
       },
     },
     {
-      id: 6,
+      id: 7,
       desc: 'mdToHtml heading + code',
       run() {
         const h = mdToHtml('# Titlu\n\n`code`\n');

@@ -5,7 +5,7 @@
   'use strict';
 
   const ALG_OPS = new Set([
-    'assign', 'cat', 'if', 'foreach', 'end',
+    'assign', 'cat', 'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',
@@ -121,42 +121,60 @@
     return ok();
   }
 
-  function validateAlg(obj) {
-    const e = checkV(obj);
-    if (e) return e;
-    if (!Array.isArray(obj.steps)) return err('alg.steps trebuie să fie array');
-    for (let i = 0; i < obj.steps.length; i++) {
-      const s = obj.steps[i];
-      if (!s || typeof s !== 'object') return err('steps[' + i + '] invalid');
-      if (!s.op || typeof s.op !== 'string') return err('steps[' + i + '] fără op');
-      if (!ALG_OPS.has(s.op)) return err('steps[' + i + ']: op necunoscut „' + s.op + '”');
+  function validateStepMeta(s, path) {
+    if (s.note != null && typeof s.note !== 'string') {
+      return err(path + '.note trebuie string');
+    }
+    if (s.off != null && typeof s.off !== 'boolean') {
+      return err(path + '.off trebuie boolean');
+    }
+    if (s.thenOff != null && typeof s.thenOff !== 'boolean') {
+      return err(path + '.thenOff trebuie boolean');
+    }
+    if (s.elseOff != null && typeof s.elseOff !== 'boolean') {
+      return err(path + '.elseOff trebuie boolean');
+    }
+    if ((s.thenOff != null || s.elseOff != null) && s.op !== 'if') {
+      return err(path + ': thenOff/elseOff doar pe if');
+    }
+    return null;
+  }
+
+  function validateAlgSteps(steps, path) {
+    if (!Array.isArray(steps)) return err(path + ' trebuie array');
+    for (let i = 0; i < steps.length; i++) {
+      const s = steps[i];
+      const p = path + '[' + i + ']';
+      if (!s || typeof s !== 'object') return err(p + ' invalid');
+      if (!s.op || typeof s.op !== 'string') return err(p + ' fără op');
+      if (!ALG_OPS.has(s.op)) return err(p + ': op necunoscut „' + s.op + '”');
+      const metaErr = validateStepMeta(s, p);
+      if (metaErr) return metaErr;
       if (s.op === 'scheck' || s.op === 'sgen') {
         if (s.schema != null && s.schema !== '' && typeof s.schema === 'string') {
           if (!/^schema:_[^:]+$/.test(s.schema) && s.schema.indexOf('form.') !== 0 && s.schema.charAt(0) !== '$') {
             if (!s.schema.includes('.') && s.schema.charAt(0) !== '$' && !/^schema:/.test(s.schema)) {
-              return err('steps[' + i + '].schema arată invalid');
+              return err(p + '.schema arată invalid');
             }
           }
         }
       }
       if (s.op === 'ui') {
         if (s.listid == null || s.listid === '') {
-          return err('steps[' + i + ']: ui fără listid');
+          return err(p + ': ui fără listid');
         }
         const d = s.do || 'refresh';
         if (d !== 'refresh' && d !== 'clear') {
-          return err('steps[' + i + ']: ui.do trebuie refresh|clear');
+          return err(p + ': ui.do trebuie refresh|clear');
         }
         const toks = Array.isArray(s.listid) ? s.listid : [s.listid];
         for (let j = 0; j < toks.length; j++) {
           const tok = toks[j];
           if (typeof tok === 'number') {
-            return err(
-              'steps[' + i + '].listid[' + j + ']: folosește string „_1” nu număr'
-            );
+            return err(p + '.listid[' + j + ']: folosește string „_1” nu număr');
           }
           if (typeof tok !== 'string') {
-            return err('steps[' + i + '].listid trebuie string|string[]');
+            return err(p + '.listid trebuie string|string[]');
           }
           const t = tok.trim();
           if (t.charAt(0) === '$' || t === 'form' || t.indexOf('form.') === 0) {
@@ -164,11 +182,34 @@
           }
           if (UiListRef && typeof UiListRef.validateListIdToken === 'function') {
             const le = UiListRef.validateListIdToken(t);
-            if (le) return err('steps[' + i + '].listid: ' + le);
+            if (le) return err(p + '.listid: ' + le);
           }
         }
       }
+      if (s.op === 'if') {
+        if (Array.isArray(s.then)) {
+          const e1 = validateAlgSteps(s.then, p + '.then');
+          if (e1) return e1;
+        }
+        if (Array.isArray(s.else)) {
+          const e2 = validateAlgSteps(s.else, p + '.else');
+          if (e2) return e2;
+        }
+      }
+      if (s.op === 'foreach' && Array.isArray(s.do)) {
+        const e3 = validateAlgSteps(s.do, p + '.do');
+        if (e3) return e3;
+      }
     }
+    return null;
+  }
+
+  function validateAlg(obj) {
+    const e = checkV(obj);
+    if (e) return e;
+    if (!Array.isArray(obj.steps)) return err('alg.steps trebuie să fie array');
+    const se = validateAlgSteps(obj.steps, 'steps');
+    if (se) return se;
     return ok();
   }
 

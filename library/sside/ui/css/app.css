@@ -507,6 +507,24 @@
             font-size: 14px;
             line-height: 1;
         }
+        .prog-step-note {
+            font-family: ui-monospace, Consolas, monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 0 0 2px;
+            font-style: italic;
+        }
+        .prog-step-off {
+            opacity: 0.55;
+        }
+        .prog-step-off .prog-step-preview,
+        .prog-step-off .prog-block-preview {
+            text-decoration: line-through;
+        }
+        .prog-step-off-btn.is-off {
+            border-color: #dc3545 !important;
+            color: #dc3545;
+        }
         .prog-step-hint {
             font-size: 12px; color: var(--text-muted); margin: 0 0 6px;
         }

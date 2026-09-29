@@ -30,6 +30,9 @@ Exemplu `when` text: `qty <= 0 or form.id == ""` (vezi Docs → **when**).
 
 În **Edit**: bloc ca `if`; panou cu `in`/`as` + card **do**.
 
+### comment
+`{ "op": "comment", "note": "--- validare ---" }` — no-op la run; în Edit view: `// nota` sub (F2-alg-E).
+
 ### end
 - `{ "op": "end", "msg": "Salvat" }` — succes (banner verde)
 - `{ "op": "end", "err": "Eroare" }` — fail (banner roșu)
@@ -45,6 +48,16 @@ Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 - text: `==` `!=` `<` `<=` `>` `>=`, `and`/`or`/`not`, `truthy(x)` / `empty(x)`, paranteze; precedență `not` > `and` > `or`
 
 `empty` — true pentru `null`/`undefined`, array/string gol, obiect fără chei. Detalii: Docs → **when**.
+
+## Meta pe pași (F2-alg-E)
+
+| Câmp | Sens |
+|------|------|
+| `note` | string; în view `// …` **sub** op |
+| `off` | `true` → runner **sare** pasul (inclusiv tot `if`/`foreach`) |
+| `thenOff` / `elseOff` | doar pe `if`; oprește doar acea ramură |
+
+În Edit: toggle **⊘** (doar pe pasul în edit / panou bloc). Op `comment` = doar `note`.
 
 ## Chei (k*)
 

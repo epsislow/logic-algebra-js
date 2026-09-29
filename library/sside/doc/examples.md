@@ -1,6 +1,6 @@
 # Exemple
 
-În **Edit** pe `alg:`: pașii apar ca **view** (text cu conținutul op); click pe rând → edit; **👁** → view. `if`/`foreach` = bloc (then/else/do). Insert: `[+ step]` pe rând. Reordonare: **↑↓**. Tab **Json** rămâne disponibil.
+În **Edit** pe `alg:`: pașii apar ca **view** (text + `// note`); click → edit (**⊘** off); **👁** → view. Op `comment`. `if`/`foreach` = bloc. Tab **Json** rămâne disponibil.
 
 ## Salvare item
 

@@ -6,7 +6,7 @@
   'use strict';
 
   const ALG_OPS = [
-    'assign', 'cat', 'if', 'foreach', 'end',
+    'assign', 'cat', 'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',
@@ -496,6 +496,7 @@
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
+    if (op === 'comment') return { op: 'comment', note: '' };
     if (op === 'kget') return { op: 'kget', key: '', to: '', as: 'auto' };
     if (op === 'ksave') return { op: 'ksave', key: '', val: 'form', as: 'auto' };
     if (op === 'kdel') return { op: 'kdel', key: '' };
@@ -597,7 +598,10 @@
         ' · then(' +
         tn +
         ')' +
-        (hasElse ? ' else(' + en + ')' : '')
+        (step.thenOff ? '[off]' : '') +
+        (hasElse
+          ? ' else(' + en + ')' + (step.elseOff ? '[off]' : '')
+          : '')
       );
     }
     if (step.op === 'foreach') {
@@ -643,6 +647,9 @@
   function previewStep(step) {
     if (!step || typeof step !== 'object') return '—';
     const op = step.op != null ? String(step.op) : '?';
+
+    // comment: view focus pe // note (rând separat); linia op goală
+    if (op === 'comment') return '';
 
     if (op === 'if' || op === 'foreach') {
       const pb = previewBlock(step);
@@ -980,6 +987,11 @@
       return el;
     }
 
+    if (op === 'comment') {
+      // doar note (adăugat și de appendNoteField pe toate ops)
+      return;
+    }
+
     if (op === 'assign') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
       const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
@@ -1187,72 +1199,82 @@
     return n ? n.value : '';
   }
 
+  function withStepMeta(el, step) {
+    const note = sf(el, 'note');
+    if (note != null && String(note).trim() !== '') step.note = String(note);
+    if (el._stepRef && el._stepRef.off === true) step.off = true;
+    return step;
+  }
+
   function readFlatStep(el) {
     const opSel = el.querySelector('[data-s="op"]');
     const op = opSel ? opSel.value : 'assign';
     const step = { op: op };
 
+    if (op === 'comment') {
+      return withStepMeta(el, step);
+    }
     if (op === 'assign') {
       step.to = sf(el, 'to');
       if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
       else step.from = sf(el, 'from');
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'cat') {
       step.to = sf(el, 'to');
       const partsHost = el.querySelector('[data-sf="parts"]');
       step.parts = partsHost && partsHost._readParts ? partsHost._readParts() : [''];
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'end') {
       const text = sf(el, 'text');
       if (sf(el, '_end') === 'err') step.err = text;
       else step.msg = text;
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'kget') {
       step.key = sf(el, 'key');
       step.to = sf(el, 'to');
       step.as = sf(el, 'as') || 'auto';
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'ksave') {
       step.key = sf(el, 'key');
       step.val = sf(el, 'val');
       step.as = sf(el, 'as') || 'auto';
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'kdel') {
       step.key = sf(el, 'key');
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'kadd' || op === 'krm') {
       step.key = sf(el, 'key');
       step.val = sf(el, 'val');
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'scheck') {
       step.schema = sf(el, 'schema');
       step.val = sf(el, 'val') || 'form';
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'sgen') {
       step.schema = sf(el, 'schema');
       step.to = sf(el, 'to') || 'draft';
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'jset') {
       step.to = sf(el, 'to');
       step.path = sf(el, 'path');
       if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
       else step.from = sf(el, 'from');
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'jget') {
       step.from = sf(el, 'from');
       step.path = sf(el, 'path');
       step.to = sf(el, 'to');
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'search') {
       step.query = sf(el, 'query');
@@ -1269,15 +1291,15 @@
         if (Number.isFinite(n)) step.offset = n;
       }
       if (idx) step.index = idx;
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'ui') {
       step.do = sf(el, 'do') || 'refresh';
       step.listid = sf(el, 'listid');
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') {
-      return step;
+      return withStepMeta(el, step);
     }
     if (op === 'redis') {
       step.do = sf(el, 'do') || 'TYPE';
@@ -1286,9 +1308,38 @@
       step.args = argsHost && argsHost._readParts ? argsHost._readParts() : [];
       const to = sf(el, 'to').trim();
       if (to) step.to = to;
-      return step;
+      return withStepMeta(el, step);
     }
-    return step;
+    return withStepMeta(el, step);
+  }
+
+  function appendNoteField(body, step, onChange) {
+    const row = document.createElement('div');
+    row.className = 'prog-row prog-step-note-edit';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.setAttribute('data-sf', 'note');
+    inp.placeholder = 'note (opțional)';
+    inp.value = step.note != null ? String(step.note) : '';
+    inp.addEventListener('input', onChange);
+    row.appendChild(mkField('note', inp));
+    body.appendChild(row);
+  }
+
+  function appendNoteView(body, step) {
+    if (step.note == null || String(step.note) === '') {
+      if (step.op === 'comment') {
+        const n = document.createElement('div');
+        n.className = 'prog-step-note';
+        n.textContent = '//';
+        body.appendChild(n);
+      }
+      return;
+    }
+    const n = document.createElement('div');
+    n.className = 'prog-step-note';
+    n.textContent = '// ' + String(step.note);
+    body.appendChild(n);
   }
 
   /**
@@ -1504,7 +1555,8 @@
           'prog-step' +
           (isBlock ? ' prog-step-block' : '') +
           (!isBlock && !isEditing ? ' prog-step-view' : '') +
-          (isEditing ? ' prog-step-editing' : '');
+          (isEditing ? ' prog-step-editing' : '') +
+          (step.off === true ? ' prog-step-off' : '');
         el.setAttribute('data-mode', mode);
         el.setAttribute('data-editing', isEditing ? '1' : '0');
         el._stepRef = step;
@@ -1612,7 +1664,10 @@
           opSel.className = 'prog-step-op';
           fillOpSelect(opSel, step.op);
           opSel.addEventListener('change', () => {
+            const prev = step;
             const next = defaultStep(opSel.value);
+            if (prev.note) next.note = prev.note;
+            if (prev.off === true) next.off = true;
             const i = Array.from(stepsHost.children).indexOf(el);
             flushCurrentView();
             if (i >= 0) stepsArr[i] = next;
@@ -1632,6 +1687,27 @@
             setEditIndex(null);
           };
           head.appendChild(viewBtn);
+
+          const offBtn = document.createElement('button');
+          offBtn.type = 'button';
+          offBtn.className =
+            'btn-gri btn-inline prog-step-off-btn' +
+            (step.off === true ? ' is-off' : '');
+          offBtn.textContent = '⊘';
+          offBtn.title = step.off === true ? 'Pornește pasul (off→on)' : 'Oprește pasul (on→off)';
+          offBtn.setAttribute('aria-label', offBtn.title);
+          offBtn.onclick = (ev) => {
+            ev.stopPropagation();
+            flushCurrentView();
+            const i = Array.from(stepsHost.children).indexOf(el);
+            const cur = i >= 0 ? stepsArr[i] : step;
+            if (cur.off === true) delete cur.off;
+            else cur.off = true;
+            if (i >= 0) stepsArr[i] = cur;
+            frame.editIndex = i >= 0 ? i : index;
+            rebuild();
+          };
+          head.appendChild(offBtn);
 
           mountDeleteBtn(head);
           mountMoveBtns(head, index);
@@ -1679,6 +1755,7 @@
           prev.className = 'prog-block-preview';
           prev.textContent = previewBlock(step);
           body.appendChild(prev);
+          appendNoteView(body, step);
           el.addEventListener('click', (ev) => {
             if (ev.target && ev.target.closest && ev.target.closest('button, select')) {
               return;
@@ -1692,10 +1769,14 @@
             });
           });
         } else if (!isEditing) {
-          const prev = document.createElement('div');
-          prev.className = 'prog-step-preview';
-          prev.textContent = previewStep(step);
-          body.appendChild(prev);
+          const main = previewStep(step);
+          if (main) {
+            const prev = document.createElement('div');
+            prev.className = 'prog-step-preview';
+            prev.textContent = main;
+            body.appendChild(prev);
+          }
+          appendNoteView(body, step);
           el.addEventListener('click', (ev) => {
             if (
               ev.target &&
@@ -1729,8 +1810,10 @@
             }
           });
           body.appendChild(ta);
+          appendNoteField(body, step, syncAll);
         } else {
           renderFlatFields(body, step, syncAll);
+          appendNoteField(body, step, syncAll);
         }
 
         stepsHost.appendChild(el);
@@ -1793,6 +1876,44 @@
       wrap.className = 'prog-block-panel';
       parent.appendChild(wrap);
 
+      // meta: note + off (⊘) pe bloc
+      const metaRow = document.createElement('div');
+      metaRow.className = 'prog-row';
+      const noteInp = document.createElement('input');
+      noteInp.type = 'text';
+      noteInp.setAttribute('data-block', 'note');
+      noteInp.placeholder = 'note (opțional)';
+      noteInp.value = step.note != null ? String(step.note) : '';
+      noteInp.addEventListener('input', () => {
+        const v = noteInp.value.trim();
+        if (v) step.note = v;
+        else delete step.note;
+        syncAll();
+      });
+      metaRow.appendChild(mkField('note', noteInp));
+      const offBtn = document.createElement('button');
+      offBtn.type = 'button';
+      offBtn.className =
+        'btn-gri btn-inline prog-step-off-btn' +
+        (step.off === true ? ' is-off' : '');
+      offBtn.textContent = '⊘';
+      offBtn.title =
+        step.off === true ? 'Pornește blocul (off→on)' : 'Oprește blocul (on→off)';
+      offBtn.onclick = () => {
+        if (step.off === true) delete step.off;
+        else step.off = true;
+        offBtn.classList.toggle('is-off', step.off === true);
+        offBtn.title =
+          step.off === true ? 'Pornește blocul (off→on)' : 'Oprește blocul (on→off)';
+        syncAll();
+      };
+      const offWrap = document.createElement('div');
+      offWrap.className = 'prog-field';
+      offWrap.innerHTML = '<label>off</label>';
+      offWrap.appendChild(offBtn);
+      metaRow.appendChild(offWrap);
+      wrap.appendChild(metaRow);
+
       if (step.op === 'if') {
         const whenLab = document.createElement('div');
         whenLab.className = 'prog-step-hint';
@@ -1831,7 +1952,6 @@
             whenErr.textContent =
               r.error +
               (typeof r.index === 'number' ? ' (pos ' + r.index + ')' : '');
-            // D46: nu rescrie when invalid în progObj
           } else {
             whenTa.classList.add('json-invalid');
             whenErr.textContent = 'parser when indisponibil';
@@ -1840,11 +1960,40 @@
         wrap.appendChild(whenTa);
         wrap.appendChild(whenErr);
 
+        function mountBranchOffToggle(label, flagKey) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className =
+            'btn-gri btn-inline prog-step-off-btn' +
+            (step[flagKey] === true ? ' is-off' : '');
+          btn.textContent = '⊘';
+          btn.title =
+            step[flagKey] === true
+              ? 'Pornește ' + label
+              : 'Oprește ' + label + ' (thenOff/elseOff)';
+          btn.setAttribute('data-block', flagKey);
+          btn.onclick = (ev) => {
+            ev.stopPropagation();
+            if (step[flagKey] === true) delete step[flagKey];
+            else step[flagKey] = true;
+            btn.classList.toggle('is-off', step[flagKey] === true);
+            syncAll();
+            renderView();
+          };
+          return btn;
+        }
+
         if (!Array.isArray(step.then)) step.then = [];
-        mountBranchCard(wrap, 'then', step.then.length, () => {
-          flushCurrentView();
-          pushNav({ kind: 'steps', label: 'then', steps: step.then });
-        });
+        mountBranchCard(
+          wrap,
+          'then' + (step.thenOff ? ' [off]' : ''),
+          step.then.length,
+          () => {
+            flushCurrentView();
+            pushNav({ kind: 'steps', label: 'then', steps: step.then });
+          },
+          [mountBranchOffToggle('then', 'thenOff')]
+        );
 
         if (Array.isArray(step.else)) {
           const rmElse = document.createElement('button');
@@ -1865,18 +2014,19 @@
             if (!ok) return;
             flushCurrentView();
             delete step.else;
+            delete step.elseOff;
             renderView();
             scrieRaw(obj);
           };
           mountBranchCard(
             wrap,
-            'else',
+            'else' + (step.elseOff ? ' [off]' : ''),
             step.else.length,
             () => {
               flushCurrentView();
               pushNav({ kind: 'steps', label: 'else', steps: step.else });
             },
-            [rmElse]
+            [mountBranchOffToggle('else', 'elseOff'), rmElse]
           );
         } else {
           const addElse = document.createElement('button');

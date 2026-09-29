@@ -35,6 +35,7 @@ module.exports = {
         assert(Prog.ALG_OPS.indexOf('scheck') !== -1);
         assert(Prog.ALG_OPS.indexOf('search') !== -1);
         assert(Prog.ALG_OPS.indexOf('ui') !== -1);
+        assert(Prog.ALG_OPS.indexOf('comment') !== -1);
       },
     },
     {
@@ -299,7 +300,20 @@ module.exports = {
         assert(u.indexOf('refresh') !== -1);
         assert(u.indexOf('_self') !== -1);
 
-        // mai bun decât JSON brut: conține datele, fără virgule de obiect
+        assertEq(Prog.previewStep({ op: 'comment', note: 'x' }), '');
+        assertEq(Prog.defaultStep('comment').op, 'comment');
+
+        const iffOff = Prog.previewBlock({
+          op: 'if',
+          when: ['eq', 'a', 1],
+          then: [],
+          else: [],
+          thenOff: true,
+          elseOff: true,
+        });
+        assert(iffOff.indexOf('[off]') !== -1);
+
+        // mai bun decât JSON brut: conține datele, fără virgole de obiect
         const jsonish = JSON.stringify({ op: 'assign', to: 'qty', from: 'form.qty' });
         assert(a !== jsonish);
         assert(a.length > 5);

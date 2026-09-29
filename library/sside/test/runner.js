@@ -152,5 +152,84 @@ module.exports = {
         assertEq(tip, 'json');
       },
     },
+    {
+      id: 8,
+      desc: 'comment no-op + off skip + thenOff/elseOff (F2-alg-E)',
+      async run() {
+        const redis = createMemoryRedis();
+        const r1 = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'comment', note: 'secțiune' },
+              { op: 'assign', to: 'x', val: 1 },
+              { op: 'assign', to: 'y', val: 2, off: true },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r1.vars.x, 1);
+        assert(r1.vars.y === undefined, 'off skip assign y');
+        assertEq(r1.msg, 'ok');
+
+        const r2 = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'if',
+                when: ['eq', 1, 1],
+                then: [{ op: 'assign', to: 't', val: 'then' }],
+                else: [{ op: 'assign', to: 'e', val: 'else' }],
+                thenOff: true,
+              },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r2.vars.t === undefined, 'thenOff');
+        assert(r2.vars.e === undefined);
+
+        const r3 = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'if',
+                when: ['eq', 1, 2],
+                then: [{ op: 'assign', to: 't', val: 'then' }],
+                else: [{ op: 'assign', to: 'e', val: 'else' }],
+                elseOff: true,
+              },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r3.vars.e === undefined, 'elseOff');
+        assert(r3.vars.t === undefined);
+
+        const r4 = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'if',
+                off: true,
+                when: ['eq', 1, 1],
+                then: [{ op: 'assign', to: 't', val: 'then' }],
+              },
+              { op: 'assign', to: 'z', val: 9 },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r4.vars.t === undefined, 'if off');
+        assertEq(r4.vars.z, 9);
+      },
+    },
   ],
 };

@@ -64,6 +64,13 @@
     const op = step.op;
     if (!op) throw new Error('step fără op');
 
+    // F2-alg-E: off → skip întregul pas (incl. if/foreach)
+    if (step.off === true) return;
+
+    if (op === 'comment') {
+      return;
+    }
+
     if (op === 'assign') {
       let val;
       if (Object.prototype.hasOwnProperty.call(step, 'val')) {
@@ -114,8 +121,11 @@
 
     if (op === 'if') {
       const ok = When.evalWhen(step.when, (t) => getVal(ctx, t));
-      if (ok) await runSteps(step.then || [], ctx, env);
-      else await runSteps(step.else || [], ctx, env);
+      if (ok) {
+        if (step.thenOff !== true) await runSteps(step.then || [], ctx, env);
+      } else {
+        if (step.elseOff !== true) await runSteps(step.else || [], ctx, env);
+      }
       return;
     }
 
