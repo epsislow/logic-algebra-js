@@ -173,5 +173,60 @@ module.exports = {
         assert(Array.isArray(steps[0].then));
       },
     },
+    {
+      id: 9,
+      desc: 'appendStep pe listă goală și pe listă existentă',
+      run() {
+        const empty = [];
+        const a = Prog.appendStep(empty, 'assign');
+        assertEq(empty.length, 1);
+        assertEq(a.op, 'assign');
+        assertEq(empty[0], a);
+
+        const b = Prog.appendStep(empty, 'if');
+        assertEq(empty.length, 2);
+        assertEq(empty[1].op, 'if');
+        assertEq(b.op, 'if');
+      },
+    },
+    {
+      id: 10,
+      desc: 'insertStepAt la 0 / la final / clamp peste length',
+      run() {
+        const steps = [Prog.defaultStep('ksave')];
+        Prog.insertStepAt(steps, 0, 'assign');
+        assertEq(steps.map((s) => s.op).join(','), 'assign,ksave');
+        Prog.insertStepAt(steps, steps.length, 'end');
+        assertEq(steps.map((s) => s.op).join(','), 'assign,ksave,end');
+        Prog.insertStepAt(steps, 99, 'ui');
+        assertEq(steps[steps.length - 1].op, 'ui');
+      },
+    },
+    {
+      id: 11,
+      desc: 'regresie: flush stale după append pierde pasul; calea corectă nu',
+      run() {
+        const steps = [];
+        const staleSnapshot = []; // ce ar citi flush din DOM înainte de re-render
+
+        Prog.appendStep(steps, 'assign');
+        assertEq(steps.length, 1);
+
+        // bug vechi: rebuild() făcea flush din DOM vechi → replace cu []
+        const buggy = steps.slice();
+        Prog.replaceStepsContents(buggy, staleSnapshot);
+        assertEq(buggy.length, 0, 'flush stale trebuie să piardă append-ul (demonstrație bug)');
+
+        // calea corectă: după append nu mai înlocui din snapshot vechi
+        const ok = [];
+        Prog.appendStep(ok, 'assign');
+        Prog.insertStepAt(ok, 0, 'end');
+        assertEq(ok.length, 2);
+        assertEq(ok[0].op, 'end');
+        assertEq(ok[1].op, 'assign');
+        // „rebuild” corect = păstrează ok așa cum e (fără replaceStepsContents)
+        assertEq(ok.length, 2);
+      },
+    },
   ],
 };

@@ -603,6 +603,24 @@
     return step;
   }
 
+  /** Append la final (toolbar + Step). Returnează noul step. */
+  function appendStep(steps, op) {
+    if (!Array.isArray(steps)) throw new Error('appendStep: steps trebuie array');
+    const step = defaultStep(op);
+    steps.push(step);
+    return step;
+  }
+
+  /**
+   * Înlocuiește conținutul array-ului (ca readStepsInto după flush).
+   * După append/insert NU apela cu snapshot din DOM vechi — pierde mutația.
+   */
+  function replaceStepsContents(targetArr, nextList) {
+    if (!Array.isArray(targetArr)) throw new Error('replaceStepsContents: target trebuie array');
+    targetArr.length = 0;
+    (Array.isArray(nextList) ? nextList : []).forEach((s) => targetArr.push(s));
+  }
+
   function parseMaybeLiteral(s) {
     if (s == null) return '';
     const t = String(s).trim();
@@ -1214,7 +1232,9 @@
       parent.appendChild(stepsHost);
 
       function rebuild() {
-        flushCurrentView();
+        // stepsArr e deja sursa de adevăr după mutație — NU re-citim DOM-ul vechi
+        // (flush înainte de push/splice, altfel overwrite șterge noul pas).
+        persistMeta();
         renderView();
         scrieRaw(obj);
       }
@@ -2084,6 +2104,8 @@
       previewWhen,
       previewBlock,
       insertStepAt,
+      appendStep,
+      replaceStepsContents,
       parseMaybeLiteral,
       normalizeUiTabBlocks,
     };
