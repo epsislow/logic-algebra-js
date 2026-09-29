@@ -83,7 +83,35 @@
         .btn-gri { background: #6c757d; }
         .btn-gri:hover { background: #5a6268; }
         .btn-inline { width: auto; display: inline-block; margin: 0; padding: 2px 9px; font-size: 13px; }
-        .zona-utilizator { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: var(--bg-user); padding: 10px; border-radius: 5px; color: var(--text); }
+        .zona-utilizator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            background: var(--bg-user);
+            padding: 10px;
+            border-radius: 5px;
+            color: var(--text);
+        }
+        .zona-utilizator-left,
+        .zona-utilizator-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .zona-utilizator-right {
+            margin-left: auto;
+        }
+        .zona-user-name {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .zona-utilizator .btn-inline {
+            width: auto;
+            margin: 0;
+        }
         .badge { background: #6c757d; width:40px; text-align: center; color: white; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
         .badge-schema { background: var(--badge-schema); }
         .badge-data { background: var(--badge-data); }

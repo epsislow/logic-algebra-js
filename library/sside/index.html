@@ -41,9 +41,14 @@
     <div id="panou-aplicatie" style="display: none;">
 
         <div class="zona-utilizator">
-            <span>Conectat ca: <strong id="nume-utilizator-afisat">...</strong></span>
-            <button type="button" class="btn-gri btn-inline" onclick="deschideDocs()" title="Documentație ALG/FORM/UI">Docs</button>
-            <button onclick="executaLogout()" class="btn-rosu btn-inline">Deconectare</button>
+            <div class="zona-utilizator-left">
+                <button type="button" class="btn-gri btn-inline" onclick="inapoiLaLista()" title="Înapoi la lista de chei">Lista</button>
+                <button type="button" class="btn-gri btn-inline" onclick="deschideDocs()" title="Documentație ALG/FORM/UI">Docs</button>
+            </div>
+            <div class="zona-utilizator-right">
+                <strong id="nume-utilizator-afisat" class="zona-user-name">...</strong>
+                <button type="button" onclick="executaLogout()" class="btn-rosu btn-inline">Deconectare</button>
+            </div>
         </div>
 
         <!-- ========== ECRAN LISTĂ ========== -->
