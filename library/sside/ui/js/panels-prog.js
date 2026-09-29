@@ -1393,22 +1393,28 @@
 
     function mountBranchCard(parent, label, count, onOpen, extraBtns) {
       const cardB = document.createElement('div');
-      cardB.className = 'prog-branch-card';
-      const title = document.createElement('div');
-      title.className = 'prog-branch-card-title';
-      title.innerHTML =
-        '<strong>' + label + '</strong> <span class="prog-branch-count">(' + count + ')</span>';
-      cardB.appendChild(title);
-      const actions = document.createElement('div');
-      actions.className = 'prog-branch-card-actions';
+      cardB.className = 'prog-step prog-step-block prog-branch-card';
+      const head = document.createElement('div');
+      head.className = 'prog-step-head';
+      const lab = document.createElement('code');
+      lab.className = 'prog-block-op';
+      lab.textContent = label;
+      head.appendChild(lab);
+      const cnt = document.createElement('span');
+      cnt.className = 'prog-branch-count';
+      cnt.textContent = '(' + count + ')';
+      head.appendChild(cnt);
       const open = document.createElement('button');
       open.type = 'button';
       open.className = 'btn-albastru btn-inline';
       open.textContent = 'Deschide';
-      open.onclick = onOpen;
-      actions.appendChild(open);
-      (extraBtns || []).forEach((b) => actions.appendChild(b));
-      cardB.appendChild(actions);
+      open.onclick = (ev) => {
+        ev.stopPropagation();
+        onOpen();
+      };
+      head.appendChild(open);
+      (extraBtns || []).forEach((b) => head.appendChild(b));
+      cardB.appendChild(head);
       cardB.addEventListener('click', (ev) => {
         if (ev.target && ev.target.closest && ev.target.closest('button')) return;
         onOpen();

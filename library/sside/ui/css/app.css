@@ -491,14 +491,10 @@
         }
         .prog-alg-crumb { font-size: 13px; color: var(--text-muted); }
         .prog-branch-card {
-            display: flex; align-items: center; justify-content: space-between; gap: 8px;
-            flex-wrap: wrap; border: 1px solid var(--border); border-radius: 6px;
-            padding: 10px; margin: 8px 0; background: var(--bg-muted); cursor: pointer;
+            margin: 8px 0;
         }
-        .prog-branch-card:hover { background: var(--row-hover); }
-        .prog-branch-card-title { font-size: 14px; }
+        .prog-branch-card .prog-step-head { margin-bottom: 0; }
         .prog-branch-count { color: var(--text-muted); font-size: 13px; }
-        .prog-branch-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .prog-when-ta {
             width: 100%; min-height: 72px; margin: 0 0 8px; box-sizing: border-box;
             font-family: ui-monospace, Consolas, monospace; font-size: 12px;
