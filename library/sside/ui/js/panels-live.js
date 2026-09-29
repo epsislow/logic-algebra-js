@@ -166,8 +166,10 @@
       '<h3></h3>' +
       '<div class="prog-live-banner" style="display:none;"></div>' +
       '<div class="prog-list-table-wrap"><table class="prog-list-table"><thead></thead><tbody></tbody></table></div>' +
+      '<div class="prog-list-footer">' +
       '<div class="prog-list-pager"></div>' +
-      '<div class="prog-live-actions prog-list-below-btns"></div>';
+      '<div class="prog-live-actions prog-list-below-btns"></div>' +
+      '</div>';
     block.querySelector('h3').textContent = title;
     parent.appendChild(block);
 

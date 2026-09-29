@@ -147,7 +147,7 @@ Fiecare coloană: **`path` sau `const`** (sau ambele; `const` câștigă la afi�
 |------|--------|
 | `row` | `object` (default) sau `array` (path = index) |
 | `pageSize` | ≥ 1 (default 20) |
-| `rowBtns` / `btns` | ca form; `place`: `row` \| `below` |
+| `rowBtns` / `btns` | ca form (`kind`); `btns` în dreapta paginatiei; `place`: `row` \| `below` |
 
 Paginare: `search` = `LIMIT`/`OFFSET` pe index; `keys`/colecții = sort + slice în UI (`maxScan`).
 
@@ -184,7 +184,7 @@ Comportament:
 - după alg: `result.ui.refresh` / `.clear` pe acele `listid`
 - nu împinge rows din alg — doar reîncarcă sursa
 - **Edit UI:** pe fiecare tab → **+ Block**, `type` = `form` \| `list`, `id` obligatoriu, select cheie `form:_` / `list:_` (legacy `forms[]` se citește și se convertește la blocks)
-- **↗** pe block → deschide form/list; **← Înapoi la UI** revine (stivă nav, ca data↔schema)
+- **Edit list:** title / source (`from` + pattern|query|key) / columns (`path`|`const`) / rowBtns / btns — ca form/ui (tab Formular rămâne, direcție: Edit-first)
 
 ---
 

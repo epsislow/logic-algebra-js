@@ -135,7 +135,7 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 | `columns[].path` | `_key` / `_type` / `_json` / câmp din JSON |
 | `columns[].const` | valoare **statică** (ex. `"stock"`) — fără citire pe rând |
 | `pageSize` | mărime pagină |
-| `rowBtns` / `btns` | butoane pe rând / sub tabel (`place`: `row` \| `below`) |
+| `rowBtns` / `btns` | butoane pe rând / în dreapta paginatiei; `kind` ca form; `place`: `row` \| `below` |
 
 **Fetch pe pagină:** doar ce cer coloanele — `_key` + `const` → zero `TYPE`/`JSON.GET`; `path: "_type"` → doar `TYPE`; path-uri de câmp / `_json` → `TYPE` + `GET`/`JSON.GET`.
 

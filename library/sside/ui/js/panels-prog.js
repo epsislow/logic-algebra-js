@@ -598,16 +598,317 @@
     host.appendChild(card);
   }
 
+  // ---------- List edit ----------
+  const LIST_SOURCE_FROM = [
+    { value: 'keys', label: 'keys (pattern)' },
+    { value: 'search', label: 'search (query)' },
+    { value: 'set', label: 'set' },
+    { value: 'list', label: 'list (Redis LIST)' },
+    { value: 'zset', label: 'zset' },
+    { value: 'hash', label: 'hash' },
+    { value: 'enum', label: 'enum' },
+  ];
+
+  function randeazaEditList(host, obj) {
+    if (!obj.source || typeof obj.source !== 'object') {
+      obj.source = { from: 'keys', pattern: '*' };
+    }
+    if (!Array.isArray(obj.columns)) obj.columns = [];
+    if (!Array.isArray(obj.btns)) obj.btns = [];
+    if (!Array.isArray(obj.rowBtns)) obj.rowBtns = [];
+    if (obj.row !== 'array') obj.row = 'object';
+    if (obj.pageSize == null || !Number.isFinite(Number(obj.pageSize))) obj.pageSize = 20;
+
+    host.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'prog-edit-card';
+    card.innerHTML = '<h4>List</h4>';
+
+    const rowHead = document.createElement('div');
+    rowHead.className = 'prog-row';
+    rowHead.innerHTML =
+      '<div class="prog-field"><label>title</label><input type="text" data-f="title"></div>' +
+      '<div class="prog-field"><label>row</label><select data-f="row">' +
+      '<option value="object">object</option><option value="array">array</option></select></div>' +
+      '<div class="prog-field"><label>pageSize</label><input type="number" min="1" step="1" data-f="pageSize"></div>';
+    card.appendChild(rowHead);
+    rowHead.querySelector('[data-f="title"]').value = obj.title || '';
+    rowHead.querySelector('[data-f="row"]').value = obj.row === 'array' ? 'array' : 'object';
+    rowHead.querySelector('[data-f="pageSize"]').value = obj.pageSize;
+
+    const srcCard = document.createElement('div');
+    srcCard.className = 'prog-step';
+    srcCard.innerHTML = '<div class="prog-step-head"><span>source</span></div>';
+    const srcRow = document.createElement('div');
+    srcRow.className = 'prog-row';
+    srcRow.innerHTML =
+      '<div class="prog-field"><label>from</label><select data-s="from"></select></div>' +
+      '<div class="prog-field" data-s-wrap="pattern"><label>pattern</label><input data-s="pattern" placeholder="data:_stock:*"></div>' +
+      '<div class="prog-field" data-s-wrap="query" style="flex:2"><label>query</label><textarea data-s="query" rows="2" placeholder=\'{"s_prefix":"stock"} sau s_prefix:stock\'></textarea></div>' +
+      '<div class="prog-field" data-s-wrap="key"><label>key</label><input data-s="key" placeholder="set:_ids"></div>' +
+      '<div class="prog-field" data-s-wrap="values" style="flex:2"><label>values (enum, virgulă)</label><input data-s="values" placeholder="a,b,c"></div>';
+    const fromSel = srcRow.querySelector('[data-s="from"]');
+    LIST_SOURCE_FROM.forEach((o) => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      fromSel.appendChild(opt);
+    });
+    srcCard.appendChild(srcRow);
+    card.appendChild(srcCard);
+
+    function fillSourceFields() {
+      const src = obj.source || {};
+      const from = src.from || 'keys';
+      fromSel.value = from;
+      srcRow.querySelector('[data-s="pattern"]').value = src.pattern != null ? String(src.pattern) : '*';
+      const q = src.query;
+      srcRow.querySelector('[data-s="query"]').value =
+        q == null ? '' : typeof q === 'string' ? q : JSON.stringify(q, null, 2);
+      srcRow.querySelector('[data-s="key"]').value = src.key != null ? String(src.key) : '';
+      srcRow.querySelector('[data-s="values"]').value = Array.isArray(src.values)
+        ? src.values.join(',')
+        : '';
+      syncSourceVisibility();
+    }
+
+    function syncSourceVisibility() {
+      const from = fromSel.value;
+      const show = {
+        pattern: from === 'keys',
+        query: from === 'search',
+        key: from === 'set' || from === 'list' || from === 'zset' || from === 'hash',
+        values: from === 'enum',
+      };
+      Object.keys(show).forEach((k) => {
+        const el = srcRow.querySelector('[data-s-wrap="' + k + '"]');
+        if (el) el.style.display = show[k] ? '' : 'none';
+      });
+    }
+
+    const colsHost = document.createElement('div');
+    colsHost.className = 'prog-steps';
+    const colsLabel = document.createElement('div');
+    colsLabel.className = 'prog-step-head';
+    colsLabel.innerHTML = '<span>columns</span>';
+    card.appendChild(colsLabel);
+    card.appendChild(colsHost);
+
+    const rowBtnsHost = document.createElement('div');
+    rowBtnsHost.className = 'prog-steps';
+    const rowBtnsLabel = document.createElement('div');
+    rowBtnsLabel.className = 'prog-step-head';
+    rowBtnsLabel.innerHTML = '<span>rowBtns</span>';
+    card.appendChild(rowBtnsLabel);
+    card.appendChild(rowBtnsHost);
+
+    const btnsHost = document.createElement('div');
+    btnsHost.className = 'prog-steps';
+    const btnsLabel = document.createElement('div');
+    btnsLabel.className = 'prog-step-head';
+    btnsLabel.innerHTML = '<span>btns (below)</span>';
+    card.appendChild(btnsLabel);
+    card.appendChild(btnsHost);
+
+    function readSourceFromDom() {
+      const from = fromSel.value || 'keys';
+      const source = { from };
+      if (from === 'keys') {
+        source.pattern = srcRow.querySelector('[data-s="pattern"]').value.trim() || '*';
+      } else if (from === 'search') {
+        const raw = srcRow.querySelector('[data-s="query"]').value.trim();
+        if (!raw) source.query = { '*': '*' };
+        else {
+          try {
+            source.query = JSON.parse(raw);
+          } catch (e) {
+            source.query = raw;
+          }
+        }
+      } else if (from === 'enum') {
+        source.values = srcRow
+          .querySelector('[data-s="values"]')
+          .value.split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+      } else {
+        source.key = srcRow.querySelector('[data-s="key"]').value.trim();
+      }
+      return source;
+    }
+
+    function syncFromDom() {
+      obj.title = rowHead.querySelector('[data-f="title"]').value;
+      obj.row = rowHead.querySelector('[data-f="row"]').value === 'array' ? 'array' : 'object';
+      const ps = parseInt(rowHead.querySelector('[data-f="pageSize"]').value, 10);
+      obj.pageSize = Number.isFinite(ps) && ps >= 1 ? ps : 20;
+      obj.source = readSourceFromDom();
+
+      obj.columns = [];
+      colsHost.querySelectorAll('.prog-step[data-col]').forEach((el) => {
+        const col = {
+          id: el.querySelector('[data-c="id"]').value.trim(),
+          label: el.querySelector('[data-c="label"]').value.trim(),
+        };
+        const path = el.querySelector('[data-c="path"]').value.trim();
+        const cnst = el.querySelector('[data-c="const"]').value;
+        if (path) col.path = path;
+        if (cnst !== '') {
+          const t = cnst.trim();
+          if (t === 'true') col.const = true;
+          else if (t === 'false') col.const = false;
+          else if (t !== '' && Number.isFinite(Number(t)) && String(Number(t)) === t) col.const = Number(t);
+          else col.const = cnst;
+        }
+        obj.columns.push(col);
+      });
+
+      function readBtns(host) {
+        const out = [];
+        host.querySelectorAll('.prog-step[data-btn]').forEach((el) => {
+          const kind = normalizeBtnKind(el.querySelector('[data-b="kind"]').value);
+          const btn = {
+            id: el.querySelector('[data-b="id"]').value.trim(),
+            label: el.querySelector('[data-b="label"]').value.trim(),
+            alg: el.querySelector('[data-b="alg"]').value.trim(),
+          };
+          if (kind) btn.kind = kind;
+          out.push(btn);
+        });
+        return out;
+      }
+      obj.rowBtns = readBtns(rowBtnsHost);
+      obj.btns = readBtns(btnsHost);
+      scrieRaw(obj);
+    }
+
+    function addColRow(col) {
+      col = col || { id: '', label: '', path: '' };
+      const el = document.createElement('div');
+      el.className = 'prog-step';
+      el.setAttribute('data-col', '1');
+      el.innerHTML =
+        '<div class="prog-row">' +
+        '<div class="prog-field"><label>id</label><input data-c="id"></div>' +
+        '<div class="prog-field"><label>label</label><input data-c="label"></div>' +
+        '<div class="prog-field"><label>path</label><input data-c="path" placeholder="_key | qty | _json"></div>' +
+        '<div class="prog-field"><label>const</label><input data-c="const" placeholder="opțional static"></div>' +
+        '</div>';
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'btn-gri btn-inline btn-inline-danger';
+      rm.textContent = 'Șterge col';
+      rm.onclick = () => {
+        el.remove();
+        syncFromDom();
+      };
+      el.appendChild(rm);
+      el.querySelector('[data-c="id"]').value = col.id || '';
+      el.querySelector('[data-c="label"]').value = col.label || '';
+      el.querySelector('[data-c="path"]').value = col.path != null ? String(col.path) : '';
+      el.querySelector('[data-c="const"]').value = Object.prototype.hasOwnProperty.call(col, 'const')
+        ? String(col.const)
+        : '';
+      el.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', syncFromDom));
+      colsHost.appendChild(el);
+    }
+
+    function addListBtnRow(host, btn) {
+      btn = btn || { id: '', label: '', alg: '', kind: '' };
+      const el = document.createElement('div');
+      el.className = 'prog-step';
+      el.setAttribute('data-btn', '1');
+      el.innerHTML =
+        '<div class="prog-row">' +
+        '<div class="prog-field"><label>id</label><input data-b="id"></div>' +
+        '<div class="prog-field"><label>label</label><input data-b="label"></div>' +
+        '<div class="prog-field"><label>alg</label><select data-b="alg"></select></div>' +
+        '<div class="prog-field"><label>culoare</label><select data-b="kind"></select></div>' +
+        '</div>';
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'btn-gri btn-inline btn-inline-danger';
+      rm.textContent = 'Șterge';
+      rm.onclick = () => {
+        el.remove();
+        syncFromDom();
+      };
+      el.appendChild(rm);
+      el.querySelector('[data-b="id"]').value = btn.id || '';
+      el.querySelector('[data-b="label"]').value = btn.label || '';
+      const algSel = el.querySelector('[data-b="alg"]');
+      fillKeySelect(algSel, 'alg', btn.alg || '');
+      fillBtnKindSelect(el.querySelector('[data-b="kind"]'), btn.kind || '');
+      mountSelectWithOpen(algSel, { beforeOpen: syncFromDom });
+      el.querySelectorAll('input,select').forEach((inp) => {
+        inp.addEventListener('input', syncFromDom);
+        inp.addEventListener('change', syncFromDom);
+      });
+      host.appendChild(el);
+    }
+
+    fillSourceFields();
+    fromSel.addEventListener('change', () => {
+      syncSourceVisibility();
+      syncFromDom();
+    });
+    srcRow.querySelectorAll('input,textarea').forEach((inp) => {
+      inp.addEventListener('input', syncFromDom);
+    });
+
+    (obj.columns.length ? obj.columns : [{ id: 'key', label: 'Cheie', path: '_key' }]).forEach(
+      addColRow
+    );
+    (obj.rowBtns || []).forEach((b) => addListBtnRow(rowBtnsHost, b));
+    (obj.btns || []).forEach((b) => addListBtnRow(btnsHost, b));
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'prog-toolbar';
+    function toolBtn(label, cls, fn) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = (cls || 'btn-albastru') + ' btn-inline';
+      b.textContent = label;
+      b.onclick = fn;
+      toolbar.appendChild(b);
+    }
+    toolBtn('+ Column', 'btn-albastru', () => {
+      addColRow({ id: 'c' + (colsHost.children.length + 1), label: 'Col', path: '' });
+      syncFromDom();
+    });
+    toolBtn('+ rowBtn', 'btn-albastru', () => {
+      addListBtnRow(rowBtnsHost, {
+        id: 'rb' + (rowBtnsHost.querySelectorAll('[data-btn]').length + 1),
+        label: 'Actiune',
+        alg: '',
+      });
+      syncFromDom();
+    });
+    toolBtn('+ btn', 'btn-albastru', () => {
+      addListBtnRow(btnsHost, {
+        id: 'b' + (btnsHost.querySelectorAll('[data-btn]').length + 1),
+        label: 'Actiune',
+        alg: '',
+      });
+      syncFromDom();
+    });
+    card.appendChild(toolbar);
+
+    rowHead.querySelectorAll('input,select').forEach((inp) => {
+      inp.addEventListener('input', syncFromDom);
+      inp.addEventListener('change', syncFromDom);
+    });
+    host.appendChild(card);
+    syncFromDom();
+  }
+
   function randeazaEdit(kind, obj) {
     const host = $('panel-prog-edit');
     if (!host) return;
     if (kind === 'form') randeazaEditForm(host, obj);
     else if (kind === 'ui') randeazaEditUi(host, obj);
-    else if (kind === 'list') {
-      host.innerHTML =
-        '<div class="prog-edit-card"><h4>List</h4>' +
-        '<p class="prog-live-stub">Editează <code>source</code>, <code>columns</code>, <code>pageSize</code>, <code>btns</code>/<code>rowBtns</code> în tab <b>Formular</b> sau <b>Json</b>.</p></div>';
-    } else randeazaEditAlg(host, obj);
+    else if (kind === 'list') randeazaEditList(host, obj);
+    else randeazaEditAlg(host, obj);
   }
 
   function randeazaLive(kind) {
