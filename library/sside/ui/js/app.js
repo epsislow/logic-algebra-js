@@ -3339,6 +3339,9 @@ function translateUpstashSearchResults(date) {
             }
 
             schemaObj = JSON.parse(JSON.stringify(schemaObj));
+            if (window.SsideSchemaOrder && SsideSchemaOrder.applyPropertyOrder) {
+                SsideSchemaOrder.applyPropertyOrder(schemaObj);
+            }
 
             if (dataFormEditor) {
                 try { dataFormEditor.destroy(); } catch (e) {}

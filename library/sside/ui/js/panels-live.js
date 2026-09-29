@@ -76,9 +76,16 @@
     if (typeof JSONEditor === 'undefined') {
       throw new Error('JSONEditor lipsă');
     }
+    const SchemaOrder =
+      root.SsideSchemaOrder ||
+      (typeof require !== 'undefined' ? require('../core/schema-order.js') : null);
+    const schemaOrdered =
+      SchemaOrder && SchemaOrder.withPropertyOrder
+        ? SchemaOrder.withPropertyOrder(schema)
+        : schema;
     return new JSONEditor(holder, {
       theme: 'html',
-      schema: schema || { type: 'object' },
+      schema: schemaOrdered || { type: 'object' },
       startval: startval,
       no_additional_properties: false,
       disable_collapse: true,

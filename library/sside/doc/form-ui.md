@@ -20,7 +20,7 @@ Aici: detalii Live form, `fields.options`, list fetch.
 Taburi editor: **Edit** | **Live** | **Formular** | **Json**.
 
 Pe **Live**:
-- câmpuri din `schema`
+- câmpuri din `schema` — **ordine**: `propertyOrder` pe fiecare câmp, sau lista `propertyOrder: ["a","b"]` pe obiect; altfel ordinea cheilor din `properties` (injectată automat pt. JSONEditor)
 - **Reset** (built-in) — nu e în `btns`
 - butoane → rulează `alg` → banner **verde** (`msg`) / **roșu** (`err`)
 

@@ -84,6 +84,7 @@ Ops: vezi Docs → **Operații alg**.
 
 Comportament Live:
 - câmpuri din schemă (+ options rezolvate la open)
+- ordine câmpuri: vezi **Form / UI** (`propertyOrder`)
 - **Reset** built-in (nu e în `btns`)
 - click btn → `run(alg)` cu `form` = valorile editorului
 - `fields.*.options.from`: `set` / `list` / `zset` / `hash` / `search` / `enum`  
