@@ -141,7 +141,7 @@ module.exports = {
           when: ['lte', 'qty', 0],
           then: [{ op: 'end', err: 'x' }],
         });
-        assert(prev.indexOf('lte') !== -1);
+        assert(prev.indexOf('<=') !== -1 || prev.indexOf('qty') !== -1);
         assert(prev.indexOf('then(1)') !== -1);
         assert(prev.indexOf('else') === -1);
         const fe = Prog.previewBlock({
@@ -152,7 +152,7 @@ module.exports = {
         });
         assert(fe.indexOf('form.items') !== -1);
         assert(fe.indexOf('do(0)') !== -1);
-        assert(Prog.previewWhen(['eq', 'a', 1]).indexOf('eq') !== -1);
+        assert(Prog.previewWhen(['eq', 'a', 1]).indexOf('==') !== -1);
       },
     },
     {

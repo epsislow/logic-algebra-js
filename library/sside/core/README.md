@@ -6,7 +6,7 @@ Logică partajată (testabilă din Node + încărcată în browser).
 |--------|-----|
 | `keys.js` | Clasificare chei, badge tip, `alg:`/`form:`/`ui:_` |
 | `meta-schemas.js` | Meta JSON Schema + seed `v:1` pentru alg/form/ui |
-| `when.js` | Evaluare `when` (eq/and/or/not/…) |
+| `when.js` | Evaluare `when` + `printWhenExpr` / `parseWhenExpr` (F2-alg-C) |
 | `alg-ops.js` | Refs, scheck/sgen helpers, whitelist redis, argv k* |
 | `search-query.js` | Parse query `=`… + unwrap SEARCH.QUERY |
 | `form-options.js` | Form `fields.*.options` → enum overlay (F4k) |

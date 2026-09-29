@@ -552,13 +552,34 @@
     return n;
   }
 
+  function getWhenApi() {
+    if (root.SsideWhen) return root.SsideWhen;
+    if (typeof require !== 'undefined') {
+      try {
+        return require('../../core/when.js');
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   function previewWhen(when, maxLen) {
     maxLen = maxLen == null ? 72 : maxLen;
     let s;
+    const When = getWhenApi();
     try {
-      s = JSON.stringify(when);
+      if (When && typeof When.printWhenExpr === 'function') {
+        s = When.printWhenExpr(when);
+      } else {
+        s = JSON.stringify(when);
+      }
     } catch (e) {
-      s = String(when);
+      try {
+        s = JSON.stringify(when);
+      } catch (e2) {
+        s = String(when);
+      }
     }
     if (!s) return '—';
     if (s.length <= maxLen) return s;
@@ -1173,11 +1194,34 @@
       if (frame.kind === 'block' && frame.step) {
         const whenTa = viewHost.querySelector('textarea[data-block="when"]');
         if (whenTa) {
-          try {
-            frame.step.when = JSON.parse(whenTa.value);
+          const When = getWhenApi();
+          const errEl = viewHost.querySelector('[data-block="when-err"]');
+          const parsed =
+            When && typeof When.tryParseWhenExpr === 'function'
+              ? When.tryParseWhenExpr(whenTa.value)
+              : null;
+          if (parsed && parsed.ok) {
+            frame.step.when = parsed.ast;
             whenTa.classList.remove('json-invalid');
-          } catch (e) {
+            if (errEl) errEl.textContent = '';
+          } else if (parsed) {
             whenTa.classList.add('json-invalid');
+            if (errEl) {
+              errEl.textContent =
+                parsed.error +
+                (typeof parsed.index === 'number'
+                  ? ' (pos ' + parsed.index + ')'
+                  : '');
+            }
+          } else {
+            try {
+              frame.step.when = JSON.parse(whenTa.value);
+              whenTa.classList.remove('json-invalid');
+              if (errEl) errEl.textContent = '';
+            } catch (e) {
+              whenTa.classList.add('json-invalid');
+              if (errEl) errEl.textContent = e && e.message ? e.message : String(e);
+            }
           }
         }
         const inInp = viewHost.querySelector('[data-block="in"]');
@@ -1501,30 +1545,49 @@
       if (step.op === 'if') {
         const whenLab = document.createElement('div');
         whenLab.className = 'prog-step-hint';
-        whenLab.textContent = 'when (JSON — editor condiții în F2-alg-C)';
+        whenLab.textContent =
+          'when — text (ex: qty <= 0 or form.id == ""); Docs → when';
         wrap.appendChild(whenLab);
         const whenTa = document.createElement('textarea');
         whenTa.setAttribute('data-block', 'when');
         whenTa.className = 'prog-when-ta';
+        const When = getWhenApi();
         try {
-          whenTa.value = JSON.stringify(
-            step.when != null ? step.when : ['eq', '', ''],
-            null,
-            2
-          );
+          const w = step.when != null ? step.when : ['eq', '', ''];
+          whenTa.value =
+            When && typeof When.printWhenExpr === 'function'
+              ? When.printWhenExpr(w)
+              : JSON.stringify(w);
         } catch (e) {
-          whenTa.value = '["eq","",""]';
+          whenTa.value = '"" == ""';
         }
+        const whenErr = document.createElement('div');
+        whenErr.className = 'prog-when-err';
+        whenErr.setAttribute('data-block', 'when-err');
         whenTa.addEventListener('input', () => {
-          whenTa.classList.remove('json-invalid');
-          try {
-            step.when = JSON.parse(whenTa.value);
+          const api = getWhenApi();
+          const r =
+            api && typeof api.tryParseWhenExpr === 'function'
+              ? api.tryParseWhenExpr(whenTa.value)
+              : null;
+          if (r && r.ok) {
+            step.when = r.ast;
+            whenTa.classList.remove('json-invalid');
+            whenErr.textContent = '';
             syncAll();
-          } catch (e) {
+          } else if (r) {
             whenTa.classList.add('json-invalid');
+            whenErr.textContent =
+              r.error +
+              (typeof r.index === 'number' ? ' (pos ' + r.index + ')' : '');
+            // D46: nu rescrie when invalid în progObj
+          } else {
+            whenTa.classList.add('json-invalid');
+            whenErr.textContent = 'parser when indisponibil';
           }
         });
         wrap.appendChild(whenTa);
+        wrap.appendChild(whenErr);
 
         if (!Array.isArray(step.then)) step.then = [];
         mountBranchCard(wrap, 'then', step.then.length, () => {

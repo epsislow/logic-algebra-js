@@ -21,7 +21,9 @@ sau `"val": 7` (literal).
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
 
-`else` e opțional. În **Edit** (F2-alg-B): `if` e un **bloc** — Deschide → panou cu `when` (JSON) + carduri **then** / **else** (drill-in); ← Înapoi. Ștergerea blocului șterge și interiorul (confirm). Pe liste: **↑↓** reordonare (disabled la capete).
+`else` e opțional. În **Edit** (F2-alg-B): `if` e un **bloc** — Deschide → panou cu `when` (text expresie, F2-alg-C) + carduri **then** / **else** (drill-in); ← Înapoi. Ștergerea blocului șterge și interiorul (confirm). Pe liste: **↑↓** reordonare (disabled la capete).
+
+Exemplu `when` text: `qty <= 0 or form.id == ""` (vezi Docs → **when**).
 
 ### foreach
 `{ "op": "foreach", "in": "form.items", "as": "it", "do": [...] }`
@@ -36,12 +38,13 @@ sau `"val": 7` (literal).
 
 ## when
 
-Tupluri nested:
+Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 
 - atomic: `eq` `neq` `gt` `gte` `lt` `lte` `truthy` `empty`
 - `["and", …]` `["or", …]` `["not", cond]`
+- text: `==` `!=` `<` `<=` `>` `>=`, `and`/`or`/`not`, `truthy(x)` / `empty(x)`, paranteze; precedență `not` > `and` > `or`
 
-`empty` — true pentru `null`/`undefined`, array/string gol, obiect fără chei.
+`empty` — true pentru `null`/`undefined`, array/string gol, obiect fără chei. Detalii: Docs → **when**.
 
 ## Chei (k*)
 
