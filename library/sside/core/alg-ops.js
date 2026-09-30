@@ -328,6 +328,43 @@
     }
   }
 
+  function formatDateValue(dateObj, formatStr) {
+    if (!dateObj || !(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) {
+      return '';
+    }
+    const pad = (n) => String(n).padStart(2, '0');
+    const hours24 = dateObj.getHours();
+    const hours12 = hours24 % 12 || 12;
+    const ampm = hours24 >= 12 ? 'PM' : 'AM';
+    const hours24U = dateObj.getUTCHours();
+    const hours12U = hours24U % 12 || 12;
+    const ampmU = hours24U >= 12 ? 'PM' : 'AM';
+    const tokens = {
+      'ISO': dateObj.toISOString(),
+      'YYYYU': dateObj.getUTCFullYear(),
+      'MMU': pad(dateObj.getUTCMonth() + 1),
+      'DDU': pad(dateObj.getUTCDate()),
+      'HHU': pad(hours24U),
+      'hhU': pad(hours12U),
+      'mmU': pad(dateObj.getUTCMinutes()),
+      'ssU': pad(dateObj.getUTCSeconds()),
+      'AU': ampmU,
+      'Z': dateObj.getTimezoneOffset(),
+      'YYYY': dateObj.getFullYear(),
+      'MM': pad(dateObj.getMonth() + 1),
+      'DD': pad(dateObj.getDate()),
+      'HH': pad(hours24),
+      'hh': pad(hours12),
+      'mm': pad(dateObj.getMinutes()),
+      'ss': pad(dateObj.getSeconds()),
+      'A': ampm
+    };
+    let result = formatStr || 'YYYY-MM-DD';
+    const pattern = new RegExp(Object.keys(tokens).join('|'), 'g');
+    return result.replace(pattern, (match) => tokens[match]);
+  }
+
+
   /**
    * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
    */
@@ -363,6 +400,8 @@
     normalizeCastAs,
     isEmptyObject,
     isEmptyArray,
+    castValue,
+    formatDateValue,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,
@@ -370,7 +409,6 @@
     unwrapJsonGet,
     parseMaybeJson,
     looksJsonType,
-    castValue,
   };
 
   root.SsideAlgOps = api;

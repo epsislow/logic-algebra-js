@@ -6,7 +6,8 @@
   'use strict';
 
   const ALG_OPS = [
-    'assign', 'cat', 'cast', 'if', 'foreach', 'end', 'comment',
+    'assign', 'cat', 'cast', 'fdate', 
+    'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',
@@ -504,6 +505,7 @@
     if (op === 'assign') return { op: 'assign', to: '', from: '' };
     if (op === 'cat') return { op: 'cat', to: '', parts: [''] };
     if (op === 'cast') return { op: 'cast', as: 'json',to: '' , from: ''};
+    if (op === 'fdate') return { op: 'fdate', format: 'YYYY-MM-DD', to: '', from: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
@@ -700,6 +702,27 @@
         from + ' from' +
         '  as ' +
         previewVal(step.as)
+      );
+    }
+
+    if (op === 'fdate') {
+      const to = step.to != null ? String(step.to) : '';
+      const format = step.format != null ? String(step.format) : 'YYYY-MM-DD';
+
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        return (
+          'fdate ' + to + ' ← ' +
+          previewVal(step.val) + ' val' +
+          '  fmt ' +
+          previewVal(format)
+        );
+      }
+      const from = (step.from != null ? String(step.from) : '');
+      return (
+        'fdate ' + to + ' ← ' +
+        from + ' from' +
+        '  fmt ' +
+        previewVal(format)
       );
     }
 
@@ -1082,6 +1105,33 @@
       return;
     }
 
+    if (op === 'fdate') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      row.appendChild(mkField('format', wire(mkInput('format', step.format != null ? step.format : 'YYYY-MM-DD'))));
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
+      const srcSel = wire(
+        mkSelect('_src', srcMode, [
+          { value: 'from', label: 'from (ref)' },
+          { value: 'val', label: 'val (literal)' },
+        ])
+      );
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', step.from != null ? step.from : ''));
+      const valInp = wire(mkInput('val', literalToInput(step.val)));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      function toggleSrc() {
+        const m = srcSel.value;
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      srcSel.addEventListener('change', toggleSrc);
+      toggleSrc();
+      return;
+    }
+
     if (op === 'end') {
       const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
       const modeSel = wire(
@@ -1287,6 +1337,13 @@
     if (op === 'cast') {
       step.to = sf(el, 'to');
       step.as = sf(el, 'as') || 'json';
+      if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
+      else step.from = sf(el, 'from');
+      return withStepMeta(el, step);
+    }
+    if (op === 'fdate') {
+      step.to = sf(el, 'to');
+      step.format = sf(el, 'format') || 'YYYY-MM-DD';
       if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
       else step.from = sf(el, 'from');
       return withStepMeta(el, step);

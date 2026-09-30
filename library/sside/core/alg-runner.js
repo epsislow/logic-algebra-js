@@ -112,6 +112,23 @@
       return;
     }
 
+    if (op === 'fdate') {
+      let val;
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        val = step.val;
+      } else if (Object.prototype.hasOwnProperty.call(step, 'from')) {
+        val = getVal(ctx, step.from);
+      } else {
+        throw new Error('fdate: lipsește val|from');
+      }
+
+      const dateObj = Ops.castValue(val, 'date');
+      const formatted = Ops.formatDateValue(dateObj, step.format);
+      
+      Ops.setVar(ctx, step.to, formatted);
+      return;
+    }
+
     if (op === 'end') {
       if (ctx.inTx) {
         ctx.txBuf = [];

@@ -1005,5 +1005,202 @@ module.exports = {
         assert(r.stopped);
       },
     },
+    {
+      id: 50,
+      desc: 'fdate from dynamic variable using ISO string and custom format',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              // Am eliminat secundele din format ('hh:mm') ca să se potrivească cu aserțiunea ta
+              { op: 'fdate', from: 'form.created_at', format: 'DD.MM.YYYY HH:mm', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          // Am scos 'Z' de la final pentru a forța parsarea în timp local
+          { form: { created_at: '2026-09-30T15:30:45.000' }, redis }
+        );
+        // Aserțiunea se potrivește acum perfect cu formatul cerut
+        assertEq(r.vars.ui_date, '30.09.2026 15:30');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 51,
+      desc: 'fdate using literal timestamp value and default format fallback',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: 1790769600000, to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.ui_date, '2026-09-30');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 52,
+      desc: 'fdate with missing variable returns empty string safe fallback',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', from: 'form.non_existent_date', format: 'YYYY-MM-DD', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.ui_date, '');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 53,
+      desc: 'fdate with completely invalid string text returns empty string',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: 'not-a-date-at-all', format: 'YYYY-MM-DD', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.ui_date, '');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 54,
+      desc: 'fdate using 12h format and AM/PM token for afternoon time',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: '2026-09-30T15:30:00.000Z', format: 'hh:mm A', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        const expectedHours = (15 - (new Date().getTimezoneOffset() / 60)) % 12 || 12;
+        const pad = (n) => String(n).padStart(2, '0');
+        const expectedAmpm = (15 - (new Date().getTimezoneOffset() / 60)) >= 12 ? 'PM' : 'AM';
+        assertEq(r.vars.ui_date, pad(expectedHours) + ':30 ' + expectedAmpm);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 55,
+      desc: 'fdate using strict UTC tokens for 12h and AM/PM format',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: '2026-09-30T15:30:00.000Z', format: 'hhU:mmU AU', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.ui_date, '03:30 PM');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 56,
+      desc: 'fdate using strict UTC tokens for 12h midnight edge case',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: '2026-09-30T00:15:00.000Z', format: 'hhU:mmU AU', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.ui_date, '12:15 AM');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 57,
+      desc: 'fdate extracting full ISO string token directly',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: 1790769600000, format: 'ISO', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.ui_date, '2026-09-30T12:00:00.000Z');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 58,
+      desc: 'fdate extracting timezone offset token',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'fdate', val: '2026-09-30T12:00:00.000Z', format: 'Z', to: 'ui_date' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        const expectedOffset = new Date('2026-09-30T12:00:00.000Z').getTimezoneOffset();
+        assertEq(r.vars.ui_date, String(expectedOffset));
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+
   ],
 };
