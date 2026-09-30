@@ -481,6 +481,7 @@
     { value: 'auto', label: 'auto' },
     { value: 'json', label: 'json' },
     { value: 'string', label: 'string' },
+    { value: 'date', label: 'date' },
     { value: 'integer', label: 'integer' },
     { value: 'number', label: 'number' },
     { value: 'boolean', label: 'boolean' },

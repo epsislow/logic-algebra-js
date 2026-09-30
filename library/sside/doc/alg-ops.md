@@ -31,6 +31,7 @@ Dacă valoarea din `as` este invalidă sau lipsește, motorul folosește implici
 | **`auto`** | Păstrează tipul dacă e obiect. Parsează JSON-urile valide din string. Altfel transformă în string primitiv. Dacă valoarea lipsește, returnează `null`. |
 | **`json`** | Parsează string-urile în obiecte JSON native. Returnează `null` pentru `undefined`/`null`. Păstrează intacte structurile care sunt deja obiecte. |
 | **`string`** | Returnează `''` pentru `null`/`undefined`. Obiectele și Array-urile sunt serializate automat prin `JSON.stringify()`. Restul devin string nativ. |
+| **`date`** | Transformă valoarea într-un obiect `Date` valid. Acceptă string-uri ISO sau numere (timestamp Unix în milisecunde). Dacă inputul este deja o instanță de `Date`, o lasă neatinsă. **Orice valoare invalidă sau text corupt returnează `null` (Safe Fallback)**. |
 | **`integer`** | Transformă în număr întreg cu rotunjire matematică (`Math.round`). String-urile numerice (ex: `"15.7"`) sunt analizate ca float și rotunjite corect (ex: `16`). Orice text invalid sau `NaN` devine automat `0`. |
 | **`number`** | Convertește în număr cu zecimale. Cazuri speciale structuri goale: **Array-ul gol `[]` devine `0`**, **Obiectul gol `{}` devine `0`**. Obiectele populate devin `1`. Textul invalid sau `NaN` devine `0`. |
 | **`boolean`** | Returnează `false` pentru `null`/`undefined` sau pentru string-ul `"false"`. Returnează `true` pentru string-ul `"true"`. Pentru restul, aplică evaluarea de adevăr standard (`!!val`). |
