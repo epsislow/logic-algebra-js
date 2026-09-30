@@ -310,8 +310,8 @@
         return Number.isNaN(val.getTime()) ? null : val;
       }
       if (typeof val === 'number' || typeof val === 'string') {
-        const d = new Date(val);
-        return Number.isNaN(d.getTime()) ? null : d;
+        const d = parseRelativeDate(val);
+        return d && !Number.isNaN(d.getTime()) ? d : null;
       }
       return null;
     }
@@ -362,6 +362,64 @@
     let result = formatStr || 'YYYY-MM-DD';
     const pattern = new RegExp(Object.keys(tokens).join('|'), 'g');
     return result.replace(pattern, (match) => tokens[match]);
+  }
+
+  function parseRelativeDate(rawStr) {
+    if (rawStr === undefined || rawStr === null) return null;
+    if (typeof rawStr === 'number') {
+      const d = new Date(rawStr);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const str = String(rawStr).trim();
+    if (str === '') return null;
+    let dateObj;
+    let modifiersIdx = -1;
+    if (str === 'now' || str === '+0' || str === '-0') {
+      return new Date();
+    }
+    if (str.startsWith('+') || str.startsWith('-')) {
+      dateObj = new Date();
+      modifiersIdx = 0;
+    } else {
+      const parts = str.split(/\s+(?=[\+\-])/);
+      if (parts.length > 1) {
+        dateObj = new Date(parts[0]);
+        modifiersIdx = parts[0].length;
+      } else {
+        const lastSignMatch = str.match(/\s*([\+\-]\d+[a-zA-Z]*)$/);
+        if (lastSignMatch) {
+          const basePart = str.substring(0, lastSignMatch.index).trim();
+          dateObj = new Date(basePart);
+          modifiersIdx = lastSignMatch.index;
+        } else {
+          dateObj = new Date(str);
+          return Number.isNaN(dateObj.getTime()) ? null : dateObj;
+        }
+      }
+      if (Number.isNaN(dateObj.getTime())) return null;
+    }
+    const modStr = str.substring(modifiersIdx);
+    const regex = /([\+\-])(\d+)([a-zA-Z]*)/g;
+    let match;
+    while ((match = regex.exec(modStr)) !== null) {
+      const sign = match[1];
+      const value = parseInt(match[2], 10) * (sign === '-' ? -1 : 1);
+      const unit = match[3].toLowerCase();
+      if (unit === 'y' || unit === 'year' || unit === 'years') {
+        dateObj.setFullYear(dateObj.getFullYear() + value);
+      } else if (unit === 'month' || unit === 'months') {
+        dateObj.setMonth(dateObj.getMonth() + value);
+      } else if (unit === 'd' || unit === 'day' || unit === 'days') {
+        dateObj.setDate(dateObj.getDate() + value);
+      } else if (unit === 'h' || unit === 'hour' || unit === 'hours') {
+        dateObj.setHours(dateObj.getHours() + value);
+      } else if (unit === 'm' || unit === 'min' || unit === 'minute' || unit === 'minutes') {
+        dateObj.setMinutes(dateObj.getMinutes() + value);
+      } else if (unit === 's' || unit === 'sec' || unit === 'second' || unit === 'seconds' || unit === '') {
+        dateObj.setSeconds(dateObj.getSeconds() + value);
+      }
+    }
+    return dateObj;
   }
 
 

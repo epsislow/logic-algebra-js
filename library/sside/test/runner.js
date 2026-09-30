@@ -1201,6 +1201,133 @@ module.exports = {
         assert(r.stopped);
       },
     },
+    {
+      id: 59,
+      desc: 'fdate relative time now alias zero seconds',
+      async run() {
+        const redis = createMemoryRedis();
+        const before = new Date().getUTCDate();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '+0', format: 'DDU', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(Number(r.vars.x), before);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+      },
+    },
+    {
+      id: 60,
+      desc: 'fdate relative time chaining without spaces',
+      async run() {
+        const redis = createMemoryRedis();
+        const baseDate = new Date('2026-09-30T12:00:00.000Z');
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'd', val: baseDate },
+              { op: 'fdate', from: 'd', format: 'YYYYU-MMU-DDU HHU:mmU:ssU', to: 'x' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '2026-09-30 12:00:00');
+      },
+    },
+    {
+      id: 61,
+      desc: 'fdate anchored base ISO date with negative seconds shortcut',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '2026-09-30T21:02:00Z -33s', format: 'HHU:mmU:ssU', to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '21:01:27');
+      },
+    },
+    {
+      id: 62,
+      desc: 'fdate anchored base ISO date with raw negative number defaults to seconds',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '2026-09-30T21:02:00Z -33', format: 'HHU:mmU:ssU', to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '21:01:27');
+      },
+    },
+    {
+      id: 63,
+      desc: 'fdate chained modifiers with multiple units mixed',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '2026-09-30T12:00:00Z +1h+20min-1y', format: 'YYYYU-MMU-DDU HHU:mmU', to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '2025-09-30 13:20');
+      },
+    },
+    {
+      id: 64,
+      desc: 'fdate chained modifiers crossing month boundary fields',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '2026-09-30T12:00:00Z +2day', format: 'YYYYU-MMU-DDU', to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '2026-10-02');
+      },
+    },
+    {
+      id: 65,
+      desc: 'fdate chained modifiers subtracting months cross year boundary',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '2026-01-15T12:00:00Z -2month', format: 'YYYYU-MMU-DDU', to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '2025-11-15');
+      },
+    },
+    {
+      id: 66,
+      desc: 'fdate relative string parsing safe cast fallback on corruption',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'fdate', val: '2026-09-30T12:00:00Z +invalid', format: 'YYYYU', to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '2026');
+      },
+    },
 
   ],
 };
