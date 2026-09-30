@@ -37,6 +37,39 @@ Dacă valoarea din `as` este invalidă sau lipsește, motorul folosește implici
 | **`boolean`** | Returnează `false` pentru `null`/`undefined` sau pentru string-ul `"false"`. Returnează `true` pentru string-ul `"true"`. Pentru restul, aplică evaluarea de adevăr standard (`!!val`). |
 | **`null`** | Transformă orice valoare primită în mod direct în `null`. |
 
+### fdate
+`{ "op": "fdate", "format": "DD.MM.YYYY HH:mm", "to": "display_date", "from": "form.created_at" }`  
+sau  
+`{ "op": "fdate", "format": "YYYY-MM-DD", "to": "display_date", "val": 1790769600000 }` (literal).
+
+Extrage o valoare de dată (`from` sau `val`), o convertește automat într-un obiect `Date` valid și generează un string formatat în variabila destinație (`to`) pe baza token-urilor furnizate. Operația este garantată **Safe-Cast** (dacă valoarea lipsește sau este text corupt, returnează un string gol `''` fără să blokeze algoritmul).
+
+Dacă proprietatea `format` lipsește din pas, motorul folosește implicit formatul standard **`YYYY-MM-DD`**.
+
+#### Token-uri suportate pentru formatare:
+
+| Token | Rezultat | Exemplu (pentru ora UTC 15:30:45) |
+| :--- | :--- | :--- |
+| **`ISO`** | String-ul complet în format standard ISO 8601 | `"2026-09-30T15:30:45.000Z"` |
+| **`Z`** | Decalajul de fus orar (Timezone Offset) în minute | `-180` (în funcție de server) |
+| **`YYYY`** | Anul curent în fusul orar local (4 cifre) | `2026` |
+| **`MM`** | Luna curentă în fusul orar local (cu zero în față) | `09` |
+| **`DD`** | Ziua curentă în fusul orar local (cu zero în față) | `30` |
+| **`HH`** | Ora curentă în format de **24 de ore** local (00-23) | `18` (dacă local e UTC+3) |
+| **`hh`** | Ora curentă în format de **12 ore** local (01-12) | `06` |
+| **`mm`** | Minutele curente în fusul orar local (cu zero în față) | `30` |
+| **`ss`** | Secundele curente în fusul orar local (cu zero în față) | `45` |
+| **`A`** | Indicatorul AM / PM pentru fusul orar local | `PM` |
+| **`YYYYU`**| Anul curent în format strict **UTC** | `2026` |
+| **`MMU`** | Luna curentă în format strict **UTC** | `09` |
+| **`DDU`** | Ziua curentă în format strict **UTC** | `30` |
+| **`HHU`** | Ora curentă în format de **24 de ore UTC** (00-23) | `15` |
+| **`hhU`** | Ora curentă în format de **12 ore UTC** (01-12) | `03` |
+| **`mmU`** | Minutele curente în format strict **UTC** | `30` |
+| **`ssU`** | Secundele curente în format strict **UTC** | `45` |
+| **`AU`** | Indicatorul AM / PM pentru formatul **UTC** | `PM` |
+
+
 ### cat
 `{ "op": "cat", "to": "key", "parts": ["data:_item:", "form.id"] }`
 
