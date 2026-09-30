@@ -13,7 +13,28 @@ Context: `form` (date din Live) + `vars` (locale).
 
 ### assign
 `{ "op": "assign", "to": "qty", "from": "form.qty" }`  
-sau `"val": 7` (literal).
+sau
+`{ "op": "assign", "to": "qty", "val": 7 }`  (literal).
+
+### cast
+Forțează conversia unei valori (`from` sau `val`) către un anumit tip de dată specificat în parametrul `as`. Această operație este garantată **Safe-Cast** (nu returnează niciodată erori de runtime de tip `NaN`, aplicând fallback-uri automate).
+
+`{ "op": "cast", "as":"number", "to": "qty", "from": "form.qty" }`  
+sau
+`{ "op": "cast", "as":"number", "to": "qty", "val": 7 }`  (literal).
+
+#### Tipuri suportate în `as` (Case-Insensitive):
+Dacă valoarea din `as` este invalidă sau lipsește, motorul folosește implicit fallback-ul `auto`.
+
+| Tip `as` | Comportament și reguli de conversie (Safe Fallbacks) |
+| :--- | :--- |
+| **`auto`** | Păstrează tipul dacă e obiect. Parsează JSON-urile valide din string. Altfel transformă în string primitiv. Dacă valoarea lipsește, returnează `null`. |
+| **`json`** | Parsează string-urile în obiecte JSON native. Returnează `null` pentru `undefined`/`null`. Păstrează intacte structurile care sunt deja obiecte. |
+| **`string`** | Returnează `''` pentru `null`/`undefined`. Obiectele și Array-urile sunt serializate automat prin `JSON.stringify()`. Restul devin string nativ. |
+| **`integer`** | Transformă în număr întreg cu rotunjire matematică (`Math.round`). String-urile numerice (ex: `"15.7"`) sunt analizate ca float și rotunjite corect (ex: `16`). Orice text invalid sau `NaN` devine automat `0`. |
+| **`number`** | Convertește în număr cu zecimale. Cazuri speciale structuri goale: **Array-ul gol `[]` devine `0`**, **Obiectul gol `{}` devine `0`**. Obiectele populate devin `1`. Textul invalid sau `NaN` devine `0`. |
+| **`boolean`** | Returnează `false` pentru `null`/`undefined` sau pentru string-ul `"false"`. Returnează `true` pentru string-ul `"true"`. Pentru restul, aplică evaluarea de adevăr standard (`!!val`). |
+| **`null`** | Transformă orice valoare primită în mod direct în `null`. |
 
 ### cat
 `{ "op": "cat", "to": "key", "parts": ["data:_item:", "form.id"] }`

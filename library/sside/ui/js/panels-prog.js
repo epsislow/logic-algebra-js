@@ -477,6 +477,15 @@
     { value: 'json', label: 'json' },
     { value: 'string', label: 'string' },
   ];
+  const CAST_AS_OPTS = [
+    { value: 'auto', label: 'auto' },
+    { value: 'json', label: 'json' },
+    { value: 'string', label: 'string' },
+    { value: 'integer', label: 'integer' },
+    { value: 'number', label: 'number' },
+    { value: 'boolean', label: 'boolean' },
+    { value: 'null', label: 'null' },
+  ];
   const UI_DO_OPTS = [
     { value: 'refresh', label: 'refresh' },
     { value: 'clear', label: 'clear' },
@@ -1047,7 +1056,7 @@
 
     if (op === 'cast') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
-      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'json', AS_OPTS))));
+      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'json', CAST_AS_OPTS))));
       const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
       const srcSel = wire(
         mkSelect('_src', srcMode, [
