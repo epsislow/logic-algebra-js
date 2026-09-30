@@ -40,11 +40,36 @@ Dacă valoarea din `as` este invalidă sau lipsește, motorul folosește implici
 ### fdate
 `{ "op": "fdate", "format": "DD.MM.YYYY HH:mm", "to": "display_date", "from": "form.created_at" }`  
 sau  
-`{ "op": "fdate", "format": "YYYY-MM-DD", "to": "display_date", "val": 1790769600000 }` (literal).
+`{ "op": "fdate", "format": "YYYY-MM-DD", "to": "display_date", "val": 1790769600000 }` (literal)
+sau  
+`{ "op": "fdate", "format": "YYYY-MM-DD", "to": "display_date", "val": "now +2day" }` (relativ).
 
-Extrage o valoare de dată (`from` sau `val`), o convertește automat într-un obiect `Date` valid și generează un string formatat în variabila destinație (`to`) pe baza token-urilor furnizate. Operația este garantată **Safe-Cast** (dacă valoarea lipsește sau este text corupt, returnează un string gol `''` fără să blokeze algoritmul).
+Extrage o valoare de dată (`from` sau `val`), o convertește automat într-un obiect `Date` valid (suportând ancore fixe și modificatori relativi înlănțuiți) și salvează string-ul formatat în variabila destinație (`to`).
+
+Operația este garantată **Safe-Cast** (dacă valoarea lipsește complet sau este un text corupt imposibil de parsat, returnează un string gol `''` fără să blocheze execuția algoritmului).
 
 Dacă proprietatea `format` lipsește din pas, motorul folosește implicit formatul standard **`YYYY-MM-DD`**.
+
+#### Sintaxă Timp Relativ (Modificatori înlănțuiți)
+
+Valoarea de intrare (`val` sau valoarea extrasă din `from`) poate fi scrisă sub formă de expresie dinamică compactă (fără spații în interiorul modificatorului, ex: `+1h-30min`).
+
+1. **Ancore de timp curent:**
+   * `"now"`, `"+0"`, `"-0"` — Reprezintă exact momentul curent (`new Date()`).
+   * Punctul de plecare poate fi urmat direct de modificatori (ex: `"+2day"`, `"-33sec"`).
+
+2. **Ancore de dată fixă:**
+   * Poți pune o dată ISO sau un timestamp, urmat de un spațiu și modificatori (ex: `"2026-09-30T21:02:00Z -33s"`).
+
+3. **Prescurtări unități de timp (Shortcuts Case-Insensitive):**
+   * **Ani:** `y`, `year`, `years` (ex: `-1y`)
+   * **Luni:** `month`, `months` (ex: `+2month`)
+   * **Zile:** `d`, `day`, `days` (ex: `+7d`)
+   * **Ore:** `h`, `hour`, `hours` (ex: `+1h`)
+   * **Minute:** `m`, `min`, `minute`, `minutes` (ex: `-15m`)
+   * **Secunde:** `s`, `sec`, `second`, `seconds` sau *lipsă unitate* (ex: `-33s` sau `-33`)
+
+---
 
 #### Token-uri suportate pentru formatare:
 
