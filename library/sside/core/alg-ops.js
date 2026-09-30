@@ -225,13 +225,13 @@
 
   function normalizeCastAs(as) {
     const a = (as || 'auto').toLowerCase();
-    if (a === 'json' || a === 'string' || a === 'auto') return a;
+    if (a === 'json' || a === 'string' || a === 'auto' || a === 'date') return a;
     if (a === 'integer' || a === 'number' || a === 'boolean' || a === 'null') return a;
     return 'auto';
   }
 
   function isEmptyObject(val) {
-    return typeof val === 'object' && val !== null && Object.keys(val).length === 0;
+    return typeof val === 'object' && val !== null && !(val instanceof Date) && Object.keys(val).length === 0;
   }
 
   function isEmptyArray(val) {
@@ -255,11 +255,18 @@
     if (as === 'string') {
       if (val === undefined || val === null) return '';
       if (typeof val === 'string') return val;
+      if (val instanceof Date) {
+        return Number.isNaN(val.getTime()) ? '' : val.toISOString();
+      }
       if (typeof val === 'object') return JSON.stringify(val);
       return String(val);
     }
     if (as === 'integer') {
       if (val === undefined || val === null) return 0;
+      if (val instanceof Date) {
+        const t = val.getTime();
+        return Number.isNaN(t) ? 0 : t;
+      }
       if (typeof val === 'number') {
         return Number.isNaN(val) ? 0 : Math.round(val);
       }
@@ -268,6 +275,10 @@
     }
     if (as === 'number') {
       if (val === undefined || val === null) return 0;
+      if (val instanceof Date) {
+        const t = val.getTime();
+        return Number.isNaN(t) ? 0 : t;
+      }
       if (typeof val === 'number') {
         return Number.isNaN(val) ? 0 : val;
       }
@@ -291,6 +302,17 @@
       return !!val;
     }
     if (as === 'null') {
+      return null;
+    }
+    if (as === 'date') {
+      if (val === undefined || val === null) return null;
+      if (val instanceof Date) {
+        return Number.isNaN(val.getTime()) ? null : val;
+      }
+      if (typeof val === 'number' || typeof val === 'string') {
+        const d = new Date(val);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
       return null;
     }
     throw new Error('cast: invalid as value: ' + as);

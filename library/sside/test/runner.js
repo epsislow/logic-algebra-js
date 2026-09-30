@@ -879,5 +879,131 @@ module.exports = {
         assert(r.stopped);
       },
     },
+    {
+      id: 44,
+      desc: 'cast from valid ISO string to date',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '2026-09-30T12:00:00.000Z', as: 'date', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assert(r.vars.x instanceof Date);
+        assertEq(r.vars.x.toISOString(), '2026-09-30T12:00:00.000Z');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 45,
+      desc: 'cast from timestamp number to date',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 1790769600000, as: 'date', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assert(r.vars.x instanceof Date);
+        assertEq(r.vars.x.toISOString(), '2026-09-30T12:00:00.000Z');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 46,
+      desc: 'cast from invalid string to date returns null fallback',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 'not-a-date-string', as: 'date', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, null);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 47,
+      desc: 'cast from date to string returns ISO representation',
+      async run() {
+        const redis = createMemoryRedis();
+        const initialDate = new Date('2026-09-30T12:00:00.000Z');
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'my_date', val: initialDate },
+              { op: 'cast', from: 'my_date', as: 'string', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '2026-09-30T12:00:00.000Z');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 48,
+      desc: 'cast from date to integer returns millisecond timestamp',
+      async run() {
+        const redis = createMemoryRedis();
+        const initialDate = new Date('2026-09-30T12:00:00.000Z');
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'my_date', val: initialDate },
+              { op: 'cast', from: 'my_date', as: 'integer', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 1790769600000);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 49,
+      desc: 'cast from date to date identity re-cast',
+      async run() {
+        const redis = createMemoryRedis();
+        const initialDate = new Date('2026-09-30T12:00:00.000Z');
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'my_date', val: initialDate },
+              { op: 'cast', from: 'my_date', as: 'date', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r.vars.x instanceof Date);
+        assertEq(r.vars.x.getTime(), 1790769600000);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
   ],
 };
