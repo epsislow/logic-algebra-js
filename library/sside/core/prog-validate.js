@@ -5,7 +5,7 @@
   'use strict';
 
   const ALG_OPS = new Set([
-    'assign', 'cat', 'if', 'foreach', 'end', 'comment',
+    'assign', 'cat', 'cast', 'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',

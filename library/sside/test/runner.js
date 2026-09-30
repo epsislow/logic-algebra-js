@@ -11,6 +11,10 @@ function assertEq(a, b, msg) {
   if (a !== b) throw new Error((msg || 'eq') + ': ' + JSON.stringify(a) + ' !== ' + JSON.stringify(b));
 }
 
+function assertEqJson(a, b, msg) {
+  if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error((msg || 'eq') + ': ' + JSON.stringify(a) + ' !== ' + JSON.stringify(b));
+}
+
 module.exports = {
   name: 'runner',
   tests: [
@@ -229,6 +233,543 @@ module.exports = {
         );
         assert(r4.vars.t === undefined, 'if off');
         assertEq(r4.vars.z, 9);
+      },
+    },
+    {
+      id: 9,
+      desc: 'cast from string to json',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '{"a":1}', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.x, { a: 1 });
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 10,
+      desc: 'cast from json to string',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '{"a":1}', as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '{"a":1}');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 11,
+      desc: 'cast from number to integer round down',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 1.4, as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 1);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 12,
+      desc: 'cast from number to integer round up',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 1.5, as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 2);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 13,
+      desc: 'cast from integer to number',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 1, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 1);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 14,
+      desc: 'cast from boolean to string',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: true, as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 'true');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 15,
+      desc: 'cast from null to string',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: null, as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 16,
+      desc: 'cast from undefined to string',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: undefined, as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 17,
+      desc: 'cast from number to boolean',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 1, as: 'boolean', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, true);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 18,
+      desc: 'cast from boolean to number',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: true, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 1);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 19,
+      desc: 'cast from null to boolean',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: null, as: 'boolean', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, false);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 20,
+      desc: 'cast invalid string to number gives zero instead of NaN',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 'not-a-number', as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 21,
+      desc: 'cast empty array to number gives zero',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: [], as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 22,
+      desc: 'cast empty object to number gives zero',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: {}, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 23,
+      desc: 'cast populated object to number gives one',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: { a: 10 }, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 1);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 24,
+      desc: 'cast invalid string to integer gives zero instead of NaN',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 'abc', as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 25,
+      desc: 'cast from string to json valid array',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '[1,2,3]', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.x, [1, 2, 3]);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 26,
+      desc: 'cast from json to string valid array',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: [1,2,3], as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '[1,2,3]');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 27,
+      desc: 'cast from invalid json string to json fallback handling',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '{invalid-json}', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 28,
+      desc: 'cast from primitive string to json',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '"text-in-ghilimele"', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 29,
+      desc: 'cast empty string to json handling',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 30,
+      desc: 'cast auto from valid json string to object',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: '{"status":true}', as: 'auto', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.x, { status: true });
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 31,
+      desc: 'cast auto from object returns the object untouched',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: { user: 'admin' }, as: 'auto', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.x, { user: 'admin' });
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 32,
+      desc: 'cast auto from number returns string representation',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 42.5, as: 'auto', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, '42.5');
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 33,
+      desc: 'cast to null always returns null',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 'anything', as: 'null', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, null);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 34,
+      desc: 'cast invalid string to number gives zero instead of NaN',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 'not-a-number', as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 35,
+      desc: 'cast empty array to number gives zero',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: [], as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 36,
+      desc: 'cast empty object to number gives zero',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: {}, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 37,
+      desc: 'cast populated object to number gives one',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: { a: 10 }, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 1);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 38,
+      desc: 'cast invalid string to integer gives zero instead of NaN',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'cast', val: 'abc', as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
       },
     },
   ],

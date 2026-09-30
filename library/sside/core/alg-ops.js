@@ -223,6 +223,79 @@
     return v;
   }
 
+  function normalizeCastAs(as) {
+    const a = (as || 'auto').toLowerCase();
+    if (a === 'json' || a === 'string' || a === 'auto') return a;
+    if (a === 'integer' || a === 'number' || a === 'boolean' || a === 'null') return a;
+    return 'auto';
+  }
+
+  function isEmptyObject(val) {
+    return typeof val === 'object' && val !== null && Object.keys(val).length === 0;
+  }
+
+  function isEmptyArray(val) {
+    return Array.isArray(val) && val.length === 0;
+  }
+  
+  function castValue(val, as) {
+    as = normalizeCastAs(as);
+    //console.log('castValue', val, as);
+    if (as === 'auto') {
+      if (val === undefined || val === null) return null;
+      if (typeof val === 'string') return parseMaybeJson(val);
+      if (typeof val === 'object') return val;
+      return String(val);
+    }
+    if (as === 'json') {
+      if (val === undefined || val === null) return null;
+      if (typeof val === 'string') return parseMaybeJson(val);
+      return val;
+    }
+    if (as === 'string') {
+      if (val === undefined || val === null) return '';
+      if (typeof val === 'string') return val;
+      if (typeof val === 'object') return JSON.stringify(val);
+      return String(val);
+    }
+    if (as === 'integer') {
+      if (val === undefined || val === null) return 0;
+      if (typeof val === 'number') {
+        return Number.isNaN(val) ? 0 : Math.round(val);
+      }
+      const parsedInt = Number.parseInt(val, 10);
+      return Number.isNaN(parsedInt) ? 0 : parsedInt;
+    }
+    if (as === 'number') {
+      if (val === undefined || val === null) return 0;
+      if (typeof val === 'number') {
+        return Number.isNaN(val) ? 0 : val;
+      }
+      if (typeof val === 'string') {
+        const parsedFloat = Number.parseFloat(val);
+        return Number.isNaN(parsedFloat) ? 0 : parsedFloat;
+      }
+      if (typeof val === 'object') {
+        return isEmptyArray(val) ? 0 : isEmptyObject(val) ? 0 : 1;
+      }
+      if (typeof val === 'boolean') {
+        return val ? 1 : 0;
+      }
+      return 0;
+    }
+    if (as === 'boolean') {
+      if (val === undefined || val === null) return false;
+      if (typeof val === 'boolean') return val;
+      if (val === 'false') return false;
+      if (val === 'true') return true;
+      return !!val;
+    }
+    if (as === 'null') {
+      return null;
+    }
+    throw new Error('cast: invalid as value: ' + as);
+  }
+
   function parseMaybeJson(raw) {
     if (raw == null || raw === '') return raw;
     if (typeof raw !== 'string') return raw;
@@ -265,6 +338,9 @@
     checkSchema,
     assertRedisAllowed,
     normalizeAs,
+    normalizeCastAs,
+    isEmptyObject,
+    isEmptyArray,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,
@@ -272,6 +348,7 @@
     unwrapJsonGet,
     parseMaybeJson,
     looksJsonType,
+    castValue,
   };
 
   root.SsideAlgOps = api;

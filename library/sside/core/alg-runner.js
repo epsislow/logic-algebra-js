@@ -95,6 +95,14 @@
       return;
     }
 
+    if (op === 'cast') {
+      const val = getVal(ctx, step.val);
+      const as = step.as || 'json';
+      const converted = Ops.castValue(val, as);
+      Ops.setVar(ctx, step.to, converted);
+      return;
+    }
+
     if (op === 'end') {
       if (ctx.inTx) {
         ctx.txBuf = [];

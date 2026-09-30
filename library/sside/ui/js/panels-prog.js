@@ -6,7 +6,7 @@
   'use strict';
 
   const ALG_OPS = [
-    'assign', 'cat', 'if', 'foreach', 'end', 'comment',
+    'assign', 'cat', 'cast', 'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen',
     'jset', 'jget',
@@ -493,6 +493,7 @@
     op = op || 'assign';
     if (op === 'assign') return { op: 'assign', to: '', from: '' };
     if (op === 'cat') return { op: 'cat', to: '', parts: [''] };
+    if (op === 'cast') return { op: 'cast', val: '', as: 'json' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
@@ -670,6 +671,17 @@
         ? step.parts.map((p) => previewVal(p)).join(' + ')
         : '';
       return 'cat  ' + to + ' ← ' + parts;
+    }
+
+    if (op === 'cast') {
+      return (
+        'cast  ' +
+        previewVal(step.val) +
+        '  as ' +
+        previewVal(step.as) +
+        ' → ' +
+        previewVal(step.to)
+      );
     }
 
     if (op === 'end') {
@@ -1024,6 +1036,13 @@
       return;
     }
 
+    if (op === 'cast') {
+      row.appendChild(mkField('val', wire(mkInput('val', literalToInput(step.val)))));
+      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'json', AS_OPTS))));
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      return;
+    }
+
     if (op === 'end') {
       const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
       const modeSel = wire(
@@ -1224,6 +1243,12 @@
       step.to = sf(el, 'to');
       const partsHost = el.querySelector('[data-sf="parts"]');
       step.parts = partsHost && partsHost._readParts ? partsHost._readParts() : [''];
+      return withStepMeta(el, step);
+    }
+    if (op === 'cast') {
+      step.val = parseMaybeLiteral(sf(el, 'val'));
+      step.as = sf(el, 'as') || 'json';
+      step.to = sf(el, 'to');
       return withStepMeta(el, step);
     }
     if (op === 'end') {
