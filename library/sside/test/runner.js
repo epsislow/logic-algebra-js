@@ -856,5 +856,28 @@ module.exports = {
         assert(r.stopped);
       },
     },
+    {
+      id: 43,
+      desc: 'cast using from reference pointing to a previously assigned variable',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'temp_val', from: 'form.raw_string' },
+              { op: 'cast', from: 'temp_val', as: 'integer', to: 'final_score' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: { raw_string: '15.7' }, redis }
+        );
+        assertEq(r.vars.temp_val, '15.7');
+        assertEq(r.vars.final_score, 16);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
   ],
 };

@@ -516,11 +516,11 @@
         }
         html[data-theme="dark"] .prog-step-off {
             opacity: 1;
-            background-color: #112;
+            background: repeating-linear-gradient(135deg,#191d26,#191d26 8px,#11141a 8px,#11141a 16px);
         }
         html[data-theme="light"] .prog-step-off {
             opacity: 1;
-            background-color: #dee;
+            background: repeating-linear-gradient(135deg,#eff,#eff 8px,#e7f7f7 8px,#e7f7f7 16px);
         }
         .prog-step-off .prog-step-preview,
         .prog-step-off .prog-block-preview {
