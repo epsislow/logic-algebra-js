@@ -772,5 +772,89 @@ module.exports = {
         assert(r.stopped);
       },
     },
+    {
+      id: 39,
+      desc: 'cast with from reference string to json',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'cast', from: 'form.payload', as: 'json', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: { payload: '{"active":true}' }, redis }
+        );
+        assertEqJson(r.vars.x, { active: true });
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 40,
+      desc: 'cast with from reference string to integer',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'cast', from: 'form.count', as: 'integer', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: { count: '15.7' }, redis }
+        );
+        assertEq(r.vars.x, 16);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 41,
+      desc: 'cast with from reference empty array to number',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'cast', from: 'form.items', as: 'number', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: { items: [] }, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 42,
+      desc: 'cast with from reference missing value fallback to zero',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'cast', from: 'form.missing_field', as: 'number', to: 'x' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 0);
+        assertEq(r.msg, 'ok');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
   ],
 };

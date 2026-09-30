@@ -96,7 +96,16 @@
     }
 
     if (op === 'cast') {
-      const val = getVal(ctx, step.val);
+      let val = getVal(ctx, step.val);
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        // val = literal (nu se rezolvă ca ref)
+        val = step.val;
+      } else if (Object.prototype.hasOwnProperty.call(step, 'from')) {
+        val = getVal(ctx, step.from);
+      } else {
+        throw new Error('cast: lipsește val|from');
+      }
+
       const as = step.as || 'json';
       const converted = Ops.castValue(val, as);
       Ops.setVar(ctx, step.to, converted);

@@ -237,7 +237,7 @@
   function isEmptyArray(val) {
     return Array.isArray(val) && val.length === 0;
   }
-  
+
   function castValue(val, as) {
     as = normalizeCastAs(as);
     //console.log('castValue', val, as);
@@ -263,8 +263,8 @@
       if (typeof val === 'number') {
         return Number.isNaN(val) ? 0 : Math.round(val);
       }
-      const parsedInt = Number.parseInt(val, 10);
-      return Number.isNaN(parsedInt) ? 0 : parsedInt;
+      const parsedFloat = Number.parseFloat(val);
+      return Number.isNaN(parsedFloat) ? 0 : Math.round(parsedFloat);
     }
     if (as === 'number') {
       if (val === undefined || val === null) return 0;

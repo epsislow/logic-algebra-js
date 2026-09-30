@@ -493,7 +493,7 @@
     op = op || 'assign';
     if (op === 'assign') return { op: 'assign', to: '', from: '' };
     if (op === 'cat') return { op: 'cat', to: '', parts: [''] };
-    if (op === 'cast') return { op: 'cast', val: '', as: 'json' };
+    if (op === 'cast') return { op: 'cast', as: 'json',to: '' , from: ''};
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
@@ -674,13 +674,22 @@
     }
 
     if (op === 'cast') {
+      const to = step.to != null ? String(step.to) : '';
+
+      if (Object.prototype.hasOwnProperty.call(step, 'val')) {
+        return (
+          'cast  ' + to + ' ← ' +
+          previewVal(step.val) + ' val' +
+          '  as ' +
+          previewVal(step.as)
+        );
+      }
+      const from = (step.from != null ? String(step.from) : '');
       return (
-        'cast  ' +
-        previewVal(step.val) +
+        'cast  ' + to + ' ← ' +
+        from + ' from' +
         '  as ' +
-        previewVal(step.as) +
-        ' → ' +
-        previewVal(step.to)
+        previewVal(step.as)
       );
     }
 
@@ -1037,9 +1046,29 @@
     }
 
     if (op === 'cast') {
-      row.appendChild(mkField('val', wire(mkInput('val', literalToInput(step.val)))));
-      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'json', AS_OPTS))));
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'json', AS_OPTS))));
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'val') ? 'val' : 'from';
+      const srcSel = wire(
+        mkSelect('_src', srcMode, [
+          { value: 'from', label: 'from (ref)' },
+          { value: 'val', label: 'val (literal)' },
+        ])
+      );
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', step.from != null ? step.from : ''));
+      const valInp = wire(mkInput('val', literalToInput(step.val)));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      function toggleSrc() {
+        const m = srcSel.value;
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      srcSel.addEventListener('change', toggleSrc);
+      toggleSrc();
       return;
     }
 
@@ -1246,9 +1275,10 @@
       return withStepMeta(el, step);
     }
     if (op === 'cast') {
-      step.val = parseMaybeLiteral(sf(el, 'val'));
-      step.as = sf(el, 'as') || 'json';
       step.to = sf(el, 'to');
+      step.as = sf(el, 'as') || 'json';
+      if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
+      else step.from = sf(el, 'from');
       return withStepMeta(el, step);
     }
     if (op === 'end') {
