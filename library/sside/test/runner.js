@@ -1451,5 +1451,163 @@ module.exports = {
         assert(r.err || (r.msg && r.msg.includes('Object sau Array')));
       },
     },
+    {
+      id: 74,
+      desc: 'str inspector functions length and index handling',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'length', value: 'form.text', to: 'len' },
+              { op: 'str', fn: 'indexOf', value: 'form.text', search: 'form.s', to: 'idx' },
+              { op: 'str', fn: 'lastIndexOf', value: 'form.text', search: 'form.s', to: 'last_idx' }
+            ],
+          },
+          { form: { text: 'hello world hello', s: 'hello' }, redis }
+        );
+        assertEq(r.vars.len, 17);
+        assertEq(r.vars.idx, 0);
+        assertEq(r.vars.last_idx, 12);
+      },
+    },
+    {
+      id: 75,
+      desc: 'str case and trim whitespace modifiers',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'lower', value: 'form.t', to: 'lo' },
+              { op: 'str', fn: 'upper', value: 'form.t', to: 'up' },
+              { op: 'str', fn: 'trim', value: 'form.t', to: 'tr' },
+              { op: 'str', fn: 'ltrim', value: 'form.t', to: 'lt' },
+              { op: 'str', fn: 'rtrim', value: 'form.t', to: 'rt' }
+            ],
+          },
+          { form: { t: '  John Smith  ' }, redis }
+        );
+        assertEq(r.vars.lo, '  john smith  ');
+        assertEq(r.vars.up, '  JOHN SMITH  ');
+        assertEq(r.vars.tr, 'John Smith');
+        assertEq(r.vars.lt, 'John Smith  ');
+        assertEq(r.vars.rt, '  John Smith');
+      },
+    },
+    {
+      id: 76,
+      desc: 'str search boolean predicate operations',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'contains', value: 'form.email', search: 'form.s1', to: 'c1' },
+              { op: 'str', fn: 'contains', value: 'form.email', search: 'form.s2', to: 'c2' },
+              { op: 'str', fn: 'startsWith', value: 'form.code', search: 'form.p1', to: 'sw' },
+              { op: 'str', fn: 'endsWith', value: 'form.file', search: 'form.p2', to: 'ew' }
+            ],
+          },
+          { form: { email: 'john@test.com', s1: '@', s2: 'xyz', code: 'SKU-123', p1: 'SKU-', file: 'conf.json', p2: '.json' }, redis }
+        );
+        assertEq(r.vars.c1, true);
+        assertEq(r.vars.c2, false);
+        assertEq(r.vars.sw, true);
+        assertEq(r.vars.ew, true);
+      },
+    },
+    {
+      id: 77,
+      desc: 'str extraction and replacement operations',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'substr', value: 'form.t', start: 'form.s', length: 'form.l', to: 'sub1' },
+              { op: 'str', fn: 'substr', value: 'form.t', start: 'form.s', to: 'sub2' },
+              { op: 'str', fn: 'replace', value: 'form.t', search: 'form.f', replace: 'form.r', to: 'rep' },
+              { op: 'str', fn: 'replaceAll', value: 'form.t', search: 'form.f', replace: 'form.r', to: 'repA' }
+            ],
+          },
+          { form: { t: 'A B A B', s: 2, l: 3, f: 'A', r: 'X' }, redis }
+        );
+        assertEq(r.vars.sub1, 'B A');
+        assertEq(r.vars.sub2, 'B A B');
+        assertEq(r.vars.rep, 'X B A B');
+        assertEq(r.vars.repA, 'X B X B');
+      },
+    },
+    {
+      id: 78,
+      desc: 'str conversion split and construction concat steps',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'split', value: 'form.tags', separator: 'form.s', to: 'arr' },
+              { op: 'str', fn: 'concat', args: ['form.a1', 'form.a2', 'form.a3'], to: 'str' }
+            ],
+          },
+          { form: { tags: 'r,g,b', s: ',', a1: 'X', a2: '-', a3: 'Y' }, redis }
+        );
+        assertEqJson(r.vars.arr, ['r', 'g', 'b']);
+        assertEq(r.vars.str, 'X-Y');
+      },
+    },
+    {
+      id: 79,
+      desc: 'str formatting padding repeat and wildcard matching',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'padStart', value: 'form.v', length: 'form.l', char: 'form.c', to: 'pS' },
+              { op: 'str', fn: 'padEnd', value: 'form.v', length: 'form.l', char: 'form.c', to: 'pE' },
+              { op: 'str', fn: 'repeat', value: 'form.ch', count: 'form.cnt', to: 'rep' },
+              { op: 'str', fn: 'matches', value: 'form.code', pattern: 'form.p1', to: 'm1' },
+              { op: 'str', fn: 'matches', value: 'form.code', pattern: 'form.p2', to: 'm2' }
+            ],
+          },
+          { form: { v: '7', l: 3, c: '0', ch: '-', cnt: 4, code: 'SKU-456', p1: 'SKU-*', p2: 'SKU-1*' }, redis }
+        );
+        assertEq(r.vars.pS, '007');
+        assertEq(r.vars.pE, '700');
+        assertEq(r.vars.rep, '----');
+        assertEq(r.vars.m1, true);
+        assertEq(r.vars.m2, false);
+      },
+    },
+    {
+      id: 80,
+      desc: 'str safe cast fallback handling for empty and object types',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'lower', value: 'form.missing', to: 's1' },
+              { op: 'str', fn: 'split', value: 'form.missing', separator: ',', to: 's2' },
+              { op: 'str', fn: 'trim', value: 'form.obj', to: 's3' }
+            ],
+          },
+          { form: { obj: { name: 'A' } }, redis }
+        );
+        assertEq(r.vars.s1, '');
+        assertEqJson(r.vars.s2, ['']);
+        assertEq(r.vars.s3, '{"name":"A"}');
+      },
+    },
+
   ],
 };

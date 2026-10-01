@@ -134,6 +134,41 @@ Valoarea de intrare (`val` sau valoarea extrasă din `from`) poate fi scrisă su
 ### cat
 `{ "op": "cat", "to": "key", "parts": ["data:_item:", "form.id"] }`
 
+### str
+`{ "op": "str", "fn": "lower", "value": "form.name", "to": "name" }`  
+sau  
+`{ "op": "str", "fn": "concat", "args": ["form.first", " ", "form.last"], "to": "full" }` (multi-argument).
+
+Meta-operația `str` oferă un set complet de funcții atomice pentru inspecția, transformarea și manipularea șirurilor de caractere. 
+
+Toate funcțiile sunt garantate **Safe-Cast** (dacă variabilele lipsesc sau sunt obiecte complexe, ele sunt convertite automat în string-uri goale sau serializate JSON pentru a preveni crash-urile). Această operație **nu modifică controlul execuției** (funcțiile booleene întorc doar `true/false`, decizia fiind responsabilitatea operației native `if`).
+
+---
+
+#### Tipuri de Return în funcție de `fn` (Case-Insensitive)
+
+##### 1. Returnează STRING
+* **`lower`** / **`upper`** — Convertește textul în litere mici sau mari.
+* **`trim`** / **`ltrim`** / **`rtrim`** — Elimină spațiile libere (de la ambele capete, doar început sau doar sfârșit).
+* **`substr`** — Extrage o bucățică de text. Necesită proprietatea `start` și opțional `length`.
+* **`replace`** / **`replaceAll`** — Înlocuiește prima sau toate aparițiile unui text (`search`) cu textul nou (`replace`).
+* **`concat`** — Unește mai multe referințe din context specificate în array-ul `args`. **Nu folosește proprietatea `value`.**
+* **`padStart`** / **`padEnd`** — Adaugă caractere (`char`, implicit spațiu) la început sau sfârșit până se atinge lungimea `length`.
+* **`repeat`** — Repetă textul de `count` ori (limită maximă de siguranță de 500 de repetări).
+
+##### 2. Returnează NUMBER
+* **`length`** — Returnează numărul total de caractere din string.
+* **`indexOf`** / **`lastIndexOf`** — Returnează poziția primei sau ultimei apariții a textului `search`. Întoarce `-1` dacă nu este găsit.
+
+##### 3. Returnează BOOLEAN
+* **`contains`** — Verifică dacă textul conține substring-ul `search`.
+* **`startsWith`** / **`endsWith`** — Verifică dacă textul începe sau se termină cu prefixul/sufixul `search`.
+* **`matches`** — Verifică dacă textul se potrivește cu un șablon de tip wildcard definit în `pattern` (suportă caracterul `*` ca wildcard general, ex: `SKU-*`).
+
+##### 4. Returnează ARRAY
+* **`split`** — Împarte textul într-un masiv de string-uri pe baza unui `separator`. Returnează întotdeauna un array (gol `[]` în caz de eroare) garantând compatibilitatea cu operația `foreach`.
+
+
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
 

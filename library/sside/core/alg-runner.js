@@ -143,6 +143,13 @@
       return;
     }
 
+    if (op === 'str') {
+      if (!step.to) throw new Error('str: proprietatea to este obligatorie');
+      const result = Ops.executeStringMeta(step, ctx, getVal);
+      Ops.setVar(ctx, step.to, result);
+      return;
+    }
+
     if (op === 'end') {
       if (ctx.inTx) {
         ctx.txBuf = [];

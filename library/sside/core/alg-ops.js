@@ -562,6 +562,107 @@
     return parseExpression();
   }
 
+  function executeStringMeta(step, ctx, getValFn) {
+    const fn = String(step.fn || 'lower').toLowerCase();
+    function safeStr(v) {
+      if (v === undefined || v === null) return '';
+      if (v instanceof Date) return v.toISOString();
+      if (Array.isArray(v) || typeof v === 'object') {
+        try { return JSON.stringify(v); } catch (e) { return ''; }
+      }
+      return String(v);
+    }
+    let inputStr = '';
+    if (fn !== 'concat') {
+      inputStr = safeStr(getValFn(ctx, step.value));
+    }
+    switch (fn) {
+      case 'length':
+        return inputStr.length;
+      case 'lower':
+        return inputStr.toLowerCase();
+      case 'upper':
+        return inputStr.toUpperCase();
+      case 'trim':
+        return inputStr.trim();
+      case 'ltrim':
+        return inputStr.replace(/^\s+/, '');
+      case 'rtrim':
+        return inputStr.replace(/\s+$/, '');
+      case 'contains': {
+        const s = safeStr(getValFn(ctx, step.search));
+        return s !== '' ? inputStr.includes(s) : false;
+      }
+      case 'startswith': {
+        const s = safeStr(getValFn(ctx, step.search));
+        return inputStr.startsWith(s);
+      }
+      case 'endswith': {
+        const s = safeStr(getValFn(ctx, step.search));
+        return inputStr.endsWith(s);
+      }
+      case 'indexof': {
+        const s = safeStr(getValFn(ctx, step.search));
+        return inputStr.indexOf(s);
+      }
+      case 'lastindexof': {
+        const s = safeStr(getValFn(ctx, step.search));
+        return inputStr.lastIndexOf(s);
+      }
+      case 'substr': {
+        const start = castValue(getValFn(ctx, step.start), 'integer');
+        const length = step.length !== undefined && step.length !== null ? castValue(getValFn(ctx, step.length), 'integer') : undefined;
+        if (length !== undefined) return inputStr.substring(start, start + length);
+        return inputStr.substring(start);
+      }
+      case 'replace': {
+        const s = safeStr(getValFn(ctx, step.search));
+        const r = safeStr(getValFn(ctx, step.replace));
+        return inputStr.replace(s, r);
+      }
+      case 'replaceall': {
+        const s = safeStr(getValFn(ctx, step.search));
+        const r = safeStr(getValFn(ctx, step.replace));
+        if (s === '') return inputStr;
+        return inputStr.split(s).join(r);
+      }
+      case 'split': {
+        const sep = safeStr(getValFn(ctx, step.separator));
+        return inputStr.split(sep);
+      }
+      case 'concat': {
+        const args = Array.isArray(step.args) ? step.args : [];
+        let res = '';
+        for (let i = 0; i < args.length; i++) {
+          res += safeStr(getValFn(ctx, args[i]));
+        }
+        return res;
+      }
+      case 'padstart': {
+        const len = castValue(getValFn(ctx, step.length), 'integer');
+        const ch = step.char !== undefined && step.char !== null ? safeStr(getValFn(ctx, step.char)) : ' ';
+        return inputStr.padStart(len, ch || ' ');
+      }
+      case 'padend': {
+        const len = castValue(getValFn(ctx, step.length), 'integer');
+        const ch = step.char !== undefined && step.char !== null ? safeStr(getValFn(ctx, step.char)) : ' ';
+        return inputStr.padEnd(len, ch || ' ');
+      }
+      case 'repeat': {
+        const count = Math.min(Math.max(0, castValue(getValFn(ctx, step.count), 'integer')), 500);
+        return inputStr.repeat(count);
+      }
+      case 'matches': {
+        const pattern = safeStr(getValFn(ctx, step.pattern));
+        if (pattern === '') return false;
+        const escaped = pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*');
+        const rx = new RegExp('^' + escaped + '$');
+        return rx.test(inputStr);
+      }
+      default:
+        return inputStr;
+    }
+  }
 
 
   /**
@@ -602,6 +703,7 @@
     castValue,
     formatDateValue,
     evaluateMath,
+    executeStringMeta,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,

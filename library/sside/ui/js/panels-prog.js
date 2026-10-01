@@ -9,7 +9,7 @@
     'assign', 'cat', 'cast', 'fdate', 
     'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
-    'scheck', 'sgen', 'calc',
+    'scheck', 'sgen', 'calc', 'str',
     'jset', 'jget',
     'search',
     'ui',
@@ -507,6 +507,7 @@
     if (op === 'cast') return { op: 'cast', as: 'json',to: '' , from: ''};
     if (op === 'fdate') return { op: 'fdate', format: 'YYYY-MM-DD', to: '', from: '' };
     if (op === 'calc') return { op: 'calc', expr: '', to: '', precision: null };
+    if (op === 'str') return { op: 'str', fn: 'lower', value: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
@@ -732,6 +733,16 @@
       const prec = step.precision != null ? ' [p:' + step.precision + ']' : '';
       return 'calc  ' + to + ' ← ' + (step.expr || '') + prec;
     }
+
+    if (op === 'str') {
+      const to = step.to != null ? String(step.to) : '';
+      const fn = step.fn != null ? String(step.fn) : '';
+      if (fn === 'concat') {
+        return 'str  ' + to + ' ← concat(' + (Array.isArray(step.args) ? step.args.join(', ') : '') + ')';
+      }
+      return 'str  ' + to + ' ← ' + fn + '(' + (step.value != null ? String(step.value) : '') + ')';
+    }
+
 
     if (op === 'end') {
       if (step.err != null && step.err !== '') {
@@ -1146,6 +1157,59 @@
       return;
     }
 
+    if (op === 'str') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      const fnOpts = [
+        { value: 'length', label: 'length' }, { value: 'lower', label: 'lower' }, { value: 'upper', label: 'upper' },
+        { value: 'trim', label: 'trim' }, { value: 'ltrim', label: 'ltrim' }, { value: 'rtrim', label: 'rtrim' },
+        { value: 'contains', label: 'contains' }, { value: 'startsWith', label: 'startsWith' }, { value: 'endsWith', label: 'endsWith' },
+        { value: 'indexOf', label: 'indexOf' }, { value: 'lastIndexOf', label: 'lastIndexOf' }, { value: 'substr', label: 'substr' },
+        { value: 'replace', label: 'replace' }, { value: 'replaceAll', label: 'replaceAll' }, { value: 'split', label: 'split' },
+        { value: 'concat', label: 'concat' }, { value: 'padStart', label: 'padStart' }, { value: 'padEnd', label: 'padEnd' },
+        { value: 'repeat', label: 'repeat' }, { value: 'matches', label: 'matches' }
+      ];
+      const fnSel = wire(mkSelect('fn', step.fn || 'lower', fnOpts));
+      row.appendChild(mkField('funcție', fnSel));
+      const valInp = wire(mkInput('value', step.value != null ? step.value : ''));
+      const valF = mkField('valoare', valInp);
+      row.appendChild(valF);
+      const extraContainer = document.createElement('span');
+      row.appendChild(extraContainer);
+      function renderExtraFields() {
+        extraContainer.innerHTML = '';
+        const f = fnSel.value;
+        if (f === 'concat') {
+          valF.style.display = 'none';
+          const argsInp = wire(mkInput('args', Array.isArray(step.args) ? step.args.join(', ') : ''));
+          extraContainer.appendChild(mkField('argumente (ref, separate prin virgulă)', argsInp));
+          return;
+        }
+        valF.style.display = '';
+        if (f === 'contains' || f === 'startsWith' || f === 'endsWith' || f === 'indexOf' || f === 'lastIndexOf') {
+          extraContainer.appendChild(mkField('search', wire(mkInput('search', step.search != null ? step.search : ''))));
+        } else if (f === 'substr') {
+          extraContainer.appendChild(mkField('start', wire(mkInput('start', step.start != null ? step.start : '0', { type: 'number' }))));
+          extraContainer.appendChild(mkField('length', wire(mkInput('length', step.length != null ? step.length : '', { type: 'number', placeholder: 'tot' }))));
+        } else if (f === 'replace' || f === 'replaceAll') {
+          extraContainer.appendChild(mkField('search', wire(mkInput('search', step.search != null ? step.search : ''))));
+          extraContainer.appendChild(mkField('replace', wire(mkInput('replace', step.replace != null ? step.replace : ''))));
+        } else if (f === 'split') {
+          extraContainer.appendChild(mkField('separator', wire(mkInput('separator', step.separator != null ? step.separator : ''))));
+        } else if (f === 'padStart' || f === 'padEnd') {
+          extraContainer.appendChild(mkField('length', wire(mkInput('length', step.length != null ? step.length : '0', { type: 'number' }))));
+          extraContainer.appendChild(mkField('char', wire(mkInput('char', step.char != null ? step.char : ' '))));
+        } else if (f === 'repeat') {
+          extraContainer.appendChild(mkField('count', wire(mkInput('count', step.count != null ? step.count : '1', { type: 'number' }))));
+        } else if (f === 'matches') {
+          extraContainer.appendChild(mkField('pattern', wire(mkInput('pattern', step.pattern != null ? step.pattern : ''))));
+        }
+      }
+      fnSel.addEventListener('change', renderExtraFields);
+      renderExtraFields();
+      return;
+    }
+
+
     if (op === 'end') {
       const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
       const modeSel = wire(
@@ -1369,6 +1433,36 @@
       step.precision = p !== '' ? parseInt(p, 10) : null;
       return withStepMeta(el, step);
     }
+    if (op === 'str') {
+      step.to = sf(el, 'to');
+      step.fn = sf(el, 'fn') || 'lower';
+      if (step.fn === 'concat') {
+        const rawArgs = sf(el, 'args');
+        step.args = rawArgs !== '' ? rawArgs.split(',').map(s => s.trim()) : [];
+        delete step.value;
+      } else {
+        step.value = sf(el, 'value');
+        delete step.args;
+      }
+      const searchVal = sf(el, 'search');
+      if (searchVal !== '') step.search = searchVal;
+      const replaceVal = sf(el, 'replace');
+      if (replaceVal !== '') step.replace = replaceVal;
+      const sepVal = sf(el, 'separator');
+      if (sepVal !== '') step.separator = sepVal;
+      const patVal = sf(el, 'pattern');
+      if (patVal !== '') step.pattern = patVal;
+      const charVal = sf(el, 'char');
+      if (charVal !== '') step.char = charVal;
+      const startVal = sf(el, 'start');
+      if (startVal !== '') step.start = parseInt(startVal, 10);
+      const lenVal = sf(el, 'length');
+      if (lenVal !== '') step.length = parseInt(lenVal, 10);
+      const countVal = sf(el, 'count');
+      if (countVal !== '') step.count = parseInt(countVal, 10);
+      return withStepMeta(el, step);
+    }
+
     if (op === 'end') {
       const text = sf(el, 'text');
       if (sf(el, '_end') === 'err') step.err = text;
