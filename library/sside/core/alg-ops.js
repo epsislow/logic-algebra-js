@@ -422,6 +422,147 @@
     return dateObj;
   }
 
+  function evaluateMath(exprStr, ctx, getValFn) {
+    if (!exprStr || String(exprStr).trim() === '') return 0;
+    let str = String(exprStr).trim();
+    let pos = 0;
+    function peek() {
+      return str[pos] || '';
+    }
+    function consume(char) {
+      while (peek() === ' ') pos++;
+      if (str[pos] === char) { pos++; return true; }
+      return false;
+    }
+    function parseExpression() {
+      let result = parseTerm();
+      while (true) {
+        if (consume('+')) result += parseTerm();
+        else if (consume('-')) result -= parseTerm();
+        else break;
+      }
+      return result;
+    }
+    function parseTerm() {
+      let result = parsePower();
+      while (true) {
+        if (consume('*')) {
+          result *= parsePower();
+        } else if (consume('/')) {
+          const denominator = parsePower();
+          result = denominator === 0 ? 0 : result / denominator;
+        } else if (consume('%')) {
+          const denominator = parsePower();
+          result = denominator === 0 ? 0 : result % denominator;
+        } else break;
+      }
+      return result;
+    }
+    function parsePower() {
+      let result = parseFactor();
+      while (consume('^')) {
+        result = Math.pow(result, parseFactor());
+      }
+      return result;
+    }
+    function parseFactor() {
+      while (peek() === ' ') pos++;
+      if (consume('-')) return -parseFactor();
+      if (consume('+')) return parseFactor();
+      if (consume('(')) {
+        const result = parseExpression();
+        consume(')');
+        return result;
+      }
+      const funcMatch = str.substring(pos).match(/^(abs|min|max|sqrt|pow|floor|ceil|round)\(/);
+      if (funcMatch) {
+        const funcName = funcMatch[1];
+        pos += funcName.length + 1;
+        let argsStr = '';
+        let depth = 1;
+        while (pos < str.length && depth > 0) {
+          const char = str[pos++];
+          if (char === '(') depth++;
+          if (char === ')') depth--;
+          if (depth > 0) argsStr += char;
+        }
+        if (funcName === 'abs') return Math.abs(evaluateMath(argsStr, ctx, getValFn));
+        if (funcName === 'sqrt') return Math.sqrt(evaluateMath(argsStr, ctx, getValFn));
+        if (funcName === 'floor') return Math.floor(evaluateMath(argsStr, ctx, getValFn));
+        if (funcName === 'ceil') return Math.ceil(evaluateMath(argsStr, ctx, getValFn));
+        if (funcName === 'round') return Math.round(evaluateMath(argsStr, ctx, getValFn));
+        if (funcName === 'pow') {
+          const parts = splitArgs(argsStr);
+          return Math.pow(evaluateMath(parts[0], ctx, getValFn), evaluateMath(parts[1], ctx, getValFn));
+        }
+        if (funcName === 'min' || funcName === 'max') {
+          const rawArg = getValFn(ctx, argsStr.trim());
+          if (Array.isArray(rawArg)) {
+            const numElements = rawArg.map(v => castValue(v, 'number'));
+            return funcName === 'min' ? Math.min(...numElements) : Math.max(...numElements);
+          }
+          const parts = splitArgs(argsStr);
+          const values = parts.map(p => evaluateMath(p, ctx, getValFn));
+          return funcName === 'min' ? Math.min(...values) : Math.max(...values);
+        }
+      }
+      const varMatch = str.substring(pos).match(/^[a-zA-Z_][a-zA-Z0-9_\.]*/);
+      if (varMatch) {
+        const varName = varMatch[0];
+        pos += varName.length;
+        const rawVal = getValFn(ctx, varName);
+        if (rawVal !== null && rawVal !== undefined) {
+          if (Array.isArray(rawVal) || (typeof rawVal === 'object' && !(rawVal instanceof Date))) {
+            throw new Error('[calc] Operație invalidă: nu se pot face calcule matematice folosind structuri de tip Object sau Array direct în expresie.');
+          }
+        }
+        const firstPart = varName.split('.')[0];
+        const rootVal = getValFn(ctx, firstPart);
+        if (rootVal !== null && rootVal !== undefined && varName.includes('.')) {
+          const pathParts = varName.split('.').slice(1);
+          let currentObj = rootVal;
+          for (let p of pathParts) {
+            if (currentObj && typeof currentObj === 'object') {
+              currentObj = currentObj[p];
+            }
+          }
+          if (currentObj !== null && currentObj !== undefined) {
+            if (Array.isArray(currentObj) || (typeof currentObj === 'object' && !(currentObj instanceof Date))) {
+              throw new Error('[calc] Operație invalidă: nu se pot face calcule matematice folosind structuri de tip Object sau Array direct în expresie.');
+            }
+          }
+        }
+        return castValue(rawVal, 'number');
+      }
+      let numStr = '';
+      while ((peek() >= '0' && peek() <= '9') || peek() === '.') {
+        numStr += str[pos++];
+      }
+      while (peek() === ' ') pos++;
+      return numStr !== '' ? parseFloat(numStr) : 0;
+    }
+    function splitArgs(argumentsStr) {
+      const args = [];
+      let current = '';
+      let depth = 0;
+      for (let i = 0; i < argumentsStr.length; i++) {
+        const char = argumentsStr[i];
+        if (char === '(') depth++;
+        if (char === ')') depth--;
+        if (char === ',' && depth === 0) {
+          args.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      if (current !== '') args.push(current);
+      return args;
+    }
+    return parseExpression();
+  }
+
+
 
   /**
    * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
@@ -460,6 +601,7 @@
     isEmptyArray,
     castValue,
     formatDateValue,
+    evaluateMath,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,

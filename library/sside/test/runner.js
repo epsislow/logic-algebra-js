@@ -1328,6 +1328,128 @@ module.exports = {
         assertEq(r.vars.x, '2026');
       },
     },
-
+    {
+      id: 67,
+      desc: 'calc basic arithmetic precedence and parentheses',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'calc', expr: '2 + 3 * 4', to: 'x' },
+              { op: 'calc', expr: '(2 + 3) * 4', to: 'y' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 14);
+        assertEq(r.vars.y, 20);
+      },
+    },
+    {
+      id: 68,
+      desc: 'calc dynamic references with power and modulo operators',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'calc', expr: 'form.base ^ form.exp', to: 'pow_res' },
+              { op: 'calc', expr: 'form.val % 3', to: 'mod_res' }
+            ],
+          },
+          { form: { base: 2, exp: 8, val: 10 }, redis }
+        );
+        assertEq(r.vars.pow_res, 256);
+        assertEq(r.vars.mod_res, 1);
+      },
+    },
+    {
+      id: 69,
+      desc: 'calc safe math division and modulo by zero returns zero',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'calc', expr: '10 / 0', to: 'div_zero' },
+              { op: 'calc', expr: '10 % 0', to: 'mod_zero' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.div_zero, 0);
+        assertEq(r.vars.mod_zero, 0);
+      },
+    },
+    {
+      id: 70,
+      desc: 'calc unary operators handling inside expressions',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'calc', expr: 'form.price * -form.discount', to: 'x' }],
+          },
+          { form: { price: 100, discount: 2 }, redis }
+        );
+        assertEq(r.vars.x, -200);
+      },
+    },
+    {
+      id: 71,
+      desc: 'calc precision rounding on final result only',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'calc', expr: '10 / 3 * 3', precision: 2, to: 'x' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.x, 10);
+      },
+    },
+    {
+      id: 72,
+      desc: 'calc math functions with unlimited arguments and array support',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'calc', expr: 'min(5, 10, 2, 8)', to: 'min_val' },
+              { op: 'calc', expr: 'max(form.items)', to: 'max_array' },
+              { op: 'calc', expr: 'abs(-42) + sqrt(16)', to: 'func_mix' }
+            ],
+          },
+          { form: { items: [10, 45, 23, 5] }, redis }
+        );
+        assertEq(r.vars.min_val, 2);
+        assertEq(r.vars.max_array, 45);
+        assertEq(r.vars.func_mix, 46);
+      },
+    },
+    {
+      id: 73,
+      desc: 'calc strict validation throws error on invalid object types',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'calc', expr: 'form.profile * 2', to: 'x' }],
+          },
+          { form: { profile: { name: 'John' } }, redis }
+        );
+        assert(r.err || (r.msg && r.msg.includes('Object sau Array')));
+      },
+    },
   ],
 };

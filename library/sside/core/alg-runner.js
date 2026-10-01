@@ -129,6 +129,20 @@
       return;
     }
 
+    if (op === 'calc') {
+      if (!step.expr) throw new Error('calc: proprietatea expr este obligatorie');
+      let result = Ops.evaluateMath(step.expr, ctx, getVal);
+      if (step.precision !== null && step.precision !== undefined) {
+        const p = parseInt(step.precision, 10);
+        if (!Number.isNaN(p)) {
+          const factor = Math.pow(10, p);
+          result = Math.round(result * factor) / factor;
+        }
+      }
+      Ops.setVar(ctx, step.to, Number.isNaN(result) ? 0 : result);
+      return;
+    }
+
     if (op === 'end') {
       if (ctx.inTx) {
         ctx.txBuf = [];

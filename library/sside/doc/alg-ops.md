@@ -37,6 +37,42 @@ Dacă valoarea din `as` este invalidă sau lipsește, motorul folosește implici
 | **`boolean`** | Returnează `false` pentru `null`/`undefined` sau pentru string-ul `"false"`. Returnează `true` pentru string-ul `"true"`. Pentru restul, aplică evaluarea de adevăr standard (`!!val`). |
 | **`null`** | Transformă orice valoare primită în mod direct în `null`. |
 
+### calc
+`{ "op": "calc", "expr": "(form.price * form.qty) * 1.19", "precision": 2, "to": "total_price" }`  
+sau  
+`{ "op": "calc", "expr": "max(form.items) ^ 2", "to": "result" }` (funcții & putere).
+
+Evaluează o expresie matematică complexă furnizată ca string în proprietatea `expr`, extrage dinamic variabilele din context (`form` sau `vars`) și salvează rezultatul numeric pur în variabila destinație (`to`). 
+
+Operația rulează pe un interpretor izolat (fără `eval()`), aplică reguli de **Safe-Math** (împărțirea la zero returnează `0` în loc de crash) și aplică rotunjirea `precision` exclusiv pe rezultatul final.
+
+**REGULĂ DE STRICTEȚE (Type Validation):** Dacă expresia încearcă să folosească direct o variabilă care conține un `Object` sau un `Array` (în afara funcțiilor dedicate), motorul va opri execuția și va returna o eroare de tip.
+
+---
+
+#### Operatori Suportați (în ordinea precedenței matematice)
+
+1. **Paranteze:** `()` pentru controlul explicit al ordinii de calcul.
+2. **Putere:** `^` (ex: `2 ^ 8` returnează `256`).
+3. **Operatori Unari:** `+` sau `-` în interiorul expresiilor (ex: `price * -discount`).
+4. **Multiplicare, Divizare și Modulo:** `*`, `/`, `%` (restul împărțirii).
+5. **Adunare și Scădere:** `+`, `-`.
+
+---
+
+#### Funcții Matematice Native Suportate
+
+| Funcție | Comportament | Exemplu |
+| :--- | :--- | :--- |
+| **`abs(x)`** | Returnează valoarea absolută (elimină semnul minus). | `abs(-42) -> 42` |
+| **`sqrt(x)`** | Calculează rădăcina pătrată a numărului. | `sqrt(16) -> 4` |
+| **`floor(x)`**| Rotunjește numărul în jos către cel mai apropiat întreg. | `floor(4.9) -> 4` |
+| **`ceil(x)`** | Rotunjește numărul în sus către cel mai apropiat întreg. | `ceil(4.1) -> 5` |
+| **`round(x)`**| Rotunjește numărul standard la cel mai apropiat întreg. | `round(4.5) -> 5` |
+| **`pow(x, y)`**| Calculează baza `x` la puterea `y` (echivalent cu `x ^ y`). | `pow(2, 3) -> 8` |
+| **`min(...)`**| Returnează valoarea minimă. Suportă listă de argumente sau un **Array pur** din context. | `min(5, 2, 8)` sau `min(form.items)` |
+| **`max(...)`**| Returnează valoarea maximă. Suportă listă de argumente sau un **Array pur** din context. | `max(5, 2, 8)` sau `max(form.items)` |
+
 ### fdate
 `{ "op": "fdate", "format": "DD.MM.YYYY HH:mm", "to": "display_date", "from": "form.created_at" }`  
 sau  

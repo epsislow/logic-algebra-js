@@ -9,7 +9,7 @@
     'assign', 'cat', 'cast', 'fdate', 
     'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
-    'scheck', 'sgen',
+    'scheck', 'sgen', 'calc',
     'jset', 'jget',
     'search',
     'ui',
@@ -506,6 +506,7 @@
     if (op === 'cat') return { op: 'cat', to: '', parts: [''] };
     if (op === 'cast') return { op: 'cast', as: 'json',to: '' , from: ''};
     if (op === 'fdate') return { op: 'fdate', format: 'YYYY-MM-DD', to: '', from: '' };
+    if (op === 'calc') return { op: 'calc', expr: '', to: '', precision: null };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
@@ -724,6 +725,12 @@
         '  fmt ' +
         previewVal(format)
       );
+    }
+
+    if (op === 'calc') {
+      const to = step.to != null ? String(step.to) : '';
+      const prec = step.precision != null ? ' [p:' + step.precision + ']' : '';
+      return 'calc  ' + to + ' ← ' + (step.expr || '') + prec;
     }
 
     if (op === 'end') {
@@ -1132,6 +1139,13 @@
       return;
     }
 
+    if (op === 'calc') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      row.appendChild(mkField('expresie', wire(mkInput('expr', step.expr != null ? step.expr : ''))));
+      row.appendChild(mkField('precizie', wire(mkInput('precision', step.precision != null ? step.precision : '', { type: 'number', placeholder: 'max' }))));
+      return;
+    }
+
     if (op === 'end') {
       const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
       const modeSel = wire(
@@ -1346,6 +1360,13 @@
       step.format = sf(el, 'format') || 'YYYY-MM-DD';
       if (sf(el, '_src') === 'val') step.val = parseMaybeLiteral(sf(el, 'val'));
       else step.from = sf(el, 'from');
+      return withStepMeta(el, step);
+    }
+    if (op === 'calc') {
+      step.to = sf(el, 'to');
+      step.expr = sf(el, 'expr');
+      const p = sf(el, 'precision');
+      step.precision = p !== '' ? parseInt(p, 10) : null;
       return withStepMeta(el, step);
     }
     if (op === 'end') {
