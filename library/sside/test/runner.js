@@ -1608,6 +1608,213 @@ module.exports = {
         assertEq(r.vars.s3, '{"name":"A"}');
       },
     },
-
+    {
+      id: 81,
+      desc: 'array inspection functions length isEmpty and contains',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'length', from: 'form.items', to: 'len' },
+              { op: 'array', fn: 'isEmpty', from: 'form.items', to: 'empty1' },
+              { op: 'array', fn: 'isEmpty', from: 'form.empty_arr', to: 'empty2' },
+              { op: 'array', fn: 'contains', from: 'form.items', values: ['red'], to: 'c1' },
+              { op: 'array', fn: 'contains', from: 'form.items', values: ['yellow'], to: 'c2' }
+            ],
+          },
+          { form: { items: ['red', 'green', 'blue'], empty_arr: [] }, redis }
+        );
+        assertEq(r.vars.len, 3);
+        assertEq(r.vars.empty1, false);
+        assertEq(r.vars.empty2, true);
+        assertEq(r.vars.c1, true);
+        assertEq(r.vars.c2, false);
+      },
+    },
+    {
+      id: 82,
+      desc: 'array search index positions first and last occurrences',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'indexOf', from: 'form.colors', values: ['red'], to: 'idx1' },
+              { op: 'array', fn: 'lastIndexOf', from: 'form.colors', values: ['red'], to: 'idx2' },
+              { op: 'array', fn: 'indexOf', from: 'form.colors', values: ['blue'], to: 'idx3' }
+            ],
+          },
+          { form: { colors: ['green', 'red', 'yellow', 'red'] }, redis }
+        );
+        assertEq(r.vars.idx1, 1);
+        assertEq(r.vars.idx2, 3);
+        assertEq(r.vars.idx3, -1);
+      },
+    },
+    {
+      id: 83,
+      desc: 'array access element get first last and slice',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'get', from: 'form.letters', index: 2, to: 'item' },
+              { op: 'array', fn: 'first', from: 'form.letters', to: 'f' },
+              { op: 'array', fn: 'last', from: 'form.letters', to: 'l' },
+              { op: 'array', fn: 'slice', from: 'form.letters', start: 1, length: 3, to: 'sl' }
+            ],
+          },
+          { form: { letters: ['A', 'B', 'C', 'D', 'E'] }, redis }
+        );
+        assertEq(r.vars.item, 'C');
+        assertEq(r.vars.f, 'A');
+        assertEq(r.vars.l, 'E');
+        assertEqJson(r.vars.sl, ['B', 'C', 'D']);
+      },
+    },
+    {
+      id: 84,
+      desc: 'array addition push and unshift literal values and arrays',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'push', from: 'form.base', values: [30, 40], to: 'r1' },
+              { op: 'array', fn: 'push', from: 'form.base', values: [[30, 40]], to: 'r2' },
+              { op: 'array', fn: 'unshift', from: 'form.base', values: [5, 10], to: 'r3' }
+            ],
+          },
+          { form: { base: [10, 20] }, redis }
+        );
+        assertEqJson(r.vars.r1, [10, 20, 30, 40]);
+        assertEqJson(r.vars.r2, [10, 20, [30, 40]]);
+        assertEqJson(r.vars.r3, [5, 10, 10, 20]);
+      },
+    },
+    {
+      id: 85,
+      desc: 'array addition push using dynamic references',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'array', fn: 'push', from: 'form.items', values: 'form.news', to: 'res' }],
+          },
+          { form: { items: [1, 2], news: [3, 4] }, redis }
+        );
+        assertEqJson(r.vars.res, [1, 2, 3, 4]);
+      },
+    },
+    {
+      id: 86,
+      desc: 'array element removal first and last bounds',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'removeFirst', from: 'form.list', to: 'rf' },
+              { op: 'array', fn: 'removeLast', from: 'form.list', to: 'rl' }
+            ],
+          },
+          { form: { list: [100, 200, 300] }, redis }
+        );
+        assertEqJson(r.vars.rf, [200, 300]);
+        assertEqJson(r.vars.rl, [100, 200]);
+      },
+    },
+    {
+      id: 87,
+      desc: 'array transformation functions reverse unique and sort directions',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'reverse', from: 'form.nums', to: 'rev' },
+              { op: 'array', fn: 'unique', from: 'form.dups', to: 'uniq' },
+              { op: 'array', fn: 'sort', from: 'form.unsorted', direction: 'asc', to: 's_asc' },
+              { op: 'array', fn: 'sort', from: 'form.unsorted', direction: 'desc', to: 's_desc' }
+            ],
+          },
+          { form: { nums: [1, 2, 3], dups: [1, 2, 2, 3], unsorted: [30, 10, 20] }, redis }
+        );
+        assertEqJson(r.vars.rev, [3, 2, 1]);
+        assertEqJson(r.vars.uniq, [1, 2, 3]);
+        assertEqJson(r.vars.s_asc, [10, 20, 30]);
+        assertEqJson(r.vars.s_desc, [30, 20, 10]);
+      },
+    },
+    {
+      id: 88,
+      desc: 'array conversion join counter-part to string split',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'array', fn: 'join', from: 'form.words', separator: '-', to: 'txt' }],
+          },
+          { form: { words: ['red', 'green', 'blue'] }, redis }
+        );
+        assertEq(r.vars.txt, 'red-green-blue');
+      },
+    },
+    {
+      id: 89,
+      desc: 'array numeric aggregation math operations',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'sum', from: 'form.prices', to: 's' },
+              { op: 'array', fn: 'min', from: 'form.prices', to: 'mi' },
+              { op: 'array', fn: 'max', from: 'form.prices', to: 'ma' },
+              { op: 'array', fn: 'avg', from: 'form.prices', to: 'av' }
+            ],
+          },
+          { form: { prices: [10, 25, 40, 15] }, redis }
+        );
+        assertEq(r.vars.s, 90);
+        assertEq(r.vars.mi, 10);
+        assertEq(r.vars.ma, 40);
+        assertEq(r.vars.av, 22.5);
+      },
+    },
+    {
+      id: 90,
+      desc: 'array safe cast input convention fallback handling',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'array', fn: 'length', from: 'form.missing', to: 's1' },
+              { op: 'array', fn: 'min', from: 'form.empty_arr', to: 's2' },
+              { op: 'array', fn: 'push', from: 'form.primitive', values: [2], to: 's3' },
+              { op: 'array', fn: 'length', from: 'form.primitive', to: 's4' }
+            ],
+          },
+          { form: { empty_arr: [], primitive: 1 }, redis }
+        );
+        assertEq(r.vars.s1, 0);
+        assertEq(r.vars.s2, 0);
+        assertEqJson(r.vars.s3, [1, 2]);
+        assertEq(r.vars.s4, 1);
+      },
+    },
   ],
 };

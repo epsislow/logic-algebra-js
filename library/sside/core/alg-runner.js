@@ -150,6 +150,13 @@
       return;
     }
 
+    if (op === 'array') {
+      if (!step.to) throw new Error('array: proprietatea to este obligatorie');
+      const result = Ops.executeArrayMeta(step, ctx, getVal);
+      Ops.setVar(ctx, step.to, result);
+      return;
+    }
+
     if (op === 'end') {
       if (ctx.inTx) {
         ctx.txBuf = [];

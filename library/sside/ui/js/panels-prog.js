@@ -9,7 +9,7 @@
     'assign', 'cat', 'cast', 'fdate', 
     'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
-    'scheck', 'sgen', 'calc', 'str',
+    'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget',
     'search',
     'ui',
@@ -508,6 +508,7 @@
     if (op === 'fdate') return { op: 'fdate', format: 'YYYY-MM-DD', to: '', from: '' };
     if (op === 'calc') return { op: 'calc', expr: '', to: '', precision: null };
     if (op === 'str') return { op: 'str', fn: 'lower', value: '', to: '' };
+    if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
     if (op === 'end') return { op: 'end', msg: '' };
@@ -742,6 +743,20 @@
       }
       return 'str  ' + to + ' ← ' + fn + '(' + (step.value != null ? String(step.value) : '') + ')';
     }
+
+    if (op === 'array') {
+      const to = step.to != null ? String(step.to) : '';
+      const fn = step.fn != null ? String(step.fn) : '';
+      let from = '';
+      if (Array.isArray(step.from)) {
+        const json = JSON.stringify(step.from);
+        from = json.length > 25 ? json.substring(0, 25) + '...' : json;
+      } else if (step.from != null) {
+        from = String(step.from);
+      }
+      return 'array ' + to + ' ← ' + fn + '(' + from + ')';
+    }
+
 
 
     if (op === 'end') {
@@ -1209,6 +1224,58 @@
       return;
     }
 
+    if (op === 'array') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      const fnOpts = [
+        { value: 'length', label: 'length' }, { value: 'isEmpty', label: 'isEmpty' }, { value: 'contains', label: 'contains' },
+        { value: 'indexOf', label: 'indexOf' }, { value: 'lastIndexOf', label: 'lastIndexOf' }, { value: 'get', label: 'get' },
+        { value: 'first', label: 'first' }, { value: 'last', label: 'last' }, { value: 'slice', label: 'slice' },
+        { value: 'push', label: 'push' }, { value: 'unshift', label: 'unshift' }, { value: 'removeFirst', label: 'removeFirst' },
+        { value: 'removeLast', label: 'removeLast' }, { value: 'reverse', label: 'reverse' }, { value: 'unique', label: 'unique' },
+        { value: 'join', label: 'join' }, { value: 'sort', label: 'sort' }, { value: 'sum', label: 'sum' },
+        { value: 'min', label: 'min' }, { value: 'max', label: 'max' }, { value: 'avg', label: 'avg' }
+      ];
+      const fnSel = wire(mkSelect('fn', step.fn || 'length', fnOpts));
+      row.appendChild(mkField('funcție', fnSel));
+      const srcMode = Array.isArray(step.from) ? 'val' : 'from';
+      const srcSel = wire(mkSelect('_src', srcMode, [{ value: 'from', label: 'from (ref)' }, { value: 'val', label: 'from (literal)' }]));
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', !Array.isArray(step.from) && step.from != null ? step.from : ''));
+      const valInp = wire(mkInput('val', Array.isArray(step.from) ? JSON.stringify(step.from) : ''));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      const extraContainer = document.createElement('span');
+      row.appendChild(extraContainer);
+      function toggleSrc() {
+        const m = srcSel.value;
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      function renderExtraFields() {
+        extraContainer.innerHTML = '';
+        const f = fnSel.value;
+        if (f === 'contains' || f === 'indexOf' || f === 'lastIndexOf' || f === 'push' || f === 'unshift') {
+          extraContainer.appendChild(mkField('values (ref sau JSON literal)', wire(mkInput('values', typeof step.values === 'string' ? step.values : (step.values != null ? JSON.stringify(step.values) : '')))));
+        } else if (f === 'get') {
+          extraContainer.appendChild(mkField('index', wire(mkInput('index', step.index != null ? step.index : '0', { type: 'number' }))));
+        } else if (f === 'slice') {
+          extraContainer.appendChild(mkField('start', wire(mkInput('start', step.start != null ? step.start : '0', { type: 'number' }))));
+          extraContainer.appendChild(mkField('length', wire(mkInput('length', step.length != null ? step.length : '', { type: 'number', placeholder: 'tot' }))));
+        } else if (f === 'sort') {
+          extraContainer.appendChild(mkField('direction', wire(mkSelect('direction', step.direction || 'asc', [{ value: 'asc', label: 'asc' }, { value: 'desc', label: 'desc' }]))));
+        } else if (f === 'join') {
+          extraContainer.appendChild(mkField('separator', wire(mkInput('separator', step.separator != null ? step.separator : ','))));
+        }
+      }
+      srcSel.addEventListener('change', toggleSrc);
+      fnSel.addEventListener('change', renderExtraFields);
+      toggleSrc();
+      renderExtraFields();
+      return;
+    }
+
 
     if (op === 'end') {
       const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
@@ -1462,6 +1529,37 @@
       if (countVal !== '') step.count = parseInt(countVal, 10);
       return withStepMeta(el, step);
     }
+    if (op === 'array') {
+      step.to = sf(el, 'to');
+      step.fn = sf(el, 'fn') || 'length';
+      if (sf(el, '_src') === 'val') {
+        const rawVal = sf(el, 'val');
+        try { step.from = JSON.parse(rawVal); } catch (e) { step.from = []; }
+      } else {
+        step.from = sf(el, 'from');
+      }
+      const f = step.fn;
+      if (f === 'contains' || f === 'indexOf' || f === 'lastIndexOf' || f === 'push' || f === 'unshift') {
+        const rawVals = sf(el, 'values');
+        if (rawVals.startsWith('[') || rawVals.startsWith('{') || rawVals === 'true' || rawVals === 'false' || !Number.isNaN(Number(rawVals))) {
+          try { step.values = JSON.parse(rawVals); } catch (e) { step.values = rawVals; }
+        } else {
+          step.values = rawVals;
+        }
+      } else if (f === 'get') {
+        step.index = parseInt(sf(el, 'index'), 10) || 0;
+      } else if (f === 'slice') {
+        step.start = parseInt(sf(el, 'start'), 10) || 0;
+        const lenVal = sf(el, 'length');
+        if (lenVal !== '') step.length = parseInt(lenVal, 10);
+      } else if (f === 'sort') {
+        step.direction = sf(el, 'direction') || 'asc';
+      } else if (f === 'join') {
+        step.separator = sf(el, 'separator');
+      }
+      return withStepMeta(el, step);
+    }
+
 
     if (op === 'end') {
       const text = sf(el, 'text');

@@ -169,6 +169,57 @@ Toate funcțiile sunt garantate **Safe-Cast** (dacă variabilele lipsesc sau sun
 * **`split`** — Împarte textul într-un masiv de string-uri pe baza unui `separator`. Returnează întotdeauna un array (gol `[]` în caz de eroare) garantând compatibilitatea cu operația `foreach`.
 
 
+### array
+`{ "op": "array", "fn": "push", "from": "items", "values":, "to": "items" }`  
+sau  
+`{ "op": "array", "fn": "unique", "from": "form.items", "to": "unique_items" }` (imutabil).
+
+Meta-operația `array` oferă un set extins de funcții atomice pentru inspecția, accesarea, modificarea, transformarea și agregarea structurilor de tip masiv (Array). 
+
+Toate funcțiile sunt garantate **Safe-Cast** (dacă masivul sursă sau parametrii lipsesc sau sunt primitive, motorul le uniformizează automat în structuri de tip array pentru a preveni crash-urile). Modificarea masivului original are loc **exclusiv** atunci când aceeași referință este folosită atât în proprietatea `from`, cât și în `to`. În caz contrar, operația lasă masivul inițial neatins și scrie rezultatul imutabil la destinație.
+
+---
+
+#### Convenție de Intrare (Input Convention)
+
+* **`from` (Masivul sursă):**
+  * Dacă este trimis ca Array (`[...]`), este interpretat ca un array literal fix.
+  * Dacă este trimis ca String, este evaluat dinamic ca referință din context (ex: `"items"` sau `"form.items"`).
+* **`values` (Elemente de adăugat/căutat):**
+  * Urmează aceeași convenție. Dacă este string, se evaluează ca referință.
+  * Pentru funcțiile `push` și `unshift`, un array literal `[1, 2, 3]` va adăuga cele 3 elemente în mod plat (*flat*). Pentru a împinge un array ca element unic, acesta trebuie împachetat dublu: `[[1, 2, 3]]`.
+
+---
+
+#### Tipuri de Return în funcție de `fn`
+
+##### 1. Returnează ARRAY
+* **`slice`** — Extrage o porțiune din masiv pe baza proprietății `start` și opțional `length`.
+* **`push`** / **`unshift`** — Adaugă unul sau mai multe elemente (`values`) la sfârșitul sau la începutul masivului.
+* **`removeFirst`** / **`removeLast`** — Returnează masivul fără primul sau fără ultimul element (spre deosebire de JS, returnează noul masiv, nu elementul eliminat).
+* **`reverse`** — Inversează ordinea elementelor din masiv.
+* **`unique`** — Elimină elementele duplicate, păstrând prima apariție și ordinea originală a acestora.
+* **`sort`** — Sortează masivul. Direcția este controlată de proprietatea `direction` (valori acceptate: `"asc"` sau `"desc"`).
+
+##### 2. Returnează NUMBER
+* **`length`** — Returnează numărul total de elemente din masiv.
+* **`indexOf`** / **`lastIndexOf`** — Returnează prima sau ultima poziție a elementului căutat în proprietatea `values`. Întoarce `-1` dacă nu este găsit.
+* **`sum`** — Calculează suma tuturor elementelor (trecute automat prin safe-cast la `number`).
+* **`min`** / **`max`** — Returnează cel mai mic sau cel mai mare element numeric. Dacă masivul este gol, returnează `0`.
+* **`avg`** — Returnează media aritmetică a elementelor. Dacă masivul este gol, returnează `0`.
+
+##### 3. Returnează BOOLEAN
+* **`isEmpty`** — Verifică dacă masivul conține zero elemente.
+* **`contains`** — Verifică dacă valoarea din proprietatea `values` există în interiorul masivului.
+
+##### 4. Returnează ANY (Orice tip primitiv sau obiect)
+* **`get`** — Returnează elementul de la poziția specificată în proprietatea `index`. Returnează `null` dacă indexul este în afara limitelor.
+* **`first`** / **`last`** — Returnează primul sau ultimul element din masiv. Întoarce `null` dacă masivul este gol.
+
+##### 5. Returnează STRING
+* **`join`** — Unește toate elementele masivului într-un singur string, separate prin textul definit în proprietatea `separator` (implicit `,`). Reprezintă omologul natural al operației `str.split`.
+
+
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
 

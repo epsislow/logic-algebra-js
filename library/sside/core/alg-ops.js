@@ -663,6 +663,106 @@
         return inputStr;
     }
   }
+  function executeArrayMeta(step, ctx, getValFn) {
+    const fn = String(step.fn || 'length');
+    let arr = Array.isArray(step.from) ? step.from : getValFn(ctx, step.from);
+    if (arr === undefined || arr === null || arr === '') {
+      arr = [];
+    } else if (typeof arr === 'string' && (arr.trim().startsWith('[') || arr.trim().startsWith('{'))) {
+      try { arr = JSON.parse(arr); } catch (e) { arr = [arr]; }
+    }
+    if (!Array.isArray(arr)) {
+      arr = [arr];
+    }
+    function safeValues() {
+      let v = typeof step.values === 'string' && !Array.isArray(step.values) ? getValFn(ctx, step.values) : step.values;
+      if (v === undefined || v === null || v === '') return [];
+      if (typeof v === 'string' && (v.trim().startsWith('[') || v.trim().startsWith('{'))) {
+        try { v = JSON.parse(v); } catch (e) { return [v]; }
+      }
+      return Array.isArray(v) ? v : [v];
+    }
+    switch (fn) {
+      case 'length':
+        return arr.length;
+      case 'isEmpty':
+        return arr.length === 0;
+      case 'contains': {
+        const vals = safeValues();
+        return vals.length > 0 ? arr.includes(vals[0]) : false;
+      }
+      case 'indexOf': {
+        const vals = safeValues();
+        return vals.length > 0 ? arr.indexOf(vals[0]) : -1;
+      }
+      case 'lastIndexOf': {
+        const vals = safeValues();
+        return vals.length > 0 ? arr.lastIndexOf(vals[0]) : -1;
+      }
+      case 'get': {
+        const idx = castValue(getValFn(ctx, step.index), 'integer');
+        return idx >= 0 && idx < arr.length ? arr[idx] : null;
+      }
+      case 'first':
+        return arr.length > 0 ? arr[0] : null;
+      case 'last':
+        return arr.length > 0 ? arr[arr.length - 1] : null;
+      case 'slice': {
+        const start = castValue(getValFn(ctx, step.start), 'integer');
+        const length = step.length !== undefined && step.length !== null ? castValue(getValFn(ctx, step.length), 'integer') : undefined;
+        if (length !== undefined) return arr.slice(start, start + length);
+        return arr.slice(start);
+      }
+      case 'push': {
+        const vals = safeValues();
+        return [...arr, ...vals];
+      }
+      case 'unshift': {
+        const vals = safeValues();
+        return [...vals, ...arr];
+      }
+      case 'removeFirst':
+        return arr.slice(1);
+      case 'removeLast':
+        return arr.slice(0, -1);
+      case 'reverse':
+        return [...arr].reverse();
+      case 'unique':
+        return [...new Set(arr)];
+      case 'join': {
+        const sep = step.separator !== undefined && step.separator !== null ? String(step.separator) : ',';
+        return arr.join(sep);
+      }
+      case 'sort': {
+        const dir = String(step.direction || 'asc').toLowerCase();
+        return [...arr].sort((a, b) => {
+          if (typeof a === 'number' && typeof b === 'number') return dir === 'desc' ? b - a : a - b;
+          const sa = String(a);
+          const sb = String(b);
+          return dir === 'desc' ? sb.localeCompare(sa) : sa.localeCompare(sb);
+        });
+      }
+      case 'sum':
+        return arr.reduce((acc, curr) => acc + castValue(curr, 'number'), 0);
+      case 'min': {
+        if (arr.length === 0) return 0;
+        const nums = arr.map(v => castValue(v, 'number'));
+        return Math.min(...nums);
+      }
+      case 'max': {
+        if (arr.length === 0) return 0;
+        const nums = arr.map(v => castValue(v, 'number'));
+        return Math.max(...nums);
+      }
+      case 'avg': {
+        if (arr.length === 0) return 0;
+        const sum = arr.reduce((acc, curr) => acc + castValue(curr, 'number'), 0);
+        return sum / arr.length;
+      }
+      default:
+        return arr;
+    }
+  }
 
 
   /**
@@ -704,6 +804,7 @@
     formatDateValue,
     evaluateMath,
     executeStringMeta,
+    executeArrayMeta,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,
