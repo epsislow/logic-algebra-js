@@ -2111,6 +2111,45 @@ module.exports = {
         assertEqJson(r.vars.remaining_roles, ['admin']);
       },
     },
+    {
+      id: 106,
+      desc: 'notify accumulation text prepended to final end success banner',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'notify', kind: 'info', value: 'Calculare pornită.' },
+              { op: 'notify', kind: 'success', value: 'Validare ok.' },
+              { op: 'end', type: 'msg', value: 'Gata.' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.msg, '[INFO] Calculare pornită.\n[SUCCESS] Validare ok.\nGata.');
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 107,
+      desc: 'notify accumulation pre-pended to final end error banner with dynamic values',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'notify', kind: 'warning', with: 'form.warn_msg' },
+              { op: 'end', type: 'err', value: 'Proces prăbușit.' }
+            ],
+          },
+          { form: { warn_msg: 'Stoc mic!' }, redis }
+        );
+        assertEq(r.err, '[WARNING] Stoc mic!\nProces prăbușit.');
+        assert(r.stopped);
+      },
+    },
 
   ],
 };

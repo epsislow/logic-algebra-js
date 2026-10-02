@@ -11,7 +11,7 @@
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id',
-    'search',
+    'search', 'notify',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -510,6 +510,7 @@
     if (op === 'str') return { op: 'str', fn: 'lower', value: '', to: '' };
     if (op === 'obj') return { op: 'obj', fn: 'get', from: '', path: '', to: '' };
     if (op === 'id') return { op: 'id', type: 'nanoid', to: '' };
+    if (op === 'notify') return { op: 'notify', kind: 'warning', value: '' };
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
@@ -765,6 +766,13 @@
       const type = step.type != null ? String(step.type) : 'nanoid';
       const detail = type === 'autoinc' || type === 'dateinc' ? ' [key:' + (step.key || '') + ']' : (type === 'nanoid' && step.size ? ' [sz:' + step.size + ']' : '');
       return 'id    ' + to + ' ← ' + type + detail;
+    }
+
+    if (op === 'notify') {
+      const kind = step.kind != null ? String(step.kind) : 'info';
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'with') ? 'with' : 'value';
+      const text = srcMode === 'with' ? step.with : (step.value || '');
+      return 'notify ' + kind + ' ← ' + (srcMode === 'with' ? 'ref:' : 'val:') + previewVal(text);
     }
 
     if (op === 'array') {
@@ -1329,6 +1337,25 @@
       return;
     }
 
+    if (op === 'notify') {
+      const kindOpts = [
+        { value: 'info', label: 'info (albastru)' },
+        { value: 'success', label: 'success (verde)' },
+        { value: 'warning', label: 'warning (galben)' },
+        { value: 'error', label: 'error (roșu)' }
+      ];
+      const kindSel = wire(mkSelect('kind', step.kind || 'info', kindOpts));
+      row.appendChild(mkField('tip', kindSel));
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'with') ? 'with' : 'value';
+      const srcSel = wire(mkSelect('_src', srcMode, [{ value: 'value', label: 'value (literal)' }, { value: 'with', label: 'with (ref)' }]));
+      row.appendChild(mkField('sursă', srcSel));
+      const rawText = srcMode === 'with' ? step.with : (step.value || '');
+      const textInp = wire(mkInput('text', rawText != null ? rawText : ''));
+      row.appendChild(mkField('text/ref', textInp));
+      return;
+    }
+
+
     if (op === 'array') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
       const fnOpts = [
@@ -1684,6 +1711,20 @@
       }
       return withStepMeta(el, step);
     }
+
+    if (op === 'notify') {
+      step.kind = sf(el, 'kind') || 'info';
+      const text = sf(el, 'text');
+      if (sf(el, '_src') === 'with') {
+        step.with = text;
+        delete step.value;
+      } else {
+        step.value = text;
+        delete step.with;
+      }
+      return withStepMeta(el, step);
+    }
+
 
     if (op === 'array') {
       step.to = sf(el, 'to');

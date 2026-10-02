@@ -163,6 +163,11 @@
       Ops.setVar(ctx, step.to, result);
       return;
     }
+
+    if (op === 'notify') {
+      Ops.executeNotify(step, ctx, getVal);
+      return;
+    }
     
     if (op === 'array') {
       if (!step.to) throw new Error('array: proprietatea to este obligatorie');
@@ -184,6 +189,10 @@
       } else {
         finalStr = step.value !== undefined ? String(step.value) : String(step.msg || step.err || '');
       }
+      if (ctx._notifications && ctx._notifications.length > 0) {
+        const prefix = ctx._notifications.map(n => '[' + n.kind.toUpperCase() + '] ' + n.text).join('\n');
+        finalStr = prefix + '\n' + finalStr;
+      }
       if (type === 'err') {
         ctx._err = finalStr;
       } else {
@@ -192,6 +201,7 @@
       ctx._stop = true;
       return;
     }
+
 
 
     if (op === 'if') {

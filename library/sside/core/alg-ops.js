@@ -942,6 +942,21 @@
     }
   }
 
+  function executeNotify(step, ctx, getValFn) {
+    const kind = String(step.kind || 'info').toLowerCase();
+    let text = '';
+    if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+      const v = getValFn(ctx, step.with);
+      text = v == null ? '' : String(v);
+    } else {
+      text = step.value !== undefined ? String(step.value) : '';
+    }
+    if (!ctx._notifications) {
+      ctx._notifications = [];
+    }
+    ctx._notifications.push({ kind, text });
+  }
+
 
   /**
    * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
@@ -985,6 +1000,7 @@
     executeObjMeta,
     executeArrayMeta,
     executeIdGen,
+    executeNotify,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,

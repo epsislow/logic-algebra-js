@@ -296,6 +296,23 @@ Exemplu `when` text: `qty <= 0 or form.id == ""` (vezi Docs → **when**).
 ### comment
 `{ "op": "comment", "note": "--- validare ---" }` — no-op la run; în Edit view: `// nota` sub (F2-alg-E).
 
+### notify
+- `{ "op": "notify", "kind": "warning", "value": "Stocul este sub limita critică!" }` (literal rigid)
+- `{ "op": "notify", "kind": "success", "with": "vars.success_msg" }` (referință dinamică)
+
+Generează un mesaj de avertizare sau informare intermediară pe parcursul execuției algoritmului, **fără a opri control-flow-ul sau execuția pașilor următori** (spre deosebire de `end`). 
+
+Toate mesajele generate de pașii `notify` sunt acumulate secvențial în interiorul contextului de rulare. În momentul în care algoritmul întâlnește pasul final `end`, toate notificările strânse pe parcurs sunt concatenate automat și atașate ca prefix în interiorul bannerului nativ din Live UI (`msg` sau `err`).
+
+#### Proprietăți:
+* **`kind`** (Case-Insensitive): Determină eticheta de tip adăugată mesajului în banner. Valori suportate:
+  * `"success"` — `[SUCCESS]`
+  * `"warning"` — `[WARNING]`
+  * `"error"`   — `[ERROR]`
+  * `"info"`    — `[INFO]` (implicit, dacă proprietatea lipsește sau este invalidă)
+* **`value`**: text literal fix. Tipul său este conservat rigid și nu este interpretat ca referință.
+* **`with`**: referință dinamică (ex: `"vars.msg"`, `"form.qty"`). Motorul extrage valoarea reală din context la runtime.
+
 ### end
 - `{ "op": "end", "msg": "Salvat" }` — succes (banner verde)
 - `{ "op": "end", "err": "Eroare" }` — fail (banner roșu)
