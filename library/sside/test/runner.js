@@ -1944,5 +1944,49 @@ module.exports = {
         assertEqJson(r.vars.s3, { profile: { id: 99 } });
       },
     },
+    {
+      id: 97,
+      desc: 'end hybrid dynamic message using with reference and string concat',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'concat', args: ['Produsul ', 'form.name', ' a fost salvat.'], to: 'msg_buf' },
+              { op: 'end', type: 'msg', with: 'msg_buf' }
+            ],
+          },
+          { form: { name: 'Laptop' }, redis }
+        );
+        assertEq(r.msg, 'Produsul Laptop a fost salvat.');
+        assert(!r.err);
+        assert(r.stopped);
+      },
+    },
+    {
+      id: 98,
+      desc: 'end hybrid dynamic error using with reference and calculation error context',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'str', fn: 'concat', args: ['Eroare cruntă: stocul introdus (', 'form.qty', ') este invalid.'], to: 'err_buf' },
+              { op: 'end', type: 'err', with: 'err_buf' }
+            ],
+          },
+          { form: { qty: -5 }, redis }
+        );
+        assertEq(r.err, 'Eroare cruntă: stocul introdus (-5) este invalid.');
+        assert(!r.msg);
+        assert(r.stopped);
+      },
+    },
+
+
+
+
   ],
 };

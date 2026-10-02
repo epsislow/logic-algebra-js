@@ -634,10 +634,13 @@
         const args = Array.isArray(step.args) ? step.args : [];
         let res = '';
         for (let i = 0; i < args.length; i++) {
-          res += safeStr(getValFn(ctx, args[i]));
+          const rawArg = args[i];
+          const resolved = getValFn(ctx, rawArg);
+          res += safeStr(resolved);
         }
         return res;
       }
+
       case 'padstart': {
         const len = castValue(getValFn(ctx, step.length), 'integer');
         const ch = step.char !== undefined && step.char !== null ? safeStr(getValFn(ctx, step.char)) : ' ';
