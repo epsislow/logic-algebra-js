@@ -1984,9 +1984,133 @@ module.exports = {
         assert(r.stopped);
       },
     },
-
-
-
+    {
+      id: 99,
+      desc: 'id generation nanoid length and character composition checks',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'id', type: 'nanoid', size: 10, to: 'id1' },
+              { op: 'id', type: 'nanoid', to: 'id2' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(typeof r.vars.id1, 'string');
+        assertEq(r.vars.id1.length, 10);
+        assertEq(typeof r.vars.id2, 'string');
+        assertEq(r.vars.id2.length, 21);
+      },
+    },
+    {
+      id: 100,
+      desc: 'id generation uuid v4 standard structural hex pattern format',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'id', type: 'uuid', to: 'uid' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(typeof r.vars.uid, 'string');
+        assertEq(r.vars.uid.length, 36);
+        assertEq(r.vars.uid.charAt(14), '4');
+      },
+    },
+    {
+      id: 101,
+      desc: 'id generation ulid timestamp sorting structure length validation',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'id', type: 'ulid', to: 'ulid_val' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(typeof r.vars.ulid_val, 'string');
+        assertEq(r.vars.ulid_val.length, 26);
+      },
+    },
+    {
+      id: 102,
+      desc: 'id generation autoinc atomic counter step sequential calls',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'id', type: 'autoinc', key: 'counter:_test_items', to: 'i1' },
+              { op: 'id', type: 'autoinc', key: 'counter:_test_items', to: 'i2' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.i1, 1);
+        assertEq(r.vars.i2, 2);
+      },
+    },
+    {
+      id: 103,
+      desc: 'id generation dateinc structured date and reset sequence token',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'id', type: 'dateinc', key: 'counter:_test_invoices', to: 'inv' }],
+          },
+          { form: {}, redis }
+        );
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const expectedPrefix = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+        assertEq(r.vars.inv, expectedPrefix + '-1');
+      },
+    },    {
+      id: 104,
+      desc: 'redis key operations ksave and kget using json storage mode',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'ksave', key: 'data:_test_user:1', val: 'form.profile', as: 'json' },
+              { op: 'kget', key: 'data:_test_user:1', as: 'json', to: 'fetched_profile' }
+            ],
+          },
+          { form: { profile: { name: 'Alex', active: true } }, redis }
+        );
+        assertEqJson(r.vars.fetched_profile, { name: 'Alex', active: true });
+      },
+    },
+    {
+      id: 105,
+      desc: 'redis collection operations kadd and krm inside native sets',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['SADD', 'set:_test_roles', 'admin', 'user']);
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'krm', key: 'set:_test_roles', val: 'user' },
+              { op: 'redis', do: 'SMEMBERS', args: ['set:_test_roles'], to: 'remaining_roles' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.remaining_roles, ['admin']);
+      },
+    },
 
   ],
 };

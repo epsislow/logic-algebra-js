@@ -157,6 +157,13 @@
       return;
     }
 
+    if (op === 'id') {
+      if (!step.to) throw new Error('id: proprietatea to este obligatorie');
+      const result = await Ops.executeIdGen(step, ctx, getVal);
+      Ops.setVar(ctx, step.to, result);
+      return;
+    }
+    
     if (op === 'array') {
       if (!step.to) throw new Error('array: proprietatea to este obligatorie');
       const result = Ops.executeArrayMeta(step, ctx, getVal);

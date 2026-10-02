@@ -152,6 +152,19 @@
         return n;
       }
 
+      if (cmd === 'INCR') {
+        const key = a[0];
+        let e = store.get(key);
+        if (!e) {
+          e = { tip: 'string', val: '0' };
+          store.set(key, e);
+        }
+        if (e.tip !== 'string') throw new Error('WRONGTYPE');
+        const nextVal = (parseInt(e.val, 10) || 0) + 1;
+        e.val = String(nextVal);
+        return nextVal;
+      }
+
       if (cmd === 'SREM') {
         const e = store.get(a[0]);
         if (!e || e.tip !== 'set') return 0;
@@ -317,6 +330,9 @@
       store,
       async exec(argv) {
         return execOne(argv);
+      },
+      async incr(key) {
+        return execOne(['INCR', key]);
       },
       async type(key) {
         return typeOf(key);

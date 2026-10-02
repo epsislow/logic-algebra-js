@@ -876,6 +876,70 @@
     }
   }
 
+  async function executeIdGen(step, ctx, getValFn) {
+    const type = String(step.type || 'nanoid').toLowerCase();
+    function cryptoRandom() {
+      return Math.random();
+    }
+    function genNanoId(size) {
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+      let res = '';
+      for (let i = 0; i < size; i++) {
+        res += alphabet.charAt(Math.floor(cryptoRandom() * alphabet.length));
+      }
+      return res;
+    }
+    function genUuidV4() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.floor(cryptoRandom() * 16);
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+    function genUlid() {
+      const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+      let time = Date.now();
+      let timeStr = '';
+      for (let i = 0; i < 10; i++) {
+        timeStr = alphabet.charAt(time % 32) + timeStr;
+        time = Math.floor(time / 32);
+      }
+      let randStr = '';
+      for (let i = 0; i < 16; i++) {
+        randStr += alphabet.charAt(Math.floor(cryptoRandom() * 32));
+      }
+      return timeStr + randStr;
+    }
+    switch (type) {
+      case 'nanoid': {
+        const sz = step.size !== undefined && step.size !== null ? castValue(getValFn(ctx, step.size), 'integer') : 21;
+        return genNanoId(sz || 21);
+      }
+      case 'uuid':
+        return genUuidV4();
+      case 'ulid':
+        return genUlid();
+      case 'autoinc': {
+        if (!step.key) throw new Error('id: Proprietatea key este obligatorie pentru tipul autoinc');
+        const rKey = String(getValFn(ctx, step.key));
+        return await ctx.redis.exec(['INCR', rKey]);
+      }
+      case 'dateinc': {
+        if (!step.key) throw new Error('id: Proprietatea key este obligatorie pentru tipul dateinc');
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const datePrefix = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+        const baseKey = String(getValFn(ctx, step.key));
+        const rKey = `${baseKey}:${datePrefix}`;
+        const seq = await ctx.redis.exec(['INCR', rKey]);
+        return `${datePrefix}-${seq}`;
+      }
+      default:
+        return genNanoId(21);
+    }
+  }
+
+
 
   /**
    * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
@@ -918,6 +982,7 @@
     executeStringMeta,
     executeObjMeta,
     executeArrayMeta,
+    executeIdGen,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,

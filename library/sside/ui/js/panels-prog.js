@@ -10,7 +10,7 @@
     'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
-    'jset', 'jget', 'obj',
+    'jset', 'jget', 'obj', 'id',
     'search',
     'ui',
     'tstart', 'tdo', 'tstop',
@@ -509,6 +509,7 @@
     if (op === 'calc') return { op: 'calc', expr: '', to: '', precision: null };
     if (op === 'str') return { op: 'str', fn: 'lower', value: '', to: '' };
     if (op === 'obj') return { op: 'obj', fn: 'get', from: '', path: '', to: '' };
+    if (op === 'id') return { op: 'id', type: 'nanoid', to: '' };
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
@@ -757,6 +758,13 @@
         from = String(step.from);
       }
       return 'obj   ' + to + ' ← ' + fn + '(' + from + ')' + path;
+    }
+
+    if (op === 'id') {
+      const to = step.to != null ? String(step.to) : '';
+      const type = step.type != null ? String(step.type) : 'nanoid';
+      const detail = type === 'autoinc' || type === 'dateinc' ? ' [key:' + (step.key || '') + ']' : (type === 'nanoid' && step.size ? ' [sz:' + step.size + ']' : '');
+      return 'id    ' + to + ' ← ' + type + detail;
     }
 
     if (op === 'array') {
@@ -1294,6 +1302,32 @@
       return;
     }
 
+    if (op === 'id') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      const typeOpts = [
+        { value: 'nanoid', label: 'nanoid (compact)' },
+        { value: 'uuid', label: 'uuid (global v4)' },
+        { value: 'autoinc', label: 'autoinc (secvențial)' },
+        { value: 'dateinc', label: 'dateinc (facturi/zilnic)' },
+        { value: 'ulid', label: 'ulid (sortabil cronologic)' }
+      ];
+      const typeSel = wire(mkSelect('type', step.type || 'nanoid', typeOpts));
+      row.appendChild(mkField('tip id', typeSel));
+      const keyInp = wire(mkInput('key', step.key != null ? step.key : ''));
+      const keyF = mkField('cheie contor Redis', keyInp);
+      row.appendChild(keyF);
+      const sizeInp = wire(mkInput('size', step.size != null ? step.size : '21', { type: 'number', placeholder: '21' }));
+      const sizeF = mkField('lungime', sizeInp);
+      row.appendChild(sizeF);
+      function renderFields() {
+        const t = typeSel.value;
+        keyF.style.display = (t === 'autoinc' || t === 'dateinc') ? '' : 'none';
+        sizeF.style.display = t === 'nanoid' ? '' : 'none';
+      }
+      typeSel.addEventListener('change', renderFields);
+      renderFields();
+      return;
+    }
 
     if (op === 'array') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
@@ -1633,6 +1667,24 @@
       }
       return withStepMeta(el, step);
     }
+    if (op === 'id') {
+      step.to = sf(el, 'to');
+      step.type = sf(el, 'type') || 'nanoid';
+      const t = step.type;
+      if (t === 'autoinc' || t === 'dateinc') {
+        step.key = sf(el, 'key');
+        delete step.size;
+      } else if (t === 'nanoid') {
+        const sz = sf(el, 'size');
+        step.size = sz !== '' ? parseInt(sz, 10) : 21;
+        delete step.key;
+      } else {
+        delete step.key;
+        delete step.size;
+      }
+      return withStepMeta(el, step);
+    }
+
     if (op === 'array') {
       step.to = sf(el, 'to');
       step.fn = sf(el, 'fn') || 'length';
