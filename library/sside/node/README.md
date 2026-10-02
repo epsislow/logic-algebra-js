@@ -18,14 +18,16 @@ node node/<fisier>.js
 | Fișier | Rol |
 |--------|-----|
 | `README.md` | acest fișier |
-| `run_tests.js` | rulează suite-ul din `../test/` |
+| `check_syntax.js` | verifică recursiv erorile de sintaxă din fișierele `.js` dintr-un director dat |
 | `gen_doc_data.js` | bundle `doc/*.md` → `ui/js/doc-data_generated.js` |
+| `run_tests.js` | rulează suite-ul din `../test/` |
 
 *(Actualizează acest tabel când apar fișiere noi.)*
 
 ## Exemple
 
 ```text
+node node/check_syntax.js ./calea/catre/director
 node node/run_tests.js
 node node/run_tests.js -e
 node node/run_tests.js -e -w 20
