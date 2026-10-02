@@ -159,7 +159,7 @@
 
     if (op === 'id') {
       if (!step.to) throw new Error('id: proprietatea to este obligatorie');
-      const result = await Ops.executeIdGen(step, ctx, getVal);
+      const result = await Ops.executeIdGen(step, ctx, getVal, env);
       Ops.setVar(ctx, step.to, result);
       return;
     }

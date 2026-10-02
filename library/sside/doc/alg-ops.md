@@ -263,6 +263,23 @@ Toate funcțiile sunt garantate **Safe-Cast** (dacă masivul sursă sau parametr
 ##### 5. Returnează STRING
 * **`join`** — Unește toate elementele masivului într-un singur string, separate prin textul definit în proprietatea `separator` (implicit `,`). Reprezintă omologul natural al operației `str.split`.
 
+### id
+`{ "op": "id", "type": "nanoid", "size": 12, "to": "generated_id" }`  
+sau  
+`{ "op": "id", "type": "autoinc", "key": "counter:_test_items", "to": "new_numeric_id" }` (Redis incremental).
+
+Generează identificatori unici securizați (ID-uri) pe baza algoritmului selectat în proprietatea `type` și salvează rezultatul ca string sau număr în variabila destinație (`to`). Este o operație asincronă care folosește motorul nativ criptografic sau apeluri atomice direct pe instanța Redis din context.
+
+#### Tipuri suportate în `type` (Case-Insensitive):
+Dacă valoarea din `type` este invalidă sau lipsește, motorul folosește implicit fallback-ul standard `nanoid`.
+
+| Tip `type` | Structură Rezultat | Proprietăți adiționale | Comportament și utilitate |
+| :--- | :--- | :--- | :--- |
+| **`nanoid`** | `V1StGXR8_Z` | `size` (implicit 21) | String compact, URL-safe și rapid. Ideal ca identificator general pentru chei Redis de tip record. |
+| **`uuid`** | `xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx` | — | Generează un UUID v4 standard pe 36 de caractere, oferind unicitate globală absolută. |
+| **`ulid`** | `01ARZ3NDEKTSV4RRFFQ69G5FAV` | — | String unic pe 26 de caractere, sortat nativ cronologic (timestamp-ul este inclus în primele caractere). |
+| **`autoinc`**| `1`, `2`, `3`... (numeric pur) | `key` (obligatoriu) | Execută comanda atomică asincronă `INCR` în Redis pe cheia specificată. Garantat imun la concurență. |
+| **`dateinc`**| `20261002-1` | `key` (obligatoriu) | Combină data curentă compactă cu un auto-increment Redis. **Numărătoarea se resetează automat la 1 în fiecare zi.** |
 
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`

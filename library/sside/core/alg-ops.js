@@ -876,7 +876,7 @@
     }
   }
 
-  async function executeIdGen(step, ctx, getValFn) {
+  async function executeIdGen(step, ctx, getValFn, env) {
     const type = String(step.type || 'nanoid').toLowerCase();
     function cryptoRandom() {
       return Math.random();
@@ -896,7 +896,7 @@
         return v.toString(16);
       });
     }
-    function genUlid() {
+    function genUuidV7() {
       const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
       let time = Date.now();
       let timeStr = '';
@@ -918,27 +918,29 @@
       case 'uuid':
         return genUuidV4();
       case 'ulid':
-        return genUlid();
+        return genUuidV7();
       case 'autoinc': {
         if (!step.key) throw new Error('id: Proprietatea key este obligatorie pentru tipul autoinc');
-        const rKey = String(getValFn(ctx, step.key));
-        return await ctx.redis.exec(['INCR', rKey]);
+        const resolvedKey = getValFn(ctx, step.key);
+        const rKey = (resolvedKey !== undefined && resolvedKey !== null && resolvedKey !== '') ? String(resolvedKey) : String(step.key);
+        const res = await env.redis.exec(['INCR', rKey]);
+        return parseInt(res, 10) || 0;
       }
       case 'dateinc': {
         if (!step.key) throw new Error('id: Proprietatea key este obligatorie pentru tipul dateinc');
         const d = new Date();
         const pad = (n) => String(n).padStart(2, '0');
         const datePrefix = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
-        const baseKey = String(getValFn(ctx, step.key));
+        const resolvedKey = getValFn(ctx, step.key);
+        const baseKey = (resolvedKey !== undefined && resolvedKey !== null && resolvedKey !== '') ? String(resolvedKey) : String(step.key);
         const rKey = `${baseKey}:${datePrefix}`;
-        const seq = await ctx.redis.exec(['INCR', rKey]);
-        return `${datePrefix}-${seq}`;
+        const seq = await env.redis.exec(['INCR', rKey]);
+        return `${datePrefix}-${parseInt(seq, 10) || 0}`;
       }
       default:
         return genNanoId(21);
     }
   }
-
 
 
   /**
