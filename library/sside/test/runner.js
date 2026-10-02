@@ -29,7 +29,7 @@ module.exports = {
             steps: [
               { op: 'assign', to: 'qty', from: 'form.qty' },
               { op: 'cat', to: 'key', parts: ['data:_item:', 'form.id'] },
-              { op: 'end', msg: 'Salvat' },
+              { op: 'end', type: 'msg', with: 'Salvat' },
             ],
           },
           { form: { qty: 3, id: '42' }, redis }
@@ -47,7 +47,7 @@ module.exports = {
       async run() {
         const redis = createMemoryRedis();
         const r = await Alg.run(
-          { v: 1, steps: [{ op: 'end', msg: 'ok', err: 'fail' }] },
+          { v: 1, steps: [{ op: 'end', type: 'err', value: 'fail' }] },
           { form: {}, redis }
         );
         assertEq(r.err, 'fail');
@@ -63,7 +63,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'assign', to: 'x', val: 7 },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -84,8 +84,8 @@ module.exports = {
               {
                 op: 'if',
                 when: ['lte', 'qty', 0],
-                then: [{ op: 'end', err: 'Cantitate invalida' }],
-                else: [{ op: 'end', msg: 'ok' }],
+                then: [{ op: 'end', type: 'err', value: 'Cantitate invalida' }],
+                else: [{ op: 'end', type: 'msg', value: 'ok' }],
               },
             ],
           },
@@ -109,7 +109,7 @@ module.exports = {
                 as: 'n',
                 do: [{ op: 'assign', to: 'last', from: 'n' }],
               },
-              { op: 'end', msg: 'done' },
+              { op: 'end', type: 'msg', value: 'done' },
             ],
           },
           { form: { nums: [1, 2, 3] }, redis }
@@ -141,11 +141,11 @@ module.exports = {
               {
                 op: 'if',
                 when: ['lte', 'qty', 0],
-                then: [{ op: 'end', err: 'Cantitate invalida' }],
+                then: [{ op: 'end', type: 'err', value: 'Cantitate invalida' }],
               },
               { op: 'cat', to: 'key', parts: ['data:_item:', 'form.id'] },
               { op: 'ksave', key: '$key', val: 'form', as: 'auto' },
-              { op: 'end', msg: 'Salvat' },
+              { op: 'end', type: 'msg', value: 'Salvat' },
             ],
           },
           { form: { qty: 2, id: '9', name: 'x' }, redis }
@@ -168,7 +168,7 @@ module.exports = {
               { op: 'comment', note: 'secțiune' },
               { op: 'assign', to: 'x', val: 1 },
               { op: 'assign', to: 'y', val: 2, off: true },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -188,7 +188,7 @@ module.exports = {
                 else: [{ op: 'assign', to: 'e', val: 'else' }],
                 thenOff: true,
               },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -207,7 +207,7 @@ module.exports = {
                 else: [{ op: 'assign', to: 'e', val: 'else' }],
                 elseOff: true,
               },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -226,7 +226,7 @@ module.exports = {
                 then: [{ op: 'assign', to: 't', val: 'then' }],
               },
               { op: 'assign', to: 'z', val: 9 },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -243,7 +243,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '{"a":1}', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '{"a":1}', as: 'json', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -261,7 +261,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '{"a":1}', as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '{"a":1}', as: 'string', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -279,7 +279,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 1.4, as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 1.4, as: 'integer', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -297,7 +297,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 1.5, as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 1.5, as: 'integer', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -315,7 +315,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 1, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 1, as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -333,7 +333,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: true, as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: true, as: 'string', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -351,7 +351,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: null, as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: null, as: 'string', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -369,7 +369,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: undefined, as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: undefined, as: 'string', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -387,7 +387,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 1, as: 'boolean', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 1, as: 'boolean', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -405,7 +405,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: true, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: true, as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -423,7 +423,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: null, as: 'boolean', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: null, as: 'boolean', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -441,7 +441,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 'not-a-number', as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 'not-a-number', as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -459,7 +459,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: [], as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: [], as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -477,7 +477,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: {}, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: {}, as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -495,7 +495,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: { a: 10 }, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: { a: 10 }, as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -513,7 +513,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 'abc', as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 'abc', as: 'integer', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -531,7 +531,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '[1,2,3]', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '[1,2,3]', as: 'json', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -549,7 +549,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: [1,2,3], as: 'string', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: [1,2,3], as: 'string', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -567,7 +567,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '{invalid-json}', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '{invalid-json}', as: 'json', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -584,7 +584,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '"text-in-ghilimele"', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '"text-in-ghilimele"', as: 'json', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -601,7 +601,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '', as: 'json', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '', as: 'json', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -618,7 +618,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '{"status":true}', as: 'auto', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '{"status":true}', as: 'auto', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -636,7 +636,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: { user: 'admin' }, as: 'auto', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: { user: 'admin' }, as: 'auto', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -654,7 +654,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 42.5, as: 'auto', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 42.5, as: 'auto', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -672,7 +672,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 'anything', as: 'null', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 'anything', as: 'null', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -690,7 +690,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 'not-a-number', as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 'not-a-number', as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -708,7 +708,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: [], as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: [], as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -726,7 +726,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: {}, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: {}, as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -744,7 +744,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: { a: 10 }, as: 'number', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: { a: 10 }, as: 'number', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -762,7 +762,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 'abc', as: 'integer', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 'abc', as: 'integer', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -782,7 +782,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'cast', from: 'form.payload', as: 'json', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: { payload: '{"active":true}' }, redis }
@@ -803,7 +803,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'cast', from: 'form.count', as: 'integer', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: { count: '15.7' }, redis }
@@ -824,7 +824,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'cast', from: 'form.items', as: 'number', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: { items: [] }, redis }
@@ -845,7 +845,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'cast', from: 'form.missing_field', as: 'number', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -867,7 +867,7 @@ module.exports = {
             steps: [
               { op: 'assign', to: 'temp_val', from: 'form.raw_string' },
               { op: 'cast', from: 'temp_val', as: 'integer', to: 'final_score' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: { raw_string: '15.7' }, redis }
@@ -887,7 +887,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: '2026-09-30T12:00:00.000Z', as: 'date', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: '2026-09-30T12:00:00.000Z', as: 'date', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -906,7 +906,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 1790769600000, as: 'date', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 1790769600000, as: 'date', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -925,7 +925,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'cast', val: 'not-a-date-string', as: 'date', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'cast', val: 'not-a-date-string', as: 'date', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );
@@ -947,7 +947,7 @@ module.exports = {
             steps: [
               { op: 'assign', to: 'my_date', val: initialDate },
               { op: 'cast', from: 'my_date', as: 'string', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -970,7 +970,7 @@ module.exports = {
             steps: [
               { op: 'assign', to: 'my_date', val: initialDate },
               { op: 'cast', from: 'my_date', as: 'integer', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -993,7 +993,7 @@ module.exports = {
             steps: [
               { op: 'assign', to: 'my_date', val: initialDate },
               { op: 'cast', from: 'my_date', as: 'date', to: 'x' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1016,7 +1016,7 @@ module.exports = {
             steps: [
               // Am eliminat secundele din format ('hh:mm') ca să se potrivească cu aserțiunea ta
               { op: 'fdate', from: 'form.created_at', format: 'DD.MM.YYYY HH:mm', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           // Am scos 'Z' de la final pentru a forța parsarea în timp local
@@ -1039,7 +1039,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: 1790769600000, to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1060,7 +1060,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', from: 'form.non_existent_date', format: 'YYYY-MM-DD', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1081,7 +1081,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: 'not-a-date-at-all', format: 'YYYY-MM-DD', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1102,7 +1102,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: '2026-09-30T15:30:00.000Z', format: 'hh:mm A', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1126,7 +1126,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: '2026-09-30T15:30:00.000Z', format: 'hhU:mmU AU', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1147,7 +1147,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: '2026-09-30T00:15:00.000Z', format: 'hhU:mmU AU', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1168,7 +1168,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: 1790769600000, format: 'ISO', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1189,7 +1189,7 @@ module.exports = {
             v: 1,
             steps: [
               { op: 'fdate', val: '2026-09-30T12:00:00.000Z', format: 'Z', to: 'ui_date' },
-              { op: 'end', msg: 'ok' },
+              { op: 'end', type: 'msg', value: 'ok' },
             ],
           },
           { form: {}, redis }
@@ -1210,7 +1210,7 @@ module.exports = {
         const r = await Alg.run(
           {
             v: 1,
-            steps: [{ op: 'fdate', val: '+0', format: 'DDU', to: 'x' }, { op: 'end', msg: 'ok' }],
+            steps: [{ op: 'fdate', val: '+0', format: 'DDU', to: 'x' }, { op: 'end', type: 'msg', value: 'ok' }],
           },
           { form: {}, redis }
         );

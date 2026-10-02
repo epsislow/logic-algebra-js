@@ -512,7 +512,7 @@
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
-    if (op === 'end') return { op: 'end', msg: '' };
+    if (op === 'end') return { op: 'end', type: 'msg', value: '' };
     if (op === 'comment') return { op: 'comment', note: '' };
     if (op === 'kget') return { op: 'kget', key: '', to: '', as: 'auto' };
     if (op === 'ksave') return { op: 'ksave', key: '', val: 'form', as: 'auto' };
@@ -775,14 +775,12 @@
 
 
     if (op === 'end') {
-      if (step.err != null && step.err !== '') {
-        return 'end  err ' + previewVal(step.err);
-      }
-      if (step.msg != null && step.msg !== '') {
-        return 'end  msg ' + previewVal(step.msg);
-      }
-      return 'end';
+      const type = step.type || (step.err != null ? 'err' : 'msg');
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'with') ? 'with' : 'value';
+      const text = srcMode === 'with' ? step.with : (step.value || step.msg || step.err || '');
+      return 'end   ' + type + ' ← ' + (srcMode === 'with' ? 'ref:' : 'val:') + previewVal(text);
     }
+
 
     if (op === 'kget') {
       return (
@@ -1351,19 +1349,18 @@
 
 
     if (op === 'end') {
-      const mode = step.err != null && step.err !== '' ? 'err' : 'msg';
-      const modeSel = wire(
-        mkSelect('_end', mode, [
-          { value: 'msg', label: 'msg (ok)' },
-          { value: 'err', label: 'err (fail)' },
-        ])
-      );
-      row.appendChild(mkField('tip', modeSel));
-      const text = mode === 'err' ? step.err : step.msg;
-      const textInp = wire(mkInput('text', text != null ? text : ''));
-      row.appendChild(mkField('text', textInp));
+      const currentType = step.type || (step.err != null ? 'err' : 'msg');
+      const typeSel = wire(mkSelect('_type', currentType, [{ value: 'msg', label: 'msg (ok)' }, { value: 'err', label: 'err (fail)' }]));
+      row.appendChild(mkField('tip', typeSel));
+      const srcMode = Object.prototype.hasOwnProperty.call(step, 'with') ? 'with' : 'value';
+      const srcSel = wire(mkSelect('_src', srcMode, [{ value: 'value', label: 'value (literal)' }, { value: 'with', label: 'with (ref)' }]));
+      row.appendChild(mkField('sursă', srcSel));
+      const rawText = srcMode === 'with' ? step.with : (step.value || step.msg || step.err || '');
+      const textInp = wire(mkInput('text', rawText != null ? rawText : ''));
+      row.appendChild(mkField('text/ref', textInp));
       return;
     }
+
 
     if (op === 'kget') {
       row.appendChild(mkField('key', wire(mkInput('key', step.key))));
@@ -1669,11 +1666,21 @@
 
 
     if (op === 'end') {
+      const type = sf(el, '_type');
+      step.type = type;
       const text = sf(el, 'text');
-      if (sf(el, '_end') === 'err') step.err = text;
-      else step.msg = text;
+      if (sf(el, '_src') === 'with') {
+        step.with = text;
+        delete step.value;
+      } else {
+        step.value = text;
+        delete step.with;
+      }
+      delete step.msg;
+      delete step.err;
       return withStepMeta(el, step);
     }
+
     if (op === 'kget') {
       step.key = sf(el, 'key');
       step.to = sf(el, 'to');

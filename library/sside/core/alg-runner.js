@@ -169,24 +169,23 @@
         ctx.txBuf = [];
         ctx.inTx = false;
       }
-      // msg/err: literal, sau ref doar dacă form.* / $var
-      function endText(x) {
-        if (x == null) return '';
-        if (typeof x !== 'string') return String(x);
-        if (x === 'form' || x.indexOf('form.') === 0 || x.charAt(0) === '$') {
-          const v = getVal(ctx, x);
-          return v == null ? '' : String(v);
-        }
-        return x;
+      const type = step.type || (step.err != null ? 'err' : 'msg');
+      let finalStr = '';
+      if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+        const v = getVal(ctx, step.with);
+        finalStr = v == null ? '' : String(v);
+      } else {
+        finalStr = step.value !== undefined ? String(step.value) : String(step.msg || step.err || '');
       }
-      if (step.err != null && step.err !== '') {
-        ctx._err = endText(step.err);
-      } else if (step.msg != null) {
-        ctx._msg = endText(step.msg);
+      if (type === 'err') {
+        ctx._err = finalStr;
+      } else {
+        ctx._msg = finalStr;
       }
       ctx._stop = true;
       return;
     }
+
 
     if (op === 'if') {
       const ok = When.evalWhen(step.when, (t) => getVal(ctx, t));
