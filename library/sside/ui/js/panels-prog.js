@@ -10,7 +10,7 @@
     'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
-    'jset', 'jget',
+    'jset', 'jget', 'obj',
     'search',
     'ui',
     'tstart', 'tdo', 'tstop',
@@ -508,6 +508,7 @@
     if (op === 'fdate') return { op: 'fdate', format: 'YYYY-MM-DD', to: '', from: '' };
     if (op === 'calc') return { op: 'calc', expr: '', to: '', precision: null };
     if (op === 'str') return { op: 'str', fn: 'lower', value: '', to: '' };
+    if (op === 'obj') return { op: 'obj', fn: 'get', from: '', path: '', to: '' };
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
@@ -742,6 +743,20 @@
         return 'str  ' + to + ' ← concat(' + (Array.isArray(step.args) ? step.args.join(', ') : '') + ')';
       }
       return 'str  ' + to + ' ← ' + fn + '(' + (step.value != null ? String(step.value) : '') + ')';
+    }
+
+    if (op === 'obj') {
+      const to = step.to != null ? String(step.to) : '';
+      const fn = step.fn != null ? String(step.fn) : '';
+      const path = step.path != null ? ' [' + step.path + ']' : '';
+      let from = '';
+      if (typeof step.from === 'object' && step.from !== null) {
+        const json = JSON.stringify(step.from);
+        from = json.length > 25 ? json.substring(0, 25) + '...' : json;
+      } else if (step.from != null) {
+        from = String(step.from);
+      }
+      return 'obj   ' + to + ' ← ' + fn + '(' + from + ')' + path;
     }
 
     if (op === 'array') {
@@ -1224,6 +1239,64 @@
       return;
     }
 
+    if (op === 'obj') {
+      row.appendChild(mkField('to', wire(mkInput('to', step.to))));
+      const fnOpts = [
+        { value: 'get', label: 'get' }, { value: 'set', label: 'set' }, { value: 'delete', label: 'delete' },
+        { value: 'has', label: 'has' }, { value: 'keys', label: 'keys' }, { value: 'values', label: 'values' },
+        { value: 'entries', label: 'entries' }, { value: 'merge', label: 'merge' }, { value: 'pick', label: 'pick' },
+        { value: 'omit', label: 'omit' }
+      ];
+      const fnSel = wire(mkSelect('fn', step.fn || 'get', fnOpts));
+      row.appendChild(mkField('funcție', fnSel));
+      const srcMode = (typeof step.from === 'object' && step.from !== null) ? 'val' : 'from';
+      const srcSel = wire(mkSelect('_src', srcMode, [{ value: 'from', label: 'from (ref)' }, { value: 'val', label: 'from (literal)' }]));
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', typeof step.from === 'string' ? step.from : ''));
+      const valInp = wire(mkInput('val', typeof step.from === 'object' && step.from !== null ? JSON.stringify(step.from) : ''));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      const extraContainer = document.createElement('span');
+      row.appendChild(extraContainer);
+      function toggleSrc() {
+        const m = srcSel.value;
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      function renderExtraFields() {
+        extraContainer.innerHTML = '';
+        const f = fnSel.value;
+        if (f === 'get' || f === 'set' || f === 'delete' || f === 'has') {
+          extraContainer.appendChild(mkField('path', wire(mkInput('path', step.path != null ? step.path : ''))));
+        }
+        if (f === 'set' || f === 'merge' || f === 'pick' || f === 'omit') {
+          const valMode = Object.prototype.hasOwnProperty.call(step, 'with') ? 'with' : 'value';
+          const valSel = wire(mkSelect('_vsrc', valMode, [{ value: 'value', label: 'value (literal)' }, { value: 'with', label: 'with (ref)' }]));
+          extraContainer.appendChild(mkField('intrare', valSel));
+          const vInp = wire(mkInput('value', !Object.prototype.hasOwnProperty.call(step, 'with') && step.value !== undefined ? (typeof step.value === 'object' ? JSON.stringify(step.value) : String(step.value)) : ''));
+          const wInp = wire(mkInput('with', step.with != null ? step.with : ''));
+          const vF = mkField('value', vInp);
+          const wF = mkField('with', wInp);
+          extraContainer.appendChild(vF);
+          extraContainer.appendChild(wF);
+          function toggleValSrc() {
+            vF.style.display = valSel.value === 'value' ? '' : 'none';
+            wF.style.display = valSel.value === 'with' ? '' : 'none';
+          }
+          valSel.addEventListener('change', toggleValSrc);
+          toggleValSrc();
+        }
+      }
+      srcSel.addEventListener('change', toggleSrc);
+      fnSel.addEventListener('change', renderExtraFields);
+      toggleSrc();
+      renderExtraFields();
+      return;
+    }
+
+
     if (op === 'array') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
       const fnOpts = [
@@ -1527,6 +1600,40 @@
       if (lenVal !== '') step.length = parseInt(lenVal, 10);
       const countVal = sf(el, 'count');
       if (countVal !== '') step.count = parseInt(countVal, 10);
+      return withStepMeta(el, step);
+    }
+    if (op === 'obj') {
+      step.to = sf(el, 'to');
+      step.fn = sf(el, 'fn') || 'get';
+      if (sf(el, '_src') === 'val') {
+        const rawVal = sf(el, 'val');
+        try { step.from = JSON.parse(rawVal); } catch (e) { step.from = {}; }
+      } else {
+        step.from = sf(el, 'from');
+      }
+      const f = step.fn;
+      if (f === 'get' || f === 'set' || f === 'delete' || f === 'has') {
+        step.path = sf(el, 'path');
+      } else {
+        delete step.path;
+      }
+      if (f === 'set' || f === 'merge' || f === 'pick' || f === 'omit') {
+        if (sf(el, '_vsrc') === 'with') {
+          step.with = sf(el, 'with');
+          delete step.value;
+        } else {
+          const rawV = sf(el, 'value');
+          if (rawV.startsWith('[') || rawV.startsWith('{') || rawV === 'true' || rawV === 'false' || !Number.isNaN(Number(rawV))) {
+            try { step.value = JSON.parse(rawV); } catch (e) { step.value = rawV; }
+          } else {
+            step.value = rawV;
+          }
+          delete step.with;
+        }
+      } else {
+        delete step.value;
+        delete step.with;
+      }
       return withStepMeta(el, step);
     }
     if (op === 'array') {

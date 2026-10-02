@@ -1816,5 +1816,133 @@ module.exports = {
         assertEq(r.vars.s4, 1);
       },
     },
+    {
+      id: 91,
+      desc: 'obj deep access functions get and has with dot notation',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'obj', fn: 'get', from: 'form.user', path: 'profile.name', to: 'n1' },
+              { op: 'obj', fn: 'get', from: 'form.user', path: 'profile.missing', to: 'n2' },
+              { op: 'obj', fn: 'has', from: 'form.user', path: 'profile.active', to: 'h1' },
+              { op: 'obj', fn: 'has', from: 'form.user', path: 'profile.missing', to: 'h2' }
+            ],
+          },
+          { form: { user: { profile: { name: 'John', active: false } } }, redis }
+        );
+        assertEq(r.vars.n1, 'John');
+        assertEq(r.vars.n2, null);
+        assertEq(r.vars.h1, true);
+        assertEq(r.vars.h2, false);
+      },
+    },
+    {
+      id: 92,
+      desc: 'obj mutation set and delete operations with dot notation',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'obj', fn: 'set', from: 'form.user', path: 'profile.city', value: 'Bucharest', to: 'u1' },
+              { op: 'obj', fn: 'set', from: 'form.user', path: 'profile.name', with: 'form.new_name', to: 'u2' },
+              { op: 'obj', fn: 'delete', from: 'form.user', path: 'profile.age', to: 'u3' }
+            ],
+          },
+          { form: { user: { profile: { name: 'John', age: 30 } }, new_name: 'Jane' }, redis }
+        );
+        assertEq(r.vars.u1.profile.city, 'Bucharest');
+        assertEq(r.vars.u1.profile.name, 'John');
+        assertEq(r.vars.u2.profile.name, 'Jane');
+        assertEq(r.vars.u3.profile.age, undefined);
+        assertEq(r.vars.u3.profile.name, 'John');
+      },
+    },
+    {
+      id: 93,
+      desc: 'obj structural array extraction keys values and entries',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'obj', fn: 'keys', from: 'form.data', to: 'k' },
+              { op: 'obj', fn: 'values', from: 'form.data', to: 'v' },
+              { op: 'obj', fn: 'entries', from: 'form.data', to: 'e' }
+            ],
+          },
+          { form: { data: { id: 10, role: 'admin' } }, redis }
+        );
+        assertEqJson(r.vars.k, ['id', 'role']);
+        assertEqJson(r.vars.v, [10, 'admin']);
+        assertEqJson(r.vars.e, [['id', 10], ['role', 'admin']]);
+      },
+    },
+    {
+      id: 94,
+      desc: 'obj filtering operations pick and omit with fields filtering',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'obj', fn: 'pick', from: 'form.user', value: ['id', 'email'], to: 'p1' },
+              { op: 'obj', fn: 'pick', from: 'form.user', with: 'form.fields', to: 'p2' },
+              { op: 'obj', fn: 'omit', from: 'form.user', value: ['password'], to: 'o1' }
+            ],
+          },
+          { form: { user: { id: 1, email: 'a@b.com', password: '123' }, fields: ['id'] }, redis }
+        );
+        assertEqJson(r.vars.p1, { id: 1, email: 'a@b.com' });
+        assertEqJson(r.vars.p2, { id: 1 });
+        assertEqJson(r.vars.o1, { id: 1, email: 'a@b.com' });
+      },
+    },
+    {
+      id: 95,
+      desc: 'obj aggregation merge literal and reference extensions',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'obj', fn: 'merge', from: 'form.base', value: { active: true, role: 'admin' }, to: 'm1' },
+              { op: 'obj', fn: 'merge', from: 'form.base', with: 'form.extra', to: 'm2' }
+            ],
+          },
+          { form: { base: { name: 'John', active: false }, extra: { role: 'user' } }, redis }
+        );
+        assertEqJson(r.vars.m1, { name: 'John', active: true, role: 'admin' });
+        assertEqJson(r.vars.m2, { name: 'John', active: false, role: 'user' });
+      },
+    },
+    {
+      id: 96,
+      desc: 'obj safe cast convention fallbacks on missing and primitive types',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'obj', fn: 'get', from: 'form.missing', path: 'a.b', to: 's1' },
+              { op: 'obj', fn: 'keys', from: 'form.primitive', to: 's2' },
+              { op: 'obj', fn: 'set', from: {}, path: 'profile.id', value: 99, to: 's3' }
+            ],
+          },
+          { form: { primitive: 42 }, redis }
+        );
+        assertEq(r.vars.s1, null);
+        assertEqJson(r.vars.s2, []);
+        assertEqJson(r.vars.s3, { profile: { id: 99 } });
+      },
+    },
   ],
 };

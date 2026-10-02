@@ -169,6 +169,50 @@ Toate funcțiile sunt garantate **Safe-Cast** (dacă variabilele lipsesc sau sun
 * **`split`** — Împarte textul într-un masiv de string-uri pe baza unui `separator`. Returnează întotdeauna un array (gol `[]` în caz de eroare) garantând compatibilitatea cu operația `foreach`.
 
 
+### obj
+`{ "op": "obj", "fn": "set", "from": "user", "path": "profile.name", "value": "John", "to": "user" }`  
+sau  
+`{ "op": "obj", "fn": "merge", "from": "form.base", "with": "form.extra", "to": "extended_obj" }` (dinamic).
+
+Meta-operația `obj` oferă un set compact de funcții atomice pentru inspecția, accesarea, modificarea, filtrarea și agregarea structurilor de date de tip obiect (Key-Value Dictionaries). Această operație înlocuiește nativ și extinde vechile comportamente hibride de tip `jget` și `jset`.
+
+Toate funcțiile componente sunt garantate **Safe-Cast** (dacă obiectul sursă sau parametrii lipsesc ori sunt primitive, motorul le uniformizează automat în structuri compatibile de tip obiect gol `{}` pentru a preveni crash-urile în runtime). Actualizarea obiectului original are loc **exclusiv** atunci când aceeași referință este pasată atât în proprietatea `from`, cât și în `to`. În caz contrar, logica rulează complet imutabil.
+
+---
+
+#### Convenție de Intrare (Input Convention)
+
+* **`from` (Obiectul sursă):**
+  * Dacă este trimis ca obiect (`{...}` sau `[...]`), este interpretat ca un obiect literal fix.
+  * Dacă este trimis ca string, este evaluat dinamic ca referință din context (ex: `"user"` sau `"form.user"`).
+* **`value` (Literal rigid):**
+  * Reprezintă întotdeauna o valoare literală brută (string, număr, boolean, array sau obiect). Tipul ei este conservat intact și nu este interpretat niciodată ca o referință din context.
+* **`with` (Referință dinamică):**
+  * Reprezintă întotdeauna o cale de variabilă din contextul curent de execuție, care va fi rezolvată dinamic la runtime înainte de aplicarea funcției.
+
+---
+
+#### Tipuri de Return în funcție de `fn`
+
+##### 1. Returnează ANY (Orice tip primitiv sau structură)
+* **`get`** — Returnează valoarea stocată la calea specificată în proprietatea `path` (suportă notația cu punct pentru adâncimi mari, ex: `"profile.address.city"`). Dacă calea nu există, returnează curat `null`.
+
+##### 2. Returnează OBJECT
+* **`set`** — Setează o valoare la calea specificată în proprietatea `path` (suportă dot-notation). Valoarea poate fi trimisă ca literal (`value`) sau ca referință (`with`). Obiectele intermediare lipsă sunt create automat pe parcurs.
+* **`delete`** — Elimină proprietatea de la calea specificată în `path` (suportă dot-notation). Dacă calea nu există, obiectul rămâne neschimbat.
+* **`merge`** — Unește proprietățile de la nivelul superior (*top-level*) ale unui al doilea obiect (furnizat prin `value` sau `with`) peste obiectul sursă. Valorile cu chei identice sunt suprascrise.
+* **`pick`** — Filtrează obiectul păstrând **doar** proprietățile ale căror nume se regăsesc în array-ul specificat prin `value` sau `with`.
+* **`omit`** — Filtrează obiectul eliminând proprietățile ale căror nume se regăsesc în array-ul specificat prin `value` sau `with`.
+
+##### 3. Returnează BOOLEAN
+* **`has`** — Verifică existența fizică a unei proprietăți la calea definită în `path` (suportă dot-notation). Verifică prezența cheii în structură, nu evaluarea ei de adevăr (*truthiness*), returnând strict `true` sau `false`.
+
+##### 4. Returnează ARRAY
+* **`keys`** — Returnează un masiv care conține numele tuturor cheilor de la nivelul superior al obiectului.
+* **`values`** — Returnează un masiv care conține toate valorile proprietăților de la nivelul superior al obiectului.
+* **`entries`** — Returnează structura obiectului transformată într-un masiv de perechi de tip text-valoare (ex: `[["id", 10], ["role", "admin"]]`).
+
+
 ### array
 `{ "op": "array", "fn": "push", "from": "items", "values":, "to": "items" }`  
 sau  

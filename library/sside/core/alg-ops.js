@@ -764,6 +764,115 @@
     }
   }
 
+  function executeObjMeta(step, ctx, getValFn) {
+    const fn = String(step.fn || 'get');
+    let obj = (typeof step.from === 'object' && step.from !== null) ? step.from : getValFn(ctx, step.from);
+    if (obj === undefined || obj === null || typeof obj !== 'object') {
+      obj = {};
+    } else {
+      obj = JSON.parse(JSON.stringify(obj));
+    }
+    function resolveValue() {
+      if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+        return getValFn(ctx, step.with);
+      }
+      return step.value;
+    }
+    function deepGet(o, pathStr) {
+      if (!pathStr) return o;
+      const parts = pathStr.split('.');
+      let current = o;
+      for (let p of parts) {
+        if (current === null || current === undefined || typeof current !== 'object') return null;
+        current = current[p];
+      }
+      return current === undefined ? null : current;
+    }
+    function deepSet(o, pathStr, val) {
+      if (!pathStr) return o;
+      const parts = pathStr.split('.');
+      let current = o;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const p = parts[i];
+        if (current[p] === undefined || current[p] === null || typeof current[p] !== 'object') {
+          current[p] = {};
+        }
+        current = current[p];
+      }
+      current[parts[parts.length - 1]] = val;
+      return o;
+    }
+    function deepDelete(o, pathStr) {
+      if (!pathStr) return o;
+      const parts = pathStr.split('.');
+      let current = o;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const p = parts[i];
+        if (current === null || current === undefined || typeof current !== 'object') return o;
+        current = current[p];
+      }
+      if (current && typeof current === 'object') {
+        delete current[parts[parts.length - 1]];
+      }
+      return o;
+    }
+    function deepHas(o, pathStr) {
+      if (!pathStr) return false;
+      const parts = pathStr.split('.');
+      let current = o;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const p = parts[i];
+        if (current === null || current === undefined || typeof current !== 'object') return false;
+        current = current[p];
+      }
+      if (current === null || current === undefined || typeof current !== 'object') return false;
+      return Object.prototype.hasOwnProperty.call(current, parts[parts.length - 1]);
+    }
+    switch (fn) {
+      case 'get':
+        return deepGet(obj, step.path);
+      case 'set': {
+        const val = resolveValue();
+        return deepSet(obj, step.path, val);
+      }
+      case 'delete':
+        return deepDelete(obj, step.path);
+      case 'has':
+        return deepHas(obj, step.path);
+      case 'keys':
+        return Object.keys(obj);
+      case 'values':
+        return Object.values(obj);
+      case 'entries':
+        return Object.entries(obj);
+      case 'merge': {
+        const val = resolveValue();
+        const src2 = (val && typeof val === 'object') ? val : {};
+        return Object.assign({}, obj, src2);
+      }
+      case 'pick': {
+        const val = resolveValue();
+        const keysArr = Array.isArray(val) ? val : [];
+        const res = {};
+        for (let k of keysArr) {
+          if (Object.prototype.hasOwnProperty.call(obj, k)) res[k] = obj[k];
+        }
+        return res;
+      }
+      case 'omit': {
+        const val = resolveValue();
+        const keysArr = Array.isArray(val) ? val : [];
+        const res = Object.assign({}, obj);
+        for (let k of keysArr) {
+          delete res[k];
+        }
+        return res;
+      }
+      default:
+        return obj;
+    }
+  }
+
 
   /**
    * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
@@ -804,6 +913,7 @@
     formatDateValue,
     evaluateMath,
     executeStringMeta,
+    executeObjMeta,
     executeArrayMeta,
     buildKsaveArgv,
     buildKgetArgv,

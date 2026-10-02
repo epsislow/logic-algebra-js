@@ -150,6 +150,13 @@
       return;
     }
 
+    if (op === 'obj') {
+      if (!step.to) throw new Error('obj: proprietatea to este obligatorie');
+      const result = Ops.executeObjMeta(step, ctx, getVal);
+      Ops.setVar(ctx, step.to, result);
+      return;
+    }
+
     if (op === 'array') {
       if (!step.to) throw new Error('array: proprietatea to este obligatorie');
       const result = Ops.executeArrayMeta(step, ctx, getVal);
