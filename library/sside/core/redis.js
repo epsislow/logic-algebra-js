@@ -69,9 +69,16 @@
       }
 
       if (cmd === 'SET') {
-        store.set(a[0], { tip: 'string', val: a[1] == null ? '' : String(a[1]) });
+        const key = a[0];
+        const val = a[1] == null ? '' : String(a[1]);
+        const hasNx = a.map(x => String(x).toUpperCase()).includes('NX');
+        if (hasNx && store.has(key)) {
+          return null;
+        }
+        store.set(key, { tip: 'string', val: val });
         return 'OK';
       }
+
 
       if (cmd === 'DEL') {
         let n = 0;

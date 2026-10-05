@@ -957,6 +957,38 @@
     ctx._notifications.push({ kind, text });
   }
 
+  async function executeLock(step, ctx, getValFn, env) {
+    const fn = String(step.fn || 'acq').toLowerCase();
+    let rawKeys = Array.isArray(step.keys) ? step.keys : getValFn(ctx, step.keys);
+    if (rawKeys === undefined || rawKeys === null || rawKeys === '') {
+      rawKeys = [];
+    } else if (typeof rawKeys === 'string' && rawKeys.trim().startsWith('[')) {
+      try { rawKeys = JSON.parse(rawKeys); } catch (e) { rawKeys = [rawKeys]; }
+    }
+    const keysArr = Array.isArray(rawKeys) ? rawKeys : [rawKeys];
+    const resolvedKeys = keysArr.map(k => {
+      const resolved = getValFn(ctx, k);
+      return (resolved !== undefined && resolved !== null && resolved !== '') ? String(resolved) : String(k);
+    }).filter(k => k.trim() !== '');
+    if (resolvedKeys.length === 0) return fn === 'acq' ? false : true;
+    if (fn === 'rel') {
+      await env.redis.exec(['DEL', ...resolvedKeys]);
+      return true;
+    }
+    const ttl = step.ttl !== undefined && step.ttl !== null ? castValue(getValFn(ctx, step.ttl), 'integer') : 5000;
+    const txBatch = resolvedKeys.map(k => ['SET', k, '1', 'NX', 'PX', String(ttl || 5000)]);
+    const txResults = await env.redis.execTx(txBatch);
+    const allOk = txResults.every(res => res === 'OK');
+    if (allOk) return true;
+    const cleanupKeys = [];
+    for (let i = 0; i < txResults.length; i++) {
+      if (txResults[i] === 'OK') cleanupKeys.push(resolvedKeys[i]);
+    }
+    if (cleanupKeys.length > 0) {
+      await env.redis.exec(['DEL', ...cleanupKeys]);
+    }
+    return false;
+  }
 
   /**
    * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
@@ -1001,6 +1033,7 @@
     executeArrayMeta,
     executeIdGen,
     executeNotify,
+    executeLock,
     buildKsaveArgv,
     buildKgetArgv,
     buildKaddArgv,

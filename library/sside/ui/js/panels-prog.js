@@ -10,7 +10,7 @@
     'if', 'foreach', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
-    'jset', 'jget', 'obj', 'id',
+    'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify',
     'ui',
     'tstart', 'tdo', 'tstop',
@@ -509,6 +509,7 @@
     if (op === 'calc') return { op: 'calc', expr: '', to: '', precision: null };
     if (op === 'str') return { op: 'str', fn: 'lower', value: '', to: '' };
     if (op === 'obj') return { op: 'obj', fn: 'get', from: '', path: '', to: '' };
+    if (op === 'lock') return { op: 'lock', fn: 'acq', keys: '', ttl: 5000, to: '' };
     if (op === 'id') return { op: 'id', type: 'nanoid', to: '' };
     if (op === 'notify') return { op: 'notify', kind: 'warning', value: '' };
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
@@ -759,6 +760,14 @@
         from = String(step.from);
       }
       return 'obj   ' + to + ' ← ' + fn + '(' + from + ')' + path;
+    }
+
+    if (op === 'lock') {
+      const to = step.to != null ? String(step.to) : '';
+      const fn = step.fn != null ? String(step.fn) : 'acq';
+      const keys = Array.isArray(step.keys) ? JSON.stringify(step.keys) : (step.keys != null ? String(step.keys) : '');
+      const ttl = fn === 'acq' && step.ttl ? ' [ttl:' + step.ttl + 'ms]' : '';
+      return 'lock  ' + (to ? to + ' ← ' : '') + fn + '(' + keys + ')' + ttl;
     }
 
     if (op === 'id') {
@@ -1310,6 +1319,39 @@
       return;
     }
 
+    if (op === 'lock') {
+      const toInp = wire(mkInput('to', step.to != null ? step.to : ''));
+      const toF = mkField('to', toInp);
+      row.appendChild(toF);
+      const fnOpts = [{ value: 'acq', label: 'acq (acquire)' }, { value: 'rel', label: 'rel (release)' }];
+      const fnSel = wire(mkSelect('fn', step.fn || 'acq', fnOpts));
+      row.appendChild(mkField('funcție', fnSel));
+      const srcMode = Array.isArray(step.keys) ? 'val' : 'from';
+      const srcSel = wire(mkSelect('_src', srcMode, [{ value: 'from', label: 'keys (ref)' }, { value: 'val', label: 'keys (literal array)' }]));
+      row.appendChild(mkField('sursă', srcSel));
+      const fromInp = wire(mkInput('from', !Array.isArray(step.keys) && step.keys != null ? step.keys : ''));
+      const valInp = wire(mkInput('val', Array.isArray(step.keys) ? JSON.stringify(step.keys) : ''));
+      const fromF = mkField('from', fromInp);
+      const valF = mkField('val', valInp);
+      row.appendChild(fromF);
+      row.appendChild(valF);
+      const ttlInp = wire(mkInput('ttl', step.ttl != null ? step.ttl : '5000', { type: 'number', placeholder: '5000' }));
+      const ttlF = mkField('ttl (ms)', ttlInp);
+      row.appendChild(ttlF);
+      function toggleFields() {
+        const f = fnSel.value;
+        const m = srcSel.value;
+        toF.style.display = f === 'acq' ? '' : 'none';
+        ttlF.style.display = f === 'acq' ? '' : 'none';
+        fromF.style.display = m === 'from' ? '' : 'none';
+        valF.style.display = m === 'val' ? '' : 'none';
+      }
+      srcSel.addEventListener('change', toggleFields);
+      fnSel.addEventListener('change', toggleFields);
+      toggleFields();
+      return;
+    }
+
     if (op === 'id') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
       const typeOpts = [
@@ -1691,6 +1733,24 @@
       } else {
         delete step.value;
         delete step.with;
+      }
+      return withStepMeta(el, step);
+    }
+    if (op === 'lock') {
+      step.fn = sf(el, 'fn') || 'acq';
+      if (step.fn === 'acq') {
+        step.to = sf(el, 'to');
+        const ttlVal = sf(el, 'ttl');
+        step.ttl = ttlVal !== '' ? parseInt(ttlVal, 10) : 5000;
+      } else {
+        delete step.to;
+        delete step.ttl;
+      }
+      if (sf(el, '_src') === 'val') {
+        const rawVal = sf(el, 'val');
+        try { step.keys = JSON.parse(rawVal); } catch (e) { step.keys = []; }
+      } else {
+        step.keys = sf(el, 'from');
       }
       return withStepMeta(el, step);
     }

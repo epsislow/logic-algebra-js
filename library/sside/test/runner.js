@@ -2150,6 +2150,66 @@ module.exports = {
         assert(r.stopped);
       },
     },
+    {
+      id: 108,
+      desc: 'lock acquire success and release cycles with single key literal',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'lock', fn: 'acq', keys: 'lock:_test_res:1', ttl: 4000, to: 'lock1' },
+              { op: 'lock', fn: 'rel', keys: 'lock:_test_res:1' },
+              { op: 'lock', fn: 'acq', keys: 'lock:_test_res:1', ttl: 4000, to: 'lock2' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.lock1, true);
+        assertEq(r.vars.lock2, true);
+        assert(!r.stopped);
+      },
+    },
+    {
+      id: 109,
+      desc: 'lock acquire fails when key is already occupied in redis database',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['SET', 'lock:_test_res:2', '1']);
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'lock', fn: 'acq', keys: 'lock:_test_res:2', to: 'lock_fail' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.lock_fail, false);
+        assert(!r.stopped);
+      },
+    },
+    {
+      id: 110,
+      desc: 'lock multi key atomic matrix transaction execution with cleanup verify',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['SET', 'lock:_multi:3', '1']);
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'lock', fn: 'acq', keys: ['lock:_multi:1', 'lock:_multi:2', 'lock:_multi:3'], to: 'multi_fail' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.multi_fail, false);
+        const check1 = await redis.exec(['TYPE', 'lock:_multi:1']);
+        const check2 = await redis.exec(['TYPE', 'lock:_multi:2']);
+        assertEq(check1, 'none');
+        assertEq(check2, 'none');
+        assert(!r.stopped);
+      },
+    },
+
 
   ],
 };

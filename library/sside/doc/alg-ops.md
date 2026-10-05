@@ -281,6 +281,48 @@ Dacă valoarea din `type` este invalidă sau lipsește, motorul folosește impli
 | **`autoinc`**| `1`, `2`, `3`... (numeric pur) | `key` (obligatoriu) | Execută comanda atomică asincronă `INCR` în Redis pe cheia specificată. Garantat imun la concurență. |
 | **`dateinc`**| `20261002-1` | `key` (obligatoriu) | Combină data curentă compactă cu un auto-increment Redis. **Numărătoarea se resetează automat la 1 în fiecare zi.** |
 
+
+### lock
+- `{ "op": "lock", "fn": "acq", "keys": "lock:_stock:form.id", "ttl": 5000, "to": "is_ok" }` (acquire)
+- `{ "op": "lock", "fn": "rel", "keys": ["lock:1", "lock:2"] }` (release)
+
+Gestionează mecanismul de blocare distribuită (*Distributed Locks*) pentru a preveni condițiile de concurență (race conditions) în execuții paralele din workeri. Operația nu oprește fluxul algoritmului.
+
+#### Sub-funcții suportate (`fn`):
+* **`acq`** (Acquire) — Încearcă blocarea cheilor. Execută atomic un batch `execTx` pe server folosind comanda `SET NX PX`. Dacă **toate** cheile sunt libere, se obține lock-ul (`true`). Dacă cel puțin o cheie este ocupată, tranzacția eșuează instant, motorul rulează un mecanism de curățare (*cleanup*) automat pentru cheile parțial atinse în acel pas și returnează `false`.
+* **`rel`** (Release) — Eliberează resursele prin ștergerea cheilor din Redis (`DEL`).
+
+#### Proprietăți:
+* **`keys`**: String (referință/literal pentru o cheie) sau Array (pentru multi-lock atomic).
+* **`ttl`** (Time-To-Live): Timpul în milisecunde pentru auto-expirarea cheii pe server în caz de crash al worker-ului (implicit `5000` ms).
+* **`to`**: Variabila destinație în care se stochează rezultatul succesului (`true`/`false`). Obligatorie doar pentru sub-funcția `acq`.
+
+---
+
+#### Model de utilizare în algoritm:
+
+```json
+[
+  { 
+    "op": "lock", 
+    "fn": "acq", 
+    "keys": ["lock:_stock:form.product_id"], 
+    "ttl": 5000, 
+    "to": "lock_success" 
+  },
+  { 
+    "op": "if", 
+    "when": "not lock_success",
+    "then": [
+      { "op": "end", "type": "err", "value": "Resursa este blocată de alt utilizator. Încearcă din nou!" }
+    ]
+  },
+  { "op": "ksave", "key": "data:_stock:form.product_id", "val": "form", "as": "json" },
+  { "op": "lock", "fn": "rel", "keys": ["lock:_stock:form.product_id"] },
+  { "op": "end", "type": "msg", "value": "Stoc salvat cu succes." }
+]
+```
+
 ### if
 `{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
 

@@ -157,6 +157,14 @@
       return;
     }
 
+    if (op === 'lock') {
+      const result = await Ops.executeLock(step, ctx, getVal, env);
+      if (step.to) {
+        Ops.setVar(ctx, step.to, result);
+      }
+      return;
+    }
+
     if (op === 'id') {
       if (!step.to) throw new Error('id: proprietatea to este obligatorie');
       const result = await Ops.executeIdGen(step, ctx, getVal, env);
