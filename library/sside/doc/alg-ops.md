@@ -393,6 +393,22 @@ Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 
 `ksave` **rescrie** mereu cheia (fără eroare dacă există). Pentru create-only, verifică înainte cu `TYPE` / `EXISTS` + `if` + `end`+`err` (vezi exemple).
 
+### kadd / krm
+- `{ "op": "kadd", "key": "hash:_user_meta", "val": { "email": "test@sside.ro" } }` (HASH mutations)
+- `{ "op": "krm", "key": "list:_logs", "val": "vars.log_item" }`
+
+Meta-operații polimorfice separate pentru adăugarea (`kadd`) sau eliminarea (`krm`) elementelor din colecții native Redis (SET, LIST sau HASH). Toate regulile sunt garantate Safe-Cast.
+
+#### Capabilități avansate adăugate:
+1. **Auto-inferență de tip**: Dacă cheia este nouă (`none`), motorul deduce tipul automat uitându-se dacă denumirea cheii începe cu prefixul `set:`, `list:` sau `hash:`.
+2. **Suport nativ pentru HASH**: 
+   * `kadd` primește un obiect `{ field: value }` și rulează comanda atomică `HSET`.
+   * `krm` primește numele câmpului (string) și rulează comanda `HDEL`.
+3. **Serializare Obiecte**: În interiorul seturilor sau listelor, obiectele complexe pasate în `val` sunt automat convertite prin `JSON.stringify` pentru a preveni alterarea datelor.
+4. **Multi-Values (Seturi)**: Masivele pasate în proprietatea `val` sunt despachetate și salvate/șterse în masă printr-un singur pas din interpretor.
+
+
+
 ## Schemă
 
 - `scheck` — validează `val` pe `schema`; fail → ca `end`+`err`

@@ -2209,7 +2209,110 @@ module.exports = {
         assert(!r.stopped);
       },
     },
-
+    {
+      id: 111,
+      desc: 'kadd and krm automatic type inference by key prefix patterns',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kadd', key: 'set:_prefix_test', val: 'A' },
+              { op: 'kadd', key: 'list:_prefix_test', val: 'B' },
+              { op: 'redis', do: 'SMEMBERS', args: ['set:_prefix_test'], to: 's_res' },
+              { op: 'redis', do: 'LRANGE', args: ['list:_prefix_test', 0, -1], to: 'l_res' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.s_res, ['A']);
+        assertEqJson(r.vars.l_res, ['B']);
+        assert(!r.err);
+      },
+    },
+    {
+      id: 112,
+      desc: 'kadd safe cast automatic json stringify for object values inside sets',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kadd', key: 'set:_obj_test', val: 'form.profile', as: 'set' },
+              { op: 'redis', do: 'SMEMBERS', args: ['set:_obj_test'], to: 's_res' }
+            ],
+          },
+          { form: { profile: { id: 5, role: 'user' } }, redis }
+        );
+        assertEqJson(r.vars.s_res, ['{"id":5,"role":"user"}']);
+        assert(!r.err);
+      },
+    },
+    {
+      id: 113,
+      desc: 'kadd multi values array unpacking execution inside native sets',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kadd', key: 'set:_multi', val: 'form.roles', as: 'set' },
+              { op: 'redis', do: 'SMEMBERS', args: ['set:_multi'], to: 's_res' }
+            ],
+          },
+          { form: { roles: ['admin', 'guest'] }, redis }
+        );
+        assertEq(r.vars.s_res.includes('admin'), true);
+        assertEq(r.vars.s_res.includes('guest'), true);
+        assertEq(r.vars.s_res.length, 2);
+        assert(!r.err);
+      },
+    },
+    {
+      id: 114,
+      desc: 'krm values array removal using safe cleanup inside list collection',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['RPUSH', 'list:_rm_multi', 'A', 'B', 'C']);
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'krm', key: 'list:_rm_multi', val: 'A', as: 'list' },
+              { op: 'redis', do: 'LRANGE', args: ['list:_rm_multi', 0, -1], to: 'l_res' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.l_res, ['B', 'C']);
+        assert(!r.err);
+      },
+    },
+    {
+      id: 115,
+      desc: 'kadd and krm dictionary structural mutations inside hash keys',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kadd', key: 'hash:_user_meta', val: { email: 'test@sside.ro' } },
+              { op: 'redis', do: 'HGETALL', args: ['hash:_user_meta'], to: 'h_res1' },
+              { op: 'krm', key: 'hash:_user_meta', val: 'email' },
+              { op: 'redis', do: 'HGETALL', args: ['hash:_user_meta'], to: 'h_res2' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.h_res1, { email: 'test@sside.ro' });
+        assertEqJson(r.vars.h_res2, {});
+        assert(!r.err);
+      },
+    },
 
   ],
 };

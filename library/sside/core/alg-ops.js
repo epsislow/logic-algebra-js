@@ -989,28 +989,56 @@
     }
     return false;
   }
-
-  /**
-   * kadd/krm argv după tip Redis (set/list; hash/zset → F4f-a amânat).
-   */
   function buildKaddArgv(key, member, redisType) {
-    const t = String(redisType || 'none').toLowerCase();
-    const m = member === undefined || member === null ? '' : typeof member === 'string' ? member : JSON.stringify(member);
-    if (t === 'list') return ['RPUSH', key, m];
-    if (t === 'hash') throw new Error('kadd pe hash amânat (F4f-a); folosește redis');
-    if (t === 'zset') throw new Error('kadd pe zset amânat (F4f-a); folosește redis');
-    // set sau none → SADD
-    return ['SADD', key, m];
+    let t = String(redisType || 'none').toLowerCase();
+    if (t === 'none') {
+      if (key.startsWith('list:')) t = 'list';
+      else if (key.startsWith('set:')) t = 'set';
+      else if (key.startsWith('hash:')) t = 'hash';
+    }
+    let elements = [];
+    if (Array.isArray(member)) {
+      elements = member.map(item => {
+        if (item && typeof item === 'object') { try { return JSON.stringify(item); } catch (e) { return ''; } }
+        return String(item != null ? item : '');
+      });
+    } else if (member && typeof member === 'object' && t !== 'hash') {
+      try { elements.push(JSON.stringify(member)); } catch (e) { elements.push(''); }
+    } else {
+      elements.push(member === undefined || member === null ? '' : String(member));
+    }
+    if (t === 'list') return ['RPUSH', key, ...elements];
+    if (t === 'hash') {
+      if (member && typeof member === 'object' && !Array.isArray(member)) {
+        const firstKey = Object.keys(member)[0];
+        return ['HSET', key, firstKey, String(member[firstKey])];
+      }
+      throw new Error('kadd pe hash necesită un obiect { field: value }');
+    }
+    return ['SADD', key, ...elements];
   }
 
   function buildKrmArgv(key, member, redisType) {
-    const t = String(redisType || 'none').toLowerCase();
-    const m = member === undefined || member === null ? '' : typeof member === 'string' ? member : JSON.stringify(member);
-    if (t === 'list') return ['LREM', key, '1', m];
-    if (t === 'hash') throw new Error('krm pe hash amânat (F4f-a); folosește redis');
-    if (t === 'zset') throw new Error('krm pe zset amânat (F4f-a); folosește redis');
-    return ['SREM', key, m];
+    let t = String(redisType || 'none').toLowerCase();
+    if (t === 'none') {
+      if (key.startsWith('list:')) t = 'list';
+      else if (key.startsWith('set:')) t = 'set';
+      else if (key.startsWith('hash:')) t = 'hash';
+    }
+    let elements = [];
+    if (Array.isArray(member)) {
+      elements = member.map(item => {
+        if (item && typeof item === 'object') { try { return JSON.stringify(item); } catch (e) { return ''; } }
+        return String(item != null ? item : '');
+      });
+    } else {
+      elements.push(member === undefined || member === null ? '' : String(member));
+    }
+    if (t === 'list') return ['LREM', key, '0', elements[0] || ''];
+    if (t === 'hash') return ['HDEL', key, elements[0]];
+    return ['SREM', key, ...elements];
   }
+
 
   const api = {
     REDIS_ALLOW,
