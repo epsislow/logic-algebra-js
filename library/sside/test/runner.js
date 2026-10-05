@@ -2313,6 +2313,28 @@ module.exports = {
         assert(!r.err);
       },
     },
-
+    {
+      id: 116,
+      desc: 'kadd and krm structured elements manipulation inside sorted sets zset',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kadd', key: 'zset:_leaderboard', val: { score: 100, member: 'player_one' } },
+              { op: 'kadd', key: 'zset:_leaderboard', val: { player_two: 250 } },
+              { op: 'redis', do: 'ZRANGE', args: ['zset:_leaderboard', 0, -1], to: 'z_res1' },
+              { op: 'krm', key: 'zset:_leaderboard', val: 'player_one' },
+              { op: 'redis', do: 'ZRANGE', args: ['zset:_leaderboard', 0, -1], to: 'z_res2' }
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEqJson(r.vars.z_res1, ['player_one', 'player_two']);
+        assertEqJson(r.vars.z_res2, ['player_two']);
+        assert(!r.err);
+      },
+    },
   ],
 };

@@ -989,12 +989,14 @@
     }
     return false;
   }
+
   function buildKaddArgv(key, member, redisType) {
     let t = String(redisType || 'none').toLowerCase();
     if (t === 'none') {
       if (key.startsWith('list:')) t = 'list';
       else if (key.startsWith('set:')) t = 'set';
       else if (key.startsWith('hash:')) t = 'hash';
+      else if (key.startsWith('zset:')) t = 'zset';
     }
     let elements = [];
     if (Array.isArray(member)) {
@@ -1002,7 +1004,7 @@
         if (item && typeof item === 'object') { try { return JSON.stringify(item); } catch (e) { return ''; } }
         return String(item != null ? item : '');
       });
-    } else if (member && typeof member === 'object' && t !== 'hash') {
+    } else if (member && typeof member === 'object' && t !== 'hash' && t !== 'zset') {
       try { elements.push(JSON.stringify(member)); } catch (e) { elements.push(''); }
     } else {
       elements.push(member === undefined || member === null ? '' : String(member));
@@ -1015,6 +1017,16 @@
       }
       throw new Error('kadd pe hash necesită un obiect { field: value }');
     }
+    if (t === 'zset') {
+      if (member && typeof member === 'object' && !Array.isArray(member)) {
+        if (Object.prototype.hasOwnProperty.call(member, 'score') && Object.prototype.hasOwnProperty.call(member, 'member')) {
+          return ['ZADD', key, String(castValue(member.score, 'number')), String(member.member)];
+        }
+        const firstKey = Object.keys(member)[0];
+        return ['ZADD', key, String(castValue(member[firstKey], 'number')), firstKey];
+      }
+      return ['ZADD', key, '0', String(member)];
+    }
     return ['SADD', key, ...elements];
   }
 
@@ -1024,6 +1036,7 @@
       if (key.startsWith('list:')) t = 'list';
       else if (key.startsWith('set:')) t = 'set';
       else if (key.startsWith('hash:')) t = 'hash';
+      else if (key.startsWith('zset:')) t = 'zset';
     }
     let elements = [];
     if (Array.isArray(member)) {
@@ -1036,6 +1049,7 @@
     }
     if (t === 'list') return ['LREM', key, '0', elements[0] || ''];
     if (t === 'hash') return ['HDEL', key, elements[0]];
+    if (t === 'zset') return ['ZREM', key, elements[0]];
     return ['SREM', key, ...elements];
   }
 

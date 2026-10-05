@@ -407,6 +407,9 @@ Meta-operații polimorfice separate pentru adăugarea (`kadd`) sau eliminarea (`
 3. **Serializare Obiecte**: În interiorul seturilor sau listelor, obiectele complexe pasate în `val` sunt automat convertite prin `JSON.stringify` pentru a preveni alterarea datelor.
 4. **Multi-Values (Seturi)**: Masivele pasate în proprietatea `val` sunt despachetate și salvate/șterse în masă printr-un singur pas din interpretor.
 
+#### Suport nativ pentru Sorted Sets (ZSET):
+* `kadd` acceptă un obiect explicit formatat `{ score: 100, member: "val" }` sau o structură compactă `{ member_name: score_number }` și rulează comanda atomică `ZADD` în ordine crescătoare a scorurilor. Ca fallback sigur pentru primitive, le adaugă cu scorul implicit `0`.
+* `krm` acceptă string-ul reprezentând numele membrului unic și rulează comanda `ZREM`, eliminându-l complet din structură.
 
 
 ## Schemă

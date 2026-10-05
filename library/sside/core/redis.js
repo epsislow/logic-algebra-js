@@ -110,6 +110,16 @@
         return 'OK';
       }
 
+      if (cmd === 'ZREM') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'zset') return 0;
+        let n = 0;
+        for (let i = 1; i < a.length; i++) {
+          if (e.val.delete(String(a[i]))) n++;
+        }
+        return n;
+      }
+
       if (cmd === 'SEARCH.QUERY') {
         // SEARCH.QUERY index jsonQuery LIMIT n OFFSET m NOCONTENT
         let queryObj = a[1];
