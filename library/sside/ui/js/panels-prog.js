@@ -2729,13 +2729,18 @@
       '<div class="prog-field"><label>pageSize</label><input type="number" min="1" step="1" data-f="pageSize"></div>' +
       '<div class="prog-field"><label>autoload</label><select data-f="autoload">' +
       '<option value="true">true</option>' +
-      '<option value="false">false</option></select></div>';
+      '<option value="false">false</option></select></div>' +
+      '<div class="prog-field"><label>exactCount</label><select data-f="exactCount">' +
+      '<option value="false">false</option>' +
+      '<option value="true">true</option></select></div>';
     card.appendChild(rowHead);
     rowHead.querySelector('[data-f="title"]').value = obj.title || '';
     rowHead.querySelector('[data-f="row"]').value = obj.row === 'array' ? 'array' : 'object';
     rowHead.querySelector('[data-f="pageSize"]').value = obj.pageSize;
     rowHead.querySelector('[data-f="autoload"]').value =
       obj.autoload === false ? 'false' : 'true';
+    rowHead.querySelector('[data-f="exactCount"]').value =
+      obj.exactCount === true ? 'true' : 'false';
 
     const srcCard = document.createElement('div');
     srcCard.className = 'prog-step';
@@ -2746,6 +2751,8 @@
       '<div class="prog-field"><label>from</label><select data-s="from"></select></div>' +
       '<div class="prog-field" data-s-wrap="pattern"><label>pattern</label><input data-s="pattern" placeholder="data:_stock:*"></div>' +
       '<div class="prog-field" data-s-wrap="query" style="flex:2"><label>query</label><textarea data-s="query" rows="2" placeholder=\'{"s_prefix":"stock"} sau s_prefix:stock\'></textarea></div>' +
+      '<div class="prog-field" data-s-wrap="noContent"><label>noContent</label><select data-s="noContent">' +
+      '<option value="false">false</option><option value="true">true</option></select></div>' +
       '<div class="prog-field" data-s-wrap="key"><label>key</label><input data-s="key" placeholder="set:_ids"></div>' +
       '<div class="prog-field" data-s-wrap="values" style="flex:2"><label>values (enum, virgulă)</label><input data-s="values" placeholder="a,b,c"></div>';
     const fromSel = srcRow.querySelector('[data-s="from"]');
@@ -2770,6 +2777,8 @@
       srcRow.querySelector('[data-s="values"]').value = Array.isArray(src.values)
         ? src.values.join(',')
         : '';
+      srcRow.querySelector('[data-s="noContent"]').value =
+        src.noContent === true ? 'true' : 'false';
       syncSourceVisibility();
     }
 
@@ -2778,6 +2787,7 @@
       const show = {
         pattern: from === 'keys',
         query: from === 'search',
+        noContent: from === 'search',
         key: from === 'set' || from === 'list' || from === 'zset' || from === 'hash',
         values: from === 'enum',
       };
@@ -2826,6 +2836,9 @@
             source.query = raw;
           }
         }
+        if (srcRow.querySelector('[data-s="noContent"]').value === 'true') {
+          source.noContent = true;
+        }
       } else if (from === 'enum') {
         source.values = srcRow
           .querySelector('[data-s="values"]')
@@ -2847,6 +2860,11 @@
         obj.autoload = false;
       } else {
         delete obj.autoload;
+      }
+      if (rowHead.querySelector('[data-f="exactCount"]').value === 'true') {
+        obj.exactCount = true;
+      } else {
+        delete obj.exactCount;
       }
       obj.source = readSourceFromDom();
 

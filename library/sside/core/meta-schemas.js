@@ -83,6 +83,11 @@
         default: true,
         description: 'false = nu încarcă source la open Live (doar la refresh)',
       },
+      exactCount: {
+        type: 'boolean',
+        default: false,
+        description: 'true = SEARCH.COUNT la fiecare pagină (search); pager cu total',
+      },
       btns: { type: 'array', default: [], items: { type: 'object' } },
       rowBtns: { type: 'array', default: [], items: { type: 'object' } },
     },

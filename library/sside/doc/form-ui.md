@@ -118,6 +118,7 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
     { "id": "qty", "label": "Qty", "path": "qty" }
   ],
   "pageSize": 20,
+  "exactCount": false,
   "rowBtns": [
     { "id": "del", "label": "Sterge", "alg": "alg:_del_stock", "kind": "red", "place": "row" }
   ],
@@ -137,12 +138,20 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 | `columns[].const` | valoare **statică** (ex. `"stock"`) — fără citire pe rând |
 | `pageSize` | mărime pagină |
 | `autoload` | default `true`; `false` = **nu** încarcă `source` la open Live (tabel gol până la refresh / Reîncarcă) |
+| `exactCount` | default `false`; `true` = la fiecare pagină (search) apelează **`SEARCH.COUNT`** + QUERY → pager `Pagina N / M (total)` |
+| `source.noContent` | doar `from: search`; default `false` = QUERY **cu** document; `true` = **NOCONTENT** (doar chei), **fără** TYPE/JSON.GET — coloane `_key` / `const`; path-uri din JSON → afișare **nimic** |
 | `rowBtns` | pe rând (mereu cu rând → `form`); `kind` ca form |
 | `btns` | sub tabel; `needsRow` default `true`; `false` = fără selecție (`form` = `{}`) |
 
 **Context alg (buton pe listă):** `form` = rândul + `form._key` (id rând); `list.page` / `list.pageMax` / `list.pageSize` / `list.total` / `list.hasMore` / `list.keys` / `list.rows` / `list.id` / `list.def`. `pageMax` = numărul după `/` din „Pagina 1 / 3”. `list.rows` = valorile pe pagina curentă (deja în Live).
 
-**Fetch pe pagină:** doar ce cer coloanele — `_key` + `const` → zero `TYPE`/`JSON.GET`; `path: "_type"` → doar `TYPE`; path-uri de câmp / `_json` → `TYPE` + `GET`/`JSON.GET`.
+**Fetch pe pagină:** doar ce cer coloanele — `_key` + `const` → zero `TYPE`/`JSON.GET`; `path: "_type"` → doar `TYPE`; path-uri de câmp / `_json` → `TYPE` + `GET`/`JSON.GET` (sau content din **`SEARCH.QUERY`** când `noContent` e false). Cu **`noContent: true`**, nu se citesc valorile per rând.
+
+**Celule Live:** path lipsă / neîncărcat → text **`nimic`** (roșu); câmp JSON **`null`** → **`(nul)`** (gri); string gol **`""`** rămâne celulă goală normală.
+
+**Erori search (exactCount):** dacă `SEARCH.COUNT` e invalid sau index lipsă (`-1`) → mesaj *Interogare search invalidă sau index indisponibil.*
+
+**Filtrul `=…` de pe pagina principală** (lista de chei) **nu** folosește `exactCount` / `noContent` de pe `list:` — rămâne NOCONTENT ca înainte.
 
 **Exemple coloane:**
 

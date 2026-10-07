@@ -70,7 +70,8 @@
       return undefined;
     }
     if (p === '_type') {
-      return meta.type != null ? meta.type : '';
+      if (meta.type != null && meta.type !== '') return meta.type;
+      return undefined;
     }
     if (p === '$' || p === '_json' || p === '_raw') {
       if (rowVal == null) return '';
@@ -91,6 +92,16 @@
       return p === 'value' || p === '0' ? rowVal : undefined;
     }
     return getPath(rowVal, p);
+  }
+
+  /**
+   * Afișare celulă Live: lipsă vs null vs valoare.
+   * @returns {{ kind: 'value'|'missing'|'null', text: string }}
+   */
+  function formatListCellDisplay(val) {
+    if (val === undefined) return { kind: 'missing', text: 'nimic' };
+    if (val === null) return { kind: 'null', text: '(nul)' };
+    return { kind: 'value', text: String(val) };
   }
 
   /** Ce citiri Redis sunt necesare pentru columns. */
@@ -150,25 +161,49 @@
       const page = pageOpts.page || 1;
       const offset = (page - 1) * pageSize;
       const qObj = SearchQ.normalizeQuery(source.query);
+      const searchNoContent =
+        SearchQ.sourceWantsNoContent && SearchQ.sourceWantsNoContent(source);
       const searchSourceObj = Object.assign({}, source, {
         query: qObj,
         limit: pageSize,
         offset: offset,
-        nocontent: false,
       });
       const argv = SearchQ.buildSearchArgv(searchSourceObj);
-      const raw = await redis.exec(argv);
+      const exactCount = pageOpts.exactCount === true;
+      let searchTotal;
+      let raw;
+      if (exactCount) {
+        const countArgv = SearchQ.buildSearchCountArgv(searchSourceObj);
+        const pair = await Promise.all([redis.exec(countArgv), redis.exec(argv)]);
+        const countParsed = SearchQ.parseSearchCount(pair[0]);
+        if (!countParsed.ok) {
+          throw new Error(
+            SearchQ.SEARCH_COUNT_ERROR ||
+              'Interogare search invalidă sau index indisponibil.'
+          );
+        }
+        searchTotal = countParsed.count;
+        raw = pair[1];
+      } else {
+        raw = await redis.exec(argv);
+      }
       const parsed = SearchQ.parseSearchHits
         ? SearchQ.parseSearchHits(raw)
         : { keys: SearchQ.unwrapSearchKeys(raw), preloadedRows: {} };
       const keys = parsed.keys;
-      const preloadedRows = parsed.preloadedRows || {};
+      const preloadedRows = searchNoContent ? {} : parsed.preloadedRows || {};
+      let total = typeof searchTotal !== 'undefined' ? searchTotal : null;
+      let hasMore =
+        total != null
+          ? offset + keys.length < total
+          : keys.length >= pageSize;
       return {
         keys,
-        total: null,
-        hasMore: keys.length >= pageSize,
+        total,
+        hasMore,
         pagedAtSource: true,
         _preloadedRows: preloadedRows,
+        _searchNoContent: !!searchNoContent,
       };
     }
     if (!FormOpts) throw new Error('form-options lipsă');
@@ -243,9 +278,17 @@
     const rowMode = listDef.row === 'array' ? 'array' : 'object';
     const needs = analyzeColumnNeeds(listDef.columns);
 
+    const exactCount = listDef.exactCount === true;
+    const searchNoContent =
+      listDef.source &&
+      listDef.source.from === 'search' &&
+      SearchQ &&
+      SearchQ.sourceWantsNoContent(listDef.source);
+
     let src = await resolveSourceKeys(listDef.source, redis, {
       page: pageNum,
       pageSize,
+      exactCount,
     });
 
     let pageKeys;
@@ -254,11 +297,26 @@
 
     if (src.pagedAtSource) {
       pageKeys = src.keys;
-      if (pageKeys.length === 0 && pageNum > 1) {
+      if (total != null && Number.isFinite(Number(total))) {
+        total = Number(total);
+        const maxPage = Math.max(1, Math.ceil(total / pageSize) || 1);
+        if (pageNum > maxPage) {
+          pageNum = maxPage;
+          src = await resolveSourceKeys(listDef.source, redis, {
+            page: pageNum,
+            pageSize,
+            exactCount,
+          });
+          pageKeys = src.keys;
+          total = src.total != null ? Number(src.total) : total;
+        }
+        hasMore = pageNum * pageSize < total;
+      } else if (pageKeys.length === 0 && pageNum > 1) {
         pageNum = 1;
         src = await resolveSourceKeys(listDef.source, redis, {
           page: 1,
           pageSize,
+          exactCount,
         });
         pageKeys = src.keys;
         hasMore = !!src.hasMore;
@@ -275,7 +333,7 @@
 
     const fromSearch =
       listDef.source && listDef.source.from === 'search' && !!src.pagedAtSource;
-    if (fromSearch && needs.needsValue && pageKeys.length) {
+    if (fromSearch && !searchNoContent && needs.needsValue && pageKeys.length) {
       if (!src._preloadedRows) src._preloadedRows = {};
       const missing = pageKeys.filter(
         (k) => !Object.prototype.hasOwnProperty.call(src._preloadedRows, k)
@@ -289,8 +347,14 @@
     const rows = [];
     for (const key of pageKeys) {
       let tip = null;
-      const isPreloaded = src && src._preloadedRows && Object.prototype.hasOwnProperty.call(src._preloadedRows, key);
-      if (!isPreloaded && (needs.needsType || needs.needsValue)) {
+      const isPreloaded =
+        !searchNoContent &&
+        src &&
+        src._preloadedRows &&
+        Object.prototype.hasOwnProperty.call(src._preloadedRows, key);
+      if (searchNoContent && fromSearch) {
+        tip = null;
+      } else if (!isPreloaded && (needs.needsType || needs.needsValue)) {
         if (fromSearch && needs.needsValue && !needs.needsType) {
           tip = 'json';
         } else {
@@ -307,7 +371,9 @@
         tip = 'json';
       }
       let value;
-      if (isPreloaded) {
+      if (searchNoContent && fromSearch) {
+        value = rowMode === 'array' ? [] : {};
+      } else if (isPreloaded) {
         value = src._preloadedRows[key];
       } else if (needs.needsValue) {
         try {
@@ -411,6 +477,7 @@
 
   const api = {
     cellValue,
+    formatListCellDisplay,
     analyzeColumnNeeds,
     loadRowValue,
     resolveSourceKeys,

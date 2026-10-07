@@ -120,15 +120,31 @@
         return n;
       }
 
-      if (cmd === 'SEARCH.QUERY') {
-        let queryObj = a[1];
+      function parseSearchFilterArg(arg) {
+        let queryObj = arg;
         if (typeof queryObj === 'string') {
           try {
             queryObj = JSON.parse(queryObj);
           } catch (e) {
-            throw new Error('SEARCH.QUERY: json invalid');
+            throw new Error('SEARCH: json invalid');
           }
         }
+        return queryObj;
+      }
+
+      if (cmd === 'SEARCH.COUNT') {
+        const idxName = a[0] != null ? String(a[0]) : '';
+        if (idxName !== 'idx_search_tags') return -1;
+        const queryObj = parseSearchFilterArg(a[1]);
+        let n = 0;
+        for (const [, tags] of searchIndex.entries()) {
+          if (matchSearchQuery(tags, queryObj)) n++;
+        }
+        return n;
+      }
+
+      if (cmd === 'SEARCH.QUERY') {
+        const queryObj = parseSearchFilterArg(a[1]);
         let limit = 1000;
         let offset = 0;
         for (let i = 2; i < a.length; i++) {

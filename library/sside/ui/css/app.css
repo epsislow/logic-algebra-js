@@ -382,6 +382,20 @@
         .prog-live-list table.prog-list-table tr.is-selected td {
             background: var(--row-hover);
         }
+        .prog-live-list table.prog-list-table td.prog-cell-missing {
+            color: #c62828;
+            font-style: italic;
+        }
+        html[data-theme="dark"] .prog-live-list table.prog-list-table td.prog-cell-missing {
+            color: #ef9a9a;
+        }
+        .prog-live-list table.prog-list-table td.prog-cell-null {
+            color: #607d8b;
+            font-style: italic;
+        }
+        html[data-theme="dark"] .prog-live-list table.prog-list-table td.prog-cell-null {
+            color: #90a4ae;
+        }
         .prog-list-footer {
             display: flex; align-items: center;
             gap: 8px; flex-wrap: wrap; margin-top: 6px;

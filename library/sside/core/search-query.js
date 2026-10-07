@@ -242,12 +242,19 @@
     return { keys, preloadedRows };
   }
 
-  /**
-   * Obiect `{ query, index, limit, offset, nocontent }` sau legacy `(index, qObj, limit, offset)`.
-   * Implicit NOCONTENT (doar chei). Pentru listă: `nocontent: false`.
-   */
-  function buildSearchArgv(indexOrSource, qObj, limit, offset) {
-    let source;
+  const SEARCH_COUNT_ERROR =
+    'Interogare search invalidă sau index indisponibil.';
+
+  /** `source.noContent` / `nocontent`; listă search default = cu content. */
+  function sourceWantsNoContent(source) {
+    if (!source || typeof source !== 'object') return true;
+    if (source.noContent === true || source.nocontent === true) return true;
+    if (source.content === true || source.nocontent === false) return false;
+    if (source.from === 'search') return false;
+    return true;
+  }
+
+  function normalizeSearchSource(indexOrSource, qObj, limit, offset) {
     if (
       indexOrSource &&
       typeof indexOrSource === 'object' &&
@@ -256,17 +263,48 @@
         Object.prototype.hasOwnProperty.call(indexOrSource, 'from') ||
         Object.prototype.hasOwnProperty.call(indexOrSource, 'index') ||
         Object.prototype.hasOwnProperty.call(indexOrSource, 'nocontent') ||
+        Object.prototype.hasOwnProperty.call(indexOrSource, 'noContent') ||
         Object.prototype.hasOwnProperty.call(indexOrSource, 'content'))
     ) {
-      source = indexOrSource;
-    } else {
-      source = {
-        index: indexOrSource,
-        query: qObj,
-        limit,
-        offset,
-      };
+      return indexOrSource;
     }
+    return {
+      index: indexOrSource,
+      query: qObj,
+      limit,
+      offset,
+    };
+  }
+
+  /**
+   * @param {*} raw rezultat SEARCH.COUNT
+   * @returns {{ ok: true, count: number } | { ok: false, code: string }}
+   */
+  function parseSearchCount(raw) {
+    if (raw && typeof raw === 'object' && !Array.isArray(raw) && raw.rezultat !== undefined) {
+      raw = raw.rezultat;
+    }
+    if (raw == null || raw === '') return { ok: false, code: 'invalid' };
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return { ok: false, code: 'invalid' };
+    if (n === -1) return { ok: false, code: 'index_missing' };
+    if (n < 0) return { ok: false, code: 'invalid' };
+    return { ok: true, count: Math.floor(n) };
+  }
+
+  function buildSearchCountArgv(indexOrSource, qObj) {
+    const source = normalizeSearchSource(indexOrSource, qObj);
+    const idx = source.index || 'idx_search_tags';
+    const qNorm = normalizeQuery(source.query == null ? { '*': '*' } : source.query);
+    return ['SEARCH.COUNT', idx, JSON.stringify(qNorm)];
+  }
+
+  /**
+   * Obiect `{ query, index, limit, offset, nocontent }` sau legacy `(index, qObj, limit, offset)`.
+   * Implicit NOCONTENT (alg). Listă search: content dacă `noContent` nu e true.
+   */
+  function buildSearchArgv(indexOrSource, qObj, limit, offset) {
+    const source = normalizeSearchSource(indexOrSource, qObj, limit, offset);
 
     const idx = source.index || 'idx_search_tags';
     const qNorm = normalizeQuery(source.query == null ? { '*': '*' } : source.query);
@@ -277,8 +315,7 @@
     if (source.offset != null && source.offset !== '' && Number(source.offset) > 0) {
       argv.push('OFFSET', String(source.offset));
     }
-    const wantContent = source.content === true || source.nocontent === false;
-    if (!wantContent) argv.push('NOCONTENT');
+    if (sourceWantsNoContent(source)) argv.push('NOCONTENT');
     return argv;
   }
 
@@ -292,7 +329,11 @@
     parseHitContent,
     parseSearchDocumentContent,
     isEmptySearchContent,
+    sourceWantsNoContent,
     buildSearchArgv,
+    buildSearchCountArgv,
+    parseSearchCount,
+    SEARCH_COUNT_ERROR,
   };
 
   root.SsideSearchQuery = api;

@@ -115,6 +115,14 @@
     if (obj.autoload != null && typeof obj.autoload !== 'boolean') {
       return err('list.autoload trebuie boolean');
     }
+    if (obj.exactCount != null && typeof obj.exactCount !== 'boolean') {
+      return err('list.exactCount trebuie boolean');
+    }
+    if (obj.source && typeof obj.source === 'object' && obj.source.from === 'search') {
+      if (obj.source.noContent != null && typeof obj.source.noContent !== 'boolean') {
+        return err('list.source.noContent trebuie boolean');
+      }
+    }
     const b1 = validateBtns(obj.btns, 'list.btns', { allowNeedsRow: true });
     if (b1) return b1;
     const b2 = validateBtns(obj.rowBtns, 'list.rowBtns');

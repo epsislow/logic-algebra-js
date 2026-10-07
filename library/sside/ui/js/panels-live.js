@@ -316,7 +316,25 @@
           } else if (c && String(c.path || '').trim() === '_type') {
             val = row.type;
           }
-          td.textContent = val == null ? '' : String(val);
+          let disp;
+          if (ListLoad && typeof ListLoad.formatListCellDisplay === 'function') {
+            disp = ListLoad.formatListCellDisplay(val);
+          } else if (val === undefined) {
+            disp = { kind: 'missing', text: 'nimic' };
+          } else if (val === null) {
+            disp = { kind: 'null', text: '(nul)' };
+          } else {
+            disp = { kind: 'value', text: String(val) };
+          }
+          if (disp.kind === 'missing') {
+            td.className = 'prog-cell-missing';
+            td.textContent = disp.text;
+          } else if (disp.kind === 'null') {
+            td.className = 'prog-cell-null';
+            td.textContent = disp.text;
+          } else {
+            td.textContent = disp.text;
+          }
           tr.appendChild(td);
         });
         if (rowBtns.length) {

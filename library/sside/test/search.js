@@ -92,6 +92,37 @@ module.exports = {
       },
     },
     {
+      id: 19,
+      desc: 'SEARCH.COUNT argv + parseSearchCount',
+      run() {
+        const argv = SearchQ.buildSearchCountArgv({
+          from: 'search',
+          query: { s_prefix: 'stock' },
+        });
+        assertDeep(argv, [
+          'SEARCH.COUNT',
+          'idx_search_tags',
+          JSON.stringify({ s_prefix: 'stock' }),
+        ]);
+        assertDeep(SearchQ.parseSearchCount(5), { ok: true, count: 5 });
+        assertDeep(SearchQ.parseSearchCount(0), { ok: true, count: 0 });
+        assertEq(SearchQ.parseSearchCount(-1).ok, false);
+        assertEq(SearchQ.parseSearchCount(-1).code, 'index_missing');
+        assert(
+          SearchQ.buildSearchArgv({ from: 'search', query: { s_prefix: 'x' } }).indexOf(
+            'NOCONTENT'
+          ) === -1
+        );
+        assert(
+          SearchQ.buildSearchArgv({
+            from: 'search',
+            query: { s_prefix: 'x' },
+            noContent: true,
+          }).includes('NOCONTENT')
+        );
+      },
+    },
+    {
       id: 3,
       desc: 'normalizeQuery obiect flat → $and',
       run() {

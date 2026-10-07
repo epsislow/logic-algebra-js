@@ -660,5 +660,147 @@ module.exports = {
         );
       },
     },
+    {
+      id: 18,
+      desc: 'exactCount — COUNT+QUERY, total și pageMax',
+      async run() {
+        const base = createMemoryRedis();
+        for (let i = 1; i <= 5; i++) {
+          await base.exec([
+            'JSON.SET',
+            'data:_stock:c' + i,
+            '$',
+            JSON.stringify({ s_prefix: 'stock', n: i }),
+          ]);
+        }
+        let countCalls = 0;
+        let queryCalls = 0;
+        const wrapped = {
+          async exec(argv) {
+            const cmd = String(argv[0] || '').toUpperCase();
+            if (cmd === 'SEARCH.COUNT') countCalls++;
+            if (cmd === 'SEARCH.QUERY') queryCalls++;
+            return base.exec(argv);
+          },
+          async type(k) {
+            return base.type(k);
+          },
+        };
+        const listDef = {
+          v: 1,
+          exactCount: true,
+          source: { from: 'search', query: { s_prefix: 'stock' } },
+          columns: [{ id: 'k', path: '_key' }],
+          pageSize: 2,
+        };
+        const p1 = await ListLoad.loadListPage(listDef, wrapped, 1);
+        assertEq(p1.total, 5);
+        assertEq(p1.rows.length, 2);
+        assert(p1.hasMore);
+        assertEq(ListLoad.computePageMax(p1), 3);
+        assertEq(countCalls, 1);
+        assertEq(queryCalls, 1);
+        countCalls = 0;
+        queryCalls = 0;
+        const p2 = await ListLoad.loadListPage(listDef, wrapped, 2);
+        assertEq(p2.total, 5);
+        assertEq(countCalls, 1);
+        assertEq(queryCalls, 1);
+      },
+    },
+    {
+      id: 19,
+      desc: 'noContent search — NOCONTENT, fără TYPE/GET',
+      async run() {
+        const base = createMemoryRedis();
+        await base.exec([
+          'JSON.SET',
+          'data:_stock:nc1',
+          '$',
+          JSON.stringify({ s_prefix: 'stock', qty: 9 }),
+        ]);
+        let typeN = 0;
+        let getN = 0;
+        const redis = {
+          async exec(argv) {
+            const cmd = String(argv[0] || '').toUpperCase();
+            if (cmd === 'TYPE') typeN++;
+            if (cmd === 'JSON.GET' || cmd === 'JSON.MGET') getN++;
+            const out = await base.exec(argv);
+            if (cmd === 'SEARCH.QUERY') {
+              const hasNc = argv.map((x) => String(x).toUpperCase()).includes('NOCONTENT');
+              assert(hasNc, 'QUERY cu NOCONTENT');
+            }
+            return out;
+          },
+          async type() {
+            typeN++;
+            return 'json';
+          },
+        };
+        const page = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'search', query: { s_prefix: 'stock' }, noContent: true },
+            columns: [
+              { id: 'k', path: '_key' },
+              { id: 'q', path: 'qty' },
+            ],
+            pageSize: 10,
+          },
+          redis,
+          1
+        );
+        assertEq(page.rows.length, 1);
+        assertEq(ListLoad.cellValue(page.rows[0].value, '_key', 'object', { key: page.rows[0].key }), 'data:_stock:nc1');
+        assertEq(ListLoad.cellValue(page.rows[0].value, 'qty', 'object'), undefined);
+        assertEq(typeN, 0);
+        assertEq(getN, 0);
+      },
+    },
+    {
+      id: 20,
+      desc: 'formatListCellDisplay + null vs missing',
+      run() {
+        assertDeep(ListLoad.formatListCellDisplay(undefined), {
+          kind: 'missing',
+          text: 'nimic',
+        });
+        assertDeep(ListLoad.formatListCellDisplay(null), { kind: 'null', text: '(nul)' });
+        assertDeep(ListLoad.formatListCellDisplay(''), { kind: 'value', text: '' });
+        assertDeep(ListLoad.formatListCellDisplay(0), { kind: 'value', text: '0' });
+        const row = { _key: 'k', a: null, b: 'x' };
+        assertEq(ListLoad.cellValue(row, 'a', 'object'), null);
+        assertEq(ListLoad.cellValue(row, 'missing', 'object'), undefined);
+      },
+    },
+    {
+      id: 21,
+      desc: 'exactCount COUNT -1 → eroare RO',
+      async run() {
+        const redis = {
+          async exec(argv) {
+            if (String(argv[0]).toUpperCase() === 'SEARCH.COUNT') return -1;
+            return [];
+          },
+        };
+        let errMsg = '';
+        try {
+          await ListLoad.loadListPage(
+            {
+              v: 1,
+              exactCount: true,
+              source: { from: 'search', query: { s_prefix: 'x' } },
+              columns: [{ id: 'k', path: '_key' }],
+            },
+            redis,
+            1
+          );
+        } catch (e) {
+          errMsg = e && e.message ? e.message : String(e);
+        }
+        assert(errMsg.indexOf('Interogare search invalidă') !== -1, errMsg);
+      },
+    },
   ],
 };
