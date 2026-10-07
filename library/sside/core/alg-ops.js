@@ -985,6 +985,80 @@
     return undefined;
   }
 
+  function isLogLineTemplate(str) {
+    return /<[a-z][a-z0-9]*>/i.test(String(str || ''));
+  }
+
+  function resolveLogTsformat(step) {
+    if (step.tsformat != null && String(step.tsformat).trim() !== '') {
+      return String(step.tsformat);
+    }
+    if (
+      step.format != null &&
+      String(step.format).trim() !== '' &&
+      !isLogLineTemplate(step.format)
+    ) {
+      return String(step.format);
+    }
+    return null;
+  }
+
+  function resolveLogLineTemplate(step) {
+    if (step.format != null && String(step.format).trim() !== '' && isLogLineTemplate(step.format)) {
+      return String(step.format);
+    }
+    return null;
+  }
+
+  function formatLogFieldForLine(val) {
+    if (val === undefined || val === null) return '';
+    if (typeof val === 'object') return JSON.stringify(val);
+    return String(val);
+  }
+
+  const LOG_LINE_TOKEN_MAP = {
+    ts: 'ts',
+    lvl: 'level',
+    name: 'name',
+    act: 'action',
+    ctx: 'context',
+    dat: 'data',
+    alg: 'alg',
+    btn: 'button',
+  };
+
+  function formatLogLine(template, payload) {
+    const t = String(template);
+    const p = payload || {};
+    let out = '';
+    for (let i = 0; i < t.length; i++) {
+      if (t.charAt(i) === '\\' && i + 1 < t.length && t.charAt(i + 1) === '<') {
+        out += '<';
+        i += 1;
+        continue;
+      }
+      if (t.charAt(i) === '<') {
+        const end = t.indexOf('>', i + 1);
+        if (end === -1) {
+          out += t.charAt(i);
+          continue;
+        }
+        const token = t.slice(i + 1, end).toLowerCase();
+        const field = LOG_LINE_TOKEN_MAP[token];
+        if (field) {
+          out += formatLogFieldForLine(p[field]);
+          i = end;
+          continue;
+        }
+        out += t.slice(i, end + 1);
+        i = end;
+        continue;
+      }
+      out += t.charAt(i);
+    }
+    return out;
+  }
+
   /**
    * @returns {{ key: string, payload: object }}
    */
@@ -999,9 +1073,10 @@
     if (!action) throw new Error('log: action gol');
 
     const now = new Date();
+    const tsFmt = resolveLogTsformat(step);
     let ts;
-    if (step.format != null && String(step.format).trim() !== '') {
-      ts = formatDateValue(now, String(step.format));
+    if (tsFmt) {
+      ts = formatDateValue(now, tsFmt);
     } else {
       ts = now.toISOString();
     }
@@ -1022,14 +1097,19 @@
     return { key: 'log:' + nameStr, payload };
   }
 
-  function buildLogRpushArgv(key, payload) {
+  function buildLogRpushArgv(key, member) {
     const k = String(key || '');
     if (!k) throw new Error('log: cheie goală');
-    return ['RPUSH', k, JSON.stringify(payload)];
+    const line = typeof member === 'string' ? member : JSON.stringify(member);
+    return ['RPUSH', k, line];
   }
 
   function buildLogArgv(step, ctx, getValFn, meta) {
     const built = buildLogPayload(step, ctx, getValFn, meta);
+    const lineTpl = resolveLogLineTemplate(step);
+    if (lineTpl) {
+      return buildLogRpushArgv(built.key, formatLogLine(lineTpl, built.payload));
+    }
     return buildLogRpushArgv(built.key, built.payload);
   }
 
@@ -1170,6 +1250,10 @@
     buildLogPayload,
     buildLogRpushArgv,
     buildLogArgv,
+    formatLogLine,
+    isLogLineTemplate,
+    resolveLogTsformat,
+    resolveLogLineTemplate,
     executeLock,
     buildKsaveArgv,
     buildKgetArgv,

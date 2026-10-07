@@ -188,6 +188,9 @@
         if (s.data != null && s.dataWith != null) {
           return err(p + ': data și dataWith — alege unul');
         }
+        if (s.tsformat != null && typeof s.tsformat !== 'string') {
+          return err(p + '.tsformat trebuie string');
+        }
         if (s.format != null && typeof s.format !== 'string') {
           return err(p + '.format trebuie string');
         }

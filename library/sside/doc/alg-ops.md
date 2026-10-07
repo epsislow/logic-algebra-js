@@ -357,7 +357,11 @@ Toate mesajele generate de pașii `notify` sunt acumulate secvențial în interi
 
 ### log
 
-Persistă un eveniment în Redis pe lista **`log:<name>`** (append **`RPUSH`**, JSON per linie). Nu oprește alg-ul. Respectă **`tstart` / `tdo`** (ca `ksave`).
+Persistă un eveniment în Redis pe lista **`log:<name>`** (append **`RPUSH`**). Nu oprește alg-ul. Respectă **`tstart` / `tdo`** (ca `ksave`).
+
+**Mod JSON** (implicit): fără template **`format`** cu placeholders → **`RPUSH`** cu un obiect JSON (`ts`, `level`, `name`, `action`, …).
+
+**Mod linie text**: câmpul **`format`** conține un template cu placeholders `<…>` → **`RPUSH`** cu **string** (nu JSON).
 
 ```json
 {
@@ -365,28 +369,42 @@ Persistă un eveniment în Redis pe lista **`log:<name>`** (append **`RPUSH`**, 
   "name": "stock",
   "level": "info",
   "action": "refresh",
-  "format": "DD.MM.YYYY HH:mm:ss",
+  "tsformat": "DD.MM.YYYY HH:mm:ss",
   "context": { "list": "stockMain" },
   "dataWith": "list.page"
 }
 ```
 
+```json
+{
+  "op": "log",
+  "name": "stock",
+  "level": "warning",
+  "action": "low",
+  "tsformat": "DD.MM.YYYY HH:mm",
+  "format": "[<ts>] <lvl> <act> ctx=<ctx> dat=<dat>",
+  "contextWith": "list.keys",
+  "data": { "min": 5 }
+}
+```
+
 | Câmp | Obligatoriu | Semnificație |
 |------|-------------|--------------|
-| `name` | da | Categorie → cheie **`log:<name>`** (ex. `stock` → `log:stock`) |
+| `name` | da | Categorie → cheie **`log:<name>`** |
 | `level` | da | `info` \| `warning` \| `error` |
 | `action` | da | Eveniment scurt (text) |
-| `format` | nu | Formatare **`ts`** ca la **`fdate`**. Lipsă → **`ts`** ISO (`toISOString`) |
-| `context` | nu | Literal / obiect JSON |
-| `contextWith` | nu | Referință (`form.…`, `list.…`, `$var`) |
-| `data` | nu | Literal / obiect |
-| `dataWith` | nu | Referință |
+| `tsformat` | nu | Formatare câmpului timp (ca **`fdate`**) pentru `<ts>` / JSON `ts`. Lipsă → ISO |
+| `format` | nu | **Template linie** dacă include placeholders `<ts>`, `<lvl>`, …; altfel (fără `<…>`) poate folosi ca **`tsformat`** în JSON |
+| `context` / `contextWith` | nu | Literal / ref (ca `notify`) |
+| `data` / `dataWith` | nu | Idem |
+
+**Placeholders template:** `<ts>` `<lvl>` `<name>` `<act>` `<ctx>` `<dat>` `<alg>` `<btn>`. Literal `<` în text: **`\\<`** (ex. `\\<ts>`). Obiect/array la `<ctx>` / `<dat>`: `JSON.stringify` compact; lipsă → gol.
 
 Nu combina **`context`** cu **`contextWith`** (idem **`data`** / **`dataWith`**) — eroare la run.
 
-**Payload** (o linie în listă): `ts`, `level`, `name`, `action`, opțional `context`, `data`; din Live: **`alg`**, **`button`**. Fără câmpuri index search adăugate de motor.
+Din Live: **`alg`**, **`button`** în JSON sau via `<alg>` / `<btn>`. Fără câmpuri index search adăugate de motor. Aceeași listă poate conține linii JSON și linii text.
 
-Citire în tabel Live (search) — **nu** în v1; POST-v1: sursă listă pe `LRANGE`.
+Citire în listă Live — POST-v1 (`LRANGE`).
 
 ### end
 - `{ "op": "end", "msg": "Salvat" }` — succes (banner verde)

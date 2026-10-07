@@ -791,7 +791,11 @@
       const nm = step.name != null ? String(step.name) : '';
       const lv = step.level != null ? String(step.level) : 'info';
       const act = step.action != null ? String(step.action) : '';
-      return 'log   ' + nm + ' ' + lv + ' ' + act;
+      const line =
+        step.format != null && /<[a-z][a-z0-9]*>/i.test(String(step.format))
+          ? ' fmt:' + previewVal(step.format)
+          : '';
+      return 'log   ' + nm + ' ' + lv + ' ' + act + line;
     }
 
     if (op === 'array') {
@@ -1416,7 +1420,16 @@
       ];
       row.appendChild(mkField('level', wire(mkSelect('level', step.level || 'info', levelOpts))));
       row.appendChild(mkField('action', wire(mkInput('action', step.action || ''))));
-      row.appendChild(mkField('format ts', wire(mkInput('format', step.format || ''))));
+      const tsFmtInit =
+        step.tsformat != null
+          ? step.tsformat
+          : step.format != null && !/<[a-z][a-z0-9]*>/i.test(String(step.format))
+            ? step.format
+            : '';
+      row.appendChild(mkField('tsformat', wire(mkInput('tsformat', tsFmtInit || ''))));
+      const lineFmtInit =
+        step.format != null && /<[a-z][a-z0-9]*>/i.test(String(step.format)) ? step.format : '';
+      row.appendChild(mkField('format linie', wire(mkInput('lineFormat', lineFmtInit || ''))));
       function ctxMode() {
         if (Object.prototype.hasOwnProperty.call(step, 'contextWith')) return 'with';
         if (Object.prototype.hasOwnProperty.call(step, 'context')) return 'json';
@@ -1856,8 +1869,11 @@
       step.name = sf(el, 'name');
       step.level = sf(el, 'level') || 'info';
       step.action = sf(el, 'action');
-      const fmt = sf(el, 'format');
-      if (fmt) step.format = fmt;
+      const tsFmt = sf(el, 'tsformat');
+      if (tsFmt) step.tsformat = tsFmt;
+      else delete step.tsformat;
+      const lineFmt = sf(el, 'lineFormat');
+      if (lineFmt) step.format = lineFmt;
       else delete step.format;
       delete step.context;
       delete step.contextWith;
