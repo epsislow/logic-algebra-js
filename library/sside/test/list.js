@@ -337,6 +337,49 @@ module.exports = {
       },
     },
     {
+      id: 22,
+      desc: 'search Upstash payload în QUERY — fără GET după batch',
+      async run() {
+        const base = createMemoryRedis();
+        await base.exec([
+          'JSON.SET',
+          'data:_stock:u1',
+          '$',
+          JSON.stringify({ s_prefix: 'stock', product: 'U1', qty: 7 }),
+        ]);
+        let jsonGets = 0;
+        const redis = {
+          async exec(argv) {
+            const cmd = String(argv[0] || '').toUpperCase();
+            if (cmd === 'JSON.GET' || cmd === 'JSON.MGET') jsonGets++;
+            return base.exec(argv);
+          },
+          async type() {
+            throw new Error('TYPE nu trebuie apelat');
+          },
+          async execTx(list) {
+            return base.execTx(list);
+          },
+        };
+        const page = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'search', query: { s_prefix: 'stock' } },
+            columns: [
+              { id: 'k', path: '_key' },
+              { id: 'p', path: 'product' },
+            ],
+            pageSize: 10,
+          },
+          redis,
+          1
+        );
+        assertEq(page.rows.length, 1);
+        assertEq(ListLoad.cellValue(page.rows[0].value, 'product', 'object'), 'U1');
+        assertEq(jsonGets, 0);
+      },
+    },
+    {
       id: 8,
       desc: 'alg op ui acumulează refresh/clear pe result.ui',
       async run() {

@@ -96,6 +96,17 @@
         return JSON.stringify([e.val]);
       }
 
+      if (cmd === 'JSON.MGET') {
+        const path = a.length > 0 ? String(a[a.length - 1]) : '$';
+        const keys = a.slice(0, a.length - 1).map(String);
+        return keys.map((k) => {
+          const e = store.get(k);
+          if (!e || e.tip !== 'json') return null;
+          if (path === '$' || path === '') return JSON.stringify([e.val]);
+          return JSON.stringify([e.val]);
+        });
+      }
+
       if (cmd === 'JSON.SET') {
         const key = a[0];
         // a[1]=path, a[2]=json
@@ -168,7 +179,8 @@
           if (!hasNocontent) {
             const entry = store.get(k);
             const val = (entry && entry.tip === 'json') ? entry.val : null;
-            return [k, '1.0', val ? JSON.stringify(val) : '{}'];
+            const jsonStr = val ? JSON.stringify(val) : '{}';
+            return [k, '1.0', [['$', jsonStr]]];
           }
           return [k, '1.0', []];
         });

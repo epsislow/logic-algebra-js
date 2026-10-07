@@ -232,8 +232,44 @@
         if (val != null) out[String(keys[i])] = val;
       }
     } catch (e) {
-      /* fallback per-key în loadListPage */
+      /* fallback batchLoadJsonForKeys */
     }
+    return out;
+  }
+
+  /** MGET, apoi execTx / paralel JSON.GET — fără TYPE. */
+  async function batchLoadJsonForKeys(redis, keys) {
+    const out = await batchJsonMget(redis, keys);
+    const missing = keys.filter((k) => !Object.prototype.hasOwnProperty.call(out, String(k)));
+    if (!missing.length || !redis || typeof redis.exec !== 'function') return out;
+
+    if (typeof redis.execTx === 'function') {
+      try {
+        const cmds = missing.map((k) => ['JSON.GET', String(k), '$']);
+        const rawList = await redis.execTx(cmds);
+        if (Array.isArray(rawList)) {
+          for (let i = 0; i < missing.length; i++) {
+            const val = unwrapJsonGet(rawList[i]);
+            if (val != null) out[String(missing[i])] = val;
+          }
+          return out;
+        }
+      } catch (e) {
+        /* fall through */
+      }
+    }
+
+    await Promise.all(
+      missing.map(async (k) => {
+        try {
+          const raw = await redis.exec(['JSON.GET', String(k), '$']);
+          const val = unwrapJsonGet(raw);
+          if (val != null) out[String(k)] = val;
+        } catch (e) {
+          /* skip key */
+        }
+      })
+    );
     return out;
   }
 
@@ -339,7 +375,7 @@
         (k) => !Object.prototype.hasOwnProperty.call(src._preloadedRows, k)
       );
       if (missing.length) {
-        const batch = await batchJsonMget(redis, missing);
+        const batch = await batchLoadJsonForKeys(redis, missing);
         Object.assign(src._preloadedRows, batch);
       }
     }
@@ -355,7 +391,9 @@
       if (searchNoContent && fromSearch) {
         tip = null;
       } else if (!isPreloaded && (needs.needsType || needs.needsValue)) {
-        if (fromSearch && needs.needsValue && !needs.needsType) {
+        if (fromSearch && !searchNoContent && !needs.needsType) {
+          tip = 'json';
+        } else if (fromSearch && needs.needsValue && !needs.needsType) {
           tip = 'json';
         } else {
           tip = 'none';

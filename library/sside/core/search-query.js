@@ -204,10 +204,25 @@
    * @param {*} raw rezultat SEARCH.QUERY
    * @returns {{ keys: string[], preloadedRows: Record<string, *> }}
    */
-  function parseSearchHits(raw) {
+  function unwrapSearchRaw(raw) {
     if (raw && typeof raw === 'object' && !Array.isArray(raw) && raw.rezultat !== undefined) {
       raw = raw.rezultat;
     }
+    if (typeof raw === 'string') {
+      const s = raw.trim();
+      if (s) {
+        try {
+          raw = JSON.parse(s);
+        } catch (e) {
+          /* păstrăm stringul */
+        }
+      }
+    }
+    return raw;
+  }
+
+  function parseSearchHits(raw) {
+    raw = unwrapSearchRaw(raw);
     const keys = [];
     const preloadedRows = {};
     if (raw == null) return { keys, preloadedRows };
@@ -224,7 +239,12 @@
       if (Array.isArray(item) && item.length >= 1 && typeof item[0] === 'string') {
         const kName = item[0];
         keys.push(kName);
-        const content = item.length >= 3 ? parseSearchDocumentContent(item[2]) : null;
+        let content = null;
+        if (item.length >= 3) {
+          content = parseSearchDocumentContent(item[2]);
+        } else if (item.length === 2 && typeof item[1] !== 'number' && typeof item[1] !== 'string') {
+          content = parseSearchDocumentContent(item[1]);
+        }
         if (content != null) preloadedRows[kName] = content;
       } else if (typeof item === 'string' && item !== '') {
         keys.push(item);
@@ -232,10 +252,21 @@
         const kName = String(item.key || item.id || '');
         if (kName) {
           keys.push(kName);
-          const content = item.data != null ? item.data : item.value != null ? item.value : item;
-          if (content != null && typeof content === 'object' && !Array.isArray(content)) {
-            preloadedRows[kName] = content;
+          let content = null;
+          if (item.content != null) {
+            content = parseSearchDocumentContent(item.content);
+          } else if (item.data != null) {
+            content =
+              typeof item.data === 'object' && !Array.isArray(item.data)
+                ? item.data
+                : parseSearchDocumentContent(item.data);
+          } else if (item.value != null) {
+            content =
+              typeof item.value === 'object' && !Array.isArray(item.value)
+                ? item.value
+                : parseSearchDocumentContent(item.value);
           }
+          if (content != null) preloadedRows[kName] = content;
         }
       }
     }
