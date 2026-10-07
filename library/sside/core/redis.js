@@ -121,7 +121,6 @@
       }
 
       if (cmd === 'SEARCH.QUERY') {
-        // SEARCH.QUERY index jsonQuery LIMIT n OFFSET m NOCONTENT
         let queryObj = a[1];
         if (typeof queryObj === 'string') {
           try {
@@ -148,9 +147,18 @@
         }
         hits.sort();
         const sliced = hits.slice(offset, offset + limit);
-        // format RESP-like: [ [key, score, …], … ] — unwrap ia item[0]
-        return sliced.map((k) => [k, '1.0', []]);
+        const hasNocontent = a.map(x => String(x).toUpperCase()).includes('NOCONTENT');
+        return sliced.map((k) => {
+          if (!hasNocontent) {
+            const entry = store.get(k);
+            const val = (entry && entry.tip === 'json') ? entry.val : null;
+            return [k, '1.0', val ? JSON.stringify(val) : '{}'];
+          }
+          return [k, '1.0', []];
+        });
       }
+
+
 
       if (cmd === 'SADD') {
         const key = a[0];

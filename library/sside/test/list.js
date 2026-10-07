@@ -1,6 +1,7 @@
 'use strict';
 
 const ListLoad = require('../core/list-load.js');
+const SearchQ = require('../core/search-query.js');
 const Alg = require('../core/alg-runner.js');
 const V = require('../core/prog-validate.js');
 const Keys = require('../core/keys.js');
@@ -238,6 +239,101 @@ module.exports = {
         const p3 = await ListLoad.loadListPage(listDef, redis, 3);
         assertEq(p3.rows.length, 1);
         assert(!p3.hasMore);
+      },
+    },
+    {
+      id: 17,
+      desc: 'search query text (=s_prefix) + content fără JSON.GET/TYPE',
+      async run() {
+        const base = createMemoryRedis();
+        let typeCalls = 0;
+        let jsonGets = 0;
+        const redis = {
+          async exec(argv) {
+            const cmd = String(argv[0] || '').toUpperCase();
+            if (cmd === 'TYPE') typeCalls++;
+            if (cmd === 'JSON.GET') jsonGets++;
+            return base.exec(argv);
+          },
+          async type(key) {
+            typeCalls++;
+            return base.type(key);
+          },
+        };
+        for (let i = 1; i <= 3; i++) {
+          await redis.exec([
+            'JSON.SET',
+            'data:_stock:t' + i,
+            '$',
+            JSON.stringify({ s_prefix: 'stock', s_name: 't' + i, qty: i }),
+          ]);
+        }
+        const listDef = {
+          v: 1,
+          source: { from: 'search', query: '=s_prefix:stock' },
+          columns: [
+            { id: 'k', path: '_key' },
+            { id: 'q', path: 'qty' },
+          ],
+          pageSize: 2,
+        };
+        const p1 = await ListLoad.loadListPage(listDef, redis, 1);
+        assertEq(p1.rows.length, 2);
+        assertEq(ListLoad.cellValue(p1.rows[0].value, 'qty', 'object'), 1);
+        assertEq(typeCalls, 0, 'fără TYPE când content din search');
+        assertEq(jsonGets, 0, 'fără JSON.GET când content din search');
+        const argv = SearchQ.buildSearchArgv({
+          from: 'search',
+          query: '=s_prefix:stock',
+          limit: 2,
+          offset: 0,
+          nocontent: false,
+        });
+        assert(!argv.map((x) => String(x).toUpperCase()).includes('NOCONTENT'));
+        assertEq(JSON.parse(argv[2]).s_prefix, 'stock');
+        const upstashRaw = [
+          [
+            'data:_stock:t1',
+            '1.0',
+            [['$', JSON.stringify({ s_prefix: 'stock', qty: 1, product: 'P1' })]],
+          ],
+          [
+            'data:_stock:t2',
+            '0.9',
+            [['$', JSON.stringify({ s_prefix: 'stock', qty: 2, product: 'P2' })]],
+          ],
+        ];
+        const parsed = SearchQ.parseSearchHits(upstashRaw);
+        assertEq(parsed.keys.length, 2);
+        const listUpstash = {
+          v: 1,
+          source: { from: 'search', query: { s_prefix: 'stock' } },
+          columns: [
+            { id: 'k', path: '_key' },
+            { id: 'prod', path: 'product' },
+          ],
+          pageSize: 10,
+        };
+        const base2 = createMemoryRedis();
+        let typeCalls2 = 0;
+        let jsonGets2 = 0;
+        const redisUpstash = {
+          async exec(argv) {
+            const cmd = String(argv[0] || '').toUpperCase();
+            if (cmd === 'SEARCH.QUERY') return upstashRaw;
+            if (cmd === 'JSON.GET') jsonGets2++;
+            return base2.exec(argv);
+          },
+          async type() {
+            typeCalls2++;
+            return 'json';
+          },
+        };
+        const page = await ListLoad.loadListPage(listUpstash, redisUpstash, 1);
+        assertEq(page.rows.length, 2);
+        assertEq(ListLoad.cellValue(page.rows[0].value, 'product', 'object'), 'P1');
+        assertEq(typeCalls2, 0);
+        assertEq(jsonGets2, 0);
       },
     },
     {

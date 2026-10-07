@@ -135,16 +135,12 @@
       throw new Error('list.source lipsă');
     }
     const from = source.from;
-
-    // Ca lista din UI: `*` / pattern → KEYS (nu SEARCH.QUERY)
     if (from === 'keys') {
       return resolveKeysPattern(redis, source.pattern != null ? source.pattern : '*', {
         maxScan: source.maxScan != null ? source.maxScan : pageOpts.maxScan,
       });
     }
-
     if (from === 'search' && SearchQ) {
-      // seed vechi { "*": "*" } / query "*" → același comportament ca KEYS *
       if (isMatchAllSearchQuery(source.query)) {
         return resolveKeysPattern(redis, '*', {
           maxScan: source.maxScan != null ? source.maxScan : pageOpts.maxScan,
@@ -154,19 +150,25 @@
       const page = pageOpts.page || 1;
       const offset = (page - 1) * pageSize;
       const qObj = SearchQ.normalizeQuery(source.query);
-      const argv = SearchQ.buildSearchArgv(
-        source.index || 'idx_search_tags',
-        qObj,
-        pageSize,
-        offset
-      );
+      const searchSourceObj = Object.assign({}, source, {
+        query: qObj,
+        limit: pageSize,
+        offset: offset,
+        nocontent: false,
+      });
+      const argv = SearchQ.buildSearchArgv(searchSourceObj);
       const raw = await redis.exec(argv);
-      const keys = SearchQ.unwrapSearchKeys(raw);
+      const parsed = SearchQ.parseSearchHits
+        ? SearchQ.parseSearchHits(raw)
+        : { keys: SearchQ.unwrapSearchKeys(raw), preloadedRows: {} };
+      const keys = parsed.keys;
+      const preloadedRows = parsed.preloadedRows || {};
       return {
         keys,
         total: null,
         hasMore: keys.length >= pageSize,
         pagedAtSource: true,
+        _preloadedRows: preloadedRows,
       };
     }
     if (!FormOpts) throw new Error('form-options lipsă');
@@ -177,9 +179,29 @@
     return { keys, total: keys.length, hasMore: false, pagedAtSource: false };
   }
 
+
+
+
   /**
    * @param {string} [knownType] dacă e deja cunoscut, nu mai apelează TYPE
    */
+  async function batchJsonMget(redis, keys) {
+    const out = {};
+    if (!redis || typeof redis.exec !== 'function' || !keys || !keys.length) return out;
+    try {
+      const argv = ['JSON.MGET'].concat(keys.map(String), '$');
+      const raw = await redis.exec(argv);
+      if (!Array.isArray(raw)) return out;
+      for (let i = 0; i < keys.length; i++) {
+        const val = unwrapJsonGet(raw[i]);
+        if (val != null) out[String(keys[i])] = val;
+      }
+    } catch (e) {
+      /* fallback per-key în loadListPage */
+    }
+    return out;
+  }
+
   async function loadRowValue(key, redis, rowMode, knownType) {
     let tip = knownType;
     if (tip == null || tip === '') {
@@ -221,7 +243,7 @@
     const rowMode = listDef.row === 'array' ? 'array' : 'object';
     const needs = analyzeColumnNeeds(listDef.columns);
 
-    const src = await resolveSourceKeys(listDef.source, redis, {
+    let src = await resolveSourceKeys(listDef.source, redis, {
       page: pageNum,
       pageSize,
     });
@@ -234,12 +256,12 @@
       pageKeys = src.keys;
       if (pageKeys.length === 0 && pageNum > 1) {
         pageNum = 1;
-        const again = await resolveSourceKeys(listDef.source, redis, {
+        src = await resolveSourceKeys(listDef.source, redis, {
           page: 1,
           pageSize,
         });
-        pageKeys = again.keys;
-        hasMore = !!again.hasMore;
+        pageKeys = src.keys;
+        hasMore = !!src.hasMore;
       }
     } else {
       const all = src.keys;
@@ -251,22 +273,43 @@
       hasMore = start + pageSize < total;
     }
 
+    const fromSearch =
+      listDef.source && listDef.source.from === 'search' && !!src.pagedAtSource;
+    if (fromSearch && needs.needsValue && pageKeys.length) {
+      if (!src._preloadedRows) src._preloadedRows = {};
+      const missing = pageKeys.filter(
+        (k) => !Object.prototype.hasOwnProperty.call(src._preloadedRows, k)
+      );
+      if (missing.length) {
+        const batch = await batchJsonMget(redis, missing);
+        Object.assign(src._preloadedRows, batch);
+      }
+    }
+
     const rows = [];
     for (const key of pageKeys) {
       let tip = null;
-      if (needs.needsType || needs.needsValue) {
-        tip = 'none';
-        if (redis.type) {
-          try {
-            tip = await redis.type(key);
-          } catch (e) {
-            tip = 'none';
+      const isPreloaded = src && src._preloadedRows && Object.prototype.hasOwnProperty.call(src._preloadedRows, key);
+      if (!isPreloaded && (needs.needsType || needs.needsValue)) {
+        if (fromSearch && needs.needsValue && !needs.needsType) {
+          tip = 'json';
+        } else {
+          tip = 'none';
+          if (redis.type) {
+            try {
+              tip = await redis.type(key);
+            } catch (e) {
+              tip = 'none';
+            }
           }
         }
+      } else if (isPreloaded) {
+        tip = 'json';
       }
-
       let value;
-      if (needs.needsValue) {
+      if (isPreloaded) {
+        value = src._preloadedRows[key];
+      } else if (needs.needsValue) {
         try {
           value = await loadRowValue(key, redis, rowMode, tip);
         } catch (e) {
@@ -275,13 +318,16 @@
       } else {
         value = rowMode === 'array' ? [] : {};
       }
-
       if (value && typeof value === 'object' && !Array.isArray(value)) {
         value = Object.assign({ _key: key }, value);
         if (tip != null) value._type = tip;
       }
       rows.push({ key, value, type: tip });
     }
+
+
+
+
 
     return {
       page: pageNum,

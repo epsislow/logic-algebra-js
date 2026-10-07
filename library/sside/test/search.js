@@ -50,6 +50,48 @@ module.exports = {
       },
     },
     {
+      id: 18,
+      desc: 'buildSearchArgv legacy + query string',
+      run() {
+        const a = SearchQ.buildSearchArgv('idx_search_tags', '=s_prefix:stock', 10, 2);
+        assertEq(a[0], 'SEARCH.QUERY');
+        assertEq(a[1], 'idx_search_tags');
+        assertDeep(JSON.parse(a[2]), { s_prefix: 'stock' });
+        assertEq(a[3], 'LIMIT');
+        assertEq(a[4], '10');
+        assertEq(a[5], 'OFFSET');
+        assertEq(a[6], '2');
+        assert(a[a.length - 1] === 'NOCONTENT');
+        const hits = SearchQ.parseSearchHits([
+          ['data:a', '1.0', JSON.stringify({ x: 1 })],
+          ['data:b', '1.0', []],
+        ]);
+        assertDeep(hits.keys, ['data:a', 'data:b']);
+        assertDeep(hits.preloadedRows['data:a'], { x: 1 });
+        assert(!Object.prototype.hasOwnProperty.call(hits.preloadedRows, 'data:b'));
+        const upstash = SearchQ.parseSearchHits([
+          [
+            'data:_stock:1',
+            '1.25',
+            [['$', '{"product":"A","qty":3,"location":"X"}']],
+          ],
+          ['data:_stock:2', '0.75', [['$', '{"product":"B","qty":5}']]],
+        ]);
+        assertDeep(upstash.keys, ['data:_stock:1', 'data:_stock:2']);
+        assertEq(upstash.preloadedRows['data:_stock:1'].product, 'A');
+        assertEq(upstash.preloadedRows['data:_stock:2'].qty, 5);
+        const flat = SearchQ.parseSearchHits([
+          2,
+          'data:_stock:a',
+          [['$', '{"qty":1}']],
+          'data:_stock:b',
+          [['$', '{"qty":2}']],
+        ]);
+        assertDeep(flat.keys, ['data:_stock:a', 'data:_stock:b']);
+        assertEq(flat.preloadedRows['data:_stock:b'].qty, 2);
+      },
+    },
+    {
       id: 3,
       desc: 'normalizeQuery obiect flat → $and',
       run() {
