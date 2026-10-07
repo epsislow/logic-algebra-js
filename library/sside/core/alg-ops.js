@@ -942,6 +942,97 @@
     }
   }
 
+  const LOG_LEVELS = new Set(['info', 'warning', 'error']);
+
+  function normalizeLogName(raw) {
+    const n = String(raw == null ? '' : raw).trim();
+    if (!n) throw new Error('log: name gol');
+    if (!/^[a-zA-Z][a-zA-Z0-9_-]*$/.test(n)) {
+      throw new Error('log: name invalid (literă, cifre, _, -)');
+    }
+    return n;
+  }
+
+  function resolveLogName(step, ctx, getValFn) {
+    const raw = step.name;
+    if (raw == null || raw === '') throw new Error('log: name lipsă');
+    let resolved = raw;
+    if (typeof raw === 'string') {
+      if (raw.charAt(0) === '$' || raw.indexOf('form.') === 0 || raw.indexOf('list.') === 0) {
+        resolved = getValFn(ctx, raw);
+      }
+    }
+    return normalizeLogName(resolved);
+  }
+
+  function resolveLogField(step, field, ctx, getValFn) {
+    const withKey = field + 'With';
+    const hasVal = Object.prototype.hasOwnProperty.call(step, field);
+    const hasWith = Object.prototype.hasOwnProperty.call(step, withKey);
+    if (hasVal && hasWith) {
+      throw new Error('log: ' + field + ' și ' + withKey + ' simultan');
+    }
+    if (hasWith) {
+      return getValFn(ctx, step[withKey]);
+    }
+    if (hasVal) {
+      const v = step[field];
+      if (v !== null && typeof v === 'object') {
+        return JSON.parse(JSON.stringify(v));
+      }
+      return v;
+    }
+    return undefined;
+  }
+
+  /**
+   * @returns {{ key: string, payload: object }}
+   */
+  function buildLogPayload(step, ctx, getValFn, meta) {
+    meta = meta || {};
+    const nameStr = resolveLogName(step, ctx, getValFn);
+    const level = String(step.level || '').toLowerCase();
+    if (!LOG_LEVELS.has(level)) {
+      throw new Error('log: level invalid (info|warning|error)');
+    }
+    const action = String(step.action || '').trim();
+    if (!action) throw new Error('log: action gol');
+
+    const now = new Date();
+    let ts;
+    if (step.format != null && String(step.format).trim() !== '') {
+      ts = formatDateValue(now, String(step.format));
+    } else {
+      ts = now.toISOString();
+    }
+
+    const payload = {
+      ts,
+      level,
+      name: nameStr,
+      action,
+    };
+    const ctxVal = resolveLogField(step, 'context', ctx, getValFn);
+    const dataVal = resolveLogField(step, 'data', ctx, getValFn);
+    if (ctxVal !== undefined) payload.context = ctxVal;
+    if (dataVal !== undefined) payload.data = dataVal;
+    if (meta.algId) payload.alg = String(meta.algId);
+    if (meta.buttonId) payload.button = String(meta.buttonId);
+
+    return { key: 'log:' + nameStr, payload };
+  }
+
+  function buildLogRpushArgv(key, payload) {
+    const k = String(key || '');
+    if (!k) throw new Error('log: cheie goală');
+    return ['RPUSH', k, JSON.stringify(payload)];
+  }
+
+  function buildLogArgv(step, ctx, getValFn, meta) {
+    const built = buildLogPayload(step, ctx, getValFn, meta);
+    return buildLogRpushArgv(built.key, built.payload);
+  }
+
   function executeNotify(step, ctx, getValFn) {
     const kind = String(step.kind || 'info').toLowerCase();
     let text = '';
@@ -1075,6 +1166,10 @@
     executeArrayMeta,
     executeIdGen,
     executeNotify,
+    LOG_LEVELS,
+    buildLogPayload,
+    buildLogRpushArgv,
+    buildLogArgv,
     executeLock,
     buildKsaveArgv,
     buildKgetArgv,

@@ -3206,7 +3206,7 @@ function translateUpstashSearchResults(date) {
                 };
             }
 
-            async function onRunAlg({ algKey, form, list, uiContext }) {
+            async function onRunAlg({ algKey, form, list, uiContext, btn }) {
                 if (!window.SsideAlg) {
                     return { err: 'alg-runner lipsă' };
                 }
@@ -3224,6 +3224,8 @@ function translateUpstashSearchResults(date) {
                     form: form || {},
                     list: list || {},
                     redis,
+                    algKey,
+                    btn: btn || null,
                     uiContext: uiContext || null,
                     loadSchema: async (schemaKey) => {
                         return incarcaSchemaCaObiect(schemaKey);

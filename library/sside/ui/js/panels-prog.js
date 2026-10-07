@@ -11,7 +11,7 @@
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
-    'search', 'notify',
+    'search', 'notify', 'log',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -512,6 +512,9 @@
     if (op === 'lock') return { op: 'lock', fn: 'acq', keys: '', ttl: 5000, to: '' };
     if (op === 'id') return { op: 'id', type: 'nanoid', to: '' };
     if (op === 'notify') return { op: 'notify', kind: 'warning', value: '' };
+    if (op === 'log') {
+      return { op: 'log', name: 'app', level: 'info', action: '' };
+    }
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
@@ -782,6 +785,13 @@
       const srcMode = Object.prototype.hasOwnProperty.call(step, 'with') ? 'with' : 'value';
       const text = srcMode === 'with' ? step.with : (step.value || '');
       return 'notify ' + kind + ' ← ' + (srcMode === 'with' ? 'ref:' : 'val:') + previewVal(text);
+    }
+
+    if (op === 'log') {
+      const nm = step.name != null ? String(step.name) : '';
+      const lv = step.level != null ? String(step.level) : 'info';
+      const act = step.action != null ? String(step.action) : '';
+      return 'log   ' + nm + ' ' + lv + ' ' + act;
     }
 
     if (op === 'array') {
@@ -1397,6 +1407,63 @@
       return;
     }
 
+    if (op === 'log') {
+      row.appendChild(mkField('name', wire(mkInput('name', step.name || ''))));
+      const levelOpts = [
+        { value: 'info', label: 'info' },
+        { value: 'warning', label: 'warning' },
+        { value: 'error', label: 'error' },
+      ];
+      row.appendChild(mkField('level', wire(mkSelect('level', step.level || 'info', levelOpts))));
+      row.appendChild(mkField('action', wire(mkInput('action', step.action || ''))));
+      row.appendChild(mkField('format ts', wire(mkInput('format', step.format || ''))));
+      function ctxMode() {
+        if (Object.prototype.hasOwnProperty.call(step, 'contextWith')) return 'with';
+        if (Object.prototype.hasOwnProperty.call(step, 'context')) return 'json';
+        return 'none';
+      }
+      function dataMode() {
+        if (Object.prototype.hasOwnProperty.call(step, 'dataWith')) return 'with';
+        if (Object.prototype.hasOwnProperty.call(step, 'data')) return 'json';
+        return 'none';
+      }
+      const ctxSel = wire(mkSelect('_ctxMode', ctxMode(), [
+        { value: 'none', label: 'context — (lipsă)' },
+        { value: 'json', label: 'context — literal/JSON' },
+        { value: 'with', label: 'contextWith — ref' },
+      ]));
+      row.appendChild(mkField('context', ctxSel));
+      const ctxJson = wire(mkInput('contextJson', step.context != null ? JSON.stringify(step.context) : ''));
+      const ctxWith = wire(mkInput('contextWith', step.contextWith || ''));
+      const ctxJsonF = mkField('context JSON', ctxJson);
+      const ctxWithF = mkField('contextWith', ctxWith);
+      row.appendChild(ctxJsonF);
+      row.appendChild(ctxWithF);
+      const dataSel = wire(mkSelect('_dataMode', dataMode(), [
+        { value: 'none', label: 'data — (lipsă)' },
+        { value: 'json', label: 'data — literal/JSON' },
+        { value: 'with', label: 'dataWith — ref' },
+      ]));
+      row.appendChild(mkField('data', dataSel));
+      const dataJson = wire(mkInput('dataJson', step.data != null ? JSON.stringify(step.data) : ''));
+      const dataWith = wire(mkInput('dataWith', step.dataWith || ''));
+      const dataJsonF = mkField('data JSON', dataJson);
+      const dataWithF = mkField('dataWith', dataWith);
+      row.appendChild(dataJsonF);
+      row.appendChild(dataWithF);
+      function syncLogCtxDataFields() {
+        const cm = ctxSel.value;
+        ctxJsonF.style.display = cm === 'json' ? '' : 'none';
+        ctxWithF.style.display = cm === 'with' ? '' : 'none';
+        const dm = dataSel.value;
+        dataJsonF.style.display = dm === 'json' ? '' : 'none';
+        dataWithF.style.display = dm === 'with' ? '' : 'none';
+      }
+      ctxSel.addEventListener('change', syncLogCtxDataFields);
+      dataSel.addEventListener('change', syncLogCtxDataFields);
+      syncLogCtxDataFields();
+      return;
+    }
 
     if (op === 'array') {
       row.appendChild(mkField('to', wire(mkInput('to', step.to))));
@@ -1785,6 +1852,45 @@
       return withStepMeta(el, step);
     }
 
+    if (op === 'log') {
+      step.name = sf(el, 'name');
+      step.level = sf(el, 'level') || 'info';
+      step.action = sf(el, 'action');
+      const fmt = sf(el, 'format');
+      if (fmt) step.format = fmt;
+      else delete step.format;
+      delete step.context;
+      delete step.contextWith;
+      delete step.data;
+      delete step.dataWith;
+      const cm = sf(el, '_ctxMode');
+      if (cm === 'json') {
+        const raw = sf(el, 'contextJson');
+        if (raw.trim()) {
+          try {
+            step.context = JSON.parse(raw);
+          } catch (e) {
+            step.context = raw;
+          }
+        }
+      } else if (cm === 'with') {
+        step.contextWith = sf(el, 'contextWith');
+      }
+      const dm = sf(el, '_dataMode');
+      if (dm === 'json') {
+        const raw = sf(el, 'dataJson');
+        if (raw.trim()) {
+          try {
+            step.data = JSON.parse(raw);
+          } catch (e) {
+            step.data = raw;
+          }
+        }
+      } else if (dm === 'with') {
+        step.dataWith = sf(el, 'dataWith');
+      }
+      return withStepMeta(el, step);
+    }
 
     if (op === 'array') {
       step.to = sf(el, 'to');

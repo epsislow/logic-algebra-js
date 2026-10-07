@@ -1,5 +1,5 @@
 /**
- * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops, s-ops, jset/jget, search, redis, tstart/tdo/tstop.
+ * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops, s-ops, jset/jget, search, log, redis, tstart/tdo/tstop.
  * deps: SsideWhen, SsideAlgOps, SsideSearchQuery (browser) sau require.
  */
 (function (root) {
@@ -174,6 +174,12 @@
 
     if (op === 'notify') {
       Ops.executeNotify(step, ctx, getVal);
+      return;
+    }
+
+    if (op === 'log') {
+      const argv = Ops.buildLogArgv(step, ctx, getVal, env.runMeta || {});
+      await enqueueOrExec(ctx, env, argv);
       return;
     }
     
@@ -466,7 +472,7 @@
 
   /**
    * @param {object} alg { v, steps }
-   * @param {object} options { form, vars?, list?, redis, loadSchema?, uiContext? }
+   * @param {object} options { form, vars?, list?, redis, loadSchema?, uiContext?, algKey?, btn? }
    * @returns {Promise<{ msg?, err?, vars, stopped }>}
    */
   async function run(alg, options) {
@@ -482,10 +488,18 @@
     }
 
     const ctx = makeCtx(options.form, options.vars, options.list);
+    let buttonId = options.buttonId || null;
+    if (!buttonId && options.btn && typeof options.btn === 'object') {
+      buttonId = options.btn.id || options.btn.label || null;
+    }
     const env = {
       redis: options.redis,
       loadSchema: options.loadSchema || null,
       uiContext: options.uiContext || null,
+      runMeta: {
+        algId: options.algKey || options.algId || null,
+        buttonId: buttonId || null,
+      },
     };
 
     try {

@@ -10,7 +10,7 @@
     'kget', 'ksave', 'kdel', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
-    'search', 'notify',
+    'search', 'notify', 'log',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -166,6 +166,30 @@
               return err(p + '.schema arată invalid');
             }
           }
+        }
+      }
+      if (s.op === 'log') {
+        if (s.name == null || typeof s.name !== 'string' || !String(s.name).trim()) {
+          return err(p + '.name obligatoriu');
+        }
+        if (s.level == null || typeof s.level !== 'string' || !String(s.level).trim()) {
+          return err(p + '.level obligatoriu');
+        }
+        const lv = String(s.level).toLowerCase();
+        if (lv !== 'info' && lv !== 'warning' && lv !== 'error') {
+          return err(p + '.level trebuie info|warning|error');
+        }
+        if (s.action == null || typeof s.action !== 'string' || !String(s.action).trim()) {
+          return err(p + '.action obligatoriu');
+        }
+        if (s.context != null && s.contextWith != null) {
+          return err(p + ': context și contextWith — alege unul');
+        }
+        if (s.data != null && s.dataWith != null) {
+          return err(p + ': data și dataWith — alege unul');
+        }
+        if (s.format != null && typeof s.format !== 'string') {
+          return err(p + '.format trebuie string');
         }
       }
       if (s.op === 'ui') {
