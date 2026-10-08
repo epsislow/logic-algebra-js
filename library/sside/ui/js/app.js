@@ -3399,6 +3399,58 @@ function translateUpstashSearchResults(date) {
                 return { msg: 'OK' };
             }
 
+            function normalizeAlgInputConsole(input) {
+                if (Array.isArray(input)) {
+                    return { v: 1, steps: input };
+                }
+                if (input && typeof input === 'object' && Array.isArray(input.steps)) {
+                    const alg = Object.assign({ v: 1 }, input);
+                    if (!alg.steps.length) {
+                        throw new Error('runAlgOps: steps gol');
+                    }
+                    return alg;
+                }
+                throw new Error(
+                    'runAlgOps: trimite { steps: [...] }, un alg { v, name?, steps } sau un array de pași'
+                );
+            }
+
+            /**
+             * Rulează pași alg pe worker (consolă). Necesită login.
+             * @example await runAlgOps({ steps: [{ op: 'kttl', fn: 'get', key: 's:x', to: 'sec' }, { op: 'end', with: '$sec' }] })
+             */
+            async function runAlgOps(input, opts) {
+                opts = opts || {};
+                if (!window.SsideAlg) {
+                    throw new Error('SsideAlg lipsă — încarcă pagina sside complet.');
+                }
+                if (!localStorage.getItem('session_token')) {
+                    throw new Error('Nu ești autentificat — login înainte de runAlgOps.');
+                }
+                const alg = normalizeAlgInputConsole(input);
+                const redis = createWorkerRedisAdapter();
+                const result = await SsideAlg.run(alg, {
+                    form: opts.form || {},
+                    list: opts.list || {},
+                    redis,
+                    algKey: opts.algKey || 'console:debug',
+                    btn: opts.btn || null,
+                    uiContext: opts.uiContext || null,
+                    loadSchema: async (schemaKey) => incarcaSchemaCaObiect(schemaKey),
+                });
+                if (result.err) {
+                    console.error('[runAlgOps]', result.err, result);
+                } else {
+                    console.log('[runAlgOps]', result.msg != null ? result.msg : 'OK', result);
+                }
+                if (opts.applyUi !== false && result.ui && SsideProgLive.applyUiCommands) {
+                    await SsideProgLive.applyUiCommands(result.ui);
+                }
+                return result;
+            }
+
+            window.runAlgOps = runAlgOps;
+
             SsideProgLive.setDeps({
                 loadJsonKey: liveLoadJsonKey,
                 normalizeSchema: normalizeToJsonSchema,
