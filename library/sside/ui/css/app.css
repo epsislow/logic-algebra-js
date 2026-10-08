@@ -246,6 +246,16 @@
         .key-row .key-name { flex: 1; min-width: 0; font-family: Consolas, monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .key-row .key-note { font-size: 11px; color: var(--text-muted); }
 
+        .detail-head-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+        }
+        .detail-head-row .btn-inline { margin: 0; width: auto; }
+        .detail-refresh-btn {
+            margin-left: auto !important;
+            font-weight: 600;
+        }
+        .detail-refresh-btn:disabled { opacity: 0.55; cursor: wait; }
         .detail-meta { margin-bottom: 12px; }
         .detail-meta .meta-line { margin: 4px 0; font-size: 14px; }
         .detail-meta .meta-ttl {

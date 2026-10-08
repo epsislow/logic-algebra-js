@@ -2840,6 +2840,43 @@ function translateUpstashSearchResults(date) {
             }
         }
 
+        function esteDetaliuCuModificariNesalvate() {
+            const dotIds = ['save-dirty-dot', 'set-save-dirty-dot', 'col-save-dirty-dot'];
+            for (let i = 0; i < dotIds.length; i++) {
+                const el = document.getElementById(dotIds[i]);
+                if (el && el.classList.contains('is-visible')) return true;
+            }
+            return false;
+        }
+
+        async function reincarcaCheieCurenta() {
+            if (!cheieCurenta) return;
+            if (esteDetaliuCuModificariNesalvate()) {
+                if (!confirm('Reîncarci de pe server? Modificările nesalvate se pierd.')) return;
+            }
+            const cheie = cheieCurenta;
+            const opts = { keepNav: true, forceRefresh: true };
+            if (
+                window.SsideProgPanels &&
+                infoCheieCurenta &&
+                SsideProgPanels.esteProgTip(infoCheieCurenta.tip) &&
+                SsideProgPanels.getKind()
+            ) {
+                opts.preferProgMod = SsideProgPanels.getMod();
+            } else {
+                opts.preferEditMod = modEditare;
+            }
+            const btn = document.getElementById('btn-reincarca-cheie');
+            if (btn) btn.disabled = true;
+            try {
+                await deschideDetaliu(cheie, opts);
+            } catch (e) {
+                alert(e.message || String(e));
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
         async function deschideDetaliu(cheie, opts) {
             opts = opts || {};
             const setChei = new Set(toateCheile);
@@ -2895,9 +2932,9 @@ function translateUpstashSearchResults(date) {
             valoareBaseline = '';
             actualizeazaIndicatorModificat();
 
-            // tip din cache (de la listă); TYPE doar dacă lipsește
+            // tip din cache; la reîncărcare forțăm TYPE pe server
             let redisTip = tipuriRedisChei[cheie];
-            if (!redisTip || redisTip === 'unknown') {
+            if (opts.forceRefresh || !redisTip || redisTip === 'unknown') {
                 redisTip = await aflaTipRedis(cheie, { force: true });
             }
             if (redisTip === 'none') {
@@ -2930,6 +2967,7 @@ function translateUpstashSearchResults(date) {
                 } catch (err) {
                     alert(err.message);
                 }
+                marcheazaCurentCaBaseline();
                 return;
             }
 
@@ -2942,6 +2980,7 @@ function translateUpstashSearchResults(date) {
                 } catch (err) {
                     alert(err.message);
                 }
+                marcheazaCurentCaBaseline();
                 return;
             }
 
@@ -3010,17 +3049,16 @@ function translateUpstashSearchResults(date) {
                 const pretty = valoareCaJsonPretty(rawText);
                 await incarcaFormularDate(info, pretty);
                 seteazaModEditare('form');
-                marcheazaCurentCaBaseline();
             } else if (canFormBound && info.tip === 'schema') {
                 const pretty = valoareCaJsonPretty(rawText) || JSON.stringify({ type: 'object', properties: {} }, null, 2);
                 document.getElementById('raw-json-editor').value = pretty;
                 await incarcaEditorSchemaVizual(pretty);
                 seteazaModEditare('form');
-                marcheazaCurentCaBaseline();
             } else {
                 seteazaModEditare(redisTip === 'json' ? 'json' : 'text');
-                marcheazaCurentCaBaseline();
             }
+            if (opts.preferEditMod) seteazaModEditare(opts.preferEditMod);
+            marcheazaCurentCaBaseline();
         }
 
         function valoareCaTextAfisat(rezultat) {
@@ -3242,8 +3280,23 @@ function translateUpstashSearchResults(date) {
                         return date.rezultat;
                     },
                     async execTx(commands) {
+                        if (!Array.isArray(commands) || !commands.length) return null;
                         const date = await apeleazaServerul('/api/comanda', { tranzactie: commands });
-                        return date.rezultat;
+                        if (date && (date.eroare || date.error)) {
+                            throw new Error(date.eroare || date.error);
+                        }
+                        if (date && date.succes === false) {
+                            throw new Error(date.mesaj || date.eroare || 'Tranzacție respinsă de server.');
+                        }
+                        if (date && date.rezultat !== undefined && date.rezultat !== null) {
+                            return date.rezultat;
+                        }
+                        // Worker fără rezultat EXEC (ex. `{}`) — comenzile din tx nu ajung pe Redis;
+                        // fallback secvențial ca ksave/kttl să funcționeze până e reparat MULTI/EXEC.
+                        for (let i = 0; i < commands.length; i++) {
+                            await apeleazaServerul('/api/comanda', { comandaRedis: commands[i] });
+                        }
+                        return null;
                     },
                 };
             }

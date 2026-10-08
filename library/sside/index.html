@@ -92,7 +92,10 @@
         <!-- ========== ECRAN DETALIU ========== -->
         <div id="ecran-detaliu" style="display: none;">
             <div class="box">
-                <button type="button" class="btn-gri btn-inline" id="btn-inapoi-detaliu" onclick="navigareInapoiDetaliu()">← Înapoi la listă</button>
+                <div class="detail-head-row">
+                    <button type="button" class="btn-gri btn-inline" id="btn-inapoi-detaliu" onclick="navigareInapoiDetaliu()">← Înapoi la listă</button>
+                    <button type="button" class="btn-gri btn-inline detail-refresh-btn" id="btn-reincarca-cheie" onclick="reincarcaCheieCurenta()" title="Reîncarcă de pe server (valoare, TTL, membri)">↻ Reîncarcă</button>
+                </div>
 
                 <div class="detail-meta" id="detail-meta">
                     <div class="meta-line"><strong>Cheie:</strong> <code id="detail-key-name"></code></div>
