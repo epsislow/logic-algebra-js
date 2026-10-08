@@ -365,6 +365,20 @@
       return;
     }
 
+    if (op === 'kttl') {
+      const spec = Ops.buildKttlStep(step, ctx, getVal);
+      if (spec.read) {
+        const raw = await env.redis.exec(spec.argv);
+        let n = raw;
+        if (typeof n === 'string') n = parseInt(n, 10);
+        if (typeof n !== 'number' || Number.isNaN(n)) n = -2;
+        Ops.setVar(ctx, spec.to, n);
+      } else {
+        await enqueueOrExec(ctx, env, spec.argv);
+      }
+      return;
+    }
+
     if (op === 'kadd') {
       const key = String(getVal(ctx, step.key) || '');
       const member = getVal(ctx, step.val != null ? step.val : step.member);

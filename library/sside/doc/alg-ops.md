@@ -439,10 +439,40 @@ Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 | `kget` | citește → `to` | `auto` / `json` / `string` |
 | `ksave` | scrie `val` la `key` | idem (default `auto`) |
 | `kdel` | șterge | — |
+| `kttl` | TTL pe cheie (get / set / remove) | — |
 | `kadd` | adaugă în set/list | — |
 | `krm` | scoate din set/list | — |
 
 `ksave` **rescrie** mereu cheia (fără eroare dacă există). Pentru create-only, verifică înainte cu `TYPE` / `EXISTS` + `if` + `end`+`err` (vezi exemple).
+
+### kttl
+
+Citește sau setează **expirarea unei chei** (conținutul rămâne; nu e `kdel`). TTL = pe **întreaga cheie** (inclus listă `log:…`).
+
+```json
+{ "op": "kttl", "fn": "get", "key": "data:_session:$id", "to": "sec" }
+{ "op": "kttl", "fn": "set", "key": "$key", "ttl": 3600 }
+{ "op": "kttl", "fn": "remove", "key": "log:test" }
+```
+
+| `fn` | Redis | Semnificație |
+|------|--------|--------------|
+| **`get`** | `TTL` (sau `PTTL` dacă `ms: true`) | Scrie în **`to`** numărul returnat de Redis |
+| **`set`** | `EXPIRE key seconds` | **`ttl`**: secunde (literal sau ref). Cheia trebuie să existe |
+| **`remove`** | `PERSIST` | Elimină expirarea; cheia și datele **rămân** |
+
+#### Rezultat la **`get`** (secunde, dacă `ms` nu e true)
+
+| Valoare | Înseamnă |
+|---------|----------|
+| **`-2`** | Cheia **nu există** |
+| **`-1`** | Cheia **există**, **fără** TTL (permanentă, sau după `remove`) |
+| **`0`** | Expiră imediat / tocmai a expirat |
+| **`> 0`** | Secunde **rămase** până la expirare |
+
+Cu **`ms: true`**: aceeași logică, dar **`PTTL`** în **milisecunde** (`-2` / `-1` neschimbate).
+
+**Tranzacții:** **`get`** = citire live (ca `kget`); **`set`** / **`remove`** = în buffer la `tstart`, commit la `tdo`.
 
 ### kadd / krm
 - `{ "op": "kadd", "key": "hash:_user_meta", "val": { "email": "test@sside.ro" } }` (HASH mutations)
@@ -561,7 +591,7 @@ La salvare, pune în payload câmpurile indexate (`s_prefix`, `s_name`, `s_num`,
 
 1. `tstart` — începe buffer
 2. scrieri (`ksave`/`kdel`/…) → în buffer (fără HTTP)
-3. citiri (`kget`, `search`) → HTTP **imediat** (văd Redis actual, nu bufferul)
+3. citiri (`kget`, `kttl` **get**, `search`) → HTTP **imediat** (văd Redis actual, nu bufferul)
 4. `tdo` — batch `tranzactie` pe worker (MULTI/EXEC)
 5. `tstop` — discard local
 

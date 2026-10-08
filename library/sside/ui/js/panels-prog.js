@@ -8,7 +8,7 @@
   const ALG_OPS = [
     'assign', 'cat', 'cast', 'fdate', 
     'if', 'foreach', 'end', 'comment',
-    'kget', 'ksave', 'kdel', 'kadd', 'krm',
+    'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
@@ -523,6 +523,7 @@
     if (op === 'kget') return { op: 'kget', key: '', to: '', as: 'auto' };
     if (op === 'ksave') return { op: 'ksave', key: '', val: 'form', as: 'auto' };
     if (op === 'kdel') return { op: 'kdel', key: '' };
+    if (op === 'kttl') return { op: 'kttl', fn: 'get', key: '', to: 'ttl_sec' };
     if (op === 'kadd' || op === 'krm') return { op: op, key: '', val: '' };
     if (op === 'scheck') return { op: 'scheck', schema: '', val: 'form' };
     if (op === 'sgen') return { op: 'sgen', schema: '', to: 'draft' };
@@ -843,6 +844,14 @@
 
     if (op === 'kdel') {
       return 'kdel  ' + previewVal(step.key);
+    }
+
+    if (op === 'kttl') {
+      const fn = step.fn != null ? String(step.fn) : 'get';
+      let extra = '';
+      if (fn === 'get') extra = ' → ' + previewVal(step.to);
+      else if (fn === 'set') extra = ' ttl ' + previewVal(step.ttl);
+      return 'kttl  ' + fn + ' ' + previewVal(step.key) + extra;
     }
 
     if (op === 'kadd' || op === 'krm') {
@@ -1566,6 +1575,35 @@
       return;
     }
 
+    if (op === 'kttl') {
+      const fnOpts = [
+        { value: 'get', label: 'get — citește TTL' },
+        { value: 'set', label: 'set — EXPIRE (secunde)' },
+        { value: 'remove', label: 'remove — scoate TTL (cheia rămâne)' },
+      ];
+      const fnSel = wire(mkSelect('fn', step.fn || 'get', fnOpts));
+      row.appendChild(mkField('fn', fnSel));
+      row.appendChild(mkField('key', wire(mkInput('key', step.key))));
+      const toF = mkField('to', wire(mkInput('to', step.to || '')));
+      const ttlF = mkField('ttl (sec)', wire(mkInput('ttl', step.ttl != null ? step.ttl : '')));
+      const msF = mkField('ms (PTTL)', wire(mkSelect('ms', step.ms === true ? '1' : '0', [
+        { value: '0', label: 'nu — TTL secunde' },
+        { value: '1', label: 'da — PTTL ms' },
+      ])));
+      row.appendChild(toF);
+      row.appendChild(ttlF);
+      row.appendChild(msF);
+      function syncKttlFields() {
+        const f = fnSel.value;
+        toF.style.display = f === 'get' ? '' : 'none';
+        msF.style.display = f === 'get' ? '' : 'none';
+        ttlF.style.display = f === 'set' ? '' : 'none';
+      }
+      fnSel.addEventListener('change', syncKttlFields);
+      syncKttlFields();
+      return;
+    }
+
     if (op === 'kadd' || op === 'krm') {
       row.appendChild(mkField('key', wire(mkInput('key', step.key))));
       row.appendChild(mkField('val', wire(mkInput('val', step.val))));
@@ -1970,6 +2008,22 @@
     }
     if (op === 'kdel') {
       step.key = sf(el, 'key');
+      return withStepMeta(el, step);
+    }
+    if (op === 'kttl') {
+      step.fn = sf(el, 'fn') || 'get';
+      step.key = sf(el, 'key');
+      delete step.to;
+      delete step.ttl;
+      delete step.ms;
+      if (step.fn === 'get') {
+        step.to = sf(el, 'to');
+        if (sf(el, 'ms') === '1') step.ms = true;
+      } else if (step.fn === 'set') {
+        const raw = sf(el, 'ttl');
+        if (raw !== '' && !Number.isNaN(Number(raw))) step.ttl = parseInt(raw, 10);
+        else step.ttl = raw;
+      }
       return withStepMeta(el, step);
     }
     if (op === 'kadd' || op === 'krm') {

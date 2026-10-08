@@ -11,8 +11,19 @@
     /** @type {Map<string, object>} tags s_* pentru SEARCH.QUERY mock */
     const searchIndex = new Map();
 
-    function typeOf(key) {
+    function resolveEntry(key) {
       const e = store.get(key);
+      if (!e) return null;
+      if (e.expireAt != null && Date.now() >= e.expireAt) {
+        store.delete(key);
+        searchIndex.delete(key);
+        return null;
+      }
+      return e;
+    }
+
+    function typeOf(key) {
+      const e = resolveEntry(key);
       return e ? e.tip : 'none';
     }
 
@@ -60,8 +71,37 @@
 
       if (cmd === 'TYPE') return typeOf(a[0]);
 
-      if (cmd === 'GET') {
+      if (cmd === 'TTL') {
+        const e = resolveEntry(a[0]);
+        if (!e) return -2;
+        if (e.expireAt == null) return -1;
+        return Math.max(0, Math.ceil((e.expireAt - Date.now()) / 1000));
+      }
+
+      if (cmd === 'PTTL') {
+        const e = resolveEntry(a[0]);
+        if (!e) return -2;
+        if (e.expireAt == null) return -1;
+        return Math.max(0, e.expireAt - Date.now());
+      }
+
+      if (cmd === 'EXPIRE') {
         const e = store.get(a[0]);
+        const sec = parseInt(a[1], 10);
+        if (!e || !Number.isFinite(sec)) return 0;
+        e.expireAt = Date.now() + sec * 1000;
+        return 1;
+      }
+
+      if (cmd === 'PERSIST') {
+        const e = store.get(a[0]);
+        if (!e) return 0;
+        e.expireAt = null;
+        return 1;
+      }
+
+      if (cmd === 'GET') {
+        const e = resolveEntry(a[0]);
         if (!e) return null;
         if (e.tip === 'string') return e.val;
         if (e.tip === 'json') return JSON.stringify(e.val);
@@ -75,7 +115,7 @@
         if (hasNx && store.has(key)) {
           return null;
         }
-        store.set(key, { tip: 'string', val: val });
+        store.set(key, { tip: 'string', val: val, expireAt: null });
         return 'OK';
       }
 
@@ -116,7 +156,7 @@
             payload = JSON.parse(payload);
           } catch (e) { /* keep */ }
         }
-        store.set(key, { tip: 'json', val: payload });
+        store.set(key, { tip: 'json', val: payload, expireAt: null });
         indexTagsFromJson(key, payload);
         return 'OK';
       }
@@ -238,7 +278,7 @@
         const key = a[0];
         let e = store.get(key);
         if (!e) {
-          e = { tip: 'list', val: [] };
+          e = { tip: 'list', val: [], expireAt: null };
           store.set(key, e);
         }
         if (e.tip !== 'list') throw new Error('WRONGTYPE');
@@ -400,7 +440,7 @@
           else if (v.tip === 'hash') val = Object.assign({}, v.val);
           else if (v.tip === 'zset') val = new Map(v.val);
           else if (v.tip === 'json') val = JSON.parse(JSON.stringify(v.val));
-          snap.set(k, { tip: v.tip, val });
+          snap.set(k, { tip: v.tip, val, expireAt: v.expireAt != null ? v.expireAt : null });
         }
         try {
           const results = [];

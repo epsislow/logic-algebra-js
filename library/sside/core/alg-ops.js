@@ -1113,6 +1113,34 @@
     return buildLogRpushArgv(built.key, built.payload);
   }
 
+  /**
+   * @returns {{ read: boolean, argv: string[], to?: string }}
+   */
+  function buildKttlStep(step, ctx, getValFn) {
+    const key = String(getValFn(ctx, step.key) || '');
+    if (!key) throw new Error('kttl: key gol');
+    const fn = String(step.fn || '').toLowerCase();
+    if (fn === 'get') {
+      if (!step.to) throw new Error('kttl get: lipsește to');
+      const argv = step.ms === true ? ['PTTL', key] : ['TTL', key];
+      return { read: true, argv, to: step.to };
+    }
+    if (fn === 'set') {
+      if (step.ttl === undefined || step.ttl === null || step.ttl === '') {
+        throw new Error('kttl set: lipsește ttl');
+      }
+      const sec = castValue(getValFn(ctx, step.ttl), 'integer');
+      if (!Number.isFinite(sec) || sec < 1) {
+        throw new Error('kttl set: ttl trebuie integer ≥ 1 (secunde)');
+      }
+      return { read: false, argv: ['EXPIRE', key, String(sec)] };
+    }
+    if (fn === 'remove') {
+      return { read: false, argv: ['PERSIST', key] };
+    }
+    throw new Error('kttl: fn invalid (get|set|remove)');
+  }
+
   function executeNotify(step, ctx, getValFn) {
     const kind = String(step.kind || 'info').toLowerCase();
     let text = '';
@@ -1254,6 +1282,7 @@
     isLogLineTemplate,
     resolveLogTsformat,
     resolveLogLineTemplate,
+    buildKttlStep,
     executeLock,
     buildKsaveArgv,
     buildKgetArgv,

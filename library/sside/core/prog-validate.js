@@ -7,7 +7,7 @@
   const ALG_OPS = new Set([
     'assign', 'cat', 'cast',  'fdate',
     'if', 'foreach', 'end', 'comment',
-    'kget', 'ksave', 'kdel', 'kadd', 'krm',
+    'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
@@ -166,6 +166,28 @@
               return err(p + '.schema arată invalid');
             }
           }
+        }
+      }
+      if (s.op === 'kttl') {
+        const fn = String(s.fn || '').toLowerCase();
+        if (fn !== 'get' && fn !== 'set' && fn !== 'remove') {
+          return err(p + '.fn trebuie get|set|remove');
+        }
+        if (s.key == null || typeof s.key !== 'string' || !String(s.key).trim()) {
+          return err(p + '.key obligatoriu');
+        }
+        if (fn === 'get') {
+          if (s.to == null || typeof s.to !== 'string' || !String(s.to).trim()) {
+            return err(p + '.to obligatoriu la fn get');
+          }
+        }
+        if (fn === 'set') {
+          if (s.ttl === undefined || s.ttl === null || s.ttl === '') {
+            return err(p + '.ttl obligatoriu la fn set');
+          }
+        }
+        if (s.ms != null && typeof s.ms !== 'boolean') {
+          return err(p + '.ms trebuie boolean');
         }
       }
       if (s.op === 'log') {
