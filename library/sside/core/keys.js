@@ -103,22 +103,55 @@
       return { tip: 'liber', missingSchema: schemaName, schemaKey };
     }
 
+    const k = key || '';
+    if (k.indexOf('log:') === 0) return { tip: 'log' };
+    if (k.indexOf('info:') === 0) return { tip: 'info' };
+    if (k.indexOf('json:') === 0) return { tip: 'json' };
+    if (k.indexOf('search:') === 0) return { tip: 'search' };
+    if (k.indexOf('set:') === 0) return { tip: 'set' };
+    if (k.indexOf('s:') === 0) return { tip: 's' };
+
     return { tip: 'liber' };
   }
 
-  function etichetaTip(info) {
-    if (!info) return { badge: 'liber', cls: 'badge-liber', note: '' };
-    if (info.sistem) return { badge: 'admin', cls: 'badge-admin', note: '(user/session)' };
-    if (info.tip === 'schema') return { badge: 'schemă', cls: 'badge-schema', note: '' };
-    if (info.tip === 'data') return { badge: 'data', cls: 'badge-data', note: '→ ' + info.schemaKey };
-    if (info.tip === 'alg') return { badge: 'alg', cls: 'badge-alg', note: '' };
-    if (info.tip === 'form') return { badge: 'form', cls: 'badge-form', note: '' };
-    if (info.tip === 'ui') return { badge: 'ui', cls: 'badge-ui', note: '' };
-    if (info.tip === 'list') return { badge: 'list', cls: 'badge-list', note: '' };
-    if (info.missingSchema) {
-      return { badge: 'liber', cls: 'badge-liber', note: '(lipsa schema ' + info.missingSchema + ')' };
+  function withRowTint(out) {
+    if (out.cls && out.cls !== 'badge-liber' && out.cls !== 'badge-admin') {
+      out.rowTint = 'key-row--' + out.cls.replace(/^badge-/, '');
     }
-    return { badge: 'liber', cls: 'badge-liber', note: '' };
+    return out;
+  }
+
+  function etichetaTip(info) {
+    if (!info) return withRowTint({ badge: 'liber', cls: 'badge-liber', note: '' });
+    if (info.sistem) return { badge: 'admin', cls: 'badge-admin', note: '(user/session)' };
+    if (info.tip === 'schema') {
+      return withRowTint({ badge: 'schemă', cls: 'badge-schema', note: '' });
+    }
+    if (info.tip === 'data') {
+      return withRowTint({
+        badge: 'data',
+        cls: 'badge-data',
+        note: '→ ' + info.schemaKey,
+      });
+    }
+    if (info.tip === 'alg') return withRowTint({ badge: 'alg', cls: 'badge-alg', note: '' });
+    if (info.tip === 'form') return withRowTint({ badge: 'form', cls: 'badge-form', note: '' });
+    if (info.tip === 'ui') return withRowTint({ badge: 'ui', cls: 'badge-ui', note: '' });
+    if (info.tip === 'list') return withRowTint({ badge: 'list', cls: 'badge-list', note: '' });
+    if (info.tip === 'log') return withRowTint({ badge: 'log', cls: 'badge-log', note: '' });
+    if (info.tip === 'info') return withRowTint({ badge: 'info', cls: 'badge-info', note: '' });
+    if (info.tip === 'json') return withRowTint({ badge: 'json', cls: 'badge-json', note: '' });
+    if (info.tip === 'search') return withRowTint({ badge: 'search', cls: 'badge-search', note: '' });
+    if (info.tip === 'set') return withRowTint({ badge: 'set', cls: 'badge-set', note: '' });
+    if (info.tip === 's') return withRowTint({ badge: 's', cls: 'badge-s', note: '' });
+    if (info.missingSchema) {
+      return withRowTint({
+        badge: 'liber',
+        cls: 'badge-liber',
+        note: '(lipsa schema ' + info.missingSchema + ')',
+      });
+    }
+    return withRowTint({ badge: 'liber', cls: 'badge-liber', note: '' });
   }
 
   function cheieProgDinNume(kind, name) {

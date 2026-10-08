@@ -3,13 +3,13 @@
   'use strict';
   root.SsideDocData = {
   "title": "sside docs",
-  "generatedAt": "2026-10-08T13:00:21.212Z",
+  "generatedAt": "2026-10-08T13:38:21.096Z",
   "sections": [
     {
       "id": "keys",
       "label": "Chei",
       "file": "keys.md",
-      "markdown": "# Convenții chei\n\nPrefixuri Redis folosite de sside:\n\n| Prefix | Exemplu | Rol |\n|--------|---------|-----|\n| `schema:` | `schema:_item` | definiție câmpuri (JSON Schema) |\n| `data:` | `data:_item:42` | instanță pe schemă |\n| `alg:` | `alg:_save_item` | algoritm (DSL JSON) |\n| `form:` | `form:_item_edit` | formular: schemă + butoane → alg |\n| `list:` | `list:_stock` | tabel: sursă + coloane + paginare |\n| `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |\n\nForme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.\n\n## Reguli\n\n- Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).\n- `alg:` / `form:` / `ui:` / `list:` **nu** sunt indexate în Upstash Search.\n- Versiune obiect: doar **`v: 1`**.\n\n## Legături tipice\n\n```\nui:_warehouse\n  └─ tab.blocks\n       ├─ list → list:_stock  (id: stockMain)\n       └─ form → form:_item_edit\n                    ├─ schema:_item\n                    └─ btn → alg:_save_item\n                               └─ { op: \"ui\", do: \"refresh\", listid: \"_self\" }\n```\n"
+      "markdown": "# Convenții chei\n\nPrefixuri Redis folosite de sside:\n\n| Prefix | Exemplu | Rol |\n|--------|---------|-----|\n| `schema:` | `schema:_item` | definiție câmpuri (JSON Schema) |\n| `data:` | `data:_item:42` | instanță pe schemă |\n| `alg:` | `alg:_save_item` | algoritm (DSL JSON) |\n| `form:` | `form:_item_edit` | formular: schemă + butoane → alg |\n| `list:` | `list:_stock` | tabel: sursă + coloane + paginare |\n| `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |\n| `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |\n| `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |\n\nForme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.\n\n## Reguli\n\n- Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).\n- `alg:` / `form:` / `ui:` / `list:` **nu** sunt indexate în Upstash Search.\n- Versiune obiect: doar **`v: 1`**.\n\n## Legături tipice\n\n```\nui:_warehouse\n  └─ tab.blocks\n       ├─ list → list:_stock  (id: stockMain)\n       └─ form → form:_item_edit\n                    ├─ schema:_item\n                    └─ btn → alg:_save_item\n                               └─ { op: \"ui\", do: \"refresh\", listid: \"_self\" }\n```\n"
     },
     {
       "id": "prog",

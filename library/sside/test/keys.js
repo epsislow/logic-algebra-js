@@ -124,6 +124,23 @@ module.exports = {
       },
     },
     {
+      id: 12,
+      desc: 'clasificaCheie prefix log/info/json/search/set/s + etichetaTip rowTint',
+      run() {
+        const empty = new Set();
+        assertEq(Keys.clasificaCheie('log:test', empty).tip, 'log');
+        assertEq(Keys.etichetaTip({ tip: 'log' }).cls, 'badge-log');
+        assertEq(Keys.etichetaTip({ tip: 'log' }).rowTint, 'key-row--log');
+        assertEq(Keys.clasificaCheie('info:_x', empty).tip, 'info');
+        assertEq(Keys.clasificaCheie('json:_y', empty).tip, 'json');
+        assertEq(Keys.clasificaCheie('search:idx', empty).tip, 'search');
+        assertEq(Keys.clasificaCheie('set:_loc', empty).tip, 'set');
+        assertEq(Keys.clasificaCheie('s:tag', empty).tip, 's');
+        assertEq(Keys.etichetaTip({ tip: 'liber' }).rowTint, undefined);
+        assertEq(Keys.etichetaTip({ tip: 'form' }).rowTint, 'key-row--form');
+      },
+    },
+    {
       id: 11,
       desc: 'IDX must not treat alg/form/ui/list as search prefixes (convention check)',
       run() {

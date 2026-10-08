@@ -10,6 +10,8 @@ Prefixuri Redis folosite de sside:
 | `form:` | `form:_item_edit` | formular: schemă + butoane → alg |
 | `list:` | `list:_stock` | tabel: sursă + coloane + paginare |
 | `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |
+| `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |
+| `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |
 
 Forme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.
 

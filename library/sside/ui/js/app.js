@@ -1414,6 +1414,7 @@ function translateUpstashSearchResults(date) {
                     const et = etichetaTip(info);
                     const row = document.createElement('div');
                     row.className = 'key-row';
+                    if (et.rowTint) row.classList.add(et.rowTint);
                     if (listareCuType) {
                         const er = etichetaRedisTip(tipuriRedisChei[cheie]);
                         const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);

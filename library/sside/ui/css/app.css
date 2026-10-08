@@ -26,6 +26,12 @@
             --badge-list: #fd7e14;
             --badge-liber: #6c757d;
             --badge-admin: #fd7e14;
+            --badge-log: #b45309;
+            --badge-info: #6366f1;
+            --badge-json: #0d9488;
+            --badge-search: #7c3aed;
+            --badge-set: #6f42c1;
+            --badge-s: #65a30d;
             --prog-op-color: #088;
         }
         html[data-theme="dark"] {
@@ -56,6 +62,12 @@
             --badge-list: #fb923c;
             --badge-liber: #6b7280;
             --badge-admin: #f59e0b;
+            --badge-log: #fbbf24;
+            --badge-info: #818cf8;
+            --badge-json: #2dd4bf;
+            --badge-search: #a78bfa;
+            --badge-set: #8b5cf6;
+            --badge-s: #a3e635;
             --prog-op-color: #ff9;
         }
 
@@ -121,8 +133,17 @@
         .badge-form { background: var(--badge-form); color: #04303a; }
         .badge-ui { background: var(--badge-ui); }
         .badge-list { background: var(--badge-list); color: #1a0a00; }
+        .badge-log { background: var(--badge-log); color: #1a0a00; }
+        .badge-info { background: var(--badge-info); }
+        .badge-json { background: var(--badge-json); color: #042f2e; }
+        .badge-search { background: var(--badge-search); }
+        .badge-set { background: var(--badge-set); }
+        .badge-s { background: var(--badge-s); color: #1a2e05; }
         .badge-liber { background: var(--badge-liber); }
         .badge-admin { background: var(--badge-admin); color: #111; }
+        html[data-theme="dark"] .badge-json { color: #042f2e; }
+        html[data-theme="dark"] .badge-log { color: #1a0a00; }
+        html[data-theme="dark"] .badge-s { color: #1a2e05; }
         .badge-redis { background: #17a2b8; }
         .badge-redis-set { background: #6f42c1; }
         .badge-redis-hash { background: #0d9488; }
@@ -243,6 +264,24 @@
         }
         .key-row:last-child { border-bottom: none; }
         .key-row:hover { background: var(--row-hover); }
+        .key-row[class*="key-row--"]:not(.key-row--liber) {
+            background: color-mix(in srgb, var(--key-row-tint) 13%, var(--bg-panel));
+        }
+        .key-row[class*="key-row--"]:not(.key-row--liber):hover {
+            background: color-mix(in srgb, var(--key-row-tint) 20%, var(--row-hover));
+        }
+        .key-row--schema { --key-row-tint: var(--badge-schema); }
+        .key-row--data { --key-row-tint: var(--badge-data); }
+        .key-row--alg { --key-row-tint: var(--badge-alg); }
+        .key-row--form { --key-row-tint: var(--badge-form); }
+        .key-row--ui { --key-row-tint: var(--badge-ui); }
+        .key-row--list { --key-row-tint: var(--badge-list); }
+        .key-row--log { --key-row-tint: var(--badge-log); }
+        .key-row--info { --key-row-tint: var(--badge-info); }
+        .key-row--json { --key-row-tint: var(--badge-json); }
+        .key-row--search { --key-row-tint: var(--badge-search); }
+        .key-row--set { --key-row-tint: var(--badge-set); }
+        .key-row--s { --key-row-tint: var(--badge-s); }
         .key-row .key-name { flex: 1; min-width: 0; font-family: Consolas, monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .key-row .key-note { font-size: 11px; color: var(--text-muted); }
 
