@@ -129,6 +129,201 @@
     return keys.length === 1 && keys[0] === '*' && (q['*'] === '*' || q['*'] === '');
   }
 
+  /**
+   * Text membru LIST/SET/… → valoare rând (Faza GB). Fără trim. `{`/`[` → JSON.parse; eșec → scalar.
+   */
+  function parseMemberRowText(text, rowMode) {
+    const s = text == null ? '' : String(text);
+    if (s.length > 0 && (s.charAt(0) === '{' || s.charAt(0) === '[')) {
+      try {
+        return JSON.parse(s);
+      } catch (e) {
+        /* scalar */
+      }
+    }
+    if (rowMode === 'array') return [s];
+    return { value: s };
+  }
+
+  function valueFromJsonRootElement(raw, rowMode) {
+    if (raw !== null && typeof raw === 'object') return raw;
+    if (rowMode === 'array') return [raw];
+    return { value: raw };
+  }
+
+  function hashFieldToRow(field, raw, rowMode) {
+    const inner = parseMemberRowText(raw, rowMode);
+    if (inner !== null && typeof inner === 'object' && !Array.isArray(inner)) {
+      return Object.assign({ field: field }, inner);
+    }
+    return { field: field, value: inner };
+  }
+
+  function jsonRootToEntries(root, rowMode) {
+    if (root == null) return [];
+    if (Array.isArray(root)) {
+      return root.map(function (raw, i) {
+        return {
+          rowKey: String(i),
+          value: valueFromJsonRootElement(raw, rowMode),
+        };
+      });
+    }
+    if (typeof root === 'object') {
+      return [{ rowKey: '0', value: root }];
+    }
+    return [{ rowKey: '0', value: valueFromJsonRootElement(root, rowMode) }];
+  }
+
+  async function redisKeyType(redis, key) {
+    if (redis.type) return String(await redis.type(key) || 'none');
+    return String((await redis.exec(['TYPE', key])) || 'none');
+  }
+
+  function packKeySourcePage(entries, offset, pageSize, total, meta, rowMode, needsValue) {
+    const slice = entries.slice(offset, offset + pageSize);
+    const keys = [];
+    const _preloadedRows = {};
+    for (let i = 0; i < slice.length; i++) {
+      const ent = slice[i];
+      keys.push(ent.rowKey);
+      if (needsValue) _preloadedRows[ent.rowKey] = ent.value;
+      else _preloadedRows[ent.rowKey] = rowMode === 'array' ? [] : {};
+    }
+    return {
+      keys: keys,
+      total: total,
+      hasMore: offset + slice.length < total,
+      pagedAtSource: true,
+      _preloadedRows: _preloadedRows,
+      _fromKey: true,
+      _containerType: meta.containerType,
+      _sourceKey: meta.storageKey,
+    };
+  }
+
+  /**
+   * `source.from === 'key'` — rânduri din conținutul unei singure chei Redis.
+   */
+  async function resolveSourceKeyContent(source, redis, pageOpts) {
+    pageOpts = pageOpts || {};
+    const storageKey = String(source.key || '').trim();
+    if (!storageKey) throw new Error('list.source.key lipsă');
+    const rowMode = pageOpts.rowMode === 'array' ? 'array' : 'object';
+    const pageSize = Math.max(1, Number(pageOpts.pageSize) || 20);
+    const page = Math.max(1, Number(pageOpts.page) || 1);
+    const offset = (page - 1) * pageSize;
+    const needsValue = pageOpts.needsValue !== false;
+
+    let tip = await redisKeyType(redis, storageKey);
+    if (tip === 'ReJSON-RL') tip = 'json';
+    const meta = { storageKey: storageKey, containerType: tip };
+
+    if (tip === 'none') {
+      return packKeySourcePage([], offset, pageSize, 0, meta, rowMode, needsValue);
+    }
+
+    if (tip === 'list') {
+      const total = Number(await redis.exec(['LLEN', storageKey])) || 0;
+      const end = offset + pageSize - 1;
+      const members = await redis.exec(['LRANGE', storageKey, String(offset), String(end)]);
+      const list = Array.isArray(members) ? members : [];
+      const entries = list.map(function (m, i) {
+        return {
+          rowKey: String(offset + i),
+          value: parseMemberRowText(m, rowMode),
+        };
+      });
+      const keys = entries.map(function (e) {
+        return e.rowKey;
+      });
+      const _preloadedRows = {};
+      entries.forEach(function (e) {
+        _preloadedRows[e.rowKey] = needsValue ? e.value : rowMode === 'array' ? [] : {};
+      });
+      return {
+        keys: keys,
+        total: total,
+        hasMore: offset + entries.length < total,
+        pagedAtSource: true,
+        _preloadedRows: _preloadedRows,
+        _fromKey: true,
+        _containerType: 'list',
+        _sourceKey: storageKey,
+      };
+    }
+
+    if (tip === 'json') {
+      const raw = await redis.exec(['JSON.GET', storageKey, '$']);
+      const root = unwrapJsonGet(raw);
+      const entries = jsonRootToEntries(root, rowMode);
+      return packKeySourcePage(entries, offset, pageSize, entries.length, meta, rowMode, needsValue);
+    }
+
+    if (tip === 'string') {
+      const s = await redis.exec(['GET', storageKey]);
+      const text = s == null ? '' : String(s);
+      const val = rowMode === 'array' ? [text] : { value: text };
+      const entries = [{ rowKey: '0', value: val }];
+      return packKeySourcePage(entries, offset, pageSize, 1, meta, rowMode, needsValue);
+    }
+
+    if (tip === 'set') {
+      const members = await redis.exec(['SMEMBERS', storageKey]);
+      const sorted = (Array.isArray(members) ? members : []).map(String).sort();
+      const entries = sorted.map(function (m) {
+        return { rowKey: m, value: parseMemberRowText(m, rowMode) };
+      });
+      return packKeySourcePage(entries, offset, pageSize, entries.length, meta, rowMode, needsValue);
+    }
+
+    if (tip === 'zset') {
+      const total = Number(await redis.exec(['ZCARD', storageKey])) || 0;
+      const end = offset + pageSize - 1;
+      const members = await redis.exec(['ZRANGE', storageKey, String(offset), String(end)]);
+      const list = Array.isArray(members) ? members : [];
+      const entries = list.map(function (m) {
+        return { rowKey: String(m), value: parseMemberRowText(m, rowMode) };
+      });
+      const keys = entries.map(function (e) {
+        return e.rowKey;
+      });
+      const _preloadedRows = {};
+      entries.forEach(function (e) {
+        _preloadedRows[e.rowKey] = needsValue ? e.value : rowMode === 'array' ? [] : {};
+      });
+      return {
+        keys: keys,
+        total: total,
+        hasMore: offset + entries.length < total,
+        pagedAtSource: true,
+        _preloadedRows: _preloadedRows,
+        _fromKey: true,
+        _containerType: 'zset',
+        _sourceKey: storageKey,
+      };
+    }
+
+    if (tip === 'hash') {
+      const raw = await redis.exec(['HGETALL', storageKey]);
+      let map = raw;
+      if (Array.isArray(raw)) {
+        map = {};
+        for (let i = 0; i + 1 < raw.length; i += 2) {
+          map[String(raw[i])] = String(raw[i + 1]);
+        }
+      }
+      if (!map || typeof map !== 'object') map = {};
+      const fields = Object.keys(map).sort();
+      const entries = fields.map(function (f) {
+        return { rowKey: f, value: hashFieldToRow(f, map[f], rowMode) };
+      });
+      return packKeySourcePage(entries, offset, pageSize, entries.length, meta, rowMode, needsValue);
+    }
+
+    throw new Error('list.source.key tip nesuportat: ' + tip);
+  }
+
   async function resolveKeysPattern(redis, pattern, pageOpts) {
     pageOpts = pageOpts || {};
     const pat = pattern == null || pattern === '' ? '*' : String(pattern);
@@ -146,6 +341,9 @@
       throw new Error('list.source lipsă');
     }
     const from = source.from;
+    if (from === 'key') {
+      return resolveSourceKeyContent(source, redis, pageOpts);
+    }
     if (from === 'keys') {
       return resolveKeysPattern(redis, source.pattern != null ? source.pattern : '*', {
         maxScan: source.maxScan != null ? source.maxScan : pageOpts.maxScan,
@@ -325,7 +523,11 @@
       page: pageNum,
       pageSize,
       exactCount,
+      rowMode,
+      needsValue: needs.needsValue,
     });
+
+    const fromKey = !!(listDef.source && listDef.source.from === 'key');
 
     let pageKeys;
     let total = src.total;
@@ -369,7 +571,7 @@
 
     const fromSearch =
       listDef.source && listDef.source.from === 'search' && !!src.pagedAtSource;
-    if (fromSearch && !searchNoContent && needs.needsValue && pageKeys.length) {
+    if (!fromKey && fromSearch && !searchNoContent && needs.needsValue && pageKeys.length) {
       if (!src._preloadedRows) src._preloadedRows = {};
       const missing = pageKeys.filter(
         (k) => !Object.prototype.hasOwnProperty.call(src._preloadedRows, k)
@@ -384,11 +586,14 @@
     for (const key of pageKeys) {
       let tip = null;
       const isPreloaded =
-        !searchNoContent &&
-        src &&
-        src._preloadedRows &&
-        Object.prototype.hasOwnProperty.call(src._preloadedRows, key);
-      if (searchNoContent && fromSearch) {
+        fromKey ||
+        (!searchNoContent &&
+          src &&
+          src._preloadedRows &&
+          Object.prototype.hasOwnProperty.call(src._preloadedRows, key));
+      if (fromKey) {
+        tip = src._containerType || 'key';
+      } else if (searchNoContent && fromSearch) {
         tip = null;
       } else if (!isPreloaded && (needs.needsType || needs.needsValue)) {
         if (fromSearch && !searchNoContent && !needs.needsType) {
@@ -517,8 +722,10 @@
     cellValue,
     formatListCellDisplay,
     analyzeColumnNeeds,
+    parseMemberRowText,
     loadRowValue,
     resolveSourceKeys,
+    resolveSourceKeyContent,
     loadListPage,
     computePageMax,
     formFromRow,

@@ -123,6 +123,11 @@
         return err('list.source.noContent trebuie boolean');
       }
     }
+    if (obj.source.from === 'key') {
+      if (obj.source.key == null || String(obj.source.key).trim() === '') {
+        return err('list.source.key obligatoriu pentru from:key');
+      }
+    }
     const b1 = validateBtns(obj.btns, 'list.btns', { allowNeedsRow: true });
     if (b1) return b1;
     const b2 = validateBtns(obj.rowBtns, 'list.rowBtns');

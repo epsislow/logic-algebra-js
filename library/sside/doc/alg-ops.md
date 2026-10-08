@@ -404,7 +404,7 @@ Nu combina **`context`** cu **`contextWith`** (idem **`data`** / **`dataWith`**)
 
 Din Live: **`alg`**, **`button`** în JSON sau via `<alg>` / `<btn>`. Fără câmpuri index search adăugate de motor. Aceeași listă poate conține linii JSON și linii text.
 
-Citire în listă Live — POST-v1 (`LRANGE`).
+Citire în listă Live — **Faza GB** (`list.source` **`from: key`**; LIST → `LRANGE`) — vezi plan GB1–GB6.
 
 ### end
 - `{ "op": "end", "msg": "Salvat" }` — succes (banner verde)

@@ -845,5 +845,160 @@ module.exports = {
         assert(errMsg.indexOf('Interogare search invalidă') !== -1, errMsg);
       },
     },
+    {
+      id: 22,
+      desc: 'from:key LIST mix JSON + text + paginare LRANGE',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['RPUSH', 'log:_t', '{"lvl":"info","msg":"a"}', 'plain line']);
+        await redis.exec(['RPUSH', 'log:_t', '{bad json']);
+        const listDef = {
+          v: 1,
+          source: { from: 'key', key: 'log:_t' },
+          row: 'object',
+          columns: [
+            { id: 'l', path: 'lvl' },
+            { id: 'm', path: 'msg' },
+            { id: 'v', path: 'value' },
+          ],
+          pageSize: 2,
+        };
+        const p1 = await ListLoad.loadListPage(listDef, redis, 1);
+        assertEq(p1.total, 3);
+        assertEq(p1.rows.length, 2);
+        assert(p1.hasMore);
+        assertEq(ListLoad.cellValue(p1.rows[0].value, 'lvl', 'object'), 'info');
+        assertEq(ListLoad.cellValue(p1.rows[1].value, 'value', 'object'), 'plain line');
+        const p2 = await ListLoad.loadListPage(listDef, redis, 2);
+        assertEq(p2.rows.length, 1);
+        assertEq(ListLoad.cellValue(p2.rows[0].value, 'value', 'object'), '{bad json');
+      },
+    },
+    {
+      id: 23,
+      desc: 'from:key JSON array + root obiect/primitiv/gol',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec([
+          'JSON.SET',
+          'data:_arr',
+          '$',
+          JSON.stringify([{ n: 1 }, { n: 2 }]),
+        ]);
+        const la = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'key', key: 'data:_arr' },
+            columns: [{ id: 'n', path: 'n' }],
+            pageSize: 10,
+          },
+          redis,
+          1
+        );
+        assertEq(la.total, 2);
+        assertEq(ListLoad.cellValue(la.rows[0].value, 'n', 'object'), 1);
+
+        await redis.exec(['JSON.SET', 'data:_one', '$', JSON.stringify({ x: 9 })]);
+        const lo = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'key', key: 'data:_one' },
+            columns: [{ id: 'x', path: 'x' }],
+          },
+          redis,
+          1
+        );
+        assertEq(lo.total, 1);
+        assertEq(ListLoad.cellValue(lo.rows[0].value, 'x', 'object'), 9);
+
+        await redis.exec(['JSON.SET', 'data:_prim', '$', JSON.stringify(42)]);
+        const lp = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'key', key: 'data:_prim' },
+            columns: [{ id: 'v', path: 'value' }],
+          },
+          redis,
+          1
+        );
+        assertEq(lp.total, 1);
+        assertEq(ListLoad.cellValue(lp.rows[0].value, 'value', 'object'), 42);
+
+        await redis.exec(['JSON.SET', 'data:_empty', '$', JSON.stringify([])]);
+        const le = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'key', key: 'data:_empty' },
+            columns: [{ id: 'k', path: '_key' }],
+          },
+          redis,
+          1
+        );
+        assertEq(le.total, 0);
+        assertEq(le.rows.length, 0);
+      },
+    },
+    {
+      id: 24,
+      desc: 'from:key string fără JSON.parse + regresie set index',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['SET', 's:_line', 'hello-only']);
+        const ls = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'key', key: 's:_line' },
+            columns: [{ id: 'v', path: 'value' }],
+          },
+          redis,
+          1
+        );
+        assertEq(ls.total, 1);
+        assertEq(ListLoad.cellValue(ls.rows[0].value, 'value', 'object'), 'hello-only');
+
+        await redis.exec(['SADD', 'set:_ids', 'data:_item:1']);
+        await redis.exec([
+          'JSON.SET',
+          'data:_item:1',
+          '$',
+          JSON.stringify({ name: 'Z' }),
+        ]);
+        const lx = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'set', key: 'set:_ids' },
+            columns: [{ id: 'n', path: 'name' }],
+          },
+          redis,
+          1
+        );
+        assertEq(ListLoad.cellValue(lx.rows[0].value, 'name', 'object'), 'Z');
+      },
+    },
+    {
+      id: 25,
+      desc: 'parseMemberRowText + validate from:key',
+      run() {
+        assertDeep(ListLoad.parseMemberRowText('{"a":1}', 'object'), { a: 1 });
+        assertDeep(ListLoad.parseMemberRowText('txt', 'object'), { value: 'txt' });
+        assertDeep(ListLoad.parseMemberRowText('[1]', 'array'), [1]);
+        assertDeep(ListLoad.parseMemberRowText('{x', 'object'), { value: '{x' });
+        const V = require('../core/prog-validate.js');
+        assert(
+          !V.validateList({
+            v: 1,
+            source: { from: 'key' },
+            columns: [{ path: 'x' }],
+          }).ok
+        );
+        assert(
+          V.validateList({
+            v: 1,
+            source: { from: 'key', key: 'log:x' },
+            columns: [{ path: 'x' }],
+          }).ok
+        );
+      },
+    },
   ],
 };

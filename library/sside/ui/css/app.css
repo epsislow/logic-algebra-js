@@ -465,7 +465,8 @@
             gap: 4px;
             width: 100%;
         }
-        .prog-select-with-open select {
+        .prog-select-with-open select,
+        .prog-select-with-open input[type="text"] {
             flex: 1;
             min-width: 0;
             width: auto !important;

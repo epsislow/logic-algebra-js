@@ -131,14 +131,15 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 
 | Câmp | Sens |
 |------|------|
-| `source.from` | `keys` (pattern KEYS, ca lista UI) / `search` / `set` / `list` / `zset` / `hash` / `enum` |
+| `source.from` | `keys` / `search` / **`key`** / `set` / `list` / `zset` / `hash` / `enum` — vezi mai jos |
+| `source.key` | obligatoriu la **`from: "key"`** și la `set`/`list`/… (index); la **`key`** = o singură cheie Redis a cărei **valoare** devine tabelul. În **Edit list**, câmpul `key` are buton **↗** → detaliu cheie (ca la schema/alg pe form) |
 | `source.pattern` | doar la `keys`: glob Redis (default `*`) |
 | `row` | `object` (path-uri câmp) sau `array` (path = index) |
 | `columns[].path` | `_key` / `_type` / `_json` / câmp din JSON |
 | `columns[].const` | valoare **statică** (ex. `"stock"`) — fără citire pe rând |
 | `pageSize` | mărime pagină |
 | `autoload` | default `true`; `false` = **nu** încarcă `source` la open Live (tabel gol până la refresh / Reîncarcă) |
-| `exactCount` | default `false`; `true` = la fiecare pagină (search) apelează **`SEARCH.COUNT`** + QUERY → pager `Pagina N / M (total)` |
+| `exactCount` | default `false`; `true` = doar **`from: search`** → **`SEARCH.COUNT`**; la **`from: key`** este **ignorat** (total din `LLEN` / lungime conținut) |
 | `source.noContent` | doar `from: search`; default `false` = QUERY **cu** document; `true` = **NOCONTENT** (doar chei), **fără** TYPE/JSON.GET — coloane `_key` / `const`; path-uri din JSON → afișare **nimic** |
 | `rowBtns` | pe rând (mereu cu rând → `form`); `kind` ca form |
 | `btns` | sub tabel; `needsRow` default `true`; `false` = fără selecție (`form` = `{}`) |
@@ -163,6 +164,42 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
 ]
 ```
 
+
+### `from: "key"` — conținut pe o cheie (Faza GB)
+
+**Nu** e același lucru cu `from: "list"` / `set` / …: acolo fiecare **membru** e tratat ca **nume de altă cheie Redis** (`TYPE` + `JSON.GET`). La **`from: "key"`** există **o singură** cheie (`source.key`); fiecare **rând** = un element din conținutul ei.
+
+```json
+"source": { "from": "key", "key": "log:audit" }
+```
+
+| Tip Redis la `source.key` | Rânduri | Paginare (v1) |
+|---------------------------|---------|----------------|
+| **list** | fiecare membru | **`LLEN` + `LRANGE`** (server) |
+| **json** | root `[]` → câte elemente; `{}` → 1; primitiv → 1; `[]` gol → 0 | **`JSON.GET` $** întreg → slice în UI (**GB7** later: path slice) |
+| **string** | 1 rând; **fără** `JSON.parse` forțat | — |
+| **set** / **hash** / **zset** | fiecare membru / câmp / member zset | load + slice client (zset/list similare LRANGE/ZRANGE pe pagină) |
+
+**Parse membru** (listă, set, etc.): fără trim; dacă textul **nu** începe cu `{` sau `[` → scalar (`path` **`value`** sau **`0`** în `row: array`); dacă începe → `JSON.parse`, iar la eșec → scalar (string brut).
+
+**`_key` pe rând:** id sintetic (index listă/json array, nume câmp hash, member set) — **nu** cheie Redis. Poate deveni stale dacă lista se modifică (LREM/LPUSH din alg-uri user).
+
+**Model vechi păstrat:** listă pe **chei** (`keys`, `search`, `set` ca index) — string per cheie rând încă încearcă `JSON.parse` la `GET`.
+
+Exemplu log (LIST, rând JSON + text):
+
+```json
+{
+  "source": { "from": "key", "key": "log:stock" },
+  "row": "object",
+  "columns": [
+    { "id": "lvl", "path": "level" },
+    { "id": "line", "path": "value" }
+  ]
+}
+```
+
+---
 
 **Nu confunda** cu filtrul din lista de chei: acolo `*` = `KEYS *`, iar `=s_prefix:…` = `SEARCH.QUERY`. La `list.source`, la fel: „toate cheile” = `{ "from": "keys", "pattern": "*" }`; indexul = `{ "from": "search", "query": { "s_prefix": "stock" } }`. Seed-ul vechi `{ "from":"search", "query": { "*": "*" } }` e tratat ca `KEYS *` (compat).
 

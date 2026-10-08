@@ -286,6 +286,12 @@
         return Array.from(e.val);
       }
 
+      if (cmd === 'SCARD') {
+        const e = resolveEntry(a[0]);
+        if (!e || e.tip !== 'set') return 0;
+        return e.val.size;
+      }
+
       if (cmd === 'RPUSH') {
         const key = a[0];
         let e = store.get(key);
@@ -327,6 +333,12 @@
         return removed;
       }
 
+      if (cmd === 'LLEN') {
+        const e = resolveEntry(a[0]);
+        if (!e || e.tip !== 'list') return 0;
+        return e.val.length;
+      }
+
       if (cmd === 'LRANGE') {
         const e = store.get(a[0]);
         if (!e || e.tip !== 'list') return [];
@@ -357,6 +369,12 @@
         return n;
       }
 
+      if (cmd === 'ZCARD') {
+        const e = resolveEntry(a[0]);
+        if (!e || e.tip !== 'zset') return 0;
+        return e.val.size;
+      }
+
       if (cmd === 'ZRANGE') {
         const e = store.get(a[0]);
         if (!e || e.tip !== 'zset') return [];
@@ -385,6 +403,12 @@
         const e = store.get(a[0]);
         if (!e || e.tip !== 'hash') return {};
         return Object.assign({}, e.val);
+      }
+
+      if (cmd === 'HLEN') {
+        const e = resolveEntry(a[0]);
+        if (!e || e.tip !== 'hash') return 0;
+        return Object.keys(e.val).length;
       }
 
       if (cmd === 'HKEYS') {

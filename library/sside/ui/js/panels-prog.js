@@ -2911,8 +2911,9 @@
   const LIST_SOURCE_FROM = [
     { value: 'keys', label: 'keys (pattern)' },
     { value: 'search', label: 'search (query)' },
-    { value: 'set', label: 'set' },
-    { value: 'list', label: 'list (Redis LIST)' },
+    { value: 'key', label: 'key (conținut cheie)' },
+    { value: 'set', label: 'set (index chei)' },
+    { value: 'list', label: 'list (index chei)' },
     { value: 'zset', label: 'zset' },
     { value: 'hash', label: 'hash' },
     { value: 'enum', label: 'enum' },
@@ -2966,7 +2967,7 @@
       '<div class="prog-field" data-s-wrap="query" style="flex:2"><label>query</label><textarea data-s="query" rows="2" placeholder=\'{"s_prefix":"stock"} sau s_prefix:stock\'></textarea></div>' +
       '<div class="prog-field" data-s-wrap="noContent"><label>noContent</label><select data-s="noContent">' +
       '<option value="false">false</option><option value="true">true</option></select></div>' +
-      '<div class="prog-field" data-s-wrap="key"><label>key</label><input data-s="key" placeholder="set:_ids"></div>' +
+      '<div class="prog-field" data-s-wrap="key"><label>key</label><input data-s="key" placeholder="log:audit sau set:_ids"></div>' +
       '<div class="prog-field" data-s-wrap="values" style="flex:2"><label>values (enum, virgulă)</label><input data-s="values" placeholder="a,b,c"></div>';
     const fromSel = srcRow.querySelector('[data-s="from"]');
     LIST_SOURCE_FROM.forEach((o) => {
@@ -2977,6 +2978,15 @@
     });
     srcCard.appendChild(srcRow);
     card.appendChild(srcCard);
+
+    const keyInp = srcRow.querySelector('[data-s="key"]');
+    const keyOpenCtl = mountSelectWithOpen(keyInp, {
+      getKey: function () {
+        return String(keyInp.value || '').trim();
+      },
+      beforeOpen: syncFromDom,
+    });
+    keyInp.addEventListener('input', keyOpenCtl.syncOpenBtn);
 
     function fillSourceFields() {
       const src = obj.source || {};
@@ -2993,6 +3003,7 @@
       srcRow.querySelector('[data-s="noContent"]').value =
         src.noContent === true ? 'true' : 'false';
       syncSourceVisibility();
+      keyOpenCtl.syncOpenBtn();
     }
 
     function syncSourceVisibility() {
@@ -3001,7 +3012,12 @@
         pattern: from === 'keys',
         query: from === 'search',
         noContent: from === 'search',
-        key: from === 'set' || from === 'list' || from === 'zset' || from === 'hash',
+        key:
+          from === 'key' ||
+          from === 'set' ||
+          from === 'list' ||
+          from === 'zset' ||
+          from === 'hash',
         values: from === 'enum',
       };
       Object.keys(show).forEach((k) => {
@@ -3201,6 +3217,7 @@
     fillSourceFields();
     fromSel.addEventListener('change', () => {
       syncSourceVisibility();
+      keyOpenCtl.syncOpenBtn();
       syncFromDom();
     });
     srcRow.querySelectorAll('input,textarea').forEach((inp) => {
