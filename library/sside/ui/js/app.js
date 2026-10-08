@@ -286,11 +286,61 @@
             }
         });
 
+        const SESSION_REFRESH_MS = 30 * 60 * 1000;
+        let sessionRefreshTimerId = null;
+
+        function opresteCronRefreshSesiune() {
+            if (sessionRefreshTimerId != null) {
+                clearInterval(sessionRefreshTimerId);
+                sessionRefreshTimerId = null;
+            }
+        }
+
+        function pornesteCronRefreshSesiune() {
+            opresteCronRefreshSesiune();
+            sessionRefreshTimerId = setInterval(function () {
+                reimprospateazaSesiunePeServer({ silent: true });
+            }, SESSION_REFRESH_MS);
+        }
+
+        async function reimprospateazaSesiunePeServer(opts) {
+            opts = opts || {};
+            if (!localStorage.getItem('session_token')) return;
+            try {
+                await apeleazaServerul('/api/session/refresh', {});
+            } catch (e) {
+                if (!opts.silent) {
+                    alert(e.message || String(e));
+                }
+            }
+        }
+
         window.onload = function () {
             const token = localStorage.getItem("session_token");
             const user = localStorage.getItem("session_user");
             if (token && user) arataPanouAplicatie(user);
         };
+
+        function mesajDinRaspunsApi(textSauJson) {
+            if (textSauJson == null) return '';
+            if (typeof textSauJson === 'object') {
+                if (textSauJson.eroare) return String(textSauJson.eroare);
+                if (textSauJson.error) return String(textSauJson.error);
+                if (textSauJson.mesaj) return String(textSauJson.mesaj);
+                try {
+                    return JSON.stringify(textSauJson);
+                } catch (e) {
+                    return String(textSauJson);
+                }
+            }
+            const s = String(textSauJson);
+            try {
+                const j = JSON.parse(s);
+                return mesajDinRaspunsApi(j);
+            } catch (e) {
+                return s;
+            }
+        }
 
         async function apeleazaServerul(ruta, dateTrimise) {
             const t0 = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
@@ -305,30 +355,39 @@
             const durationMs = Math.round(
                 (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) - t0
             );
+            const rawText = await raspuns.text();
+            let json = null;
+            try {
+                json = rawText ? JSON.parse(rawText) : null;
+            } catch (e) {
+                json = null;
+            }
             if (raspuns.status === 401 || raspuns.status === 403) {
                 executaLogout();
-                throw new Error("Sesiune invalidă sau expirată. Te rog reconectează-te.");
+                throw new Error(mesajDinRaspunsApi(json || rawText) || "Sesiune invalidă sau expirată. Te rog reconectează-te.");
             }
-            if (!raspuns.ok) {
-                const textEroare = await raspuns.text();
+            if (!raspuns.ok || (json && json.succes === false)) {
+                const textEroare = mesajDinRaspunsApi(json || rawText) || 'Eroare la server.';
                 if (ruta === '/api/comanda') {
                     jurnalApiComanda(dateTrimise, {
-                        response: null,
+                        response: json,
                         durationMs,
                         ok: false,
                         httpStatus: raspuns.status,
-                        errorText: textEroare || 'Eroare HTTP',
+                        errorText: textEroare,
                     });
                 }
-                throw new Error(textEroare || "Eroare la server.");
+                throw new Error(textEroare);
             }
-            const json = await raspuns.json();
+            if (json == null) {
+                throw new Error(rawText || 'Răspuns invalid de la server.');
+            }
             if (ruta === '/api/comanda') {
                 inregistreazaPayloadApi(dateTrimise);
                 jurnalApiComanda(dateTrimise, {
                     response: json,
                     durationMs,
-                    ok: json && json.succes !== false,
+                    ok: json.succes !== false,
                     httpStatus: raspuns.status,
                     errorText: null,
                 });
@@ -361,11 +420,13 @@
             document.getElementById("nume-utilizator-afisat").innerText = username;
             seteazaVizibilitateStatisticiApi(true);
             actualizeazaUiStatisticiApi();
+            pornesteCronRefreshSesiune();
             inapoiLaLista();
             scaneazaToateCampurile();
         }
 
         function executaLogout() {
+            opresteCronRefreshSesiune();
             localStorage.removeItem("session_token");
             localStorage.removeItem("session_user");
             document.getElementById("ecran-login").style.display = "block";
