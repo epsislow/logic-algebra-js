@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=exactcount1">
+    <link rel="stylesheet" href="ui/css/app.css?v=api-inspector2">
 </head>
 <body>
 
@@ -330,8 +330,9 @@
         </div>
     </div>
 
-    <footer id="api-stats-footer" class="api-stats-footer" aria-label="Statistici cereri Redis">
-        <div class="api-stats-inner">
+    <footer id="api-stats-footer" class="api-stats-footer" aria-label="Statistici cereri Redis — click pentru jurnal">
+        <div class="api-stats-inner" title="Click pentru jurnal cereri /api/comanda">
+            <span class="api-stats-err-badge" id="api-stats-err-badge" title="Ultima cerere a eșuat">!</span>
             <span class="api-stat api-stat-read"><span class="api-stat-label">Read</span> <strong id="stat-read">0</strong></span>
             <span class="api-stat api-stat-type"><span class="api-stat-label">Type</span> <strong id="stat-type">0</strong></span>
             <span class="api-stat api-stat-write"><span class="api-stat-label">Write</span> <strong id="stat-write">0</strong></span>
@@ -344,6 +345,22 @@
             </div>
         </div>
     </footer>
+
+    <div class="modal-backdrop api-inspector-backdrop" id="api-inspector-modal" aria-hidden="true">
+        <div class="modal-card api-inspector-card" role="dialog" aria-labelledby="api-inspector-title">
+            <div class="api-inspector-head">
+                <h3 id="api-inspector-title">Cereri /api/comanda</h3>
+                <button type="button" class="api-inspector-close" id="api-inspector-close" aria-label="Închide">×</button>
+            </div>
+            <div class="api-inspector-list" id="api-inspector-list"></div>
+            <div class="api-inspector-actions">
+                <button type="button" class="btn-gri btn-inline" id="api-inspector-all">Toate</button>
+                <button type="button" class="btn-gri btn-inline" id="api-inspector-none">Niciunul</button>
+                <button type="button" class="btn-albastru btn-inline" id="api-inspector-copy" disabled>Copiază</button>
+                <button type="button" class="btn-rosu btn-inline" id="api-inspector-delete" disabled>Șterge</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal cheie nouă -->
     <div class="modal-backdrop" id="modal-cheie-noua">
@@ -495,6 +512,7 @@
     <script src="ui/js/doc-viewer.js"></script>
     <script src="ui/js/panels-live.js?v=exactcount1"></script>
     <script src="ui/js/panels-prog.js?v=kttl1"></script>
+    <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
     <script src="ui/js/app.js"></script>
 </body>
 </html>

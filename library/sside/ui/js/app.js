@@ -135,7 +135,30 @@
             apiStats.write = 0;
             apiStats.advSearch = 0;
             apiCmdHistory = [];
+            if (window.SsideApiInspector && typeof SsideApiInspector.clearLog === 'function') {
+                SsideApiInspector.clearLog();
+            }
             actualizeazaUiStatisticiApi();
+        }
+
+        function inregistreazaPayloadApi(dateTrimise) {
+            if (!dateTrimise || typeof dateTrimise !== 'object') return;
+            if (Array.isArray(dateTrimise.tranzactie)) {
+                dateTrimise.tranzactie.forEach((argv) => {
+                    if (argv && argv[0]) inregistreazaComandaRedis(argv[0]);
+                });
+            } else if (Array.isArray(dateTrimise.comandaRedis) && dateTrimise.comandaRedis[0]) {
+                inregistreazaComandaRedis(dateTrimise.comandaRedis[0]);
+            }
+        }
+
+        function jurnalApiComanda(dateTrimise, payload) {
+            if (!window.SsideApiInspector || typeof SsideApiInspector.appendLog !== 'function') return;
+            const kind =
+                dateTrimise && Array.isArray(dateTrimise.tranzactie) ? 'tranzactie' : 'comandaRedis';
+            SsideApiInspector.appendLog(
+                Object.assign({ kind, request: dateTrimise || {} }, payload)
+            );
         }
 
         function seteazaVizibilitateStatisticiApi(vizibil) {
@@ -270,6 +293,7 @@
         };
 
         async function apeleazaServerul(ruta, dateTrimise) {
+            const t0 = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
             const token = localStorage.getItem("session_token");
             const configurareCerere = {
                 method: "POST",
@@ -278,18 +302,36 @@
             if (token) configurareCerere.headers["Authorization"] = `Bearer ${token}`;
             configurareCerere.body = JSON.stringify(dateTrimise);
             const raspuns = await fetch(`${WORKER_URL}${ruta}`, configurareCerere);
+            const durationMs = Math.round(
+                (typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now()) - t0
+            );
             if (raspuns.status === 401 || raspuns.status === 403) {
                 executaLogout();
                 throw new Error("Sesiune invalidă sau expirată. Te rog reconectează-te.");
             }
             if (!raspuns.ok) {
                 const textEroare = await raspuns.text();
+                if (ruta === '/api/comanda') {
+                    jurnalApiComanda(dateTrimise, {
+                        response: null,
+                        durationMs,
+                        ok: false,
+                        httpStatus: raspuns.status,
+                        errorText: textEroare || 'Eroare HTTP',
+                    });
+                }
                 throw new Error(textEroare || "Eroare la server.");
             }
             const json = await raspuns.json();
-            // contorizăm doar Redis reușit (nu login/sql)
-            if (ruta === '/api/comanda' && dateTrimise && Array.isArray(dateTrimise.comandaRedis) && dateTrimise.comandaRedis[0]) {
-                inregistreazaComandaRedis(dateTrimise.comandaRedis[0]);
+            if (ruta === '/api/comanda') {
+                inregistreazaPayloadApi(dateTrimise);
+                jurnalApiComanda(dateTrimise, {
+                    response: json,
+                    durationMs,
+                    ok: json && json.succes !== false,
+                    httpStatus: raspuns.status,
+                    errorText: null,
+                });
             }
             return json;
         }
