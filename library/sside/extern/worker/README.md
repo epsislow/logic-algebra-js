@@ -99,4 +99,40 @@ await runAlgOps({
 });
 ```
 
-Verifică în consolă linia `[runAlgOps]` și răspunsurile **TRZ** / **CMDREDIS** în panoul de jurnal.
+**`end.with`** — o singură referință (`"$sec"`, `"txt"`, `"vars.x"`), nu text liber. Pentru mesaj compus: `str` / `concat` sau `msg` literal.
+
+### ksave — `ttl` / `keepTtl` (K6)
+
+`ttl` pe același pas (fără `kttl set` separat):
+
+```javascript
+await runAlgOps({
+  steps: [
+    { op: "ksave", key: "s:console:kt1", val: "a", as: "string", ttl: 120 },
+    { op: "kttl", fn: "get", key: "s:console:kt1", to: "sec" },
+    { op: "end", with: "$sec" }
+  ]
+});
+```
+
+`keepTtl` — valoarea se schimbă, TTL rămâne (~600):
+
+```javascript
+await runAlgOps({
+  steps: [
+    { op: "ksave", key: "s:console:keep1", val: "v1", as: "string", ttl: 600 },
+    { op: "ksave", key: "s:console:keep1", val: "v2", as: "string", keepTtl: true },
+    { op: "kget", key: "s:console:keep1", to: "txt", as: "string" },
+    { op: "kttl", fn: "get", key: "s:console:keep1", to: "sec" },
+    {
+      op: "str",
+      fn: "concat",
+      args: ["txt", " / ttl=", "sec"],
+      to: "line"
+    },
+    { op: "end", with: "$line" }
+  ]
+});
+```
+
+Verifică în consolă linia `[runAlgOps]` (`msg` = conținutul lui `with`) și răspunsurile **TRZ** / **CMDREDIS** în panoul de jurnal.
