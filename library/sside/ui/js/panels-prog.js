@@ -833,12 +833,18 @@
     }
 
     if (op === 'ksave') {
+      let extra = '';
+      if (step.keepTtl === true) extra += '  keepTtl';
+      if (step.ttl !== undefined && step.ttl !== null && step.ttl !== '') {
+        extra += '  ttl ' + previewVal(step.ttl);
+      }
       return (
         'ksave  ' +
         previewVal(step.key) +
         ' ← ' +
         previewVal(step.val) +
-        (step.as ? '  as ' + previewVal(step.as) : '')
+        (step.as ? '  as ' + previewVal(step.as) : '') +
+        extra
       );
     }
 
@@ -1567,6 +1573,26 @@
         mkField('val', wire(mkInput('val', step.val != null ? step.val : 'form')))
       );
       row.appendChild(mkField('as', wire(mkSelect('as', step.as || 'auto', AS_OPTS))));
+      const ttlIn = wire(mkInput('ttl', step.ttl != null ? step.ttl : ''));
+      const ttlF = mkField('ttl (sec)', ttlIn);
+      const keepSel = wire(
+        mkSelect('keepTtl', step.keepTtl === true ? '1' : '0', [
+          { value: '0', label: 'nu' },
+          { value: '1', label: 'da — păstrează TTL (SET KEEPTTL)' },
+        ])
+      );
+      const keepF = mkField('keepTtl', keepSel);
+      row.appendChild(ttlF);
+      row.appendChild(keepF);
+      function syncKsaveTtlKeep() {
+        const keepOn = keepSel.value === '1';
+        const ttlOn = String(ttlIn.value || '').trim() !== '';
+        ttlIn.disabled = keepOn;
+        keepSel.disabled = ttlOn;
+      }
+      ttlIn.addEventListener('input', syncKsaveTtlKeep);
+      keepSel.addEventListener('change', syncKsaveTtlKeep);
+      syncKsaveTtlKeep();
       return;
     }
 
@@ -2004,6 +2030,17 @@
       step.key = sf(el, 'key');
       step.val = sf(el, 'val');
       step.as = sf(el, 'as') || 'auto';
+      delete step.ttl;
+      delete step.keepTtl;
+      if (sf(el, 'keepTtl') === '1') step.keepTtl = true;
+      const rawTtl = sf(el, 'ttl');
+      if (rawTtl !== '') {
+        if (!Number.isNaN(Number(rawTtl)) && String(rawTtl).trim() === String(Number(rawTtl))) {
+          step.ttl = parseInt(rawTtl, 10);
+        } else {
+          step.ttl = rawTtl;
+        }
+      }
       return withStepMeta(el, step);
     }
     if (op === 'kdel') {

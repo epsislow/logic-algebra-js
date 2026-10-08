@@ -68,6 +68,131 @@ module.exports = {
     },
     {
       id: 3,
+      desc: 'ksave ttl + kttl get',
+      async run() {
+        const redis = createMemoryRedis();
+        await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'ksave', key: 's:kt', val: 'v', as: 'string', ttl: 90 },
+              { op: 'kttl', fn: 'get', key: 's:kt', to: 't' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kttl', fn: 'get', key: 's:kt', to: 't' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r.vars.t >= 1 && r.vars.t <= 90);
+      },
+    },
+    {
+      id: 4,
+      desc: 'ksave keepTtl string păstrează EXPIRE',
+      async run() {
+        const redis = createMemoryRedis();
+        await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'ksave', key: 's:keep', val: 'a', as: 'string', ttl: 200 },
+            ],
+          },
+          { form: {}, redis }
+        );
+        await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'ksave', key: 's:keep', val: 'b', as: 'string', keepTtl: true },
+              { op: 'kttl', fn: 'get', key: 's:keep', to: 't' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kget', key: 's:keep', to: 'v', as: 'string' },
+              { op: 'kttl', fn: 'get', key: 's:keep', to: 't' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.v, 'b');
+        assert(r.vars.t >= 1 && r.vars.t <= 200);
+      },
+    },
+    {
+      id: 5,
+      desc: 'ksave ttl + keepTtl mutual exclusive',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'ksave',
+                key: 's:x',
+                val: '1',
+                as: 'string',
+                ttl: 10,
+                keepTtl: true,
+              },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r.err && /mutual/i.test(r.err));
+      },
+    },
+    {
+      id: 6,
+      desc: 'ksave ttl în tstart/tdo',
+      async run() {
+        const redis = createMemoryRedis();
+        await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'tstart' },
+              { op: 'ksave', key: 's:txk', val: 'z', as: 'string', ttl: 45 },
+              { op: 'tdo' },
+              { op: 'kttl', fn: 'get', key: 's:txk', to: 't' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kttl', fn: 'get', key: 's:txk', to: 't' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r.vars.t >= 1 && r.vars.t <= 45);
+      },
+    },
+    {
+      id: 7,
       desc: 'kadd / krm pe set',
       async run() {
         const redis = createMemoryRedis();
@@ -89,7 +214,7 @@ module.exports = {
       },
     },
     {
-      id: 4,
+      id: 8,
       desc: 'redis whitelist blochează FLUSHALL',
       async run() {
         const redis = createMemoryRedis();
@@ -104,7 +229,7 @@ module.exports = {
       },
     },
     {
-      id: 5,
+      id: 9,
       desc: 'buildKsaveArgv auto object→JSON.SET',
       run() {
         const argv = Ops.buildKsaveArgv('k', { x: 1 }, 'auto');
@@ -113,7 +238,15 @@ module.exports = {
       },
     },
     {
-      id: 6,
+      id: 10,
+      desc: 'buildKsaveArgv keepTtl → SET KEEPTTL',
+      run() {
+        const argv = Ops.buildKsaveArgv('s:k', 'v', 'string', { keepTtl: true });
+        assertEq(argv.join(' '), 'SET s:k v KEEPTTL');
+      },
+    },
+    {
+      id: 11,
       desc: 'resolveRef form / list / $var literal',
       run() {
         const ctx = {

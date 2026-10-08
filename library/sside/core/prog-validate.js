@@ -168,6 +168,15 @@
           }
         }
       }
+      if (s.op === 'ksave') {
+        if (s.keepTtl != null && typeof s.keepTtl !== 'boolean') {
+          return err(p + '.keepTtl trebuie boolean');
+        }
+        const hasTtl = s.ttl !== undefined && s.ttl !== null && s.ttl !== '';
+        if (s.keepTtl === true && hasTtl) {
+          return err(p + ': ttl și keepTtl sunt mutual exclusive');
+        }
+      }
       if (s.op === 'kttl') {
         const fn = String(s.fn || '').toLowerCase();
         if (fn !== 'get' && fn !== 'set' && fn !== 'remove') {

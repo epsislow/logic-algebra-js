@@ -116,5 +116,26 @@ module.exports = {
         assert(h.indexOf('<code>code</code>') !== -1);
       },
     },
+    {
+      id: 8,
+      desc: 'ksave ttl + keepTtl mutual exclusive (K6)',
+      run() {
+        const r = V.validateAlg({
+          v: 1,
+          steps: [
+            {
+              op: 'ksave',
+              key: 's:x',
+              val: '1',
+              as: 'string',
+              ttl: 10,
+              keepTtl: true,
+            },
+          ],
+        });
+        assert(!r.ok);
+        assert(/mutual/i.test(r.err || ''));
+      },
+    },
   ],
 };

@@ -353,8 +353,14 @@
       const key = String(getVal(ctx, step.key) || '');
       if (!key) throw new Error('ksave: key gol');
       const val = getVal(ctx, step.val);
-      const argv = Ops.buildKsaveArgv(key, val, step.as);
+      const expireSec = Ops.resolveKsaveExpireSec(step, ctx, getVal);
+      const argv = Ops.buildKsaveArgv(key, val, step.as, {
+        keepTtl: step.keepTtl === true,
+      });
       await enqueueOrExec(ctx, env, argv);
+      if (expireSec != null) {
+        await enqueueOrExec(ctx, env, ['EXPIRE', key, String(expireSec)]);
+      }
       return;
     }
 

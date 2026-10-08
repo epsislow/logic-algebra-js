@@ -437,13 +437,34 @@ Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 | op | Sens | `as` |
 |----|------|------|
 | `kget` | citește → `to` | `auto` / `json` / `string` |
-| `ksave` | scrie `val` la `key` | idem (default `auto`) |
+| `ksave` | scrie `val` la `key` | idem (default `auto`); opțional **`ttl`**, **`keepTtl`** — vezi mai jos |
 | `kdel` | șterge | — |
 | `kttl` | TTL pe cheie (get / set / remove) | — |
 | `kadd` | adaugă în set/list | — |
 | `krm` | scoate din set/list | — |
 
 `ksave` **rescrie** mereu cheia (fără eroare dacă există). Pentru create-only, verifică înainte cu `TYPE` / `EXISTS` + `if` + `end`+`err` (vezi exemple).
+
+#### ksave — `ttl` și `keepTtl` (K6)
+
+Câmpuri **opționale** pe același pas (nu înlocuiesc `kttl` pentru citiri / EXPIRE separat):
+
+```json
+{ "op": "ksave", "key": "s:session:$id", "val": "payload", "as": "json", "ttl": 3600 }
+{ "op": "ksave", "key": "s:msg", "val": "text", "as": "string", "keepTtl": true }
+```
+
+| Câmp | Semnificație |
+|------|----------------|
+| **`ttl`** | După `SET` / `JSON.SET`, **`EXPIRE key ttl`** (secunde, literal sau ref). Integer **≥ 1**. Intră în **`tstart`/`tdo`** ca al doilea argv din buffer. |
+| **`keepTtl`** | **`true`**: la string, `SET … KEEPTTL` (ca salvarea din UI) — **păstrează** expirarea existentă. **Nu** trimite `EXPIRE`. |
+| (omit ambele) | Comportament clasic: rescriere; la **string** fără `KEEPTTL`, Redis **șterge** TTL-ul vechi. |
+
+**Mutual exclusive:** `ttl` + `keepTtl: true` → eroare validare / runtime.
+
+**JSON:** `keepTtl` nu adaugă flag în `JSON.SET`; pe Upstash TTL-ul cheii JSON e de obicei **păstrat** la update. Pentru string, folosește explicit `keepTtl`.
+
+**Echivalent:** `ksave` + `ttl: 120` ≈ `ksave` apoi `kttl set` cu aceeași cheie (în aceeași tranzacție, ordinea e garantată write → EXPIRE).
 
 ### kttl
 

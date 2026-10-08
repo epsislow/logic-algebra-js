@@ -188,7 +188,8 @@
     return t === 'json' || t === 'rejson' || t === 'rejson-rl';
   }
 
-  function buildKsaveArgv(key, val, as) {
+  function buildKsaveArgv(key, val, as, opts) {
+    opts = opts || {};
     as = normalizeAs(as);
     const useJson =
       as === 'json' ||
@@ -197,7 +198,27 @@
       return ['JSON.SET', key, '$', JSON.stringify(val)];
     }
     const text = val === undefined || val === null ? '' : typeof val === 'string' ? val : String(val);
-    return ['SET', key, text];
+    const argv = ['SET', key, text];
+    if (opts.keepTtl === true) {
+      argv.push('KEEPTTL');
+    }
+    return argv;
+  }
+
+  /**
+   * Secunde EXPIRE după ksave, sau null. Respinge ttl + keepTtl împreună.
+   */
+  function resolveKsaveExpireSec(step, ctx, getValFn) {
+    const hasTtl = step.ttl !== undefined && step.ttl !== null && step.ttl !== '';
+    if (step.keepTtl === true && hasTtl) {
+      throw new Error('ksave: ttl și keepTtl sunt mutual exclusive');
+    }
+    if (!hasTtl) return null;
+    const sec = castValue(getValFn(ctx, step.ttl), 'integer');
+    if (!Number.isFinite(sec) || sec < 1) {
+      throw new Error('ksave: ttl trebuie integer ≥ 1 (secunde)');
+    }
+    return sec;
   }
 
   function buildKgetArgv(key, as, redisType) {
@@ -1285,6 +1306,7 @@
     buildKttlStep,
     executeLock,
     buildKsaveArgv,
+    resolveKsaveExpireSec,
     buildKgetArgv,
     buildKaddArgv,
     buildKrmArgv,

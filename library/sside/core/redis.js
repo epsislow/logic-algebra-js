@@ -111,11 +111,18 @@
       if (cmd === 'SET') {
         const key = a[0];
         const val = a[1] == null ? '' : String(a[1]);
-        const hasNx = a.map(x => String(x).toUpperCase()).includes('NX');
+        const flags = a.map((x) => String(x).toUpperCase());
+        const hasNx = flags.includes('NX');
+        const keepTtl = flags.includes('KEEPTTL');
         if (hasNx && store.has(key)) {
           return null;
         }
-        store.set(key, { tip: 'string', val: val, expireAt: null });
+        let expireAt = null;
+        const prev = store.get(key);
+        if (keepTtl && prev && prev.expireAt != null) {
+          expireAt = prev.expireAt;
+        }
+        store.set(key, { tip: 'string', val: val, expireAt: expireAt });
         return 'OK';
       }
 
@@ -156,7 +163,12 @@
             payload = JSON.parse(payload);
           } catch (e) { /* keep */ }
         }
-        store.set(key, { tip: 'json', val: payload, expireAt: null });
+        const prev = store.get(key);
+        let expireAt = null;
+        if (prev && prev.expireAt != null) {
+          expireAt = prev.expireAt;
+        }
+        store.set(key, { tip: 'json', val: payload, expireAt: expireAt });
         indexTagsFromJson(key, payload);
         return 'OK';
       }
