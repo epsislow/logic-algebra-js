@@ -102,7 +102,8 @@ Preferat: `tabs[].blocks[]` (fiecare block are **`id` obligatoriu**). `forms[]` 
 }
 ```
 
-Live UI: taburi + stivă verticală de blocks (tabele + formuri).
+Live UI: taburi + stivă verticală de blocks (tabele + formuri).  
+Din alg (buton form/list): `{ "op": "ui", "do": "tab", "tab": "<tabs[].id>" }` — vezi **Operații alg** / **UI Runtime**.
 
 ## list:_… (F4l)
 

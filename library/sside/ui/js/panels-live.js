@@ -25,6 +25,8 @@
   const listById = new Map();
   /** Ordinea listelor pe tabul / view-ul activ (pt. _1, _2, …). */
   let activeListOrder = [];
+  /** @type {{ switchTo: (ref: string) => Promise<void> } | null} */
+  let runtimeUiTabApi = null;
 
   function setDeps(partial) {
     deps = Object.assign({}, deps, partial || {});
@@ -75,6 +77,7 @@
     liveInstances = [];
     listById.clear();
     resetActiveListOrder();
+    runtimeUiTabApi = null;
   }
 
   async function applyUiCommands(ui) {
@@ -86,6 +89,15 @@
       if (deps.onUiRuntimeOpen && typeof deps.onUiRuntimeOpen === 'function') {
         await deps.onUiRuntimeOpen(k);
       }
+    }
+    const tabs = [].concat(ui.tab || []);
+    for (let i = 0; i < tabs.length; i++) {
+      const ref = String(tabs[i] || '').trim();
+      if (!ref) continue;
+      if (!runtimeUiTabApi || typeof runtimeUiTabApi.switchTo !== 'function') {
+        throw new Error('ui tab: niciun UI Live cu taburi montat');
+      }
+      await runtimeUiTabApi.switchTo(ref);
     }
     const clears = [].concat(ui.clear || []);
     const refreshes = [].concat(ui.refresh || []);
@@ -787,7 +799,12 @@
       }
     }
 
+    const tabIndexById = new Map();
     tabs.forEach((tab, i) => {
+      if (tab && tab.id != null && String(tab.id).trim() !== '') {
+        tabIndexById.set(String(tab.id).trim(), i);
+      }
+      tabIndexById.set(String(i), i);
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = tab.label || tab.id || 'Tab ' + (i + 1);
@@ -796,6 +813,22 @@
       };
       tabBar.appendChild(b);
     });
+
+    runtimeUiTabApi = {
+      async switchTo(ref) {
+        const r = String(ref || '').trim();
+        if (!r) throw new Error('ui tab: referință goală');
+        let idx = tabIndexById.has(r) ? tabIndexById.get(r) : undefined;
+        if (idx == null && /^\d+$/.test(r)) {
+          const n = parseInt(r, 10);
+          if (n >= 0 && n < tabs.length) idx = n;
+        }
+        if (idx == null) {
+          throw new Error('ui tab: id necunoscut „' + r + '”');
+        }
+        await showTab(idx);
+      },
+    };
 
     await showTab(0);
   }

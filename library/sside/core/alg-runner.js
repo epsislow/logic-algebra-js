@@ -326,18 +326,26 @@
       if (doCmd === 'open') {
         const openKey = String(getVal(ctx, step.key) != null ? getVal(ctx, step.key) : step.key || '');
         if (!openKey.trim()) throw new Error('ui: open fără key');
-        if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [] };
+        if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [], tab: [] };
         if (!Array.isArray(ctx._ui.open)) ctx._ui.open = [];
         ctx._ui.open.push(openKey.trim());
         return;
       }
+      if (doCmd === 'tab') {
+        const tabRef = String(getVal(ctx, step.tab) != null ? getVal(ctx, step.tab) : step.tab || '');
+        if (!tabRef.trim()) throw new Error('ui: tab fără tab');
+        if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [], tab: [] };
+        if (!Array.isArray(ctx._ui.tab)) ctx._ui.tab = [];
+        ctx._ui.tab.push(tabRef.trim());
+        return;
+      }
       if (doCmd !== 'refresh' && doCmd !== 'clear') {
-        throw new Error('ui: do trebuie refresh|clear|open');
+        throw new Error('ui: do trebuie refresh|clear|open|tab');
       }
       let ids = step.listid;
       if (ids == null || ids === '') throw new Error('ui: lipsește listid');
       if (!Array.isArray(ids)) ids = [ids];
-      if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [] };
+      if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [], tab: [] };
       const bucket = doCmd === 'clear' ? 'clear' : 'refresh';
       const uiCtx = env.uiContext || {};
       ids.forEach((idTok) => {

@@ -638,6 +638,22 @@ Deschide alt `ui:` în același ecran Runtime (stivă + ← Înapoi). Doar pe **
 
 `key` — obligatoriu (string sau ref). Fără `listid`.
 
+### tab (același UI)
+
+Schimbă tabul activ în **Runtime** (același `ui:_…` montat). Ordinea în alg: de obicei **tab** înainte de **refresh**, ca `_1` / `listid` să țintească listele din noul tab.
+
+```json
+{ "op": "ui", "do": "tab", "tab": "legacy" }
+{ "op": "ui", "do": "tab", "tab": "1" }
+```
+
+| `tab` | Sens |
+|-------|------|
+| id literal | `ui.tabs[].id` (recomandat — id obligatoriu în definiție) |
+| `"0"`, `"1"`, … | index tab **0-based** (fallback) |
+
+`tab` — obligatoriu (string sau ref, ex. `form.tabId`). Fără `listid`.
+
 ### refresh / clear
 
 `listid` e **mereu string** (sau array de stringuri), obligatoriu la `refresh` și `clear`:

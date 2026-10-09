@@ -233,8 +233,8 @@
       }
       if (s.op === 'ui') {
         const d = s.do || 'refresh';
-        if (d !== 'refresh' && d !== 'clear' && d !== 'open') {
-          return err(p + ': ui.do trebuie refresh|clear|open');
+        if (d !== 'refresh' && d !== 'clear' && d !== 'open' && d !== 'tab') {
+          return err(p + ': ui.do trebuie refresh|clear|open|tab');
         }
         if (d === 'open') {
           if (s.key == null || s.key === '') {
@@ -242,6 +242,13 @@
           }
           if (typeof s.key !== 'string' && typeof s.key !== 'number') {
             return err(p + ': ui.key trebuie string sau ref');
+          }
+        } else if (d === 'tab') {
+          if (s.tab == null || s.tab === '') {
+            return err(p + ': ui tab fără tab');
+          }
+          if (typeof s.tab !== 'string' && typeof s.tab !== 'number') {
+            return err(p + ': ui.tab trebuie string sau ref');
           }
         } else {
           if (s.listid == null || s.listid === '') {

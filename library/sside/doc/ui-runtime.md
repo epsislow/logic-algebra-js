@@ -59,6 +59,18 @@ Un singur draft: cheia UI curentă. După abandon confirmat, remount din **Redis
 
 ---
 
+## Alg: `ui` **tab**
+
+Schimbă tabul în **același** UI (fără altă cheie Redis):
+
+```json
+{ "op": "ui", "do": "tab", "tab": "legacy" }
+```
+
+- `tab` = `tabs[].id` din JSON-ul `ui:` (ex. `"main"`, `"legacy"`).
+- Alternativ index `"0"`, `"1"`, … (0-based).
+- Combină cu **refresh** după tab, ex. `{ "do": "refresh", "listid": "stockMain" }` pe lista din tabul activ.
+
 ## Alg: `ui` **open**
 
 Deschide alt `ui:` în **același Runtime** (mini-browser):

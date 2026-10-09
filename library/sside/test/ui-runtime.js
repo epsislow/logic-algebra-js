@@ -219,5 +219,47 @@ module.exports = {
         assert(r.ui.refresh && r.ui.refresh.length === 1);
       },
     },
+    {
+      id: 16,
+      desc: 'validate ui tab cu tab id',
+      run() {
+        const r = V.validateAlg({
+          v: 1,
+          steps: [{ op: 'ui', do: 'tab', tab: 'legacy' }],
+        });
+        assert(r.ok, r.err);
+      },
+    },
+    {
+      id: 17,
+      desc: 'validate ui tab fără tab',
+      run() {
+        const r = V.validateAlg({
+          v: 1,
+          steps: [{ op: 'ui', do: 'tab' }],
+        });
+        assert(!r.ok);
+      },
+    },
+    {
+      id: 18,
+      desc: 'Alg.run acumulează ui.tab',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'ui', do: 'tab', tab: 'main' },
+              { op: 'ui', do: 'refresh', listid: 'stockMain' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r.ui && Array.isArray(r.ui.tab));
+        assertEq(r.ui.tab[0], 'main');
+        assert(r.ui.refresh && r.ui.refresh.length === 1);
+      },
+    },
   ],
 };
