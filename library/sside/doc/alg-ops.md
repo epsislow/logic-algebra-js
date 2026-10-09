@@ -628,6 +628,8 @@ Comenzi pe whitelist (`TYPE`, `EXISTS`, `JSON.GET`, …); nu e default în Edit 
 
 După ce un buton rulează alg, Live / Runtime aplică `result.ui`.
 
+**Ordinea efectelor** (alg → `open`/`tab` → refresh/clear → banner `end`), combinații `open`/`tab` + refresh, și limitele mesajului `end` după navigare: Docs → **UI Runtime (Live)** → *Ordinea efectelor la buton*.
+
 ### open (Runtime)
 
 Deschide alt `ui:` în același ecran Runtime (stivă + ← Înapoi). Doar pe **Runtime** `ui:`; vezi **UI Runtime (Live)**.
@@ -640,7 +642,7 @@ Deschide alt `ui:` în același ecran Runtime (stivă + ← Înapoi). Doar pe **
 
 ### tab (același UI)
 
-Schimbă tabul activ în **Runtime** (același `ui:_…` montat). Ordinea în alg: de obicei **tab** înainte de **refresh**, ca `_1` / `listid` să țintească listele din noul tab.
+Schimbă tabul activ în **Runtime** (același `ui:_…` montat). În JSON poți pune pașii în orice ordine; la aplicare se execută **tab** înainte de **refresh**/`clear`. Pentru lista din tabul nou, preferă **`listid` literal** (id block); `_1` / `_self` se rezolvă la run din tabul activ **la click** — vezi **UI Runtime**.
 
 ```json
 { "op": "ui", "do": "tab", "tab": "legacy" }
