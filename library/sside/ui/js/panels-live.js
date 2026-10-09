@@ -77,8 +77,16 @@
     resetActiveListOrder();
   }
 
-  function applyUiCommands(ui) {
+  async function applyUiCommands(ui) {
     if (!ui || typeof ui !== 'object') return;
+    const opens = [].concat(ui.open || []);
+    for (let i = 0; i < opens.length; i++) {
+      const k = String(opens[i] || '').trim();
+      if (!k) continue;
+      if (deps.onUiRuntimeOpen && typeof deps.onUiRuntimeOpen === 'function') {
+        await deps.onUiRuntimeOpen(k);
+      }
+    }
     const clears = [].concat(ui.clear || []);
     const refreshes = [].concat(ui.refresh || []);
     clears.forEach((id) => {
@@ -164,7 +172,7 @@
         uiContext: makeUiContext(listid),
       });
       showBanner(bannerEl, result || { msg: 'OK' });
-      if (result && result.ui) applyUiCommands(result.ui);
+      if (result && result.ui) await applyUiCommands(result.ui);
     } catch (e) {
       showBanner(bannerEl, { err: e.message || String(e) });
     }
@@ -630,7 +638,7 @@
               uiContext: makeUiContext(null),
             });
             showBanner(bannerEl, result || { msg: 'OK' });
-            if (result && result.ui) applyUiCommands(result.ui);
+            if (result && result.ui) await applyUiCommands(result.ui);
           } catch (e) {
             showBanner(bannerEl, { err: e.message || String(e) });
           }

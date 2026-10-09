@@ -3457,9 +3457,13 @@
     $('panel-unsupported').style.display = 'none';
     $('btn-salveaza').style.display = 'inline-block';
 
-    // Live ascuns pe alg (D8)
+    // Live tab: alg nu; ui: → Runtime separat (UA); form/list păstrează tab Live
     const liveBtn = $('tab-prog-live');
-    if (liveBtn) liveBtn.style.display = progKind === 'alg' ? 'none' : 'inline-block';
+    const Nav = root.SsideUiRuntimeNav;
+    const showLiveTab =
+      progKind !== 'alg' &&
+      (!Nav || typeof Nav.progUiShowsLiveTab !== 'function' || Nav.progUiShowsLiveTab(progKind));
+    if (liveBtn) liveBtn.style.display = showLiveTab ? 'inline-block' : 'none';
 
     const prefer = hooks.preferMod || 'edit';
     seteazaMod(prefer === 'live' || prefer === 'formular' || prefer === 'json' ? prefer : 'edit');
@@ -3473,6 +3477,16 @@
     return progKind;
   }
 
+  function getProgDocument() {
+    if (!progKind) return null;
+    sincronizeazaInRaw();
+    try {
+      return JSON.parse(JSON.stringify(progObj));
+    } catch (e) {
+      return null;
+    }
+  }
+
   root.SsideProgPanels = {
     esteProgTip,
     activeaza,
@@ -3481,6 +3495,7 @@
     sincronizeazaInRaw,
     getMod,
     getKind,
+    getProgDocument,
     setDeps,
     ALG_OPS,
     normalizeUiTabBlocks,

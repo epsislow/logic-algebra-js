@@ -232,29 +232,38 @@
         }
       }
       if (s.op === 'ui') {
-        if (s.listid == null || s.listid === '') {
-          return err(p + ': ui fără listid');
-        }
         const d = s.do || 'refresh';
-        if (d !== 'refresh' && d !== 'clear') {
-          return err(p + ': ui.do trebuie refresh|clear');
+        if (d !== 'refresh' && d !== 'clear' && d !== 'open') {
+          return err(p + ': ui.do trebuie refresh|clear|open');
         }
-        const toks = Array.isArray(s.listid) ? s.listid : [s.listid];
-        for (let j = 0; j < toks.length; j++) {
-          const tok = toks[j];
-          if (typeof tok === 'number') {
-            return err(p + '.listid[' + j + ']: folosește string „_1” nu număr');
+        if (d === 'open') {
+          if (s.key == null || s.key === '') {
+            return err(p + ': ui open fără key');
           }
-          if (typeof tok !== 'string') {
-            return err(p + '.listid trebuie string|string[]');
+          if (typeof s.key !== 'string' && typeof s.key !== 'number') {
+            return err(p + ': ui.key trebuie string sau ref');
           }
-          const t = tok.trim();
-          if (t.charAt(0) === '$' || t === 'form' || t.indexOf('form.') === 0) {
-            continue;
+        } else {
+          if (s.listid == null || s.listid === '') {
+            return err(p + ': ui fără listid');
           }
-          if (UiListRef && typeof UiListRef.validateListIdToken === 'function') {
-            const le = UiListRef.validateListIdToken(t);
-            if (le) return err(p + '.listid: ' + le);
+          const toks = Array.isArray(s.listid) ? s.listid : [s.listid];
+          for (let j = 0; j < toks.length; j++) {
+            const tok = toks[j];
+            if (typeof tok === 'number') {
+              return err(p + '.listid[' + j + ']: folosește string „_1” nu număr');
+            }
+            if (typeof tok !== 'string') {
+              return err(p + '.listid trebuie string|string[]');
+            }
+            const t = tok.trim();
+            if (t.charAt(0) === '$' || t === 'form' || t.indexOf('form.') === 0) {
+              continue;
+            }
+            if (UiListRef && typeof UiListRef.validateListIdToken === 'function') {
+              const le = UiListRef.validateListIdToken(t);
+              if (le) return err(p + '.listid: ' + le);
+            }
           }
         }
       }

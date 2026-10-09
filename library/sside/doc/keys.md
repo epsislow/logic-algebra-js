@@ -13,7 +13,8 @@ Prefixuri Redis folosite de sside:
 | `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |
 | `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |
 
-Forme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.
+Forme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.  
+Chei **`ui:`** — utilizare: **UI Runtime (Live)**; `form:` / `list:` — tab Live în Edit.
 
 ## Reguli
 

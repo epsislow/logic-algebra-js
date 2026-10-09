@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=key-badge-tint1">
+    <link rel="stylesheet" href="ui/css/app.css?v=ua-runtime-shell">
 </head>
 <body>
 
@@ -28,7 +28,7 @@
         </button>
     </div>
 
-    <h2>Sistem Gestiune In-House (Cloudflare + Upstash)</h2>
+    <h2 id="app-main-title">Sistem Gestiune In-House (Cloudflare + Upstash)</h2>
 
     <div id="ecran-login" class="box box-auth">
         <h3>🔒 Autentificare Necesară</h3>
@@ -86,6 +86,26 @@
                     <button type="button" class="btn-gri btn-inline" onclick="reseteazaCautariSalvate()" title="Revine la cele 2 căutări implicite">Reset</button>
                 </div>
                 <div id="lista-cautari-salvate" class="lista-chei"></div>
+            </div>
+        </div>
+
+        <!-- ========== ECRAN UI RUNTIME (Live ui:) ========== -->
+        <div id="ecran-ui-runtime" style="display: none;">
+            <div class="box ui-runtime-box">
+                <div class="ui-runtime-head">
+                    <div class="ui-runtime-nav">
+                        <button type="button" class="btn-gri btn-inline" id="btn-runtime-back" onclick="runtimeNavBack()" style="display:none;">← Înapoi</button>
+                        <button type="button" class="btn-gri btn-inline" id="btn-runtime-back-list" onclick="runtimeNavBackToList()">← Înapoi la listă</button>
+                    </div>
+                    <div class="ui-runtime-title-wrap">
+                        <h3 class="ui-runtime-title" id="runtime-ui-title">ui:</h3>
+                        <code class="ui-runtime-key" id="runtime-ui-key"></code>
+                    </div>
+                    <div class="ui-runtime-actions">
+                        <button type="button" class="btn-albastru btn-inline" id="btn-runtime-edit" onclick="runtimeNavOpenEdit()">Edit</button>
+                    </div>
+                </div>
+                <div id="ui-runtime-live-root" class="ui-runtime-body"></div>
             </div>
         </div>
 
@@ -298,6 +318,7 @@
                     <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
                         Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
                     </button>
+                    <button type="button" class="btn-albastru" id="btn-prog-live-ui" style="display:none;" onclick="deschideLiveUiDinEdit()">Live</button>
                     <button type="button" class="btn-rosu" onclick="stergeCheieCurenta()">Șterge</button>
                     <button type="button" class="btn-albastru" id="btn-deschide-schema" style="display:none;" onclick="deschideSchemaLegata()">Deschide schema</button>
                     <button type="button" class="btn-legenda" id="btn-idx-legenda" style="display:none;" onclick="toggleIdxLegenda()">Indecși</button>
@@ -508,6 +529,7 @@
     <script src="core/list-load.js?v=exactcount2"></script>
     <script src="core/alg-ops.js?v=kttl1"></script>
     <script src="core/ui-list-ref.js?v=f4l-uiref"></script>
+    <script src="core/ui-runtime-nav.js?v=ua1"></script>
     <script src="core/redis.js"></script>
     <script src="core/alg-runner.js?v=kttl1"></script>
     <script src="core/prog-validate.js?v=kttl1"></script>
@@ -516,6 +538,6 @@
     <script src="ui/js/panels-live.js?v=exactcount1"></script>
     <script src="ui/js/panels-prog.js?v=listkey3"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js"></script>
+    <script src="ui/js/app.js?v=ua2"></script>
 </body>
 </html>

@@ -17,7 +17,7 @@ ui:_…          → layout (taburi → blocks)
 | `alg` | `alg:_name` | logică (pași) | nu (doar Edit/Json) |
 | `form` | `form:_name` | UI câmpuri + butoane → alg | da |
 | `list` | `list:_name` | tabel din Redis / search | da |
-| `ui` | `ui:_name` | pagină: taburi → form/list | da |
+| `ui` | `ui:_name` | pagină: taburi → form/list | **Runtime** (listă → Live); Edit fără tab Live |
 
 Reguli comune:
 - obiect JSON, **`v: 1`** obligatoriu

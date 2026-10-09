@@ -624,11 +624,23 @@ Nested `tstart` → eroare.
 Comenzi pe whitelist (`TYPE`, `EXISTS`, `JSON.GET`, …); nu e default în Edit — adaugă din tab JSON.  
 `args` rezolvă refs (`$key`, `form.x`).
 
-## ui (refresh / clear list) — F4l + refs
+## ui (refresh / clear / open) — F4l + Runtime
 
-După ce un buton rulează alg, Live aplică `result.ui` pe tabelele montate.
+După ce un buton rulează alg, Live / Runtime aplică `result.ui`.
 
-`listid` e **mereu string** (sau array de stringuri), obligatoriu:
+### open (Runtime)
+
+Deschide alt `ui:` în același ecran Runtime (stivă + ← Înapoi). Doar pe **Runtime** `ui:`; vezi **UI Runtime (Live)**.
+
+```json
+{ "op": "ui", "do": "open", "key": "ui:_orders" }
+```
+
+`key` — obligatoriu (string sau ref). Fără `listid`.
+
+### refresh / clear
+
+`listid` e **mereu string** (sau array de stringuri), obligatoriu la `refresh` și `clear`:
 
 ```json
 { "op": "ui", "do": "refresh", "listid": "_self" }

@@ -323,13 +323,21 @@
 
     if (op === 'ui') {
       const doCmd = step.do || 'refresh';
+      if (doCmd === 'open') {
+        const openKey = String(getVal(ctx, step.key) != null ? getVal(ctx, step.key) : step.key || '');
+        if (!openKey.trim()) throw new Error('ui: open fără key');
+        if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [] };
+        if (!Array.isArray(ctx._ui.open)) ctx._ui.open = [];
+        ctx._ui.open.push(openKey.trim());
+        return;
+      }
       if (doCmd !== 'refresh' && doCmd !== 'clear') {
-        throw new Error('ui: do trebuie refresh|clear');
+        throw new Error('ui: do trebuie refresh|clear|open');
       }
       let ids = step.listid;
       if (ids == null || ids === '') throw new Error('ui: lipsește listid');
       if (!Array.isArray(ids)) ids = [ids];
-      if (!ctx._ui) ctx._ui = { refresh: [], clear: [] };
+      if (!ctx._ui) ctx._ui = { refresh: [], clear: [], open: [] };
       const bucket = doCmd === 'clear' ? 'clear' : 'refresh';
       const uiCtx = env.uiContext || {};
       ids.forEach((idTok) => {

@@ -3,6 +3,8 @@
 Prezentare generală a tipurilor prog: Docs → **Prog (alg/form/list/ui)**.  
 Aici: detalii Live form, `fields.options`, list fetch.
 
+**`ui:` Runtime (Live full-page):** Docs → **UI Runtime (Live)** — listă cu buton Live, Edit fără tab Live, navigare `ui open`.
+
 ## form:_…
 
 ```json
@@ -72,6 +74,9 @@ Path-uri: top-level (`location`) sau nested (`meta.wh`).
 `enum` static în schemă rămâne valid (fără `fields`).
 
 ## ui:_…
+
+**Editor:** tab-uri **Edit | Formular | Json** + acțiuni **Salvează | Live | Șterge** (fără tab Live în detaliu).  
+**Utilizare:** din listă → **Live** sau butonul **Live** din Edit → ecran **Runtime** (vezi doc dedicat).
 
 Preferat: `tabs[].blocks[]` (fiecare block are **`id` obligatoriu**). `forms[]` rămâne compat (Live îl normalizează la blocks).
 

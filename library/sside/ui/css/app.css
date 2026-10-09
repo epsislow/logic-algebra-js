@@ -295,6 +295,33 @@
             font-weight: 600;
         }
         .detail-refresh-btn:disabled { opacity: 0.55; cursor: wait; }
+
+        .ui-runtime-head {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+            gap: 10px 16px; margin-bottom: 14px; padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-subtle, #ddd);
+        }
+        .ui-runtime-nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .ui-runtime-title-wrap { flex: 1; min-width: 160px; }
+        .ui-runtime-title { margin: 0 0 4px 0; font-size: 1.15rem; }
+        .ui-runtime-key { font-size: 12px; color: var(--text-muted); }
+        .ui-runtime-body { min-height: 120px; }
+
+        /* Runtime ui: — doar ecranul Live, fără listă / toolbar aplicație */
+        body.sside-runtime-active #app-main-title,
+        body.sside-runtime-active .zona-utilizator,
+        body.sside-runtime-active #ecran-lista,
+        body.sside-runtime-active #ecran-cautari-salvate,
+        body.sside-runtime-active #ecran-detaliu {
+            display: none !important;
+        }
+        body.sside-runtime-active #ecran-ui-runtime {
+            display: block !important;
+        }
+        body.sside-runtime-active #panou-aplicatie {
+            display: block !important;
+        }
+
         .detail-meta { margin-bottom: 12px; }
         .detail-meta .meta-line { margin: 4px 0; font-size: 14px; }
         .detail-meta .meta-ttl {

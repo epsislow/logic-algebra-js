@@ -51,6 +51,10 @@
         let progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
         /** Cache JSON alg/form/schema pentru Live (evită JSON.GET la fiecare click). */
         let progJsonCache = Object.create(null);
+        /** Sesiune navigare Runtime ui: (UA) — sincronizată cu SsideUiRuntimeNav.plan */
+        let uiRuntimeSession = window.SsideUiRuntimeNav
+            ? SsideUiRuntimeNav.createSession()
+            : { stack: [], dirty: false, dirtyKey: null, memoryObj: null };
 
         function invalidateProgJsonCache(key) {
             if (key) delete progJsonCache[key];
@@ -1423,17 +1427,19 @@ function translateUpstashSearchResults(date) {
                             '<span class="key-name"></span>' +
                             '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
                             (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
-                            '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                            '<button type="button" class="btn-albastru btn-inline"></button>';
                         row.querySelector('[data-role="redis"]').textContent = er.badge;
                     } else {
                         row.innerHTML =
                             '<span class="key-name"></span>' +
                             '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
-                            '<button type="button" class="btn-albastru btn-inline">Edit</button>';
+                            '<button type="button" class="btn-albastru btn-inline"></button>';
                     }
                     row.querySelector('.key-name').textContent = cheie;
                     row.querySelector('[data-role="conv"]').textContent = et.badge;
-                    const go = () => deschideDetaliu(cheie);
+                    const btnAct = row.querySelector('button');
+                    btnAct.textContent = info.tip === 'ui' ? 'Live' : 'Edit';
+                    const go = () => executaDeschidereDinLista(cheie, info);
                     row.addEventListener('click', (ev) => {
                         if (ev.target.tagName === 'BUTTON') return;
                         go();
@@ -1585,7 +1591,116 @@ function translateUpstashSearchResults(date) {
             }
         }
 
-        function inapoiLaLista() {
+        function setModShellRuntime(activ) {
+            document.body.classList.toggle('sside-runtime-active', !!activ);
+        }
+
+        function ascundeEcranUiRuntime() {
+            setModShellRuntime(false);
+            const el = document.getElementById('ecran-ui-runtime');
+            if (el) el.style.display = 'none';
+            if (window.SsideProgLive) SsideProgLive.destroyAll();
+            const root = document.getElementById('ui-runtime-live-root');
+            if (root) root.innerHTML = '';
+        }
+
+        async function monteazaUiRuntimeDinSesiuneSafe() {
+            if (typeof window.monteazaUiRuntimeDinSesiune === 'function') {
+                await window.monteazaUiRuntimeDinSesiune();
+            } else {
+                const root = document.getElementById('ui-runtime-live-root');
+                if (root) {
+                    root.innerHTML =
+                        '<p class="prog-live-stub">Live indisponibil (panels-live.js).</p>';
+                }
+            }
+        }
+
+        function syncUiRuntimeDirtyFromEdit() {
+            if (!window.SsideUiRuntimeNav) return;
+            const detaliu = document.getElementById('ecran-detaliu');
+            if (
+                detaliu &&
+                detaliu.style.display !== 'none' &&
+                infoCheieCurenta &&
+                infoCheieCurenta.tip === 'ui'
+            ) {
+                uiRuntimeSession.dirty = esteDetaliuCuModificariNesalvate();
+                uiRuntimeSession.dirtyKey = uiRuntimeSession.dirty ? cheieCurenta : null;
+            }
+        }
+
+        async function applyUiRuntimeNavPlan(action, payload, opts) {
+            if (!window.SsideUiRuntimeNav) return null;
+            syncUiRuntimeDirtyFromEdit();
+            opts = opts || {};
+            let p = SsideUiRuntimeNav.plan(uiRuntimeSession, action, payload || {}, opts);
+            if (p.confirmRequired && !opts.confirmedAbandon) {
+                if (!confirm(p.confirmMsg || SsideUiRuntimeNav.CONFIRM_MSG)) return null;
+                p = SsideUiRuntimeNav.plan(uiRuntimeSession, action, payload || {}, {
+                    confirmedAbandon: true,
+                });
+            }
+            if (p.nextSession) uiRuntimeSession = p.nextSession;
+            return p;
+        }
+
+        function showEcranUiRuntime() {
+            if (window.SsideDocs) SsideDocs.ascunde();
+            document.getElementById('ecran-lista').style.display = 'none';
+            document.getElementById('ecran-detaliu').style.display = 'none';
+            document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            document.getElementById('ecran-ui-runtime').style.display = 'block';
+            setModShellRuntime(true);
+        }
+
+        function actualizeazaBtnProgLiveUi() {
+            const btn = document.getElementById('btn-prog-live-ui');
+            if (!btn) return;
+            const show =
+                infoCheieCurenta &&
+                infoCheieCurenta.tip === 'ui' &&
+                document.getElementById('ecran-detaliu').style.display !== 'none';
+            btn.style.display = show ? 'inline-block' : 'none';
+        }
+
+        async function executaDeschidereDinLista(cheie, info) {
+            info = info || clasificaCheie(cheie, new Set(toateCheile || []));
+            if (info.tip === 'ui' && window.SsideUiRuntimeNav) {
+                const p = await applyUiRuntimeNavPlan('list.openKey', {
+                    key: cheie,
+                    progTip: info.tip,
+                });
+                if (!p) return;
+                if (p.effect && p.effect.screen === 'runtime') {
+                    cheieCurenta = cheie;
+                    infoCheieCurenta = info;
+                    showEcranUiRuntime();
+                    await monteazaUiRuntimeDinSesiuneSafe();
+                    return;
+                }
+            }
+            await deschideDetaliu(cheie);
+        }
+
+        async function inapoiLaLista(forceOpts) {
+            forceOpts = forceOpts || {};
+            if (
+                !forceOpts.skipUiConfirm &&
+                infoCheieCurenta &&
+                infoCheieCurenta.tip === 'ui' &&
+                document.getElementById('ecran-detaliu').style.display !== 'none'
+            ) {
+                const p = await applyUiRuntimeNavPlan('edit.backToList', {});
+                if (!p) return;
+            }
+            const runtimeVizibil =
+                document.getElementById('ecran-ui-runtime') &&
+                document.getElementById('ecran-ui-runtime').style.display !== 'none';
+            if (!forceOpts.skipUiConfirm && runtimeVizibil && window.SsideUiRuntimeNav) {
+                const p = await applyUiRuntimeNavPlan('runtime.backToList', {});
+                if (!p) return;
+            }
             opresteTimerTtl();
             anuleazaEditTtl({ silent: true });
             distrugeEditori();
@@ -1600,6 +1715,10 @@ function translateUpstashSearchResults(date) {
             valoareBaseline = '';
             ttlMsRemaining = null;
             actualizeazaIndicatorModificat();
+            ascundeEcranUiRuntime();
+            if (window.SsideUiRuntimeNav) {
+                uiRuntimeSession = SsideUiRuntimeNav.createSession();
+            }
             document.getElementById('ecran-detaliu').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
             if (window.SsideDocs) SsideDocs.ascunde();
@@ -2968,6 +3087,7 @@ function translateUpstashSearchResults(date) {
 
             document.getElementById('ecran-lista').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            ascundeEcranUiRuntime(); /* scoate și class sside-runtime-active */
             document.getElementById('ecran-detaliu').style.display = 'block';
             document.getElementById('detail-key-name').textContent = cheie;
 
@@ -3096,6 +3216,7 @@ function translateUpstashSearchResults(date) {
                     onDirty: () => actualizeazaIndicatorModificat(),
                     preferMod: opts.preferProgMod || 'edit',
                 });
+                actualizeazaBtnProgLiveUi();
                 marcheazaCurentCaBaseline();
                 return;
             }
@@ -3452,12 +3573,107 @@ function translateUpstashSearchResults(date) {
 
             window.runAlgOps = runAlgOps;
 
+            async function monteazaUiRuntimeDinSesiune() {
+                const entry =
+                    uiRuntimeSession.stack && uiRuntimeSession.stack.length
+                        ? uiRuntimeSession.stack[uiRuntimeSession.stack.length - 1]
+                        : null;
+                if (!entry || !entry.key) return;
+                const key = entry.key;
+                const titleEl = document.getElementById('runtime-ui-title');
+                const keyEl = document.getElementById('runtime-ui-key');
+                const root = document.getElementById('ui-runtime-live-root');
+                const backBtn = document.getElementById('btn-runtime-back');
+                if (keyEl) keyEl.textContent = key;
+                if (root) root.innerHTML = '<p class="prog-live-stub">Se încarcă Live…</p>';
+                SsideProgLive.destroyAll();
+                let uiDef;
+                try {
+                    if (entry.mount === 'memory' && entry.obj) {
+                        uiDef = JSON.parse(JSON.stringify(entry.obj));
+                    } else {
+                        uiDef = await liveLoadJsonKey(key);
+                    }
+                } catch (e) {
+                    if (root) {
+                        root.innerHTML =
+                            '<p class="prog-live-stub">' + (e.message || String(e)) + '</p>';
+                    }
+                    return;
+                }
+                if (titleEl) titleEl.textContent = (uiDef && uiDef.title) || key;
+                cheieCurenta = key;
+                infoCheieCurenta = clasificaCheie(key, new Set(toateCheile || []));
+                try {
+                    await SsideProgLive.renderUiLive(root, uiDef);
+                } catch (e) {
+                    if (root) {
+                        root.innerHTML =
+                            '<p class="prog-live-stub">' + (e.message || String(e)) + '</p>';
+                    }
+                }
+                if (backBtn) {
+                    backBtn.style.display =
+                        uiRuntimeSession.stack.length > 1 ? 'inline-block' : 'none';
+                }
+            }
+
+            async function runtimeUiOpenKey(openKey) {
+                const k = String(openKey || '').trim();
+                if (!k) return;
+                const p = await applyUiRuntimeNavPlan('runtime.uiOpen', { key: k });
+                if (!p || !p.ok) return;
+                showEcranUiRuntime();
+                await monteazaUiRuntimeDinSesiuneSafe();
+            }
+
+            window.monteazaUiRuntimeDinSesiune = monteazaUiRuntimeDinSesiune;
+
+            window.runtimeNavBack = async function runtimeNavBack() {
+                const p = await applyUiRuntimeNavPlan('runtime.back', {});
+                if (!p || !p.ok) return;
+                await monteazaUiRuntimeDinSesiuneSafe();
+            };
+
+            window.runtimeNavBackToList = async function runtimeNavBackToList() {
+                await inapoiLaLista();
+            };
+
+            window.runtimeNavOpenEdit = async function runtimeNavOpenEdit() {
+                const entry =
+                    uiRuntimeSession.stack && uiRuntimeSession.stack.length
+                        ? uiRuntimeSession.stack[uiRuntimeSession.stack.length - 1]
+                        : null;
+                if (!entry || !entry.key) return;
+                const key = entry.key;
+                await deschideDetaliu(key, { keepNav: true, preferProgMod: 'edit' });
+            };
+
+            window.deschideLiveUiDinEdit = async function deschideLiveUiDinEdit() {
+                if (!cheieCurenta || !infoCheieCurenta || infoCheieCurenta.tip !== 'ui') return;
+                if (SsideProgPanels) SsideProgPanels.sincronizeazaInRaw();
+                const dirty = esteDetaliuCuModificariNesalvate();
+                let doc = null;
+                if (dirty && SsideProgPanels && SsideProgPanels.getProgDocument) {
+                    doc = SsideProgPanels.getProgDocument();
+                }
+                const p = await applyUiRuntimeNavPlan('edit.openLive', {
+                    key: cheieCurenta,
+                    fromDirty: dirty,
+                    obj: doc,
+                });
+                if (!p) return;
+                showEcranUiRuntime();
+                await monteazaUiRuntimeDinSesiuneSafe();
+            };
+
             SsideProgLive.setDeps({
                 loadJsonKey: liveLoadJsonKey,
                 normalizeSchema: normalizeToJsonSchema,
                 defaultFromSchema: valoareImplicitaDinSchema,
                 onRunAlg,
                 redis: createWorkerRedisAdapter(),
+                onUiRuntimeOpen: runtimeUiOpenKey,
             });
         }
 
@@ -3722,6 +3938,10 @@ function translateUpstashSearchResults(date) {
                         onDirty: () => actualizeazaIndicatorModificat()
                     });
                     marcheazaCurentCaBaseline();
+                    if (infoCheieCurenta.tip === 'ui' && window.SsideUiRuntimeNav) {
+                        const sp = SsideUiRuntimeNav.plan(uiRuntimeSession, 'edit.save', {});
+                        if (sp.nextSession) uiRuntimeSession = sp.nextSession;
+                    }
                     alert('Salvat: ' + cheieCurenta);
                     await refreshTtlDinServer({ silent: true });
                 } catch (err) {

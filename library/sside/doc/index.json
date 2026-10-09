@@ -6,6 +6,7 @@
     { "id": "alg-ops", "label": "Operații alg", "file": "alg-ops.md" },
     { "id": "when", "label": "when", "file": "when.md" },
     { "id": "form-ui", "label": "Form / UI", "file": "form-ui.md" },
+    { "id": "ui-runtime", "label": "UI Runtime (Live)", "file": "ui-runtime.md" },
     { "id": "examples", "label": "Exemple", "file": "examples.md" }
   ]
 }
