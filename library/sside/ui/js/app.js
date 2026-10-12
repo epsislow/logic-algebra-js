@@ -3485,6 +3485,68 @@ function translateUpstashSearchResults(date) {
                 };
             }
 
+            function algConfirmBtnClass(kind) {
+                if (kind === 'danger') return 'btn-kind-red';
+                if (kind) return 'btn-kind-' + String(kind).toLowerCase();
+                return 'btn-albastru';
+            }
+
+            function showAlgConfirmModal(spec) {
+                return new Promise((resolve) => {
+                    const backdrop = document.getElementById('modal-alg-confirm');
+                    const textEl = document.getElementById('modal-alg-confirm-text');
+                    const actionsEl = document.getElementById('modal-alg-confirm-actions');
+                    if (!backdrop || !textEl || !actionsEl) {
+                        resolve('no');
+                        return;
+                    }
+                    textEl.textContent = spec.text != null ? String(spec.text) : 'Continui?';
+                    actionsEl.innerHTML = '';
+                    let settled = false;
+                    function finish(choice) {
+                        if (settled) return;
+                        settled = true;
+                        backdrop.classList.remove('open');
+                        backdrop.setAttribute('aria-hidden', 'true');
+                        backdrop.onclick = null;
+                        document.removeEventListener('keydown', onKey);
+                        resolve(choice === 'ok' ? 'ok' : 'no');
+                    }
+                    function onKey(e) {
+                        if (e.key === 'Escape') finish('no');
+                    }
+                    function mkBtn(label, kind, choice) {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.textContent = label;
+                        b.className = algConfirmBtnClass(kind);
+                        b.addEventListener('click', () => {
+                            actionsEl.querySelectorAll('button').forEach((x) => {
+                                x.disabled = true;
+                            });
+                            finish(choice);
+                        });
+                        return b;
+                    }
+                    const okBtn = mkBtn(spec.okLabel || 'OK', spec.okKind, 'ok');
+                    const noBtn = mkBtn(spec.noLabel || 'Anulează', spec.noKind || 'gray', 'no');
+                    const order = spec.order === 'okFirst' ? 'okFirst' : 'noFirst';
+                    if (order === 'okFirst') {
+                        actionsEl.appendChild(okBtn);
+                        actionsEl.appendChild(noBtn);
+                    } else {
+                        actionsEl.appendChild(noBtn);
+                        actionsEl.appendChild(okBtn);
+                    }
+                    backdrop.onclick = (ev) => {
+                        if (ev.target === backdrop) finish('no');
+                    };
+                    document.addEventListener('keydown', onKey);
+                    backdrop.classList.add('open');
+                    backdrop.setAttribute('aria-hidden', 'false');
+                });
+            }
+
             async function onRunAlg({ algKey, form, list, uiContext, btn }) {
                 if (!window.SsideAlg) {
                     return { err: 'alg-runner lipsă' };
@@ -3506,6 +3568,7 @@ function translateUpstashSearchResults(date) {
                     algKey,
                     btn: btn || null,
                     uiContext: uiContext || null,
+                    onConfirm: (s) => showAlgConfirmModal(s),
                     loadAlg: async (key) => liveLoadJsonKey(key),
                     loadSchema: async (schemaKey) => {
                         return incarcaSchemaCaObiect(schemaKey);

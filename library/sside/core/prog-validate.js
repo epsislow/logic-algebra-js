@@ -12,6 +12,7 @@
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
     'call',
+    'confirm',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -241,6 +242,31 @@
         }
         if (s.to != null && (typeof s.to !== 'string' || !String(s.to).trim())) {
           return err(p + '.to trebuie string nevid');
+        }
+      }
+      if (s.op === 'confirm') {
+        const hasWith = Object.prototype.hasOwnProperty.call(s, 'with');
+        const hasMsg = s.msg != null && String(s.msg).trim() !== '';
+        if (hasWith && hasMsg) {
+          return err(p + ': confirm — alege msg sau with, nu ambele');
+        }
+        const hasNoWith = Object.prototype.hasOwnProperty.call(s, 'noWith');
+        const hasNoMsg = s.noMsg != null && String(s.noMsg).trim() !== '';
+        const hasNoErr = s.noErr != null && String(s.noErr).trim() !== '';
+        if (hasNoWith && (hasNoMsg || hasNoErr)) {
+          return err(p + ': confirm — noWith exclusiv față de noMsg/noErr');
+        }
+        if (hasNoMsg && hasNoErr) {
+          return err(p + ': confirm — alege noMsg sau noErr, nu ambele');
+        }
+        if (s.auto != null && s.auto !== 'yes' && s.auto !== 'no') {
+          return err(p + '.auto trebuie yes|no');
+        }
+        if (s.noType != null && s.noType !== 'msg' && s.noType !== 'err') {
+          return err(p + '.noType trebuie msg|err');
+        }
+        if (s.order != null && s.order !== 'noFirst' && s.order !== 'okFirst') {
+          return err(p + '.order trebuie noFirst|okFirst');
         }
       }
       if (s.op === 'ui') {

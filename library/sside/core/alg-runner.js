@@ -78,11 +78,136 @@
     return Ops.resolveRef(token, ctx);
   }
 
-  async function runSteps(steps, ctx, env) {
+  function confirmCache(root) {
+    if (!root._confirmCache) root._confirmCache = Object.create(null);
+    return root._confirmCache;
+  }
+
+  function resolveConfirmQuestion(step, ctx) {
+    if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+      const v = getVal(ctx, step.with);
+      const s = v == null ? '' : String(v);
+      if (s.trim()) return s;
+    } else if (step.msg != null) {
+      const s = String(step.msg);
+      if (s.trim()) return s;
+    }
+    return 'Continui?';
+  }
+
+  function resolveConfirmOkLabel(step, ctx) {
+    if (Object.prototype.hasOwnProperty.call(step, 'okWith')) {
+      const v = getVal(ctx, step.okWith);
+      const s = v == null ? '' : String(v);
+      if (s.trim()) return s;
+      return 'OK';
+    }
+    if (step.ok != null && String(step.ok).trim()) return String(step.ok);
+    return 'OK';
+  }
+
+  function resolveConfirmNoLabel(step) {
+    if (step.no != null && String(step.no).trim()) return String(step.no);
+    return 'Anulează';
+  }
+
+  function confirmCancelPayload(step, ctx, withNotifyPrefix) {
+    let type = 'msg';
+    let finalStr = '';
+    if (Object.prototype.hasOwnProperty.call(step, 'noWith')) {
+      const v = getVal(ctx, step.noWith);
+      finalStr = v == null ? '' : String(v);
+      type = step.noType === 'err' ? 'err' : 'msg';
+      if (!finalStr.trim()) finalStr = 'Anulat';
+    } else if (step.noErr != null && String(step.noErr).trim() !== '') {
+      finalStr = String(step.noErr);
+      type = 'err';
+    } else if (step.noMsg != null && String(step.noMsg).trim() !== '') {
+      finalStr = String(step.noMsg);
+      type = 'msg';
+    } else {
+      finalStr = 'Anulat';
+      type = 'msg';
+    }
+    if (withNotifyPrefix && ctx._notifications && ctx._notifications.length > 0) {
+      const prefix = ctx._notifications.map((n) => '[' + n.kind.toUpperCase() + '] ' + n.text).join('\n');
+      finalStr = prefix + '\n' + finalStr;
+    }
+    return { type, finalStr };
+  }
+
+  function buildConfirmUiSpec(step, ctx, confirmId) {
+    const order = step.order === 'okFirst' ? 'okFirst' : 'noFirst';
+    return {
+      confirmId,
+      text: resolveConfirmQuestion(step, ctx),
+      okLabel: resolveConfirmOkLabel(step, ctx),
+      noLabel: resolveConfirmNoLabel(step),
+      okKind: step.okKind != null && step.okKind !== '' ? String(step.okKind) : '',
+      noKind: step.noKind != null && step.noKind !== '' ? String(step.noKind) : 'gray',
+      order,
+    };
+  }
+
+  function applyConfirmCancel(step, ctx, env) {
+    if (ctx.inTx) {
+      ctx.txBuf = [];
+      ctx.inTx = false;
+    }
+    const inCallee = (env.callDepth || 0) > 0;
+    const payload = confirmCancelPayload(step, ctx, !inCallee);
+    if (inCallee) {
+      const kind = payload.type === 'err' ? 'err' : 'msg';
+      ctx._callReturn = makeCallResult(true, kind, payload.finalStr);
+      ctx._stop = true;
+      return;
+    }
+    if (payload.type === 'err') {
+      ctx._err = payload.finalStr;
+    } else {
+      ctx._msg = payload.finalStr;
+    }
+    ctx._stop = true;
+  }
+
+  async function runConfirm(step, ctx, env, stepPath) {
+    const root = env.rootCtx || ctx;
+    const algKey = (env.runMeta && env.runMeta.algId) || 'alg:_';
+    const confirmId = algKey + ':' + stepPath;
+    const cache = confirmCache(root);
+    if (cache[confirmId] === 'ok') return;
+
+    const savedInTx = ctx.inTx;
+    const savedTxBuf = ctx.txBuf.slice();
+    let choice;
+    try {
+      if (typeof env.onConfirm === 'function') {
+        const spec = buildConfirmUiSpec(step, ctx, confirmId);
+        choice = await env.onConfirm(spec);
+        if (choice !== 'ok' && choice !== 'no') choice = 'no';
+      } else {
+        choice = step.auto === 'yes' ? 'ok' : 'no';
+      }
+    } finally {
+      ctx.inTx = savedInTx;
+      ctx.txBuf = savedTxBuf.slice();
+    }
+
+    if (choice === 'ok') {
+      cache[confirmId] = 'ok';
+      return;
+    }
+    applyConfirmCancel(step, ctx, env);
+  }
+
+  async function runSteps(steps, ctx, env, pathPrefix) {
     if (!Array.isArray(steps)) return;
-    for (const step of steps) {
+    const base = pathPrefix || 'steps';
+    for (let i = 0; i < steps.length; i++) {
       if (ctx._stop) return;
-      await runStep(step, ctx, env);
+      const step = steps[i];
+      const stepPath = base + '[' + i + ']';
+      await runStep(step, ctx, env, stepPath);
     }
   }
 
@@ -94,10 +219,11 @@
     return env.redis.exec(argv);
   }
 
-  async function runStep(step, ctx, env) {
+  async function runStep(step, ctx, env, stepPath) {
     if (!step || typeof step !== 'object') throw new Error('step invalid');
     const op = step.op;
     if (!op) throw new Error('step fără op');
+    stepPath = stepPath || 'steps[0]';
 
     // F2-alg-E: off → skip întregul pas (incl. if/foreach)
     if (step.off === true) return;
@@ -255,14 +381,17 @@
       return;
     }
 
-
+    if (op === 'confirm') {
+      await runConfirm(step, ctx, env, stepPath);
+      return;
+    }
 
     if (op === 'if') {
       const ok = When.evalWhen(step.when, (t) => getVal(ctx, t));
       if (ok) {
-        if (step.thenOff !== true) await runSteps(step.then || [], ctx, env);
+        if (step.thenOff !== true) await runSteps(step.then || [], ctx, env, stepPath + '.then');
       } else {
-        if (step.elseOff !== true) await runSteps(step.else || [], ctx, env);
+        if (step.elseOff !== true) await runSteps(step.else || [], ctx, env, stepPath + '.else');
       }
       return;
     }
@@ -274,7 +403,7 @@
       for (const item of list) {
         if (ctx._stop) return;
         Ops.setVar(ctx, as, item);
-        await runSteps(step.do || [], ctx, env);
+        await runSteps(step.do || [], ctx, env, stepPath + '.do');
       }
       return;
     }
@@ -586,6 +715,7 @@
         loadSchema: env.loadSchema,
         loadAlg: env.loadAlg,
         uiContext: null,
+        onConfirm: env.onConfirm || null,
         callDepth: depth + 1,
         rootCtx: env.rootCtx || ctx,
         runMeta: {
@@ -610,7 +740,7 @@
       }
 
       try {
-        await runSteps(childAlg.steps, childCtx, childEnv);
+        await runSteps(childAlg.steps, childCtx, childEnv, 'steps');
       } finally {
         ctx.inTx = savedInTx;
         ctx.txBuf = savedTxBuf;
@@ -673,6 +803,7 @@
       loadSchema: options.loadSchema || null,
       loadAlg: options.loadAlg || null,
       uiContext: options.uiContext || null,
+      onConfirm: typeof options.onConfirm === 'function' ? options.onConfirm : null,
       callDepth: 0,
       rootCtx: null,
       runMeta: {
@@ -681,9 +812,10 @@
       },
     };
     env.rootCtx = ctx;
+    ctx._confirmCache = Object.create(null);
 
     try {
-      await runSteps(Array.isArray(alg.steps) ? alg.steps : [], ctx, env);
+      await runSteps(Array.isArray(alg.steps) ? alg.steps : [], ctx, env, 'steps');
       if (ctx.inTx) {
         // end implicit: discard
         ctx.txBuf = [];
@@ -710,7 +842,14 @@
     }
   }
 
-  const api = { run, runSteps, runStep };
+  const api = {
+    run,
+    runSteps,
+    runStep,
+    buildConfirmUiSpec,
+    resolveConfirmQuestion,
+    confirmCancelPayload,
+  };
 
   root.SsideAlg = api;
 

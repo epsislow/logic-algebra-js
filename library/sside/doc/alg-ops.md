@@ -412,6 +412,36 @@ Citire în listă Live — **Faza GB** (`list.source` **`from: key`**; LIST → 
 - dacă ambele: prioritate `err`
 - în tranzacție deschisă: discard buffer, apoi stop
 
+### confirm (întrebare user)
+
+Pauză în alg: **ok** → continuă pașii de după; **no** → stop ca **`end`** (banner pe block-ul sursă în Live).
+
+**Consolă / fără UI Live:** `auto`: `"yes"` | `"no"` (lipsă = **`no`**). În Live, modal la prima întâlnire a pasului; apoi **cache** pe aceeași rulare (click buton).
+
+```json
+{
+  "op": "confirm",
+  "msg": "Sigur ștergi?",
+  "ok": "Da",
+  "no": "Renunță",
+  "noMsg": "Anulat"
+}
+```
+
+| Câmp | Rol |
+|------|-----|
+| **`msg`** / **`with`** | Text întrebare (unul singur). Fallback: **`Continui?`**. |
+| **`ok`** / **`okWith`** | Label buton ok (fallback **`OK`**). |
+| **`no`** | Label anulare (default **`Anulează`**). |
+| **`okKind`** / **`noKind`** | Culori butoane (ca `kind` pe butoane form/list). |
+| **`order`** | `noFirst` (default) \| `okFirst`. |
+| **`noMsg`** / **`noErr`** / **`noWith`** | Mesaj la **no** (literal sau ref + **`noType`**). Fallback **`Anulat`**. |
+| **`auto`** | Fără handler UI: simulează ok/no. |
+
+**Cache (`confirmId`):** `{algKey}:{path}` — ex. `alg:_save:steps[0]`, `alg:_h:steps[1].do[0]`. Același pas în **`foreach`** sau **`call`** repetat → **un** modal; op-uri diferite → id-uri diferite. **`call`** moștenește cache-ul rulării root.
+
+Escape / click pe fundal = **no**. Confirm imbricate: câte un modal, secvențial.
+
 ## when
 
 Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).

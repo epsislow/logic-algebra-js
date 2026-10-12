@@ -13,6 +13,7 @@
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
     'call',
+    'confirm',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -675,6 +676,9 @@
     if (op === 'jget') return { op: 'jget', from: 'payload', path: '', to: '' };
     if (op === 'search') return { op: 'search', query: '', to: 'hits' };
     if (op === 'call') return { op: 'call', alg: 'alg:_', with: 'form', to: '_end' };
+    if (op === 'confirm') {
+      return { op: 'confirm', msg: 'Continui?', ok: 'OK', no: 'Anulează', noMsg: 'Anulat' };
+    }
     if (op === 'ui') return { op: 'ui', do: 'refresh', listid: '_self' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
     if (op === 'redis') return { op: 'redis', do: 'TYPE', args: [''], to: '' };
@@ -971,6 +975,13 @@
       const withRef = step.with != null && step.with !== '' ? String(step.with) : '{}';
       const to = step.to != null && String(step.to).trim() !== '' ? String(step.to) : '_end';
       return 'call  ' + previewVal(alg) + '  with ' + previewVal(withRef) + ' → ' + to;
+    }
+
+    if (op === 'confirm') {
+      const q = Object.prototype.hasOwnProperty.call(step, 'with')
+        ? 'ref:' + previewVal(step.with)
+        : previewVal(step.msg || 'Continui?');
+      return 'confirm  ' + q;
     }
 
     if (op === 'kget') {
