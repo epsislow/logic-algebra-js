@@ -3089,7 +3089,7 @@
     if (!Array.isArray(obj.btns)) obj.btns = [];
     if (!Array.isArray(obj.rowBtns)) obj.rowBtns = [];
     if (obj.row !== 'array') obj.row = 'object';
-    if (obj.pageSize == null || !Number.isFinite(Number(obj.pageSize))) obj.pageSize = 20;
+    if (obj.pageSize == null || !Number.isFinite(Number(obj.pageSize))) obj.pageSize = 10;
 
     host.innerHTML = '';
     const card = document.createElement('div');
@@ -3246,7 +3246,7 @@
       obj.title = rowHead.querySelector('[data-f="title"]').value;
       obj.row = rowHead.querySelector('[data-f="row"]').value === 'array' ? 'array' : 'object';
       const ps = parseInt(rowHead.querySelector('[data-f="pageSize"]').value, 10);
-      obj.pageSize = Number.isFinite(ps) && ps >= 1 ? ps : 20;
+      obj.pageSize = Number.isFinite(ps) && ps >= 1 ? ps : 10;
       if (rowHead.querySelector('[data-f="autoload"]').value === 'false') {
         obj.autoload = false;
       } else {

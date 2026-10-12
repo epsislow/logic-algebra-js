@@ -976,6 +976,29 @@ module.exports = {
       },
     },
     {
+      id: 26,
+      desc: 'pageSize default 10 când lipsește din listDef',
+      async run() {
+        assertEq(ListLoad.DEFAULT_LIST_PAGE_SIZE, 10);
+        assertEq(ListLoad.resolveListPageSize(undefined), 10);
+        const redis = createMemoryRedis();
+        for (let i = 1; i <= 15; i++) {
+          await redis.exec(['SADD', 'set:_p', 'k' + i]);
+        }
+        const page = await ListLoad.loadListPage(
+          {
+            v: 1,
+            source: { from: 'set', key: 'set:_p' },
+            columns: [{ path: '_key' }],
+          },
+          redis,
+          1
+        );
+        assertEq(page.pageSize, 10);
+        assertEq(page.rows.length, 10);
+      },
+    },
+    {
       id: 25,
       desc: 'parseMemberRowText + validate from:key',
       run() {

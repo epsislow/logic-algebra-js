@@ -48,10 +48,53 @@
     };
   }
 
+  function listPageSize(listDef, pageData) {
+    if (ListLoad && typeof ListLoad.resolveListPageSize === 'function') {
+      const raw =
+        pageData && pageData.pageSize != null
+          ? pageData.pageSize
+          : listDef && listDef.pageSize != null
+            ? listDef.pageSize
+            : null;
+      return ListLoad.resolveListPageSize(raw);
+    }
+    const n = Number(listDef && listDef.pageSize);
+    return Number.isFinite(n) && n >= 1 ? n : 10;
+  }
+
+  /** Evită salt scroll când bannerul / tabelul își schimbă înălțimea la click pe buton. */
+  function preserveViewportScroll(run) {
+    const y = window.scrollY;
+    const done = () => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, y);
+      });
+    };
+    try {
+      const out = run();
+      if (out && typeof out.then === 'function') {
+        return out.then(
+          (v) => {
+            done();
+            return v;
+          },
+          (e) => {
+            done();
+            throw e;
+          }
+        );
+      }
+      done();
+      return out;
+    } catch (e) {
+      done();
+      throw e;
+    }
+  }
+
   function showBanner(el, result) {
     if (!el) return;
-    el.classList.remove('is-ok', 'is-err');
-    el.style.display = '';
+    el.classList.remove('is-ok', 'is-err', 'is-empty');
     if (result && result.err) {
       el.textContent = String(result.err);
       el.classList.add('is-err');
@@ -60,7 +103,7 @@
       el.classList.add('is-ok');
     } else {
       el.textContent = '';
-      el.style.display = 'none';
+      el.classList.add('is-empty');
     }
   }
 
@@ -171,19 +214,21 @@
       showBanner(bannerEl, { err: algKey ? 'Runner lipsă' : 'Buton fără alg' });
       return;
     }
-    try {
-      const result = await deps.onRunAlg({
-        algKey,
-        form: formValue || {},
-        list: {},
-        btn,
-        uiContext: makeUiContext(null),
-      });
-      showBanner(bannerEl, result || { msg: 'OK' });
-      if (result && result.ui) await applyUiCommands(result.ui);
-    } catch (e) {
-      showBanner(bannerEl, { err: e.message || String(e) });
-    }
+    return preserveViewportScroll(async () => {
+      try {
+        const result = await deps.onRunAlg({
+          algKey,
+          form: formValue || {},
+          list: {},
+          btn,
+          uiContext: makeUiContext(null),
+        });
+        showBanner(bannerEl, result || { msg: 'OK' });
+        if (result && result.ui) await applyUiCommands(result.ui);
+      } catch (e) {
+        showBanner(bannerEl, { err: e.message || String(e) });
+      }
+    });
   }
 
   function actionsAlignClass(align) {
@@ -213,7 +258,7 @@
     block.className = 'prog-live-block prog-live-ui-actions';
     block.setAttribute('data-blockid', blockId);
     block.innerHTML =
-      '<div class="prog-live-banner" style="display:none;"></div>' +
+      '<div class="prog-live-banner is-empty"></div>' +
       '<div class="prog-ui-actions-btns prog-live-actions"></div>';
     parent.appendChild(block);
 
@@ -252,23 +297,25 @@
       showBanner(bannerEl, { err: algKey ? 'Runner lipsă' : 'Buton fără alg' });
       return;
     }
-    try {
-      const result = await deps.onRunAlg({
-        algKey,
-        form: formValue || {},
-        list: listContext || {},
-        btn,
-        formDef: listDef,
-        listid,
-        listDefKey: listDef && listDef._key,
-        rowKey,
-        uiContext: makeUiContext(listid),
-      });
-      showBanner(bannerEl, result || { msg: 'OK' });
-      if (result && result.ui) await applyUiCommands(result.ui);
-    } catch (e) {
-      showBanner(bannerEl, { err: e.message || String(e) });
-    }
+    return preserveViewportScroll(async () => {
+      try {
+        const result = await deps.onRunAlg({
+          algKey,
+          form: formValue || {},
+          list: listContext || {},
+          btn,
+          formDef: listDef,
+          listid,
+          listDefKey: listDef && listDef._key,
+          rowKey,
+          uiContext: makeUiContext(listid),
+        });
+        showBanner(bannerEl, result || { msg: 'OK' });
+        if (result && result.ui) await applyUiCommands(result.ui);
+      } catch (e) {
+        showBanner(bannerEl, { err: e.message || String(e) });
+      }
+    });
   }
 
   /**
@@ -287,7 +334,7 @@
     block.setAttribute('data-listid', listid);
     block.innerHTML =
       '<h3></h3>' +
-      '<div class="prog-live-banner" style="display:none;"></div>' +
+      '<div class="prog-live-banner is-empty"></div>' +
       '<div class="prog-list-table-wrap"><table class="prog-list-table"><thead></thead><tbody></tbody></table></div>' +
       '<div class="prog-list-footer">' +
       '<div class="prog-list-pager"></div>' +
@@ -308,7 +355,12 @@
     let page = 1;
     let selectedKey = null;
     let lastPageData = null;
+    let dataEverLoaded = false;
     let destroyed = false;
+
+    function listColumnCount() {
+      return columns.length + (rowBtns.length ? 1 : 0);
+    }
 
     function renderHead() {
       thead.innerHTML = '';
@@ -343,12 +395,20 @@
     function currentListContext() {
       if (ListLoad && typeof ListLoad.buildListContext === 'function') {
         return ListLoad.buildListContext({
-          pageData: lastPageData || { page: page, pageSize: listDef.pageSize || 20, rows: [] },
+          pageData: lastPageData || { page: page, pageSize: listPageSize(listDef), rows: [] },
           listid: listid,
           listDefKey: listKey || (listDef && listDef._key) || '',
         });
       }
-      return { page: page, pageMax: 1, pageSize: 20, keys: [], rows: [], id: listid, def: '' };
+      return {
+        page: page,
+        pageMax: 1,
+        pageSize: listPageSize(listDef),
+        keys: [],
+        rows: [],
+        id: listid,
+        def: '',
+      };
     }
 
     function runListBtn(btn, row) {
@@ -367,96 +427,159 @@
     async function reload() {
       if (destroyed) return;
       if (!ListLoad || !deps.redis) {
-        tbody.innerHTML =
-          '<tr><td colspan="99">list-load / redis lipsă</td></tr>';
+        renderBody({ statusText: 'list-load / redis lipsă' });
         return;
       }
-      tbody.innerHTML = '<tr><td colspan="99">Se încarcă…</td></tr>';
+      block.classList.add('prog-list-is-loading');
       try {
         lastPageData = await ListLoad.loadListPage(listDef, deps.redis, page);
         page = lastPageData.page;
+        dataEverLoaded = true;
         renderBody();
         renderPager();
       } catch (e) {
-        tbody.innerHTML =
-          '<tr><td colspan="99">' +
-          (e && e.message ? e.message : String(e)) +
-          '</td></tr>';
+        dataEverLoaded = true;
+        renderBody({
+          statusText: e && e.message ? e.message : String(e),
+        });
+      } finally {
+        block.classList.remove('prog-list-is-loading');
       }
     }
 
-    function renderBody() {
-      tbody.innerHTML = '';
-      const rows = (lastPageData && lastPageData.rows) || [];
-      const rowMode = (lastPageData && lastPageData.rowMode) || 'object';
-      if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="99">Niciun rând</td></tr>';
-        return;
+    function appendStatusRow(text) {
+      const tr = document.createElement('tr');
+      tr.className = 'prog-list-row-status';
+      const td = document.createElement('td');
+      td.colSpan = listColumnCount();
+      td.textContent = text;
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+
+    function appendPadRow() {
+      const tr = document.createElement('tr');
+      tr.className = 'prog-list-row-pad';
+      tr.setAttribute('aria-hidden', 'true');
+      for (let c = 0; c < columns.length; c++) {
+        const td = document.createElement('td');
+        td.className = 'prog-list-pad-cell';
+        td.innerHTML = '\u00a0';
+        tr.appendChild(td);
       }
-      rows.forEach((row) => {
-        const tr = document.createElement('tr');
-        if (row.key === selectedKey) tr.classList.add('is-selected');
-        tr.onclick = (ev) => {
-          if (ev.target && ev.target.closest && ev.target.closest('button')) return;
-          selectedKey = row.key;
-          Array.from(tbody.querySelectorAll('tr')).forEach((r) =>
-            r.classList.remove('is-selected')
-          );
-          tr.classList.add('is-selected');
-        };
-        columns.forEach((c) => {
-          const td = document.createElement('td');
-          const meta = { key: row.key, type: row.type };
-          let val;
-          if (ListLoad && typeof ListLoad.cellValue === 'function') {
-            val = ListLoad.cellValue(row.value, c, rowMode, meta);
-          } else if (c && Object.prototype.hasOwnProperty.call(c, 'const')) {
-            val = c.const;
-          } else if (c && String(c.path || '').trim() === '_key') {
-            val = row.key;
-          } else if (c && String(c.path || '').trim() === '_type') {
-            val = row.type;
-          }
-          let disp;
-          if (ListLoad && typeof ListLoad.formatListCellDisplay === 'function') {
-            disp = ListLoad.formatListCellDisplay(val);
-          } else if (val === undefined) {
-            disp = { kind: 'missing', text: 'nimic' };
-          } else if (val === null) {
-            disp = { kind: 'null', text: '(nul)' };
-          } else {
-            disp = { kind: 'value', text: String(val) };
-          }
-          if (disp.kind === 'missing') {
-            td.className = 'prog-cell-missing';
-            td.textContent = disp.text;
-          } else if (disp.kind === 'null') {
-            td.className = 'prog-cell-null';
-            td.textContent = disp.text;
-          } else {
-            td.textContent = disp.text;
-          }
-          tr.appendChild(td);
+      if (rowBtns.length) {
+        const td = document.createElement('td');
+        td.className = 'prog-list-row-btns';
+        rowBtns.forEach((btn) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = btnClass(btn) + ' btn-inline prog-list-pad-btn';
+          b.disabled = true;
+          b.tabIndex = -1;
+          b.setAttribute('aria-hidden', 'true');
+          b.textContent = btn.label || btn.id || '\u00a0';
+          td.appendChild(b);
         });
-        if (rowBtns.length) {
-          const td = document.createElement('td');
-          td.className = 'prog-list-row-btns';
-          rowBtns.forEach((btn) => {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.className = btnClass(btn) + ' btn-inline';
-            b.textContent = btn.label || btn.id || '…';
-            b.onclick = (ev) => {
-              ev.stopPropagation();
-              selectedKey = row.key;
-              runListBtn(btn, row);
-            };
-            td.appendChild(b);
-          });
-          tr.appendChild(td);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+
+    function appendDataRow(row, rowMode) {
+      const tr = document.createElement('tr');
+      if (row.key === selectedKey) tr.classList.add('is-selected');
+      tr.onclick = (ev) => {
+        if (ev.target && ev.target.closest && ev.target.closest('button')) return;
+        selectedKey = row.key;
+        Array.from(tbody.querySelectorAll('tr')).forEach((r) =>
+          r.classList.remove('is-selected')
+        );
+        tr.classList.add('is-selected');
+      };
+      columns.forEach((c) => {
+        const td = document.createElement('td');
+        const meta = { key: row.key, type: row.type };
+        let val;
+        if (ListLoad && typeof ListLoad.cellValue === 'function') {
+          val = ListLoad.cellValue(row.value, c, rowMode, meta);
+        } else if (c && Object.prototype.hasOwnProperty.call(c, 'const')) {
+          val = c.const;
+        } else if (c && String(c.path || '').trim() === '_key') {
+          val = row.key;
+        } else if (c && String(c.path || '').trim() === '_type') {
+          val = row.type;
         }
-        tbody.appendChild(tr);
+        let disp;
+        if (ListLoad && typeof ListLoad.formatListCellDisplay === 'function') {
+          disp = ListLoad.formatListCellDisplay(val);
+        } else if (val === undefined) {
+          disp = { kind: 'missing', text: 'nimic' };
+        } else if (val === null) {
+          disp = { kind: 'null', text: '(nul)' };
+        } else {
+          disp = { kind: 'value', text: String(val) };
+        }
+        if (disp.kind === 'missing') {
+          td.className = 'prog-cell-missing';
+          td.textContent = disp.text;
+        } else if (disp.kind === 'null') {
+          td.className = 'prog-cell-null';
+          td.textContent = disp.text;
+        } else {
+          td.textContent = disp.text;
+        }
+        tr.appendChild(td);
       });
+      if (rowBtns.length) {
+        const td = document.createElement('td');
+        td.className = 'prog-list-row-btns';
+        rowBtns.forEach((btn) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = btnClass(btn) + ' btn-inline';
+          b.textContent = btn.label || btn.id || '…';
+          b.onclick = (ev) => {
+            ev.stopPropagation();
+            selectedKey = row.key;
+            runListBtn(btn, row);
+          };
+          td.appendChild(b);
+        });
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+
+    /**
+     * Întotdeauna `pageSize` rânduri vizibile: date, mesaj pe primul slot, restul padding gol.
+     */
+    function renderBody(options) {
+      options = options || {};
+      tbody.innerHTML = '';
+      const pageRows = listPageSize(listDef, lastPageData);
+      const dataRows = (lastPageData && lastPageData.rows) || [];
+      const rowMode = (lastPageData && lastPageData.rowMode) || 'object';
+
+      let statusText = options.statusText;
+      if (statusText == null && !dataEverLoaded) {
+        statusText = 'Neinițializat';
+      } else if (statusText == null && dataRows.length === 0) {
+        statusText = 'Niciun rând';
+      }
+
+      let dataIndex = 0;
+      for (let slot = 0; slot < pageRows; slot++) {
+        if (slot === 0 && statusText) {
+          appendStatusRow(statusText);
+          continue;
+        }
+        if (dataIndex < dataRows.length) {
+          appendDataRow(dataRows[dataIndex], rowMode);
+          dataIndex += 1;
+        } else {
+          appendPadRow();
+        }
+      }
     }
 
     function renderPager() {
@@ -467,7 +590,10 @@
       info.textContent =
         'Pagina ' +
         page +
-        (total != null ? ' / ' + Math.max(1, Math.ceil(total / (lastPageData.pageSize || 20))) : '') +
+        (total != null
+          ? ' / ' +
+            Math.max(1, Math.ceil(total / listPageSize(listDef, lastPageData)))
+          : '') +
         (total != null ? ' (' + total + ')' : hasMore ? '+' : '');
       const prev = document.createElement('button');
       prev.type = 'button';
@@ -537,13 +663,13 @@
     } else {
       lastPageData = {
         page: 1,
-        pageSize: listDef.pageSize || 20,
+        pageSize: listPageSize(listDef),
         total: 0,
         hasMore: false,
         rows: [],
         rowMode: listDef.row === 'array' ? 'array' : 'object',
       };
-      tbody.innerHTML = '<tr><td colspan="99">Neinițializat</td></tr>';
+      renderBody({ statusText: 'Neinițializat' });
       renderPager();
     }
 
@@ -559,7 +685,7 @@
       clear() {
         lastPageData = {
           page,
-          pageSize: listDef.pageSize || 20,
+          pageSize: listPageSize(listDef),
           total: 0,
           hasMore: false,
           rows: [],
@@ -587,7 +713,7 @@
     if (opts.id) block.setAttribute('data-blockid', opts.id);
     block.innerHTML =
       '<h3></h3>' +
-      '<div class="prog-live-banner" style="display:none;"></div>' +
+      '<div class="prog-live-banner is-empty"></div>' +
       '<div class="prog-live-fields"></div>' +
       '<div class="prog-live-actions"></div>';
     block.querySelector('h3').textContent = title;
@@ -712,7 +838,6 @@
       b.textContent = btn.label || btn.id || 'Actiune';
       b.className = btnClass(btn);
       b.onclick = async () => {
-        clearBanner(bannerEl);
         const algKey = btn.alg || '';
         let formValue = {};
         try {
@@ -722,19 +847,22 @@
           return;
         }
         if (typeof deps.onRunAlg === 'function' && algKey) {
-          try {
-            const result = await deps.onRunAlg({
-              algKey,
-              form: formValue,
-              btn,
-              formDef,
-              uiContext: makeUiContext(null),
-            });
-            showBanner(bannerEl, result || { msg: 'OK' });
-            if (result && result.ui) await applyUiCommands(result.ui);
-          } catch (e) {
-            showBanner(bannerEl, { err: e.message || String(e) });
-          }
+          await preserveViewportScroll(async () => {
+            clearBanner(bannerEl);
+            try {
+              const result = await deps.onRunAlg({
+                algKey,
+                form: formValue,
+                btn,
+                formDef,
+                uiContext: makeUiContext(null),
+              });
+              showBanner(bannerEl, result || { msg: 'OK' });
+              if (result && result.ui) await applyUiCommands(result.ui);
+            } catch (e) {
+              showBanner(bannerEl, { err: e.message || String(e) });
+            }
+          });
         } else {
           showBanner(bannerEl, {
             err: algKey ? 'Runner lipsă — ' + algKey : 'Buton fără alg',

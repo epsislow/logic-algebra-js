@@ -371,19 +371,25 @@
             margin: 0 0 10px; font-size: 16px;
         }
         .prog-live-banner {
-            display: none; margin: 0 0 10px; padding: 8px 10px; border-radius: 6px;
-            font-size: 13px; border: 1px solid transparent;
+            display: block; margin: 0 0 10px; padding: 8px 10px; border-radius: 6px;
+            font-size: 13px; border: 1px solid transparent; box-sizing: border-box;
+        }
+        .prog-live-banner.is-empty {
+            display: none;
         }
         .prog-live-banner.is-ok {
-            display: block; background: rgba(25, 135, 84, 0.15);
+            visibility: visible; background: rgba(25, 135, 84, 0.15);
             border-color: #198754; color: #75b798;
         }
         html[data-theme="light"] .prog-live-banner.is-ok { color: #0f5132; background: #d1e7dd; }
         .prog-live-banner.is-err {
-            display: block; background: rgba(220, 53, 69, 0.15);
+            visibility: visible; background: rgba(220, 53, 69, 0.15);
             border-color: #dc3545; color: #f1aeb5;
         }
         html[data-theme="light"] .prog-live-banner.is-err { color: #842029; background: #f8d7da; }
+        .prog-live-list.prog-list-is-loading .prog-list-table-wrap {
+            opacity: 0.55; pointer-events: none;
+        }
         .prog-live-fields {
             background: var(--bg-editor); border: 1px dashed var(--border);
             border-radius: 6px; padding: 10px; margin-bottom: 10px; color: var(--text);
@@ -454,9 +460,24 @@
         .prog-live-list table.prog-list-table td {
             border: 1px solid var(--border); padding: 6px 8px; text-align: left;
         }
+        .prog-live-list table.prog-list-table tbody td {
+            min-height: 2.75rem;
+            vertical-align: middle;
+            box-sizing: border-box;
+        }
         .prog-live-list table.prog-list-table th { background: var(--bg-muted); }
         .prog-live-list table.prog-list-table tr.is-selected td {
             background: var(--row-hover);
+        }
+        .prog-live-list table.prog-list-table tr.prog-list-row-status td {
+            color: var(--text-muted); font-style: italic;
+        }
+        .prog-live-list table.prog-list-table tr.prog-list-row-pad td.prog-list-pad-cell {
+            color: transparent;
+        }
+        .prog-live-list table.prog-list-table tr.prog-list-row-pad .prog-list-pad-btn {
+            visibility: hidden;
+            pointer-events: none;
         }
         .prog-live-list table.prog-list-table td.prog-cell-missing {
             color: #c62828;

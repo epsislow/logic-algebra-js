@@ -134,7 +134,7 @@ La Live, `warehouse` e select cu etichete din hash values; valoarea trimisă în
     { "id": "k", "label": "Cheie", "path": "_key" },
     { "id": "q", "label": "Qty", "path": "qty" }
   ],
-  "pageSize": 20
+  "pageSize": 10
 }
 ```
 

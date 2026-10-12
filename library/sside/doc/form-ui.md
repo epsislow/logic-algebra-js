@@ -156,7 +156,7 @@ Definiție tabel — **nu** rânduri hardcodate. Live încarcă sursa, pagină, 
     { "id": "prod", "label": "Produs", "path": "product" },
     { "id": "qty", "label": "Qty", "path": "qty" }
   ],
-  "pageSize": 20,
+  "pageSize": 10,
   "exactCount": false,
   "rowBtns": [
     { "id": "del", "label": "Sterge", "alg": "alg:_del_stock", "kind": "red", "place": "row" }

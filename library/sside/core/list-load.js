@@ -4,6 +4,12 @@
 (function (root) {
   'use strict';
 
+  const DEFAULT_LIST_PAGE_SIZE = 10;
+
+  function resolveListPageSize(n) {
+    return Math.max(1, Number(n) || DEFAULT_LIST_PAGE_SIZE);
+  }
+
   const FormOpts =
     root.SsideFormOptions ||
     (typeof require !== 'undefined' ? require('./form-options.js') : null);
@@ -210,7 +216,7 @@
     const storageKey = String(source.key || '').trim();
     if (!storageKey) throw new Error('list.source.key lipsă');
     const rowMode = pageOpts.rowMode === 'array' ? 'array' : 'object';
-    const pageSize = Math.max(1, Number(pageOpts.pageSize) || 20);
+    const pageSize = resolveListPageSize(pageOpts.pageSize);
     const page = Math.max(1, Number(pageOpts.page) || 1);
     const offset = (page - 1) * pageSize;
     const needsValue = pageOpts.needsValue !== false;
@@ -355,7 +361,7 @@
           maxScan: source.maxScan != null ? source.maxScan : pageOpts.maxScan,
         });
       }
-      const pageSize = pageOpts.pageSize || 20;
+      const pageSize = resolveListPageSize(pageOpts.pageSize);
       const page = pageOpts.page || 1;
       const offset = (page - 1) * pageSize;
       const qObj = SearchQ.normalizeQuery(source.query);
@@ -507,7 +513,7 @@
     if (!redis || typeof redis.exec !== 'function') {
       throw new Error('redis lipsă');
     }
-    const pageSize = Math.max(1, Number(listDef.pageSize) || 20);
+    const pageSize = resolveListPageSize(listDef.pageSize);
     let pageNum = Math.max(1, Number(page) || 1);
     const rowMode = listDef.row === 'array' ? 'array' : 'object';
     const needs = analyzeColumnNeeds(listDef.columns);
@@ -652,7 +658,7 @@
   /** Max pagini ca în UI „Pagina N / M”. */
   function computePageMax(pageData) {
     const page = Math.max(1, Number(pageData && pageData.page) || 1);
-    const pageSize = Math.max(1, Number(pageData && pageData.pageSize) || 20);
+    const pageSize = resolveListPageSize(pageData && pageData.pageSize);
     const total = pageData && pageData.total;
     if (total != null && Number.isFinite(Number(total))) {
       return Math.max(1, Math.ceil(Number(total) / pageSize));
@@ -684,7 +690,7 @@
     opts = opts || {};
     const pageData = opts.pageData || {};
     const rows = Array.isArray(pageData.rows) ? pageData.rows : [];
-    const pageSize = Math.max(1, Number(pageData.pageSize) || 20);
+    const pageSize = resolveListPageSize(pageData.pageSize);
     const page = Math.max(1, Number(pageData.page) || 1);
     const total =
       pageData.total != null && Number.isFinite(Number(pageData.total))
@@ -719,6 +725,8 @@
   }
 
   const api = {
+    DEFAULT_LIST_PAGE_SIZE,
+    resolveListPageSize,
     cellValue,
     formatListCellDisplay,
     analyzeColumnNeeds,

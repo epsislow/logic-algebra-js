@@ -77,7 +77,7 @@
           },
         },
       },
-      pageSize: { type: 'integer', default: 20 },
+      pageSize: { type: 'integer', default: 10 },
       autoload: {
         type: 'boolean',
         default: true,
@@ -145,7 +145,7 @@
         { id: 'key', label: 'Cheie', path: '_key' },
         { id: 'val', label: 'Valoare', path: '_json' },
       ],
-      pageSize: 20,
+      pageSize: 10,
       btns: [],
       rowBtns: [],
     };

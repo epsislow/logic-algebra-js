@@ -109,7 +109,7 @@ Detalii options: Docs → **Form / UI**.
     { "id": "t", "label": "Type", "path": "_type" },
     { "id": "qty", "label": "Qty", "path": "qty" }
   ],
-  "pageSize": 20,
+  "pageSize": 10,
   "rowBtns": [],
   "btns": []
 }
@@ -147,7 +147,7 @@ Fiecare coloană: **`path` sau `const`** (sau ambele; `const` câștigă la afi�
 | Câmp | Reguli |
 |------|--------|
 | `row` | `object` (default) sau `array` (path = index) |
-| `pageSize` | ≥ 1 (default 20) |
+| `pageSize` | ≥ 1 (default 10) |
 | `autoload` | default true; `false` = fără load source la open Live |
 | `rowBtns` / `btns` | `kind`; `btns.needsRow` (default true); context `form` + `list.*` la run |
 
