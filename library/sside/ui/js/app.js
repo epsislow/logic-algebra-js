@@ -62,8 +62,8 @@
         }
 
         const apiStats = { read: 0, type: 0, write: 0, advSearch: 0 };
-        /** Istoric agregat consecutiv: [{ cmd, count, cat }, ...] — index 0 = cel mai recent. Max 10 evenimente. */
-        const API_CMD_HISTORY_MAX = 10;
+        /** Footer: agregat consecutiv (×N), cel mai nou la stânga. */
+        const API_CMD_HISTORY_MAX = 32;
         let apiCmdHistory = [];
 
         function clasificaComandaRedis(cmd) {
@@ -90,14 +90,15 @@
             const box = document.getElementById('api-stats-recent');
             if (!box) return;
             box.innerHTML = '';
-            apiCmdHistory.forEach(ev => {
+            apiCmdHistory.forEach((ev) => {
                 const chip = document.createElement('span');
                 chip.className = 'api-cmd-chip ' + chipClassPentruCat(ev.cat);
-                const label = ev.count > 1 ? (ev.cmd + '×' + ev.count) : ev.cmd;
+                const label = ev.count > 1 ? ev.label + '×' + ev.count : ev.label;
                 chip.textContent = label;
-                chip.title = ev.count > 1
-                    ? (ev.cmd + ' × ' + ev.count + ' (consecutive)')
-                    : ev.cmd;
+                chip.title =
+                    ev.count > 1
+                        ? ev.label + ' × ' + ev.count + ' (consecutive)'
+                        : ev.label;
                 box.appendChild(chip);
             });
         }
@@ -125,9 +126,9 @@
             if (apiCmdHistory.length && apiCmdHistory[0].cmd === c) {
                 apiCmdHistory[0].count++;
             } else {
-                apiCmdHistory.unshift({ cmd: c, count: 1, cat: cat });
-                if (apiCmdHistory.length > API_CMD_HISTORY_MAX) {
-                    apiCmdHistory.length = API_CMD_HISTORY_MAX;
+                apiCmdHistory.unshift({ cmd: c, label: c, count: 1, cat: cat });
+                while (apiCmdHistory.length > API_CMD_HISTORY_MAX) {
+                    apiCmdHistory.pop();
                 }
             }
             actualizeazaUiStatisticiApi();
@@ -3505,6 +3506,7 @@ function translateUpstashSearchResults(date) {
                     algKey,
                     btn: btn || null,
                     uiContext: uiContext || null,
+                    loadAlg: async (key) => liveLoadJsonKey(key),
                     loadSchema: async (schemaKey) => {
                         return incarcaSchemaCaObiect(schemaKey);
                     },
@@ -3558,6 +3560,7 @@ function translateUpstashSearchResults(date) {
                     algKey: opts.algKey || 'console:debug',
                     btn: opts.btn || null,
                     uiContext: opts.uiContext || null,
+                    loadAlg: async (key) => liveLoadJsonKey(key),
                     loadSchema: async (schemaKey) => incarcaSchemaCaObiect(schemaKey),
                 });
                 if (result.err) {

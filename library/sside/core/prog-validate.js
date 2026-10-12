@@ -11,6 +11,7 @@
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
+    'call',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -229,6 +230,17 @@
         }
         if (s.format != null && typeof s.format !== 'string') {
           return err(p + '.format trebuie string');
+        }
+      }
+      if (s.op === 'call') {
+        if (s.alg == null || s.alg === '') {
+          return err(p + ': call fără alg');
+        }
+        if (typeof s.alg !== 'string' && typeof s.alg !== 'number') {
+          return err(p + ': call.alg trebuie string sau ref');
+        }
+        if (s.to != null && (typeof s.to !== 'string' || !String(s.to).trim())) {
+          return err(p + '.to trebuie string nevid');
         }
       }
       if (s.op === 'ui') {

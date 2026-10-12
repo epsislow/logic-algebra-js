@@ -624,6 +624,56 @@ Nested `tstart` → eroare.
 Comenzi pe whitelist (`TYPE`, `EXISTS`, `JSON.GET`, …); nu e default în Edit — adaugă din tab JSON.  
 `args` rezolvă refs (`$key`, `form.x`).
 
+## call (alg din alg)
+
+Invocă alt `alg:_…` cu context izolat. **`end` în alg chemat = return** (nu oprește root). Rezultatul merge în **`to`** sau, dacă lipsește, în **`vars._end`**.
+
+```json
+{
+  "op": "call",
+  "alg": "alg:_save_item_core",
+  "with": "form",
+  "to": "saveOut"
+}
+```
+
+| Câmp | Rol |
+|------|-----|
+| **`alg`** | Cheie obligatorie (`alg:_…` sau ref). |
+| **`with`** | Obiect → **`form`** pentru callee (ref sau literal). Lipsă → `{}`. |
+| **`list`** | Opțional — context listă callee; lipsă → `{}`. |
+| **`to`** | Var caller pentru rezultat; default **`_end`**. |
+
+### Rezultat (`to` / `_end`)
+
+| Câmp | Sens |
+|------|------|
+| **`stopped`** | `true` dacă callee a executat `end`. |
+| **`kind`** | `"msg"` \| `"err"` \| `null` |
+| **`text`** | Mesajul returnat |
+| **`msg` / `err`** | Una setată după `kind` (celălalt `null`) |
+
+Callee **nu** moștenește `vars` caller. Caller verifică cu `if` + `end` root dacă vrea banner Live.
+
+### Tranzacții
+
+Caller în `tstart`…`tdo`: starea tx caller e **salvată** pe durata `call` și **restaurată** la return. Callee poate avea tx proprie (`tstart`/`tdo`); nu amestecă `txBuf`-ul caller.
+
+### `ui` / `notify`
+
+| | Comportament |
+|---|--------------|
+| **`ui` în callee** | Ignorat (doar root produce `result.ui`). |
+| **`notify` în callee** | Se acumulează la **root**; prefix la **`end` root** (nu în textul `_end` return). |
+
+### Limite
+
+- Adâncime max **128** apeluri: eroare **`max alg call 128 reached`**.
+- Erori **throw** (Redis, etc.) din callee: opresc root; tx caller restaurată în `finally` pe `call`.
+- Live: `loadAlg` încarcă cheia din Redis (ca butonul).
+
+---
+
 ## ui (refresh / clear / open) — F4l + Runtime
 
 După ce un buton rulează alg, Live / Runtime aplică `result.ui`.

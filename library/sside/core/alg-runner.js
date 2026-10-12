@@ -12,6 +12,41 @@
   const UiListRef =
     root.SsideUiListRef || (typeof require !== 'undefined' ? require('./ui-list-ref.js') : null);
 
+  const MAX_CALL_DEPTH = 128;
+
+  function cloneData(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  function makeCallResult(stopped, kind, text) {
+    const t = text == null ? '' : String(text);
+    const isErr = kind === 'err';
+    return {
+      stopped: !!stopped,
+      kind: kind || null,
+      text: t,
+      msg: isErr ? null : stopped ? t : null,
+      err: isErr ? t : null,
+    };
+  }
+
+  function endPayloadFromStep(step, ctx, getValFn, withNotifyPrefix) {
+    const type = step.type || (step.err != null ? 'err' : 'msg');
+    let finalStr = '';
+    if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+      const v = getValFn(ctx, step.with);
+      finalStr = v == null ? '' : String(v);
+    } else {
+      finalStr =
+        step.value !== undefined ? String(step.value) : String(step.msg || step.err || '');
+    }
+    if (withNotifyPrefix && ctx._notifications && ctx._notifications.length > 0) {
+      const prefix = ctx._notifications.map((n) => '[' + n.kind.toUpperCase() + '] ' + n.text).join('\n');
+      finalStr = prefix + '\n' + finalStr;
+    }
+    return { type, finalStr };
+  }
+
   function stoppedResult(ctx, extra) {
     return Object.assign(
       {
@@ -174,6 +209,14 @@
 
     if (op === 'notify') {
       Ops.executeNotify(step, ctx, getVal);
+      const root = env.rootCtx;
+      if (root && root !== ctx) {
+        if (!root._notifications) root._notifications = [];
+        const notes = ctx._notifications;
+        if (notes && notes.length) {
+          root._notifications.push(notes[notes.length - 1]);
+        }
+      }
       return;
     }
 
@@ -195,22 +238,18 @@
         ctx.txBuf = [];
         ctx.inTx = false;
       }
-      const type = step.type || (step.err != null ? 'err' : 'msg');
-      let finalStr = '';
-      if (Object.prototype.hasOwnProperty.call(step, 'with')) {
-        const v = getVal(ctx, step.with);
-        finalStr = v == null ? '' : String(v);
-      } else {
-        finalStr = step.value !== undefined ? String(step.value) : String(step.msg || step.err || '');
+      const inCallee = (env.callDepth || 0) > 0;
+      const payload = endPayloadFromStep(step, ctx, getVal, !inCallee);
+      if (inCallee) {
+        const kind = payload.type === 'err' ? 'err' : 'msg';
+        ctx._callReturn = makeCallResult(true, kind, payload.finalStr);
+        ctx._stop = true;
+        return;
       }
-      if (ctx._notifications && ctx._notifications.length > 0) {
-        const prefix = ctx._notifications.map(n => '[' + n.kind.toUpperCase() + '] ' + n.text).join('\n');
-        finalStr = prefix + '\n' + finalStr;
-      }
-      if (type === 'err') {
-        ctx._err = finalStr;
+      if (payload.type === 'err') {
+        ctx._err = payload.finalStr;
       } else {
-        ctx._msg = finalStr;
+        ctx._msg = payload.finalStr;
       }
       ctx._stop = true;
       return;
@@ -322,6 +361,9 @@
     }
 
     if (op === 'ui') {
+      if ((env.callDepth || 0) > 0) {
+        return;
+      }
       const doCmd = step.do || 'refresh';
       if (doCmd === 'open') {
         const openKey = String(getVal(ctx, step.key) != null ? getVal(ctx, step.key) : step.key || '');
@@ -503,12 +545,110 @@
       return;
     }
 
+    if (op === 'call') {
+      const depth = env.callDepth || 0;
+      if (depth >= MAX_CALL_DEPTH) {
+        throw new Error('max alg call 128 reached');
+      }
+      if (!env.loadAlg || typeof env.loadAlg !== 'function') {
+        throw new Error('call: loadAlg lipsă');
+      }
+      const algKeyRaw = getVal(ctx, step.alg) != null ? getVal(ctx, step.alg) : step.alg;
+      const algKey = String(algKeyRaw || '').trim();
+      if (!algKey) throw new Error('call: lipsește alg');
+
+      let payload = {};
+      if (step.with != null && step.with !== '') {
+        const w = getVal(ctx, step.with);
+        if (w != null && typeof w === 'object' && !Array.isArray(w)) {
+          payload = cloneData(w);
+        } else if (w != null) {
+          throw new Error('call: with trebuie obiect');
+        }
+      }
+
+      let listPayload = {};
+      if (step.list != null && step.list !== '') {
+        const l = getVal(ctx, step.list);
+        if (l != null && typeof l === 'object' && !Array.isArray(l)) {
+          listPayload = cloneData(l);
+        } else if (l != null) {
+          throw new Error('call: list trebuie obiect');
+        }
+      }
+
+      const savedInTx = ctx.inTx;
+      const savedTxBuf = ctx.txBuf.slice();
+
+      const childCtx = makeCtx(payload, {}, listPayload);
+      const childEnv = {
+        redis: env.redis,
+        loadSchema: env.loadSchema,
+        loadAlg: env.loadAlg,
+        uiContext: null,
+        callDepth: depth + 1,
+        rootCtx: env.rootCtx || ctx,
+        runMeta: {
+          algId: algKey,
+          parentAlgId: env.runMeta && env.runMeta.algId,
+          buttonId: env.runMeta && env.runMeta.buttonId,
+        },
+      };
+
+      let childAlg;
+      try {
+        childAlg = await env.loadAlg(algKey);
+      } catch (e) {
+        ctx.inTx = savedInTx;
+        ctx.txBuf = savedTxBuf;
+        throw e;
+      }
+      if (!childAlg || typeof childAlg !== 'object' || !Array.isArray(childAlg.steps)) {
+        ctx.inTx = savedInTx;
+        ctx.txBuf = savedTxBuf;
+        throw new Error('call: alg invalid ' + algKey);
+      }
+
+      try {
+        await runSteps(childAlg.steps, childCtx, childEnv);
+      } finally {
+        ctx.inTx = savedInTx;
+        ctx.txBuf = savedTxBuf;
+      }
+
+      const toVar =
+        step.to != null && String(step.to).trim() !== '' ? String(step.to).trim() : '_end';
+
+      let result;
+      if (childCtx._callReturn) {
+        result = childCtx._callReturn;
+      } else {
+        const maybe = childCtx.vars[toVar];
+        if (
+          maybe &&
+          typeof maybe === 'object' &&
+          Object.prototype.hasOwnProperty.call(maybe, 'stopped')
+        ) {
+          result = maybe;
+        } else if (childCtx._stop && childCtx._err) {
+          result = makeCallResult(true, 'err', childCtx._err);
+        } else if (childCtx._stop && childCtx._msg) {
+          result = makeCallResult(true, 'msg', childCtx._msg);
+        } else {
+          result = makeCallResult(false, null, '');
+        }
+      }
+
+      Ops.setVar(ctx, toVar, result);
+      return;
+    }
+
     throw new Error('op necunoscut: ' + op);
   }
 
   /**
    * @param {object} alg { v, steps }
-   * @param {object} options { form, vars?, list?, redis, loadSchema?, uiContext?, algKey?, btn? }
+   * @param {object} options { form, vars?, list?, redis, loadSchema?, loadAlg?, uiContext?, algKey?, btn? }
    * @returns {Promise<{ msg?, err?, vars, stopped }>}
    */
   async function run(alg, options) {
@@ -531,12 +671,16 @@
     const env = {
       redis: options.redis,
       loadSchema: options.loadSchema || null,
+      loadAlg: options.loadAlg || null,
       uiContext: options.uiContext || null,
+      callDepth: 0,
+      rootCtx: null,
       runMeta: {
         algId: options.algKey || options.algId || null,
         buttonId: buttonId || null,
       },
     };
+    env.rootCtx = ctx;
 
     try {
       await runSteps(Array.isArray(alg.steps) ? alg.steps : [], ctx, env);

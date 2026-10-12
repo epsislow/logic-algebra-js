@@ -12,6 +12,7 @@
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
+    'call',
     'ui',
     'tstart', 'tdo', 'tstop',
     'redis',
@@ -530,6 +531,7 @@
     if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
     if (op === 'jget') return { op: 'jget', from: 'payload', path: '', to: '' };
     if (op === 'search') return { op: 'search', query: '', to: 'hits' };
+    if (op === 'call') return { op: 'call', alg: 'alg:_', with: 'form', to: '_end' };
     if (op === 'ui') return { op: 'ui', do: 'refresh', listid: '_self' };
     if (op === 'tstart' || op === 'tdo' || op === 'tstop') return { op: op };
     if (op === 'redis') return { op: 'redis', do: 'TYPE', args: [''], to: '' };
@@ -821,6 +823,12 @@
       return 'end   ' + type + ' ← ' + (srcMode === 'with' ? 'ref:' : 'val:') + previewVal(text);
     }
 
+    if (op === 'call') {
+      const alg = step.alg != null ? String(step.alg) : '';
+      const withRef = step.with != null && step.with !== '' ? String(step.with) : '{}';
+      const to = step.to != null && String(step.to).trim() !== '' ? String(step.to) : '_end';
+      return 'call  ' + previewVal(alg) + '  with ' + previewVal(withRef) + ' → ' + to;
+    }
 
     if (op === 'kget') {
       return (

@@ -976,8 +976,10 @@
             pointer-events: auto;
             cursor: pointer;
             max-width: 960px; margin: 0 auto;
-            display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+            display: flex; flex-wrap: nowrap; align-items: center; gap: 6px 10px;
             padding: 6px 10px;
+            min-height: 32px; max-height: 32px;
+            overflow: hidden;
             font-size: 11px; line-height: 1.3;
             letter-spacing: 0.02em;
             background: color-mix(in srgb, var(--bg-panel) 92%, transparent);
@@ -988,6 +990,7 @@
         }
         .api-stat {
             display: inline-flex; align-items: baseline; gap: 4px;
+            flex-shrink: 0;
             color: var(--text-muted);
             font-variant-numeric: tabular-nums;
         }
@@ -1010,17 +1013,26 @@
         }
         .api-stats-trailing {
             margin-left: auto;
-            display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
-            justify-content: flex-end; min-width: 0;
+            display: flex; flex-wrap: nowrap; align-items: center; gap: 6px 8px;
+            justify-content: flex-end;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
         }
+        /* Nou stânga → vechi spre dreapta; surplus tăiat la dreapta (înainte de Reset) */
         .api-stats-recent {
-            display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
-            justify-content: flex-end; max-width: min(480px, 100%);
-            min-height: 18px;
+            display: flex; flex-direction: row; flex-wrap: nowrap;
+            gap: 4px; align-items: center;
+            justify-content: flex-start;
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            direction: ltr;
         }
         .api-stats-recent:empty { display: none; }
         .api-cmd-chip {
             display: inline-block;
+            flex-shrink: 0;
             font-family: Consolas, ui-monospace, monospace;
             font-size: 9px; font-weight: 600; line-height: 1.35;
             padding: 1px 5px; border-radius: 3px;

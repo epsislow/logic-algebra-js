@@ -9,7 +9,7 @@ Ops detaliate: Docs → **Operații alg**. Condiții: **when**. Exemple: **Exemp
 ui:_…          → layout (taburi → blocks)
   ├─ list:_…   → tabel (source + columns + pageSize)
   └─ form:_…   → formular (schema + btns → alg)
-       └─ alg:_… → pași (assign / k* / search / ui / …)
+       └─ alg:_… → pași (assign / k* / search / call / ui / …)
 ```
 
 | Tip | Cheie | Rol | Live |
