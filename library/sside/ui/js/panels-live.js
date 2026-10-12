@@ -165,6 +165,87 @@
     return { row, below };
   }
 
+  async function runAlgForActionsBtn(opts) {
+    const { algKey, formValue, btn, bannerEl } = opts;
+    if (typeof deps.onRunAlg !== 'function' || !algKey) {
+      showBanner(bannerEl, { err: algKey ? 'Runner lipsă' : 'Buton fără alg' });
+      return;
+    }
+    try {
+      const result = await deps.onRunAlg({
+        algKey,
+        form: formValue || {},
+        list: {},
+        btn,
+        uiContext: makeUiContext(null),
+      });
+      showBanner(bannerEl, result || { msg: 'OK' });
+      if (result && result.ui) await applyUiCommands(result.ui);
+    } catch (e) {
+      showBanner(bannerEl, { err: e.message || String(e) });
+    }
+  }
+
+  function actionsAlignClass(align) {
+    const a = String(align || 'center').toLowerCase();
+    if (a === 'left') return 'is-align-left';
+    if (a === 'right') return 'is-align-right';
+    return 'is-align-center';
+  }
+
+  function formPayloadFromActionsBtn(btn) {
+    if (btn && btn.form != null && typeof btn.form === 'object' && !Array.isArray(btn.form)) {
+      return JSON.parse(JSON.stringify(btn.form));
+    }
+    return {};
+  }
+
+  /**
+   * Block UI actions (butoane + alg, fără listă). Cod duplicat din list below-btns.
+   */
+  async function mountActionsBlock(parent, blockDef, opts) {
+    opts = opts || {};
+    const blockId = String(opts.id || (blockDef && blockDef.id) || 'actions1');
+    const align = (blockDef && blockDef.align) || 'center';
+    const btns = Array.isArray(blockDef && blockDef.btns) ? blockDef.btns : [];
+
+    const block = document.createElement('div');
+    block.className = 'prog-live-block prog-live-ui-actions';
+    block.setAttribute('data-blockid', blockId);
+    block.innerHTML =
+      '<div class="prog-live-banner" style="display:none;"></div>' +
+      '<div class="prog-ui-actions-btns prog-live-actions"></div>';
+    parent.appendChild(block);
+
+    const bannerEl = block.querySelector('.prog-live-banner');
+    const actionsEl = block.querySelector('.prog-ui-actions-btns');
+    actionsEl.classList.add(actionsAlignClass(align));
+
+    btns.forEach((btn) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = btnClass(btn);
+      b.textContent = btn.label || btn.id || 'Actiune';
+      b.onclick = () => {
+        runAlgForActionsBtn({
+          algKey: btn.alg,
+          formValue: formPayloadFromActionsBtn(btn),
+          btn,
+          bannerEl,
+        });
+      };
+      actionsEl.appendChild(b);
+    });
+
+    const inst = {
+      destroy() {
+        block.remove();
+      },
+    };
+    liveInstances.push(inst);
+    return inst;
+  }
+
   async function runAlgForList(opts) {
     const { algKey, formValue, btn, listDef, listid, rowKey, bannerEl, listContext } = opts;
     if (typeof deps.onRunAlg !== 'function' || !algKey) {
@@ -773,6 +854,8 @@
             listid: bl.id,
             listKey: bl.list,
           });
+        } else if (bl.type === 'actions') {
+          await mountActionsBlock(stack, bl, { id: bl.id });
         } else {
           let formDef = null;
           try {
@@ -844,6 +927,7 @@
     renderUiLive,
     mountFormBlock,
     mountListBlock,
+    mountActionsBlock,
   };
 
   if (typeof module !== 'undefined' && module.exports) {

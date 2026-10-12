@@ -102,8 +102,41 @@ Preferat: `tabs[].blocks[]` (fiecare block are **`id` obligatoriu**). `forms[]` 
 }
 ```
 
-Live UI: taburi + stivă verticală de blocks (tabele + formuri).  
+Live UI: taburi + stivă verticală de blocks (**list** / **form** / **actions**).  
 Din alg (buton form/list): `{ "op": "ui", "do": "tab", "tab": "<tabs[].id>" }` — vezi **Operații alg** / **UI Runtime**.
+
+### Block `actions` (butoane în tab)
+
+Fără cheie Redis separată — butoane **inline** în `ui:_…`. Poți pune **mai multe** blockuri `actions` pe același tab.
+
+```json
+{
+  "type": "actions",
+  "id": "stockGlobal",
+  "align": "center",
+  "btns": [
+    {
+      "id": "export",
+      "label": "Export",
+      "alg": "alg:_stock_export",
+      "kind": "gray",
+      "form": { "intent": "export" }
+    },
+    { "id": "add", "label": "Adaugă stoc", "alg": "alg:_open_add", "kind": "green" }
+  ]
+}
+```
+
+| Câmp | Sens |
+|------|------|
+| **`id`** | Obligatoriu (fără prefix `_`). |
+| **`align`** | `center` (default), `left`, `right` — aliniere butoane. |
+| **`btns[]`** | Minim 1 buton: `id`, `label`, `alg`; `kind` opțional. |
+| **`form` pe buton** | Obiect → context **`form`** la rularea alg-ului (payload static). Lipsă → `{}`. **Nu** e cheie `form:_…`. |
+
+**Nu** există: `title` pe block, `needsRow`, `place`, legare automată la rând listă. Acțiuni pe rând → `list.rowBtns` / `list.btns`.
+
+`ui refresh` / `clear` cu `listid` = id block actions → **no-op** (doar listele sunt reîncărcate).
 
 ## list:_… (F4l)
 

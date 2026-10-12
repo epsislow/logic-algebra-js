@@ -276,10 +276,20 @@
   function normalizeUiTabBlocks(tab) {
     if (Array.isArray(tab && tab.blocks) && tab.blocks.length) {
       return tab.blocks.map((b, i) => {
-        const type = b && b.type === 'list' ? 'list' : 'form';
+        const rawType = b && b.type;
+        const type =
+          rawType === 'list' ? 'list' : rawType === 'actions' ? 'actions' : 'form';
         const id = (b && b.id) || type + (i + 1);
         if (type === 'list') {
           return { type: 'list', id: String(id), list: (b && b.list) || '' };
+        }
+        if (type === 'actions') {
+          return {
+            type: 'actions',
+            id: String(id),
+            align: (b && b.align) || 'center',
+            btns: Array.isArray(b && b.btns) ? b.btns.slice() : [],
+          };
         }
         return { type: 'form', id: String(id), form: (b && b.form) || '' };
       });
@@ -317,11 +327,42 @@
       tabsHost.querySelectorAll('.prog-step[data-tab]').forEach((el) => {
         const blocks = [];
         el.querySelectorAll('.prog-block-edit').forEach((bEl) => {
-          const type = bEl.querySelector('[data-b="type"]').value === 'list' ? 'list' : 'form';
+          const typeVal = bEl.querySelector('[data-b="type"]').value;
+          const type =
+            typeVal === 'list' ? 'list' : typeVal === 'actions' ? 'actions' : 'form';
           const id = (bEl.querySelector('[data-b="id"]').value || '').trim();
           const key = (bEl.querySelector('[data-b="key"]').value || '').trim();
           if (type === 'list') {
             blocks.push({ type: 'list', id: id || 'list', list: key });
+          } else if (type === 'actions') {
+            const alignEl = bEl.querySelector('[data-b="align"]');
+            const align = alignEl ? alignEl.value : 'center';
+            const btns = [];
+            bEl.querySelectorAll('.prog-actions-btn-row').forEach((row) => {
+              const kind = normalizeBtnKind(row.querySelector('[data-ab="kind"]').value);
+              const btn = {
+                id: row.querySelector('[data-ab="id"]').value.trim(),
+                label: row.querySelector('[data-ab="label"]').value.trim(),
+                alg: row.querySelector('[data-ab="alg"]').value.trim(),
+              };
+              if (kind) btn.kind = kind;
+              const formRaw = (row.querySelector('[data-ab="form"]').value || '').trim();
+              if (formRaw) {
+                try {
+                  const parsed = JSON.parse(formRaw);
+                  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    btn.form = parsed;
+                  }
+                } catch (e) { /* ignore invalid json la sync */ }
+              }
+              btns.push(btn);
+            });
+            blocks.push({
+              type: 'actions',
+              id: id || 'actions',
+              align: align || 'center',
+              btns,
+            });
           } else {
             blocks.push({ type: 'form', id: id || 'form', form: key });
           }
@@ -350,24 +391,81 @@
       wrap.appendChild(stack);
       tabEl.appendChild(wrap);
 
+      function mountActionsBtnRow(host, btn, onChange) {
+        btn = btn || { id: '', label: '', alg: '', kind: '', form: null };
+        const el = document.createElement('div');
+        el.className = 'prog-actions-btn-row prog-step';
+        el.innerHTML =
+          '<div class="prog-row">' +
+          '<div class="prog-field"><label>id</label><input data-ab="id"></div>' +
+          '<div class="prog-field"><label>label</label><input data-ab="label"></div>' +
+          '<div class="prog-field"><label>alg</label><select data-ab="alg"></select></div>' +
+          '<div class="prog-field"><label>culoare</label><select data-ab="kind"></select></div>' +
+          '</div>' +
+          '<div class="prog-field"><label>form (JSON payload alg)</label>' +
+          '<textarea data-ab="form" rows="2" placeholder="{}"></textarea></div>';
+        el.querySelector('[data-ab="id"]').value = btn.id || '';
+        el.querySelector('[data-ab="label"]').value = btn.label || '';
+        const algSel = el.querySelector('[data-ab="alg"]');
+        fillKeySelect(algSel, 'alg', btn.alg || '');
+        fillBtnKindSelect(el.querySelector('[data-ab="kind"]'), btn.kind || '');
+        const formTa = el.querySelector('[data-ab="form"]');
+        if (btn.form && typeof btn.form === 'object') {
+          formTa.value = JSON.stringify(btn.form);
+        }
+        mountSelectWithOpen(algSel, { beforeOpen: onChange });
+        el.querySelectorAll('input,select,textarea').forEach((inp) => {
+          inp.addEventListener('input', onChange);
+          inp.addEventListener('change', onChange);
+        });
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'btn-gri btn-inline btn-inline-danger';
+        rm.textContent = 'Șterge btn';
+        rm.onclick = () => {
+          el.remove();
+          onChange();
+        };
+        el.appendChild(rm);
+        host.appendChild(el);
+      }
+
       function addBlockRow(block) {
         block = block || { type: 'form', id: '', form: '' };
-        const type = block.type === 'list' ? 'list' : 'form';
+        const type =
+          block.type === 'list' ? 'list' : block.type === 'actions' ? 'actions' : 'form';
         const row = document.createElement('div');
         row.className = 'prog-block-edit';
         row.innerHTML =
           '<div class="prog-row">' +
           '<div class="prog-field"><label>type</label><select data-b="type">' +
-          '<option value="form">form</option><option value="list">list</option></select></div>' +
+          '<option value="form">form</option><option value="list">list</option>' +
+          '<option value="actions">actions</option></select></div>' +
           '<div class="prog-field"><label>id</label><input data-b="id" placeholder="ex: stockMain (fără _ la început)"></div>' +
-          '<div class="prog-field"><label data-b="keylab">form</label><select data-b="key"></select></div>' +
-          '</div>';
+          '<div class="prog-field prog-block-key-field"><label data-b="keylab">form</label><select data-b="key"></select></div>' +
+          '<div class="prog-field prog-block-align-field" style="display:none"><label>align</label>' +
+          '<select data-b="align"><option value="center">center</option>' +
+          '<option value="left">left</option><option value="right">right</option></select></div>' +
+          '</div>' +
+          '<div class="prog-actions-btns-edit" style="display:none"></div>';
         const typeSel = row.querySelector('[data-b="type"]');
         const idInp = row.querySelector('[data-b="id"]');
         const keySel = row.querySelector('[data-b="key"]');
         const keyLab = row.querySelector('[data-b="keylab"]');
+        const keyField = row.querySelector('.prog-block-key-field');
+        const alignField = row.querySelector('.prog-block-align-field');
+        const alignSel = row.querySelector('[data-b="align"]');
+        const actionsHost = row.querySelector('.prog-actions-btns-edit');
         typeSel.value = type;
         idInp.value = block.id || '';
+        if (alignSel) alignSel.value = block.align || 'center';
+
+        function syncActionsUi() {
+          const isActions = typeSel.value === 'actions';
+          keyField.style.display = isActions ? 'none' : '';
+          alignField.style.display = isActions ? '' : 'none';
+          actionsHost.style.display = isActions ? '' : 'none';
+        }
 
         function refillKey(prefer) {
           const t = typeSel.value === 'list' ? 'list' : 'form';
@@ -381,14 +479,58 @@
           }
           fillKeySelect(keySel, t, cur);
         }
-        refillKey(
-          type === 'list' ? block.list || '' : block.form || ''
-        );
+        refillKey(type === 'list' ? block.list || '' : block.form || '');
 
         const openCtl = mountSelectWithOpen(keySel, { beforeOpen: syncFromDom });
 
+        actionsHost.innerHTML = '';
+        const initialBtns =
+          type === 'actions' && Array.isArray(block.btns) && block.btns.length
+            ? block.btns
+            : type === 'actions'
+              ? [{ id: 'btn1', label: 'Actiune', alg: 'alg:_', kind: '' }]
+              : [];
+        initialBtns.forEach((btn) => mountActionsBtnRow(actionsHost, btn, syncFromDom));
+
+        function ensureActionsAddBtn() {
+          if (actionsHost.querySelector('[data-actions-add]')) return;
+          const addActBtn = document.createElement('button');
+          addActBtn.type = 'button';
+          addActBtn.className = 'btn-albastru btn-inline';
+          addActBtn.setAttribute('data-actions-add', '1');
+          addActBtn.textContent = '+ Buton actions';
+          addActBtn.onclick = () => {
+            mountActionsBtnRow(
+              actionsHost,
+              {
+                id: 'btn' + (actionsHost.querySelectorAll('.prog-actions-btn-row').length + 1),
+                label: 'Actiune',
+                alg: 'alg:_',
+              },
+              syncFromDom
+            );
+            syncFromDom();
+          };
+          actionsHost.appendChild(addActBtn);
+        }
+
+        if (type === 'actions') {
+          ensureActionsAddBtn();
+        }
+
+        syncActionsUi();
+
         typeSel.onchange = () => {
+          if (typeSel.value === 'actions' && !actionsHost.querySelector('.prog-actions-btn-row')) {
+            mountActionsBtnRow(
+              actionsHost,
+              { id: 'btn1', label: 'Actiune', alg: 'alg:_' },
+              syncFromDom
+            );
+            ensureActionsAddBtn();
+          }
           refillKey('');
+          syncActionsUi();
           syncFromDom();
           openCtl.syncOpenBtn();
         };
@@ -396,6 +538,7 @@
           syncFromDom();
           openCtl.syncOpenBtn();
         };
+        if (alignSel) alignSel.addEventListener('change', syncFromDom);
         idInp.addEventListener('input', syncFromDom);
 
         const rm = document.createElement('button');

@@ -332,8 +332,49 @@
       if (!b.form || typeof b.form !== 'string' || !/^form:_[^:]+$/.test(b.form)) {
         return err(path + '.form invalid (ex: form:_item_edit)');
       }
+    } else if (b.type === 'actions') {
+      if (b.align != null && b.align !== '') {
+        const a = String(b.align).toLowerCase();
+        if (a !== 'center' && a !== 'left' && a !== 'right') {
+          return err(path + '.align trebuie center|left|right');
+        }
+      }
+      if (b.title != null && String(b.title).trim() !== '') {
+        return err(path + ': title nu e suportat pe actions (v1)');
+      }
+      const be = validateActionsBtns(b.btns, path);
+      if (be) return be;
     } else {
-      return err(path + '.type trebuie list|form');
+      return err(path + '.type trebuie list|form|actions');
+    }
+    return null;
+  }
+
+  function validateActionsBtns(btns, path) {
+    if (!Array.isArray(btns) || btns.length === 0) {
+      return err(path + '.btns trebuie array nevid');
+    }
+    for (let i = 0; i < btns.length; i++) {
+      const b = btns[i];
+      const p = path + '.btns[' + i + ']';
+      if (!b || typeof b !== 'object') return err(p + ' invalid');
+      if (!b.id || typeof b.id !== 'string' || !String(b.id).trim()) {
+        return err(p + '.id obligatoriu');
+      }
+      if (b.label == null || typeof b.label !== 'string' || !String(b.label).trim()) {
+        return err(p + '.label obligatoriu');
+      }
+      if (!b.alg || typeof b.alg !== 'string' || !/^alg:_[^:]+$/.test(b.alg)) {
+        return err(p + '.alg invalid (ex: alg:_save)');
+      }
+      if (b.needsRow != null) return err(p + ': needsRow interzis pe actions');
+      if (b.place != null) return err(p + ': place interzis pe actions');
+      if (b.form != null && (typeof b.form !== 'object' || Array.isArray(b.form))) {
+        return err(p + '.form trebuie obiect JSON');
+      }
+      if (b.kind != null && typeof b.kind !== 'string') {
+        return err(p + '.kind trebuie string');
+      }
     }
     return null;
   }

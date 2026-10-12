@@ -483,6 +483,13 @@
         .prog-list-footer .prog-list-below-btns {
             margin: 0 auto;
         }
+        .prog-live-ui-actions .prog-ui-actions-btns {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            width: 100%;
+        }
+        .prog-ui-actions-btns.is-align-center { justify-content: center; }
+        .prog-ui-actions-btns.is-align-left { justify-content: flex-start; }
+        .prog-ui-actions-btns.is-align-right { justify-content: flex-end; }
         .prog-list-row-btns { white-space: nowrap; }
         .prog-list-row-btns .btn-inline,
         .prog-list-pager .btn-inline,
