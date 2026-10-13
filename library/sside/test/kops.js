@@ -322,5 +322,55 @@ module.exports = {
         assertEq(spec.argv.join(' '), 'INCRBY k 5');
       },
     },
+    {
+      id: 15,
+      desc: 'kincr float cheie nouă + kdecr float (INCRBYFLOAT ±)',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kincr', key: 'score:_a', as: 'float', by: 0.5, to: 'a' },
+              { op: 'kincr', key: 'score:_a', as: 'float', by: '0.25', to: 'b' },
+              { op: 'kdecr', key: 'score:_a', as: 'float', by: 0.75, to: 'c' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.a, 0.5);
+        assertEq(r.vars.b, 0.75);
+        assertEq(r.vars.c, 0);
+        assertEq(await redis.exec(['GET', 'score:_a']), '0');
+      },
+    },
+    {
+      id: 16,
+      desc: 'buildKdecrStep float → INCRBYFLOAT negativ',
+      run() {
+        const ctx = { form: {}, vars: {}, list: {} };
+        const getVal = (c, t) => Ops.resolveRef(t, c);
+        const spec = Ops.buildKdecrStep(
+          { op: 'kdecr', key: 'k', as: 'float', by: 2.5 },
+          ctx,
+          getVal
+        );
+        assertEq(spec.as, 'float');
+        assertEq(spec.argv[0], 'INCRBYFLOAT');
+        assertEq(spec.argv[2], '-2.5');
+      },
+    },
+    {
+      id: 17,
+      desc: 'validare as invalid pe kincr',
+      run() {
+        const V = require('../core/prog-validate.js');
+        const bad = V.validateAlg({
+          v: 1,
+          steps: [{ op: 'kincr', key: 'k', as: 'double' }],
+        });
+        assert(!bad.ok);
+      },
+    },
   ],
 };

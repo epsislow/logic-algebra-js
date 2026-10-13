@@ -596,10 +596,7 @@
       const spec = Ops.buildKincrStep(step, ctx, getVal);
       const raw = await enqueueOrExec(ctx, env, spec.argv);
       if (spec.to && !ctx.inTx) {
-        let n = raw;
-        if (typeof n === 'string') n = parseInt(n, 10);
-        if (typeof n !== 'number' || Number.isNaN(n)) n = 0;
-        Ops.setVar(ctx, spec.to, n);
+        Ops.setVar(ctx, spec.to, Ops.parseCounterResult(raw, spec.as || 'int'));
       }
       return;
     }
@@ -608,10 +605,7 @@
       const spec = Ops.buildKdecrStep(step, ctx, getVal);
       const raw = await enqueueOrExec(ctx, env, spec.argv);
       if (spec.to && !ctx.inTx) {
-        let n = raw;
-        if (typeof n === 'string') n = parseInt(n, 10);
-        if (typeof n !== 'number' || Number.isNaN(n)) n = 0;
-        Ops.setVar(ctx, spec.to, n);
+        Ops.setVar(ctx, spec.to, Ops.parseCounterResult(raw, spec.as || 'int'));
       }
       return;
     }

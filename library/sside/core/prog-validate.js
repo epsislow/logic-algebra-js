@@ -191,9 +191,20 @@
         if (s.to != null && (typeof s.to !== 'string' || !String(s.to).trim())) {
           return err(p + '.to trebuie string nevid');
         }
+        if (s.as != null && s.as !== '' && s.as !== 'int' && s.as !== 'float') {
+          return err(p + '.as trebuie int|float');
+        }
         if (s.by !== undefined && s.by !== null && s.by !== '') {
           if (typeof s.by !== 'string' && typeof s.by !== 'number') {
             return err(p + '.by trebuie număr sau ref');
+          }
+          const asMode = s.as != null && s.as !== '' ? String(s.as) : 'int';
+          if (typeof s.by === 'number' && Number.isFinite(s.by)) {
+            if (asMode === 'float') {
+              if (s.by <= 0) return err(p + '.by trebuie > 0 la as float');
+            } else if (!Number.isInteger(s.by) || s.by < 1) {
+              return err(p + '.by trebuie integer ≥ 1 la as int');
+            }
           }
         }
       }

@@ -287,6 +287,21 @@
         return adjustStringCounter(a[0], Number.isFinite(n) ? -n : 0);
       }
 
+      if (cmd === 'INCRBYFLOAT') {
+        const key = a[0];
+        const delta = parseFloat(a[1]);
+        if (!Number.isFinite(delta)) throw new Error('ERR value is not a valid float');
+        let e = store.get(key);
+        if (!e) {
+          e = { tip: 'string', val: '0' };
+          store.set(key, e);
+        }
+        if (e.tip !== 'string') throw new Error('WRONGTYPE');
+        const nextVal = (parseFloat(e.val) || 0) + delta;
+        e.val = String(nextVal);
+        return e.val;
+      }
+
       if (cmd === 'SREM') {
         const e = store.get(a[0]);
         if (!e || e.tip !== 'set') return 0;

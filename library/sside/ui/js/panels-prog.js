@@ -670,7 +670,7 @@
     if (op === 'kdel') return { op: 'kdel', key: '' };
     if (op === 'kttl') return { op: 'kttl', fn: 'get', key: '', to: 'ttl_sec' };
     if (op === 'kadd' || op === 'krm') return { op: op, key: '', val: '' };
-    if (op === 'kincr' || op === 'kdecr') return { op: op, key: '', to: '' };
+    if (op === 'kincr' || op === 'kdecr') return { op: op, key: '', as: 'int', to: '' };
     if (op === 'scheck') return { op: 'scheck', schema: '', val: 'form' };
     if (op === 'sgen') return { op: 'sgen', schema: '', to: 'draft' };
     if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
@@ -1029,6 +1029,8 @@
 
     if (op === 'kincr' || op === 'kdecr') {
       let extra = step.to ? ' → ' + previewVal(step.to) : '';
+      const asMode = step.as != null && step.as !== '' ? String(step.as) : 'int';
+      if (asMode !== 'int') extra += '  as ' + asMode;
       if (step.by != null && step.by !== '') extra += '  by ' + previewVal(step.by);
       return op + '  ' + previewVal(step.key) + extra;
     }
@@ -1806,6 +1808,13 @@
     }
 
     if (op === 'kincr' || op === 'kdecr') {
+      const asSel = wire(
+        mkSelect('as', step.as != null && step.as !== '' ? String(step.as) : 'int', [
+          { value: 'int', label: 'int (INCR / INCRBY)' },
+          { value: 'float', label: 'float (INCRBYFLOAT)' },
+        ])
+      );
+      row.appendChild(mkField('as', asSel));
       row.appendChild(mkField('key', wire(mkInput('key', step.key))));
       row.appendChild(mkField('to (opțional)', wire(mkInput('to', step.to != null ? step.to : ''))));
       row.appendChild(
@@ -2248,6 +2257,9 @@
     }
     if (op === 'kincr' || op === 'kdecr') {
       step.key = sf(el, 'key');
+      const asMode = sf(el, 'as') || 'int';
+      if (asMode === 'int') delete step.as;
+      else step.as = 'float';
       const to = sf(el, 'to');
       if (to.trim()) step.to = to;
       else delete step.to;

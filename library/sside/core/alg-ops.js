@@ -11,7 +11,7 @@
     'RPUSH', 'LPUSH', 'LRANGE', 'LREM', 'LLEN', 'LINDEX', 'LSET',
     'HSET', 'HGET', 'HDEL', 'HGETALL', 'HINCRBY',
     'ZADD', 'ZREM', 'ZRANGE', 'ZSCORE',
-    'INCR', 'INCRBY', 'DECR', 'DECRBY', 'MGET',
+    'INCR', 'INCRBY', 'DECR', 'DECRBY', 'INCRBYFLOAT', 'MGET',
   ]);
 
   function isIdent(s) {
@@ -1162,7 +1162,19 @@
     throw new Error('kttl: fn invalid (get|set|remove)');
   }
 
-  function resolveCounterBy(step, ctx, getValFn) {
+  function counterToVar(step) {
+    return step.to != null && String(step.to).trim() !== '' ? String(step.to).trim() : null;
+  }
+
+  function counterAsMode(step) {
+    const a = step.as != null && step.as !== '' ? String(step.as).toLowerCase() : 'int';
+    if (a !== 'int' && a !== 'float') {
+      throw new Error('as trebuie int|float');
+    }
+    return a;
+  }
+
+  function resolveCounterByInt(step, ctx, getValFn) {
     if (step.by === undefined || step.by === null || step.by === '') return 1;
     const n = castValue(getValFn(ctx, step.by), 'integer');
     if (!Number.isFinite(n) || n < 1) {
@@ -1171,20 +1183,52 @@
     return Math.trunc(n);
   }
 
+  function resolveCounterByFloat(step, ctx, getValFn) {
+    if (step.by === undefined || step.by === null || step.by === '') return 1;
+    const n = castValue(getValFn(ctx, step.by), 'number');
+    if (!Number.isFinite(n) || n <= 0) {
+      throw new Error('by trebuie number > 0');
+    }
+    return n;
+  }
+
+  function parseCounterResult(raw, asMode) {
+    if (asMode === 'float') {
+      const n = typeof raw === 'number' ? raw : parseFloat(raw);
+      return Number.isFinite(n) ? n : 0;
+    }
+    let n = raw;
+    if (typeof n === 'string') n = parseInt(n, 10);
+    if (typeof n !== 'number' || Number.isNaN(n)) n = 0;
+    return n;
+  }
+
   function buildKincrStep(step, ctx, getValFn) {
     const key = String(getValFn(ctx, step.key) || '');
     if (!key) throw new Error('kincr: key gol');
-    const by = resolveCounterBy(step, ctx, getValFn);
+    const mode = counterAsMode(step);
+    const to = counterToVar(step);
+    if (mode === 'float') {
+      const amount = resolveCounterByFloat(step, ctx, getValFn);
+      return { argv: ['INCRBYFLOAT', key, String(amount)], to, as: 'float' };
+    }
+    const by = resolveCounterByInt(step, ctx, getValFn);
     const argv = by === 1 ? ['INCR', key] : ['INCRBY', key, String(by)];
-    return { argv, to: step.to != null && String(step.to).trim() !== '' ? String(step.to).trim() : null };
+    return { argv, to, as: 'int' };
   }
 
   function buildKdecrStep(step, ctx, getValFn) {
     const key = String(getValFn(ctx, step.key) || '');
     if (!key) throw new Error('kdecr: key gol');
-    const by = resolveCounterBy(step, ctx, getValFn);
+    const mode = counterAsMode(step);
+    const to = counterToVar(step);
+    if (mode === 'float') {
+      const amount = resolveCounterByFloat(step, ctx, getValFn);
+      return { argv: ['INCRBYFLOAT', key, String(-amount)], to, as: 'float' };
+    }
+    const by = resolveCounterByInt(step, ctx, getValFn);
     const argv = by === 1 ? ['DECR', key] : ['DECRBY', key, String(by)];
-    return { argv, to: step.to != null && String(step.to).trim() !== '' ? String(step.to).trim() : null };
+    return { argv, to, as: 'int' };
   }
 
   function executeNotify(step, ctx, getValFn) {
@@ -1337,6 +1381,7 @@
     buildKrmArgv,
     buildKincrStep,
     buildKdecrStep,
+    parseCounterResult,
     unwrapJsonGet,
     parseMaybeJson,
     looksJsonType,

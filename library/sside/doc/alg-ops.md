@@ -472,8 +472,8 @@ Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 | `kttl` | TTL pe cheie (get / set / remove) | — |
 | `kadd` | adaugă în set/list | — |
 | `krm` | scoate din set/list | — |
-| `kincr` | increment atomic (`INCR` / `INCRBY`) | — |
-| `kdecr` | decrement atomic (`DECR` / `DECRBY`) | — |
+| `kincr` | increment atomic (int sau float) | — |
+| `kdecr` | decrement atomic (int sau float) | — |
 
 `ksave` **rescrie** mereu cheia (fără eroare dacă există). Pentru create-only, verifică înainte cu `TYPE` / `EXISTS` + `if` + `end`+`err` (vezi exemple).
 
@@ -552,14 +552,38 @@ Increment / decrement atomic pe o cheie **string** (contor Redis). Dacă cheia *
 ```json
 { "op": "kincr", "key": "counter:_stock", "to": "qty" }
 { "op": "kdecr", "key": "counter:_stock", "by": 5 }
-{ "op": "kincr", "key": "$key", "by": "form.delta", "to": "newVal" }
+{ "op": "kincr", "key": "score:_x", "as": "float", "by": "0.25", "to": "s" }
+{ "op": "kdecr", "key": "score:_x", "as": "float", "by": "form.step", "to": "s" }
 ```
 
 | Câmp | Rol |
 |------|-----|
 | **`key`** | Cheie obligatorie (string sau ref). |
-| **`to`** | Opțional — variabilă unde se scrie **valoarea după** increment/decrement. |
-| **`by`** | Opțional — pas (integer **≥ 1**). Lipsă = **1** → `INCR` / `DECR`; altfel `INCRBY` / `DECRBY`. |
+| **`as`** | **`int`** (default) sau **`float`**. |
+| **`to`** | Opțional — variabilă unde se scrie **valoarea după** increment/decrement (number). |
+| **`by`** | Opțional — magnitudine **> 0**. Lipsă = **1**. Semnul vine din op (`kincr` / `kdecr`), nu din `by` negativ. |
+
+#### `as: "int"` (default)
+
+| Op | `by` | Redis |
+|----|------|--------|
+| `kincr` | lipsă / 1 | `INCR` |
+| `kincr` | ≥ 2 | `INCRBY` |
+| `kdecr` | lipsă / 1 | `DECR` |
+| `kdecr` | ≥ 2 | `DECRBY` |
+
+`by` trebuie **integer ≥ 1**.
+
+#### `as: "float"`
+
+Doar **`INCRBYFLOAT`** (nu există `DECRBYFLOAT` în Redis):
+
+| Op | Redis |
+|----|--------|
+| `kincr` | `INCRBYFLOAT key +by` |
+| `kdecr` | `INCRBYFLOAT key -by` |
+
+`by` = număr **> 0** (literal sau ref, ex. `0.5`, `form.qty`).
 
 **Tranzacții:** intră în buffer la `tstart`, commit la `tdo`. **`to`** se umple doar când pasul rulează **în afara** tx (la buffer, rezultatul nu e disponibil până la `EXEC`).
 
