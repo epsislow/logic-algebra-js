@@ -8,7 +8,7 @@
   const ALG_OPS = [
     'assign', 'cat', 'cast', 'fdate', 
     'if', 'foreach', 'end', 'comment',
-    'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm',
+    'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm', 'kincr', 'kdecr',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
@@ -670,6 +670,7 @@
     if (op === 'kdel') return { op: 'kdel', key: '' };
     if (op === 'kttl') return { op: 'kttl', fn: 'get', key: '', to: 'ttl_sec' };
     if (op === 'kadd' || op === 'krm') return { op: op, key: '', val: '' };
+    if (op === 'kincr' || op === 'kdecr') return { op: op, key: '', to: '' };
     if (op === 'scheck') return { op: 'scheck', schema: '', val: 'form' };
     if (op === 'sgen') return { op: 'sgen', schema: '', to: 'draft' };
     if (op === 'jset') return { op: 'jset', to: 'payload', path: '', from: 'form.' };
@@ -1024,6 +1025,12 @@
 
     if (op === 'kadd' || op === 'krm') {
       return op + '  ' + previewVal(step.key) + '  ' + previewVal(step.val);
+    }
+
+    if (op === 'kincr' || op === 'kdecr') {
+      let extra = step.to ? ' → ' + previewVal(step.to) : '';
+      if (step.by != null && step.by !== '') extra += '  by ' + previewVal(step.by);
+      return op + '  ' + previewVal(step.key) + extra;
     }
 
     if (op === 'scheck') {
@@ -1798,6 +1805,15 @@
       return;
     }
 
+    if (op === 'kincr' || op === 'kdecr') {
+      row.appendChild(mkField('key', wire(mkInput('key', step.key))));
+      row.appendChild(mkField('to (opțional)', wire(mkInput('to', step.to != null ? step.to : ''))));
+      row.appendChild(
+        mkField('by (default 1)', wire(mkInput('by', step.by != null ? step.by : '')))
+      );
+      return;
+    }
+
     if (op === 'scheck') {
       const sel = document.createElement('select');
       sel.setAttribute('data-sf', 'schema');
@@ -2228,6 +2244,16 @@
     if (op === 'kadd' || op === 'krm') {
       step.key = sf(el, 'key');
       step.val = sf(el, 'val');
+      return withStepMeta(el, step);
+    }
+    if (op === 'kincr' || op === 'kdecr') {
+      step.key = sf(el, 'key');
+      const to = sf(el, 'to');
+      if (to.trim()) step.to = to;
+      else delete step.to;
+      const by = sf(el, 'by');
+      if (by.trim()) step.by = by;
+      else delete step.by;
       return withStepMeta(el, step);
     }
     if (op === 'scheck') {

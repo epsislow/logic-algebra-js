@@ -1,5 +1,5 @@
 /**
- * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops, s-ops, jset/jget, search, log, redis, tstart/tdo/tstop.
+ * ALG runner v1 (F4): assign, cat, end, if, foreach, k-ops (incl. kincr/kdecr), s-ops, jset/jget, search, log, redis, tstart/tdo/tstop.
  * deps: SsideWhen, SsideAlgOps, SsideSearchQuery (browser) sau require.
  */
 (function (root) {
@@ -589,6 +589,30 @@
       if (env.redis.type) redisType = await env.redis.type(key);
       const argv = Ops.buildKrmArgv(key, member, redisType);
       await enqueueOrExec(ctx, env, argv);
+      return;
+    }
+
+    if (op === 'kincr') {
+      const spec = Ops.buildKincrStep(step, ctx, getVal);
+      const raw = await enqueueOrExec(ctx, env, spec.argv);
+      if (spec.to && !ctx.inTx) {
+        let n = raw;
+        if (typeof n === 'string') n = parseInt(n, 10);
+        if (typeof n !== 'number' || Number.isNaN(n)) n = 0;
+        Ops.setVar(ctx, spec.to, n);
+      }
+      return;
+    }
+
+    if (op === 'kdecr') {
+      const spec = Ops.buildKdecrStep(step, ctx, getVal);
+      const raw = await enqueueOrExec(ctx, env, spec.argv);
+      if (spec.to && !ctx.inTx) {
+        let n = raw;
+        if (typeof n === 'string') n = parseInt(n, 10);
+        if (typeof n !== 'number' || Number.isNaN(n)) n = 0;
+        Ops.setVar(ctx, spec.to, n);
+      }
       return;
     }
 

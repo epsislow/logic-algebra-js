@@ -1162,6 +1162,31 @@
     throw new Error('kttl: fn invalid (get|set|remove)');
   }
 
+  function resolveCounterBy(step, ctx, getValFn) {
+    if (step.by === undefined || step.by === null || step.by === '') return 1;
+    const n = castValue(getValFn(ctx, step.by), 'integer');
+    if (!Number.isFinite(n) || n < 1) {
+      throw new Error('by trebuie integer ≥ 1');
+    }
+    return Math.trunc(n);
+  }
+
+  function buildKincrStep(step, ctx, getValFn) {
+    const key = String(getValFn(ctx, step.key) || '');
+    if (!key) throw new Error('kincr: key gol');
+    const by = resolveCounterBy(step, ctx, getValFn);
+    const argv = by === 1 ? ['INCR', key] : ['INCRBY', key, String(by)];
+    return { argv, to: step.to != null && String(step.to).trim() !== '' ? String(step.to).trim() : null };
+  }
+
+  function buildKdecrStep(step, ctx, getValFn) {
+    const key = String(getValFn(ctx, step.key) || '');
+    if (!key) throw new Error('kdecr: key gol');
+    const by = resolveCounterBy(step, ctx, getValFn);
+    const argv = by === 1 ? ['DECR', key] : ['DECRBY', key, String(by)];
+    return { argv, to: step.to != null && String(step.to).trim() !== '' ? String(step.to).trim() : null };
+  }
+
   function executeNotify(step, ctx, getValFn) {
     const kind = String(step.kind || 'info').toLowerCase();
     let text = '';
@@ -1310,6 +1335,8 @@
     buildKgetArgv,
     buildKaddArgv,
     buildKrmArgv,
+    buildKincrStep,
+    buildKdecrStep,
     unwrapJsonGet,
     parseMaybeJson,
     looksJsonType,

@@ -472,6 +472,8 @@ Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
 | `kttl` | TTL pe cheie (get / set / remove) | — |
 | `kadd` | adaugă în set/list | — |
 | `krm` | scoate din set/list | — |
+| `kincr` | increment atomic (`INCR` / `INCRBY`) | — |
+| `kdecr` | decrement atomic (`DECR` / `DECRBY`) | — |
 
 `ksave` **rescrie** mereu cheia (fără eroare dacă există). Pentru create-only, verifică înainte cu `TYPE` / `EXISTS` + `if` + `end`+`err` (vezi exemple).
 
@@ -543,6 +545,25 @@ Meta-operații polimorfice separate pentru adăugarea (`kadd`) sau eliminarea (`
 * `kadd` acceptă un obiect explicit formatat `{ score: 100, member: "val" }` sau o structură compactă `{ member_name: score_number }` și rulează comanda atomică `ZADD` în ordine crescătoare a scorurilor. Ca fallback sigur pentru primitive, le adaugă cu scorul implicit `0`.
 * `krm` acceptă string-ul reprezentând numele membrului unic și rulează comanda `ZREM`, eliminându-l complet din structură.
 
+### kincr / kdecr
+
+Increment / decrement atomic pe o cheie **string** (contor Redis). Dacă cheia **nu există**, Redis o tratează ca **`0`** apoi aplică +/- (comportament standard).
+
+```json
+{ "op": "kincr", "key": "counter:_stock", "to": "qty" }
+{ "op": "kdecr", "key": "counter:_stock", "by": 5 }
+{ "op": "kincr", "key": "$key", "by": "form.delta", "to": "newVal" }
+```
+
+| Câmp | Rol |
+|------|-----|
+| **`key`** | Cheie obligatorie (string sau ref). |
+| **`to`** | Opțional — variabilă unde se scrie **valoarea după** increment/decrement. |
+| **`by`** | Opțional — pas (integer **≥ 1**). Lipsă = **1** → `INCR` / `DECR`; altfel `INCRBY` / `DECRBY`. |
+
+**Tranzacții:** intră în buffer la `tstart`, commit la `tdo`. **`to`** se umple doar când pasul rulează **în afara** tx (la buffer, rezultatul nu e disponibil până la `EXEC`).
+
+Pentru ID-uri secvențiale cu prefix dată, vezi op **`id`** (`autoinc` / `dateinc`).
 
 ## Schemă
 

@@ -261,5 +261,66 @@ module.exports = {
         assertEq(JSON.stringify(Ops.resolveRef('list.keys', ctx)), JSON.stringify(['a']));
       },
     },
+    {
+      id: 12,
+      desc: 'kincr cheie nouă → 1, apoi 2',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'kincr', key: 'counter:_x', to: 'a' },
+              { op: 'kincr', key: 'counter:_x', to: 'b' },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.a, 1);
+        assertEq(r.vars.b, 2);
+        assertEq(await redis.exec(['GET', 'counter:_x']), '2');
+      },
+    },
+    {
+      id: 13,
+      desc: 'kdecr cheie nouă → -1',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [{ op: 'kdecr', key: 'counter:_y', to: 'n' }],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.n, -1);
+        assertEq(await redis.exec(['GET', 'counter:_y']), '-1');
+      },
+    },
+    {
+      id: 14,
+      desc: 'kincr/kdecr by + tstart/tdo',
+      async run() {
+        const redis = createMemoryRedis();
+        await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'tstart' },
+              { op: 'kincr', key: 'counter:_z', by: 3 },
+              { op: 'kdecr', key: 'counter:_z', by: 1 },
+              { op: 'tdo' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(await redis.exec(['GET', 'counter:_z']), '2');
+        const ctx = { form: {}, vars: {}, list: {} };
+        const getVal = (c, t) => Ops.resolveRef(t, c);
+        const spec = Ops.buildKincrStep({ op: 'kincr', key: 'k', by: 5 }, ctx, getVal);
+        assertEq(spec.argv.join(' '), 'INCRBY k 5');
+      },
+    },
   ],
 };

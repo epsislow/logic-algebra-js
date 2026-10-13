@@ -257,17 +257,34 @@
         return n;
       }
 
-      if (cmd === 'INCR') {
-        const key = a[0];
+      function adjustStringCounter(key, delta) {
         let e = store.get(key);
         if (!e) {
           e = { tip: 'string', val: '0' };
           store.set(key, e);
         }
         if (e.tip !== 'string') throw new Error('WRONGTYPE');
-        const nextVal = (parseInt(e.val, 10) || 0) + 1;
+        const nextVal = (parseInt(e.val, 10) || 0) + delta;
         e.val = String(nextVal);
         return nextVal;
+      }
+
+      if (cmd === 'INCR') {
+        return adjustStringCounter(a[0], 1);
+      }
+
+      if (cmd === 'DECR') {
+        return adjustStringCounter(a[0], -1);
+      }
+
+      if (cmd === 'INCRBY') {
+        const n = parseInt(a[1], 10);
+        return adjustStringCounter(a[0], Number.isFinite(n) ? n : 0);
+      }
+
+      if (cmd === 'DECRBY') {
+        const n = parseInt(a[1], 10);
+        return adjustStringCounter(a[0], Number.isFinite(n) ? -n : 0);
       }
 
       if (cmd === 'SREM') {

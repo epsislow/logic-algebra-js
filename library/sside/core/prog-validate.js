@@ -7,7 +7,7 @@
   const ALG_OPS = new Set([
     'assign', 'cat', 'cast',  'fdate',
     'if', 'foreach', 'end', 'comment',
-    'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm',
+    'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm', 'kincr', 'kdecr',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
     'search', 'notify', 'log',
@@ -182,6 +182,19 @@
         const hasTtl = s.ttl !== undefined && s.ttl !== null && s.ttl !== '';
         if (s.keepTtl === true && hasTtl) {
           return err(p + ': ttl și keepTtl sunt mutual exclusive');
+        }
+      }
+      if (s.op === 'kincr' || s.op === 'kdecr') {
+        if (s.key == null || typeof s.key !== 'string' || !String(s.key).trim()) {
+          return err(p + '.key obligatoriu');
+        }
+        if (s.to != null && (typeof s.to !== 'string' || !String(s.to).trim())) {
+          return err(p + '.to trebuie string nevid');
+        }
+        if (s.by !== undefined && s.by !== null && s.by !== '') {
+          if (typeof s.by !== 'string' && typeof s.by !== 'number') {
+            return err(p + '.by trebuie număr sau ref');
+          }
         }
       }
       if (s.op === 'kttl') {
