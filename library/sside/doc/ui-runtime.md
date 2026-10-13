@@ -27,7 +27,7 @@ Header:
 
 Conținut: același renderer ca vechiul tab Live (`tabs` → blocks form/list).
 
-În Runtime **nu** se afișează lista principală (căutare, rânduri chei), titlul paginii sau bara **Lista / Docs** — doar headerul Runtime (+ comutator temă sus). Înapoi la listă: **← Înapoi la listă** din Runtime sau după ieșirea din Edit.
+În Runtime **nu** se afișează lista principală (căutare, rânduri chei) nici titlul paginii. Sus rămân **comutatorul de temă**, **bara utilizator** (Lista, Docs, nume, Deconectare) și **headerul Runtime** (Înapoi, titlu ui, Edit). Înapoi la listă: **Lista** / **← Înapoi la listă** din Runtime.
 
 ---
 

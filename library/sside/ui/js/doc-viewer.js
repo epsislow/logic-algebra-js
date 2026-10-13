@@ -175,8 +175,11 @@
     return panel;
   }
 
+  /** @type {boolean} revenire la Runtime Live după închidere Docs */
+  let docsReturnToRuntime = false;
+
   function hideOtherScreens() {
-    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate'].forEach(function (id) {
+    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate', 'ecran-ui-runtime'].forEach(function (id) {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
@@ -233,7 +236,12 @@
 
   function arata(sectionId) {
     ensurePanel();
+    const runtimeEl = document.getElementById('ecran-ui-runtime');
+    docsReturnToRuntime =
+      document.body.classList.contains('sside-runtime-active') &&
+      !!(runtimeEl && runtimeEl.style.display !== 'none');
     hideOtherScreens();
+    document.body.classList.add('sside-docs-open');
     const panel = document.getElementById('ecran-docs');
     panel.style.display = 'block';
     randeazaToc();
@@ -243,8 +251,15 @@
   }
 
   function ascunde() {
+    document.body.classList.remove('sside-docs-open');
     const panel = document.getElementById('ecran-docs');
     if (panel) panel.style.display = 'none';
+    if (docsReturnToRuntime) {
+      const runtimeEl = document.getElementById('ecran-ui-runtime');
+      if (runtimeEl) runtimeEl.style.display = 'block';
+      docsReturnToRuntime = false;
+      return;
+    }
     const lista = document.getElementById('ecran-lista');
     if (lista) lista.style.display = 'block';
   }
