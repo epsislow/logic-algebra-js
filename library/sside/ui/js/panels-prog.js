@@ -7,7 +7,7 @@
 
   const ALG_OPS = [
     'assign', 'cat', 'cast', 'fdate', 
-    'if', 'foreach', 'end', 'comment',
+    'if', 'foreach', 'scope', 'fail', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm', 'kincr', 'kdecr',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
@@ -617,7 +617,7 @@
   }
 
   // ---------- Alg edit (F2-alg-A flat + F2-alg-B bloc/drill-in) ----------
-  const ALG_BLOCK_OPS = new Set(['if', 'foreach']);
+  const ALG_BLOCK_OPS = new Set(['if', 'foreach', 'scope']);
   const AS_OPTS = [
     { value: 'auto', label: 'auto' },
     { value: 'json', label: 'json' },
@@ -663,6 +663,8 @@
     if (op === 'array') return { op: 'array', fn: 'length', from: '', to: '' };
     if (op === 'if') return { op: 'if', when: ['eq', '', ''], then: [] };
     if (op === 'foreach') return { op: 'foreach', in: '', as: 'it', do: [] };
+    if (op === 'scope') return { op: 'scope', steps: [], recover: [] };
+    if (op === 'fail') return { op: 'fail', msg: '' };
     if (op === 'end') return { op: 'end', type: 'msg', value: '' };
     if (op === 'comment') return { op: 'comment', note: '' };
     if (op === 'kget') return { op: 'kget', key: '', to: '', as: 'auto' };
@@ -718,6 +720,15 @@
         });
       } else if (s.op === 'foreach') {
         (Array.isArray(s.do) ? s.do : []).forEach((x) => {
+          n += 1;
+          walk(x);
+        });
+      } else if (s.op === 'scope') {
+        (Array.isArray(s.steps) ? s.steps : []).forEach((x) => {
+          n += 1;
+          walk(x);
+        });
+        (Array.isArray(s.recover) ? s.recover : []).forEach((x) => {
           n += 1;
           walk(x);
         });
@@ -790,6 +801,11 @@
         ')'
       );
     }
+    if (step.op === 'scope') {
+      const sn = Array.isArray(step.steps) ? step.steps.length : 0;
+      const rn = Array.isArray(step.recover) ? step.recover.length : 0;
+      return 'steps(' + sn + ') · recover(' + rn + ')';
+    }
     return '';
   }
 
@@ -825,9 +841,16 @@
     // comment: view focus pe // note (rând separat); linia op goală
     if (op === 'comment') return '';
 
-    if (op === 'if' || op === 'foreach') {
+    if (op === 'if' || op === 'foreach' || op === 'scope') {
       const pb = previewBlock(step);
       return pb ? op + '  ' + pb : op;
+    }
+
+    if (op === 'fail') {
+      if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+        return 'fail  ' + String(step.with);
+      }
+      return 'fail  ' + (step.msg != null ? String(step.msg) : '');
     }
 
     if (op === 'assign') {
@@ -3081,6 +3104,22 @@
           flushCurrentView();
           pushNav({ kind: 'steps', label: 'do', steps: step.do });
         });
+        return;
+      }
+
+      if (step.op === 'scope') {
+        if (!Array.isArray(step.steps)) step.steps = [];
+        if (!Object.prototype.hasOwnProperty.call(step, 'recover')) step.recover = [];
+        if (!Array.isArray(step.recover)) step.recover = [];
+        mountBranchCard(wrap, 'steps', step.steps.length, () => {
+          flushCurrentView();
+          pushNav({ kind: 'steps', label: 'steps', steps: step.steps });
+        });
+        mountBranchCard(wrap, 'recover', step.recover.length, () => {
+          flushCurrentView();
+          pushNav({ kind: 'steps', label: 'recover', steps: step.recover });
+        });
+        return;
       }
     }
 

@@ -74,6 +74,163 @@
     };
   }
 
+  function discardTx(ctx) {
+    if (ctx.inTx) {
+      ctx.txBuf = [];
+      ctx.inTx = false;
+    }
+  }
+
+  function cloneFailVars(f) {
+    if (!f || typeof f !== 'object') return undefined;
+    return {
+      path: f.path,
+      msg: f.msg,
+      op: f.op,
+      note: f.note,
+    };
+  }
+
+  function setFailVars(ctx, stepPath, step, message) {
+    ctx.vars._fail = {
+      path: stepPath,
+      msg: message == null ? '' : String(message),
+      op: step && step.op ? String(step.op) : '',
+      note: step && step.note != null ? String(step.note) : '',
+    };
+  }
+
+  function shouldRecoverFail(err) {
+    if (err && err._algFail === true) return true;
+    const msg = String(err && err.message ? err.message : err);
+    const nonRecoverable = [
+      'max alg call 128 reached',
+      'call: loadAlg lipsă',
+      'call: alg invalid',
+      'alg lipsă:',
+      'alg invalid',
+      'redis adapter lipsă',
+      'step invalid',
+      'step fără op',
+      'op necunoscut:',
+    ];
+    for (let i = 0; i < nonRecoverable.length; i++) {
+      if (msg.indexOf(nonRecoverable[i]) !== -1) return false;
+    }
+    return true;
+  }
+
+  function applyUncaughtFail(ctx, env, message) {
+    discardTx(ctx);
+    const text = message == null ? '' : String(message);
+    const inCallee = (env.callDepth || 0) > 0;
+    if (inCallee) {
+      ctx._callReturn = makeCallResult(true, 'err', text);
+      ctx._stop = true;
+      return;
+    }
+    ctx._err = text;
+    ctx._stop = true;
+  }
+
+  async function runStepsFromIndex(steps, fromIndex, ctx, env, pathPrefix, loc) {
+    if (!Array.isArray(steps) || fromIndex >= steps.length) return;
+    for (let i = fromIndex; i < steps.length; i++) {
+      if (ctx._stop) return;
+      const step = steps[i];
+      const stepPath = pathPrefix + '[' + i + ']';
+      const stepLoc = Object.assign({}, loc, {
+        steps,
+        index: i,
+        pathPrefix,
+      });
+      const hr = await runStepMaybeFail(step, ctx, env, stepPath, stepLoc);
+      if (hr === 'afterScope' || hr === 'algDone') return;
+    }
+  }
+
+  async function handleFail(message, failStep, failStepPath, loc, ctx, env) {
+    discardTx(ctx);
+    const restoreFail = cloneFailVars(ctx.vars._fail);
+    setFailVars(ctx, failStepPath, failStep, message);
+
+    const opHasRecover =
+      failStep &&
+      failStep.op !== 'fail' &&
+      Object.prototype.hasOwnProperty.call(failStep, 'recover');
+
+    let recoverList = null;
+    let resume = null;
+    let recoverPath = null;
+
+    if (opHasRecover) {
+      recoverList = Array.isArray(failStep.recover) ? failStep.recover : [];
+      recoverPath = failStepPath + '.recover';
+      resume = 'afterOp';
+    } else if (loc.mode === 'scopeSteps' && loc.enclosingScope) {
+      recoverList = Array.isArray(loc.enclosingScope.recover) ? loc.enclosingScope.recover : [];
+      recoverPath = loc.enclosingScopePath + '.recover';
+      resume = 'afterScope';
+    } else if (loc.mode === 'algSteps') {
+      const ar = loc.algRecover != null ? loc.algRecover : env.algRecover;
+      recoverList = Array.isArray(ar) ? ar : [];
+      recoverPath = 'recover';
+      resume = 'algDone';
+    } else {
+      applyUncaughtFail(ctx, env, message);
+      return 'stop';
+    }
+
+    await runSteps(recoverList, ctx, env, recoverPath, {
+      mode: 'recoverList',
+      algRecover: env.algRecover,
+    });
+
+    if (restoreFail !== undefined) ctx.vars._fail = restoreFail;
+    else delete ctx.vars._fail;
+
+    if (ctx._stop) return 'stop';
+
+    if (resume === 'afterOp') {
+      await runStepsFromIndex(loc.steps, loc.index + 1, ctx, env, loc.pathPrefix, loc);
+      return 'handled';
+    }
+    if (resume === 'afterScope') return 'afterScope';
+    if (resume === 'algDone') return 'algDone';
+    return 'handled';
+  }
+
+  async function runStepMaybeFail(step, ctx, env, stepPath, loc) {
+    try {
+      await runStep(step, ctx, env, stepPath);
+      return null;
+    } catch (e) {
+      if (ctx._stop) return 'stop';
+      if (!shouldRecoverFail(e)) throw e;
+      const msg = e && e.message ? e.message : String(e);
+      return await handleFail(msg, step, stepPath, loc || {}, ctx, env);
+    }
+  }
+
+  async function runScopeBlock(scopeStep, stepPath, ctx, env) {
+    const innerSteps = Array.isArray(scopeStep.steps) ? scopeStep.steps : [];
+    const innerPath = stepPath + '.steps';
+    for (let i = 0; i < innerSteps.length; i++) {
+      if (ctx._stop) return;
+      const st = innerSteps[i];
+      const sp = innerPath + '[' + i + ']';
+      const hr = await runStepMaybeFail(st, ctx, env, sp, {
+        mode: 'scopeSteps',
+        steps: innerSteps,
+        index: i,
+        pathPrefix: innerPath,
+        enclosingScope: scopeStep,
+        enclosingScopePath: stepPath,
+      });
+      if (hr) return;
+    }
+  }
+
   function getVal(ctx, token) {
     return Ops.resolveRef(token, ctx);
   }
@@ -200,14 +357,21 @@
     applyConfirmCancel(step, ctx, env);
   }
 
-  async function runSteps(steps, ctx, env, pathPrefix) {
+  async function runSteps(steps, ctx, env, pathPrefix, loc) {
     if (!Array.isArray(steps)) return;
     const base = pathPrefix || 'steps';
+    const baseLoc = loc || { mode: 'recoverList', algRecover: env.algRecover };
     for (let i = 0; i < steps.length; i++) {
       if (ctx._stop) return;
       const step = steps[i];
       const stepPath = base + '[' + i + ']';
-      await runStep(step, ctx, env, stepPath);
+      const stepLoc = Object.assign({}, baseLoc, {
+        steps,
+        index: i,
+        pathPrefix: base,
+      });
+      const hr = await runStepMaybeFail(step, ctx, env, stepPath, stepLoc);
+      if (hr === 'afterScope' || hr === 'algDone') return;
     }
   }
 
@@ -389,9 +553,19 @@
     if (op === 'if') {
       const ok = When.evalWhen(step.when, (t) => getVal(ctx, t));
       if (ok) {
-        if (step.thenOff !== true) await runSteps(step.then || [], ctx, env, stepPath + '.then');
+        if (step.thenOff !== true) {
+          await runSteps(step.then || [], ctx, env, stepPath + '.then', {
+            mode: 'recoverList',
+            algRecover: env.algRecover,
+          });
+        }
       } else {
-        if (step.elseOff !== true) await runSteps(step.else || [], ctx, env, stepPath + '.else');
+        if (step.elseOff !== true) {
+          await runSteps(step.else || [], ctx, env, stepPath + '.else', {
+            mode: 'recoverList',
+            algRecover: env.algRecover,
+          });
+        }
       }
       return;
     }
@@ -403,9 +577,31 @@
       for (const item of list) {
         if (ctx._stop) return;
         Ops.setVar(ctx, as, item);
-        await runSteps(step.do || [], ctx, env, stepPath + '.do');
+        await runSteps(step.do || [], ctx, env, stepPath + '.do', {
+          mode: 'recoverList',
+          algRecover: env.algRecover,
+        });
       }
       return;
+    }
+
+    if (op === 'scope') {
+      await runScopeBlock(step, stepPath, ctx, env);
+      return;
+    }
+
+    if (op === 'fail') {
+      let msg = '';
+      if (Object.prototype.hasOwnProperty.call(step, 'with')) {
+        const v = getVal(ctx, step.with);
+        msg = v == null ? '' : String(v);
+      } else if (step.msg != null) {
+        msg = String(step.msg);
+      }
+      if (!String(msg).trim()) msg = 'fail';
+      const fe = new Error(msg);
+      fe._algFail = true;
+      throw fe;
     }
 
     if (op === 'tstart') {
@@ -757,8 +953,12 @@
         throw new Error('call: alg invalid ' + algKey);
       }
 
+      childEnv.algRecover = childAlg.recover != null ? childAlg.recover : [];
       try {
-        await runSteps(childAlg.steps, childCtx, childEnv, 'steps');
+        await runSteps(childAlg.steps, childCtx, childEnv, 'steps', {
+          mode: 'algSteps',
+          algRecover: childEnv.algRecover,
+        });
       } finally {
         ctx.inTx = savedInTx;
         ctx.txBuf = savedTxBuf;
@@ -830,10 +1030,14 @@
       },
     };
     env.rootCtx = ctx;
+    env.algRecover = alg.recover != null ? alg.recover : [];
     ctx._confirmCache = Object.create(null);
 
     try {
-      await runSteps(Array.isArray(alg.steps) ? alg.steps : [], ctx, env, 'steps');
+      await runSteps(Array.isArray(alg.steps) ? alg.steps : [], ctx, env, 'steps', {
+        mode: 'algSteps',
+        algRecover: env.algRecover,
+      });
       if (ctx.inTx) {
         // end implicit: discard
         ctx.txBuf = [];

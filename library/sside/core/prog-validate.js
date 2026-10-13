@@ -6,7 +6,7 @@
 
   const ALG_OPS = new Set([
     'assign', 'cat', 'cast',  'fdate',
-    'if', 'foreach', 'end', 'comment',
+    'if', 'foreach', 'scope', 'fail', 'end', 'comment',
     'kget', 'ksave', 'kdel', 'kttl', 'kadd', 'krm', 'kincr', 'kdecr',
     'scheck', 'sgen', 'calc', 'str', 'array',
     'jset', 'jget', 'obj', 'id', 'lock',
@@ -350,6 +350,31 @@
         const e3 = validateAlgSteps(s.do, p + '.do');
         if (e3) return e3;
       }
+      if (s.op === 'scope') {
+        if (!Object.prototype.hasOwnProperty.call(s, 'recover')) {
+          return err(p + ': scope fără recover (obligatoriu, poate fi [])');
+        }
+        if (!Array.isArray(s.steps)) return err(p + '.steps trebuie array');
+        if (!Array.isArray(s.recover)) return err(p + '.recover trebuie array');
+        const e4 = validateAlgSteps(s.steps, p + '.steps');
+        if (e4) return e4;
+        const e5 = validateAlgSteps(s.recover, p + '.recover');
+        if (e5) return e5;
+      }
+      if (s.op === 'fail') {
+        const hasWith = Object.prototype.hasOwnProperty.call(s, 'with');
+        const hasMsg = s.msg != null && String(s.msg).trim() !== '';
+        if (hasWith && hasMsg) return err(p + ': fail — msg sau with, nu ambele');
+        if (!hasWith && !hasMsg) return err(p + ': fail — msg sau with obligatoriu');
+      }
+      if (
+        s.op !== 'fail' &&
+        Object.prototype.hasOwnProperty.call(s, 'recover')
+      ) {
+        if (!Array.isArray(s.recover)) return err(p + '.recover trebuie array');
+        const er = validateAlgSteps(s.recover, p + '.recover');
+        if (er) return er;
+      }
     }
     return null;
   }
@@ -360,6 +385,11 @@
     if (!Array.isArray(obj.steps)) return err('alg.steps trebuie să fie array');
     const se = validateAlgSteps(obj.steps, 'steps');
     if (se) return se;
+    if (obj.recover != null) {
+      if (!Array.isArray(obj.recover)) return err('alg.recover trebuie array');
+      const re = validateAlgSteps(obj.recover, 'recover');
+      if (re) return re;
+    }
     return ok();
   }
 

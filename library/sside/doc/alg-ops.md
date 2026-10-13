@@ -1,5 +1,7 @@
 # Operații algoritm
 
+**Recover / scope / fail:** [alg-recover.md](alg-recover.md) — document separat (try/catch, compensare la fail).
+
 Context: `form` (date din Live) + `vars` (locale).
 
 ## Referințe
