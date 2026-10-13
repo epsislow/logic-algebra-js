@@ -94,6 +94,7 @@
 
   function showBanner(el, result) {
     if (!el) return;
+    el.style.display = '';
     el.classList.remove('is-ok', 'is-err', 'is-empty');
     if (result && result.err) {
       el.textContent = String(result.err);
@@ -108,7 +109,9 @@
   }
 
   function clearBanner(el) {
+    if (!el) return;
     showBanner(el, null);
+    el.style.display = 'none';
   }
 
   function destroyAll() {

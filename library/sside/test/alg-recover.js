@@ -361,7 +361,7 @@ module.exports = {
     },
     {
       id: 19,
-      desc: 'fail root fără alg.recover → prins implicit [] (fără err)',
+      desc: 'fail root fără câmp alg.recover → neprins (end err)',
       async run() {
         const redis = createMemoryRedis();
         const r = await Alg.run(
@@ -371,9 +371,9 @@ module.exports = {
           },
           { form: {}, redis }
         );
-        assert(r.err == null);
+        assert(r.stopped);
+        assertEq(r.err, 'root');
         assert(r.msg == null);
-        assert(!r.stopped);
       },
     },
     {
@@ -390,6 +390,143 @@ module.exports = {
           { form: {}, redis }
         );
         assert(!r.stopped || (r.err == null && r.msg == null));
+      },
+    },
+    {
+      id: 21,
+      desc: 'confirm no în scope → recover nu rulează',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'scope',
+                steps: [{ op: 'confirm', msg: '?', auto: 'no', noMsg: 'Renunțat' }],
+                recover: [{ op: 'assign', to: 'rec', val: 1 }],
+              },
+              { op: 'end', msg: 'după' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assert(r.stopped);
+        assertEq(r.msg, 'Renunțat');
+        assert(r.vars.rec === undefined);
+        assert(r.msg !== 'după');
+      },
+    },
+    {
+      id: 22,
+      desc: 'foreach în lista recover scope',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'scope',
+                steps: [{ op: 'fail', msg: 'x' }],
+                recover: [
+                  {
+                    op: 'foreach',
+                    in: 'form.items',
+                    as: 'it',
+                    do: [{ op: 'assign', to: 'last', from: 'it' }],
+                  },
+                ],
+              },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: { items: [10, 20, 30] }, redis }
+        );
+        assertEq(r.vars.last, 30);
+        assertEq(r.msg, 'ok');
+      },
+    },
+    {
+      id: 23,
+      desc: 'foreach.recover la fail în do → continuă după foreach',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'foreach',
+                in: 'form.items',
+                as: 'it',
+                do: [{ op: 'fail', msg: 'in loop' }],
+                recover: [{ op: 'assign', to: 'caught', val: 1 }],
+              },
+              { op: 'end', msg: 'după foreach' },
+            ],
+          },
+          { form: { items: [1, 2] }, redis }
+        );
+        assertEq(r.vars.caught, 1);
+        assertEq(r.msg, 'după foreach');
+      },
+    },
+    {
+      id: 24,
+      desc: 'foreach fără recover → fail în do la alg.recover',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'foreach',
+                in: 'form.items',
+                as: 'it',
+                do: [{ op: 'fail', msg: 'f' }],
+              },
+              { op: 'end', msg: 'nope' },
+            ],
+            recover: [{ op: 'end', err: 'alg cap' }],
+          },
+          { form: { items: [1] }, redis }
+        );
+        assertEq(r.err, 'alg cap');
+        assert(r.msg == null);
+      },
+    },
+    {
+      id: 25,
+      desc: 'recover pe pas (afterOp) în do foreach',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              {
+                op: 'foreach',
+                in: 'form.items',
+                as: 'it',
+                do: [
+                  {
+                    op: 'scope',
+                    steps: [{ op: 'fail', msg: 'inner' }],
+                    recover: [{ op: 'assign', to: 'tag', val: 'scope-rec' }],
+                  },
+                  { op: 'assign', to: 'afterInner', val: 'yes' },
+                ],
+              },
+              { op: 'end', msg: 'done' },
+            ],
+          },
+          { form: { items: [7] }, redis }
+        );
+        assertEq(r.vars.tag, 'scope-rec');
+        assertEq(r.vars.afterInner, 'yes');
+        assertEq(r.msg, 'done');
       },
     },
   ],

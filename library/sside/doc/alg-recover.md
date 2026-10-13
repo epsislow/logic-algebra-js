@@ -12,7 +12,7 @@ Plan de implementare: `.cursor/plans/alg-recover.plan.md`.
 - **`end` msg/err** = ce vede userul (banner).
 - **`scope`** = bloc try: `steps` + **`recover` obligatoriu** (poate fi `[]`).
 - **`recover`** opțional pe orice alt op (except `fail` — câmp ignorat).
-- **`alg.recover`** opțional; lipsă = listă goală la runtime.
+- **`alg.recover`** opțional; **lipsă câmp** = fără handler la root (fail neprins); **`recover: []`** = prins explicit, fără pași.
 
 ---
 
@@ -22,8 +22,8 @@ Pe pasul **P** care fail-uiește:
 
 1. **P** are câmp **`recover`** → rulezi `P.recover`, apoi continui **după P** în aceeași listă (dacă recover n-a făcut `end` exit).
 2. Altfel, **P** e în **`scope.steps`** → rulezi `scope.recover`, sari restul din `scope.steps`, continui **după** nodul scope.
-3. Altfel, fail în **`alg.steps`** → rulezi `alg.recover` (sau `[]` dacă lipsește).
-4. **Neprins** → comportament **`end` err** cu mesajul fail-ului.
+3. Altfel, fail în **`alg.steps`** → rulezi **`alg.recover`** doar dacă câmpul există (inclusiv `[]`).
+4. **Neprins** (fără handler, inclusiv alg **fără** câmp `recover`) → **`end` err** cu mesajul fail-ului.
 
 **Prins** (inclusiv `recover: []`): fail-ul **nu** devine banner `end` err; mesaj user doar de la **`end`** sau la final ca alg fără `end`.
 

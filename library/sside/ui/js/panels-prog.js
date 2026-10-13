@@ -723,7 +723,19 @@
           n += 1;
           walk(x);
         });
-      } else if (s.op === 'scope') {
+      }
+      if (
+        s &&
+        typeof s === 'object' &&
+        s.op !== 'scope' &&
+        Object.prototype.hasOwnProperty.call(s, 'recover')
+      ) {
+        (Array.isArray(s.recover) ? s.recover : []).forEach((x) => {
+          n += 1;
+          walk(x);
+        });
+      }
+      if (s && typeof s === 'object' && s.op === 'scope') {
         (Array.isArray(s.steps) ? s.steps : []).forEach((x) => {
           n += 1;
           walk(x);
@@ -791,6 +803,8 @@
     }
     if (step.op === 'foreach') {
       const dn = Array.isArray(step.do) ? step.do.length : 0;
+      const hasRec = Object.prototype.hasOwnProperty.call(step, 'recover');
+      const rn = hasRec && Array.isArray(step.recover) ? step.recover.length : 0;
       return (
         'in: ' +
         (step.in != null ? String(step.in) : '') +
@@ -798,7 +812,8 @@
         (step.as != null ? String(step.as) : '') +
         ' · do(' +
         dn +
-        ')'
+        ')' +
+        (hasRec ? ' · recover(' + rn + ')' : '')
       );
     }
     if (step.op === 'scope') {
@@ -1140,11 +1155,20 @@
     const bits = [op];
     Object.keys(step).forEach((k) => {
       if (k === 'op') return;
-      if (k === 'then' || k === 'else' || k === 'do') return;
+      if (k === 'then' || k === 'else' || k === 'do' || k === 'recover') return;
       const v = step[k];
       if (v == null || v === '') return;
       bits.push(k + ' ' + previewVal(v));
     });
+    if (
+      step.op !== 'scope' &&
+      step.op !== 'if' &&
+      step.op !== 'foreach' &&
+      Object.prototype.hasOwnProperty.call(step, 'recover') &&
+      Array.isArray(step.recover)
+    ) {
+      return bits.join('  ') + '  · recover(' + step.recover.length + ')';
+    }
     return bits.join('  ');
   }
 
@@ -2433,6 +2457,10 @@
     row1.querySelector('[data-f="v"]').value = obj.v != null ? obj.v : 1;
     card.appendChild(row1);
 
+    const algRecoverHost = document.createElement('div');
+    algRecoverHost.className = 'prog-alg-recover-host';
+    card.appendChild(algRecoverHost);
+
     const navEl = document.createElement('div');
     navEl.className = 'prog-alg-nav';
     card.appendChild(navEl);
@@ -2852,6 +2880,7 @@
         } else {
           renderFlatFields(body, step, syncAll);
           appendNoteField(body, step, syncAll);
+          mountOptionalRecoverBranch(body, step);
         }
 
         stepsHost.appendChild(el);
@@ -2907,6 +2936,125 @@
         onOpen();
       });
       parent.appendChild(cardB);
+    }
+
+    const OP_NO_OPTIONAL_RECOVER_UI = new Set(['fail', 'scope', 'if', 'comment', 'end']);
+
+    function mountOptionalRecoverBranch(parent, step) {
+      if (!step || OP_NO_OPTIONAL_RECOVER_UI.has(step.op)) return;
+      const has = Object.prototype.hasOwnProperty.call(step, 'recover');
+      if (has && Array.isArray(step.recover)) {
+        const rmRec = document.createElement('button');
+        rmRec.type = 'button';
+        rmRec.className = 'btn-gri btn-inline btn-inline-danger';
+        rmRec.textContent = 'Șterge recover';
+        rmRec.onclick = (ev) => {
+          ev.stopPropagation();
+          const n = step.recover.length;
+          const ok =
+            typeof window !== 'undefined' && window.confirm
+              ? window.confirm(
+                  n
+                    ? 'Ștergi ramura recover și cei ' + n + ' pași?'
+                    : 'Ștergi ramura recover?'
+                )
+              : true;
+          if (!ok) return;
+          flushCurrentView();
+          delete step.recover;
+          renderView();
+          scrieRaw(obj);
+        };
+        mountBranchCard(
+          parent,
+          'recover',
+          step.recover.length,
+          () => {
+            flushCurrentView();
+            pushNav({ kind: 'steps', label: 'recover', steps: step.recover });
+          },
+          [rmRec]
+        );
+      } else if (!has) {
+        const addRec = document.createElement('button');
+        addRec.type = 'button';
+        addRec.className = 'btn-albastru btn-inline';
+        addRec.textContent = 'Adaugă recover';
+        addRec.onclick = () => {
+          flushCurrentView();
+          step.recover = [];
+          renderView();
+          scrieRaw(obj);
+        };
+        const row = document.createElement('div');
+        row.className = 'prog-toolbar';
+        row.appendChild(addRec);
+        parent.appendChild(row);
+      }
+    }
+
+    function mountAlgRecoverBranch(parent, algObj) {
+      if (!algObj || typeof algObj !== 'object') return;
+      const has = Object.prototype.hasOwnProperty.call(algObj, 'recover');
+      if (has && Array.isArray(algObj.recover)) {
+        const rmRec = document.createElement('button');
+        rmRec.type = 'button';
+        rmRec.className = 'btn-gri btn-inline btn-inline-danger';
+        rmRec.textContent = 'Șterge alg.recover';
+        rmRec.onclick = (ev) => {
+          ev.stopPropagation();
+          const n = algObj.recover.length;
+          const ok =
+            typeof window !== 'undefined' && window.confirm
+              ? window.confirm(
+                  n
+                    ? 'Ștergi alg.recover și cei ' + n + ' pași?'
+                    : 'Ștergi alg.recover?'
+                )
+              : true;
+          if (!ok) return;
+          flushCurrentView();
+          delete algObj.recover;
+          renderView();
+          scrieRaw(obj);
+        };
+        mountBranchCard(
+          parent,
+          'alg.recover',
+          algObj.recover.length,
+          () => {
+            flushCurrentView();
+            pushNav({
+              kind: 'steps',
+              label: 'alg.recover',
+              steps: algObj.recover,
+            });
+          },
+          [rmRec]
+        );
+      } else if (!has) {
+        const addRec = document.createElement('button');
+        addRec.type = 'button';
+        addRec.className = 'btn-albastru btn-inline';
+        addRec.textContent = 'Adaugă alg.recover';
+        addRec.title =
+          'Handler recover la fail în steps (root); lipsă câmp = fail neprins';
+        addRec.onclick = () => {
+          flushCurrentView();
+          algObj.recover = [];
+          renderView();
+          scrieRaw(obj);
+        };
+        const row = document.createElement('div');
+        row.className = 'prog-toolbar';
+        row.appendChild(addRec);
+        parent.appendChild(row);
+      }
+    }
+
+    function renderAlgRecoverHost() {
+      algRecoverHost.innerHTML = '';
+      mountAlgRecoverBranch(algRecoverHost, obj);
     }
 
     function mountBlockPanel(parent, step) {
@@ -3104,6 +3252,7 @@
           flushCurrentView();
           pushNav({ kind: 'steps', label: 'do', steps: step.do });
         });
+        mountOptionalRecoverBranch(wrap, step);
         return;
       }
 
@@ -3125,6 +3274,7 @@
 
     function renderView() {
       persistMeta();
+      renderAlgRecoverHost();
       renderNav();
       viewHost.innerHTML = '';
       const frame = currentFrame();

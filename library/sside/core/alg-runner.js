@@ -100,8 +100,15 @@
     };
   }
 
-  function shouldRecoverFail(err) {
+  function shouldRecoverFail(err, step) {
     if (err && err._algFail === true) return true;
+    if (
+      !step ||
+      step.op === 'fail' ||
+      !Object.prototype.hasOwnProperty.call(step, 'recover')
+    ) {
+      return false;
+    }
     const msg = String(err && err.message ? err.message : err);
     const nonRecoverable = [
       'max alg call 128 reached',
@@ -118,6 +125,15 @@
       if (msg.indexOf(nonRecoverable[i]) !== -1) return false;
     }
     return true;
+  }
+
+  /** undefined = alg fără câmp recover (fail neprins la root); array = handler explicit (poate fi []). */
+  function resolveAlgRecover(loc, env) {
+    let ar;
+    if (loc && loc.algRecover !== undefined) ar = loc.algRecover;
+    else ar = env.algRecover;
+    if (ar === undefined) return undefined;
+    return Array.isArray(ar) ? ar : [];
   }
 
   function applyUncaughtFail(ctx, env, message) {
@@ -145,7 +161,7 @@
         pathPrefix,
       });
       const hr = await runStepMaybeFail(step, ctx, env, stepPath, stepLoc);
-      if (hr === 'afterScope' || hr === 'algDone') return;
+      if (hr === 'afterScope' || hr === 'afterForeach' || hr === 'algDone') return;
     }
   }
 
@@ -171,9 +187,32 @@
       recoverList = Array.isArray(loc.enclosingScope.recover) ? loc.enclosingScope.recover : [];
       recoverPath = loc.enclosingScopePath + '.recover';
       resume = 'afterScope';
+    } else if (
+      loc.mode === 'foreachDo' &&
+      loc.enclosingForeach &&
+      Object.prototype.hasOwnProperty.call(loc.enclosingForeach, 'recover')
+    ) {
+      recoverList = Array.isArray(loc.enclosingForeach.recover)
+        ? loc.enclosingForeach.recover
+        : [];
+      recoverPath = loc.enclosingForeachPath + '.recover';
+      resume = 'afterForeach';
+    } else if (loc.mode === 'foreachDo') {
+      const ar = resolveAlgRecover(loc, env);
+      if (ar === undefined) {
+        applyUncaughtFail(ctx, env, message);
+        return 'stop';
+      }
+      recoverList = ar;
+      recoverPath = 'recover';
+      resume = 'algDone';
     } else if (loc.mode === 'algSteps') {
-      const ar = loc.algRecover != null ? loc.algRecover : env.algRecover;
-      recoverList = Array.isArray(ar) ? ar : [];
+      const ar = resolveAlgRecover(loc, env);
+      if (ar === undefined) {
+        applyUncaughtFail(ctx, env, message);
+        return 'stop';
+      }
+      recoverList = ar;
       recoverPath = 'recover';
       resume = 'algDone';
     } else {
@@ -196,6 +235,7 @@
       return 'handled';
     }
     if (resume === 'afterScope') return 'afterScope';
+    if (resume === 'afterForeach') return 'afterForeach';
     if (resume === 'algDone') return 'algDone';
     return 'handled';
   }
@@ -206,7 +246,7 @@
       return null;
     } catch (e) {
       if (ctx._stop) return 'stop';
-      if (!shouldRecoverFail(e)) throw e;
+      if (!shouldRecoverFail(e, step)) throw e;
       const msg = e && e.message ? e.message : String(e);
       return await handleFail(msg, step, stepPath, loc || {}, ctx, env);
     }
@@ -371,7 +411,7 @@
         pathPrefix: base,
       });
       const hr = await runStepMaybeFail(step, ctx, env, stepPath, stepLoc);
-      if (hr === 'afterScope' || hr === 'algDone') return;
+      if (hr === 'afterScope' || hr === 'afterForeach' || hr === 'algDone') return;
     }
   }
 
@@ -574,13 +614,31 @@
       const list = getVal(ctx, step.in);
       if (!Array.isArray(list)) throw new Error('foreach: in nu e array');
       const as = step.as || 'item';
+      const doSteps = Array.isArray(step.do) ? step.do : [];
+      const doPath = stepPath + '.do';
       for (const item of list) {
         if (ctx._stop) return;
         Ops.setVar(ctx, as, item);
-        await runSteps(step.do || [], ctx, env, stepPath + '.do', {
-          mode: 'recoverList',
-          algRecover: env.algRecover,
-        });
+        let exitForeach = false;
+        for (let di = 0; di < doSteps.length; di++) {
+          if (ctx._stop) return;
+          const hr = await runStepMaybeFail(doSteps[di], ctx, env, doPath + '[' + di + ']', {
+            mode: 'foreachDo',
+            steps: doSteps,
+            index: di,
+            pathPrefix: doPath,
+            enclosingForeach: step,
+            enclosingForeachPath: stepPath,
+            algRecover: env.algRecover,
+          });
+          if (hr === 'afterForeach' || hr === 'algDone') {
+            exitForeach = true;
+            break;
+          }
+          if (hr === 'stop') return;
+          if (hr === 'handled') break;
+        }
+        if (exitForeach) break;
       }
       return;
     }
@@ -953,7 +1011,9 @@
         throw new Error('call: alg invalid ' + algKey);
       }
 
-      childEnv.algRecover = childAlg.recover != null ? childAlg.recover : [];
+      childEnv.algRecover = Object.prototype.hasOwnProperty.call(childAlg, 'recover')
+        ? childAlg.recover
+        : undefined;
       try {
         await runSteps(childAlg.steps, childCtx, childEnv, 'steps', {
           mode: 'algSteps',
@@ -1030,7 +1090,9 @@
       },
     };
     env.rootCtx = ctx;
-    env.algRecover = alg.recover != null ? alg.recover : [];
+    env.algRecover = Object.prototype.hasOwnProperty.call(alg, 'recover')
+      ? alg.recover
+      : undefined;
     ctx._confirmCache = Object.create(null);
 
     try {
