@@ -60,7 +60,7 @@ Tokenii opționali pot apărea în orice ordine după pattern.
 - **Afișare:** sub rândul **Afișate** — comutator **Listă | Plăci | Arbore** (preferință în `localStorage`).
   - **Listă** — rânduri cu badge-uri și buton Edit/Live (mod clasic).
   - **Plăci** — grid; culoare din tip (fără badge); click pe placă → Edit/Live.
-  - **Arbore** — grupare pe `:`; click pe cheie (frunză) → Edit/Live; foldere `<details>`.
+  - **Arbore** — grupare pe `:`; la fiecare nivel: **ramuri** (`▸ prefix:`) apoi **frunze** (chei terminale); click pe frunză → Edit/Live; foldere `<details>`.
 - **Afișate:** numărul de rânduri din listă (mereu).
 - **Limit / Batch:** doar pentru căutări **SCAN** — valorile efectiv folosite (inclusiv default 50000 / 100).
 - **`type`** și **`timeout`** nu apar în bara de status; rămân în câmpul de filtru / căutare salvată.

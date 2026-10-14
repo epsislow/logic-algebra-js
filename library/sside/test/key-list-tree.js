@@ -34,5 +34,18 @@ module.exports = {
         assertEq(findChild(t, 'Aaa').fullKey, 'Aaa');
       },
     },
+    {
+      id: 3,
+      desc: 'sort: ramuri apoi frunze (rădăcină și subnivel)',
+      run() {
+        const t = Tree.buildKeyTree(['idx_search_tags', 'mySet', 'data:loc', 'alg:_x', 'data:_item:1']);
+        const rootLabels = (t.children || []).map((c) => c.label);
+        assertEq(rootLabels.join(','), 'alg,data,idx_search_tags,mySet');
+
+        const data = findChild(t, 'data');
+        const dataLabels = (data.children || []).map((c) => c.label);
+        assertEq(dataLabels.join(','), '_item,loc');
+      },
+    },
   ],
 };

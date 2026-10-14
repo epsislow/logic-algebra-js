@@ -33,8 +33,17 @@
       }
     });
 
+    function isBranchNode(node) {
+      return !!(node.children && node.children.length > 0);
+    }
+
     function sortNode(n) {
-      n.children.sort((a, b) => a.label.localeCompare(b.label));
+      n.children.sort((a, b) => {
+        const ba = isBranchNode(a);
+        const bb = isBranchNode(b);
+        if (ba !== bb) return ba ? -1 : 1;
+        return a.label.localeCompare(b.label);
+      });
       n.children.forEach(sortNode);
     }
     sortNode(root);
