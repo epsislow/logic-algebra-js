@@ -917,6 +917,51 @@
             background: var(--input-bg); color: var(--text); border-color: var(--input-border);
             max-width: 100%;
         }
+
+        /* Formular date / Live — JSONEditor pune fiecare câmp în .row; grid pe wrapper + display:contents */
+        .sside-form-grid .sside-form-grid-wrap,
+        .sside-form-grid .je-object__container > .je-indented-panel > div > div {
+            display: grid !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px 16px;
+            align-items: start;
+        }
+        .sside-form-grid .sside-form-grid-wrap > .row,
+        .sside-form-grid .je-object__container > .je-indented-panel > div > div > .row {
+            display: contents;
+        }
+        .sside-form-grid .sside-form-grid-wrap > .row:has(.je-object__container),
+        .sside-form-grid .sside-form-grid-wrap > .row:has([class*="je-array"]),
+        .sside-form-grid .sside-form-grid-wrap > .row:has(textarea),
+        .sside-form-grid .je-object__container > .je-indented-panel > div > div > .row:has(.je-object__container),
+        .sside-form-grid .je-object__container > .je-indented-panel > div > div > .row:has([class*="je-array"]),
+        .sside-form-grid .je-object__container > .je-indented-panel > div > div > .row:has(textarea) {
+            display: block;
+            grid-column: 1 / -1;
+        }
+        .sside-form-grid .sside-form-grid-wrap > .row > *,
+        .sside-form-grid .je-object__container > .je-indented-panel > div > div > .row > * {
+            min-width: 0;
+        }
+        .sside-form-grid input[type="text"],
+        .sside-form-grid input[type="number"],
+        .sside-form-grid input[type="integer"],
+        .sside-form-grid select {
+            width: 100% !important;
+            max-width: none !important;
+            box-sizing: border-box;
+        }
+        .sside-form-grid label,
+        .sside-form-grid .je-form-input-label {
+            display: block;
+            margin-bottom: 4px;
+        }
+        @media (max-width: 768px) {
+            .sside-form-grid .sside-form-grid-wrap,
+            .sside-form-grid .je-object__container > .je-indented-panel > div > div {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
         .schema-preview-block {
             margin-top: 16px;
             padding-top: 12px;

@@ -168,7 +168,7 @@
       SchemaOrder && SchemaOrder.withPropertyOrder
         ? SchemaOrder.withPropertyOrder(schema)
         : schema;
-    return new JSONEditor(holder, {
+    const editor = new JSONEditor(holder, {
       theme: 'html',
       schema: schemaOrdered || { type: 'object' },
       startval: startval,
@@ -179,6 +179,11 @@
       disable_array_reorder: true,
       show_errors: 'interaction',
     });
+    const Grid = root.SsideSchemaFormGrid;
+    if (Grid && typeof Grid.bindEditorReady === 'function') {
+      Grid.bindEditorReady(editor, holder);
+    }
+    return editor;
   }
 
   function normalizeTabBlocks(tab) {
@@ -801,6 +806,7 @@
       ) {
         schemaObj = root.SsideSchemaOrder.withPropertyOrder(schemaObj);
       }
+      fieldsEl.classList.add('sside-form-grid');
       fieldsEl.innerHTML = '';
       editor = createEditor(fieldsEl, schemaObj, startval);
       if (optionsWarnings.length) {

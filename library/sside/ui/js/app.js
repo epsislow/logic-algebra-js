@@ -658,6 +658,13 @@
             actualizeazaSemnalCacheScheme();
         }
 
+        function leagaFormGridJsonEditor(editor, holder) {
+            const Grid = window.SsideSchemaFormGrid;
+            if (Grid && typeof Grid.bindEditorReady === 'function') {
+                Grid.bindEditorReady(editor, holder);
+            }
+        }
+
         function esteLiberCuFormularDin() {
             return !!(infoCheieCurenta && infoCheieCurenta.tip === 'liber' && !infoCheieCurenta.sistem);
         }
@@ -857,6 +864,7 @@
             }
 
             setMembruFormEditor = new JSONEditor(holder, editorOpts);
+            leagaFormGridJsonEditor(setMembruFormEditor, holder);
             setMembruFormEditor.on('ready', () => {
                 try {
                     const pretty = JSON.stringify(setMembruFormEditor.getValue(), null, 2);
@@ -3058,6 +3066,7 @@ function translateUpstashSearchResults(date) {
             };
             if (startval !== undefined && startval !== null) editorOpts.startval = startval;
             colFormEditor = new JSONEditor(holder, editorOpts);
+            leagaFormGridJsonEditor(colFormEditor, holder);
             colFormEditor.on('ready', () => {
                 try {
                     const pretty = JSON.stringify(colFormEditor.getValue(), null, 2);
@@ -4131,6 +4140,7 @@ function translateUpstashSearchResults(date) {
 
             try {
                 dataFormEditor = new JSONEditor(holder, editorOpts);
+                leagaFormGridJsonEditor(dataFormEditor, holder);
                 dataFormEditor.on('ready', () => {
                     try {
                         const rootEd = dataFormEditor.getEditor('root');
@@ -4146,6 +4156,7 @@ function translateUpstashSearchResults(date) {
                                 use_default_values: true,
                                 display_required_only: false
                             });
+                            leagaFormGridJsonEditor(dataFormEditor, holder);
                             dataFormEditor.on('ready', () => {
                                 document.getElementById('raw-json-editor').value = JSON.stringify(dataFormEditor.getValue(), null, 2);
                                 dataFormEditor.on('change', () => {
@@ -5042,6 +5053,7 @@ function translateUpstashSearchResults(date) {
 
             try {
                 schemaDataPreviewEditor = new JSONEditor(holder, opts);
+                leagaFormGridJsonEditor(schemaDataPreviewEditor, holder);
                 const syncJson = () => {
                     try {
                         out.textContent = JSON.stringify(schemaDataPreviewEditor.getValue(), null, 2);

@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=key-views3">
+    <link rel="stylesheet" href="ui/css/app.css?v=form-grid2">
 </head>
 <body>
 
@@ -186,11 +186,11 @@
                     <div id="prog-live-root"></div>
                 </div>
                 <div id="panel-prog-formular" class="panel-prog" style="display:none;">
-                    <div id="prog-formular-holder"></div>
+                    <div id="prog-formular-holder" class="sside-form-grid"></div>
                 </div>
 
                 <div id="panel-form">
-                    <div id="data-form-holder" style="display:none;"></div>
+                    <div id="data-form-holder" class="sside-form-grid" style="display:none;"></div>
                     <div id="schema-visual-wrap" style="display:none;">
                         <div class="schema-master-detail" id="schema_master_detail">
                             <aside id="schema_tree" class="schema-tree"></aside>
@@ -205,7 +205,7 @@
                         </div>
                         <div class="schema-preview-block">
                             <h3>2. Preview formular (completează date)</h3>
-                            <div id="schema-data-preview-holder"></div>
+                            <div id="schema-data-preview-holder" class="sside-form-grid"></div>
                         </div>
                         <div class="preview-json-box">
                             <h3>JSON generat din preview:</h3>
@@ -243,7 +243,7 @@
                             </div>
                             <button type="button" class="copy-btn" id="btn-copy-set-member" onclick="copiazaMembruSet(this)">Copiază</button>
                         </div>
-                        <div id="set-member-form-holder" style="display:none;"></div>
+                        <div id="set-member-form-holder" class="sside-form-grid" style="display:none;"></div>
                         <textarea id="set-member-textarea" spellcheck="false"></textarea>
                         <div class="detail-actions" style="margin-top:8px;">
                             <button type="button" id="btn-salveaza-membru" onclick="salveazaMembruSet()">
@@ -312,7 +312,7 @@
                         </div>
                         <button type="button" class="copy-btn" onclick="copiazaColValue(this)">Copiază</button>
                     </div>
-                    <div id="col-value-form-holder" style="display:none;"></div>
+                    <div id="col-value-form-holder" class="sside-form-grid" style="display:none;"></div>
                     <textarea id="col-value-textarea" spellcheck="false"></textarea>
                     <div class="detail-actions" style="margin-top:8px;">
                         <button type="button" id="btn-salveaza-col" onclick="salveazaColItem()">
@@ -547,6 +547,7 @@
     <script src="core/key-list-tree.js?v=views2"></script>
     <script src="core/form-options.js"></script>
     <script src="core/schema-order.js?v=2"></script>
+    <script src="core/schema-form-grid.js?v=1"></script>
     <script src="core/list-load.js?v=pagesize10"></script>
     <script src="core/alg-ops.js?v=kincr2"></script>
     <script src="core/ui-list-ref.js?v=f4l-uiref"></script>
@@ -556,9 +557,9 @@
     <script src="core/prog-validate.js?v=recover3"></script>
     <script src="ui/js/doc-data_generated.js?v=kincr2"></script>
     <script src="ui/js/doc-viewer.js?v=runtime-docs1"></script>
-    <script src="ui/js/panels-live.js?v=list-pad2"></script>
+    <script src="ui/js/panels-live.js?v=form-grid2"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=views2"></script>
+    <script src="ui/js/app.js?v=form-grid2"></script>
 </body>
 </html>

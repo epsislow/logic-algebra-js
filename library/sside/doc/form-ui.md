@@ -21,8 +21,9 @@ Aici: detalii Live form, `fields.options`, list fetch.
 
 Taburi editor: **Edit** | **Live** | **Formular** | **Json**.
 
-Pe **Live**:
+Pe **Live** (și tab **Formular** pe `data:` / previzualizare schemă):
 - câmpuri din `schema` — **ordine**: `propertyOrder` pe fiecare câmp, sau lista `propertyOrder: ["a","b"]` pe obiect; altfel ordinea cheilor din `properties` (injectată automat pt. JSONEditor)
+- **layout**: până la **3** câmpuri pe rând (desktop), **2** pe ecrane înguste (CSS grid + `display:contents` pe rândurile JSONEditor `.row`); obiecte imbricate, array-uri și textarea ocupă rând întreg
 - **Reset** (built-in) — nu e în `btns`
 - butoane → rulează `alg` → banner **verde** (`msg`) / **roșu** (`err`)
 
