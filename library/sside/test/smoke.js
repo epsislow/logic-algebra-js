@@ -94,5 +94,15 @@ module.exports = {
         assert(html.includes('btn-cautare-lista'));
       },
     },
+    {
+      id: 9,
+      desc: 'moduri afișare listă chei',
+      run() {
+        const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+        assert(html.includes('list-view-mode-seg'));
+        assert(html.includes('data-list-view="tiles"'));
+        assert(html.includes('key-list-tree.js'));
+      },
+    },
   ],
 };

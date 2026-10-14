@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=runtime-userbar2">
+    <link rel="stylesheet" href="ui/css/app.css?v=key-views3">
 </head>
 <body>
 
@@ -70,6 +70,13 @@
                         <span>Type</span>
                     </label>
                     <button type="button" class="btn-albastru btn-inline" onclick="deschideModalCheieNoua()">+ Cheie nouă</button>
+                </div>
+                <div class="toolbar-row list-view-mode-row" style="margin: 0 0 8px;">
+                    <div class="list-view-mode-seg" id="list-view-mode-seg" role="group" aria-label="Mod afișare chei">
+                        <button type="button" class="list-view-mode-btn is-active" data-list-view="list">Listă</button>
+                        <button type="button" class="list-view-mode-btn" data-list-view="tiles">Plăci</button>
+                        <button type="button" class="list-view-mode-btn" data-list-view="tree">Arbore</button>
+                    </div>
                 </div>
                 <div id="lista-chei" class="lista-chei"></div>
             </div>
@@ -537,6 +544,7 @@
     <script src="core/search-query.js?v=exactcount2"></script>
     <script src="core/scan-filter.js?v=scan1"></script>
     <script src="core/scan-keys.js?v=scan1"></script>
+    <script src="core/key-list-tree.js?v=views1"></script>
     <script src="core/form-options.js"></script>
     <script src="core/schema-order.js?v=2"></script>
     <script src="core/list-load.js?v=pagesize10"></script>
@@ -551,6 +559,6 @@
     <script src="ui/js/panels-live.js?v=list-pad2"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=scan2"></script>
+    <script src="ui/js/app.js?v=views2"></script>
 </body>
 </html>

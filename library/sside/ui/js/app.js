@@ -39,6 +39,10 @@
         let scanListaAbort = null;
         let scanListaRunning = false;
 
+        const LIST_KEYS_VIEW_STORAGE = 'sside-list-keys-view';
+        let cheiListaViewMode = 'list';
+        let ultimulFiltruLista = '*';
+
         /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
         let listareCuType = false;
         /** TTL pe cheia din detaliu: ms rămase; -1 = no expire; -2 = cheie lipsă; null = necunoscut. */
@@ -254,6 +258,34 @@
                 scaneazaToateCampurile();
             }
         });
+        (function initListKeysViewMode() {
+            try {
+                const saved = localStorage.getItem(LIST_KEYS_VIEW_STORAGE);
+                if (saved === 'tiles' || saved === 'tree' || saved === 'list') cheiListaViewMode = saved;
+            } catch (e) { /* ignore */ }
+            const seg = document.getElementById('list-view-mode-seg');
+            if (!seg) return;
+            seg.querySelectorAll('.list-view-mode-btn').forEach((btn) => {
+                const mode = btn.getAttribute('data-list-view');
+                btn.classList.toggle('is-active', mode === cheiListaViewMode);
+                btn.addEventListener('click', () => {
+                    if (mode !== 'list' && mode !== 'tiles' && mode !== 'tree') return;
+                    cheiListaViewMode = mode;
+                    try {
+                        localStorage.setItem(LIST_KEYS_VIEW_STORAGE, mode);
+                    } catch (e) { /* ignore */ }
+                    seg.querySelectorAll('.list-view-mode-btn').forEach((b) => {
+                        b.classList.toggle(
+                            'is-active',
+                            b.getAttribute('data-list-view') === mode
+                        );
+                    });
+                    if (Array.isArray(toateCheile) && toateCheile.length) {
+                        randeazaListaChei(toateCheile, ultimulFiltruLista);
+                    }
+                });
+            });
+        })();
         document.getElementById('input-filtru-cautari').addEventListener('input', randeazaListaCautariSalvate);
         document.getElementById('input-filtru-cautari').addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
@@ -1420,39 +1452,25 @@ function translateUpstashSearchResults(date) {
             }).sort();
         }
 
-        async function randeazaListaChei(cheiFiltrate, filtru) {
-            const dropdown = document.getElementById('select-citire');
-            const lista = document.getElementById('lista-chei');
-            toateCheile = cheiFiltrate;
+        function applyListaCheiViewModeClass(lista) {
+            if (!lista) return;
+            lista.classList.remove('lista-chei--tiles', 'lista-chei--tree');
+            if (cheiListaViewMode === 'tiles') lista.classList.add('lista-chei--tiles');
+            if (cheiListaViewMode === 'tree') lista.classList.add('lista-chei--tree');
+        }
 
-            if (listareCuType) {
-                await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie, { force: true })));
-            }
+        function deschideCheieDinLista(cheie, setChei) {
+            const info = clasificaCheie(cheie, setChei);
+            executaDeschidereDinLista(cheie, info);
+        }
 
-            if (esteFiltruRebuildSchemeCache(filtru)) {
-                rebuildSchemeCacheDinChei(cheiFiltrate);
-            }
+        function applyTintCheiePeElement(el, et) {
+            if (et && et.rowTint) el.classList.add(et.rowTint);
+            else el.classList.add('key-row--free');
+        }
 
-            dropdown.innerHTML = '';
-            lista.innerHTML = '';
-
-            if (cheiFiltrate.length === 0) {
-                dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
-                lista.innerHTML =
-                    '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
-                document.getElementById('rezultat-citire').innerText =
-                    'Nu există date pentru filtrul introdus.';
-                actualizeazaStelutaCautare();
-                return;
-            }
-
-            const setChei = setCheiPentruClasificare(cheiFiltrate);
-            cheiFiltrate.forEach(cheie => {
-                const opt = document.createElement('option');
-                opt.value = cheie;
-                opt.innerText = cheie;
-                dropdown.appendChild(opt);
-
+        function randeazaCheiModLista(cheiFiltrate, setChei, lista) {
+            cheiFiltrate.forEach((cheie) => {
                 const info = clasificaCheie(cheie, setChei);
                 const et = etichetaTip(info);
                 const row = document.createElement('div');
@@ -1483,12 +1501,118 @@ function translateUpstashSearchResults(date) {
                     if (ev.target.tagName === 'BUTTON') return;
                     go();
                 });
-                row.querySelector('button').addEventListener('click', (ev) => {
+                btnAct.addEventListener('click', (ev) => {
                     ev.stopPropagation();
                     go();
                 });
                 lista.appendChild(row);
             });
+        }
+
+        function randeazaCheiModPlaci(cheiFiltrate, setChei, lista) {
+            cheiFiltrate.forEach((cheie) => {
+                const et = etichetaTip(clasificaCheie(cheie, setChei));
+                const tile = document.createElement('div');
+                tile.className = 'key-tile';
+                applyTintCheiePeElement(tile, et);
+                const lab = document.createElement('span');
+                lab.textContent = cheie;
+                tile.appendChild(lab);
+                if (listareCuType && tipuriRedisChei[cheie]) {
+                    const hint = document.createElement('span');
+                    hint.className = 'key-tile-type-hint';
+                    hint.textContent = etichetaRedisTip(tipuriRedisChei[cheie]).badge;
+                    tile.appendChild(hint);
+                }
+                tile.addEventListener('click', () => deschideCheieDinLista(cheie, setChei));
+                lista.appendChild(tile);
+            });
+        }
+
+        function randeazaKeyTreeNode(node, setChei, host) {
+            if (!node) return;
+            if (!node.label && node.children) {
+                node.children.forEach((c) => randeazaKeyTreeNode(c, setChei, host));
+                return;
+            }
+            if (node.fullKey) {
+                const et = etichetaTip(clasificaCheie(node.fullKey, setChei));
+                const leaf = document.createElement('div');
+                leaf.className = 'key-tree-leaf';
+                applyTintCheiePeElement(leaf, et);
+                leaf.textContent = node.fullKey;
+                leaf.addEventListener('click', () => deschideCheieDinLista(node.fullKey, setChei));
+                host.appendChild(leaf);
+            }
+            if (node.children && node.children.length) {
+                const det = document.createElement('details');
+                det.className = 'key-tree-branch';
+                det.open = true;
+                const sum = document.createElement('summary');
+                sum.textContent = node.label + ':';
+                det.appendChild(sum);
+                const inner = document.createElement('div');
+                inner.className = 'key-tree-inner';
+                node.children.forEach((c) => randeazaKeyTreeNode(c, setChei, inner));
+                det.appendChild(inner);
+                host.appendChild(det);
+            }
+        }
+
+        function randeazaCheiModArbore(cheiFiltrate, setChei, lista) {
+            const Tree = window.SsideKeyListTree;
+            if (!Tree || typeof Tree.buildKeyTree !== 'function') {
+                lista.innerHTML =
+                    '<div class="key-row"><span class="key-name">Arbore indisponibil (key-list-tree.js).</span></div>';
+                return;
+            }
+            const root = Tree.buildKeyTree(cheiFiltrate);
+            root.children.forEach((c) => randeazaKeyTreeNode(c, setChei, lista));
+        }
+
+        async function randeazaListaChei(cheiFiltrate, filtru) {
+            const dropdown = document.getElementById('select-citire');
+            const lista = document.getElementById('lista-chei');
+            toateCheile = cheiFiltrate;
+            ultimulFiltruLista = filtru == null ? '*' : String(filtru);
+
+            if (listareCuType) {
+                await Promise.all(cheiFiltrate.map((cheie) => aflaTipRedis(cheie, { force: true })));
+            }
+
+            if (esteFiltruRebuildSchemeCache(filtru)) {
+                rebuildSchemeCacheDinChei(cheiFiltrate);
+            }
+
+            dropdown.innerHTML = '';
+            lista.innerHTML = '';
+            applyListaCheiViewModeClass(lista);
+
+            if (cheiFiltrate.length === 0) {
+                dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
+                lista.innerHTML =
+                    '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
+                document.getElementById('rezultat-citire').innerText =
+                    'Nu există date pentru filtrul introdus.';
+                actualizeazaStelutaCautare();
+                return;
+            }
+
+            cheiFiltrate.forEach((cheie) => {
+                const opt = document.createElement('option');
+                opt.value = cheie;
+                opt.innerText = cheie;
+                dropdown.appendChild(opt);
+            });
+
+            const setChei = setCheiPentruClasificare(cheiFiltrate);
+            if (cheiListaViewMode === 'tiles') {
+                randeazaCheiModPlaci(cheiFiltrate, setChei, lista);
+            } else if (cheiListaViewMode === 'tree') {
+                randeazaCheiModArbore(cheiFiltrate, setChei, lista);
+            } else {
+                randeazaCheiModLista(cheiFiltrate, setChei, lista);
+            }
             actualizeazaStelutaCautare();
         }
 
