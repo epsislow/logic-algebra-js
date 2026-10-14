@@ -468,20 +468,51 @@
         return n;
       }
 
+      function globMatchKeys(pat, typeFilter) {
+        const all = Array.from(store.keys()).filter((k) => resolveEntry(k) != null);
+        let matched;
+        if (pat === '*') matched = all;
+        else {
+          const re = new RegExp(
+            '^' +
+              String(pat)
+                .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                .replace(/\*/g, '.*')
+                .replace(/\?/g, '.') +
+              '$'
+          );
+          matched = all.filter((k) => re.test(k));
+        }
+        if (typeFilter) {
+          const tf = String(typeFilter).toLowerCase();
+          matched = matched.filter((k) => typeOf(k) === tf);
+        }
+        return matched.sort();
+      }
+
       if (cmd === 'KEYS') {
         const pat = a[0] == null ? '*' : String(a[0]);
-        const all = Array.from(store.keys());
-        if (pat === '*') return all;
-        // glob simplu: * și ?
-        const re = new RegExp(
-          '^' +
-            pat
-              .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-              .replace(/\*/g, '.*')
-              .replace(/\?/g, '.') +
-            '$'
-        );
-        return all.filter((k) => re.test(k));
+        return globMatchKeys(pat, null);
+      }
+
+      if (cmd === 'SCAN') {
+        let cursor = a[0] == null ? '0' : String(a[0]);
+        let pattern = '*';
+        let count = 10;
+        let typeFilter = null;
+        for (let i = 0; i < a.length; i++) {
+          const t = String(a[i]).toUpperCase();
+          if (t === 'MATCH') pattern = a[++i];
+          else if (t === 'COUNT') count = Math.max(1, parseInt(a[++i], 10) || 10);
+          else if (t === 'TYPE') typeFilter = a[++i];
+        }
+        const all = globMatchKeys(pattern, typeFilter);
+        let start = cursor === '0' ? 0 : parseInt(cursor, 10);
+        if (!Number.isFinite(start) || start < 0) start = 0;
+        const slice = all.slice(start, start + count);
+        const next = start + slice.length;
+        const nextCursor = next >= all.length ? '0' : String(next);
+        return [nextCursor, slice];
       }
 
       throw new Error('mem redis: cmd nesuportat ' + cmd);

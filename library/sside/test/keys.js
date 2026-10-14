@@ -141,6 +141,16 @@ module.exports = {
       },
     },
     {
+      id: 12,
+      desc: 'data: pe schemă — liber fără schema: în set',
+      run() {
+        const doarData = new Set(['data:_stock:AAA:A1']);
+        const cuSchema = new Set(['data:_stock:AAA:A1', 'schema:_stock']);
+        assertEq(Keys.clasificaCheie('data:_stock:AAA:A1', doarData).tip, 'liber');
+        assertEq(Keys.clasificaCheie('data:_stock:AAA:A1', cuSchema).tip, 'data');
+      },
+    },
+    {
       id: 11,
       desc: 'IDX must not treat alg/form/ui/list as search prefixes (convention check)',
       run() {

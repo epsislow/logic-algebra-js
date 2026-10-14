@@ -83,5 +83,16 @@ module.exports = {
         assert(html.includes('deschideDocs'));
       },
     },
+    {
+      id: 8,
+      desc: 'listă SCAN — scripturi + Afișate',
+      run() {
+        const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+        assert(html.includes('scan-filter.js'));
+        assert(html.includes('scan-keys.js'));
+        assert(html.includes('Afișate:'));
+        assert(html.includes('btn-cautare-lista'));
+      },
+    },
   ],
 };

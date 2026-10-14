@@ -35,6 +35,10 @@
         // --- stare UI nouă ---
         let toateCheile = [];
         let tipuriRedisChei = {}; // cheie → string|set|list|hash|zset|...
+        /** Abort pentru căutare SCAN în listă (buton Stop). */
+        let scanListaAbort = null;
+        let scanListaRunning = false;
+
         /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
         let listareCuType = false;
         /** TTL pe cheia din detaliu: ms rămase; -1 = no expire; -2 = cheie lipsă; null = necunoscut. */
@@ -502,6 +506,15 @@
 
         function listeSchemeDinCache() {
             return schemeCacheKeys.slice().sort();
+        }
+
+        /** Badge data:… necesită schema:… în set — la filtru îngust (ex. data:*) folosim cache-ul. */
+        function setCheiPentruClasificare(cheiFiltrate) {
+            const set = new Set(cheiFiltrate || []);
+            if (schemeCacheReady) {
+                schemeCacheKeys.forEach((k) => set.add(k));
+            }
+            return set;
         }
 
         function rebuildSchemeCacheDinChei(chei) {
@@ -1136,9 +1149,56 @@ function translateUpstashSearchResults(date) {
             return (filtru == null ? '' : String(filtru)).trim() || '*';
         }
 
-        function gasesteCautareDupaFiltru(filtru) {
+        function filtruCautareCanon(filtru) {
             const f = normalizeazaFiltruCautare(filtru);
-            return citesteCautariSalvate().find(c => normalizeazaFiltruCautare(c.filter) === f) || null;
+            if (window.SsideScanFilter && SsideScanFilter.isScanFilter(f)) {
+                return SsideScanFilter.canonFilterForCompare(f);
+            }
+            return f;
+        }
+
+        function gasesteCautareDupaFiltru(filtru) {
+            const f = filtruCautareCanon(filtru);
+            return citesteCautariSalvate().find(c => filtruCautareCanon(c.filter) === f) || null;
+        }
+
+        function actualizeazaStatusLista(count, scanOpts) {
+            const indicatorTotal = document.getElementById('total-campuri');
+            if (indicatorTotal) indicatorTotal.textContent = String(count);
+            const meta = document.getElementById('scan-status-meta');
+            if (!meta) return;
+            if (scanOpts && scanOpts.mode === 'scan') {
+                meta.style.display = '';
+                const lim = document.getElementById('scan-status-limit');
+                const bat = document.getElementById('scan-status-batch');
+                if (lim) lim.textContent = String(scanOpts.limit);
+                if (bat) bat.textContent = String(scanOpts.batch);
+            } else {
+                meta.style.display = 'none';
+            }
+        }
+
+        function setModButonCautareLista(running) {
+            const btn = document.getElementById('btn-cautare-lista');
+            if (!btn) return;
+            scanListaRunning = !!running;
+            if (running) {
+                btn.textContent = 'Stop';
+                btn.style.background = '#dc3545';
+                btn.style.color = '#fff';
+            } else {
+                btn.textContent = 'Caută';
+                btn.style.background = '#ffc107';
+                btn.style.color = '#333';
+            }
+        }
+
+        function normalizeazaFiltruPentruSalvare(filtru) {
+            const f = normalizeazaFiltruCautare(filtru);
+            if (window.SsideScanFilter && SsideScanFilter.isScanFilter(f)) {
+                return SsideScanFilter.normalizeScanFilterForSave(f);
+            }
+            return f;
         }
 
         /** * = orice; \* = caracter * literal. Potrivire pe întreg textul. */
@@ -1214,7 +1274,9 @@ function translateUpstashSearchResults(date) {
         function confirmaSalvareCautare() {
             const id = document.getElementById('edit-cautare-id').value.trim();
             const name = document.getElementById('edit-cautare-name').value.trim();
-            const filter = normalizeazaFiltruCautare(document.getElementById('edit-cautare-filter').value);
+            let filter = normalizeazaFiltruPentruSalvare(
+                document.getElementById('edit-cautare-filter').value
+            );
             if (!name) {
                 alert('Completează numele.');
                 return;
@@ -1230,7 +1292,7 @@ function translateUpstashSearchResults(date) {
                 }
             } else {
                 // stea: dacă filtrul există deja (alt nume), actualizăm
-                const byFilter = lista.findIndex(c => normalizeazaFiltruCautare(c.filter) === filter);
+                const byFilter = lista.findIndex(c => filtruCautareCanon(c.filter) === filtruCautareCanon(filter));
                 if (byFilter >= 0) {
                     lista[byFilter] = { ...lista[byFilter], name, filter, updatedAt: now };
                 } else {
@@ -1351,114 +1413,176 @@ function translateUpstashSearchResults(date) {
         // ==========================================
         // LISTĂ
         // ==========================================
+        function filtreazaCheiPentruLista(chei) {
+            return (chei || []).filter(c => {
+                if (!isCheieSistemAscunsa(c)) return true;
+                return esteAdmin();
+            }).sort();
+        }
+
+        async function randeazaListaChei(cheiFiltrate, filtru) {
+            const dropdown = document.getElementById('select-citire');
+            const lista = document.getElementById('lista-chei');
+            toateCheile = cheiFiltrate;
+
+            if (listareCuType) {
+                await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie, { force: true })));
+            }
+
+            if (esteFiltruRebuildSchemeCache(filtru)) {
+                rebuildSchemeCacheDinChei(cheiFiltrate);
+            }
+
+            dropdown.innerHTML = '';
+            lista.innerHTML = '';
+
+            if (cheiFiltrate.length === 0) {
+                dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
+                lista.innerHTML =
+                    '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
+                document.getElementById('rezultat-citire').innerText =
+                    'Nu există date pentru filtrul introdus.';
+                actualizeazaStelutaCautare();
+                return;
+            }
+
+            const setChei = setCheiPentruClasificare(cheiFiltrate);
+            cheiFiltrate.forEach(cheie => {
+                const opt = document.createElement('option');
+                opt.value = cheie;
+                opt.innerText = cheie;
+                dropdown.appendChild(opt);
+
+                const info = clasificaCheie(cheie, setChei);
+                const et = etichetaTip(info);
+                const row = document.createElement('div');
+                row.className = 'key-row';
+                if (et.rowTint) row.classList.add(et.rowTint);
+                if (listareCuType) {
+                    const er = etichetaRedisTip(tipuriRedisChei[cheie]);
+                    const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);
+                    row.innerHTML =
+                        '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
+                        '<span class="key-name"></span>' +
+                        '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
+                        (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
+                        '<button type="button" class="btn-albastru btn-inline"></button>';
+                    row.querySelector('[data-role="redis"]').textContent = er.badge;
+                } else {
+                    row.innerHTML =
+                        '<span class="key-name"></span>' +
+                        '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
+                        '<button type="button" class="btn-albastru btn-inline"></button>';
+                }
+                row.querySelector('.key-name').textContent = cheie;
+                row.querySelector('[data-role="conv"]').textContent = et.badge;
+                const btnAct = row.querySelector('button');
+                btnAct.textContent = info.tip === 'ui' ? 'Live' : 'Edit';
+                const go = () => executaDeschidereDinLista(cheie, info);
+                row.addEventListener('click', (ev) => {
+                    if (ev.target.tagName === 'BUTTON') return;
+                    go();
+                });
+                row.querySelector('button').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    go();
+                });
+                lista.appendChild(row);
+            });
+            actualizeazaStelutaCautare();
+        }
+
         async function scaneazaToateCampurile() {
-            const filtru = document.getElementById("input-search").value.trim() || "*";
-            const dropdown = document.getElementById("select-citire");
-            const indicatorTotal = document.getElementById("total-campuri");
-            const lista = document.getElementById("lista-chei");
+            if (scanListaRunning && scanListaAbort) {
+                scanListaAbort.abort();
+                return;
+            }
+
+            const filtru = document.getElementById('input-search').value.trim() || '*';
+            const dropdown = document.getElementById('select-citire');
+            const lista = document.getElementById('lista-chei');
+            let scanMeta = null;
 
             lista.innerHTML = '<div class="key-row"><span class="key-name">Se încarcă…</span></div>';
-            dropdown.innerHTML = "<option>Se încarcă lista...</option>";
-
-
+            dropdown.innerHTML = '<option>Se încarcă lista...</option>';
 
             try {
                 let cheiFiltrate = [];
-                let date;
+
                 if (filtru.startsWith('=')) {
+                    actualizeazaStatusLista(0, null);
                     const textQuery = filtru.substring(1).trim();
                     const jsonQuery = parseazaQueryComplex(textQuery);
                     const jsonQueryString = JSON.stringify(jsonQuery);
-                    lista.innerHTML = '<div class="key-row"><span class="key-name">Se caută avansat…</span></div>';
-                    const dateR = await apeleazaServerul("/api/comanda", {
-                        comandaRedis: ["SEARCH.QUERY", "idx_search_tags", jsonQueryString, "LIMIT", "1000", "OFFSET", "0", "NOCONTENT"]
+                    lista.innerHTML =
+                        '<div class="key-row"><span class="key-name">Se caută avansat…</span></div>';
+                    const dateR = await apeleazaServerul('/api/comanda', {
+                        comandaRedis: [
+                            'SEARCH.QUERY',
+                            'idx_search_tags',
+                            jsonQueryString,
+                            'LIMIT',
+                            '1000',
+                            'OFFSET',
+                            '0',
+                            'NOCONTENT',
+                        ],
                     });
-                    // translate* returnează array de chei — îl împachetăm ca {rezultat} (ca la KEYS)
                     const cheiSearch = translateUpstashSearchResults(dateR);
-                    date = { rezultat: Array.isArray(cheiSearch) ? cheiSearch : [] };
-                } else {
-                    date = await apeleazaServerul("/api/comanda", { comandaRedis: ["KEYS", filtru] });
-                }
-                const chei = date.rezultat || [];
-                cheiFiltrate = chei.filter(c => {
-                    if (!isCheieSistemAscunsa(c)) return true;
-                    return esteAdmin(); // user:/session: doar pentru admin
-                });
-                cheiFiltrate.sort();
-                toateCheile = cheiFiltrate;
+                    cheiFiltrate = filtreazaCheiPentruLista(
+                        Array.isArray(cheiSearch) ? cheiSearch : []
+                    );
+                } else if (window.SsideScanFilter && SsideScanFilter.isScanFilter(filtru)) {
+                    const parsed = SsideScanFilter.parseScanFilter(filtru);
+                    scanMeta = {
+                        mode: 'scan',
+                        limit: parsed.limitEffective,
+                        batch: parsed.batchEffective,
+                    };
+                    actualizeazaStatusLista(0, scanMeta);
+                    lista.innerHTML =
+                        '<div class="key-row"><span class="key-name">Se scanează…</span></div>';
 
-                // tipuri Redis (TYPE) în paralel — doar dacă toggle Type e activ
-                if (listareCuType) {
-                    await Promise.all(cheiFiltrate.map(cheie => aflaTipRedis(cheie, { force: true })));
-                }
-
-                if (esteFiltruRebuildSchemeCache(filtru)) {
-                    rebuildSchemeCacheDinChei(cheiFiltrate);
-                }
-
-                indicatorTotal.innerText = cheiFiltrate.length;
-                dropdown.innerHTML = "";
-                lista.innerHTML = "";
-
-                if (cheiFiltrate.length === 0) {
-                    dropdown.innerHTML = "<option value=''>Niciun câmp găsit</option>";
-                    lista.innerHTML = '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
-                    document.getElementById("rezultat-citire").innerText = "Nu există date pentru filtrul introdus.";
-                    actualizeazaStelutaCautare();
-                    return;
-                }
-
-                const setChei = new Set(cheiFiltrate);
-                cheiFiltrate.forEach(cheie => {
-                    const opt = document.createElement("option");
-                    opt.value = cheie;
-                    opt.innerText = cheie;
-                    dropdown.appendChild(opt);
-
-                    const info = clasificaCheie(cheie, setChei);
-                    const et = etichetaTip(info);
-                    const row = document.createElement('div');
-                    row.className = 'key-row';
-                    if (et.rowTint) row.classList.add(et.rowTint);
-                    if (listareCuType) {
-                        const er = etichetaRedisTip(tipuriRedisChei[cheie]);
-                        const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);
-                        row.innerHTML =
-                            '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
-                            '<span class="key-name"></span>' +
-                            '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
-                            (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
-                            '<button type="button" class="btn-albastru btn-inline"></button>';
-                        row.querySelector('[data-role="redis"]').textContent = er.badge;
+                    if (parsed.limitEffective === 0) {
+                        cheiFiltrate = [];
                     } else {
-                        row.innerHTML =
-                            '<span class="key-name"></span>' +
-                            '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
-                            '<button type="button" class="btn-albastru btn-inline"></button>';
+                        scanListaAbort = new AbortController();
+                        setModButonCautareLista(true);
+                        const exec = async (argv) => {
+                            const date = await apeleazaServerul('/api/comanda', {
+                                comandaRedis: argv,
+                            });
+                            return date.rezultat != null ? date.rezultat : date;
+                        };
+                        const result = await SsideScanKeys.collectKeysViaScan(exec, parsed, {
+                            signal: scanListaAbort.signal,
+                            onProgress(n) {
+                                actualizeazaStatusLista(n, scanMeta);
+                            },
+                        });
+                        cheiFiltrate = filtreazaCheiPentruLista(result.keys);
                     }
-                    row.querySelector('.key-name').textContent = cheie;
-                    row.querySelector('[data-role="conv"]').textContent = et.badge;
-                    const btnAct = row.querySelector('button');
-                    btnAct.textContent = info.tip === 'ui' ? 'Live' : 'Edit';
-                    const go = () => executaDeschidereDinLista(cheie, info);
-                    row.addEventListener('click', (ev) => {
-                        if (ev.target.tagName === 'BUTTON') return;
-                        go();
+                } else {
+                    actualizeazaStatusLista(0, null);
+                    const date = await apeleazaServerul('/api/comanda', {
+                        comandaRedis: ['KEYS', filtru],
                     });
-                    row.querySelector('button').addEventListener('click', (ev) => {
-                        ev.stopPropagation();
-                        go();
-                    });
-                    lista.appendChild(row);
-                });
-                actualizeazaStelutaCautare();
+                    cheiFiltrate = filtreazaCheiPentruLista(date.rezultat || []);
+                }
+
+                actualizeazaStatusLista(cheiFiltrate.length, scanMeta);
+                await randeazaListaChei(cheiFiltrate, filtru);
             } catch (err) {
+                actualizeazaStatusLista(0, null);
                 dropdown.innerHTML = "<option value=''>Eroare la citire</option>";
                 lista.innerHTML = '<div class="key-row"><span class="key-name"></span></div>';
                 lista.querySelector('.key-name').textContent = err.message;
-                document.getElementById("rezultat-citire").innerText = err.message;
+                document.getElementById('rezultat-citire').innerText = err.message;
                 actualizeazaStelutaCautare();
                 throw err;
+            } finally {
+                setModButonCautareLista(false);
+                scanListaAbort = null;
             }
         }
 

@@ -16,6 +16,8 @@ Prefixuri Redis folosite de sside:
 Forme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.  
 Chei **`ui:`** — utilizare: **UI Runtime (Live)**; `form:` / `list:` — tab Live în Edit.
 
+**Căutare în lista principală** (KEYS / `=` / SCAN `>`): [list-keys-search.md](list-keys-search.md).
+
 ## Reguli
 
 - Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).
