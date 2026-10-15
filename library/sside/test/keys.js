@@ -139,6 +139,12 @@ module.exports = {
         assertEq(Keys.clasificaCheie('s:tag', empty).tip, 's');
         assertEq(Keys.etichetaTip({ tip: 'liber' }).rowTint, undefined);
         assertEq(Keys.etichetaTip({ tip: 'form' }).rowTint, 'key-row--form');
+        assertEq(Keys.etichetaTip({ tip: 'liber', sistem: true }).rowTint, 'key-row--admin');
+        assertEq(Keys.clasificaCheie('settings:admin', new Set()).sistem, true);
+        assert(Keys.isCheieSearchIndexRedisKey('idx_search_tags'));
+        assert(!Keys.isCheieSearchIndexRedisKey('search:idx'));
+        assertEq(Keys.clasificaCheie('idx_search_tags', new Set()).sistem, true);
+        assertEq(Keys.etichetaTip({ tip: 'liber', sistem: true }).cls, 'badge-admin');
       },
     },
     {

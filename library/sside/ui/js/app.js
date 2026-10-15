@@ -1067,6 +1067,7 @@
             if (t === 'zset') return { badge: 'zset', cls: 'badge-redis-zset' };
             if (t === 'string') return { badge: 'string', cls: 'badge-redis' };
             if (t === 'json') return { badge: 'json', cls: 'badge-redis-json' };
+            if (t === 'searchindex') return { badge: 'Search Index', cls: 'badge-redis-searchindex' };
             return { badge: t, cls: 'badge-redis-other' };
         }
 
@@ -1074,6 +1075,7 @@
         function normalizeazaTipRedis(tip) {
             const t = String(tip == null ? 'none' : tip).toLowerCase();
             if (t === 'json' || t === 'rejson-rl' || t.indexOf('rejson') !== -1) return 'json';
+            if (t === 'search index' || t.replace(/\s+/g, '') === 'searchindex') return 'searchindex';
             return t;
         }
 
@@ -2249,8 +2251,12 @@ function translateUpstashSearchResults(date) {
             document.getElementById('detail-actions-key').style.display = 'flex';
 
             if (!supported) {
-                document.getElementById('panel-unsupported').textContent =
-                    'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia.';
+                const idxKey =
+                    SsideKeys.isCheieSearchIndexRedisKey &&
+                    SsideKeys.isCheieSearchIndexRedisKey(cheieCurenta);
+                document.getElementById('panel-unsupported').textContent = idxKey
+                    ? 'Cheie Search Index (idx_…) — editor dedicat urmează. Poți șterge cheia din acțiuni.'
+                    : 'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia.';
             }
 
             const wrapLiber = document.getElementById('formular-din-wrap');

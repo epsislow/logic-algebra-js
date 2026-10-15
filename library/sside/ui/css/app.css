@@ -176,6 +176,7 @@
         .badge-redis-list { background: #ea580c; }
         .badge-redis-zset { background: #db2777; }
         .badge-redis-json { background: #20c997; }
+        .badge-redis-searchindex { background: #7c3aed; color: #fff; min-width: 72px; width: auto; }
         .badge-redis-other { background: #868e96; }
         .badge-idx { background: #28a745; }
         .btn-legenda {
@@ -308,6 +309,7 @@
         .key-row--search { --key-row-tint: var(--badge-search); }
         .key-row--set { --key-row-tint: var(--badge-set); }
         .key-row--s { --key-row-tint: var(--badge-s); }
+        .key-row--admin { --key-row-tint: var(--badge-admin); }
         .key-row .key-name { flex: 1; min-width: 0; font-family: Consolas, monospace; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .key-row .key-note { font-size: 11px; color: var(--text-muted); }
 

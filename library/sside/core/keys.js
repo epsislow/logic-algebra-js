@@ -44,9 +44,19 @@
     return { schemaName: m[1], instance: m[2], schemaKey: 'schema:' + m[1] };
   }
 
+  /** Chei Upstash / Redis Search Index (prefix idx_). Vizibile în listă doar admin. */
+  function isCheieSearchIndexRedisKey(key) {
+    return (key || '').startsWith('idx_');
+  }
+
   function isCheieSistemAscunsa(key) {
     const k = key || '';
-    return k.startsWith('user:') || k.startsWith('session:') || k.startsWith('settings:');
+    return (
+      k.startsWith('user:') ||
+      k.startsWith('session:') ||
+      k.startsWith('settings:') ||
+      isCheieSearchIndexRedisKey(k)
+    );
   }
 
   /**
@@ -109,7 +119,7 @@
   }
 
   function withRowTint(out) {
-    if (out.cls && out.cls !== 'badge-liber' && out.cls !== 'badge-admin') {
+    if (out.cls && out.cls !== 'badge-liber') {
       out.rowTint = 'key-row--' + out.cls.replace(/^badge-/, '');
     }
     return out;
@@ -117,7 +127,13 @@
 
   function etichetaTip(info) {
     if (!info) return withRowTint({ badge: 'liber', cls: 'badge-liber', note: '' });
-    if (info.sistem) return { badge: 'admin', cls: 'badge-admin', note: '(user/session)' };
+    if (info.sistem) {
+      return withRowTint({
+        badge: 'admin',
+        cls: 'badge-admin',
+        note: '(user/session/settings/idx_)',
+      });
+    }
     if (info.tip === 'schema') {
       return withRowTint({ badge: 'schemă', cls: 'badge-schema', note: '' });
     }
@@ -172,6 +188,7 @@
     isUiRedisKey,
     isListRedisKey,
     parseDataJsonPeSchema,
+    isCheieSearchIndexRedisKey,
     isCheieSistemAscunsa,
     clasificaCheie,
     etichetaTip,
