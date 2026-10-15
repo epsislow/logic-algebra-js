@@ -562,6 +562,16 @@
         .lista-chei--folders.dosare-tint-conv .folder-tile[class*="key-row--"]:not(.key-row--liber):not(.key-row--free):hover {
             background: color-mix(in srgb, var(--key-row-tint) 24%, var(--row-hover));
             border-color: color-mix(in srgb, var(--key-row-tint) 50%, var(--border));
+            box-shadow:
+                inset 6px 0 0 var(--key-row-tint),
+                0 0 0 1px color-mix(in srgb, var(--key-row-tint) 28%, transparent);
+        }
+        html[data-theme="dark"] .lista-chei--folders.dosare-tint-conv .folder-tile[class*="key-row--"]:not(.key-row--liber):not(.key-row--free):hover {
+            background: var(--row-hover);
+            border-color: color-mix(in srgb, var(--key-row-tint) 55%, var(--border));
+            box-shadow:
+                inset 6px 0 0 var(--key-row-tint),
+                0 0 0 1px color-mix(in srgb, var(--key-row-tint) 35%, transparent);
         }
         @media (max-width: 640px) {
             .lista-chei--folders {
