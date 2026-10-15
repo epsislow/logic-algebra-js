@@ -27,7 +27,9 @@ Pe **Live** (și tab **Formular** pe `data:` / previzualizare schemă):
 - **Reset** (built-in) — nu e în `btns`
 - butoane → rulează `alg` → banner **verde** (`msg`) / **roșu** (`err`)
 
-**Editor vizual `schema:_…`** (tab **Formular** al cheii schemă): la fiecare câmp **string** — **Afișare string** (*input* / *textarea*); opțional **Înălțime textarea** (ex. `280px`). Salvarea din Formular scrie `format: "textarea"` în JSON Schema. Tab **JSON** rămâne pentru editări avansate.
+**Editor vizual `schema:_…`** (tab **Formular** al cheii schemă): la fiecare câmp **string** — **Afișare string** (*input*, *textarea*, *date*, *time*, *date-time*, *datetime-local* — ca JSONEditor); opțional **Înălțime textarea**. Tab **JSON** rămâne pentru editări avansate.
+
+**Stocare vs afișare dată:** `format` din schemă ≠ tokenii **`fdate`** din alg — mapare și exemple: [schema-string-formats.md](schema-string-formats.md).
 
 ## Select dinamic — `fields.*.options` (F4k)
 

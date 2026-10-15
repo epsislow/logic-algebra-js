@@ -1052,7 +1052,9 @@
 
         async function incarcaFormularMembruSet(schemaKey, rawText) {
             const holder = document.getElementById('set-member-form-holder');
-            const schemaObj = JSON.parse(JSON.stringify(await incarcaSchemaCaObiect(schemaKey)));
+            const schemaObj = prepareSchemaPentruJsonEditor(
+                JSON.parse(JSON.stringify(await incarcaSchemaCaObiect(schemaKey)))
+            );
             const startval = startvalDinRawSiSchema(rawText, schemaObj);
 
             distrugeEditorMembruSetForm();
@@ -3535,7 +3537,9 @@ function translateUpstashSearchResults(date) {
 
         async function incarcaFormularCol(schemaKey, rawText) {
             const holder = document.getElementById('col-value-form-holder');
-            const schemaObj = JSON.parse(JSON.stringify(await incarcaSchemaCaObiect(schemaKey)));
+            const schemaObj = prepareSchemaPentruJsonEditor(
+                JSON.parse(JSON.stringify(await incarcaSchemaCaObiect(schemaKey)))
+            );
             const startval = startvalDinRawSiSchema(rawText, schemaObj);
             distrugeEditorColForm();
             holder.style.display = 'block';
@@ -4135,6 +4139,14 @@ function translateUpstashSearchResults(date) {
             }
         }
 
+        function prepareSchemaPentruJsonEditor(schemaObj) {
+            if (!schemaObj || typeof schemaObj !== 'object') return schemaObj;
+            if (window.SsideSchemaMeta && typeof SsideSchemaMeta.prepareSchemaForJsonEditor === 'function') {
+                SsideSchemaMeta.prepareSchemaForJsonEditor(schemaObj);
+            }
+            return schemaObj;
+        }
+
         function normalizeToJsonSchema(obj) {
             if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
                 return null;
@@ -4619,6 +4631,7 @@ function translateUpstashSearchResults(date) {
             if (window.SsideSchemaOrder && SsideSchemaOrder.applyPropertyOrder) {
                 SsideSchemaOrder.applyPropertyOrder(schemaObj);
             }
+            prepareSchemaPentruJsonEditor(schemaObj);
 
             if (dataFormEditor) {
                 try { dataFormEditor.destroy(); } catch (e) {}
@@ -5292,10 +5305,24 @@ function translateUpstashSearchResults(date) {
                     string_format: {
                         type: "string",
                         title: "Afișare string",
-                        enum: ["input", "textarea"],
+                        enum: [
+                            "input",
+                            "textarea",
+                            "date",
+                            "time",
+                            "date-time",
+                            "datetime-local"
+                        ],
                         default: "input",
                         options: {
-                            enum_titles: ["câmp scurt (input)", "text multiline (textarea)"],
+                            enum_titles: [
+                                "câmp scurt (input)",
+                                "text multiline (textarea)",
+                                "dată (date)",
+                                "oră (time)",
+                                "dată și oră ISO (date-time)",
+                                "dată și oră locală (datetime-local)"
+                            ],
                             dependencies: { type: "string" }
                         }
                     },
@@ -5541,6 +5568,7 @@ function translateUpstashSearchResults(date) {
             let schema = schemaObj;
             try {
                 schema = JSON.parse(JSON.stringify(schemaObj));
+                prepareSchemaPentruJsonEditor(schema);
             } catch (e) {
                 schema = { type: 'object', properties: {} };
             }
@@ -5911,7 +5939,7 @@ function translateUpstashSearchResults(date) {
                 return;
             }
             try {
-                const schema = JSON.parse(schemaTxt);
+                const schema = prepareSchemaPentruJsonEditor(JSON.parse(schemaTxt));
                 let startValue = {};
                 if (currentJsonElement) {
                     try { startValue = JSON.parse(currentJsonElement.innerText || ''); } catch (e) {}

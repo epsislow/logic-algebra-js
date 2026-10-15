@@ -34,7 +34,7 @@ module.exports = {
     },
     {
       id: 3,
-      desc: 'readStringUiFromSchema roundtrip',
+      desc: 'readStringUiFromSchema textarea roundtrip',
       run() {
         const cfg = Meta.readStringUiFromSchema(
           { type: 'string', format: 'textarea', options: { input_height: '280px' } },
@@ -42,6 +42,48 @@ module.exports = {
         );
         assertEq(cfg.string_format, 'textarea');
         assertEq(cfg.string_format_height, '280px');
+      },
+    },
+    {
+      id: 4,
+      desc: 'apply/read date-time și datetime-local',
+      run() {
+        let sn = Meta.applyStringUiToSchema(
+          { type: 'string', string_format: 'date-time' },
+          { type: 'string', title: 'At' }
+        );
+        assertEq(sn.format, 'date-time');
+        sn = Meta.applyStringUiToSchema(
+          { type: 'string', string_format: 'datetime-local' },
+          { type: 'string', title: 'Local' }
+        );
+        assertEq(sn.format, 'datetime-local');
+        const cfg = Meta.readStringUiFromSchema({ type: 'string', format: 'date' }, { type: 'string' });
+        assertEq(cfg.string_format, 'date');
+      },
+    },
+    {
+      id: 6,
+      desc: 'prepareSchemaForJsonEditor: date-time → datetime-local',
+      run() {
+        const sch = {
+          type: 'object',
+          properties: {
+            created: { type: 'string', format: 'date-time' },
+            path: { type: 'string' },
+          },
+        };
+        Meta.prepareSchemaForJsonEditor(sch);
+        assertEq(sch.properties.created.format, 'datetime-local');
+        assertEq(sch.properties.path.format, undefined);
+      },
+    },
+    {
+      id: 5,
+      desc: 'format necunoscut → input în meta-editor',
+      run() {
+        const cfg = Meta.readStringUiFromSchema({ type: 'string', format: 'email' }, { type: 'string' });
+        assertEq(cfg.string_format, 'input');
       },
     },
   ],

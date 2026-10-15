@@ -88,6 +88,22 @@ Operația este garantată **Safe-Cast** (dacă valoarea lipsește complet sau es
 
 Dacă proprietatea `format` lipsește din pas, motorul folosește implicit formatul standard **`YYYY-MM-DD`**.
 
+**Notă:** `format` de aici sunt **tokenii de afișare fdate** (`DD.MM.YYYY`, `ISO`, …), nu `format` din **JSON Schema** (`date`, `date-time`, …) de pe câmpurile formularului. Ghid complet (picker, ISO, fus): [schema-string-formats.md](schema-string-formats.md).
+
+#### `date-time` / `datetime-local` (schemă) → ce pui la `format` în `fdate`
+
+`fdate` **ignoră** `format` din schemă. După Formular, ambele etichete folosesc același widget; în Redis rămâne doar **stringul** câmpului. Parsarea e aceeași (`cast as date` / `parseRelativeDate`).
+
+| Ce ai în `form.camp` | Ce vrei la ieșire | `format` recomandat în pasul `fdate` |
+|----------------------|-------------------|--------------------------------------|
+| `"2026-09-30T15:30"` (typic picker, fără zonă) | aceeași oră pentru user | `DD.MM.YYYY HH:mm` (tokeni **locali**) |
+| idem | log / API UTC | `ISO` (=`toISOString()`, poate diferi ora față de picker) |
+| `"2026-09-30T12:30:00.000Z"` | afișare locală | `DD.MM.YYYY HH:mm` |
+| idem | păstrezi UTC în text | `ISO` sau șablon cu tokeni `YYYYU`, `MMU`, `DDU`, `HHU`, … |
+| timestamp ms | orice | `ISO` sau șablon cu `DD`/`DDU` după caz |
+
+Exemple JSON: [schema-string-formats.md](schema-string-formats.md) → *Rețete alg*.
+
 #### Sintaxă Timp Relativ (Modificatori înlănțuiți)
 
 Valoarea de intrare (`val` sau valoarea extrasă din `from`) poate fi scrisă sub formă de expresie dinamică compactă (fără spații în interiorul modificatorului, ex: `+1h-30min`).

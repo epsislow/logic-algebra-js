@@ -164,10 +164,18 @@
     const SchemaOrder =
       root.SsideSchemaOrder ||
       (typeof require !== 'undefined' ? require('../core/schema-order.js') : null);
+    const Meta =
+      root.SsideSchemaMeta ||
+      (typeof require !== 'undefined' ? require('../core/schema-meta.js') : null);
+    let schemaForEditor = schema;
+    if (Meta && typeof Meta.prepareSchemaForJsonEditor === 'function') {
+      schemaForEditor = JSON.parse(JSON.stringify(schema));
+      Meta.prepareSchemaForJsonEditor(schemaForEditor);
+    }
     const schemaOrdered =
       SchemaOrder && SchemaOrder.withPropertyOrder
-        ? SchemaOrder.withPropertyOrder(schema)
-        : schema;
+        ? SchemaOrder.withPropertyOrder(schemaForEditor)
+        : schemaForEditor;
     const editor = new JSONEditor(holder, {
       theme: 'html',
       schema: schemaOrdered || { type: 'object' },
