@@ -63,6 +63,42 @@ module.exports = {
       },
     },
     {
+      id: 7,
+      desc: 'normalizeStartval: created gol → lipsește',
+      run() {
+        const sch = {
+          type: 'object',
+          properties: {
+            created: { type: 'string', format: 'datetime-local' },
+            path: { type: 'string' },
+          },
+        };
+        Meta.prepareSchemaForJsonEditor(sch);
+        const data = { created: '', path: 'x' };
+        Meta.normalizeStartvalForJsonEditor(sch, data);
+        if (Object.prototype.hasOwnProperty.call(data, 'created')) {
+          throw new Error('created should be removed');
+        }
+        assertEq(data.path, 'x');
+      },
+    },
+    {
+      id: 8,
+      desc: 'normalizeStartval: ISO T → YYYY-MM-DD HH:MM',
+      run() {
+        const sch = {
+          type: 'object',
+          properties: { created: { type: 'string', format: 'datetime-local' } },
+        };
+        const data = { created: '2026-09-30T15:30:00.000Z' };
+        Meta.normalizeStartvalForJsonEditor(sch, data);
+        assertEq(typeof data.created, 'string');
+        if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(data.created)) {
+          throw new Error('bad coerced: ' + data.created);
+        }
+      },
+    },
+    {
       id: 6,
       desc: 'prepareSchemaForJsonEditor: date-time → datetime-local',
       run() {

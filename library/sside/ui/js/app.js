@@ -952,6 +952,7 @@
             if (trebuieRegenaratStartval(startval, schemaObj)) {
                 startval = valoareImplicitaDinSchema(schemaObj);
             }
+            normalizeStartvalPentruJsonEditor(schemaObj, startval);
             return startval;
         }
 
@@ -4147,6 +4148,14 @@ function translateUpstashSearchResults(date) {
             return schemaObj;
         }
 
+        function normalizeStartvalPentruJsonEditor(schemaObj, startval) {
+            if (startval === undefined || startval === null || !schemaObj) return startval;
+            if (window.SsideSchemaMeta && typeof SsideSchemaMeta.normalizeStartvalForJsonEditor === 'function') {
+                SsideSchemaMeta.normalizeStartvalForJsonEditor(schemaObj, startval);
+            }
+            return startval;
+        }
+
         function normalizeToJsonSchema(obj) {
             if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
                 return null;
@@ -4632,6 +4641,7 @@ function translateUpstashSearchResults(date) {
                 SsideSchemaOrder.applyPropertyOrder(schemaObj);
             }
             prepareSchemaPentruJsonEditor(schemaObj);
+            normalizeStartvalPentruJsonEditor(schemaObj, startval);
 
             if (dataFormEditor) {
                 try { dataFormEditor.destroy(); } catch (e) {}
@@ -5605,6 +5615,7 @@ function translateUpstashSearchResults(date) {
                 display_required_only: false
             };
             if (startval !== undefined && startval !== null) {
+                normalizeStartvalPentruJsonEditor(schema, startval);
                 opts.startval = startval;
             }
 

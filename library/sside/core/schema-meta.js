@@ -25,6 +25,98 @@
     return JSONEDITOR_STRING_FORMATS.indexOf(fmt) !== -1;
   }
 
+  /** Aliniat la validatorul JSONEditor (vendor). */
+  const RE_JSONEDITOR_DATE = /^\d{4}\D\d{2}\D\d{2}$/;
+  const RE_JSONEDITOR_TIME = /^\d{2}:\d{2}(:\d{2})?$/;
+  const RE_JSONEDITOR_DATETIME_LOCAL = /^(\d{4}\D\d{2}\D\d{2}[ T]\d{2}:\d{2}(?::\d{2})?)$/;
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function coerceStringForJsonEditorFormat(format, raw) {
+    if (raw === undefined || raw === null) return undefined;
+    const str = String(raw).trim();
+    if (str === '') return undefined;
+
+    if (format === STRING_UI_DATE) {
+      if (RE_JSONEDITOR_DATE.test(str)) return str;
+      const d = new Date(str);
+      if (Number.isNaN(d.getTime())) return undefined;
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+    if (format === STRING_UI_TIME) {
+      if (RE_JSONEDITOR_TIME.test(str)) return str;
+      const d = new Date('1970-01-01T' + str);
+      if (Number.isNaN(d.getTime())) return undefined;
+      return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+    if (format === STRING_UI_DATETIME_LOCAL || format === STRING_UI_DATE_TIME) {
+      if (RE_JSONEDITOR_DATETIME_LOCAL.test(str)) {
+        return str.replace('T', ' ');
+      }
+      const d = new Date(str);
+      if (Number.isNaN(d.getTime())) return undefined;
+      return (
+        d.getFullYear() +
+        '-' +
+        pad2(d.getMonth() + 1) +
+        '-' +
+        pad2(d.getDate()) +
+        ' ' +
+        pad2(d.getHours()) +
+        ':' +
+        pad2(d.getMinutes())
+      );
+    }
+    return str;
+  }
+
+  /**
+   * startval înainte de JSONEditor: șterge goale invalid la date/time; normalizează ISO → YYYY-MM-DD HH:MM.
+   * Schema trebuie să fie deja trecută prin prepareSchemaForJsonEditor.
+   */
+  function normalizeStartvalForJsonEditor(schemaNode, dataNode) {
+    if (!schemaNode || dataNode === undefined || dataNode === null) return dataNode;
+
+    if (Array.isArray(dataNode)) {
+      const itemSch = schemaNode && schemaNode.items;
+      const one = Array.isArray(itemSch) ? itemSch[0] : itemSch;
+      dataNode.forEach((item) => normalizeStartvalForJsonEditor(one || {}, item));
+      return dataNode;
+    }
+
+    if (typeof dataNode !== 'object') return dataNode;
+
+    let types = schemaNode.type;
+    if (Array.isArray(types)) types = types[0];
+
+    if (types === 'string' && schemaNode.format) {
+      const fmt = schemaNode.format;
+      if (
+        fmt === STRING_UI_DATE ||
+        fmt === STRING_UI_TIME ||
+        fmt === STRING_UI_DATETIME_LOCAL ||
+        fmt === STRING_UI_DATE_TIME
+      ) {
+        const coerced = coerceStringForJsonEditorFormat(fmt, dataNode);
+        return coerced;
+      }
+    }
+
+    if (types === 'object' || schemaNode.properties) {
+      const props = schemaNode.properties || {};
+      Object.keys(props).forEach((key) => {
+        if (!Object.prototype.hasOwnProperty.call(dataNode, key)) return;
+        const subSch = props[key];
+        const next = normalizeStartvalForJsonEditor(subSch, dataNode[key]);
+        if (next === undefined) delete dataNode[key];
+        else dataNode[key] = next;
+      });
+    }
+    return dataNode;
+  }
+
   function applyStringUiToSchema(node, schemaNode) {
     if (!schemaNode || schemaNode.type !== 'string' || !node) return schemaNode;
     const ui = node.string_format == null ? STRING_UI_INPUT : String(node.string_format);
@@ -119,6 +211,8 @@
     isJsonEditorStringFormat,
     applyStringUiToSchema,
     prepareSchemaForJsonEditor,
+    normalizeStartvalForJsonEditor,
+    coerceStringForJsonEditorFormat,
     readStringUiFromSchema,
   };
 

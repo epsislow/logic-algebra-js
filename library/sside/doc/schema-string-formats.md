@@ -82,6 +82,12 @@ Alege **`format` în alg** după **ce vrei să arăți**, nu după eticheta `dat
 
 **ISO garantat în Redis:** formularul nu scrie singur `Z`. Opțiuni: editare tab JSON pe `data:`, pas alg la save (`fdate` + `ISO` în alt câmp, sau normalizare custom), import API.
 
+### Eroare JSONEditor „Datetime must be in the format YYYY-MM-DD HH:MM”
+
+JSONEditor validează `datetime-local` cu un regex strict; **`""` (string gol)** de la câmp nou / `valoareImplicitaDinSchema` **nu trece** validarea și afișează mesajul roșu chiar dacă câmpul e opțional.
+
+La încărcarea formularului, **sside** normalizează `startval`: elimină cheile dată/oră goale și convertește valori ISO parsabile în **`YYYY-MM-DD HH:MM`** (convenția internă JSONEditor / flatpickr). După refresh, câmpul gol nu mai ar trebui să declanșeze eroarea până nu introduci o valoare invalidă.
+
 ### Rețete alg (copy-paste)
 
 Afișare listă — valoare din formular (picker):

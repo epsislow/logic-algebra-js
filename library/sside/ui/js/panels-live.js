@@ -176,10 +176,19 @@
       SchemaOrder && SchemaOrder.withPropertyOrder
         ? SchemaOrder.withPropertyOrder(schemaForEditor)
         : schemaForEditor;
+    let startvalForEditor = startval;
+    if (
+      startvalForEditor != null &&
+      Meta &&
+      typeof Meta.normalizeStartvalForJsonEditor === 'function'
+    ) {
+      startvalForEditor = JSON.parse(JSON.stringify(startvalForEditor));
+      Meta.normalizeStartvalForJsonEditor(schemaOrdered || { type: 'object' }, startvalForEditor);
+    }
     const editor = new JSONEditor(holder, {
       theme: 'html',
       schema: schemaOrdered || { type: 'object' },
-      startval: startval,
+      startval: startvalForEditor,
       no_additional_properties: false,
       disable_collapse: true,
       disable_edit_json: true,
