@@ -557,7 +557,7 @@
             border-color: color-mix(in srgb, var(--key-row-tint) 38%, var(--border));
         }
         html[data-theme="dark"] .lista-chei--folders.dosare-tint-conv .folder-tile[class*="key-row--"]:not(.key-row--liber):not(.key-row--free) {
-            background: color-mix(in srgb, var(--key-row-tint) 12%, var(--bg-panel));
+            background: none;
         }
         .lista-chei--folders.dosare-tint-conv .folder-tile[class*="key-row--"]:not(.key-row--liber):not(.key-row--free):hover {
             background: color-mix(in srgb, var(--key-row-tint) 24%, var(--row-hover));
