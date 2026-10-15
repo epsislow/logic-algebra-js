@@ -1791,7 +1791,11 @@ function translateUpstashSearchResults(date) {
             }
             host.appendChild(rootBtn);
             dosarePathSegments.forEach((seg, i) => {
-                host.appendChild(document.createTextNode(' \u203a '));
+                const sep = document.createElement('span');
+                sep.className = 'list-folders-sep';
+                sep.textContent = '\u203a';
+                sep.setAttribute('aria-hidden', 'true');
+                host.appendChild(sep);
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'list-folders-crumb';
@@ -1958,13 +1962,16 @@ function translateUpstashSearchResults(date) {
                 tile.className = 'folder-tile';
                 tile.setAttribute('role', 'button');
                 tile.tabIndex = 0;
-                const mark = document.createElement('span');
-                mark.className = 'folder-tile-mark';
-                mark.textContent = '\u203a';
+                const meta = document.createElement('div');
+                meta.className = 'folder-tile-meta key-tile-meta';
+                const badge = document.createElement('span');
+                badge.className = 'badge badge-folder key-tile-badge';
+                badge.textContent = 'dosar';
+                meta.appendChild(badge);
+                tile.appendChild(meta);
                 const lab = document.createElement('span');
-                lab.className = 'folder-tile-label';
-                lab.textContent = fold.label + ':';
-                tile.appendChild(mark);
+                lab.className = 'folder-tile-label key-tile-key';
+                lab.textContent = '\u203a ' + fold.label + ':';
                 tile.appendChild(lab);
                 const enter = () => {
                     dosarePathSegments = fold.prefixSegments.slice();
