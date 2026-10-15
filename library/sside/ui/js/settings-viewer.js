@@ -106,6 +106,28 @@
     return el ? String(el.textContent || '').trim() : '—';
   }
 
+  function redisPrefsKeyHint() {
+    const P = Prefs();
+    if (!P || !P.settingsKeyForUsername) return '—';
+    return P.settingsKeyForUsername(getUsernameLabel()) || '—';
+  }
+
+  function despreRedisBlockHtml() {
+    return (
+      '<div class="settings-redis-block">' +
+      '<p class="settings-hint">Copie în Redis (manual, contul curent). Cheie: <code id="settings-redis-key">' +
+      escapeHtml(redisPrefsKeyHint()) +
+      '</code></p>' +
+      '<p class="settings-redis-actions">' +
+      '<button type="button" class="btn-albastru btn-inline" id="settings-btn-save-redis">Save</button> ' +
+      '<button type="button" class="btn-gri btn-inline" id="settings-btn-load-redis" disabled>Load</button> ' +
+      '<button type="button" class="btn-rosu btn-inline" id="settings-btn-delete-redis" disabled>Șterge</button>' +
+      '</p>' +
+      '<p id="settings-redis-msg" class="settings-redis-msg" role="status" aria-live="polite"></p>' +
+      '</div>'
+    );
+  }
+
   function cssCacheHint() {
     const link = document.querySelector('link[href*="app.css"]');
     if (!link || !link.getAttribute('href')) return '—';
@@ -118,7 +140,7 @@
       case 'cont':
         return (
           '<h2>Cont</h2>' +
-          '<p class="settings-kv"><strong>Username:</strong> <span id="settings-username">' +
+          '<p class="settings-kv"><strong>Utilizator:</strong> <span id="settings-username">' +
           escapeHtml(getUsernameLabel()) +
           '</span></p>' +
           '<p><button type="button" class="btn-rosu btn-inline" id="settings-btn-logout">Deconectare</button></p>'
@@ -155,6 +177,7 @@
         return (
           '<h2>Despre</h2>' +
           '<p class="settings-hint">Preferințele se salvează în <code>localStorage</code> pe acest browser.</p>' +
+          despreRedisBlockHtml() +
           '<p><strong>CSS:</strong> <code>' +
           escapeHtml(cssCacheHint()) +
           '</code></p>' +
@@ -271,6 +294,98 @@
         openDocs.onclick = function () {
           ascunde();
           root.deschideDocs();
+        };
+      }
+      const msgEl = content.querySelector('#settings-redis-msg');
+      const setMsg = function (text, isErr) {
+        if (!msgEl) return;
+        msgEl.textContent = text || '';
+        msgEl.classList.toggle('is-err', !!isErr);
+      };
+      function applySettingsRedisKeyUi(exists) {
+        const btnLoad = content.querySelector('#settings-btn-load-redis');
+        const btnDel = content.querySelector('#settings-btn-delete-redis');
+        if (btnLoad) {
+          btnLoad.disabled = !exists;
+          btnLoad.classList.toggle('settings-btn-load-ready', !!exists);
+        }
+        if (btnDel) btnDel.disabled = !exists;
+      }
+      async function refreshSettingsRedisKeyState() {
+        applySettingsRedisKeyUi(false);
+        if (!root.SsideSettings || !root.SsideSettings.settingsPrefsKeyExists) return;
+        try {
+          const exists = await root.SsideSettings.settingsPrefsKeyExists();
+          applySettingsRedisKeyUi(exists);
+        } catch (e) {
+          applySettingsRedisKeyUi(false);
+        }
+      }
+      refreshSettingsRedisKeyState();
+      const btnSave = content.querySelector('#settings-btn-save-redis');
+      const btnLoad = content.querySelector('#settings-btn-load-redis');
+      const btnDel = content.querySelector('#settings-btn-delete-redis');
+      if (btnSave && root.SsideSettings && root.SsideSettings.savePrefsToRedis) {
+        btnSave.onclick = async function () {
+          setMsg('');
+          btnSave.disabled = true;
+          try {
+            const key = await root.SsideSettings.savePrefsToRedis();
+            setMsg('Salvat în ' + key + '.', false);
+            await refreshSettingsRedisKeyState();
+            showSection('despre');
+          } catch (e) {
+            setMsg(e.message || String(e), true);
+          } finally {
+            btnSave.disabled = false;
+          }
+        };
+      }
+      if (btnLoad && root.SsideSettings && root.SsideSettings.loadPrefsFromRedis) {
+        btnLoad.onclick = async function () {
+          if (btnLoad.disabled) return;
+          setMsg('');
+          btnLoad.disabled = true;
+          try {
+            const res = await root.SsideSettings.loadPrefsFromRedis();
+            if (!res || !res.ok) {
+              const P = Prefs();
+              setMsg(
+                (res && res.message) ||
+                  (P && P.MSG_INVALID_REDIS_PREFS) ||
+                  'Format invalid! salveaza pentru corectare!',
+                true
+              );
+              await refreshSettingsRedisKeyState();
+              return;
+            }
+            setMsg('Încărcat din ' + (res.key || redisPrefsKeyHint()) + '.', false);
+            showSection('despre');
+          } catch (e) {
+            setMsg(e.message || String(e), true);
+            await refreshSettingsRedisKeyState();
+          }
+        };
+      }
+      if (btnDel && root.SsideSettings && root.SsideSettings.deletePrefsFromRedis) {
+        btnDel.onclick = async function () {
+          if (btnDel.disabled) return;
+          if (!confirm('Ștergi copia Redis a setărilor (' + redisPrefsKeyHint() + ')?')) return;
+          setMsg('');
+          btnDel.disabled = true;
+          try {
+            const res = await root.SsideSettings.deletePrefsFromRedis();
+            if (!res || !res.ok) {
+              setMsg((res && res.message) || 'Ștergere eșuată.', true);
+              await refreshSettingsRedisKeyState();
+              return;
+            }
+            setMsg('Șters: ' + (res.key || redisPrefsKeyHint()) + '.', false);
+            await refreshSettingsRedisKeyState();
+          } catch (e) {
+            setMsg(e.message || String(e), true);
+            await refreshSettingsRedisKeyState();
+          }
         };
       }
     }

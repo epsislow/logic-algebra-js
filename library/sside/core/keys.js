@@ -45,7 +45,8 @@
   }
 
   function isCheieSistemAscunsa(key) {
-    return (key || '').startsWith('user:') || (key || '').startsWith('session:');
+    const k = key || '';
+    return k.startsWith('user:') || k.startsWith('session:') || k.startsWith('settings:');
   }
 
   /**

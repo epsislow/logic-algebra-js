@@ -1534,6 +1534,31 @@
             background: var(--bg-editor); border: 1px solid var(--border);
             padding: 10px; border-radius: 6px;
         }
+        .settings-redis-block {
+            margin: 12px 0 16px;
+            padding: 10px 12px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            background: var(--bg-muted);
+        }
+        .settings-redis-actions { margin: 8px 0 0; }
+        .settings-redis-msg {
+            margin: 8px 0 0;
+            font-size: 13px;
+            min-height: 1.2em;
+            color: var(--accent);
+        }
+        .settings-redis-msg.is-err { color: #dc3545; font-weight: 600; }
+        #settings-btn-load-redis.settings-btn-load-ready:not(:disabled) {
+            background: #198754 !important;
+            color: #fff !important;
+            border-color: #198754 !important;
+        }
+        #settings-btn-load-redis:disabled,
+        #settings-btn-delete-redis:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
 
         /* Mărimi text — mic = valorile inițiale */
         html[data-ui-font="s"], html:not([data-ui-font]) {

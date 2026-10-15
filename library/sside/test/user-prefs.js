@@ -60,5 +60,22 @@ module.exports = {
         SF.resetScanDefaults();
       },
     },
+    {
+      id: 5,
+      desc: 'settingsKeyForUsername + redis snapshot',
+      run() {
+        assertEq(Prefs.settingsKeyForUsername('admin'), 'settings:admin');
+        assertEq(Prefs.settingsKeyForUsername('  '), '');
+        const snap = Prefs.buildRedisSnapshot({ theme: 'dark', uiFont: 'm' });
+        assertEq(snap.v, 1);
+        assertEq(snap.prefs.theme, 'dark');
+        const ok = Prefs.parseRedisSnapshot(snap);
+        assertEq(ok.ok, true);
+        assertEq(ok.prefs.uiFont, 'm');
+        const bad = Prefs.parseRedisSnapshot({ v: 2, prefs: {} });
+        assertEq(bad.ok, false);
+        assertEq(bad.message, Prefs.MSG_INVALID_REDIS_PREFS);
+      },
+    },
   ],
 };

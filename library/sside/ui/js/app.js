@@ -250,6 +250,76 @@
 
         if (window.SsideSettings) {
             SsideSettings.syncUiFromPrefs = syncUiFromPrefs;
+            SsideSettings.savePrefsToRedis = async function () {
+                const P = window.SsideUserPrefs;
+                if (!P) {
+                    throw new Error('Preferințe indisponibile.');
+                }
+                const user = localStorage.getItem('session_user') || '';
+                const key = P.settingsKeyForUsername(user);
+                if (!key) throw new Error('Username invalid pentru cheie settings.');
+                const snap = P.buildRedisSnapshot(P.loadFromLocalStorage());
+                const json = JSON.stringify(snap);
+                let tip = tipuriRedisChei[key];
+                if (!tip || tip === 'unknown' || tip === 'none') {
+                    tip = await aflaTipRedis(key);
+                }
+                if (tip === 'none' || tip === 'unknown') tip = 'json';
+                await salveazaValoareCheieRedis(key, tip, json);
+                return key;
+            };
+            SsideSettings.loadPrefsFromRedis = async function () {
+                const P = window.SsideUserPrefs;
+                const bad = { ok: false, message: P && P.MSG_INVALID_REDIS_PREFS };
+                if (!P) {
+                    return { ok: false, message: 'Preferințe indisponibile.' };
+                }
+                const key = P.settingsKeyForUsername(localStorage.getItem('session_user') || '');
+                if (!key) return bad;
+                let tip = tipuriRedisChei[key];
+                if (!tip || tip === 'unknown') tip = await aflaTipRedis(key);
+                const citire = await citesteValoareCheieRedis(key, tip);
+                if (citire.stearsa || citire.text == null || String(citire.text).trim() === '') {
+                    return bad;
+                }
+                let parsed;
+                try {
+                    parsed = JSON.parse(citire.text);
+                    if (typeof parsed === 'string') {
+                        try {
+                            parsed = JSON.parse(parsed);
+                        } catch (e2) { /* keep */ }
+                    }
+                } catch (e) {
+                    return bad;
+                }
+                const vr = P.parseRedisSnapshot(parsed);
+                if (!vr.ok) return vr;
+                P.saveToLocalStorage(vr.prefs);
+                P.applyAll(vr.prefs);
+                syncUiFromPrefs(vr.prefs);
+                return { ok: true, prefs: vr.prefs, key };
+            };
+            SsideSettings.getCurrentSettingsRedisKey = function () {
+                const P = window.SsideUserPrefs;
+                if (!P) return '';
+                return P.settingsKeyForUsername(localStorage.getItem('session_user') || '');
+            };
+            SsideSettings.settingsPrefsKeyExists = async function () {
+                const key = SsideSettings.getCurrentSettingsRedisKey();
+                if (!key) return false;
+                const tip = await aflaTipRedis(key, { force: true });
+                return tip !== 'none' && tip !== 'unknown';
+            };
+            SsideSettings.deletePrefsFromRedis = async function () {
+                const key = SsideSettings.getCurrentSettingsRedisKey();
+                if (!key) throw new Error('Cheie settings invalidă.');
+                const exists = await SsideSettings.settingsPrefsKeyExists();
+                if (!exists) return { ok: false, message: 'Cheia nu există în Redis.' };
+                await apeleazaServerul('/api/comanda', { comandaRedis: ['DEL', key] });
+                delete tipuriRedisChei[key];
+                return { ok: true, key };
+            };
         }
 
         (function initUserSettingsButton() {

@@ -23,6 +23,8 @@
   const BUILTIN_SCAN_LIMIT = 50000;
   const BUILTIN_SCAN_BATCH = 100;
   const MAX_SCAN_LIMIT = 50000;
+  const REDIS_SNAPSHOT_VERSION = 1;
+  const MSG_INVALID_REDIS_PREFS = 'Format invalid! salveaza pentru corectare!';
 
   function normalizeFontScale(v) {
     const x = String(v == null ? '' : v).toLowerCase();
@@ -56,6 +58,72 @@
     const n = parseInt(String(v), 10);
     if (!Number.isFinite(n) || n < 1) return fb;
     return n;
+  }
+
+  /** @param {(key:string)=>string|null|undefined} getItem */
+  function normalizePrefsObject(raw) {
+    if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const o = raw;
+    return {
+      theme: normalizeTheme(o.theme),
+      listKeysView: normalizeListView(o.listKeysView),
+      listareType: !!o.listareType,
+      uiFont: normalizeFontScale(o.uiFont),
+      listFont: normalizeFontScale(o.listFont),
+      docsFont: normalizeFontScale(o.docsFont),
+      footerFont: normalizeFontScale(o.footerFont),
+      scanLimit: parseScanLimit(o.scanLimit, BUILTIN_SCAN_LIMIT),
+      scanBatch: parseScanBatch(o.scanBatch, BUILTIN_SCAN_BATCH),
+    };
+  }
+
+  function settingsKeyForUsername(username) {
+    const u = String(username == null ? '' : username).trim();
+    if (!u) return '';
+    const safe = u.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 64);
+    if (!safe) return '';
+    return 'settings:' + safe;
+  }
+
+  function buildRedisSnapshot(prefs) {
+    return {
+      v: REDIS_SNAPSHOT_VERSION,
+      savedAt: new Date().toISOString(),
+      prefs: normalizePrefsObject(prefs || {}),
+    };
+  }
+
+  function parseRedisSnapshot(data) {
+    if (data == null || typeof data !== 'object' || Array.isArray(data)) {
+      return { ok: false, message: MSG_INVALID_REDIS_PREFS };
+    }
+    let inner = data;
+    if (Object.prototype.hasOwnProperty.call(data, 'prefs')) {
+      if (data.v != null && data.v !== REDIS_SNAPSHOT_VERSION) {
+        return { ok: false, message: MSG_INVALID_REDIS_PREFS };
+      }
+      inner = data.prefs;
+    }
+    const prefs = normalizePrefsObject(inner);
+    if (!prefs) {
+      return { ok: false, message: MSG_INVALID_REDIS_PREFS };
+    }
+    const known = [
+      'theme',
+      'listKeysView',
+      'listareType',
+      'uiFont',
+      'listFont',
+      'docsFont',
+      'footerFont',
+      'scanLimit',
+      'scanBatch',
+    ];
+    const hasAny = known.some((k) => inner && Object.prototype.hasOwnProperty.call(inner, k));
+    if (!hasAny && !Object.prototype.hasOwnProperty.call(data, 'prefs')) {
+      return { ok: false, message: MSG_INVALID_REDIS_PREFS };
+    }
+    return { ok: true, prefs };
   }
 
   /** @param {(key:string)=>string|null|undefined} getItem */
@@ -143,11 +211,17 @@
     BUILTIN_SCAN_LIMIT,
     BUILTIN_SCAN_BATCH,
     MAX_SCAN_LIMIT,
+    REDIS_SNAPSHOT_VERSION,
+    MSG_INVALID_REDIS_PREFS,
     normalizeFontScale,
     normalizeTheme,
     normalizeListView,
     parseScanLimit,
     parseScanBatch,
+    normalizePrefsObject,
+    settingsKeyForUsername,
+    buildRedisSnapshot,
+    parseRedisSnapshot,
     readFromStorage,
     prefsToStorageEntries,
     applyToDocument,
