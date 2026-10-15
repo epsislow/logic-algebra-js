@@ -47,6 +47,8 @@
 
         /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
         let listareCuType = false;
+        /** Dosare: tentă convenție (schema/data/admin…) pe tile dosar. */
+        let listDosareTintConventie = false;
         /** TTL pe cheia din detaliu: ms rămase; -1 = no expire; -2 = cheie lipsă; null = necunoscut. */
         let ttlMsRemaining = null;
         let ttlTimerId = null;
@@ -230,7 +232,9 @@
                 (window.SsideUserPrefs && SsideUserPrefs.loadFromLocalStorage()) ||
                 {};
             const prevListareType = listareCuType;
+            const prevDosareTint = listDosareTintConventie;
             listareCuType = !!p.listareType;
+            listDosareTintConventie = !!p.dosareTintConventie;
             if (
                 p.listKeysView === 'tiles' ||
                 p.listKeysView === 'tree' ||
@@ -249,11 +253,17 @@
                 });
             }
             const appVizibil = document.getElementById('panou-aplicatie').style.display !== 'none';
+            const listaEl = document.getElementById('ecran-lista');
             if (prevListareType !== listareCuType && appVizibil) {
                 scaneazaToateCampurile();
                 return;
             }
-            const listaEl = document.getElementById('ecran-lista');
+            if (prevDosareTint !== listDosareTintConventie && appVizibil) {
+                if (Array.isArray(toateCheile) && toateCheile.length && listaEl && listaEl.style.display !== 'none') {
+                    randeazaListaChei(toateCheile, ultimulFiltruLista);
+                }
+                return;
+            }
             if (Array.isArray(toateCheile) && toateCheile.length && listaEl && listaEl.style.display !== 'none') {
                 randeazaListaChei(toateCheile, ultimulFiltruLista);
             }
@@ -423,9 +433,12 @@
         (function initListareTypePref() {
             try {
                 if (window.SsideUserPrefs) {
-                    listareCuType = !!SsideUserPrefs.loadFromLocalStorage().listareType;
+                    const lp = SsideUserPrefs.loadFromLocalStorage();
+                    listareCuType = !!lp.listareType;
+                    listDosareTintConventie = !!lp.dosareTintConventie;
                 } else {
                     listareCuType = localStorage.getItem('sside-listare-type') === '1';
+                    listDosareTintConventie = localStorage.getItem('sside-dosare-tint-conv') === '1';
                 }
             } catch (e) { /* ignore */ }
         })();
@@ -1833,6 +1846,10 @@ function translateUpstashSearchResults(date) {
             if (cheiListaViewMode === 'tiles') lista.classList.add('lista-chei--tiles');
             if (cheiListaViewMode === 'tree') lista.classList.add('lista-chei--tree');
             if (cheiListaViewMode === 'folders') lista.classList.add('lista-chei--folders');
+            lista.classList.toggle(
+                'dosare-tint-conv',
+                cheiListaViewMode === 'folders' && listDosareTintConventie
+            );
             syncListFoldersNavVisible();
         }
 
@@ -1973,6 +1990,11 @@ function translateUpstashSearchResults(date) {
                 lab.className = 'folder-tile-label key-tile-key';
                 lab.textContent = '\u203a ' + fold.label + ':';
                 tile.appendChild(lab);
+                if (listDosareTintConventie && window.SsideKeys && typeof SsideKeys.clasificaDosar === 'function') {
+                    const infoDosar = SsideKeys.clasificaDosar(fold.prefixSegments.slice(0, -1), fold.label, setChei);
+                    const etDosar = etichetaTip(infoDosar);
+                    applyTintCheiePeElement(tile, etDosar);
+                }
                 const enter = () => {
                     dosarePathSegments = fold.prefixSegments.slice();
                     reincarcaListaDosareDinCache();

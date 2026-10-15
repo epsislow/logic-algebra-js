@@ -78,6 +78,16 @@ module.exports = {
       },
     },
     {
+      id: 7,
+      desc: 'dosareTintConventie în snapshot',
+      run() {
+        const p = Prefs.normalizePrefsObject({ dosareTintConventie: true });
+        assertEq(p.dosareTintConventie, true);
+        const entries = Prefs.prefsToStorageEntries(p);
+        assertEq(entries[Prefs.KEYS.dosareTintConventie], '1');
+      },
+    },
+    {
       id: 6,
       desc: 'normalizeListView include folders',
       run() {

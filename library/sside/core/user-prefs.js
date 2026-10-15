@@ -12,6 +12,7 @@
     theme: 'sside-theme',
     listKeysView: 'sside-list-keys-view',
     listareType: 'sside-listare-type',
+    dosareTintConventie: 'sside-dosare-tint-conv',
     uiFont: 'sside-ui-font',
     listFont: 'sside-list-font',
     docsFont: 'sside-docs-font',
@@ -68,6 +69,7 @@
       theme: normalizeTheme(o.theme),
       listKeysView: normalizeListView(o.listKeysView),
       listareType: !!o.listareType,
+      dosareTintConventie: !!o.dosareTintConventie,
       uiFont: normalizeFontScale(o.uiFont),
       listFont: normalizeFontScale(o.listFont),
       docsFont: normalizeFontScale(o.docsFont),
@@ -112,6 +114,7 @@
       'theme',
       'listKeysView',
       'listareType',
+      'dosareTintConventie',
       'uiFont',
       'listFont',
       'docsFont',
@@ -130,10 +133,12 @@
   function readFromStorage(getItem) {
     const get = typeof getItem === 'function' ? getItem : () => null;
     const listareRaw = get(KEYS.listareType);
+    const dosareTintRaw = get(KEYS.dosareTintConventie);
     return {
       theme: normalizeTheme(get(KEYS.theme)),
       listKeysView: normalizeListView(get(KEYS.listKeysView)),
       listareType: listareRaw === '1',
+      dosareTintConventie: dosareTintRaw === '1',
       uiFont: normalizeFontScale(get(KEYS.uiFont)),
       listFont: normalizeFontScale(get(KEYS.listFont)),
       docsFont: normalizeFontScale(get(KEYS.docsFont)),
@@ -149,6 +154,7 @@
       [KEYS.theme]: normalizeTheme(p.theme),
       [KEYS.listKeysView]: normalizeListView(p.listKeysView),
       [KEYS.listareType]: p.listareType ? '1' : '0',
+      [KEYS.dosareTintConventie]: p.dosareTintConventie ? '1' : '0',
       [KEYS.uiFont]: normalizeFontScale(p.uiFont),
       [KEYS.listFont]: normalizeFontScale(p.listFont),
       [KEYS.docsFont]: normalizeFontScale(p.docsFont),

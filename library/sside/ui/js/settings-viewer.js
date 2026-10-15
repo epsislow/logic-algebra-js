@@ -157,6 +157,9 @@
           '<label class="settings-check"><input type="checkbox" id="settings-chk-type"' +
           (p.listareType ? ' checked' : '') +
           '> Type la listare (implicit)</label>' +
+          '<label class="settings-check"><input type="checkbox" id="settings-chk-dosare-tint"' +
+          (p.dosareTintConventie ? ' checked' : '') +
+          '> Dosare — tentă convenție pe foldere (schema, data, admin…)</label>' +
           fontSegHtml('Mărime text (Listă / Plăci / Arbore / Dosare)', p.listFont)
         );
       case 'scan':
@@ -252,6 +255,12 @@
       if (chk) {
         chk.onchange = function () {
           persistAndApply({ listareType: chk.checked });
+        };
+      }
+      const chkDosare = content.querySelector('#settings-chk-dosare-tint');
+      if (chkDosare) {
+        chkDosare.onchange = function () {
+          persistAndApply({ dosareTintConventie: chkDosare.checked });
         };
       }
       wireFontButtons(content, function (scale) {

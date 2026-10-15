@@ -63,7 +63,7 @@ Tokenii opționali pot apărea în orice ordine după pattern.
   - **Listă** — rânduri cu badge-uri și buton Edit/Live (mod clasic).
   - **Plăci** — grid; culoare din tip (fără badge); click pe placă → Edit/Live.
   - **Arbore** — grupare pe `:`; la fiecare nivel: **ramuri** (`▸ prefix:`) apoi **frunze** (chei terminale); click pe frunză → Edit/Live; foldere `<details>`.
-  - **Dosare** — explorare **un nivel** pe ecran; breadcrumb + **←**; tile-uri **dosar** (`› prefix:`) și **chei** (ca Plăci). Aceleași chei ca la Arbore (fără SCAN suplimentar). **Căutare nouă** resetează navigarea la rădăcină.
+  - **Dosare** — explorare **un nivel** pe ecran; breadcrumb + **←**; tile-uri **dosar** (`› prefix:`) și **chei** (ca Plăci). Aceleași chei ca la Arbore (fără SCAN suplimentar). **Căutare nouă** resetează navigarea la rădăcină. Opțional (Setări): **tentă convenție** pe foldere — aceeași culoare ca badge-ul cheilor (`schema`, `data`, `admin`…); badge-ul **dosar** rămâne.
 
 ### Reguli `:` (Arbore + Dosare)
 

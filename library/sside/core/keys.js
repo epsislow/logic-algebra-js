@@ -118,6 +118,61 @@
     return { tip: 'liber' };
   }
 
+  /**
+   * Convenție pentru un dosar din modul Dosare (prefix + etichetă nivel).
+   * @param {string[]} prefixSegments path curent (gol = rădăcină)
+   * @param {string} folderLabel segmentul dosarului afișat
+   * @param {Set<string>|Iterable<string>} [setChei]
+   */
+  function clasificaDosar(prefixSegments, folderLabel, setChei) {
+    const segs = (prefixSegments || []).slice();
+    const label = String(folderLabel == null ? '' : folderLabel);
+    if (!label) return clasificaCheie('', setChei);
+
+    let probe;
+    if (segs.length === 0) {
+      switch (label) {
+        case 'schema':
+          probe = 'schema:_x';
+          break;
+        case 'alg':
+          probe = 'alg:_x';
+          break;
+        case 'form':
+          probe = 'form:_x';
+          break;
+        case 'ui':
+          probe = 'ui:_x';
+          break;
+        case 'list':
+          probe = 'list:_x';
+          break;
+        case 'data':
+          probe = 'data:_x:y';
+          break;
+        case 'settings':
+        case 'user':
+        case 'session':
+          probe = 'settings:user';
+          break;
+        case 'log':
+        case 'info':
+        case 'json':
+        case 'search':
+        case 'set':
+        case 's':
+          probe = label + ':x';
+          break;
+        default:
+          if (label.indexOf('idx_') === 0) probe = label;
+          else probe = label + ':x';
+      }
+    } else {
+      probe = segs.concat([label]).join(':') + ':x';
+    }
+    return clasificaCheie(probe, setChei);
+  }
+
   function withRowTint(out) {
     if (out.cls && out.cls !== 'badge-liber') {
       out.rowTint = 'key-row--' + out.cls.replace(/^badge-/, '');
@@ -191,6 +246,7 @@
     isCheieSearchIndexRedisKey,
     isCheieSistemAscunsa,
     clasificaCheie,
+    clasificaDosar,
     etichetaTip,
     cheieProgDinNume,
   };

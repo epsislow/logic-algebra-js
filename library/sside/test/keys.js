@@ -162,6 +162,19 @@ module.exports = {
       },
     },
     {
+      id: 12,
+      desc: 'clasificaDosar — prefix rădăcină și imbricat',
+      run() {
+        const set = new Set(['schema:_item']);
+        assertEq(Keys.clasificaDosar([], 'schema', set).tip, 'schema');
+        assertEq(Keys.clasificaDosar([], 'data', set).tip, 'data');
+        assertEq(Keys.clasificaDosar([], 'settings', set).sistem, true);
+        assertEq(Keys.clasificaDosar(['data'], '_item', set).tip, 'data');
+        const et = Keys.etichetaTip(Keys.clasificaDosar([], 'settings', set));
+        assertEq(et.cls, 'badge-admin');
+      },
+    },
+    {
       id: 11,
       desc: 'IDX must not treat alg/form/ui/list as search prefixes (convention check)',
       run() {
