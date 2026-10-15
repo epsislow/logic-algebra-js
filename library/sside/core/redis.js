@@ -195,6 +195,26 @@
         return queryObj;
       }
 
+      if (cmd === 'SEARCH.LISTINDEXES') {
+        return [['name', 'idx_search_tags', 'type', 'JSON']];
+      }
+
+      if (cmd === 'SEARCH.DESCRIBE') {
+        const idxName = a[0] != null ? String(a[0]) : '';
+        if (idxName !== 'idx_search_tags') return null;
+        return {
+          name: 'idx_search_tags',
+          type: 'JSON',
+          prefixes: ['data:', 'info:', 'json:', 'schema:', 'search:', 'set:', 's:'],
+          language: 'english',
+          schema: {
+            s_prefix: 'TEXT',
+            s_name: 'TEXT',
+            s_tag: 'TEXT',
+          },
+        };
+      }
+
       if (cmd === 'SEARCH.COUNT') {
         const idxName = a[0] != null ? String(a[0]) : '';
         if (idxName !== 'idx_search_tags') return -1;

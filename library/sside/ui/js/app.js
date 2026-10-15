@@ -227,9 +227,8 @@
                 prefs ||
                 (window.SsideUserPrefs && SsideUserPrefs.loadFromLocalStorage()) ||
                 {};
+            const prevListareType = listareCuType;
             listareCuType = !!p.listareType;
-            const chk = document.getElementById('chk-listare-type');
-            if (chk) chk.checked = listareCuType;
             if (p.listKeysView === 'tiles' || p.listKeysView === 'tree' || p.listKeysView === 'list') {
                 cheiListaViewMode = p.listKeysView;
             }
@@ -241,6 +240,11 @@
                         b.getAttribute('data-list-view') === cheiListaViewMode
                     );
                 });
+            }
+            const appVizibil = document.getElementById('panou-aplicatie').style.display !== 'none';
+            if (prevListareType !== listareCuType && appVizibil) {
+                scaneazaToateCampurile();
+                return;
             }
             const listaEl = document.getElementById('ecran-lista');
             if (Array.isArray(toateCheile) && toateCheile.length && listaEl && listaEl.style.display !== 'none') {
@@ -394,8 +398,6 @@
                 } else {
                     listareCuType = localStorage.getItem('sside-listare-type') === '1';
                 }
-                const chk = document.getElementById('chk-listare-type');
-                if (chk) chk.checked = listareCuType;
             } catch (e) { /* ignore */ }
         })();
         document.getElementById('input-filtru-cautari').addEventListener('input', randeazaListaCautariSalvate);
@@ -1091,6 +1093,106 @@
             return IDX_PREFIXES.some(p => (cheie || '').startsWith(p));
         }
 
+        function esteCheieSearchIndexRedis(cheie, redisTip) {
+            if (SsideKeys.isCheieSearchIndexRedisKey(cheie)) return true;
+            return normalizeazaTipRedis(redisTip) === 'searchindex';
+        }
+
+        async function incarcaPanouSearchIndexInspect(cheie) {
+            const panel = document.getElementById('panel-search-index');
+            if (!panel) return;
+            panel.style.display = 'block';
+            const Inspect = window.SsideSearchIndexInspect;
+            const primary =
+                (Inspect && Inspect.PRIMARY_SSIDE_INDEX) || 'idx_search_tags';
+            const nameEl = document.getElementById('search-index-current-name');
+            const descEl = document.getElementById('search-index-describe');
+            const listEl = document.getElementById('search-index-list');
+            if (nameEl) nameEl.textContent = cheie;
+            if (descEl) descEl.textContent = 'Se încarcă…';
+            if (listEl) listEl.innerHTML = '';
+
+            let list = [];
+            let describeObj = null;
+            try {
+                const listRaw = await apeleazaServerul('/api/comanda', {
+                    comandaRedis: ['SEARCH.LISTINDEXES'],
+                });
+                const payload = listRaw.rezultat != null ? listRaw.rezultat : listRaw;
+                if (Inspect) list = Inspect.parseListIndexes(payload);
+            } catch (e) {
+                list = [];
+            }
+            try {
+                const descRaw = await apeleazaServerul('/api/comanda', {
+                    comandaRedis: ['SEARCH.DESCRIBE', cheie],
+                });
+                const payload = descRaw.rezultat != null ? descRaw.rezultat : descRaw;
+                if (Inspect) describeObj = Inspect.describeToDisplayObject(payload);
+                else describeObj = payload;
+            } catch (e) {
+                describeObj = null;
+            }
+
+            if (listEl) {
+                if (!list.length) {
+                    listEl.innerHTML =
+                        '<li><span>Niciun index raportat (sau SEARCH.LISTINDEXES indisponibil).</span></li>';
+                } else {
+                    list.forEach((entry) => {
+                        const li = document.createElement('li');
+                        if (entry.name === cheie) li.classList.add('is-current');
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.textContent = entry.name;
+                        btn.addEventListener('click', () => deschideDetaliuDinNav(entry.name));
+                        li.appendChild(btn);
+                        const typ = document.createElement('span');
+                        typ.className = 'search-index-type';
+                        typ.textContent = entry.type || '—';
+                        li.appendChild(typ);
+                        listEl.appendChild(li);
+                    });
+                }
+            }
+            if (descEl) {
+                descEl.textContent = Inspect
+                    ? Inspect.formatJsonPretty(describeObj)
+                    : JSON.stringify(describeObj, null, 2);
+            }
+
+            const appBlock = document.getElementById('search-index-app-block');
+            const showApp = Inspect
+                ? Inspect.isPrimarySsideIndex(cheie)
+                : cheie === primary;
+            if (appBlock) appBlock.style.display = showApp ? 'block' : 'none';
+            if (showApp) {
+                const prim = document.getElementById('search-index-primary-name');
+                if (prim) prim.textContent = primary;
+                const ul = document.getElementById('search-index-prefixes');
+                if (ul) {
+                    ul.innerHTML = '';
+                    IDX_PREFIXES.forEach((p) => {
+                        const li = document.createElement('li');
+                        li.textContent = p;
+                        ul.appendChild(li);
+                    });
+                }
+                const tbody = document.getElementById('search-index-fields-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    IDX_SEARCH_FIELDS.forEach((field) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td class="idx-field-name"></td><td class="idx-field-type"></td>';
+                        tr.children[0].textContent = field.key;
+                        tr.children[1].textContent = field.tip;
+                        tbody.appendChild(tr);
+                    });
+                }
+            }
+        }
+
         function seteazaVizibilitateIdxLegenda(vizibil) {
             const btn = document.getElementById('btn-idx-legenda');
             const panel = document.getElementById('panel-idx-legenda');
@@ -1688,19 +1790,38 @@ function translateUpstashSearchResults(date) {
 
         function randeazaCheiModPlaci(cheiFiltrate, setChei, lista) {
             cheiFiltrate.forEach((cheie) => {
-                const et = etichetaTip(clasificaCheie(cheie, setChei));
+                const info = clasificaCheie(cheie, setChei);
+                const et = etichetaTip(info);
                 const tile = document.createElement('div');
                 tile.className = 'key-tile';
                 applyTintCheiePeElement(tile, et);
+
+                const meta = document.createElement('div');
+                meta.className = 'key-tile-meta';
+                const conv = document.createElement('span');
+                conv.className = 'badge key-tile-badge ' + et.cls;
+                conv.textContent = et.badge;
+                meta.appendChild(conv);
+                if (listareCuType && tipuriRedisChei[cheie]) {
+                    const er = etichetaRedisTip(tipuriRedisChei[cheie]);
+                    const redisBadge = document.createElement('span');
+                    redisBadge.className = 'badge key-tile-badge ' + er.cls;
+                    redisBadge.textContent = er.badge;
+                    meta.appendChild(redisBadge);
+                }
+                if (listareCuType && esteCheieIdx(cheie, tipuriRedisChei[cheie])) {
+                    const idxBadge = document.createElement('span');
+                    idxBadge.className = 'badge badge-idx key-tile-badge';
+                    idxBadge.textContent = 'idx';
+                    meta.appendChild(idxBadge);
+                }
+                tile.appendChild(meta);
+
                 const lab = document.createElement('span');
+                lab.className = 'key-tile-key';
                 lab.textContent = cheie;
                 tile.appendChild(lab);
-                if (listareCuType && tipuriRedisChei[cheie]) {
-                    const hint = document.createElement('span');
-                    hint.className = 'key-tile-type-hint';
-                    hint.textContent = etichetaRedisTip(tipuriRedisChei[cheie]).badge;
-                    tile.appendChild(hint);
-                }
+
                 tile.addEventListener('click', () => deschideCheieDinLista(cheie, setChei));
                 lista.appendChild(tile);
             });
@@ -1884,18 +2005,6 @@ function translateUpstashSearchResults(date) {
             } finally {
                 setModButonCautareLista(false);
                 scanListaAbort = null;
-            }
-        }
-
-        function peSchimbareListareCuType() {
-            const chk = document.getElementById('chk-listare-type');
-            listareCuType = !!(chk && chk.checked);
-            try {
-                localStorage.setItem('sside-listare-type', listareCuType ? '1' : '0');
-            } catch (e) { /* ignore */ }
-            // re-scan: cu Type on umple tipurile; cu Type off redesenează lista fără TYPE
-            if (document.getElementById('panou-aplicatie').style.display !== 'none') {
-                scaneazaToateCampurile();
             }
         }
 
@@ -2235,7 +2344,8 @@ function translateUpstashSearchResults(date) {
             const isSet = tip === 'set';
             const isCol = esteTipColecțieCol(tip);
             const isDoc = tip === 'string' || tip === 'none' || tip === 'json';
-            const supported = isSet || isCol || isDoc;
+            const isSearchIdx = esteCheieSearchIndexRedis(cheieCurenta, tip);
+            const supported = isSet || isCol || isDoc || isSearchIdx;
             const amanat = !!opts.amanatContinut;
 
             document.getElementById('detail-mode-tabs').style.display = (isDoc && !amanat) ? 'flex' : 'none';
@@ -2246,17 +2356,19 @@ function translateUpstashSearchResults(date) {
             document.getElementById('panel-list').style.display = tip === 'list' ? 'block' : 'none';
             document.getElementById('panel-zset').style.display = tip === 'zset' ? 'block' : 'none';
             document.getElementById('col-item-editor').style.display = 'none';
+            const panelSearchIdx = document.getElementById('panel-search-index');
+            if (panelSearchIdx) panelSearchIdx.style.display = isSearchIdx ? 'block' : 'none';
             document.getElementById('panel-unsupported').style.display = supported ? 'none' : 'block';
             document.getElementById('btn-salveaza').style.display = isDoc ? 'inline-block' : 'none';
+            const btnStergeCheie = document.getElementById('btn-sterge-cheie');
+            if (btnStergeCheie) {
+                btnStergeCheie.style.display = isSearchIdx ? 'none' : 'inline-block';
+            }
             document.getElementById('detail-actions-key').style.display = 'flex';
 
             if (!supported) {
-                const idxKey =
-                    SsideKeys.isCheieSearchIndexRedisKey &&
-                    SsideKeys.isCheieSearchIndexRedisKey(cheieCurenta);
-                document.getElementById('panel-unsupported').textContent = idxKey
-                    ? 'Cheie Search Index (idx_…) — editor dedicat urmează. Poți șterge cheia din acțiuni.'
-                    : 'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia.';
+                document.getElementById('panel-unsupported').textContent =
+                    'Tip Redis „' + redisTip + '” nu este suportat încă în editor. Poți șterge cheia.';
             }
 
             const wrapLiber = document.getElementById('formular-din-wrap');
@@ -3516,6 +3628,8 @@ function translateUpstashSearchResults(date) {
             document.getElementById('panel-zset').style.display = 'none';
             document.getElementById('col-item-editor').style.display = 'none';
             document.getElementById('panel-unsupported').style.display = 'none';
+            const panelSearchIdxInit = document.getElementById('panel-search-index');
+            if (panelSearchIdxInit) panelSearchIdxInit.style.display = 'none';
             document.getElementById('detail-mode-tabs').style.display = 'none';
             if (window.SsideProgPanels) SsideProgPanels.ascunde();
 
@@ -3595,6 +3709,14 @@ function translateUpstashSearchResults(date) {
                 } catch (err) {
                     alert(err.message);
                 }
+                marcheazaCurentCaBaseline();
+                return;
+            }
+
+            if (esteCheieSearchIndexRedis(cheie, redisTip)) {
+                seteazaVizibilitateIdxLegenda(false);
+                document.getElementById('btn-deschide-schema').style.display = 'none';
+                await incarcaPanouSearchIndexInspect(cheie);
                 marcheazaCurentCaBaseline();
                 return;
             }

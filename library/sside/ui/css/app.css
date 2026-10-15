@@ -249,17 +249,6 @@
         .toolbar-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
         .toolbar-row input[type="text"] { flex: 1; min-width: 140px; margin: 0; }
         .toolbar-row button { margin: 0; }
-        .listare-type-toggle {
-            display: inline-flex; align-items: center; gap: 5px;
-            margin: 0; font-size: 12px; color: var(--text-muted);
-            cursor: pointer; user-select: none; white-space: nowrap;
-            width: auto;
-        }
-        .listare-type-toggle input {
-            width: auto; margin: 0; padding: 0;
-            accent-color: var(--accent); cursor: pointer;
-        }
-        .listare-type-toggle span { font-weight: 600; letter-spacing: 0.02em; }
         .btn-star {
             background: transparent; border: 1px solid var(--input-border);
             color: var(--text); width: auto; margin: 0; padding: 6px 10px;
@@ -328,21 +317,48 @@
 
         .lista-chei--tiles {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 8px;
-            padding: 8px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px;
+            padding: 6px;
         }
         .lista-chei--tiles .key-row { display: none; }
         .key-tile {
             cursor: pointer;
             border-radius: 6px;
             border: 1px solid var(--border);
-            padding: 10px 12px;
+            padding: 6px 8px;
             font-family: Consolas, monospace;
-            font-size: 12px;
-            line-height: 1.35;
+            font-size: var(--sside-list-font-tile, 12px);
+            line-height: 1.3;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-sizing: border-box;
+        }
+        .key-tile-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            align-items: center;
+        }
+        .key-tile-badge {
+            width: auto;
+            min-width: 0;
+            max-width: 100%;
+            padding: 1px 5px;
+            font-size: 10px;
+            font-family: system-ui, sans-serif;
+            line-height: 1.25;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .key-tile-key {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
             word-break: break-all;
-            min-height: 2.6em;
         }
         .key-tile[class*="key-row--"]:not(.key-row--liber):not(.key-row--free) {
             background: color-mix(in srgb, var(--key-row-tint) 16%, var(--bg-panel));
@@ -354,12 +370,18 @@
         .key-tile[class*="key-row--"]:not(.key-row--liber):not(.key-row--free):hover {
             background: color-mix(in srgb, var(--key-row-tint) 24%, var(--row-hover));
         }
-        .key-tile-type-hint {
-            display: block;
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: 6px;
-            font-family: system-ui, sans-serif;
+        @media (max-width: 640px) {
+            .lista-chei--tiles {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 5px;
+                padding: 5px;
+            }
+            .key-tile {
+                padding: 5px 6px;
+            }
+            .key-tile-key {
+                -webkit-line-clamp: 2;
+            }
         }
 
         .lista-chei--tree { padding: 10px 10px 8px; }
@@ -1551,6 +1573,36 @@
             color: var(--accent);
         }
         .settings-redis-msg.is-err { color: #dc3545; font-weight: 600; }
+
+        .search-index-panel { margin-top: 8px; }
+        .search-index-hint {
+            font-size: 13px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.45;
+        }
+        .search-index-heading { margin: 16px 0 8px; font-size: 14px; }
+        .search-index-sub { margin: 0 0 8px; font-size: 13px; }
+        .search-index-list {
+            list-style: none; margin: 0; padding: 0;
+            border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+        }
+        .search-index-list li {
+            display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+            border-bottom: 1px solid var(--border); font-size: 13px;
+        }
+        .search-index-list li:last-child { border-bottom: none; }
+        .search-index-list li.is-current { background: color-mix(in srgb, var(--badge-admin) 14%, var(--bg-panel)); }
+        .search-index-list button {
+            margin: 0; width: auto; padding: 2px 8px; font-size: 12px;
+            background: transparent; color: var(--accent); border: 1px solid var(--border);
+        }
+        .search-index-list button:hover { border-color: var(--accent); }
+        .search-index-type {
+            font-size: 11px; color: var(--text-muted); margin-left: auto;
+        }
+        .search-index-pre { max-height: 320px; }
+        .search-index-prefixes {
+            margin: 0 0 12px; padding-left: 1.2em; font-size: 13px;
+            font-family: Consolas, ui-monospace, monospace;
+        }
         #settings-btn-load-redis.settings-btn-load-ready:not(:disabled) {
             background: #198754 !important;
             color: #fff !important;
@@ -1566,22 +1618,28 @@
         html[data-ui-font="s"], html:not([data-ui-font]) {
             --sside-ui-font: 13px;
             --sside-ui-font-sm: 11px;
+            --sside-list-status-font: 12px;
         }
         html[data-ui-font="m"] {
             --sside-ui-font: 15px;
             --sside-ui-font-sm: 12px;
+            --sside-list-status-font: 13px;
         }
         html[data-ui-font="l"] {
             --sside-ui-font: 17px;
             --sside-ui-font-sm: 13px;
+            --sside-list-status-font: 14px;
         }
         #panou-aplicatie #input-search,
         #panou-aplicatie .toolbar-row,
         #panou-aplicatie .list-view-mode-btn,
-        #panou-aplicatie #list-status-line,
         #ecran-cautari-salvate .cautare-row,
         #ecran-cautari-salvate .toolbar-row {
             font-size: var(--sside-ui-font);
+        }
+        #panou-aplicatie #list-status-line,
+        #panou-aplicatie #list-status-line .badge {
+            font-size: var(--sside-list-status-font, 12px);
         }
         #panou-aplicatie .badge,
         #ecran-cautari-salvate .cautare-date {
@@ -1605,10 +1663,6 @@
         .key-tree-branch > summary {
             font-size: var(--sside-list-font);
         }
-        .key-tile {
-            font-size: var(--sside-list-font-tile);
-        }
-
         html[data-docs-font="s"], html:not([data-docs-font]) {
             --sside-docs-font: 14px;
             --sside-docs-toc-font: 13px;

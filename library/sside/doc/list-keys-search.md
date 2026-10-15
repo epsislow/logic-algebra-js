@@ -22,6 +22,8 @@ Filtrul din **Lista** (`#input-search` + **Caută**) suportă trei moduri.
 - `=s_prefix:stock` sau query JSON (vezi **Form / UI** — filtru listă vs `list.source`).
 - Rezultate din index **`idx_search_tags`**, nu din parcurgerea tuturor cheilor.
 
+Cheile **`idx_*`** (tip Redis **Search Index**) — doar **admin** în listă; la Edit: panou **doar citire** (`SEARCH.LISTINDEXES`, `SEARCH.DESCRIBE` + convenții sside pentru `idx_search_tags`). Modificarea indexului se face în Upstash.
+
 ---
 
 ## SCAN (prefix `>`)

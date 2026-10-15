@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=idx-admin1">
+    <link rel="stylesheet" href="ui/css/app.css?v=tiles-compact1">
 </head>
 <body>
 
@@ -60,10 +60,6 @@
                         Afișate: <span id="total-campuri" class="badge">0</span>
                         <span id="scan-status-meta" style="display: none;"> · Limit: <span id="scan-status-limit" class="badge">50000</span> · Batch: <span id="scan-status-batch" class="badge">100</span></span>
                     </p>
-                    <label class="listare-type-toggle" title="Când e debifat, listarea nu apelează TYPE (fără badge Redis/idx)">
-                        <input type="checkbox" id="chk-listare-type" onchange="peSchimbareListareCuType()">
-                        <span>Type</span>
-                    </label>
                     <button type="button" class="btn-albastru btn-inline" onclick="deschideModalCheieNoua()">+ Cheie nouă</button>
                 </div>
                 <div class="toolbar-row list-view-mode-row" style="margin: 0 0 8px;">
@@ -318,12 +314,34 @@
 
                 <div id="panel-unsupported" class="set-unsupported" style="display:none;"></div>
 
+                <div id="panel-search-index" class="search-index-panel" style="display:none;">
+                    <p class="search-index-hint">Doar citire. Indexurile se definesc / modifică în <strong>Upstash</strong>; aplicația folosește <code>SEARCH.QUERY</code> pe numele indexului.</p>
+                    <h4 class="search-index-heading">Indexuri (SEARCH.LISTINDEXES)</h4>
+                    <ul id="search-index-list" class="search-index-list"></ul>
+                    <h4 class="search-index-heading">Detaliu (SEARCH.DESCRIBE)</h4>
+                    <p class="search-index-sub">Cheie curentă: <code id="search-index-current-name"></code></p>
+                    <pre id="search-index-describe" class="settings-prefs-dump search-index-pre">Se încarcă…</pre>
+                    <div id="search-index-app-block" style="display:none;">
+                        <h4 class="search-index-heading">Convenții sside — badge <span class="badge badge-idx">idx</span> pe chei JSON</h4>
+                        <p class="search-index-hint">Index implicit în listă / list / alg: <code id="search-index-primary-name"></code></p>
+                        <p class="search-index-hint"><strong>Prefixe urmărite</strong> (potrivire cu schema Upstash):</p>
+                        <ul id="search-index-prefixes" class="search-index-prefixes"></ul>
+                        <p class="search-index-hint"><strong>Câmpuri <code>s_*</code></strong> așteptate în JSON (legendă la Edit pe chei indexabile):</p>
+                        <table class="idx-fields-table">
+                            <thead>
+                                <tr><th>Câmp</th><th>Tip schemă</th></tr>
+                            </thead>
+                            <tbody id="search-index-fields-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="detail-actions" id="detail-actions-key">
                     <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
                         Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
                     </button>
                     <button type="button" class="btn-albastru" id="btn-prog-live-ui" style="display:none;" onclick="deschideLiveUiDinEdit()">Live</button>
-                    <button type="button" class="btn-rosu" onclick="stergeCheieCurenta()">Șterge</button>
+                    <button type="button" class="btn-rosu" id="btn-sterge-cheie" onclick="stergeCheieCurenta()">Șterge</button>
                     <button type="button" class="btn-albastru" id="btn-deschide-schema" style="display:none;" onclick="deschideSchemaLegata()">Deschide schema</button>
                     <button type="button" class="btn-legenda" id="btn-idx-legenda" style="display:none;" onclick="toggleIdxLegenda()">Indecși</button>
                 </div>
@@ -532,6 +550,7 @@
     </div>
 
 
+    <script src="core/search-index-inspect.js?v=1"></script>
     <script src="core/keys.js?v=idx-admin1"></script>
     <script src="core/meta-schemas.js"></script>
     <script src="core/when.js?v=f2algc"></script>
@@ -556,6 +575,6 @@
     <script src="ui/js/panels-live.js?v=form-grid2"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=idx-admin1"></script>
+    <script src="ui/js/app.js?v=tiles-compact1"></script>
 </body>
 </html>
