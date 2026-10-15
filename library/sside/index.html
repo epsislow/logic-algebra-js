@@ -17,16 +17,9 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=tree-hover2">
+    <link rel="stylesheet" href="ui/css/app.css?v=settings1">
 </head>
 <body>
-
-    <div class="top-bar">
-        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Comută tema">
-            <span class="theme-icon" id="theme-icon">🌙</span>
-            <span id="theme-label">Dark</span>
-        </button>
-    </div>
 
     <h2 id="app-main-title">Sistem Gestiune In-House (Cloudflare + Upstash)</h2>
 
@@ -46,8 +39,10 @@
                 <button type="button" class="btn-gri btn-inline" onclick="deschideDocs()" title="Documentație ALG/FORM/UI">Docs</button>
             </div>
             <div class="zona-utilizator-right">
-                <strong id="nume-utilizator-afisat" class="zona-user-name">...</strong>
-                <button type="button" onclick="executaLogout()" class="btn-rosu btn-inline">Deconectare</button>
+                <button type="button" id="btn-user-settings" class="btn-user-settings" title="Setări">
+                    <span id="nume-utilizator-afisat" class="zona-user-name">...</span>
+                </button>
+                <button type="button" onclick="executaLogout()" class="btn-rosu btn-inline btn-logout-icon" aria-label="Deconectare" title="Deconectare">⎋</button>
             </div>
         </div>
 
@@ -545,6 +540,7 @@
     <script src="core/scan-filter.js?v=scan1"></script>
     <script src="core/scan-keys.js?v=scan1"></script>
     <script src="core/key-list-tree.js?v=views2"></script>
+    <script src="core/user-prefs.js?v=1"></script>
     <script src="core/form-options.js"></script>
     <script src="core/schema-order.js?v=2"></script>
     <script src="core/schema-form-grid.js?v=1"></script>
@@ -556,10 +552,11 @@
     <script src="core/alg-runner.js?v=recover3"></script>
     <script src="core/prog-validate.js?v=recover3"></script>
     <script src="ui/js/doc-data_generated.js?v=kincr2"></script>
-    <script src="ui/js/doc-viewer.js?v=runtime-docs1"></script>
+    <script src="ui/js/doc-viewer.js?v=settings1"></script>
+    <script src="ui/js/settings-viewer.js?v=1"></script>
     <script src="ui/js/panels-live.js?v=form-grid2"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=form-grid2"></script>
+    <script src="ui/js/app.js?v=settings1"></script>
 </body>
 </html>

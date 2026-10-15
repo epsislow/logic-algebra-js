@@ -179,10 +179,13 @@
   let docsReturnToRuntime = false;
 
   function hideOtherScreens() {
-    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate', 'ecran-ui-runtime'].forEach(function (id) {
-      const el = document.getElementById(id);
-      if (el) el.style.display = 'none';
-    });
+    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate', 'ecran-ui-runtime', 'ecran-setari'].forEach(
+      function (id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      }
+    );
+    document.body.classList.remove('sside-settings-open');
   }
 
   function showSection(id) {

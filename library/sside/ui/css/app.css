@@ -122,6 +122,32 @@
             color: var(--text-muted);
             font-weight: 600;
         }
+        .btn-user-settings {
+            margin: 0;
+            padding: 4px 10px;
+            width: auto;
+            display: inline-flex;
+            align-items: center;
+            background: transparent;
+            color: inherit;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .btn-user-settings:hover {
+            background: var(--row-hover);
+            border-color: var(--border);
+        }
+        .btn-user-settings:hover .zona-user-name {
+            color: var(--text);
+        }
+        .btn-logout-icon {
+            min-width: 36px;
+            padding: 2px 10px;
+            font-size: 16px;
+            line-height: 1.2;
+        }
         .zona-utilizator .btn-inline {
             width: auto;
             margin: 0;
@@ -442,6 +468,16 @@
             display: none !important;
         }
         body.sside-docs-open #ecran-docs {
+            display: block !important;
+        }
+        body.sside-settings-open #ecran-lista,
+        body.sside-settings-open #ecran-detaliu,
+        body.sside-settings-open #ecran-cautari-salvate,
+        body.sside-settings-open #ecran-ui-runtime,
+        body.sside-settings-open #ecran-docs {
+            display: none !important;
+        }
+        body.sside-settings-open #ecran-setari {
             display: block !important;
         }
 
@@ -1469,6 +1505,96 @@
             border: 1px solid var(--border); padding: 6px 8px; text-align: left;
         }
         .docs-content th { background: var(--bg-muted); }
+
+        /* Setări utilizator */
+        .settings-content h2 { margin: 0 0 12px; font-size: 1.25rem; }
+        .settings-hint { font-size: 13px; color: var(--text-muted); margin: 0 0 12px; }
+        .settings-kv { margin: 0 0 12px; font-size: 14px; }
+        .settings-kv input[type="number"] { max-width: 200px; margin-top: 6px; }
+        .settings-check { display: flex; align-items: center; gap: 8px; margin: 12px 0; font-size: 14px; width: auto; }
+        .settings-check input { width: auto; margin: 0; }
+        .settings-seg { margin: 12px 0 16px; }
+        .settings-field-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+        .settings-prefs-dump {
+            font-size: 11px; max-height: 240px; overflow: auto;
+            background: var(--bg-editor); border: 1px solid var(--border);
+            padding: 10px; border-radius: 6px;
+        }
+
+        /* Mărimi text — mic = valorile inițiale */
+        html[data-ui-font="s"], html:not([data-ui-font]) {
+            --sside-ui-font: 13px;
+            --sside-ui-font-sm: 11px;
+        }
+        html[data-ui-font="m"] {
+            --sside-ui-font: 15px;
+            --sside-ui-font-sm: 12px;
+        }
+        html[data-ui-font="l"] {
+            --sside-ui-font: 17px;
+            --sside-ui-font-sm: 13px;
+        }
+        #panou-aplicatie #input-search,
+        #panou-aplicatie .toolbar-row,
+        #panou-aplicatie .list-view-mode-btn,
+        #panou-aplicatie #list-status-line,
+        #ecran-cautari-salvate .cautare-row,
+        #ecran-cautari-salvate .toolbar-row {
+            font-size: var(--sside-ui-font);
+        }
+        #panou-aplicatie .badge,
+        #ecran-cautari-salvate .cautare-date {
+            font-size: var(--sside-ui-font-sm);
+        }
+
+        html[data-list-font="s"], html:not([data-list-font]) {
+            --sside-list-font: 13px;
+            --sside-list-font-tile: 12px;
+        }
+        html[data-list-font="m"] {
+            --sside-list-font: 15px;
+            --sside-list-font-tile: 14px;
+        }
+        html[data-list-font="l"] {
+            --sside-list-font: 17px;
+            --sside-list-font-tile: 16px;
+        }
+        .key-row .key-name,
+        .key-tree-leaf,
+        .key-tree-branch > summary {
+            font-size: var(--sside-list-font);
+        }
+        .key-tile {
+            font-size: var(--sside-list-font-tile);
+        }
+
+        html[data-docs-font="s"], html:not([data-docs-font]) {
+            --sside-docs-font: 14px;
+            --sside-docs-toc-font: 13px;
+        }
+        html[data-docs-font="m"] {
+            --sside-docs-font: 16px;
+            --sside-docs-toc-font: 14px;
+        }
+        html[data-docs-font="l"] {
+            --sside-docs-font: 18px;
+            --sside-docs-toc-font: 15px;
+        }
+        .docs-content { font-size: var(--sside-docs-font); }
+        .docs-toc button { font-size: var(--sside-docs-toc-font); }
+
+        html[data-footer-font="s"], html:not([data-footer-font]) {
+            --sside-footer-font: 11px;
+        }
+        html[data-footer-font="m"] {
+            --sside-footer-font: 13px;
+        }
+        html[data-footer-font="l"] {
+            --sside-footer-font: 15px;
+        }
+        .api-stats-inner {
+            font-size: var(--sside-footer-font);
+        }
 
         @media (max-width: 800px) {
             body { margin: 10px; }

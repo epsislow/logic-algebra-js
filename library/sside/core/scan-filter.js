@@ -7,6 +7,34 @@
   const DEFAULT_LIMIT = 50000;
   const DEFAULT_BATCH = 100;
   const MAX_LIMIT = 50000;
+
+  let userDefaultLimit = DEFAULT_LIMIT;
+  let userDefaultBatch = DEFAULT_BATCH;
+
+  function effectiveDefaultLimit() {
+    return userDefaultLimit;
+  }
+
+  function effectiveDefaultBatch() {
+    return userDefaultBatch;
+  }
+
+  function setScanDefaults(opts) {
+    if (!opts || typeof opts !== 'object') return;
+    if (opts.limit != null) {
+      const n = parseInt(opts.limit, 10);
+      if (Number.isFinite(n) && n >= 0) userDefaultLimit = Math.min(n, MAX_LIMIT);
+    }
+    if (opts.batch != null) {
+      const n = parseInt(opts.batch, 10);
+      if (Number.isFinite(n) && n >= 1) userDefaultBatch = n;
+    }
+  }
+
+  function resetScanDefaults() {
+    userDefaultLimit = DEFAULT_LIMIT;
+    userDefaultBatch = DEFAULT_BATCH;
+  }
   const KNOWN_OPTS = new Set(['limit', 'batch', 'type', 'timeout']);
 
   function isScanFilter(filtru) {
@@ -59,10 +87,10 @@
     if (userSpecified.limit) {
       limitEffective = limit === 0 ? 0 : Math.min(limit, MAX_LIMIT);
     } else {
-      limitEffective = DEFAULT_LIMIT;
+      limitEffective = effectiveDefaultLimit();
     }
 
-    const batchEffective = userSpecified.batch ? batch : DEFAULT_BATCH;
+    const batchEffective = userSpecified.batch ? batch : effectiveDefaultBatch();
 
     return {
       pattern,
@@ -73,8 +101,8 @@
       userSpecified,
       limitEffective,
       batchEffective,
-      defaultLimit: DEFAULT_LIMIT,
-      defaultBatch: DEFAULT_BATCH,
+      defaultLimit: effectiveDefaultLimit(),
+      defaultBatch: effectiveDefaultBatch(),
     };
   }
 
@@ -86,13 +114,13 @@
         ? parsed.limit
         : parsed.limitEffective != null
           ? parsed.limitEffective
-          : DEFAULT_LIMIT;
+          : effectiveDefaultLimit();
     const bat =
       parsed.userSpecified && parsed.userSpecified.batch
         ? parsed.batch
         : parsed.batchEffective != null
           ? parsed.batchEffective
-          : DEFAULT_BATCH;
+          : effectiveDefaultBatch();
     bits.push('limit:' + lim);
     bits.push('batch:' + bat);
     if (parsed.userSpecified && parsed.userSpecified.type && parsed.type) {
@@ -146,6 +174,12 @@
     formatScanFilter,
     normalizeScanFilterForSave,
     canonFilterForCompare,
+    setScanDefaults,
+    resetScanDefaults,
+    getScanDefaults: () => ({
+      limit: userDefaultLimit,
+      batch: userDefaultBatch,
+    }),
   };
 
   root.SsideScanFilter = api;

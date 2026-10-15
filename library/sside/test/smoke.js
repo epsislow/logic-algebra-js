@@ -104,5 +104,19 @@ module.exports = {
         assert(html.includes('key-list-tree.js'));
       },
     },
+    {
+      id: 10,
+      desc: 'setări utilizator — scripturi + bară',
+      run() {
+        const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+        assert(html.includes('user-prefs.js'));
+        assert(html.includes('settings-viewer.js'));
+        assert(html.includes('btn-user-settings'));
+        assert(html.includes('btn-logout-icon'));
+        assert(!html.includes('id="theme-toggle"'));
+        assert(fs.existsSync(path.join(ROOT, 'core', 'user-prefs.js')));
+        assert(fs.existsSync(path.join(ROOT, 'ui', 'js', 'settings-viewer.js')));
+      },
+    },
   ],
 };

@@ -214,23 +214,48 @@
         let colSchemaTempKey = null;
         let colFormEditor = null;
 
-        (function initThemeToggle() {
-            const btn = document.getElementById('theme-toggle');
-            const icon = document.getElementById('theme-icon');
-            const label = document.getElementById('theme-label');
-            if (!btn) return;
-            function syncThemeUi() {
-                const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-                icon.textContent = dark ? '☀️' : '🌙';
-                label.textContent = dark ? 'Light' : 'Dark';
+        (function bootstrapUserPrefs() {
+            if (window.SsideUserPrefs && typeof SsideUserPrefs.applyAll === 'function') {
+                SsideUserPrefs.applyAll();
             }
+        })();
+
+        function syncUiFromPrefs(prefs) {
+            const p =
+                prefs ||
+                (window.SsideUserPrefs && SsideUserPrefs.loadFromLocalStorage()) ||
+                {};
+            listareCuType = !!p.listareType;
+            const chk = document.getElementById('chk-listare-type');
+            if (chk) chk.checked = listareCuType;
+            if (p.listKeysView === 'tiles' || p.listKeysView === 'tree' || p.listKeysView === 'list') {
+                cheiListaViewMode = p.listKeysView;
+            }
+            const seg = document.getElementById('list-view-mode-seg');
+            if (seg) {
+                seg.querySelectorAll('.list-view-mode-btn').forEach((b) => {
+                    b.classList.toggle(
+                        'is-active',
+                        b.getAttribute('data-list-view') === cheiListaViewMode
+                    );
+                });
+            }
+            const listaEl = document.getElementById('ecran-lista');
+            if (Array.isArray(toateCheile) && toateCheile.length && listaEl && listaEl.style.display !== 'none') {
+                randeazaListaChei(toateCheile, ultimulFiltruLista);
+            }
+        }
+
+        if (window.SsideSettings) {
+            SsideSettings.syncUiFromPrefs = syncUiFromPrefs;
+        }
+
+        (function initUserSettingsButton() {
+            const btn = document.getElementById('btn-user-settings');
+            if (!btn) return;
             btn.addEventListener('click', () => {
-                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', next);
-                try { localStorage.setItem('sside-theme', next); } catch (e) {}
-                syncThemeUi();
+                if (typeof deschideSetari === 'function') deschideSetari('cont');
             });
-            syncThemeUi();
         })();
 
         document.getElementById('raw-json-editor').addEventListener('input', () => {
@@ -263,6 +288,10 @@
                 const saved = localStorage.getItem(LIST_KEYS_VIEW_STORAGE);
                 if (saved === 'tiles' || saved === 'tree' || saved === 'list') cheiListaViewMode = saved;
             } catch (e) { /* ignore */ }
+            if (window.SsideUserPrefs) {
+                const p = SsideUserPrefs.loadFromLocalStorage();
+                if (p.listKeysView) cheiListaViewMode = p.listKeysView;
+            }
             const seg = document.getElementById('list-view-mode-seg');
             if (!seg) return;
             seg.querySelectorAll('.list-view-mode-btn').forEach((btn) => {
@@ -285,6 +314,17 @@
                     }
                 });
             });
+        })();
+        (function initListareTypePref() {
+            try {
+                if (window.SsideUserPrefs) {
+                    listareCuType = !!SsideUserPrefs.loadFromLocalStorage().listareType;
+                } else {
+                    listareCuType = localStorage.getItem('sside-listare-type') === '1';
+                }
+                const chk = document.getElementById('chk-listare-type');
+                if (chk) chk.checked = listareCuType;
+            } catch (e) { /* ignore */ }
         })();
         document.getElementById('input-filtru-cautari').addEventListener('input', randeazaListaCautariSalvate);
         document.getElementById('input-filtru-cautari').addEventListener('keydown', (ev) => {
@@ -1721,6 +1761,9 @@ function translateUpstashSearchResults(date) {
         function peSchimbareListareCuType() {
             const chk = document.getElementById('chk-listare-type');
             listareCuType = !!(chk && chk.checked);
+            try {
+                localStorage.setItem('sside-listare-type', listareCuType ? '1' : '0');
+            } catch (e) { /* ignore */ }
             // re-scan: cu Type on umple tipurile; cu Type off redesenează lista fără TYPE
             if (document.getElementById('panou-aplicatie').style.display !== 'none') {
                 scaneazaToateCampurile();
@@ -1979,6 +2022,7 @@ function translateUpstashSearchResults(date) {
             document.getElementById('ecran-detaliu').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
             if (window.SsideDocs) SsideDocs.ascunde();
+            if (window.SsideSettings) SsideSettings.ascunde();
             document.getElementById('ecran-lista').style.display = 'block';
             actualizeazaStelutaCautare();
         }

@@ -26,6 +26,7 @@ module.exports = {
       id: 2,
       desc: 'parse pattern + default limit/batch',
       run() {
+        SF.resetScanDefaults();
         const p = SF.parseScanFilter('>data:*');
         assertEq(p.pattern, 'data:*');
         assertEq(p.limitEffective, 50000);
@@ -59,6 +60,7 @@ module.exports = {
       id: 5,
       desc: 'normalizeScanFilterForSave materialize limit/batch',
       run() {
+        SF.resetScanDefaults();
         assertEq(SF.normalizeScanFilterForSave('>data:*'), '>data:* limit:50000 batch:100');
         assertEq(
           SF.normalizeScanFilterForSave('>data:* limit:1000'),
@@ -83,8 +85,22 @@ module.exports = {
       id: 7,
       desc: 'canonFilterForCompare',
       run() {
+        SF.resetScanDefaults();
         assertEq(SF.canonFilterForCompare('>data:*'), '>data:* limit:50000 batch:100');
         assertEq(SF.canonFilterForCompare('*'), '*');
+      },
+    },
+    {
+      id: 8,
+      desc: 'setScanDefaults user limit/batch',
+      run() {
+        SF.resetScanDefaults();
+        SF.setScanDefaults({ limit: 2500, batch: 25 });
+        const p = SF.parseScanFilter('>x:*');
+        assertEq(p.limitEffective, 2500);
+        assertEq(p.batchEffective, 25);
+        assertEq(SF.normalizeScanFilterForSave('>x:*'), '>x:* limit:2500 batch:25');
+        SF.resetScanDefaults();
       },
     },
   ],
