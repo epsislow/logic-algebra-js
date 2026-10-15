@@ -76,20 +76,13 @@
 
     const dj = parseDataJsonPeSchema(key);
     if (dj) {
-      if (set.has(dj.schemaKey)) {
-        return {
-          tip: 'data',
-          schemaName: dj.schemaName,
-          schemaKey: dj.schemaKey,
-          instance: dj.instance,
-          dataJson: true,
-        };
-      }
       return {
-        tip: 'liber',
-        missingSchema: dj.schemaName,
+        tip: 'data',
+        schemaName: dj.schemaName,
         schemaKey: dj.schemaKey,
+        instance: dj.instance,
         dataJson: true,
+        schemaInSet: set.has(dj.schemaKey),
       };
     }
 
@@ -128,10 +121,14 @@
       return withRowTint({ badge: 'schemă', cls: 'badge-schema', note: '' });
     }
     if (info.tip === 'data') {
+      let note = '→ ' + (info.schemaKey || '');
+      if (info.schemaInSet === false) {
+        note += ' (schema neîn listă)';
+      }
       return withRowTint({
         badge: 'data',
         cls: 'badge-data',
-        note: '→ ' + info.schemaKey,
+        note: note,
       });
     }
     if (info.tip === 'alg') return withRowTint({ badge: 'alg', cls: 'badge-alg', note: '' });

@@ -55,6 +55,8 @@
         /** Cache scheme (doar chei + tip via tipuriRedisChei). ready=false = necunoscut (încă fără * / schema:*). */
         let schemeCacheReady = false;
         let schemeCacheKeys = [];
+        /** Scheme încărcate cu succes din Redis (ex. inferate la data:_, fără schema:* în SCAN). */
+        let schemeKeysVerificate = new Set();
         /** Cache pickere prog (F5b): schema / alg / form / ui */
         let progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
         /** Cache JSON alg/form/schema pentru Live (evită JSON.GET la fiecare click). */
@@ -516,6 +518,7 @@
             cheieCurenta = null;
             schemeCacheReady = false;
             schemeCacheKeys = [];
+            schemeKeysVerificate = new Set();
             progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
             invalidateProgJsonCache();
             actualizeazaSemnalCacheScheme();
@@ -578,6 +581,17 @@
 
         function listeSchemeDinCache() {
             return schemeCacheKeys.slice().sort();
+        }
+
+        /** Opțiuni „Formular din”: cache + scheme din lista curentă + verificate (ex. inferate la data:_). */
+        function listeSchemePentruFormularDin() {
+            const keys = new Set();
+            schemeCacheKeys.forEach((k) => keys.add(k));
+            schemeKeysVerificate.forEach((k) => keys.add(k));
+            (toateCheile || []).forEach((k) => {
+                if (isSchemaRedisKey(k)) keys.add(k);
+            });
+            return Array.from(keys).sort();
         }
 
         /** Badge data:… necesită schema:… în set — la filtru îngust (ex. data:*) folosim cache-ul. */
@@ -656,11 +670,31 @@
             actualizeazaSemnalCacheScheme();
         }
 
+        function marcheazaSchemaVerificata(schemaKey, tipRedis) {
+            if (!schemaKey || !isSchemaRedisKey(schemaKey)) return;
+            schemeKeysVerificate.add(schemaKey);
+            if (tipRedis) tipuriRedisChei[schemaKey] = normalizeazaTipRedis(tipRedis);
+            if (!schemeCacheKeys.includes(schemaKey)) {
+                schemeCacheKeys.push(schemaKey);
+                schemeCacheKeys.sort();
+            }
+            actualizeazaSemnalCacheScheme();
+        }
+
+        function selectSchemaCacheSemnalUnknown(el) {
+            if (!el) return false;
+            if (el.id === 'new-data-schema') return !schemeCacheReady;
+            const val = (el.value || '').trim();
+            if (val && (schemeCacheKeys.includes(val) || schemeKeysVerificate.has(val))) {
+                return false;
+            }
+            return !schemeCacheReady;
+        }
+
         function actualizeazaSemnalCacheScheme() {
-            const unknown = !schemeCacheReady;
             ['select-formular-din', 'select-formular-din-set', 'select-formular-din-col', 'new-data-schema'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.classList.toggle('scheme-cache-unknown', unknown);
+                if (el) el.classList.toggle('scheme-cache-unknown', selectSchemaCacheSemnalUnknown(el));
             });
         }
 
@@ -676,7 +710,7 @@
             actualizeazaSemnalCacheScheme();
         }
 
-        function populeazaSelectFormularDin(sel, selectedKey) {
+        function populeazaSelectFormularDin(sel, selectedKey, extraSchemaKeys) {
             if (!sel) return;
             const keep = selectedKey || '';
             sel.innerHTML = '';
@@ -684,12 +718,18 @@
             empty.value = '';
             empty.textContent = '— niciuna —';
             sel.appendChild(empty);
-            listeSchemeDinCache().forEach(k => {
-                const opt = document.createElement('option');
-                opt.value = k;
-                opt.textContent = etichetaOptiuneSchema(k);
-                sel.appendChild(opt);
+            const keys = new Set(listeSchemePentruFormularDin());
+            (extraSchemaKeys || []).forEach((k) => {
+                if (k) keys.add(k);
             });
+            Array.from(keys)
+                .sort()
+                .forEach((k) => {
+                    const opt = document.createElement('option');
+                    opt.value = k;
+                    opt.textContent = etichetaOptiuneSchema(k);
+                    sel.appendChild(opt);
+                });
             if (keep && Array.from(sel.options).some(o => o.value === keep)) {
                 sel.value = keep;
             } else {
@@ -716,16 +756,29 @@
             return false;
         }
 
+        function esteDataCuSchemaInferata() {
+            return !!(
+                infoCheieCurenta &&
+                infoCheieCurenta.tip === 'data' &&
+                infoCheieCurenta.schemaKey
+            );
+        }
+
         function actualizeazaUiFormularDinLiber() {
             const wrap = document.getElementById('formular-din-wrap');
             const sel = document.getElementById('select-formular-din');
             if (!wrap || !sel) return;
-            const show = esteLiberCuFormularDin() &&
-                (redisTipCurent === 'string' || redisTipCurent === 'none' || redisTipCurent === 'json');
+            const tipOk =
+                redisTipCurent === 'string' || redisTipCurent === 'none' || redisTipCurent === 'json';
+            const showLiber = esteLiberCuFormularDin() && tipOk;
+            const showData = esteDataCuSchemaInferata() && tipOk;
+            const show = showLiber || showData;
             wrap.style.display = show ? 'flex' : 'none';
             if (show) {
-                populeazaSelectFormularDin(sel, schemaTempKey || '');
-            } else {
+                const inferred = infoCheieCurenta && infoCheieCurenta.schemaKey;
+                const selected = schemaTempKey || inferred || '';
+                populeazaSelectFormularDin(sel, selected, inferred ? [inferred] : []);
+            } else if (!showData) {
                 schemaTempKey = null;
                 sel.value = '';
             }
@@ -776,6 +829,7 @@
                     '” lipsește sau nu e un JSON Schema valid.'
                 );
             }
+            marcheazaSchemaVerificata(schemaKey, citire.tip || tipuriRedisChei[schemaKey]);
             return schemaObj;
         }
 
@@ -789,9 +843,12 @@
 
         async function peSchimbareFormularDinLiber() {
             const sel = document.getElementById('select-formular-din');
-            if (!sel || !esteLiberCuFormularDin()) return;
+            if (!sel || (!esteLiberCuFormularDin() && !esteDataCuSchemaInferata())) return;
             const next = sel.value || '';
-            const prev = schemaTempKey || '';
+            const prev =
+                schemaTempKey ||
+                (infoCheieCurenta && infoCheieCurenta.schemaKey) ||
+                '';
             if (next === prev) return;
 
             if (prev && next !== prev) {
@@ -3362,8 +3419,7 @@ function translateUpstashSearchResults(date) {
 
         async function deschideDetaliu(cheie, opts) {
             opts = opts || {};
-            const setChei = new Set(toateCheile);
-            const info = clasificaCheie(cheie, setChei);
+            const info = clasificaCheie(cheie, setCheiPentruClasificare(toateCheile));
 
             // cache Live doar pe durata acestui panou
             invalidateProgJsonCache();
@@ -3399,7 +3455,6 @@ function translateUpstashSearchResults(date) {
             const badge = document.getElementById('detail-type-badge');
             badge.className = 'badge ' + et.cls;
             badge.textContent = et.badge;
-            document.getElementById('detail-type-note').textContent = et.note;
 
             document.getElementById('select-citire').value = cheie;
             document.getElementById('nume-camp').value = cheie;
@@ -3528,11 +3583,18 @@ function translateUpstashSearchResults(date) {
             const canForm = canFormBound || canFormLiber;
             document.getElementById('tab-form').style.display = canForm ? 'inline-block' : 'none';
             document.getElementById('tab-text').style.display = (redisTip === 'json') ? 'none' : 'inline-block';
+            if (canFormBound && info.tip === 'data' && info.schemaKey) {
+                schemaTempKey = info.schemaKey;
+            }
             actualizeazaUiFormularDinLiber();
 
             if (canFormBound && info.tip === 'data') {
                 const pretty = valoareCaJsonPretty(rawText);
-                await incarcaFormularDate(info, pretty);
+                const schemaKey = schemaTempKey || info.schemaKey;
+                await incarcaFormularDate(
+                    { tip: 'data', schemaKey: schemaKey, schemaName: info.schemaName },
+                    pretty
+                );
                 seteazaModEditare('form');
             } else if (canFormBound && info.tip === 'schema') {
                 const pretty = valoareCaJsonPretty(rawText) || JSON.stringify({ type: 'object', properties: {} }, null, 2);
@@ -4145,6 +4207,7 @@ function translateUpstashSearchResults(date) {
                     seteazaModEditare(esteTipRedisJson(redisTipCurent) ? 'json' : 'text');
                     return;
                 }
+                marcheazaSchemaVerificata(info.schemaKey, citire.tip || tipuriRedisChei[info.schemaKey]);
             } catch (e) {
                 alert('Eroare la încărcarea schemei ' + info.schemaKey + ': ' + e.message);
                 seteazaModEditare(esteTipRedisJson(redisTipCurent) ? 'json' : 'text');

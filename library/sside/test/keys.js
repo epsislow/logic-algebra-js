@@ -68,11 +68,12 @@ module.exports = {
     },
     {
       id: 6,
-      desc: 'clasificaCheie data missing schema -> liber',
+      desc: 'clasificaCheie data:_ fără schema în set -> tot data',
       run() {
         const info = Keys.clasificaCheie('data:_missing:1', new Set());
-        assertEq(info.tip, 'liber');
-        assertEq(info.missingSchema, '_missing');
+        assertEq(info.tip, 'data');
+        assertEq(info.schemaKey, 'schema:_missing');
+        assertEq(info.schemaInSet, false);
       },
     },
     {
@@ -141,13 +142,17 @@ module.exports = {
       },
     },
     {
-      id: 12,
-      desc: 'data: pe schemă — liber fără schema: în set',
+      id: 13,
+      desc: 'data:_ — tip data indiferent de schema: în set',
       run() {
         const doarData = new Set(['data:_stock:AAA:A1']);
         const cuSchema = new Set(['data:_stock:AAA:A1', 'schema:_stock']);
-        assertEq(Keys.clasificaCheie('data:_stock:AAA:A1', doarData).tip, 'liber');
-        assertEq(Keys.clasificaCheie('data:_stock:AAA:A1', cuSchema).tip, 'data');
+        const a = Keys.clasificaCheie('data:_stock:AAA:A1', doarData);
+        const b = Keys.clasificaCheie('data:_stock:AAA:A1', cuSchema);
+        assertEq(a.tip, 'data');
+        assertEq(b.tip, 'data');
+        assertEq(a.schemaInSet, false);
+        assertEq(b.schemaInSet, true);
       },
     },
     {
