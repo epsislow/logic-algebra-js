@@ -5288,6 +5288,24 @@ function translateUpstashSearchResults(date) {
                         title: "Enum (opțional)",
                         default: [],
                         items: { type: "string", title: "Valoare" }
+                    },
+                    string_format: {
+                        type: "string",
+                        title: "Afișare string",
+                        enum: ["input", "textarea"],
+                        default: "input",
+                        options: {
+                            enum_titles: ["câmp scurt (input)", "text multiline (textarea)"],
+                            dependencies: { type: "string" }
+                        }
+                    },
+                    string_format_height: {
+                        type: "string",
+                        title: "Înălțime textarea (CSS, opțional)",
+                        default: "",
+                        options: {
+                            dependencies: { type: "string", string_format: "textarea" }
+                        }
                     }
                 },
                 required: ["key", "title", "type", "default", "enum"]
@@ -5374,6 +5392,9 @@ function translateUpstashSearchResults(date) {
                 if (node.enum && node.enum.length > 0) {
                     schemaNode.enum = node.enum.map(v => (node.type === 'integer' || node.type === 'number') ? Number(v) : v);
                 }
+                if (node.type === 'string' && window.SsideSchemaMeta) {
+                    SsideSchemaMeta.applyStringUiToSchema(node, schemaNode);
+                }
             }
             return schemaNode;
         }
@@ -5405,6 +5426,11 @@ function translateUpstashSearchResults(date) {
             };
             if (schemaNod.enum && Array.isArray(schemaNod.enum)) {
                 nodConfig.enum = schemaNod.enum.map(v => String(v));
+            }
+            if (schemaNod.type === 'string' && window.SsideSchemaMeta) {
+                SsideSchemaMeta.readStringUiFromSchema(schemaNod, nodConfig);
+            } else if (schemaNod.type === 'string') {
+                nodConfig.string_format = 'input';
             }
             if (schemaNod.type === 'object' && schemaNod.properties) {
                 nodConfig.sub_properties = [];

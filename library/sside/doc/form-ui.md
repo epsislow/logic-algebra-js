@@ -27,6 +27,8 @@ Pe **Live** (și tab **Formular** pe `data:` / previzualizare schemă):
 - **Reset** (built-in) — nu e în `btns`
 - butoane → rulează `alg` → banner **verde** (`msg`) / **roșu** (`err`)
 
+**Editor vizual `schema:_…`** (tab **Formular** al cheii schemă): la fiecare câmp **string** — **Afișare string** (*input* / *textarea*); opțional **Înălțime textarea** (ex. `280px`). Salvarea din Formular scrie `format: "textarea"` în JSON Schema. Tab **JSON** rămâne pentru editări avansate.
+
 ## Select dinamic — `fields.*.options` (F4k)
 
 La open Live, UI citește sursele și face **overlay** `enum` / `enum_titles` pe schemă (fără a rescrie `schema:` în Redis).
