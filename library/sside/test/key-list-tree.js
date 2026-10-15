@@ -47,5 +47,19 @@ module.exports = {
         assertEq(dataLabels.join(','), '_item,loc');
       },
     },
+    {
+      id: 4,
+      desc: 'chei cu : final — frunză unică, fără ramuri goale',
+      run() {
+        const t = Tree.buildKeyTree(['cheiaMea:', 'cheia:Mea:', 'data:y']);
+        const cheiaMea = findChild(t, 'cheiaMea:');
+        assertEq(cheiaMea && cheiaMea.fullKey, 'cheiaMea:');
+        assertEq(cheiaMea && cheiaMea.children.length, 0);
+        const meaColon = findChild(t, 'cheia:Mea:');
+        assertEq(meaColon && meaColon.fullKey, 'cheia:Mea:');
+        assertEq(findChild(t, 'cheia'), undefined);
+        assertEq(findChild(t, 'data').children.length, 1);
+      },
+    },
   ],
 };

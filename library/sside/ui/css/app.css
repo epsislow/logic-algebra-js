@@ -314,6 +314,43 @@
         .list-view-mode-btn:last-child { border-right: none; }
         .list-view-mode-btn:hover { background: var(--row-hover); }
         .list-view-mode-btn.is-active { background: var(--accent); color: #fff; }
+        @media (max-width: 640px) {
+            .list-view-mode-btn { padding: 4px 8px; font-size: 12px; }
+        }
+
+        .list-folders-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0 0 8px;
+            flex-wrap: wrap;
+        }
+        .list-folders-back { min-width: 36px; padding: 4px 10px; }
+        .list-folders-back:disabled { opacity: 0.45; cursor: default; }
+        .list-folders-breadcrumb {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 2px 4px;
+            font-size: 13px;
+            font-family: Consolas, monospace;
+        }
+        .list-folders-crumb {
+            margin: 0;
+            padding: 2px 6px;
+            border: none;
+            background: transparent;
+            color: var(--accent);
+            cursor: pointer;
+            border-radius: 4px;
+            font: inherit;
+        }
+        .list-folders-crumb:hover:not(:disabled) { background: var(--row-hover); }
+        .list-folders-crumb.is-current {
+            color: var(--text);
+            font-weight: 600;
+            cursor: default;
+        }
 
         .lista-chei--tiles {
             display: grid;
@@ -411,6 +448,50 @@
             background: color-mix(in srgb, var(--badge-liber) 14%, var(--row-hover));
         }
         .key-tree-branch { margin: 4px 0 2px 0; }
+        .lista-chei--folders {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 6px;
+            padding: 6px;
+        }
+        .lista-chei--folders .key-row { display: none; }
+        .folder-tile {
+            cursor: pointer;
+            border-radius: 6px;
+            border: 1px dashed var(--border);
+            padding: 8px 10px;
+            font-family: Consolas, monospace;
+            font-size: var(--sside-list-font-tile, 12px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 0;
+            box-sizing: border-box;
+            background: color-mix(in srgb, var(--text-muted) 8%, var(--bg-panel));
+        }
+        .folder-tile-mark {
+            font-weight: 700;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .folder-tile-label {
+            font-weight: 600;
+            color: var(--text);
+            word-break: break-all;
+        }
+        .folder-tile:hover {
+            background: color-mix(in srgb, var(--accent) 12%, var(--row-hover));
+            border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+        }
+        @media (max-width: 640px) {
+            .lista-chei--folders {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 5px;
+                padding: 5px;
+            }
+            .folder-tile { padding: 6px 8px; }
+        }
+
         .key-tree-branch > summary {
             cursor: pointer;
             font-weight: 600;

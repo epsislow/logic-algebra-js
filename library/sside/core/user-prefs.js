@@ -5,7 +5,7 @@
   'use strict';
 
   const FONT_SCALES = ['s', 'm', 'l'];
-  const LIST_VIEWS = ['list', 'tiles', 'tree'];
+  const LIST_VIEWS = ['list', 'tiles', 'tree', 'folders'];
   const THEMES = ['light', 'dark'];
 
   const KEYS = {

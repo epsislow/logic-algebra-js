@@ -4,6 +4,11 @@
 (function (root) {
   'use strict';
 
+  var Nav =
+    typeof module !== 'undefined' && module.exports
+      ? require('./key-colon-nav.js')
+      : root.SsideKeyColonNav;
+
   /**
    * @param {string[]} sortedKeys
    * @returns {{ label: string, children: object[], fullKey?: string }}
@@ -22,6 +27,14 @@
 
     (sortedKeys || []).forEach((key) => {
       const k = String(key);
+      const atomic =
+        Nav && (Nav.cheieCuColonFinal(k) || !Nav.esteCheieNavigabilaSplit(k));
+      if (atomic) {
+        const child = getOrCreate(root, k);
+        child.fullKey = k;
+        return;
+      }
+
       const parts = k.split(':');
       let node = root;
       for (let i = 0; i < parts.length; i++) {

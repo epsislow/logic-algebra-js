@@ -77,5 +77,14 @@ module.exports = {
         assertEq(bad.message, Prefs.MSG_INVALID_REDIS_PREFS);
       },
     },
+    {
+      id: 6,
+      desc: 'normalizeListView include folders',
+      run() {
+        assertEq(Prefs.normalizeListView('folders'), 'folders');
+        assertEq(Prefs.normalizeListView('FOLDERS'), 'folders');
+        assertEq(Prefs.normalizeListView('bogus'), 'list');
+      },
+    },
   ],
 };

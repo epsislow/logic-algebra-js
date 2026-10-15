@@ -84,6 +84,7 @@
       { v: 'list', l: 'Listă' },
       { v: 'tiles', l: 'Plăci' },
       { v: 'tree', l: 'Arbore' },
+      { v: 'folders', l: 'Dosare' },
     ];
     let h =
       '<div class="settings-seg"><span class="settings-field-label">Mod implicit</span><div class="list-view-mode-seg">';
@@ -156,7 +157,7 @@
           '<label class="settings-check"><input type="checkbox" id="settings-chk-type"' +
           (p.listareType ? ' checked' : '') +
           '> Type la listare (implicit)</label>' +
-          fontSegHtml('Mărime text (Listă / Plăci / Arbore)', p.listFont)
+          fontSegHtml('Mărime text (Listă / Plăci / Arbore / Dosare)', p.listFont)
         );
       case 'scan':
         return (

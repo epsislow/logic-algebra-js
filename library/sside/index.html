@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=tiles-compact1">
+    <link rel="stylesheet" href="ui/css/app.css?v=folders1">
 </head>
 <body>
 
@@ -55,19 +55,24 @@
                     <button type="button" id="btn-cautare-lista" onclick="scaneazaToateCampurile()" style="background:#ffc107;color:#333;width:auto;">Caută</button>
                     <button type="button" class="btn-gri btn-inline" onclick="deschideEcranCautariSalvate()">★ Căutări</button>
                 </div>
+                <div class="toolbar-row list-view-mode-row" style="margin: 0 0 8px;">
+                    <div class="list-view-mode-seg" id="list-view-mode-seg" role="group" aria-label="Mod afișare chei">
+                        <button type="button" class="list-view-mode-btn is-active" data-list-view="list">Listă</button>
+                        <button type="button" class="list-view-mode-btn" data-list-view="tiles">Plăci</button>
+                        <button type="button" class="list-view-mode-btn" data-list-view="tree">Arbore</button>
+                        <button type="button" class="list-view-mode-btn" data-list-view="folders">Dosare</button>
+                    </div>
+                </div>
+                <div id="list-folders-nav" class="list-folders-nav" style="display: none;" aria-label="Navigare dosare">
+                    <button type="button" class="list-folders-back btn-gri btn-inline" id="list-folders-back" title="Nivel anterior">←</button>
+                    <nav class="list-folders-breadcrumb" id="list-folders-breadcrumb"></nav>
+                </div>
                 <div class="toolbar-row" style="margin: 0 0 8px;">
                     <p style="margin: 0; flex: 1;" id="list-status-line">
                         Afișate: <span id="total-campuri" class="badge">0</span>
                         <span id="scan-status-meta" style="display: none;"> · Limit: <span id="scan-status-limit" class="badge">50000</span> · Batch: <span id="scan-status-batch" class="badge">100</span></span>
                     </p>
                     <button type="button" class="btn-albastru btn-inline" onclick="deschideModalCheieNoua()">+ Cheie nouă</button>
-                </div>
-                <div class="toolbar-row list-view-mode-row" style="margin: 0 0 8px;">
-                    <div class="list-view-mode-seg" id="list-view-mode-seg" role="group" aria-label="Mod afișare chei">
-                        <button type="button" class="list-view-mode-btn is-active" data-list-view="list">Listă</button>
-                        <button type="button" class="list-view-mode-btn" data-list-view="tiles">Plăci</button>
-                        <button type="button" class="list-view-mode-btn" data-list-view="tree">Arbore</button>
-                    </div>
                 </div>
                 <div id="lista-chei" class="lista-chei"></div>
             </div>
@@ -557,7 +562,9 @@
     <script src="core/search-query.js?v=exactcount2"></script>
     <script src="core/scan-filter.js?v=scan1"></script>
     <script src="core/scan-keys.js?v=scan1"></script>
-    <script src="core/key-list-tree.js?v=views2"></script>
+    <script src="core/key-colon-nav.js?v=folders1"></script>
+    <script src="core/key-list-tree.js?v=folders1"></script>
+    <script src="core/key-list-folder.js?v=folders1"></script>
     <script src="core/user-prefs.js?v=redis-prefs1"></script>
     <script src="core/form-options.js"></script>
     <script src="core/schema-order.js?v=2"></script>
@@ -575,6 +582,6 @@
     <script src="ui/js/panels-live.js?v=form-grid2"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=tiles-compact1"></script>
+    <script src="ui/js/app.js?v=folders1"></script>
 </body>
 </html>

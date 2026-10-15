@@ -42,6 +42,8 @@
         const LIST_KEYS_VIEW_STORAGE = 'sside-list-keys-view';
         let cheiListaViewMode = 'list';
         let ultimulFiltruLista = '*';
+        /** Path segmente în mod Dosare (reset la căutare nouă). */
+        let dosarePathSegments = [];
 
         /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
         let listareCuType = false;
@@ -229,7 +231,12 @@
                 {};
             const prevListareType = listareCuType;
             listareCuType = !!p.listareType;
-            if (p.listKeysView === 'tiles' || p.listKeysView === 'tree' || p.listKeysView === 'list') {
+            if (
+                p.listKeysView === 'tiles' ||
+                p.listKeysView === 'tree' ||
+                p.listKeysView === 'list' ||
+                p.listKeysView === 'folders'
+            ) {
                 cheiListaViewMode = p.listKeysView;
             }
             const seg = document.getElementById('list-view-mode-seg');
@@ -362,11 +369,26 @@
         (function initListKeysViewMode() {
             try {
                 const saved = localStorage.getItem(LIST_KEYS_VIEW_STORAGE);
-                if (saved === 'tiles' || saved === 'tree' || saved === 'list') cheiListaViewMode = saved;
+                if (
+                    saved === 'tiles' ||
+                    saved === 'tree' ||
+                    saved === 'list' ||
+                    saved === 'folders'
+                ) {
+                    cheiListaViewMode = saved;
+                }
             } catch (e) { /* ignore */ }
             if (window.SsideUserPrefs) {
                 const p = SsideUserPrefs.loadFromLocalStorage();
                 if (p.listKeysView) cheiListaViewMode = p.listKeysView;
+            }
+            const foldersBack = document.getElementById('list-folders-back');
+            if (foldersBack) {
+                foldersBack.addEventListener('click', () => {
+                    if (cheiListaViewMode !== 'folders' || !dosarePathSegments.length) return;
+                    dosarePathSegments.pop();
+                    reincarcaListaDosareDinCache();
+                });
             }
             const seg = document.getElementById('list-view-mode-seg');
             if (!seg) return;
@@ -374,7 +396,14 @@
                 const mode = btn.getAttribute('data-list-view');
                 btn.classList.toggle('is-active', mode === cheiListaViewMode);
                 btn.addEventListener('click', () => {
-                    if (mode !== 'list' && mode !== 'tiles' && mode !== 'tree') return;
+                    if (
+                        mode !== 'list' &&
+                        mode !== 'tiles' &&
+                        mode !== 'tree' &&
+                        mode !== 'folders'
+                    ) {
+                        return;
+                    }
                     cheiListaViewMode = mode;
                     try {
                         localStorage.setItem(LIST_KEYS_VIEW_STORAGE, mode);
@@ -1731,11 +1760,124 @@ function translateUpstashSearchResults(date) {
             }).sort();
         }
 
+        function resetDosareNavigare() {
+            dosarePathSegments = [];
+        }
+
+        function syncListFoldersNavVisible() {
+            const nav = document.getElementById('list-folders-nav');
+            if (nav) {
+                nav.style.display = cheiListaViewMode === 'folders' ? '' : 'none';
+            }
+        }
+
+        function randeazaBreadcrumbDosare() {
+            const host = document.getElementById('list-folders-breadcrumb');
+            const back = document.getElementById('list-folders-back');
+            if (!host) return;
+            host.innerHTML = '';
+            const rootBtn = document.createElement('button');
+            rootBtn.type = 'button';
+            rootBtn.className = 'list-folders-crumb';
+            rootBtn.textContent = 'Rădăcină';
+            if (!dosarePathSegments.length) {
+                rootBtn.classList.add('is-current');
+                rootBtn.disabled = true;
+            } else {
+                rootBtn.addEventListener('click', () => {
+                    resetDosareNavigare();
+                    reincarcaListaDosareDinCache();
+                });
+            }
+            host.appendChild(rootBtn);
+            dosarePathSegments.forEach((seg, i) => {
+                host.appendChild(document.createTextNode(' \u203a '));
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-folders-crumb';
+                btn.textContent = seg + ':';
+                const isLast = i === dosarePathSegments.length - 1;
+                if (isLast) {
+                    btn.classList.add('is-current');
+                    btn.disabled = true;
+                } else {
+                    const pathCopy = dosarePathSegments.slice(0, i + 1);
+                    btn.addEventListener('click', () => {
+                        dosarePathSegments = pathCopy;
+                        reincarcaListaDosareDinCache();
+                    });
+                }
+                host.appendChild(btn);
+            });
+            if (back) back.disabled = dosarePathSegments.length === 0;
+        }
+
+        function reincarcaListaDosareDinCache() {
+            if (!Array.isArray(toateCheile) || !toateCheile.length) return;
+            const lista = document.getElementById('lista-chei');
+            if (!lista) return;
+            lista.innerHTML = '';
+            applyListaCheiViewModeClass(lista);
+            const cheiFiltrate = filtreazaCheiPentruLista(toateCheile);
+            const setChei = setCheiPentruClasificare(cheiFiltrate);
+            randeazaCheiModDosare(cheiFiltrate, setChei, lista);
+        }
+
         function applyListaCheiViewModeClass(lista) {
             if (!lista) return;
-            lista.classList.remove('lista-chei--tiles', 'lista-chei--tree');
+            lista.classList.remove('lista-chei--tiles', 'lista-chei--tree', 'lista-chei--folders');
             if (cheiListaViewMode === 'tiles') lista.classList.add('lista-chei--tiles');
             if (cheiListaViewMode === 'tree') lista.classList.add('lista-chei--tree');
+            if (cheiListaViewMode === 'folders') lista.classList.add('lista-chei--folders');
+            syncListFoldersNavVisible();
+        }
+
+        function etichetaScurtaCheieDosar(fullKey) {
+            const Nav = window.SsideKeyColonNav;
+            if (Nav && typeof Nav.restDupaPrefix === 'function') {
+                const rest = Nav.restDupaPrefix(fullKey, dosarePathSegments);
+                if (rest === '' || rest == null) return fullKey;
+                return rest;
+            }
+            return fullKey;
+        }
+
+        function creeazaKeyTilePentruLista(cheie, setChei, labelText) {
+            const info = clasificaCheie(cheie, setChei);
+            const et = etichetaTip(info);
+            const tile = document.createElement('div');
+            tile.className = 'key-tile';
+            applyTintCheiePeElement(tile, et);
+
+            const meta = document.createElement('div');
+            meta.className = 'key-tile-meta';
+            const conv = document.createElement('span');
+            conv.className = 'badge key-tile-badge ' + et.cls;
+            conv.textContent = et.badge;
+            meta.appendChild(conv);
+            if (listareCuType && tipuriRedisChei[cheie]) {
+                const er = etichetaRedisTip(tipuriRedisChei[cheie]);
+                const redisBadge = document.createElement('span');
+                redisBadge.className = 'badge key-tile-badge ' + er.cls;
+                redisBadge.textContent = er.badge;
+                meta.appendChild(redisBadge);
+            }
+            if (listareCuType && esteCheieIdx(cheie, tipuriRedisChei[cheie])) {
+                const idxBadge = document.createElement('span');
+                idxBadge.className = 'badge badge-idx key-tile-badge';
+                idxBadge.textContent = 'idx';
+                meta.appendChild(idxBadge);
+            }
+            tile.appendChild(meta);
+
+            const lab = document.createElement('span');
+            lab.className = 'key-tile-key';
+            lab.textContent = labelText != null ? labelText : cheie;
+            if (labelText != null && labelText !== cheie) lab.title = cheie;
+            tile.appendChild(lab);
+
+            tile.addEventListener('click', () => deschideCheieDinLista(cheie, setChei));
+            return tile;
         }
 
         function deschideCheieDinLista(cheie, setChei) {
@@ -1790,40 +1932,58 @@ function translateUpstashSearchResults(date) {
 
         function randeazaCheiModPlaci(cheiFiltrate, setChei, lista) {
             cheiFiltrate.forEach((cheie) => {
-                const info = clasificaCheie(cheie, setChei);
-                const et = etichetaTip(info);
+                lista.appendChild(creeazaKeyTilePentruLista(cheie, setChei, cheie));
+            });
+        }
+
+        function randeazaCheiModDosare(cheiFiltrate, setChei, lista) {
+            const Folder = window.SsideKeyListFolder;
+            if (!Folder || typeof Folder.listLevelClamped !== 'function') {
+                lista.innerHTML =
+                    '<div class="key-row"><span class="key-name">Dosare indisponibil (key-list-folder.js).</span></div>';
+                return;
+            }
+            const level = Folder.listLevelClamped(cheiFiltrate, dosarePathSegments);
+            dosarePathSegments = level.pathSegments.slice();
+            randeazaBreadcrumbDosare();
+
+            if (!level.folders.length && !level.keys.length) {
+                lista.innerHTML =
+                    '<div class="key-row"><span class="key-name">Nici o cheie în acest dosar.</span></div>';
+                return;
+            }
+
+            level.folders.forEach((fold) => {
                 const tile = document.createElement('div');
-                tile.className = 'key-tile';
-                applyTintCheiePeElement(tile, et);
-
-                const meta = document.createElement('div');
-                meta.className = 'key-tile-meta';
-                const conv = document.createElement('span');
-                conv.className = 'badge key-tile-badge ' + et.cls;
-                conv.textContent = et.badge;
-                meta.appendChild(conv);
-                if (listareCuType && tipuriRedisChei[cheie]) {
-                    const er = etichetaRedisTip(tipuriRedisChei[cheie]);
-                    const redisBadge = document.createElement('span');
-                    redisBadge.className = 'badge key-tile-badge ' + er.cls;
-                    redisBadge.textContent = er.badge;
-                    meta.appendChild(redisBadge);
-                }
-                if (listareCuType && esteCheieIdx(cheie, tipuriRedisChei[cheie])) {
-                    const idxBadge = document.createElement('span');
-                    idxBadge.className = 'badge badge-idx key-tile-badge';
-                    idxBadge.textContent = 'idx';
-                    meta.appendChild(idxBadge);
-                }
-                tile.appendChild(meta);
-
+                tile.className = 'folder-tile';
+                tile.setAttribute('role', 'button');
+                tile.tabIndex = 0;
+                const mark = document.createElement('span');
+                mark.className = 'folder-tile-mark';
+                mark.textContent = '\u203a';
                 const lab = document.createElement('span');
-                lab.className = 'key-tile-key';
-                lab.textContent = cheie;
+                lab.className = 'folder-tile-label';
+                lab.textContent = fold.label + ':';
+                tile.appendChild(mark);
                 tile.appendChild(lab);
-
-                tile.addEventListener('click', () => deschideCheieDinLista(cheie, setChei));
+                const enter = () => {
+                    dosarePathSegments = fold.prefixSegments.slice();
+                    reincarcaListaDosareDinCache();
+                };
+                tile.addEventListener('click', enter);
+                tile.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                        ev.preventDefault();
+                        enter();
+                    }
+                });
                 lista.appendChild(tile);
+            });
+
+            level.keys.forEach((item) => {
+                const cheie = item.fullKey;
+                const shortLabel = etichetaScurtaCheieDosar(cheie);
+                lista.appendChild(creeazaKeyTilePentruLista(cheie, setChei, shortLabel));
             });
         }
 
@@ -1871,8 +2031,12 @@ function translateUpstashSearchResults(date) {
         async function randeazaListaChei(cheiFiltrate, filtru) {
             const dropdown = document.getElementById('select-citire');
             const lista = document.getElementById('lista-chei');
+            const filtruStr = filtru == null ? '*' : String(filtru);
+            if (filtruStr !== ultimulFiltruLista) {
+                resetDosareNavigare();
+            }
             toateCheile = cheiFiltrate;
-            ultimulFiltruLista = filtru == null ? '*' : String(filtru);
+            ultimulFiltruLista = filtruStr;
 
             if (listareCuType) {
                 await Promise.all(cheiFiltrate.map((cheie) => aflaTipRedis(cheie, { force: true })));
@@ -1892,6 +2056,8 @@ function translateUpstashSearchResults(date) {
                     '<div class="key-row"><span class="key-name">Nicio cheie pentru filtru.</span></div>';
                 document.getElementById('rezultat-citire').innerText =
                     'Nu există date pentru filtrul introdus.';
+                syncListFoldersNavVisible();
+                if (cheiListaViewMode === 'folders') randeazaBreadcrumbDosare();
                 actualizeazaStelutaCautare();
                 return;
             }
@@ -1908,6 +2074,8 @@ function translateUpstashSearchResults(date) {
                 randeazaCheiModPlaci(cheiFiltrate, setChei, lista);
             } else if (cheiListaViewMode === 'tree') {
                 randeazaCheiModArbore(cheiFiltrate, setChei, lista);
+            } else if (cheiListaViewMode === 'folders') {
+                randeazaCheiModDosare(cheiFiltrate, setChei, lista);
             } else {
                 randeazaCheiModLista(cheiFiltrate, setChei, lista);
             }
@@ -1920,6 +2088,7 @@ function translateUpstashSearchResults(date) {
                 return;
             }
 
+            resetDosareNavigare();
             const filtru = document.getElementById('input-search').value.trim() || '*';
             const dropdown = document.getElementById('select-citire');
             const lista = document.getElementById('lista-chei');

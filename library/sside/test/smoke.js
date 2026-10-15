@@ -101,7 +101,10 @@ module.exports = {
         const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
         assert(html.includes('list-view-mode-seg'));
         assert(html.includes('data-list-view="tiles"'));
+        assert(html.includes('data-list-view="folders"'));
         assert(html.includes('key-list-tree.js'));
+        assert(html.includes('key-list-folder.js'));
+        assert(html.includes('list-folders-nav'));
       },
     },
     {

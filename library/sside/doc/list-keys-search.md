@@ -59,10 +59,16 @@ Tokenii opționali pot apărea în orice ordine după pattern.
 
 ### UI
 
-- **Afișare:** sub rândul **Afișate** — comutator **Listă | Plăci | Arbore** (preferință în `localStorage`).
+- **Afișare:** comutator **Listă | Plăci | Arbore | Dosare** (deasupra liniei **Afișate**; preferință `localStorage` / Setări → Listă).
   - **Listă** — rânduri cu badge-uri și buton Edit/Live (mod clasic).
   - **Plăci** — grid; culoare din tip (fără badge); click pe placă → Edit/Live.
   - **Arbore** — grupare pe `:`; la fiecare nivel: **ramuri** (`▸ prefix:`) apoi **frunze** (chei terminale); click pe frunză → Edit/Live; foldere `<details>`.
+  - **Dosare** — explorare **un nivel** pe ecran; breadcrumb + **←**; tile-uri **dosar** (`› prefix:`) și **chei** (ca Plăci). Aceleași chei ca la Arbore (fără SCAN suplimentar). **Căutare nouă** resetează navigarea la rădăcină.
+
+### Reguli `:` (Arbore + Dosare)
+
+- Chei care **se termină cu `:`** (ex. `cheiaMea:`, `cheia:Mea:`) sunt **chei întregi**, nu ierarhie de dosare — rămân editabile ca frunze.
+- Dosarele afișate provin doar din chei reale din rezultatul căutării (fără dosare „goale”).
 - **Afișate:** numărul de rânduri din listă (mereu).
 - **Limit / Batch:** doar pentru căutări **SCAN** — valorile efectiv folosite (inclusiv default 50000 / 100).
 - **`type`** și **`timeout`** nu apar în bara de status; rămân în câmpul de filtru / căutare salvată.
