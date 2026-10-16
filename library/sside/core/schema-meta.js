@@ -86,12 +86,10 @@
       return dataNode;
     }
 
-    if (typeof dataNode !== 'object') return dataNode;
-
     let types = schemaNode.type;
     if (Array.isArray(types)) types = types[0];
 
-    if (types === 'string' && schemaNode.format) {
+    if (types === 'string' && schemaNode.format && typeof dataNode !== 'object') {
       const fmt = schemaNode.format;
       if (
         fmt === STRING_UI_DATE ||
@@ -99,10 +97,11 @@
         fmt === STRING_UI_DATETIME_LOCAL ||
         fmt === STRING_UI_DATE_TIME
       ) {
-        const coerced = coerceStringForJsonEditorFormat(fmt, dataNode);
-        return coerced;
+        return coerceStringForJsonEditorFormat(fmt, dataNode);
       }
     }
+
+    if (typeof dataNode !== 'object') return dataNode;
 
     if (types === 'object' || schemaNode.properties) {
       const props = schemaNode.properties || {};
