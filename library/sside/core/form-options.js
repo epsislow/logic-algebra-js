@@ -134,7 +134,14 @@
       if (pick === 'values') {
         return { enum: fields.map((f) => String(map[f])) };
       }
-      // entries (default): enum=fields, titles=values
+      if (pick === 'labelFields') {
+        // invers față de entries: listă = field, form/alg = value
+        return {
+          enum: fields.map((f) => String(map[f])),
+          titles: fields,
+        };
+      }
+      // entries (default): enum=fields, titles=values → listă = value, form = field
       return {
         enum: fields,
         titles: fields.map((f) => String(map[f])),
@@ -231,7 +238,7 @@
         return 'form.fields[' + path + '].options.key lipsă';
       }
       if (o.from === 'hash' && o.pick != null) {
-        if (['fields', 'values', 'entries'].indexOf(o.pick) === -1) {
+        if (['fields', 'values', 'entries', 'labelFields'].indexOf(o.pick) === -1) {
           return 'form.fields[' + path + '].options.pick invalid';
         }
       }

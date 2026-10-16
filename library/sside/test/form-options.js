@@ -165,6 +165,21 @@ module.exports = {
       },
     },
     {
+      id: 10,
+      desc: 'hash labelFields: enum=values titles=fields',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec(['HSET', 'dict:products', 'AAA', 'Tricou']);
+        await redis.exec(['HSET', 'dict:products', 'AAB', 'Telefon']);
+        const r = await FormOpts.resolveOneOptions(
+          { from: 'hash', key: 'dict:products', pick: 'labelFields' },
+          redis
+        );
+        assertDeep(r.enum, ['Tricou', 'Telefon']);
+        assertDeep(r.titles, ['AAA', 'AAB']);
+      },
+    },
+    {
       id: 9,
       desc: 'zset → membri ordonați după scor',
       async run() {

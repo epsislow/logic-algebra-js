@@ -177,8 +177,20 @@
   }
 
   // ---------- Form edit ----------
+  const FORM_FIELDS_FROM = [
+    { value: 'hash', label: 'hash' },
+    { value: 'set', label: 'set' },
+    { value: 'list', label: 'list' },
+    { value: 'zset', label: 'zset' },
+    { value: 'search', label: 'search (query)' },
+    { value: 'enum', label: 'enum (literale)' },
+  ];
+
   function randeazaEditForm(host, obj) {
     if (!Array.isArray(obj.btns)) obj.btns = [];
+    if (!obj.fields || typeof obj.fields !== 'object' || Array.isArray(obj.fields)) {
+      obj.fields = {};
+    }
     host.innerHTML = '';
 
     const card = document.createElement('div');
@@ -195,13 +207,167 @@
     const schemaSel = row1.querySelector('[data-f="schema"]');
     fillKeySelect(schemaSel, 'schema', obj.schema || '');
 
+    const fieldsLabel = document.createElement('div');
+    fieldsLabel.className = 'prog-step-head';
+    fieldsLabel.innerHTML =
+      '<span>fields</span>' +
+      '<span class="prog-step-hint" style="font-weight:normal;margin-left:8px;">path din schemă → options (select Live)</span>';
+    card.appendChild(fieldsLabel);
+
+    const fieldsHost = document.createElement('div');
+    fieldsHost.className = 'prog-steps';
+    card.appendChild(fieldsHost);
+
     const btnsHost = document.createElement('div');
     btnsHost.className = 'prog-steps';
+    const btnsLabel = document.createElement('div');
+    btnsLabel.className = 'prog-step-head';
+    btnsLabel.innerHTML = '<span>btns</span>';
+    card.appendChild(btnsLabel);
     card.appendChild(btnsHost);
+
+    function readFieldOptionsFromRow(el) {
+      const from = el.querySelector('[data-ff="from"]').value || 'hash';
+      const opt = { from };
+      if (from === 'enum') {
+        const vals = el
+          .querySelector('[data-ff="values"]')
+          .value.split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (vals.length) opt.values = vals;
+        const tit = el
+          .querySelector('[data-ff="titles"]')
+          .value.split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (tit.length) opt.titles = tit;
+      } else if (from === 'search') {
+        const raw = el.querySelector('[data-ff="query"]').value.trim();
+        if (!raw) opt.query = { '*': '*' };
+        else {
+          try {
+            opt.query = JSON.parse(raw);
+          } catch (e) {
+            opt.query = raw;
+          }
+        }
+        const idx = el.querySelector('[data-ff="index"]');
+        if (idx && idx.value.trim()) opt.index = idx.value.trim();
+      } else {
+        const key = el.querySelector('[data-ff="key"]').value.trim();
+        if (key) opt.key = key;
+        if (from === 'hash') {
+          const pick = el.querySelector('[data-ff="pick"]').value;
+          if (pick && pick !== 'entries') opt.pick = pick; // entries = omit pick în JSON
+        }
+      }
+      return opt;
+    }
+
+    function syncFieldRowVisibility(el) {
+      const from = el.querySelector('[data-ff="from"]').value;
+      const show = {
+        key: from === 'set' || from === 'list' || from === 'zset' || from === 'hash',
+        pick: from === 'hash',
+        query: from === 'search',
+        index: from === 'search',
+        values: from === 'enum',
+        titles: from === 'enum',
+      };
+      Object.keys(show).forEach((k) => {
+        const wrap = el.querySelector('[data-ff-wrap="' + k + '"]');
+        if (wrap) wrap.style.display = show[k] ? '' : 'none';
+      });
+    }
+
+    function addFieldRow(path, entry) {
+      entry = entry && typeof entry === 'object' ? entry : {};
+      const opt = entry.options && typeof entry.options === 'object' ? entry.options : {};
+      const el = document.createElement('div');
+      el.className = 'prog-step';
+      el.setAttribute('data-field-row', '1');
+      el.innerHTML =
+        '<div class="prog-row">' +
+        '<div class="prog-field"><label>path</label><input data-ff="path" placeholder="product sau meta.wh"></div>' +
+        '<div class="prog-field"><label>from</label><select data-ff="from"></select></div>' +
+        '<div class="prog-field" data-ff-wrap="key"><label>key</label><input data-ff="key" placeholder="dict:products"></div>' +
+        '<div class="prog-field" data-ff-wrap="pick"><label>pick (hash)</label><select data-ff="pick">' +
+        '<option value="entries">entries — listă: value · form: field</option>' +
+        '<option value="labelFields">labelFields — listă: field · form: value</option>' +
+        '<option value="fields">fields — field / field</option>' +
+        '<option value="values">values — value / value</option></select></div>' +
+        '<div class="prog-field" data-ff-wrap="index"><label>index</label><input data-ff="index" placeholder="idx_search_tags"></div>' +
+        '<div class="prog-field" data-ff-wrap="query" style="flex:2"><label>query</label><textarea data-ff="query" rows="2"></textarea></div>' +
+        '<div class="prog-field" data-ff-wrap="values" style="flex:2"><label>values (virgulă)</label><input data-ff="values"></div>' +
+        '<div class="prog-field" data-ff-wrap="titles" style="flex:2"><label>titles (virgulă)</label><input data-ff="titles"></div>' +
+        '</div>';
+      const fromSel = el.querySelector('[data-ff="from"]');
+      FORM_FIELDS_FROM.forEach((o) => {
+        const option = document.createElement('option');
+        option.value = o.value;
+        option.textContent = o.label;
+        fromSel.appendChild(option);
+      });
+      el.querySelector('[data-ff="path"]').value = path || '';
+      fromSel.value = opt.from || 'hash';
+      el.querySelector('[data-ff="key"]').value = opt.key != null ? String(opt.key) : '';
+      el.querySelector('[data-ff="pick"]').value = opt.pick || 'entries';
+      const q = opt.query;
+      el.querySelector('[data-ff="query"]').value =
+        q == null ? '' : typeof q === 'string' ? q : JSON.stringify(q, null, 2);
+      el.querySelector('[data-ff="index"]').value = opt.index != null ? String(opt.index) : '';
+      el.querySelector('[data-ff="values"]').value = Array.isArray(opt.values)
+        ? opt.values.join(', ')
+        : '';
+      el.querySelector('[data-ff="titles"]').value = Array.isArray(opt.titles)
+        ? opt.titles.join(', ')
+        : '';
+
+      const keyInp = el.querySelector('[data-ff="key"]');
+      const keyOpenCtl = mountSelectWithOpen(keyInp, {
+        getKey: function () {
+          return String(keyInp.value || '').trim();
+        },
+        beforeOpen: syncFromDom,
+      });
+      keyInp.addEventListener('input', keyOpenCtl.syncOpenBtn);
+
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'btn-gri btn-inline btn-inline-danger';
+      rm.textContent = 'Șterge field';
+      rm.onclick = () => {
+        el.remove();
+        syncFromDom();
+      };
+      el.appendChild(rm);
+
+      fromSel.addEventListener('change', () => {
+        syncFieldRowVisibility(el);
+        syncFromDom();
+      });
+      el.querySelectorAll('input,select,textarea').forEach((inp) => {
+        inp.addEventListener('input', syncFromDom);
+        inp.addEventListener('change', syncFromDom);
+      });
+      syncFieldRowVisibility(el);
+      keyOpenCtl.syncOpenBtn();
+      fieldsHost.appendChild(el);
+    }
 
     function syncFromDom() {
       obj.title = row1.querySelector('[data-f="title"]').value;
       obj.schema = schemaSel.value;
+      const fields = {};
+      fieldsHost.querySelectorAll('[data-field-row]').forEach((el) => {
+        const path = el.querySelector('[data-ff="path"]').value.trim();
+        if (!path) return;
+        fields[path] = { options: readFieldOptionsFromRow(el) };
+      });
+      if (Object.keys(fields).length) obj.fields = fields;
+      else delete obj.fields;
+
       obj.btns = [];
       btnsHost.querySelectorAll('.prog-step').forEach((el) => {
         const kind = normalizeBtnKind(el.querySelector('[data-b="kind"]').value);
@@ -217,6 +383,24 @@
     }
 
     mountSelectWithOpen(schemaSel, { beforeOpen: syncFromDom });
+
+    const fieldPaths = Object.keys(obj.fields);
+    if (fieldPaths.length) {
+      fieldPaths.forEach((p) => addFieldRow(p, obj.fields[p]));
+    }
+
+    const fieldsToolbar = document.createElement('div');
+    fieldsToolbar.className = 'prog-toolbar';
+    const addFieldBtn = document.createElement('button');
+    addFieldBtn.type = 'button';
+    addFieldBtn.className = 'btn-albastru btn-inline';
+    addFieldBtn.textContent = '+ Câmp (fields)';
+    addFieldBtn.onclick = () => {
+      addFieldRow('', { options: { from: 'hash', key: '' } });
+      syncFromDom();
+    };
+    fieldsToolbar.appendChild(addFieldBtn);
+    card.insertBefore(fieldsToolbar, btnsLabel);
 
     function addBtnRow(btn) {
       btn = btn || { id: '', label: '', alg: '', kind: '' };

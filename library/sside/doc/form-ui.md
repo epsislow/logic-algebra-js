@@ -21,6 +21,8 @@ Aici: detalii Live form, `fields.options`, list fetch.
 
 Taburi editor: **Edit** | **Live** | **Formular** | **Json**.
 
+Pe **Edit**: secțiunea **fields** — path din schemă + `options.from` / `key` (select din Redis pentru Live); echivalent cu JSON-ul `fields` de mai jos.
+
 Pe **Live** (și tab **Formular** pe `data:` / previzualizare schemă):
 - câmpuri din `schema` — **ordine**: `propertyOrder` pe fiecare câmp, sau lista `propertyOrder: ["a","b"]` pe obiect; altfel ordinea cheilor din `properties` (injectată automat pt. JSONEditor)
 - **layout**: până la **3** câmpuri pe rând (desktop), **2** pe ecrane înguste (CSS grid + `display:contents` pe rândurile JSONEditor `.row`); obiecte imbricate, array-uri și textarea ocupă rând întreg
@@ -68,11 +70,22 @@ La open Live, UI citește sursele și face **overlay** `enum` / `enum_titles` pe
 | `set` | `SMEMBERS` | membri |
 | `list` | `LRANGE 0 -1` | elemente |
 | `zset` | `ZRANGE 0 -1` | membri |
-| `hash` | default **entries** | **field** (cheia); select arată **value** |
+| `hash` | `pick` (vezi mai jos) | depinde de `pick` |
 | `search` | ca filtrul `=` / op `search` | chei găsite |
 | `enum` | `values` (+ `titles`) pe form | literale |
 
-**Hash:** select = etichete (values); `form.warehouse` = field (`WH1`). Field-ul poate fi text JSON — alg primește string; `jget` pe obiect cere parse (vezi docs alg).
+**Hash — `pick`:**
+
+| `pick` | În select (etichetă) | În `form` / alg |
+|--------|----------------------|-----------------|
+| **`entries`** *(implicit)* | **value** (Tricou…) | **field** (`AAA`) |
+| **`labelFields`** | **field** (`AAA`…) | **value** (Tricou) |
+| **`fields`** | field | field |
+| **`values`** | value | value |
+
+Ex.: `dict:products` — coduri vs denumiri: `entries` pentru alg pe cod; `labelFields` dacă userul alege codul dar alg primește denumirea.
+
+Field-ul hash poate fi text JSON — alg primește string; `jget` pe obiect cere parse (vezi docs alg).
 
 Path-uri: top-level (`location`) sau nested (`meta.wh`).
 
