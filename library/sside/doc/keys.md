@@ -18,6 +18,8 @@ Chei **`ui:`** — utilizare: **UI Runtime (Live)**; `form:` / `list:` — tab L
 
 **Căutare în lista principală** (KEYS / `=` / SCAN `>`): [list-keys-search.md](list-keys-search.md).
 
+**Duplică cheie** (save-as, modal, colecții): [key-duplicate.md](key-duplicate.md).
+
 ## Reguli
 
 - Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).

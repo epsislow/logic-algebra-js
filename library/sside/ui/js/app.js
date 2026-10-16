@@ -191,6 +191,8 @@
         let navProvenientaStack = [];
         let redisTipCurent = 'string';
         let modEditare = 'text'; // form | text | json
+        let modalCheieMod = 'create'; // create | duplicate
+        let duplicatePending = null;
         let valoareBaseline = ''; // ultima valoare încărcată / salvată (pt. indicator Salvează)
         let dataFormEditor = null;
         let schemaMetaEditor = null;
@@ -2566,6 +2568,7 @@ function translateUpstashSearchResults(date) {
                 btnStergeCheie.style.display = isSearchIdx ? 'none' : 'inline-block';
             }
             document.getElementById('detail-actions-key').style.display = 'flex';
+            actualizeazaVizibilitateDuplica(isSearchIdx, !supported);
 
             if (!supported) {
                 document.getElementById('panel-unsupported').textContent =
@@ -2598,6 +2601,7 @@ function translateUpstashSearchResults(date) {
             if (editor) editor.style.display = editMembru ? 'block' : 'none';
             // pe pagina membru ascundem Șterge cheie (rămân Salvează/Șterge membru)
             if (keyActions) keyActions.style.display = (redisTipCurent === 'set' && editMembru) ? 'none' : 'flex';
+            actualizeazaVizibilitateDuplica(false, false);
             if (editMembru && legendaPanel) {
                 legendaPanel.classList.remove('is-open');
                 legendaPanel.setAttribute('aria-hidden', 'true');
@@ -3174,6 +3178,7 @@ function translateUpstashSearchResults(date) {
 
             if (ed) ed.style.display = edit ? 'block' : 'none';
             if (keyActions) keyActions.style.display = edit ? 'none' : 'flex';
+            actualizeazaVizibilitateDuplica(false, false);
             if (edit && legendaPanel) {
                 legendaPanel.classList.remove('is-open');
                 legendaPanel.setAttribute('aria-hidden', 'true');
@@ -4925,9 +4930,408 @@ function translateUpstashSearchResults(date) {
         }
 
         // ==========================================
-        // CHEIE NOUĂ
+        // CHEIE NOUĂ / DUPLICĂ
         // ==========================================
+        function actualizeazaVizibilitateDuplica(isSearchIdx, panelUnsupported) {
+            const btn = document.getElementById('btn-duplica-cheie');
+            if (!btn || !cheieCurenta) {
+                if (btn) btn.style.display = 'none';
+                return;
+            }
+            const Dup = window.SsideKeyDuplicate;
+            const ok =
+                Dup &&
+                Dup.esteDuplicarePermisa({
+                    isSearchIndex: !!isSearchIdx,
+                    isSystem: !!(infoCheieCurenta && infoCheieCurenta.sistem),
+                    panelUnsupported: !!panelUnsupported,
+                    redisTip: redisTipCurent,
+                    setMembruEditIndex: setMembruEditIndex,
+                    colEditIndex: colEditIndex,
+                });
+            btn.style.display = ok ? 'inline-block' : 'none';
+        }
+
+        function resetModalCheieState() {
+            modalCheieMod = 'create';
+            duplicatePending = null;
+        }
+
+        function actualizeazaModalCheieChrome() {
+            const titlu = document.getElementById('modal-cheie-titlu');
+            const sursa = document.getElementById('modal-duplicate-sursa');
+            const act = document.getElementById('modal-cheie-action-btn');
+            const isDup = modalCheieMod === 'duplicate';
+            if (titlu) titlu.textContent = isDup ? 'Duplică cheie' : 'Cheie nouă';
+            if (act) act.textContent = isDup ? 'Duplică' : 'Creează';
+            if (sursa) {
+                if (isDup && cheieCurenta) {
+                    sursa.style.display = 'block';
+                    sursa.textContent = 'Sursă: ' + cheieCurenta + ' — se copiază conținutul din editor / colecție.';
+                } else {
+                    sursa.style.display = 'none';
+                    sursa.textContent = '';
+                }
+            }
+            setModalSeedRowsVisible(!(isDup && duplicatePending && duplicatePending.kind === 'collection'));
+        }
+
+        function setModalSeedRowsVisible(visible) {
+            document.querySelectorAll('.new-key-seed-row').forEach((el) => {
+                el.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function obtinePayloadEditorCurent() {
+            if (!cheieCurenta) {
+                return { ok: false, err: 'Nicio cheie deschisă.' };
+            }
+            if (redisTipCurent === 'set' || esteTipColecțieCol(redisTipCurent)) {
+                return { ok: false, err: 'Folosește duplicarea colecției.' };
+            }
+            if (redisTipCurent !== 'string' && redisTipCurent !== 'none' && redisTipCurent !== 'json') {
+                return { ok: false, err: 'Tip Redis nesuportat: ' + redisTipCurent };
+            }
+
+            if (SsideProgPanels && infoCheieCurenta && SsideProgPanels.esteProgTip(infoCheieCurenta.tip) && SsideProgPanels.getKind()) {
+                SsideProgPanels.sincronizeazaInRaw();
+                const textBrut = document.getElementById('raw-json-editor').value;
+                if (!esteJsonValid(textBrut)) {
+                    return { ok: false, err: 'JSON invalid — corectează în tab Json sau Edit.' };
+                }
+                let parsed;
+                try {
+                    parsed = JSON.parse(textBrut);
+                } catch (e) {
+                    return { ok: false, err: 'JSON invalid.' };
+                }
+                if (window.SsideProgValidate) {
+                    const vr = SsideProgValidate.validateProg(infoCheieCurenta.tip, parsed);
+                    if (!vr.ok) {
+                        return { ok: false, err: 'Validare: ' + vr.err };
+                    }
+                }
+                return { ok: true, redisType: 'json', payload: parsed, textBrut: textBrut };
+            }
+
+            const rawEl = document.getElementById('raw-json-editor');
+            const eJsonRedis = esteTipRedisJson(redisTipCurent);
+
+            if (modEditare === 'text') {
+                const textBrut = rawEl.value;
+                if (eJsonRedis && !esteJsonValid(textBrut)) {
+                    return { ok: false, err: 'Cheia e tip RedisJSON — textul trebuie să fie JSON valid.' };
+                }
+                return {
+                    ok: true,
+                    redisType: redisTipCurent === 'none' ? 'string' : redisTipCurent,
+                    payload: textBrut,
+                    textBrut: textBrut,
+                };
+            }
+
+            if (modEditare === 'json') {
+                actualizeazaValidareJson();
+                if (!esteJsonValid(rawEl.value)) {
+                    return { ok: false, err: 'JSON invalid — corectează în tab Json.' };
+                }
+                let parsed;
+                try {
+                    parsed = JSON.parse(rawEl.value);
+                } catch (e) {
+                    return { ok: false, err: 'JSON invalid.' };
+                }
+                return { ok: true, redisType: 'json', payload: parsed, textBrut: rawEl.value };
+            }
+
+            if (modEditare === 'form') {
+                let payload;
+                try {
+                    if (
+                        (infoCheieCurenta.tip === 'data' || (infoCheieCurenta.tip === 'liber' && schemaTempKey)) &&
+                        dataFormEditor
+                    ) {
+                        payload = dataFormEditor.getValue();
+                    } else if (infoCheieCurenta.tip === 'schema' && schemaMetaEditor) {
+                        payload = genereazaSchemaDinConfig(schemaMetaEditor.getValue());
+                    } else {
+                        return { ok: false, err: 'Formular indisponibil.' };
+                    }
+                } catch (e) {
+                    return { ok: false, err: 'Nu pot citi formularul.' };
+                }
+                return { ok: true, redisType: 'json', payload: payload, textBrut: JSON.stringify(payload) };
+            }
+
+            return { ok: false, err: 'Mod editare nesuportat pentru duplicare.' };
+        }
+
+        function obtineSnapshotColecțiePentruDuplicare() {
+            if (redisTipCurent === 'set') {
+                return { kind: 'collection', redisType: 'set', snapshot: { members: setMembri.slice() } };
+            }
+            if (redisTipCurent === 'hash') {
+                return {
+                    kind: 'collection',
+                    redisType: 'hash',
+                    snapshot: {
+                        fields: colItems.map((row) => ({
+                            field: row.field,
+                            value: row.value,
+                        })),
+                    },
+                };
+            }
+            if (redisTipCurent === 'list') {
+                return {
+                    kind: 'collection',
+                    redisType: 'list',
+                    snapshot: { items: colItems.slice() },
+                };
+            }
+            if (redisTipCurent === 'zset') {
+                return {
+                    kind: 'collection',
+                    redisType: 'zset',
+                    snapshot: {
+                        entries: colItems.map((row) => ({
+                            member: row.member,
+                            score: row.score,
+                        })),
+                    },
+                };
+            }
+            return null;
+        }
+
+        function prefillModalDuplicare() {
+            const Dup = window.SsideKeyDuplicate;
+            if (!Dup || !infoCheieCurenta || !cheieCurenta) return;
+
+            const dupColl = duplicatePending && duplicatePending.kind === 'collection';
+            const redisTypeEl = document.getElementById('new-redis-type');
+
+            if (dupColl) {
+                redisTypeEl.value = duplicatePending.redisType;
+                redisTypeEl.disabled = true;
+                document.getElementById('new-key-role').value = 'liber';
+                const sug = Dup.suggestCopySuffix(cheieCurenta);
+                if (duplicatePending.redisType === 'set') {
+                    document.getElementById('new-set-name').value = sug;
+                } else if (duplicatePending.redisType === 'hash') {
+                    document.getElementById('new-hash-name').value = sug;
+                } else if (duplicatePending.redisType === 'list') {
+                    document.getElementById('new-list-name').value = sug;
+                } else if (duplicatePending.redisType === 'zset') {
+                    document.getElementById('new-zset-name').value = sug;
+                }
+                actualizeazaFormCheieNoua();
+                return;
+            }
+
+            redisTypeEl.disabled = false;
+            const role = Dup.rolCheieNouaDinInfo(infoCheieCurenta);
+            document.getElementById('new-key-role').value = role;
+
+            const rt =
+                redisTipCurent === 'json' || redisTipCurent === 'none'
+                    ? 'json'
+                    : redisTipCurent === 'string'
+                      ? 'string'
+                      : 'json';
+            if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+                redisTypeEl.value = 'json';
+            } else {
+                redisTypeEl.value = rt === 'string' ? 'string' : 'json';
+            }
+
+            if (role === 'schema' && infoCheieCurenta.schemaName) {
+                document.getElementById('new-schema-name').value = Dup.suggestCopySuffix(
+                    String(infoCheieCurenta.schemaName).replace(/^_/, '')
+                );
+            } else if (role === 'data' && infoCheieCurenta.schemaKey) {
+                document.getElementById('new-data-schema').value = infoCheieCurenta.schemaKey;
+                document.getElementById('new-data-instance').value = Dup.suggestCopySuffix(
+                    infoCheieCurenta.instance || 'data'
+                );
+            } else if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+                const base = (infoCheieCurenta.name || '').replace(/^_/, '');
+                document.getElementById('new-prog-name').value = Dup.suggestCopySuffix(base);
+            } else if (redisTypeEl.value === 'json') {
+                document.getElementById('new-json-idx').checked = false;
+                document.getElementById('new-json-name').value = Dup.suggestCopySuffix(cheieCurenta);
+            } else {
+                document.getElementById('new-liber-name').value = Dup.suggestCopySuffix(cheieCurenta);
+            }
+            actualizeazaFormCheieNoua();
+        }
+
+        async function pornesteDuplicareCheie() {
+            if (!cheieCurenta) return;
+            const isSearchIdx = esteCheieSearchIndexRedis(cheieCurenta, redisTipCurent);
+            if (isSearchIdx || (infoCheieCurenta && infoCheieCurenta.sistem)) return;
+
+            if (redisTipCurent === 'set' || esteTipColecțieCol(redisTipCurent)) {
+                duplicatePending = obtineSnapshotColecțiePentruDuplicare();
+                if (!duplicatePending) {
+                    alert('Tip colecție nesuportat.');
+                    return;
+                }
+            } else {
+                sincronizeazaRawDinEditori();
+                const pl = obtinePayloadEditorCurent();
+                if (!pl.ok) {
+                    alert(pl.err || 'Conținut invalid.');
+                    return;
+                }
+                duplicatePending = {
+                    kind: 'document',
+                    redisType: pl.redisType,
+                    payload: pl.payload,
+                    textBrut: pl.textBrut,
+                };
+            }
+
+            modalCheieMod = 'duplicate';
+            populeazaSelectorScheme(document.getElementById('new-data-schema'));
+            prefillModalDuplicare();
+            actualizeazaModalCheieChrome();
+            document.getElementById('modal-cheie-noua').classList.add('open');
+        }
+
+        function confirmModalCheieAction() {
+            if (modalCheieMod === 'duplicate') {
+                duplicaCheieDinModal();
+            } else {
+                creeazaCheieNoua();
+            }
+        }
+
+        async function executaCloneColecție(cheieNoua, redisType, snapshot) {
+            const Dup = window.SsideKeyDuplicate;
+            if (!Dup) throw new Error('key-duplicate.js lipsă');
+            const cmds = Dup.buildCollectionCloneCommands(cheieNoua, redisType, snapshot);
+            for (let i = 0; i < cmds.length; i++) {
+                await apeleazaServerul('/api/comanda', cmds[i]);
+            }
+            tipuriRedisChei[cheieNoua] = redisType;
+            if (cmds.length === 0) {
+                tipuriRedisChei[cheieNoua] = redisType;
+            }
+        }
+
+        async function duplicaCheieDinModal() {
+            if (!duplicatePending) {
+                alert('Nu există date de duplicat.');
+                return;
+            }
+            const redisType = document.getElementById('new-redis-type').value;
+            const role = document.getElementById('new-key-role').value;
+
+            let cheie = '';
+            let payloadRedisType = duplicatePending.redisType || redisType;
+
+            if (duplicatePending.kind === 'collection') {
+                if (redisType === 'set') {
+                    cheie = document.getElementById('new-set-name').value.trim();
+                } else if (redisType === 'hash') {
+                    cheie = document.getElementById('new-hash-name').value.trim();
+                } else if (redisType === 'list') {
+                    cheie = document.getElementById('new-list-name').value.trim();
+                } else if (redisType === 'zset') {
+                    cheie = document.getElementById('new-zset-name').value.trim();
+                }
+                payloadRedisType = duplicatePending.redisType;
+                if (!cheie) {
+                    alert('Completează numele noii chei.');
+                    return;
+                }
+                if (!(await pregătesteDestinatieDuplicare(cheie))) return;
+                try {
+                    const Dup = window.SsideKeyDuplicate;
+                    const cmds =
+                        Dup && Dup.buildCollectionCloneCommands
+                            ? Dup.buildCollectionCloneCommands(cheie, payloadRedisType, duplicatePending.snapshot)
+                            : [];
+                    if (cmds.length === 0) {
+                        alert(
+                            'Colecția sursă e goală — nu s-a creat cheie pe Redis. Adaugă membri pe sursă sau alege alt nume după ce ai date.'
+                        );
+                        return;
+                    }
+                    await executaCloneColecție(cheie, payloadRedisType, duplicatePending.snapshot);
+                    inchideModalCheieNoua();
+                    adaugaProgKeyInCache(cheie);
+                    await scaneazaToateCampurile();
+                    await deschideDetaliuDinNav(cheie);
+                } catch (err) {
+                    alert(err.message);
+                }
+                return;
+            }
+
+            if (role === 'schema') {
+                const sn = normalizeSchemaName(document.getElementById('new-schema-name').value);
+                if (!sn || sn === '_') {
+                    alert('Nume schemă invalid.');
+                    return;
+                }
+                cheie = 'schema:' + sn;
+                payloadRedisType = redisType;
+            } else if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+                cheie = SsideKeys.cheieProgDinNume(role, document.getElementById('new-prog-name').value);
+                if (!cheie) {
+                    alert('Nume invalid.');
+                    return;
+                }
+                payloadRedisType = 'json';
+            } else if (role === 'data') {
+                const schemaKey = document.getElementById('new-data-schema').value;
+                const inst = document.getElementById('new-data-instance').value.trim();
+                if (!schemaKey || !inst) {
+                    alert('Completează schema și instanța.');
+                    return;
+                }
+                const schemaName = schemaKey.slice('schema:'.length);
+                cheie =
+                    redisType === 'json' ? 'data:' + schemaName + ':' + inst : schemaName + ':' + inst;
+                payloadRedisType = redisType;
+            } else if (redisType === 'json') {
+                const useIdx = document.getElementById('new-json-idx').checked;
+                if (useIdx) {
+                    const prefix = document.getElementById('new-json-idx-prefix').value || IDX_PREFIXES[0];
+                    let rest = document.getElementById('new-json-idx-name').value.trim();
+                    if (rest.startsWith(prefix)) rest = rest.slice(prefix.length);
+                    rest = rest.replace(/^:+/, '');
+                    if (!rest) {
+                        alert('Completează numele după prefix.');
+                        return;
+                    }
+                    cheie = prefix + rest;
+                } else {
+                    cheie = document.getElementById('new-json-name').value.trim();
+                }
+                payloadRedisType = 'json';
+            } else {
+                cheie = document.getElementById('new-liber-name').value.trim();
+                payloadRedisType = 'string';
+            }
+
+            if (!cheie) {
+                alert('Completează numele cheii.');
+                return;
+            }
+
+            const pending = duplicatePending;
+            await finalizeazaCreareCheie(cheie, payloadRedisType, pending.payload, {
+                viaNav: true,
+                duplicare: true,
+            });
+        }
+
         function deschideModalCheieNoua() {
+            resetModalCheieState();
+            actualizeazaModalCheieChrome();
             populeazaSelectorScheme(document.getElementById('new-data-schema'));
 
             const prefSel = document.getElementById('new-json-idx-prefix');
@@ -4948,6 +5352,10 @@ function translateUpstashSearchResults(date) {
 
         function inchideModalCheieNoua() {
             document.getElementById('modal-cheie-noua').classList.remove('open');
+            resetModalCheieState();
+            actualizeazaModalCheieChrome();
+            const redisTypeEl = document.getElementById('new-redis-type');
+            if (redisTypeEl) redisTypeEl.disabled = false;
         }
 
         function actualizeazaFormCheieNoua() {
@@ -5034,7 +5442,14 @@ function translateUpstashSearchResults(date) {
             }
 
             const hint = document.getElementById('new-create-hint');
-            if (redisType === 'set') {
+            const isDup = modalCheieMod === 'duplicate';
+            const isDupColl = isDup && duplicatePending && duplicatePending.kind === 'collection';
+            if (isDupColl) {
+                hint.textContent = 'Se copiază toți membrii / câmpurile de pe cheia sursă.';
+            } else if (isDup) {
+                hint.textContent =
+                    'Se salvează conținutul din editor (nesalvat pe sursă este inclus).';
+            } else if (redisType === 'set') {
                 hint.textContent = 'Se creează cu SADD (membru obligatoriu).';
             } else if (redisType === 'hash') {
                 hint.textContent = 'Se creează cu HSET (câmp + valoare).';
@@ -5049,6 +5464,7 @@ function translateUpstashSearchResults(date) {
             } else {
                 hint.textContent = 'Se creează cu SET (String).';
             }
+            actualizeazaModalCheieChrome();
         }
 
         document.getElementById('new-schema-name').addEventListener('input', actualizeazaFormCheieNoua);
@@ -5078,6 +5494,36 @@ function translateUpstashSearchResults(date) {
             return false;
         }
 
+        async function cheieExistăInRedis(cheie) {
+            if (toateCheile.includes(cheie)) return true;
+            try {
+                const tipExistent = await aflaTipRedis(cheie);
+                return !!(tipExistent && tipExistent !== 'none' && tipExistent !== 'unknown');
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /** Duplicare: confirm suprascriere (nu deschidere); DEL destinație înainte de scriere. */
+        async function pregătesteDestinatieDuplicare(cheie) {
+            const exists = await cheieExistăInRedis(cheie);
+            if (!exists) return true;
+            if (
+                !confirm(
+                    'Cheia „' +
+                        cheie +
+                        '” există deja.\n\nSuprascrii conținutul cu copia din duplicare?'
+                )
+            ) {
+                return false;
+            }
+            await apeleazaServerul('/api/comanda', { comandaRedis: ['DEL', cheie] });
+            delete tipuriRedisChei[cheie];
+            if (isSchemaRedisKey(cheie)) stergeSchemaDinCache(cheie);
+            invalidateProgJsonCache(cheie);
+            return true;
+        }
+
         async function valoareInitialaDinSchemaKey(schemaKey) {
             let initial = {};
             try {
@@ -5095,8 +5541,11 @@ function translateUpstashSearchResults(date) {
             return initial;
         }
 
-        async function finalizeazaCreareCheie(cheie, redisType, payload) {
-            if (await deschideDacaExistaSauContinua(cheie)) return;
+        async function finalizeazaCreareCheie(cheie, redisType, payload, navOpts) {
+            navOpts = navOpts || {};
+            if (navOpts.duplicare) {
+                if (!(await pregătesteDestinatieDuplicare(cheie))) return;
+            } else if (await deschideDacaExistaSauContinua(cheie)) return;
             try {
                 if (redisType === 'json') {
                     const jsonString = typeof payload === 'string' ? payload : JSON.stringify(payload);
@@ -5130,7 +5579,11 @@ function translateUpstashSearchResults(date) {
                     adaugaProgKeyInCache(cheie);
                 }
                 await scaneazaToateCampurile();
-                await deschideDetaliu(cheie);
+                if (navOpts.viaNav) {
+                    await deschideDetaliuDinNav(cheie);
+                } else {
+                    await deschideDetaliu(cheie);
+                }
             } catch (err) {
                 alert(err.message);
             }

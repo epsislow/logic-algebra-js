@@ -102,6 +102,10 @@
         .btn-rosu:hover { background: #bd2130; }
         .btn-gri { background: #6c757d; }
         .btn-gri:hover { background: #5a6268; }
+        .btn-galben { background: #ffc107; color: #212529; }
+        .btn-galben:hover { background: #e0a800; color: #212529; }
+        html[data-theme="dark"] .btn-galben { background: #e6a800; color: #1a1a1a; }
+        html[data-theme="dark"] .btn-galben:hover { background: #ffc107; color: #212529; }
         .btn-inline { width: auto; display: inline-block; margin: 0; padding: 2px 9px; font-size: 13px; }
         .zona-utilizator {
             display: flex;

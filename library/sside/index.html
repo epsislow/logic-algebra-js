@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=folders9">
+    <link rel="stylesheet" href="ui/css/app.css?v=duplicate-btn1">
 </head>
 <body>
 
@@ -345,6 +345,7 @@
                     <button type="button" id="btn-salveaza" onclick="salveazaCheieCurenta()">
                         Salvează <span class="save-dirty-dot" id="save-dirty-dot" aria-hidden="true" title="Modificări nesalvate"></span>
                     </button>
+                    <button type="button" class="btn-galben" id="btn-duplica-cheie" style="display:none;" onclick="pornesteDuplicareCheie()">Duplica</button>
                     <button type="button" class="btn-albastru" id="btn-prog-live-ui" style="display:none;" onclick="deschideLiveUiDinEdit()">Live</button>
                     <button type="button" class="btn-rosu" id="btn-sterge-cheie" onclick="stergeCheieCurenta()">Șterge</button>
                     <button type="button" class="btn-albastru" id="btn-deschide-schema" style="display:none;" onclick="deschideSchemaLegata()">Deschide schema</button>
@@ -416,7 +417,8 @@
     <!-- Modal cheie nouă -->
     <div class="modal-backdrop" id="modal-cheie-noua">
         <div class="modal-card">
-            <h3>Cheie nouă</h3>
+            <h3 id="modal-cheie-titlu">Cheie nouă</h3>
+            <p id="modal-duplicate-sursa" style="display:none;font-size:13px;margin:0 0 10px;color:var(--text-muted);"></p>
 
             <label>Tip Redis</label>
             <select id="new-redis-type" onchange="actualizeazaFormCheieNoua()">
@@ -488,36 +490,36 @@
             <div id="new-fields-set" style="display:none;">
                 <label>Nume cheie Set</label>
                 <input type="text" id="new-set-name" placeholder="ex: user:john:stock-lines">
-                <label>Primul membru</label>
-                <input type="text" id="new-set-first-member" placeholder="ex: 100 sau un text/JSON">
+                <label class="new-key-seed-row">Primul membru</label>
+                <input type="text" class="new-key-seed-row" id="new-set-first-member" placeholder="ex: 100 sau un text/JSON">
                 <p style="font-size:12px;margin:0;">Redis creează Set-ul la primul SADD (membru obligatoriu).</p>
             </div>
 
             <div id="new-fields-hash" style="display:none;">
                 <label>Nume cheie Hash</label>
                 <input type="text" id="new-hash-name" placeholder="ex: user:42:profile">
-                <label>Primul câmp</label>
-                <input type="text" id="new-hash-field" placeholder="ex: name">
-                <label>Valoare</label>
-                <input type="text" id="new-hash-value" placeholder="ex: Ana">
+                <label class="new-key-seed-row">Primul câmp</label>
+                <input type="text" class="new-key-seed-row" id="new-hash-field" placeholder="ex: name">
+                <label class="new-key-seed-row">Valoare</label>
+                <input type="text" class="new-key-seed-row" id="new-hash-value" placeholder="ex: Ana">
                 <p style="font-size:12px;margin:0;">Redis creează Hash-ul la primul HSET.</p>
             </div>
 
             <div id="new-fields-list" style="display:none;">
                 <label>Nume cheie List</label>
                 <input type="text" id="new-list-name" placeholder="ex: queue:jobs">
-                <label>Primul element</label>
-                <input type="text" id="new-list-first" placeholder="ex: item-1">
+                <label class="new-key-seed-row">Primul element</label>
+                <input type="text" class="new-key-seed-row" id="new-list-first" placeholder="ex: item-1">
                 <p style="font-size:12px;margin:0;">Se adaugă la coadă (RPUSH).</p>
             </div>
 
             <div id="new-fields-zset" style="display:none;">
                 <label>Nume cheie Sorted Set</label>
                 <input type="text" id="new-zset-name" placeholder="ex: leaderboard:weekly">
-                <label>Score</label>
-                <input type="number" id="new-zset-score" step="any" value="0">
-                <label>Membru</label>
-                <input type="text" id="new-zset-member" placeholder="ex: player:1">
+                <label class="new-key-seed-row">Score</label>
+                <input type="number" class="new-key-seed-row" id="new-zset-score" step="any" value="0">
+                <label class="new-key-seed-row">Membru</label>
+                <input type="text" class="new-key-seed-row" id="new-zset-member" placeholder="ex: player:1">
                 <p style="font-size:12px;margin:0;">Redis creează ZSet-ul la primul ZADD.</p>
             </div>
 
@@ -525,7 +527,7 @@
 
             <div class="modal-actions">
                 <button type="button" class="btn-gri" onclick="inchideModalCheieNoua()">Anulează</button>
-                <button type="button" class="btn-albastru" onclick="creeazaCheieNoua()">Creează</button>
+                <button type="button" class="btn-albastru" id="modal-cheie-action-btn" onclick="confirmModalCheieAction()">Creează</button>
             </div>
         </div>
     </div>
@@ -565,6 +567,7 @@
     <script src="core/key-colon-nav.js?v=folders1"></script>
     <script src="core/key-list-tree.js?v=folders1"></script>
     <script src="core/key-list-folder.js?v=folders1"></script>
+    <script src="core/key-duplicate.js?v=duplicate1"></script>
     <script src="core/schema-meta.js?v=schema-dates3"></script>
     <script src="core/user-prefs.js?v=dosare-tint1"></script>
     <script src="core/form-options.js"></script>
@@ -583,6 +586,6 @@
     <script src="ui/js/panels-live.js?v=schema-dates3"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=schema-dates3"></script>
+    <script src="ui/js/app.js?v=duplicate3"></script>
 </body>
 </html>

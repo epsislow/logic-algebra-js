@@ -108,6 +108,18 @@ module.exports = {
       },
     },
     {
+      id: 11,
+      desc: 'duplică cheie — script + buton',
+      run() {
+        const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+        assert(html.includes('key-duplicate.js'));
+        assert(html.includes('btn-duplica-cheie'));
+        assert(html.includes('pornesteDuplicareCheie'));
+        assert(fs.existsSync(path.join(ROOT, 'core', 'key-duplicate.js')));
+        assert(fs.existsSync(path.join(ROOT, 'doc', 'key-duplicate.md')));
+      },
+    },
+    {
       id: 10,
       desc: 'setări utilizator — scripturi + bară',
       run() {
