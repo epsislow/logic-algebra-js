@@ -193,6 +193,7 @@
         let modEditare = 'text'; // form | text | json
         let modalCheieMod = 'create'; // create | duplicate
         let duplicatePending = null;
+        let duplicateMemberPending = null;
         let valoareBaseline = ''; // ultima valoare încărcată / salvată (pt. indicator Salvează)
         let dataFormEditor = null;
         let schemaMetaEditor = null;
@@ -2289,8 +2290,117 @@ function translateUpstashSearchResults(date) {
             return '← Înapoi';
         }
 
+        /** @typedef {{ cheie: string, restore?: object|null }} NavFrame */
+
+        function normalizeNavFrame(entry) {
+            if (entry == null) return { cheie: '', restore: null };
+            if (typeof entry === 'string') return { cheie: entry, restore: null };
+            if (typeof entry === 'object' && entry.cheie) {
+                return { cheie: String(entry.cheie), restore: entry.restore || null };
+            }
+            return { cheie: String(entry), restore: null };
+        }
+
+        function cheieDinNavFrame(entry) {
+            return normalizeNavFrame(entry).cheie;
+        }
+
+        /** Salvează context sub-editor (membru/item) pentru restore la Back. */
+        function captureazaContextNavSubEditor() {
+            if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
+                return {
+                    tip: 'set-member',
+                    editIndex: setMembruEditIndex,
+                    memberValue: setMembruEditIndex >= 0 ? setMembri[setMembruEditIndex] : null,
+                };
+            }
+            if (esteTipColecțieCol(redisTipCurent) && colEditIndex !== -1) {
+                const ctx = {
+                    tip: 'col-item',
+                    colKind: colKind,
+                    editIndex: colEditIndex,
+                };
+                if (colKind === 'hash' && colEditIndex >= 0 && colItems[colEditIndex]) {
+                    ctx.field = colItems[colEditIndex].field;
+                } else if (colKind === 'zset' && colEditIndex >= 0 && colItems[colEditIndex]) {
+                    ctx.zmember = colItems[colEditIndex].member;
+                } else if (colKind === 'list' && colEditIndex >= 0) {
+                    ctx.listIndex = colEditIndex;
+                }
+                return ctx;
+            }
+            return null;
+        }
+
+        function scrollLaRandItemLista(listId, idx) {
+            requestAnimationFrame(() => {
+                const lista = document.getElementById(listId);
+                if (!lista) return;
+                const row = lista.querySelector('.set-member-row[data-item-idx="' + idx + '"]');
+                if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            });
+        }
+
+        function aplicăRestoreSubEditor(restore) {
+            if (!restore || !restore.tip) return;
+
+            if (restore.tip === 'set-member') {
+                let idx = -1;
+                if (restore.memberValue != null) {
+                    idx = setMembri.indexOf(restore.memberValue);
+                }
+                if (idx < 0 && restore.editIndex === -2) {
+                    incepeAdaugareMembruSet();
+                    return;
+                }
+                if (idx < 0 && restore.editIndex >= 0 && restore.editIndex < setMembri.length) {
+                    idx = restore.editIndex;
+                }
+                if (idx >= 0) {
+                    editeazaMembruSet(idx);
+                    scrollLaRandItemLista('set-members-list', idx);
+                }
+                return;
+            }
+
+            if (restore.tip === 'col-item') {
+                let idx = -1;
+                if (restore.colKind === 'hash' && restore.field) {
+                    idx = colItems.findIndex((it) => it.field === restore.field);
+                } else if (restore.colKind === 'zset' && restore.zmember != null) {
+                    idx = colItems.findIndex((it) => it.member === restore.zmember);
+                } else if (restore.colKind === 'list' && restore.listIndex != null) {
+                    idx = restore.listIndex;
+                }
+                if (idx < 0 && restore.editIndex === -2) {
+                    incepeAdaugareColItem();
+                    return;
+                }
+                if (idx < 0 && restore.editIndex >= 0 && restore.editIndex < colItems.length) {
+                    idx = restore.editIndex;
+                }
+                if (idx >= 0) {
+                    editeazaColItem(idx);
+                    const listId =
+                        restore.colKind === 'hash'
+                            ? 'hash-fields-list'
+                            : restore.colKind === 'list'
+                              ? 'list-items-list'
+                              : 'zset-members-list';
+                    scrollLaRandItemLista(listId, idx);
+                }
+            }
+        }
+
         function deschideDetaliuDinNav(cheie) {
-            if (cheieCurenta) navProvenientaStack.push(cheieCurenta);
+            if (cheieCurenta) {
+                const restore = captureazaContextNavSubEditor();
+                if (restore) {
+                    navProvenientaStack.push({ cheie: cheieCurenta, restore: restore });
+                } else {
+                    navProvenientaStack.push(cheieCurenta);
+                }
+            }
             return deschideDetaliu(cheie, { keepNav: true, preferProgMod: 'edit' });
         }
 
@@ -2304,8 +2414,13 @@ function translateUpstashSearchResults(date) {
                 return;
             }
             if (navProvenientaStack.length) {
-                const prev = navProvenientaStack.pop();
-                deschideDetaliu(prev, { keepNav: true, fromNavBack: true, preferProgMod: 'edit' });
+                const frame = normalizeNavFrame(navProvenientaStack.pop());
+                deschideDetaliu(frame.cheie, {
+                    keepNav: true,
+                    fromNavBack: true,
+                    preferProgMod: 'edit',
+                    restoreSubEditor: frame.restore,
+                });
                 return;
             }
             inapoiLaLista();
@@ -2323,9 +2438,9 @@ function translateUpstashSearchResults(date) {
                 else btn.textContent = '← Înapoi la zset';
                 btn.title = '';
             } else if (navProvenientaStack.length) {
-                const prev = navProvenientaStack[navProvenientaStack.length - 1];
-                btn.textContent = etichetaInapoiPentruCheie(prev);
-                btn.title = prev || '';
+                const prevCheie = cheieDinNavFrame(navProvenientaStack[navProvenientaStack.length - 1]);
+                btn.textContent = etichetaInapoiPentruCheie(prevCheie);
+                btn.title = prevCheie || '';
             } else {
                 btn.textContent = '← Înapoi la listă';
                 btn.title = '';
@@ -2602,6 +2717,7 @@ function translateUpstashSearchResults(date) {
             // pe pagina membru ascundem Șterge cheie (rămân Salvează/Șterge membru)
             if (keyActions) keyActions.style.display = (redisTipCurent === 'set' && editMembru) ? 'none' : 'flex';
             actualizeazaVizibilitateDuplica(false, false);
+            actualizeazaVizibilitateDuplicaMembru(false, false);
             if (editMembru && legendaPanel) {
                 legendaPanel.classList.remove('is-open');
                 legendaPanel.setAttribute('aria-hidden', 'true');
@@ -2625,6 +2741,7 @@ function translateUpstashSearchResults(date) {
             setMembri.forEach((membru, idx) => {
                 const row = document.createElement('div');
                 row.className = 'set-member-row';
+                row.dataset.itemIdx = String(idx);
                 const kind = membruPareJson(membru) ? 'json' : 'text';
                 row.innerHTML =
                     '<span class="set-member-preview"></span>' +
@@ -3066,6 +3183,7 @@ function translateUpstashSearchResults(date) {
             colItems.forEach((item, idx) => {
                 const row = document.createElement('div');
                 row.className = 'set-member-row';
+                row.dataset.itemIdx = String(idx);
                 const kind = membruPareJson(item.value) ? 'json' : 'text';
                 row.innerHTML =
                     '<span class="set-member-preview"></span>' +
@@ -3099,6 +3217,7 @@ function translateUpstashSearchResults(date) {
             colItems.forEach((val, idx) => {
                 const row = document.createElement('div');
                 row.className = 'set-member-row';
+                row.dataset.itemIdx = String(idx);
                 const kind = membruPareJson(val) ? 'json' : 'text';
                 row.innerHTML =
                     '<span class="set-member-kind">[' + idx + ']</span>' +
@@ -3133,6 +3252,7 @@ function translateUpstashSearchResults(date) {
             colItems.forEach((item, idx) => {
                 const row = document.createElement('div');
                 row.className = 'set-member-row';
+                row.dataset.itemIdx = String(idx);
                 const kind = membruPareJson(item.member) ? 'json' : 'text';
                 row.innerHTML =
                     '<span class="set-member-kind"></span>' +
@@ -3179,6 +3299,7 @@ function translateUpstashSearchResults(date) {
             if (ed) ed.style.display = edit ? 'block' : 'none';
             if (keyActions) keyActions.style.display = edit ? 'none' : 'flex';
             actualizeazaVizibilitateDuplica(false, false);
+            actualizeazaVizibilitateDuplicaMembru(false, false);
             if (edit && legendaPanel) {
                 legendaPanel.classList.remove('is-open');
                 legendaPanel.setAttribute('aria-hidden', 'true');
@@ -3905,6 +4026,7 @@ function translateUpstashSearchResults(date) {
                     alert(err.message);
                 }
                 marcheazaCurentCaBaseline();
+                if (opts.restoreSubEditor) aplicăRestoreSubEditor(opts.restoreSubEditor);
                 return;
             }
 
@@ -3918,6 +4040,7 @@ function translateUpstashSearchResults(date) {
                     alert(err.message);
                 }
                 marcheazaCurentCaBaseline();
+                if (opts.restoreSubEditor) aplicăRestoreSubEditor(opts.restoreSubEditor);
                 return;
             }
 
@@ -4950,6 +5073,294 @@ function translateUpstashSearchResults(date) {
                     colEditIndex: colEditIndex,
                 });
             btn.style.display = ok ? 'inline-block' : 'none';
+        }
+
+        function actualizeazaVizibilitateDuplicaMembru(isSearchIdx, panelUnsupported) {
+            const btns = document.querySelectorAll('.btn-duplica-membru');
+            if (!btns.length || !cheieCurenta) {
+                btns.forEach((b) => {
+                    b.style.display = 'none';
+                });
+                return;
+            }
+            const Dup = window.SsideKeyDuplicate;
+            const ok =
+                Dup &&
+                Dup.esteDuplicareMembruPermisa({
+                    isSearchIndex: !!isSearchIdx,
+                    isSystem: !!(infoCheieCurenta && infoCheieCurenta.sistem),
+                    panelUnsupported: !!panelUnsupported,
+                    redisTip: redisTipCurent,
+                    setMembruEditIndex: setMembruEditIndex,
+                    colEditIndex: colEditIndex,
+                });
+            btns.forEach((b) => {
+                b.style.display = ok ? 'inline-block' : 'none';
+            });
+        }
+
+        function obtinePayloadMembruPentruDuplicare() {
+            if (!cheieCurenta) {
+                return { ok: false, err: 'Nicio cheie deschisă.' };
+            }
+            const Dup = window.SsideKeyDuplicate;
+            if (redisTipCurent === 'set' && setMembruEditIndex !== -1) {
+                const ta = document.getElementById('set-member-textarea');
+                let valoare = ta ? ta.value : '';
+                if (setMembruMod === 'form' && setMembruFormEditor) {
+                    try {
+                        valoare = JSON.stringify(setMembruFormEditor.getValue());
+                    } catch (e) {
+                        return { ok: false, err: 'Nu pot citi formularul membrului.' };
+                    }
+                } else if (setMembruMod === 'json') {
+                    actualizeazaValidareJsonMembruSet();
+                    if (!esteJsonValid(valoare)) {
+                        return { ok: false, err: 'JSON invalid — corectează în tab Json.' };
+                    }
+                    try {
+                        valoare = JSON.stringify(JSON.parse(valoare));
+                    } catch (e) {
+                        return { ok: false, err: 'JSON invalid.' };
+                    }
+                }
+                return { ok: true, redisType: 'set', spec: { value: valoare } };
+            }
+            if (esteTipColecțieCol(redisTipCurent) && colEditIndex !== -1) {
+                let valoare;
+                try {
+                    valoare = obtineValoareColPentruSalvare();
+                } catch (e) {
+                    return { ok: false, err: 'Nu pot citi valoarea.' };
+                }
+                if (valoare == null) {
+                    return { ok: false, err: 'Valoare invalidă (ex. JSON).' };
+                }
+                const tip = colKind || redisTipCurent;
+                if (tip === 'hash') {
+                    const field = (document.getElementById('col-hash-field').value || '').trim();
+                    if (!field && colEditIndex === -2) {
+                        return { ok: false, err: 'Completează numele câmpului în editor.' };
+                    }
+                    const baseField = field || (colOriginal && colOriginal.field) || '';
+                    const fieldPrefill = Dup ? Dup.suggestCopySuffix(baseField) : baseField + '_copy';
+                    return {
+                        ok: true,
+                        redisType: 'hash',
+                        spec: { field: fieldPrefill, value: valoare },
+                        editorField: baseField,
+                    };
+                }
+                if (tip === 'list') {
+                    return { ok: true, redisType: 'list', spec: { value: valoare } };
+                }
+                if (tip === 'zset') {
+                    const score = Number(document.getElementById('col-zset-score').value);
+                    if (!Number.isFinite(score)) {
+                        return { ok: false, err: 'Score invalid.' };
+                    }
+                    const baseMember = valoare;
+                    const memberPrefill = Dup ? Dup.suggestCopySuffix(baseMember) : baseMember + '_copy';
+                    return {
+                        ok: true,
+                        redisType: 'zset',
+                        spec: { score: score, member: memberPrefill },
+                        editorMember: baseMember,
+                    };
+                }
+            }
+            return { ok: false, err: 'Deschide un membru sau item pentru duplicare.' };
+        }
+
+        function prefillModalDuplicaMembru(payload) {
+            const Dup = window.SsideKeyDuplicate;
+            const sursa = document.getElementById('dup-membru-sursa');
+            const target = document.getElementById('dup-membru-target');
+            if (sursa) {
+                sursa.textContent = 'Container sursă: ' + cheieCurenta + ' (' + payload.redisType + ')';
+            }
+            if (target) target.value = cheieCurenta;
+
+            document.getElementById('dup-membru-set').style.display = 'none';
+            document.getElementById('dup-membru-hash').style.display = 'none';
+            document.getElementById('dup-membru-list').style.display = 'none';
+            document.getElementById('dup-membru-zset').style.display = 'none';
+
+            const spec = payload.spec || {};
+            if (payload.redisType === 'set') {
+                document.getElementById('dup-membru-set').style.display = 'block';
+                const v = Dup ? Dup.suggestCopySuffix(spec.value) : String(spec.value) + '_copy';
+                document.getElementById('dup-membru-set-value').value = v;
+            } else if (payload.redisType === 'hash') {
+                document.getElementById('dup-membru-hash').style.display = 'block';
+                document.getElementById('dup-membru-hash-field').value = spec.field || '';
+                document.getElementById('dup-membru-hash-value').value = spec.value || '';
+            } else if (payload.redisType === 'list') {
+                document.getElementById('dup-membru-list').style.display = 'block';
+                document.getElementById('dup-membru-list-preview').value = spec.value || '';
+            } else if (payload.redisType === 'zset') {
+                document.getElementById('dup-membru-zset').style.display = 'block';
+                document.getElementById('dup-membru-zset-score').value = String(spec.score != null ? spec.score : 0);
+                document.getElementById('dup-membru-zset-member').value = spec.member || '';
+            }
+        }
+
+        function pornesteDuplicareMembru() {
+            const payload = obtinePayloadMembruPentruDuplicare();
+            if (!payload.ok) {
+                alert(payload.err);
+                return;
+            }
+            duplicateMemberPending = payload;
+            prefillModalDuplicaMembru(payload);
+            document.getElementById('modal-duplica-membru').classList.add('open');
+        }
+
+        function inchideModalDuplicaMembru() {
+            document.getElementById('modal-duplica-membru').classList.remove('open');
+            duplicateMemberPending = null;
+        }
+
+        async function obtineOptiuniConflictMembru(cheieDest, redisType) {
+            const tip = redisType;
+            if (cheieDest === cheieCurenta) {
+                if (tip === 'set') return { members: setMembri.slice() };
+                if (tip === 'hash') {
+                    return { fields: colItems.map((row) => ({ field: row.field, value: row.value })) };
+                }
+                if (tip === 'zset') {
+                    return { entries: colItems.map((row) => ({ member: row.member, score: row.score })) };
+                }
+                return {};
+            }
+            if (tip === 'set') {
+                const date = await apeleazaServerul('/api/comanda', { comandaRedis: ['SMEMBERS', cheieDest] });
+                const membri = Array.isArray(date.rezultat) ? date.rezultat.map((m) => valoareCaTextAfisat(m)) : [];
+                return { members: membri };
+            }
+            if (tip === 'hash') {
+                const date = await apeleazaServerul('/api/comanda', { comandaRedis: ['HGETALL', cheieDest] });
+                const raw = date.rezultat;
+                const fields = [];
+                if (Array.isArray(raw)) {
+                    for (let i = 0; i < raw.length; i += 2) {
+                        fields.push({ field: String(raw[i]), value: valoareCaTextAfisat(raw[i + 1]) });
+                    }
+                }
+                return { fields: fields };
+            }
+            if (tip === 'zset') {
+                const date = await apeleazaServerul('/api/comanda', {
+                    comandaRedis: ['ZRANGE', cheieDest, '0', '-1', 'WITHSCORES'],
+                });
+                const raw = date.rezultat;
+                const entries = [];
+                if (Array.isArray(raw)) {
+                    for (let i = 0; i < raw.length; i += 2) {
+                        entries.push({ member: valoareCaTextAfisat(raw[i]), score: raw[i + 1] });
+                    }
+                }
+                return { entries: entries };
+            }
+            return {};
+        }
+
+        function citesteSpecDuplicareMembruDinModal(redisType) {
+            const tip = redisType;
+            if (tip === 'set') {
+                return { value: document.getElementById('dup-membru-set-value').value };
+            }
+            if (tip === 'hash') {
+                return {
+                    field: (document.getElementById('dup-membru-hash-field').value || '').trim(),
+                    value: document.getElementById('dup-membru-hash-value').value,
+                };
+            }
+            if (tip === 'list') {
+                return { value: document.getElementById('dup-membru-list-preview').value };
+            }
+            if (tip === 'zset') {
+                return {
+                    score: Number(document.getElementById('dup-membru-zset-score').value),
+                    member: document.getElementById('dup-membru-zset-member').value,
+                };
+            }
+            return null;
+        }
+
+        async function duplicaMembruDinModal() {
+            if (!duplicateMemberPending || !duplicateMemberPending.ok) {
+                alert('Nu există date de duplicat.');
+                return;
+            }
+            const Dup = window.SsideKeyDuplicate;
+            if (!Dup || !Dup.buildMemberDuplicateCommand) {
+                alert('key-duplicate.js lipsă');
+                return;
+            }
+            const redisType = duplicateMemberPending.redisType;
+            const cheieDest = (document.getElementById('dup-membru-target').value || '').trim();
+            if (!cheieDest) {
+                alert('Completează cheia containerului destinație.');
+                return;
+            }
+            const spec = citesteSpecDuplicareMembruDinModal(redisType);
+            if (!spec) {
+                alert('Tip nesuportat.');
+                return;
+            }
+
+            const sameContainer = cheieDest === cheieCurenta;
+            if (!sameContainer) {
+                const exists = await cheieExistăInRedis(cheieDest);
+                const tipDest = exists ? await aflaTipRedis(cheieDest, { force: true }) : 'none';
+                const vr = Dup.validateMemberDuplicateDestination(redisType, tipDest, exists);
+                if (!vr.ok) {
+                    alert(vr.err);
+                    return;
+                }
+            }
+
+            let conflictOpts = {};
+            try {
+                conflictOpts = await obtineOptiuniConflictMembru(cheieDest, redisType);
+            } catch (e) {
+                alert(e.message || String(e));
+                return;
+            }
+            const conflict = Dup.evaluateMemberDuplicateConflict(redisType, spec, conflictOpts);
+            if (!conflict.ok) {
+                alert(conflict.err);
+                return;
+            }
+            if (conflict.needsConfirm && conflict.confirmMsg) {
+                if (!confirm(conflict.confirmMsg)) return;
+            }
+
+            const cmdWrap = Dup.buildMemberDuplicateCommand(cheieDest, redisType, spec);
+            if (!cmdWrap) {
+                alert('Nu pot construi comanda Redis.');
+                return;
+            }
+            try {
+                await apeleazaServerul('/api/comanda', cmdWrap);
+                tipuriRedisChei[cheieDest] = redisType;
+                inchideModalDuplicaMembru();
+                if (sameContainer) {
+                    if (redisType === 'set') {
+                        await incarcaSetMembri(cheieCurenta);
+                        anuleazaEditMembruSet();
+                    } else {
+                        await incarcaColItems(cheieCurenta, colKind || redisType);
+                        anuleazaEditColItem();
+                    }
+                } else {
+                    await scaneazaToateCampurile();
+                    await deschideDetaliuDinNav(cheieDest);
+                }
+            } catch (err) {
+                alert(err.message);
+            }
         }
 
         function resetModalCheieState() {

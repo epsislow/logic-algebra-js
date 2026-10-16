@@ -244,6 +244,7 @@
                             <button type="button" id="btn-salveaza-membru" onclick="salveazaMembruSet()">
                                 Salvează membru <span class="save-dirty-dot" id="set-save-dirty-dot" aria-hidden="true"></span>
                             </button>
+                            <button type="button" class="btn-galben btn-duplica-membru" style="display:none;" onclick="pornesteDuplicareMembru()">Duplica</button>
                             <button type="button" class="btn-rosu" id="btn-sterge-membru" onclick="stergeMembruSetCurent()">Șterge membru</button>
                         </div>
                     </div>
@@ -313,6 +314,7 @@
                         <button type="button" id="btn-salveaza-col" onclick="salveazaColItem()">
                             Salvează <span class="save-dirty-dot" id="col-save-dirty-dot" aria-hidden="true"></span>
                         </button>
+                        <button type="button" class="btn-galben btn-duplica-membru" style="display:none;" onclick="pornesteDuplicareMembru()">Duplica</button>
                         <button type="button" class="btn-rosu" id="btn-sterge-col" onclick="stergeColItemCurent()">Șterge</button>
                     </div>
                 </div>
@@ -532,6 +534,42 @@
         </div>
     </div>
 
+    <!-- Modal duplică membru / item (v2) -->
+    <div class="modal-backdrop" id="modal-duplica-membru">
+        <div class="modal-card">
+            <h3>Duplică membru / item</h3>
+            <p id="dup-membru-sursa" style="font-size:13px;margin:0 0 10px;color:var(--text-muted);"></p>
+            <label for="dup-membru-target">Duplică pe (cheie container)</label>
+            <input type="text" id="dup-membru-target" placeholder="nume cheie Redis">
+            <p style="font-size:12px;margin:4px 0 10px;color:var(--text-muted);">Implicit: containerul curent. Altă cheie: trebuie să existe și același tip Redis.</p>
+            <div id="dup-membru-set" style="display:none;">
+                <label for="dup-membru-set-value">Valoare membru</label>
+                <textarea id="dup-membru-set-value" rows="4" spellcheck="false"></textarea>
+            </div>
+            <div id="dup-membru-hash" style="display:none;">
+                <label for="dup-membru-hash-field">Câmp (field)</label>
+                <input type="text" id="dup-membru-hash-field" placeholder="ex: name">
+                <label for="dup-membru-hash-value">Valoare</label>
+                <textarea id="dup-membru-hash-value" rows="4" spellcheck="false"></textarea>
+            </div>
+            <div id="dup-membru-list" style="display:none;">
+                <p style="font-size:13px;margin:0 0 8px;color:var(--text-muted);">Se adaugă la <strong>coadă</strong> (RPUSH). Copii identice sunt permise.</p>
+                <label for="dup-membru-list-preview">Valoare (din editor)</label>
+                <textarea id="dup-membru-list-preview" rows="4" spellcheck="false" readonly></textarea>
+            </div>
+            <div id="dup-membru-zset" style="display:none;">
+                <label for="dup-membru-zset-score">Score</label>
+                <input type="number" id="dup-membru-zset-score" step="any" value="0">
+                <label for="dup-membru-zset-member">Member</label>
+                <textarea id="dup-membru-zset-member" rows="3" spellcheck="false"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-gri" onclick="inchideModalDuplicaMembru()">Anulează</button>
+                <button type="button" class="btn-galben" onclick="duplicaMembruDinModal()">Duplică</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal edit / salvare căutare -->
     <div class="modal-backdrop" id="modal-cautare-salvata">
         <div class="modal-card">
@@ -567,7 +605,7 @@
     <script src="core/key-colon-nav.js?v=folders1"></script>
     <script src="core/key-list-tree.js?v=folders1"></script>
     <script src="core/key-list-folder.js?v=folders1"></script>
-    <script src="core/key-duplicate.js?v=duplicate1"></script>
+    <script src="core/key-duplicate.js?v=duplicate-membru1"></script>
     <script src="core/schema-meta.js?v=schema-dates3"></script>
     <script src="core/user-prefs.js?v=dosare-tint1"></script>
     <script src="core/form-options.js"></script>
@@ -586,6 +624,6 @@
     <script src="ui/js/panels-live.js?v=schema-dates3"></script>
     <script src="ui/js/panels-prog.js?v=recover4"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=duplicate3"></script>
+    <script src="ui/js/app.js?v=dup-membru1"></script>
 </body>
 </html>

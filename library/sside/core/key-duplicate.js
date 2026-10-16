@@ -57,6 +57,138 @@
    * @param {object} snapshot
    * @returns {{ comandaRedis: string[] }[]}
    */
+  function esteDuplicareMembruPermisa(ctx) {
+    ctx = ctx || {};
+    if (ctx.isSearchIndex || ctx.isSystem || ctx.panelUnsupported) return false;
+    const tip = ctx.redisTip == null ? '' : String(ctx.redisTip);
+    if (tip === 'set') {
+      return ctx.setMembruEditIndex != null && ctx.setMembruEditIndex !== -1;
+    }
+    if (tip === 'hash' || tip === 'list' || tip === 'zset') {
+      return ctx.colEditIndex != null && ctx.colEditIndex !== -1;
+    }
+    return false;
+  }
+
+  function normalizeTipRedisMember(tip) {
+    const t = String(tip == null ? '' : tip).toLowerCase();
+    if (t === 'zset' || t === 'sorted set') return 'zset';
+    return t;
+  }
+
+  /**
+   * v2.1 — destinația trebuie să existe și același tip ca sursa.
+   * @param {string} sourceType
+   * @param {string} destType — TYPE Redis sau 'none'
+   * @param {boolean} destExists
+   */
+  function validateMemberDuplicateDestination(sourceType, destType, destExists) {
+    const s = normalizeTipRedisMember(sourceType);
+    if (!destExists) {
+      return { ok: false, err: 'Cheia destinație nu există. Creează containerul (ex. Duplică cheie) sau alege o cheie existentă.' };
+    }
+    const d = normalizeTipRedisMember(destType);
+    if (d === 'none' || d === 'unknown' || !d) {
+      return { ok: false, err: 'Cheia destinație nu există.' };
+    }
+    if (s !== d) {
+      return { ok: false, err: 'Tip Redis diferit: sursă ' + s + ', destinație ' + d + '.' };
+    }
+    return { ok: true };
+  }
+
+  /**
+   * @param {string} redisType
+   * @param {object} spec
+   * @param {object} [opts] — members[], fields[], entries[] pentru același container
+   * @returns {{ ok: boolean, err?: string, needsConfirm?: boolean, confirmMsg?: string }}
+   */
+  function evaluateMemberDuplicateConflict(redisType, spec, opts) {
+    opts = opts || {};
+    spec = spec || {};
+    const tip = normalizeTipRedisMember(redisType);
+
+    if (tip === 'set') {
+      const members = Array.isArray(opts.members) ? opts.members : [];
+      const val = String(spec.value == null ? '' : spec.value);
+      if (members.indexOf(val) !== -1) {
+        return { ok: false, err: 'Membrul există deja în Set (unicitate Redis). Schimbă valoarea.' };
+      }
+      return { ok: true };
+    }
+    if (tip === 'hash') {
+      const field = String(spec.field == null ? '' : spec.field).trim();
+      if (!field) return { ok: false, err: 'Completează numele câmpului.' };
+      const fields = Array.isArray(opts.fields) ? opts.fields : [];
+      const exista = fields.some((row) => String(row.field) === field);
+      if (exista) {
+        return {
+          ok: true,
+          needsConfirm: true,
+          confirmMsg: 'Câmpul „' + field + '” există deja. Suprascrii valoarea?',
+        };
+      }
+      return { ok: true };
+    }
+    if (tip === 'list') {
+      return { ok: true };
+    }
+    if (tip === 'zset') {
+      const member = String(spec.member == null ? '' : spec.member);
+      if (!member) return { ok: false, err: 'Completează member-ul.' };
+      const score = spec.score;
+      if (score == null || score === '' || !Number.isFinite(Number(score))) {
+        return { ok: false, err: 'Score invalid.' };
+      }
+      const entries = Array.isArray(opts.entries) ? opts.entries : [];
+      const exista = entries.some((row) => String(row.member) === member);
+      if (exista) {
+        return {
+          ok: true,
+          needsConfirm: true,
+          confirmMsg: 'Membrul „' + member + '” există deja în Sorted Set. Suprascrii score/valoarea?',
+        };
+      }
+      return { ok: true };
+    }
+    return { ok: false, err: 'Tip Redis nesuportat: ' + tip };
+  }
+
+  /**
+   * O singură comandă Redis pentru duplicare membru/item.
+   * @param {string} targetKey
+   * @param {string} redisType set|hash|list|zset
+   * @param {object} spec — set: { value }; hash: { field, value }; list: { value }; zset: { score, member }
+   */
+  function buildMemberDuplicateCommand(targetKey, redisType, spec) {
+    if (!targetKey) return null;
+    const tip = normalizeTipRedisMember(redisType);
+    spec = spec || {};
+
+    if (tip === 'set') {
+      return { comandaRedis: ['SADD', targetKey, String(spec.value == null ? '' : spec.value)] };
+    }
+    if (tip === 'hash') {
+      return {
+        comandaRedis: [
+          'HSET',
+          targetKey,
+          String(spec.field == null ? '' : spec.field),
+          String(spec.value == null ? '' : spec.value),
+        ],
+      };
+    }
+    if (tip === 'list') {
+      return { comandaRedis: ['RPUSH', targetKey, String(spec.value == null ? '' : spec.value)] };
+    }
+    if (tip === 'zset') {
+      return {
+        comandaRedis: ['ZADD', targetKey, String(spec.score), String(spec.member == null ? '' : spec.member)],
+      };
+    }
+    return null;
+  }
+
   function buildCollectionCloneCommands(targetKey, redisType, snapshot) {
     if (!targetKey) return [];
     const tip = String(redisType || '');
@@ -95,6 +227,11 @@
     TIPURI_COLECTIE,
     esteTipColecțieRedis,
     esteDuplicarePermisa,
+    esteDuplicareMembruPermisa,
+    normalizeTipRedisMember,
+    validateMemberDuplicateDestination,
+    evaluateMemberDuplicateConflict,
+    buildMemberDuplicateCommand,
     rolCheieNouaDinInfo,
     suggestCopySuffix,
     buildCollectionCloneCommands,

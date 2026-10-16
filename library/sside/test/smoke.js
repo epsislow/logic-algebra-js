@@ -115,6 +115,9 @@ module.exports = {
         assert(html.includes('key-duplicate.js'));
         assert(html.includes('btn-duplica-cheie'));
         assert(html.includes('pornesteDuplicareCheie'));
+        assert(html.includes('modal-duplica-membru'));
+        assert(html.includes('pornesteDuplicareMembru'));
+        assert(html.includes('btn-duplica-membru'));
         assert(fs.existsSync(path.join(ROOT, 'core', 'key-duplicate.js')));
         assert(fs.existsSync(path.join(ROOT, 'doc', 'key-duplicate.md')));
       },
