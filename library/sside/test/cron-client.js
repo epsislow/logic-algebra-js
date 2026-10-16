@@ -105,7 +105,21 @@ module.exports = {
         const st = await Cron.jsonGet(redis, 'cron:state:manual');
         assert(st.lastMsg === 'hi' || st.lastStatus === 'ok');
         assert(st.lastTrigger === 'manual');
+        assert(Array.isArray(st.recentRuns) && st.recentRuns.length >= 1);
+        assert(st.recentRuns[0].msg === 'hi' || st.recentRuns[0].status === 'ok');
         sched.stop();
+      },
+    },
+    {
+      id: 5,
+      desc: 'prependRecentRuns cap',
+      run() {
+        let list = [];
+        for (let i = 0; i < 15; i++) {
+          list = Cron.prependRecentRuns(list, { runAt: 't' + i, status: 'ok' });
+        }
+        assert(list.length === Cron.RECENT_RUNS_CAP);
+        assert(list[0].runAt === 't14');
       },
     },
     {

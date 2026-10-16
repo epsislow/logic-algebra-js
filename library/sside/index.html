@@ -99,11 +99,19 @@
         <!-- ========== ECRAN CRON (joburi client) ========== -->
         <div id="ecran-cron" style="display: none;">
             <div class="box">
-                <h3 style="margin: 0 0 8px;">Cronuri (browser)</h3>
-                <p style="font-size: 13px; margin: 0 0 12px; color: var(--text-muted);">
+                <div class="cron-panel-head">
+                    <h3 style="margin: 0;">Cronuri (browser)</h3>
+                    <button type="button" id="btn-cron-refresh" class="btn-gri btn-inline" title="SCAN cron:* + reîncarcă registry (ca la login)">Reîncarcă</button>
+                </div>
+                <p style="font-size: 13px; margin: 8px 0 12px; color: var(--text-muted);">
                     Rulează cât timp sside e deschis. Tick 5 min · sync config 2 min. Docs → <strong>Cron client</strong>.
                 </p>
+                <div id="cron-panel-tabs" class="cron-panel-tabs list-view-mode-seg" role="tablist" style="margin-bottom: 12px;">
+                    <button type="button" class="list-view-mode-btn is-active" data-cron-tab="jobs">Cronuri</button>
+                    <button type="button" class="list-view-mode-btn" data-cron-tab="runs">Rulari</button>
+                </div>
                 <div id="cron-panel-list"></div>
+                <div id="cron-panel-runs" style="display: none;"></div>
             </div>
         </div>
 
@@ -632,8 +640,8 @@
     <script src="core/alg-runner.js?v=recover3"></script>
     <script src="core/prog-validate.js?v=recover3"></script>
     <script src="core/cron-schedule.js?v=cron1"></script>
-    <script src="core/cron-client.js?v=cron1"></script>
-    <script src="ui/js/cron-panel.js?v=cron1"></script>
+    <script src="core/cron-client.js?v=cron-runs1"></script>
+    <script src="ui/js/cron-panel.js?v=cron-refresh1"></script>
     <script src="ui/js/doc-data_generated.js?v=kincr2"></script>
     <script src="ui/js/doc-viewer.js?v=settings1"></script>
     <script src="ui/js/settings-viewer.js?v=dosare-tint1"></script>

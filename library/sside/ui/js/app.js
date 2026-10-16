@@ -2233,6 +2233,27 @@ function translateUpstashSearchResults(date) {
             }
         }
 
+        /** SCAN `cron:*` și merge în `toateCheile` (fără a schimba filtrul listă). */
+        async function scanSiMergeCheiCron() {
+            if (!window.SsideScanFilter || !window.SsideScanKeys) {
+                return [];
+            }
+            const parsed = SsideScanFilter.parseScanFilter('>cron:* limit:500');
+            const exec = async (argv) => {
+                const date = await apeleazaServerul('/api/comanda', { comandaRedis: argv });
+                return date.rezultat != null ? date.rezultat : date;
+            };
+            const result = await SsideScanKeys.collectKeysViaScan(exec, parsed, {});
+            const cronKeys = filtreazaCheiPentruLista(result.keys || []).filter((k) =>
+                isCronRedisKey(k)
+            );
+            const set = new Set(toateCheile || []);
+            cronKeys.forEach((k) => set.add(k));
+            toateCheile = Array.from(set).sort();
+            rebuildSchemeCacheDinChei(toateCheile);
+            return cronKeys;
+        }
+
         async function citesteContinutCamp() {
             const cheie = document.getElementById("select-citire").value;
             const ecran = document.getElementById("rezultat-citire");
@@ -4724,14 +4745,32 @@ function translateUpstashSearchResults(date) {
                 ssideCronScheduler.start();
             }
 
+            async function reincarcaRegistruCron() {
+                if (!localStorage.getItem('session_token')) {
+                    alert('Nu ești autentificat.');
+                    return;
+                }
+                await scanSiMergeCheiCron();
+                if (!ssideCronScheduler) {
+                    await pornesteCronSchedulerClient();
+                    if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                    return;
+                }
+                await ssideCronScheduler.syncFromJournal();
+                await ssideCronScheduler.reloadAll();
+                if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+            }
+
             window.opresteCronSchedulerClient = opresteCronSchedulerClient;
             window.pornesteCronSchedulerClient = pornesteCronSchedulerClient;
             window.notifyCronJournal = notifyCronJournal;
+            window.reincarcaRegistruCron = reincarcaRegistruCron;
 
             if (window.SsideCronPanel) {
                 SsideCronPanel.setDeps({
                     getRegistry: () =>
                         ssideCronScheduler ? ssideCronScheduler.getRegistry() : new Map(),
+                    onRefresh: () => reincarcaRegistruCron(),
                     onOpenEdit: async (cronKey) => {
                         await deschideDetaliu(cronKey);
                     },

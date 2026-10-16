@@ -76,7 +76,34 @@ Execuție alg: ca Live, dar `confirm` → refuz, `ui` → eroare (`confirm bloca
 
 ## UI
 
-- **Cron** — listă joburi, toggle **enabled**, preview următoarele 2–3 fire, **Acum**, **Edit**.
+Panou **Cron** — două tab-uri:
+
+| Tab | Conținut |
+|-----|----------|
+| **Cronuri** | Joburi: schedule, enabled, următor / 2–3 fire, ultima rulare (badge ok/err), **Edit**, **Acum**, **Rulari** (sare la tab filtrat) |
+| **Rulari** | Istoric rulari (toate joburile sau filtrat), coloană lată **Mesaj / eroare** |
+
+Buton **Reîncarcă** (sus): `SCAN` **`cron:*`**, merge chei în cache, **`syncFromJournal`** + **`reloadAll`** pe scheduler (ca după login, la cerere).
+
+### Istoric în `cron:state:…`
+
+Câmp **`recentRuns`** — ultimele **10** rulari per job (cel mai recent primul):
+
+```json
+{
+  "runAt": "2026-10-16T17:17:27.727Z",
+  "status": "ok",
+  "trigger": "manual",
+  "runId": "...",
+  "durationMs": 643,
+  "msg": "Ping",
+  "err": null,
+  "skipReason": null
+}
+```
+
+Dacă lipsește `recentRuns` (job vechi), tab **Rulari** poate afișa totuși **ultima** rulare din `lastRunAt` / `lastMsg`.
+
 - **Edit** cheie `cron:…` — tab Edit (schedule, alg, timezone, preview fire).
 
 Creare: **+ Cheie nouă** → rol **Cron** → JSON seed `v:1`.

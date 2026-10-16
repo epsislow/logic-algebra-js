@@ -13,6 +13,17 @@
   const TICK_MS = 5 * 60 * 1000;
   const POLL_MS = 2 * 60 * 1000;
   const LOCK_TTL_MAX = 240;
+  const RECENT_RUNS_CAP = 10;
+
+  function prependRecentRuns(existing, entry) {
+    if (!entry || typeof entry !== 'object') {
+      return Array.isArray(existing) ? existing.slice() : [];
+    }
+    const list = Array.isArray(existing) ? existing.slice() : [];
+    list.unshift(entry);
+    if (list.length > RECENT_RUNS_CAP) list.length = RECENT_RUNS_CAP;
+    return list;
+  }
 
   function cronSuffix(cronKey) {
     const k = String(cronKey || '');
@@ -212,11 +223,14 @@
     }
   }
 
-  async function writeState(redis, cronKey, patch) {
+  async function writeState(redis, cronKey, patch, recentEntry) {
     const sk = stateKey(cronKey);
     let cur = await jsonGet(redis, sk);
     if (!cur || typeof cur !== 'object') cur = {};
     const next = Object.assign({}, cur, patch);
+    if (recentEntry) {
+      next.recentRuns = prependRecentRuns(cur.recentRuns, recentEntry);
+    }
     await jsonSet(redis, sk, next);
     return next;
   }
@@ -249,11 +263,26 @@
 
     const locked = await tryAcquireLock(redis, cronKey, runId, cfg);
     if (!locked) {
-      await writeState(redis, cronKey, {
-        lastStatus: 'skipped',
-        lastSkipReason: 'lock',
-        lastRunId: runId,
-      });
+      const skipAt = new Date().toISOString();
+      await writeState(
+        redis,
+        cronKey,
+        {
+          lastStatus: 'skipped',
+          lastSkipReason: 'lock',
+          lastRunId: runId,
+        },
+        {
+          runAt: skipAt,
+          status: 'skipped',
+          trigger,
+          runId,
+          durationMs: 0,
+          msg: null,
+          err: null,
+          skipReason: 'lock',
+        }
+      );
       await reloadOne(ctx, cronKey);
       return { ok: false, reason: 'lock' };
     }
@@ -295,19 +324,33 @@
     const after = new Date();
     const nextRunAt = Schedule.getNextFireAfter(cfg.schedule, after, { strictFuture: true });
 
-    await writeState(redis, cronKey, {
-      lastRunAt,
-      lastDurationMs: durationMs,
-      lastStatus,
-      lastMsg,
-      lastErr,
-      lastRunId: runId,
-      lastAlgKey: cfg.alg,
-      lastTrigger: trigger,
-      runningSince: null,
-      lastSkipReason: null,
-      nextRunAt: nextRunAt ? nextRunAt.toISOString() : null,
-    });
+    await writeState(
+      redis,
+      cronKey,
+      {
+        lastRunAt,
+        lastDurationMs: durationMs,
+        lastStatus,
+        lastMsg,
+        lastErr,
+        lastRunId: runId,
+        lastAlgKey: cfg.alg,
+        lastTrigger: trigger,
+        runningSince: null,
+        lastSkipReason: null,
+        nextRunAt: nextRunAt ? nextRunAt.toISOString() : null,
+      },
+      {
+        runAt: lastRunAt,
+        status: lastStatus,
+        trigger,
+        runId,
+        durationMs,
+        msg: lastMsg,
+        err: lastErr,
+        skipReason: null,
+      }
+    );
 
     await releaseLock(redis, cronKey);
     await reloadOne(ctx, cronKey);
@@ -380,6 +423,8 @@
     JOURNAL_KEY,
     TICK_MS,
     POLL_MS,
+    RECENT_RUNS_CAP,
+    prependRecentRuns,
     cronSuffix,
     stateKey,
     lockKey,
