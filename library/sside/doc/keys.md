@@ -10,6 +10,7 @@ Prefixuri Redis folosite de sside:
 | `form:` | `form:_item_edit` | formular: schemă + butoane → alg |
 | `list:` | `list:_stock` | tabel: sursă + coloane + paginare |
 | `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |
+| `cron:` | `cron:sync_stoc` | job planificat (client browser) — vezi [cron-client.md](cron-client.md) |
 | `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |
 | `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |
 
@@ -22,7 +23,7 @@ Chei **`ui:`** — utilizare: **UI Runtime (Live)**; `form:` / `list:` — tab L
 
 ## Reguli
 
-- Numele după prefix începe cu `_` (ex. `ui:_warehouse`, `list:_stock`).
+- Numele după prefix începe cu `_` pentru `alg` / `form` / `ui` / `list` / `schema` (ex. `ui:_warehouse`). **`cron:`** poate fi fără `_` (ex. `cron:sync_stoc`).
 - Chei **`data:_nume:…`** (instanță) sunt clasificate **data** în listă chiar dacă `schema:_nume` nu apare în rezultatul SCAN; schema inferată: `schema:` + același `_nume`. La Edit, formularul încearcă încărcarea acestei scheme. **Formular din** listează toate `schema:_…` din cache sau din rezultatul listării curente; dacă nu există niciuna, rămâne doar schema inferată (încărcată din Redis).
 - `alg:` / `form:` / `ui:` / `list:` **nu** sunt indexate în Upstash Search.
 - Versiune obiect: doar **`v: 1`**.

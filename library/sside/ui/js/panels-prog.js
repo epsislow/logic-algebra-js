@@ -98,7 +98,7 @@
   }
 
   function esteProgTip(tip) {
-    return tip === 'alg' || tip === 'form' || tip === 'ui' || tip === 'list';
+    return tip === 'alg' || tip === 'form' || tip === 'ui' || tip === 'list' || tip === 'cron';
   }
 
   function parseObjDinRaw() {
@@ -3852,12 +3852,184 @@
     syncFromDom();
   }
 
+  function randeazaEditCron(host, obj) {
+    const Sched = root.SsideCronSchedule;
+    if (!obj.schedule || typeof obj.schedule !== 'object') {
+      obj.schedule = { kind: 'interval', minutes: 15, timezone: 'Europe/Bucharest' };
+    }
+    if (obj.mode == null) obj.mode = 'client';
+    if (obj.enabled == null) obj.enabled = false;
+    if (obj.timeoutSeconds == null) obj.timeoutSeconds = 300;
+    if (!obj.vars || typeof obj.vars !== 'object' || Array.isArray(obj.vars)) obj.vars = {};
+
+    host.innerHTML = '';
+    const card = document.createElement('div');
+    card.className = 'prog-edit-card';
+    card.innerHTML = '<h4>Cron (client)</h4>';
+
+    function row(labelText, el) {
+      const lab = document.createElement('label');
+      lab.textContent = labelText;
+      card.appendChild(lab);
+      card.appendChild(el);
+    }
+
+    const titleInp = document.createElement('input');
+    titleInp.type = 'text';
+    titleInp.value = obj.title || '';
+    row('Titlu', titleInp);
+
+    const enLab = document.createElement('label');
+    const enChk = document.createElement('input');
+    enChk.type = 'checkbox';
+    enChk.checked = !!obj.enabled;
+    enLab.appendChild(enChk);
+    enLab.appendChild(document.createTextNode(' Activ (enabled)'));
+    card.appendChild(enLab);
+
+    const kindSel = document.createElement('select');
+    ['cron', 'interval'].forEach((k) => {
+      const o = document.createElement('option');
+      o.value = k;
+      o.textContent = k === 'cron' ? 'Expresie cron (5 câmpuri)' : 'Interval (minute)';
+      kindSel.appendChild(o);
+    });
+    kindSel.value = obj.schedule.kind === 'cron' ? 'cron' : 'interval';
+    row('Planificare', kindSel);
+
+    const exprInp = document.createElement('input');
+    exprInp.type = 'text';
+    exprInp.placeholder = '10/30 2/2 * * 1-5';
+    exprInp.value = obj.schedule.expr || '';
+    row('Expr cron', exprInp);
+
+    const intSel = document.createElement('select');
+    [5, 10, 15, 20, 30, 45, 60].forEach((m) => {
+      const o = document.createElement('option');
+      o.value = String(m);
+      o.textContent = m + ' min';
+      intSel.appendChild(o);
+    });
+    intSel.value = String(obj.schedule.minutes || 15);
+    row('Interval', intSel);
+
+    const tzSel = document.createElement('select');
+    [
+      { v: 'Europe/Bucharest', l: 'București (Europe/Bucharest)' },
+      { v: 'UTC', l: 'UTC (+00:00)' },
+    ].forEach((t) => {
+      const o = document.createElement('option');
+      o.value = t.v;
+      o.textContent = t.l;
+      tzSel.appendChild(o);
+    });
+    tzSel.value = obj.schedule.timezone || 'Europe/Bucharest';
+    row('Fus orar (schedule.timezone)', tzSel);
+
+    const algSel = document.createElement('select');
+    fillKeySelect(algSel, 'alg', obj.alg || '');
+    row('Algoritm', algSel);
+    mountSelectWithOpen(algSel, {});
+
+    const timeoutInp = document.createElement('input');
+    timeoutInp.type = 'number';
+    timeoutInp.min = '1';
+    timeoutInp.value = String(obj.timeoutSeconds || 300);
+    row('Timeout (sec) — TTL lock max 240', timeoutInp);
+
+    const preview = document.createElement('p');
+    preview.className = 'prog-live-stub';
+    preview.style.fontSize = '12px';
+    card.appendChild(preview);
+
+    function syncCronVisibility() {
+      const isCron = kindSel.value === 'cron';
+      exprInp.parentElement && exprInp.parentElement.previousElementSibling
+        ? (exprInp.style.display = isCron ? '' : 'none')
+        : null;
+      exprInp.style.display = isCron ? '' : 'none';
+      intSel.style.display = isCron ? 'none' : '';
+      const exprLab = exprInp.previousElementSibling;
+      const intLab = intSel.previousElementSibling;
+      if (exprLab) exprLab.style.display = isCron ? '' : 'none';
+      if (intLab) intLab.style.display = isCron ? 'none' : '';
+    }
+
+    function updatePreview() {
+      if (!Sched) {
+        preview.textContent = '';
+        return;
+      }
+      try {
+        const sch =
+          kindSel.value === 'cron'
+            ? { kind: 'cron', expr: exprInp.value.trim(), timezone: tzSel.value }
+            : {
+                kind: 'interval',
+                minutes: parseInt(intSel.value, 10),
+                timezone: tzSel.value,
+              };
+        const fires = Sched.getNextFires(sch, new Date(), 3, { strictFuture: true });
+        if (!fires.length) {
+          preview.textContent = 'Următoarele rulări: —';
+          return;
+        }
+        preview.textContent =
+          'Următoarele 3 rulări (' +
+          tzSel.value +
+          '): ' +
+          fires.map((d) => Sched.formatFireInTz(d, tzSel.value)).join(' · ');
+      } catch (e) {
+        preview.textContent = String(e.message || e);
+      }
+    }
+
+    function syncFromDom(writeRaw) {
+      if (writeRaw !== false) {
+        obj.title = titleInp.value.trim();
+        obj.enabled = enChk.checked;
+        obj.mode = 'client';
+        obj.alg = algSel.value.trim();
+        obj.timeoutSeconds = parseInt(timeoutInp.value, 10) || 300;
+        if (kindSel.value === 'cron') {
+          obj.schedule = {
+            kind: 'cron',
+            expr: exprInp.value.trim(),
+            timezone: tzSel.value,
+          };
+        } else {
+          obj.schedule = {
+            kind: 'interval',
+            minutes: parseInt(intSel.value, 10) || 15,
+            timezone: tzSel.value,
+          };
+        }
+        scrieRaw(obj);
+      }
+      updatePreview();
+    }
+
+    kindSel.addEventListener('change', () => {
+      syncCronVisibility();
+      syncFromDom();
+    });
+    [titleInp, enChk, exprInp, intSel, tzSel, algSel, timeoutInp].forEach((el) => {
+      el.addEventListener('input', () => syncFromDom());
+      el.addEventListener('change', () => syncFromDom());
+    });
+
+    syncCronVisibility();
+    host.appendChild(card);
+    syncFromDom();
+  }
+
   function randeazaEdit(kind, obj) {
     const host = $('panel-prog-edit');
     if (!host) return;
     if (kind === 'form') randeazaEditForm(host, obj);
     else if (kind === 'ui') randeazaEditUi(host, obj);
     else if (kind === 'list') randeazaEditList(host, obj);
+    else if (kind === 'cron') randeazaEditCron(host, obj);
     else randeazaEditAlg(host, obj);
   }
 
@@ -3935,7 +4107,7 @@
 
   function seteazaMod(mod) {
     if (!progKind) return;
-    if (mod === 'live' && progKind === 'alg') mod = 'edit'; // D8
+    if (mod === 'live' && (progKind === 'alg' || progKind === 'cron')) mod = 'edit';
 
     if (modProg === 'edit' || modProg === 'formular') {
       sincronizeazaInRaw();
@@ -4035,6 +4207,7 @@
     const Nav = root.SsideUiRuntimeNav;
     const showLiveTab =
       progKind !== 'alg' &&
+      progKind !== 'cron' &&
       (!Nav || typeof Nav.progUiShowsLiveTab !== 'function' || Nav.progUiShowsLiveTab(progKind));
     if (liveBtn) liveBtn.style.display = showLiveTab ? 'inline-block' : 'none';
 

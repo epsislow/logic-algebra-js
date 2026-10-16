@@ -24,6 +24,7 @@
             --badge-form: #0dcaf0;
             --badge-ui: #d63384;
             --badge-list: #fd7e14;
+            --badge-cron: #9333ea;
             --badge-liber: #6c757d;
             --badge-admin: #fd7e14;
             --badge-log: #b45309;
@@ -64,6 +65,7 @@
             --badge-form: #22d3ee;
             --badge-ui: #f472b6;
             --badge-list: #fb923c;
+            --badge-cron: #c084fc;
             --badge-liber: #6b7280;
             --badge-admin: #f59e0b;
             --badge-log: #fbbf24;
@@ -169,6 +171,7 @@
         .badge-form { background: var(--badge-form); color: #04303a; }
         .badge-ui { background: var(--badge-ui); }
         .badge-list { background: var(--badge-list); color: #1a0a00; }
+        .badge-cron { background: var(--badge-cron); }
         .badge-log { background: var(--badge-log); color: #1a0a00; }
         .badge-info { background: var(--badge-info); }
         .badge-json { background: var(--badge-json); color: #042f2e; }
@@ -315,6 +318,15 @@
         .key-row--form { --key-row-tint: var(--badge-form); }
         .key-row--ui { --key-row-tint: var(--badge-ui); }
         .key-row--list { --key-row-tint: var(--badge-list); }
+        .key-row--cron { --key-row-tint: var(--badge-cron); }
+
+        .cron-panel-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cron-panel-table th,
+        .cron-panel-table td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; }
+        .cron-panel-table th { background: var(--bg-muted); text-align: left; }
+        .cron-panel-sub { color: var(--text-muted); font-size: 12px; }
+        .cron-panel-actions { white-space: nowrap; }
+        .cron-panel-actions button { margin: 0 2px 2px 0; }
         .key-row--log { --key-row-tint: var(--badge-log); }
         .key-row--info { --key-row-tint: var(--badge-info); }
         .key-row--json { --key-row-tint: var(--badge-json); }

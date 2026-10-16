@@ -36,6 +36,7 @@
         <div class="zona-utilizator">
             <div class="zona-utilizator-left">
                 <button type="button" class="btn-gri btn-inline" onclick="inapoiLaLista()" title="Înapoi la lista de chei">Lista</button>
+                <button type="button" class="btn-gri btn-inline" onclick="deschidePanouCron()" title="Joburi cron client">Cron</button>
                 <button type="button" class="btn-gri btn-inline" onclick="deschideDocs()" title="Documentație ALG/FORM/UI">Docs</button>
             </div>
             <div class="zona-utilizator-right">
@@ -92,6 +93,17 @@
                     <button type="button" class="btn-gri btn-inline" onclick="reseteazaCautariSalvate()" title="Revine la cele 2 căutări implicite">Reset</button>
                 </div>
                 <div id="lista-cautari-salvate" class="lista-chei"></div>
+            </div>
+        </div>
+
+        <!-- ========== ECRAN CRON (joburi client) ========== -->
+        <div id="ecran-cron" style="display: none;">
+            <div class="box">
+                <h3 style="margin: 0 0 8px;">Cronuri (browser)</h3>
+                <p style="font-size: 13px; margin: 0 0 12px; color: var(--text-muted);">
+                    Rulează cât timp sside e deschis. Tick 5 min · sync config 2 min. Docs → <strong>Cron client</strong>.
+                </p>
+                <div id="cron-panel-list"></div>
             </div>
         </div>
 
@@ -441,6 +453,7 @@
                     <option value="form">Form (form:_)</option>
                     <option value="ui">UI (ui:_)</option>
                     <option value="list">List (list:_)</option>
+                    <option value="cron">Cron (cron:…)</option>
                     <option value="liber">Liber</option>
                 </select>
             </div>
@@ -618,11 +631,14 @@
     <script src="core/redis.js"></script>
     <script src="core/alg-runner.js?v=recover3"></script>
     <script src="core/prog-validate.js?v=recover3"></script>
+    <script src="core/cron-schedule.js?v=cron1"></script>
+    <script src="core/cron-client.js?v=cron1"></script>
+    <script src="ui/js/cron-panel.js?v=cron1"></script>
     <script src="ui/js/doc-data_generated.js?v=kincr2"></script>
     <script src="ui/js/doc-viewer.js?v=settings1"></script>
     <script src="ui/js/settings-viewer.js?v=dosare-tint1"></script>
     <script src="ui/js/panels-live.js?v=schema-dates3"></script>
-    <script src="ui/js/panels-prog.js?v=form-fields3"></script>
+    <script src="ui/js/panels-prog.js?v=cron-edit1"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
     <script src="ui/js/app.js?v=dup-membru1"></script>
 </body>

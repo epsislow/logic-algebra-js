@@ -175,6 +175,17 @@ module.exports = {
       },
     },
     {
+      id: 12,
+      desc: 'cron config vs aux keys',
+      run() {
+        assert(Keys.isCronRedisKey('cron:sync'));
+        assert(!Keys.isCronRedisKey('cron:state:sync'));
+        assert(Keys.isCronAuxRedisKey('cron:state:sync'));
+        assertEq(Keys.clasificaCheie('cron:sync', new Set()).tip, 'cron');
+        assertEq(Keys.cheieProgDinNume('cron', 'sync_stoc'), 'cron:sync_stoc');
+      },
+    },
+    {
       id: 11,
       desc: 'IDX must not treat alg/form/ui/list as search prefixes (convention check)',
       run() {

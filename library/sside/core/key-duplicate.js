@@ -35,7 +35,7 @@
     if (!info || !info.tip) return 'liber';
     const t = info.tip;
     if (t === 'schema' || t === 'data') return t;
-    if (t === 'alg' || t === 'form' || t === 'ui' || t === 'list') return t;
+    if (t === 'alg' || t === 'form' || t === 'ui' || t === 'list' || t === 'cron') return t;
     return 'liber';
   }
 

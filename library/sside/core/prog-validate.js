@@ -20,6 +20,9 @@
 
   const UiListRef =
     root.SsideUiListRef || (typeof require !== 'undefined' ? require('./ui-list-ref.js') : null);
+  const CronSched =
+    root.SsideCronSchedule ||
+    (typeof require !== 'undefined' ? require('./cron-schedule.js') : null);
 
   function err(msg) {
     return { ok: false, err: msg };
@@ -492,11 +495,65 @@
     return ok();
   }
 
+  function validateCron(obj) {
+    const ve = checkV(obj);
+    if (ve) return ve;
+    if (obj.mode != null && obj.mode !== 'client') {
+      return err('mode trebuie să fie "client" în v1');
+    }
+    const sched = CronSched
+      ? CronSched.normalizeSchedule(obj.schedule, obj.intervalMinutes)
+      : obj.schedule;
+    if (!sched || !sched.kind) {
+      return err('schedule obligatoriu (kind: cron sau interval)');
+    }
+    if (sched.kind === 'cron') {
+      if (!sched.expr || !String(sched.expr).trim()) {
+        return err('schedule.expr obligatoriu');
+      }
+      if (!sched.timezone || !String(sched.timezone).trim()) {
+        return err('schedule.timezone obligatoriu (IANA, ex. Europe/Bucharest sau UTC)');
+      }
+      if (CronSched) {
+        const g = CronSched.validateMinuteGranularity(sched.expr);
+        if (!g.ok) return g;
+        try {
+          CronSched.parseExpr(sched.expr);
+        } catch (e) {
+          return err(e.message || String(e));
+        }
+      }
+    } else if (sched.kind === 'interval') {
+      const m = parseInt(sched.minutes, 10);
+      if (!Number.isFinite(m) || m < 5 || m > 60 || m % 5 !== 0) {
+        return err('interval.minutes trebuie multiplu de 5, între 5 și 60');
+      }
+      if (!sched.timezone) sched.timezone = CronSched ? CronSched.DEFAULT_TZ : 'Europe/Bucharest';
+    } else {
+      return err('schedule.kind necunoscut');
+    }
+    if (!obj.alg || !/^alg:_/.test(String(obj.alg))) {
+      return err('alg obligatoriu (alg:_…)');
+    }
+    if (obj.enabled != null && typeof obj.enabled !== 'boolean') {
+      return err('enabled trebuie boolean');
+    }
+    if (obj.timeoutSeconds != null) {
+      const t = parseInt(obj.timeoutSeconds, 10);
+      if (!Number.isFinite(t) || t < 1) return err('timeoutSeconds invalid');
+    }
+    if (obj.vars != null && (typeof obj.vars !== 'object' || Array.isArray(obj.vars))) {
+      return err('vars trebuie obiect');
+    }
+    return ok();
+  }
+
   function validateProg(kind, obj) {
     if (kind === 'form') return validateForm(obj);
     if (kind === 'alg') return validateAlg(obj);
     if (kind === 'ui') return validateUi(obj);
     if (kind === 'list') return validateList(obj);
+    if (kind === 'cron') return validateCron(obj);
     return err('kind necunoscut');
   }
 
@@ -506,6 +563,7 @@
     validateAlg,
     validateUi,
     validateList,
+    validateCron,
     ALG_OPS,
   };
 

@@ -122,6 +122,13 @@
         if (keepTtl && prev && prev.expireAt != null) {
           expireAt = prev.expireAt;
         }
+        const exIdx = flags.indexOf('EX');
+        if (exIdx >= 0 && a[exIdx + 1] != null) {
+          const sec = parseInt(a[exIdx + 1], 10);
+          if (Number.isFinite(sec) && sec > 0) {
+            expireAt = Date.now() + sec * 1000;
+          }
+        }
         store.set(key, { tip: 'string', val: val, expireAt: expireAt });
         return 'OK';
       }
@@ -401,6 +408,18 @@
         if (start < 0) start = Math.max(0, arr.length + start);
         if (stop < 0) stop = arr.length + stop;
         return arr.slice(start, stop + 1);
+      }
+
+      if (cmd === 'LTRIM') {
+        const e = store.get(a[0]);
+        if (!e || e.tip !== 'list') return 'OK';
+        let start = parseInt(a[1], 10) || 0;
+        let stop = parseInt(a[2], 10);
+        const arr = e.val;
+        if (start < 0) start = Math.max(0, arr.length + start);
+        if (stop < 0) stop = arr.length + stop;
+        e.val = arr.slice(start, stop + 1);
+        return 'OK';
       }
 
       if (cmd === 'ZADD') {

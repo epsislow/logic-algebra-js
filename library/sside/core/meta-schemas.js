@@ -155,11 +155,46 @@
     return { v: 1, title: title || '', tabs: [] };
   }
 
+  const META_CRON = {
+    $schema: 'http://json-schema.org/draft-07/schema#',
+    title: 'Cron job (client)',
+    type: 'object',
+    required: ['v', 'mode', 'schedule', 'alg'],
+    properties: {
+      v: { type: 'integer', const: 1, default: 1 },
+      title: { type: 'string', default: '' },
+      mode: { type: 'string', enum: ['client'], default: 'client' },
+      enabled: { type: 'boolean', default: false },
+      schedule: {
+        type: 'object',
+        default: { kind: 'interval', minutes: 15, timezone: 'Europe/Bucharest' },
+      },
+      alg: { type: 'string', default: '', description: 'alg:_…' },
+      vars: { type: 'object', default: {} },
+      timeoutSeconds: { type: 'integer', default: 300 },
+    },
+    additionalProperties: true,
+  };
+
+  function seedCron(title) {
+    return {
+      v: 1,
+      title: title || '',
+      mode: 'client',
+      enabled: false,
+      schedule: { kind: 'interval', minutes: 15, timezone: 'Europe/Bucharest' },
+      alg: '',
+      vars: {},
+      timeoutSeconds: 300,
+    };
+  }
+
   function seedPentruRol(role, displayName) {
     if (role === 'alg') return seedAlg(displayName || '');
     if (role === 'form') return seedForm(displayName || '');
     if (role === 'list') return seedList(displayName || '');
     if (role === 'ui') return seedUi(displayName || '');
+    if (role === 'cron') return seedCron(displayName || '');
     return { v: 1 };
   }
 
@@ -168,6 +203,7 @@
     if (role === 'form') return META_FORM;
     if (role === 'list') return META_LIST;
     if (role === 'ui') return META_UI;
+    if (role === 'cron') return META_CRON;
     return null;
   }
 
@@ -176,10 +212,12 @@
     META_FORM,
     META_LIST,
     META_UI,
+    META_CRON,
     seedAlg,
     seedForm,
     seedList,
     seedUi,
+    seedCron,
     seedPentruRol,
     metaPentruRol,
   };

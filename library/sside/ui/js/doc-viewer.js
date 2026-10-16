@@ -179,12 +179,15 @@
   let docsReturnToRuntime = false;
 
   function hideOtherScreens() {
-    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate', 'ecran-ui-runtime', 'ecran-setari'].forEach(
+    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate', 'ecran-ui-runtime', 'ecran-setari', 'ecran-cron'].forEach(
       function (id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       }
     );
+    if (root.SsideCronPanel && typeof root.SsideCronPanel.ascunde === 'function') {
+      root.SsideCronPanel.ascunde();
+    }
     document.body.classList.remove('sside-settings-open');
   }
 

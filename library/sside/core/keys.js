@@ -38,6 +38,18 @@
     return /^list:_[^:]+$/.test(key || '');
   }
 
+  /** cron:sync — config job (fără _ obligatoriu). Nu cron:state: / cron:lock: */
+  function isCronRedisKey(key) {
+    return /^cron:(?!state:|lock:)[^:]+$/.test(key || '');
+  }
+
+  function isCronAuxRedisKey(key) {
+    const k = key || '';
+    if (k.startsWith('cron:state:') || k.startsWith('cron:lock:')) return true;
+    if (k === 'cronlog:scheduler' || k.startsWith('cronlog:scheduler:')) return true;
+    return false;
+  }
+
   function parseDataJsonPeSchema(key) {
     const m = (key || '').match(/^data:(_[^:]+):(.*)$/);
     if (!m || m[2] === '') return null;
@@ -55,7 +67,8 @@
       k.startsWith('user:') ||
       k.startsWith('session:') ||
       k.startsWith('settings:') ||
-      isCheieSearchIndexRedisKey(k)
+      isCheieSearchIndexRedisKey(k) ||
+      isCronAuxRedisKey(k)
     );
   }
 
@@ -83,6 +96,12 @@
     }
     if (isListRedisKey(key)) {
       return { tip: 'list', name: key.slice('list:'.length), listKey: key };
+    }
+    if (isCronRedisKey(key)) {
+      return { tip: 'cron', name: key.slice('cron:'.length), cronKey: key };
+    }
+    if (isCronAuxRedisKey(key)) {
+      return { tip: 'liber', cronAux: true, sistem: true };
     }
 
     const dj = parseDataJsonPeSchema(key);
@@ -147,6 +166,9 @@
         case 'list':
           probe = 'list:_x';
           break;
+        case 'cron':
+          probe = 'cron:x';
+          break;
         case 'data':
           probe = 'data:_x:y';
           break;
@@ -207,6 +229,7 @@
     if (info.tip === 'form') return withRowTint({ badge: 'form', cls: 'badge-form', note: '' });
     if (info.tip === 'ui') return withRowTint({ badge: 'ui', cls: 'badge-ui', note: '' });
     if (info.tip === 'list') return withRowTint({ badge: 'list', cls: 'badge-list', note: '' });
+    if (info.tip === 'cron') return withRowTint({ badge: 'cron', cls: 'badge-cron', note: '' });
     if (info.tip === 'log') return withRowTint({ badge: 'log', cls: 'badge-log', note: '' });
     if (info.tip === 'info') return withRowTint({ badge: 'info', cls: 'badge-info', note: '' });
     if (info.tip === 'json') return withRowTint({ badge: 'json', cls: 'badge-json', note: '' });
@@ -224,6 +247,14 @@
   }
 
   function cheieProgDinNume(kind, name) {
+    if (kind === 'cron') {
+      let c = String(name || '')
+        .trim()
+        .replace(/^cron:/, '')
+        .replace(/:/g, '');
+      if (!c) return '';
+      return 'cron:' + c;
+    }
     const n = normalizeUnderscoreName(name);
     if (!n || n === '_') return '';
     if (kind === 'alg') return 'alg:' + n;
@@ -242,6 +273,8 @@
     isFormRedisKey,
     isUiRedisKey,
     isListRedisKey,
+    isCronRedisKey,
+    isCronAuxRedisKey,
     parseDataJsonPeSchema,
     isCheieSearchIndexRedisKey,
     isCheieSistemAscunsa,

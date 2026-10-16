@@ -62,7 +62,7 @@
         /** Scheme încărcate cu succes din Redis (ex. inferate la data:_, fără schema:* în SCAN). */
         let schemeKeysVerificate = new Set();
         /** Cache pickere prog (F5b): schema / alg / form / ui */
-        let progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
+        let progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [], cron: [] };
         /** Cache JSON alg/form/schema pentru Live (evită JSON.GET la fiecare click). */
         let progJsonCache = Object.create(null);
         /** Sesiune navigare Runtime ui: (UA) — sincronizată cu SsideUiRuntimeNav.plan */
@@ -622,10 +622,17 @@
             actualizeazaUiStatisticiApi();
             pornesteCronRefreshSesiune();
             inapoiLaLista();
-            scaneazaToateCampurile();
+            scaneazaToateCampurile().then(() => {
+                if (typeof window.pornesteCronSchedulerClient === 'function') {
+                    window.pornesteCronSchedulerClient();
+                }
+            });
         }
 
         function executaLogout() {
+            if (typeof window.opresteCronSchedulerClient === 'function') {
+                window.opresteCronSchedulerClient();
+            }
             opresteCronRefreshSesiune();
             localStorage.removeItem("session_token");
             localStorage.removeItem("session_user");
@@ -636,7 +643,7 @@
             schemeCacheReady = false;
             schemeCacheKeys = [];
             schemeKeysVerificate = new Set();
-            progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [] };
+            progKeysCache = { schema: [], alg: [], form: [], ui: [], list: [], cron: [] };
             invalidateProgJsonCache();
             actualizeazaSemnalCacheScheme();
             seteazaVizibilitateStatisticiApi(false);
@@ -667,6 +674,10 @@
         }
         function isListRedisKey(key) {
             return SsideKeys.isListRedisKey(key);
+        }
+
+        function isCronRedisKey(key) {
+            return SsideKeys.isCronRedisKey(key);
         }
 
         /** data:_schemaName:instance — data JSON pe schemă */
@@ -726,12 +737,14 @@
             const form = new Set();
             const ui = new Set();
             const list = new Set();
+            const cron = new Set();
             (chei || []).forEach(k => {
                 if (isSchemaRedisKey(k)) set.add(k);
                 if (isAlgRedisKey(k)) alg.add(k);
                 if (isFormRedisKey(k)) form.add(k);
                 if (isUiRedisKey(k)) ui.add(k);
                 if (isListRedisKey(k)) list.add(k);
+                if (isCronRedisKey(k)) cron.add(k);
             });
             schemeCacheKeys = Array.from(set).sort();
             progKeysCache = {
@@ -740,6 +753,7 @@
                 form: Array.from(form).sort(),
                 ui: Array.from(ui).sort(),
                 list: Array.from(list).sort(),
+                cron: Array.from(cron).sort(),
             };
             schemeCacheReady = true;
             actualizeazaSemnalCacheScheme();
@@ -774,6 +788,10 @@
                 if (!progKeysCache.list) progKeysCache.list = [];
                 progKeysCache.list.push(cheie);
                 progKeysCache.list.sort();
+            } else if (isCronRedisKey(cheie) && !(progKeysCache.cron || []).includes(cheie)) {
+                if (!progKeysCache.cron) progKeysCache.cron = [];
+                progKeysCache.cron.push(cheie);
+                progKeysCache.cron.sort();
             } else if (isSchemaRedisKey(cheie)) {
                 adaugaSchemaInCache(cheie);
             }
@@ -2080,6 +2098,9 @@ function translateUpstashSearchResults(date) {
             if (esteFiltruRebuildSchemeCache(filtru)) {
                 rebuildSchemeCacheDinChei(cheiFiltrate);
             }
+            if (window.ssideCronScheduler && typeof window.ssideCronScheduler.reloadAll === 'function') {
+                window.ssideCronScheduler.reloadAll().catch(() => {});
+            }
 
             dropdown.innerHTML = '';
             lista.innerHTML = '';
@@ -2579,6 +2600,9 @@ function translateUpstashSearchResults(date) {
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
             if (window.SsideDocs) SsideDocs.ascunde();
             if (window.SsideSettings) SsideSettings.ascunde();
+            if (window.SsideCronPanel) SsideCronPanel.ascunde();
+            const ecCron = document.getElementById('ecran-cron');
+            if (ecCron) ecCron.style.display = 'none';
             document.getElementById('ecran-lista').style.display = 'block';
             actualizeazaStelutaCautare();
         }
@@ -4455,7 +4479,7 @@ function translateUpstashSearchResults(date) {
                 });
             }
 
-            async function onRunAlg({ algKey, form, list, uiContext, btn }) {
+            async function onRunAlg({ algKey, form, list, uiContext, btn, vars, cronMode }) {
                 if (!window.SsideAlg) {
                     return { err: 'alg-runner lipsă' };
                 }
@@ -4472,18 +4496,32 @@ function translateUpstashSearchResults(date) {
                 const result = await SsideAlg.run(alg, {
                     form: form || {},
                     list: list || {},
+                    vars: vars || {},
                     redis,
                     algKey,
                     btn: btn || null,
                     uiContext: uiContext || null,
-                    onConfirm: (s) => showAlgConfirmModal(s),
+                    onConfirm: cronMode
+                        ? () => 'no'
+                        : (s) => showAlgConfirmModal(s),
                     loadAlg: async (key) => liveLoadJsonKey(key),
                     loadSchema: async (schemaKey) => {
                         return incarcaSchemaCaObiect(schemaKey);
                     },
                 });
+                if (cronMode && result.ui) {
+                    return { err: 'ui blocat în cron' };
+                }
+                if (cronMode && result.err && String(result.err).indexOf('confirm') >= 0) {
+                    return { err: 'confirm blocat în cron' };
+                }
                 if (result.err) return { err: result.err };
-                if (result.ui && window.SsideProgLive && typeof SsideProgLive.applyUiCommands === 'function') {
+                if (
+                    !cronMode &&
+                    result.ui &&
+                    window.SsideProgLive &&
+                    typeof SsideProgLive.applyUiCommands === 'function'
+                ) {
                     try {
                         await SsideProgLive.applyUiCommands(result.ui);
                     } catch (e) {
@@ -4649,6 +4687,88 @@ function translateUpstashSearchResults(date) {
                 redis: createWorkerRedisAdapter(),
                 onUiRuntimeOpen: runtimeUiOpenKey,
             });
+
+            let ssideCronScheduler = null;
+
+            function opresteCronSchedulerClient() {
+                if (ssideCronScheduler) {
+                    ssideCronScheduler.stop();
+                    ssideCronScheduler = null;
+                }
+            }
+
+            async function notifyCronJournal(action, cronKey, hint) {
+                if (!ssideCronScheduler || !cronKey) return;
+                try {
+                    await ssideCronScheduler.appendJournal(action, cronKey, hint || '');
+                    await ssideCronScheduler.reloadOne(cronKey);
+                } catch (e) {
+                    /* ignore */
+                }
+            }
+
+            async function pornesteCronSchedulerClient() {
+                opresteCronSchedulerClient();
+                if (!window.SsideCronClient || !localStorage.getItem('session_token')) return;
+                ssideCronScheduler = SsideCronClient.createScheduler({
+                    redis: createWorkerRedisAdapter(),
+                    listCronKeys: async () =>
+                        (toateCheile || []).filter((k) => SsideKeys.isCronRedisKey(k)),
+                    onRunAlg: (opts) => onRunAlg(Object.assign({}, opts, { cronMode: true })),
+                    onRegistryChange: () => {
+                        if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                    },
+                });
+                window.ssideCronScheduler = ssideCronScheduler;
+                await ssideCronScheduler.reloadAll();
+                ssideCronScheduler.start();
+            }
+
+            window.opresteCronSchedulerClient = opresteCronSchedulerClient;
+            window.pornesteCronSchedulerClient = pornesteCronSchedulerClient;
+            window.notifyCronJournal = notifyCronJournal;
+
+            if (window.SsideCronPanel) {
+                SsideCronPanel.setDeps({
+                    getRegistry: () =>
+                        ssideCronScheduler ? ssideCronScheduler.getRegistry() : new Map(),
+                    onOpenEdit: async (cronKey) => {
+                        await deschideDetaliu(cronKey);
+                    },
+                    onToggleEnabled: async (cronKey, enabled) => {
+                        try {
+                            const cfg = await liveLoadJsonKey(cronKey);
+                            cfg.enabled = !!enabled;
+                            if (SsideProgValidate) {
+                                const vr = SsideProgValidate.validateProg('cron', cfg);
+                                if (!vr.ok) {
+                                    alert(vr.err);
+                                    if (SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                                    return;
+                                }
+                            }
+                            await salveazaValoareCheieRedis(
+                                cronKey,
+                                'json',
+                                JSON.stringify(cfg, null, 2)
+                            );
+                            progJsonCache[cronKey] = cfg;
+                            await notifyCronJournal('saved', cronKey, 'enabled');
+                        } catch (e) {
+                            alert(e.message || String(e));
+                            if (SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                        }
+                    },
+                    onRunNow: async (cronKey) => {
+                        if (!ssideCronScheduler) return;
+                        const r = await ssideCronScheduler.runOnce(cronKey, 'manual');
+                        if (r.reason === 'lock') {
+                            alert('Lock ocupat — alt tab rulează deja acest job.');
+                        }
+                        SsideCronPanel.refreshFromRegistry();
+                    },
+                });
+            }
         }
 
         if (window.SsideProgPanels) {
@@ -4667,7 +4787,9 @@ function translateUpstashSearchResults(date) {
                                   ? progKeysCache.ui || []
                                   : kind === 'list'
                                     ? progKeysCache.list || []
-                                    : [];
+                                    : kind === 'cron'
+                                      ? progKeysCache.cron || []
+                                      : [];
                     const pred =
                         kind === 'schema'
                             ? isSchemaRedisKey
@@ -4679,7 +4801,9 @@ function translateUpstashSearchResults(date) {
                                   ? isUiRedisKey
                                   : kind === 'list'
                                     ? isListRedisKey
-                                    : null;
+                                    : kind === 'cron'
+                                      ? isCronRedisKey
+                                      : null;
                     const fromAll = pred
                         ? (toateCheile || []).filter(pred)
                         : [];
@@ -4917,6 +5041,9 @@ function translateUpstashSearchResults(date) {
                         onDirty: () => actualizeazaIndicatorModificat()
                     });
                     marcheazaCurentCaBaseline();
+                    if (infoCheieCurenta.tip === 'cron' && typeof window.notifyCronJournal === 'function') {
+                        await window.notifyCronJournal('saved', cheieCurenta, 'edit');
+                    }
                     if (infoCheieCurenta.tip === 'ui' && window.SsideUiRuntimeNav) {
                         const sp = SsideUiRuntimeNav.plan(uiRuntimeSession, 'edit.save', {});
                         if (sp.nextSession) uiRuntimeSession = sp.nextSession;
@@ -5029,8 +5156,12 @@ function translateUpstashSearchResults(date) {
             if (!cheieCurenta) return;
             if (!confirm('Ștergi definitiv "' + cheieCurenta + '"?')) return;
             const cheieSterse = cheieCurenta;
+            const wasCron = infoCheieCurenta && infoCheieCurenta.tip === 'cron';
             document.getElementById('nume-camp-stergere').value = cheieSterse;
             try {
+                if (wasCron && typeof window.notifyCronJournal === 'function') {
+                    await window.notifyCronJournal('deleted', cheieSterse, '');
+                }
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheieSterse] });
                 if (date.rezultat > 0) {
                     if (isSchemaRedisKey(cheieSterse)) stergeSchemaDinCache(cheieSterse);
@@ -5550,7 +5681,7 @@ function translateUpstashSearchResults(date) {
                     : redisTipCurent === 'string'
                       ? 'string'
                       : 'json';
-            if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+            if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list' || role === 'cron') {
                 redisTypeEl.value = 'json';
             } else {
                 redisTypeEl.value = rt === 'string' ? 'string' : 'json';
@@ -5565,7 +5696,7 @@ function translateUpstashSearchResults(date) {
                 document.getElementById('new-data-instance').value = Dup.suggestCopySuffix(
                     infoCheieCurenta.instance || 'data'
                 );
-            } else if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+            } else if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list' || role === 'cron') {
                 const base = (infoCheieCurenta.name || '').replace(/^_/, '');
                 document.getElementById('new-prog-name').value = Dup.suggestCopySuffix(base);
             } else if (redisTypeEl.value === 'json') {
@@ -5689,7 +5820,7 @@ function translateUpstashSearchResults(date) {
                 }
                 cheie = 'schema:' + sn;
                 payloadRedisType = redisType;
-            } else if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+            } else if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list' || role === 'cron') {
                 cheie = SsideKeys.cheieProgDinNume(role, document.getElementById('new-prog-name').value);
                 if (!cheie) {
                     alert('Nume invalid.');
@@ -5773,7 +5904,8 @@ function translateUpstashSearchResults(date) {
             const redisTypeEl = document.getElementById('new-redis-type');
             let redisType = redisTypeEl.value;
             const role = document.getElementById('new-key-role').value;
-            const isProg = role === 'alg' || role === 'form' || role === 'ui' || role === 'list';
+            const isProg =
+                role === 'alg' || role === 'form' || role === 'ui' || role === 'list' || role === 'cron';
             const isColecție = esteTipColecțieLiberCreate(redisType);
 
             if (isProg && !isColecție) {
@@ -5819,6 +5951,9 @@ function translateUpstashSearchResults(date) {
                 } else if (role === 'list') {
                     label.textContent = 'Nume list (fără prefix; `_` se adaugă automat)';
                     ph.placeholder = 'ex: stock';
+                } else if (role === 'cron') {
+                    label.textContent = 'Nume job cron (fără prefix cron:, fără _ obligatoriu)';
+                    ph.placeholder = 'ex: sync_stoc';
                 } else {
                     label.textContent = 'Nume UI (fără prefix; `_` se adaugă automat)';
                     ph.placeholder = 'ex: warehouse';
@@ -5990,6 +6125,13 @@ function translateUpstashSearchResults(date) {
                     adaugaProgKeyInCache(cheie);
                 }
                 await scaneazaToateCampurile();
+                if (isCronRedisKey(cheie) && typeof window.notifyCronJournal === 'function') {
+                    await window.notifyCronJournal(
+                        navOpts.duplicare ? 'saved' : 'created',
+                        cheie,
+                        'new'
+                    );
+                }
                 if (navOpts.viaNav) {
                     await deschideDetaliuDinNav(cheie);
                 } else {
@@ -6082,14 +6224,17 @@ function translateUpstashSearchResults(date) {
                 return;
             }
 
-            if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list') {
+            if (role === 'alg' || role === 'form' || role === 'ui' || role === 'list' || role === 'cron') {
                 const rawName = document.getElementById('new-prog-name').value;
                 const cheie = SsideKeys.cheieProgDinNume(role, rawName);
                 if (!cheie) {
                     alert('Nume invalid pentru ' + role + '.');
                     return;
                 }
-                const display = normalizeSchemaName(rawName).replace(/^_/, '');
+                const display =
+                    role === 'cron'
+                        ? String(rawName || '').trim().replace(/^cron:/, '')
+                        : normalizeSchemaName(rawName).replace(/^_/, '');
                 const seed = SsideMeta.seedPentruRol(role, display);
                 await finalizeazaCreareCheie(cheie, 'json', seed);
                 return;
