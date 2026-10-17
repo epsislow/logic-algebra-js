@@ -622,11 +622,14 @@
             actualizeazaUiStatisticiApi();
             pornesteCronRefreshSesiune();
             inapoiLaLista();
-            scaneazaToateCampurile().then(() => {
-                if (typeof window.pornesteCronSchedulerClient === 'function') {
-                    window.pornesteCronSchedulerClient();
-                }
-            });
+            scaneazaToateCampurile()
+                .then(() => scanSiMergeCheiCron())
+                .then(() => {
+                    if (typeof window.pornesteCronSchedulerClient === 'function') {
+                        return window.pornesteCronSchedulerClient();
+                    }
+                })
+                .catch(() => {});
         }
 
         function executaLogout() {

@@ -3897,11 +3897,41 @@
     kindSel.value = obj.schedule.kind === 'cron' ? 'cron' : 'interval';
     row('Planificare', kindSel);
 
-    const exprInp = document.createElement('input');
-    exprInp.type = 'text';
-    exprInp.placeholder = '10/30 2/2 * * 1-5';
-    exprInp.value = obj.schedule.expr || '';
-    row('Expr cron', exprInp);
+    const cronExprLab = document.createElement('label');
+    cronExprLab.textContent = 'Expr cron (min · oră · zi lună · lună · zi săpt.)';
+    card.appendChild(cronExprLab);
+    const cronExprWrap = document.createElement('div');
+    cronExprWrap.className = 'cron-expr-fields';
+    const exprFieldLabels = ['Min', 'Oră', 'Zi lună', 'Lună', 'Zi săpt.'];
+    const initParts =
+      Sched && typeof Sched.partsFromExpr === 'function'
+        ? Sched.partsFromExpr(obj.schedule.expr || '* * * * *')
+        : String(obj.schedule.expr || '* * * * *').trim().split(/\s+/);
+    const exprPartInputs = exprFieldLabels.map((shortLab, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'cron-expr-cell';
+      const sub = document.createElement('span');
+      sub.className = 'cron-expr-cell-label';
+      sub.textContent = shortLab;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.autocomplete = 'off';
+      inp.spellcheck = false;
+      inp.placeholder = '*';
+      inp.value = initParts[i] != null ? String(initParts[i]) : '*';
+      cell.appendChild(sub);
+      cell.appendChild(inp);
+      cronExprWrap.appendChild(cell);
+      return inp;
+    });
+    card.appendChild(cronExprWrap);
+
+    function currentCronExpr() {
+      if (Sched && typeof Sched.exprFromParts === 'function') {
+        return Sched.exprFromParts(exprPartInputs.map((inp) => inp.value));
+      }
+      return exprPartInputs.map((inp) => (inp.value.trim() === '' ? '*' : inp.value.trim())).join(' ');
+    }
 
     const intSel = document.createElement('select');
     [5, 10, 15, 20, 30, 45, 60].forEach((m) => {
@@ -3944,14 +3974,10 @@
 
     function syncCronVisibility() {
       const isCron = kindSel.value === 'cron';
-      exprInp.parentElement && exprInp.parentElement.previousElementSibling
-        ? (exprInp.style.display = isCron ? '' : 'none')
-        : null;
-      exprInp.style.display = isCron ? '' : 'none';
+      cronExprWrap.style.display = isCron ? '' : 'none';
+      cronExprLab.style.display = isCron ? '' : 'none';
       intSel.style.display = isCron ? 'none' : '';
-      const exprLab = exprInp.previousElementSibling;
       const intLab = intSel.previousElementSibling;
-      if (exprLab) exprLab.style.display = isCron ? '' : 'none';
       if (intLab) intLab.style.display = isCron ? 'none' : '';
     }
 
@@ -3963,19 +3989,19 @@
       try {
         const sch =
           kindSel.value === 'cron'
-            ? { kind: 'cron', expr: exprInp.value.trim(), timezone: tzSel.value }
+            ? { kind: 'cron', expr: currentCronExpr(), timezone: tzSel.value }
             : {
                 kind: 'interval',
                 minutes: parseInt(intSel.value, 10),
                 timezone: tzSel.value,
               };
-        const fires = Sched.getNextFires(sch, new Date(), 3, { strictFuture: true });
+        const fires = Sched.getNextFires(sch, new Date(), 5, { strictFuture: true });
         if (!fires.length) {
-          preview.textContent = 'Următoarele rulări: —';
+          preview.textContent = 'Următoarele 5 rulări: —';
           return;
         }
         preview.textContent =
-          'Următoarele 3 rulări (' +
+          'Următoarele 5 rulări (' +
           tzSel.value +
           '): ' +
           fires.map((d) => Sched.formatFireInTz(d, tzSel.value)).join(' · ');
@@ -3994,7 +4020,7 @@
         if (kindSel.value === 'cron') {
           obj.schedule = {
             kind: 'cron',
-            expr: exprInp.value.trim(),
+            expr: currentCronExpr(),
             timezone: tzSel.value,
           };
         } else {
@@ -4013,10 +4039,12 @@
       syncCronVisibility();
       syncFromDom();
     });
-    [titleInp, enChk, exprInp, intSel, tzSel, algSel, timeoutInp].forEach((el) => {
-      el.addEventListener('input', () => syncFromDom());
-      el.addEventListener('change', () => syncFromDom());
-    });
+    [titleInp, enChk, intSel, tzSel, algSel, timeoutInp]
+      .concat(exprPartInputs)
+      .forEach((el) => {
+        el.addEventListener('input', () => syncFromDom());
+        el.addEventListener('change', () => syncFromDom());
+      });
 
     syncCronVisibility();
     host.appendChild(card);

@@ -7,10 +7,28 @@
   const DEFAULT_TZ = 'Europe/Bucharest';
   const WEEKDAY_MAP = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
-  function parseExpr(expr) {
+  function partsFromExpr(expr) {
     const parts = String(expr || '')
       .trim()
-      .split(/\s+/);
+      .split(/\s+/)
+      .filter(Boolean);
+    while (parts.length < 5) parts.push('*');
+    return parts.slice(0, 5);
+  }
+
+  function exprFromParts(parts) {
+    const p = Array.isArray(parts) ? parts.slice(0, 5) : [];
+    while (p.length < 5) p.push('*');
+    return p
+      .map((x) => {
+        const s = String(x == null ? '' : x).trim();
+        return s === '' ? '*' : s;
+      })
+      .join(' ');
+  }
+
+  function parseExpr(expr) {
+    const parts = partsFromExpr(expr);
     if (parts.length !== 5) {
       throw new Error('expr cron: exact 5 câmpuri (min oră zi-lună lună zi-săpt)');
     }
@@ -264,6 +282,8 @@
   const api = {
     DEFAULT_TZ,
     parseExpr,
+    partsFromExpr,
+    exprFromParts,
     normalizeSchedule,
     scheduleTimezone,
     cronExprFromSchedule,

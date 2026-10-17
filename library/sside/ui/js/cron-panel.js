@@ -102,11 +102,8 @@
       return;
     }
     host.innerHTML = '';
-    const table = document.createElement('table');
-    table.className = 'cron-panel-table';
-    table.innerHTML =
-      '<thead><tr><th>Job</th><th>Schedule</th><th>Activ</th><th>Următor</th><th>Urm. 2–3</th><th>Ultima rulare</th><th></th></tr></thead>';
-    const tbody = document.createElement('tbody');
+    const list = document.createElement('div');
+    list.className = 'cron-job-list';
 
     rows.forEach((entry) => {
       const cfg = entry.config || {};
@@ -114,65 +111,37 @@
         (cfg.schedule && cfg.schedule.timezone) ||
         (root.SsideCronSchedule && root.SsideCronSchedule.DEFAULT_TZ) ||
         'Europe/Bucharest';
-      const tr = document.createElement('tr');
-      const title = cfg.title ? cfg.title + ' · ' : '';
-      const schedText =
-        cfg.schedule && cfg.schedule.kind === 'cron'
-          ? cfg.schedule.expr + ' (' + tz + ')'
-          : cfg.schedule && cfg.schedule.kind === 'interval'
-            ? 'interval ' + cfg.schedule.minutes + ' min (' + tz + ')'
-            : '—';
 
-      const st = entry.state || {};
-      const lastWhen = st.lastRunAt ? fmtTime(st.lastRunAt, tz) : '—';
-      const lastBadge = statusBadge(st.lastStatus);
-      const trig =
-        st.lastTrigger === 'manual'
-          ? ' <span class="cron-panel-sub">manual</span>'
-          : st.lastTrigger === 'scheduled'
-            ? ' <span class="cron-panel-sub">programat</span>'
-            : '';
+      const card = document.createElement('div');
+      card.className = 'cron-job-card';
 
-      const upcoming = (entry.upcomingFires || [])
-        .slice(0, 3)
-        .map((d) => fmtTime(d, tz))
-        .join('<br>');
+      const head = document.createElement('div');
+      head.className = 'cron-job-card-main';
+      const name = document.createElement('code');
+      name.className = 'cron-job-name';
+      name.textContent = entry.cronKey;
+      const next = document.createElement('div');
+      next.className = 'cron-job-next';
+      next.textContent = 'Următor: ' + fmtTime(entry.nextRunAt, tz);
+      head.appendChild(name);
+      head.appendChild(next);
 
-      tr.innerHTML =
-        '<td><code>' +
-        entry.cronKey +
-        '</code><br><span class="cron-panel-sub">' +
-        title +
-        (cfg.alg || '') +
-        '</span></td>' +
-        '<td><code>' +
-        schedText +
-        '</code></td>' +
-        '<td class="cron-panel-toggle"></td>' +
-        '<td>' +
-        fmtTime(entry.nextRunAt, tz) +
-        '</td>' +
-        '<td class="cron-panel-upcoming">' +
-        upcoming +
-        '</td>' +
-        '<td>' +
-        lastBadge +
-        trig +
-        '<br><span class="cron-panel-sub">' +
-        lastWhen +
-        '</span></td>' +
-        '<td class="cron-panel-actions"></td>';
+      const foot = document.createElement('div');
+      foot.className = 'cron-job-card-foot';
 
-      const toggleCell = tr.querySelector('.cron-panel-toggle');
+      const enLab = document.createElement('label');
+      enLab.className = 'cron-job-enabled';
       const chk = document.createElement('input');
       chk.type = 'checkbox';
       chk.checked = !!cfg.enabled;
       chk.addEventListener('change', () => {
         if (deps.onToggleEnabled) deps.onToggleEnabled(entry.cronKey, chk.checked);
       });
-      toggleCell.appendChild(chk);
+      enLab.appendChild(chk);
+      enLab.appendChild(document.createTextNode(' Activ'));
 
-      const act = tr.querySelector('.cron-panel-actions');
+      const act = document.createElement('div');
+      act.className = 'cron-panel-actions';
       const btnEdit = document.createElement('button');
       btnEdit.type = 'button';
       btnEdit.className = 'btn-gri btn-inline';
@@ -196,11 +165,14 @@
       act.appendChild(btnRun);
       act.appendChild(btnRuns);
 
-      tbody.appendChild(tr);
+      foot.appendChild(enLab);
+      foot.appendChild(act);
+      card.appendChild(head);
+      card.appendChild(foot);
+      list.appendChild(card);
     });
 
-    table.appendChild(tbody);
-    host.appendChild(table);
+    host.appendChild(list);
   }
 
   function renderRuns() {
@@ -250,45 +222,38 @@
       return;
     }
 
-    const table = document.createElement('table');
-    table.className = 'cron-panel-table cron-runs-table';
-    table.innerHTML =
-      '<thead><tr><th>Cron</th><th>Ora</th><th>Status</th><th>Trigger</th><th>Durată</th><th>Mesaj / eroare</th></tr></thead>';
-    const tbody = document.createElement('tbody');
+    const list = document.createElement('div');
+    list.className = 'cron-run-list';
 
-    rows.slice(0, 80).forEach(({ cronKey, title, tz, run }) => {
-      const tr = document.createElement('tr');
-      const text = run.err || run.msg || (run.skipReason ? 'skip: ' + run.skipReason : '—');
-      const dur =
-        run.durationMs != null && run.durationMs !== ''
-          ? run.durationMs + ' ms'
-          : '—';
-      tr.innerHTML =
-        '<td><code>' +
-        cronKey +
-        '</code>' +
-        (title ? '<br><span class="cron-panel-sub">' + title + '</span>' : '') +
-        '</td>' +
-        '<td>' +
-        fmtTime(run.runAt, tz) +
-        '</td>' +
-        '<td>' +
+    rows.slice(0, 80).forEach(({ cronKey, tz, run }) => {
+      const card = document.createElement('div');
+      card.className = 'cron-run-card';
+      const top = document.createElement('div');
+      top.className = 'cron-run-card-top';
+      top.innerHTML =
         statusBadge(run.status) +
-        '</td>' +
-        '<td>' +
-        (run.trigger || '—') +
-        '</td>' +
-        '<td>' +
-        dur +
-        '</td>' +
-        '<td class="cron-run-msg">' +
-        escapeHtml(text) +
-        '</td>';
-      tbody.appendChild(tr);
+        ' <span class="cron-run-time">' +
+        escapeHtml(fmtTime(run.runAt, tz)) +
+        '</span>' +
+        (run.trigger
+          ? ' <span class="cron-panel-sub">' + escapeHtml(run.trigger) + '</span>'
+          : '');
+      const keyEl = document.createElement('code');
+      keyEl.className = 'cron-run-key';
+      keyEl.textContent = cronKey;
+      const text = run.err || run.msg || (run.skipReason ? 'skip: ' + run.skipReason : '');
+      card.appendChild(top);
+      card.appendChild(keyEl);
+      if (text) {
+        const msg = document.createElement('div');
+        msg.className = 'cron-run-msg';
+        msg.textContent = text;
+        card.appendChild(msg);
+      }
+      list.appendChild(card);
     });
 
-    table.appendChild(tbody);
-    host.appendChild(table);
+    host.appendChild(list);
   }
 
   function escapeHtml(s) {

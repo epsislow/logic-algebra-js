@@ -83,32 +83,38 @@
     return out;
   }
 
-  function computeNextRunAt(config, state, now) {
+  /** Următoarea fire pentru afișare (strict viitoare). dueAt = catch-up dacă e restanțier. */
+  function computeRegistryTimes(config, state, now) {
     const n = now instanceof Date ? now : new Date();
     const sched = config && config.schedule;
-    if (!sched) return null;
-    if (state && state.nextRunAt) {
+    if (!sched) {
+      return { nextRunAt: null, dueAt: null, upcomingFires: [] };
+    }
+    const nextRunAt = Schedule.getNextFireAfter(sched, n, { strictFuture: true });
+    let dueAt = nextRunAt;
+    if (config.enabled && state && state.nextRunAt) {
       const prev = new Date(state.nextRunAt);
-      if (!Number.isNaN(prev.getTime()) && prev.getTime() <= n.getTime() && config.enabled) {
-        return prev;
+      if (!Number.isNaN(prev.getTime()) && prev.getTime() <= n.getTime()) {
+        dueAt = prev;
       }
     }
-    return Schedule.getNextFireAfter(sched, n, { strictFuture: true });
+    const upcomingFires = nextRunAt
+      ? Schedule.getNextFires(sched, n, 3, { strictFuture: true })
+      : [];
+    return { nextRunAt, dueAt, upcomingFires };
   }
 
   function buildRegistryEntry(config, state, now) {
     const cfg = normalizeConfig(config);
     if (!cfg) return null;
-    const nextRunAt = computeNextRunAt(cfg, state, now);
-    const upcomingFires = nextRunAt
-      ? Schedule.getNextFires(cfg.schedule, nextRunAt, 3, { strictFuture: false })
-      : [];
+    const times = computeRegistryTimes(cfg, state, now);
     return {
       cronKey: null,
       config: cfg,
       state: state || null,
-      nextRunAt,
-      upcomingFires,
+      nextRunAt: times.nextRunAt,
+      dueAt: times.dueAt,
+      upcomingFires: times.upcomingFires,
       enabledEffective: !!cfg.enabled && cfg.mode === 'client',
     };
   }
@@ -245,7 +251,8 @@
     }
     if (trigger === 'scheduled') {
       const now = Date.now();
-      if (!entry.nextRunAt || entry.nextRunAt.getTime() > now) {
+      const dueRef = entry.dueAt || entry.nextRunAt;
+      if (!dueRef || dueRef.getTime() > now) {
         return { ok: false, reason: 'not_due' };
       }
     }
@@ -258,7 +265,9 @@
 
     const redis = ctx.deps.redis;
     const runId = newRunId();
-    const scheduledAt = entry.nextRunAt ? entry.nextRunAt.toISOString() : null;
+    const scheduledAt = (entry.dueAt || entry.nextRunAt)
+      ? (entry.dueAt || entry.nextRunAt).toISOString()
+      : null;
     const tickAt = new Date().toISOString();
 
     const locked = await tryAcquireLock(redis, cronKey, runId, cfg);

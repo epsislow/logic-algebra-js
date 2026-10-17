@@ -337,11 +337,59 @@
         }
         .cron-panel-tabs { margin-bottom: 12px; }
         .cron-runs-toolbar { margin: 0 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .cron-runs-table .cron-run-msg {
-            max-width: none;
+        .cron-job-list,
+        .cron-run-list { display: flex; flex-direction: column; gap: 8px; max-width: 100%; }
+        .cron-job-card,
+        .cron-run-card {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            background: var(--bg-panel);
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        .cron-job-card-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .cron-job-name,
+        .cron-run-key {
+            font-size: 13px;
+            word-break: break-all;
+        }
+        .cron-job-next { font-size: 13px; color: var(--text); }
+        .cron-job-card-foot {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+        .cron-job-enabled { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .cron-run-card-top { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
+        .cron-run-time { font-weight: 500; }
+        .cron-run-msg {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--text-muted);
             white-space: pre-wrap;
             word-break: break-word;
-            min-width: 200px;
+            overflow-wrap: anywhere;
+        }
+        .cron-expr-fields {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 6px 8px;
+            margin-bottom: 8px;
+            max-width: 100%;
+        }
+        .cron-expr-cell { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .cron-expr-cell-label { font-size: 11px; color: var(--text-muted); }
+        .cron-expr-cell input { width: 100%; min-width: 0; box-sizing: border-box; }
+        @media (max-width: 520px) {
+            .cron-expr-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .cron-panel-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+            .cron-panel-actions button { margin: 0; }
         }
         .cron-badge {
             display: inline-block;
