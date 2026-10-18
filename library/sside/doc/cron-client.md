@@ -84,7 +84,9 @@ La creare / save: **`nextRunAt`** = prima fire **strict viitoare** (nu rulează 
 |-------|---------|
 | **execuție due** | La **:00, :05, :10, :15…** (`Europe/Bucharest`) — doar joburi due. **Nu** depinde de login (login 15:12 → primul tick **15:15**). |
 | **journal** | La **:03, :08, :13, :18…** (cu **2 min** înainte de execuție) — `syncFromJournal` / `reloadOne` dacă s-a modificat config în alt tab. **Nu** e legat de login. |
-| **login** · **Reîncarcă** (panou) | O dată: `reloadAll` + `syncFromJournal`. Reîncarcă face și `SCAN` **`cron:*`** în cache chei. |
+| **login** · refresh pagină | Scheduler **OFF** — **fără** apeluri `JSON.GET` / journal; registry lazy la prima deschidere **Cron** sau la **Reîncarcă** / **Pornește**. |
+| **Reîncarcă** (panou) | `SCAN` **`cron:*`** + `reloadAll` + `syncFromJournal` — **fără** tick dacă scheduler OFF. |
+| **Pornește** / **Oprește** | Pornește = același pachet ca vechiul login (SCAN + registry + **`start()`**). Oprește = **`stop()`** tick/journal; **`enabled`** pe joburi neschimbat. **Acum** merge și cu OFF. |
 
 Due = ultimul slot din schedule **≤ momentul tick-ului** neacoperit de `lastRunAt` (max **1** run per tick).
 
@@ -103,7 +105,7 @@ Panou **Cron** — două tab-uri:
 | **Cronuri** | Joburi: schedule, enabled, următor / 2–3 fire, ultima rulare (badge ok/err), **Edit**, **Acum**, **Rulari** (sare la tab filtrat) |
 | **Rulari** | Istoric rulari (toate joburile sau filtrat), coloană lată **Mesaj / eroare** |
 
-Buton **Reîncarcă** (sus): `SCAN` **`cron:*`**, apoi același flux ca la login — **`reloadAll`** + **`syncFromJournal`**.
+Sus în panou: **OFF/ON** + **Pornește** / **Oprește** + **Reîncarcă** (`SCAN` + registry; nu pornește scheduler-ul dacă e OFF).
 
 ### Istoric în `cron:state:…`
 

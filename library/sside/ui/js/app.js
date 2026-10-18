@@ -625,10 +625,9 @@
             pornesteCronRefreshSesiune();
             inapoiLaLista();
             scaneazaToateCampurile()
-                .then(() => scanSiMergeCheiCron())
                 .then(() => {
-                    if (typeof window.pornesteCronSchedulerClient === 'function') {
-                        return window.pornesteCronSchedulerClient();
+                    if (typeof window.incarcaCronClientLaLogin === 'function') {
+                        return window.incarcaCronClientLaLogin();
                     }
                 })
                 .catch(() => {});
@@ -4734,35 +4733,18 @@ function translateUpstashSearchResults(date) {
             });
 
             let ssideCronScheduler = null;
+            /** Tick programat + journal sync pornite (OFF implicit la login). */
+            let cronSchedulerArmed = false;
 
-            function opresteCronSchedulerClient() {
-                if (ssideCronScheduler) {
-                    ssideCronScheduler.stop();
-                    ssideCronScheduler = null;
+            function syncCronSchedulerPowerUi() {
+                if (window.SsideCronPanel && SsideCronPanel.syncSchedulerPowerUi) {
+                    SsideCronPanel.syncSchedulerPowerUi();
                 }
             }
 
-            async function notifyCronJournal(action, cronKey, hint) {
-                if (!ssideCronScheduler || !cronKey) return;
-                try {
-                    await ssideCronScheduler.appendJournal(action, cronKey, hint || '');
-                    await ssideCronScheduler.reloadOne(cronKey);
-                } catch (e) {
-                    /* ignore */
-                }
-            }
-
-            /** Ca la login: registry din Redis + journal (înainte de due / după SCAN manual). */
-            async function reincarcaRegistryCronDinRedis() {
-                if (!ssideCronScheduler) return;
-                await ssideCronScheduler.reloadAll();
-                await ssideCronScheduler.syncFromJournal();
-            }
-
-            async function pornesteCronSchedulerClient() {
-                opresteCronSchedulerClient();
-                if (!window.SsideCronClient || !localStorage.getItem('session_token')) return;
-                ssideCronScheduler = SsideCronClient.createScheduler({
+            function createCronSchedulerInstance() {
+                if (!window.SsideCronClient) return null;
+                return SsideCronClient.createScheduler({
                     redis: createWorkerRedisAdapter(),
                     listCronKeys: async () =>
                         (toateCheile || []).filter((k) => SsideKeys.isCronRedisKey(k)),
@@ -4771,10 +4753,94 @@ function translateUpstashSearchResults(date) {
                         if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
                     },
                 });
-                window.ssideCronScheduler = ssideCronScheduler;
-                await reincarcaRegistryCronDinRedis();
-                ssideCronScheduler.start();
+            }
+
+            /** Registry + journal, fără start(). */
+            async function ensureCronSchedulerLoaded() {
+                if (!window.SsideCronClient || !localStorage.getItem('session_token')) return;
+                if (!ssideCronScheduler) {
+                    ssideCronScheduler = createCronSchedulerInstance();
+                    window.ssideCronScheduler = ssideCronScheduler;
+                }
+                if (!ssideCronScheduler) return;
+                await ssideCronScheduler.reloadAll();
+                await ssideCronScheduler.syncFromJournal();
                 if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+            }
+
+            function opresteCronSchedulerClient() {
+                if (ssideCronScheduler) {
+                    ssideCronScheduler.stop();
+                    ssideCronScheduler = null;
+                    window.ssideCronScheduler = null;
+                }
+                cronSchedulerArmed = false;
+                syncCronSchedulerPowerUi();
+            }
+
+            /** Oprește tick-ul; păstrează instanța pentru listă / Acum. */
+            async function opresteCronSchedulerTick() {
+                if (ssideCronScheduler) {
+                    ssideCronScheduler.stop();
+                    await ssideCronScheduler.reloadAll();
+                    await ssideCronScheduler.syncFromJournal();
+                }
+                cronSchedulerArmed = false;
+                if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                syncCronSchedulerPowerUi();
+            }
+
+            async function notifyCronJournal(action, cronKey, hint) {
+                if (!cronKey) return;
+                if (!ssideCronScheduler) await ensureCronSchedulerLoaded();
+                if (!ssideCronScheduler) return;
+                try {
+                    await ssideCronScheduler.appendJournal(action, cronKey, hint || '');
+                    await ssideCronScheduler.reloadOne(cronKey);
+                } catch (e) {
+                    /* ignore */
+                }
+            }
+
+            /** Registry din Redis + journal (fără a porni tick). */
+            async function reincarcaRegistryCronDinRedis() {
+                if (!ssideCronScheduler) return;
+                await ssideCronScheduler.reloadAll();
+                await ssideCronScheduler.syncFromJournal();
+            }
+
+            async function pornesteCronSchedulerClient() {
+                if (!localStorage.getItem('session_token')) return;
+                await scanSiMergeCheiCron();
+                await ensureCronSchedulerLoaded();
+                if (!ssideCronScheduler) return;
+                ssideCronScheduler.stop();
+                await ssideCronScheduler.reloadAll();
+                await ssideCronScheduler.syncFromJournal();
+                ssideCronScheduler.start();
+                cronSchedulerArmed = true;
+                if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                syncCronSchedulerPowerUi();
+            }
+
+            /** Login / refresh pagină: scheduler OFF, fără JSON.GET cron (lazy la deschidere panou). */
+            async function incarcaCronClientLaLogin() {
+                cronSchedulerArmed = false;
+                syncCronSchedulerPowerUi();
+            }
+
+            /** Prima deschidere panou Cron sau după logout — încarcă registry fără start(). */
+            async function incarcaCronPanouDacaLipsa() {
+                if (!localStorage.getItem('session_token')) return;
+                if (
+                    ssideCronScheduler &&
+                    ssideCronScheduler.getRegistry &&
+                    ssideCronScheduler.getRegistry().size > 0
+                ) {
+                    return;
+                }
+                await scanSiMergeCheiCron();
+                await ensureCronSchedulerLoaded();
             }
 
             async function reincarcaRegistruCron() {
@@ -4784,16 +4850,17 @@ function translateUpstashSearchResults(date) {
                 }
                 await scanSiMergeCheiCron();
                 if (!ssideCronScheduler) {
-                    await pornesteCronSchedulerClient();
-                    if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
-                    return;
+                    await ensureCronSchedulerLoaded();
+                } else {
+                    await reincarcaRegistryCronDinRedis();
                 }
-                await reincarcaRegistryCronDinRedis();
                 if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
             }
 
             window.opresteCronSchedulerClient = opresteCronSchedulerClient;
             window.pornesteCronSchedulerClient = pornesteCronSchedulerClient;
+            window.incarcaCronClientLaLogin = incarcaCronClientLaLogin;
+            window.incarcaCronPanouDacaLipsa = incarcaCronPanouDacaLipsa;
             window.notifyCronJournal = notifyCronJournal;
             window.reincarcaRegistruCron = reincarcaRegistruCron;
 
@@ -4801,6 +4868,15 @@ function translateUpstashSearchResults(date) {
                 SsideCronPanel.setDeps({
                     getRegistry: () =>
                         ssideCronScheduler ? ssideCronScheduler.getRegistry() : new Map(),
+                    isSchedulerArmed: () => cronSchedulerArmed,
+                    onToggleSchedulerPower: async () => {
+                        if (cronSchedulerArmed) {
+                            await opresteCronSchedulerTick();
+                        } else {
+                            await pornesteCronSchedulerClient();
+                        }
+                    },
+                    onPanelShow: () => incarcaCronPanouDacaLipsa(),
                     onRefresh: () => reincarcaRegistruCron(),
                     onOpenEdit: async (cronKey) => {
                         navInapoiLaCron = true;
@@ -4834,6 +4910,7 @@ function translateUpstashSearchResults(date) {
                         }
                     },
                     onRunNow: async (cronKey) => {
+                        if (!ssideCronScheduler) await ensureCronSchedulerLoaded();
                         if (!ssideCronScheduler) return;
                         const r = await ssideCronScheduler.runOnce(cronKey, 'manual');
                         if (r.reason === 'lock') {

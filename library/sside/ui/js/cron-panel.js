@@ -9,6 +9,9 @@
 
   let deps = {
     getRegistry: () => new Map(),
+    isSchedulerArmed: () => false,
+    onToggleSchedulerPower: null,
+    onPanelShow: null,
     onOpenEdit: null,
     onToggleEnabled: null,
     onRunNow: null,
@@ -301,6 +304,47 @@
     else renderRuns();
   }
 
+  function syncSchedulerPowerUi() {
+    const armed =
+      typeof deps.isSchedulerArmed === 'function' ? !!deps.isSchedulerArmed() : false;
+    const stateEl = document.getElementById('cron-scheduler-state');
+    const powerBtn = document.getElementById('btn-cron-power');
+    if (stateEl) {
+      stateEl.textContent = armed ? 'ON' : 'OFF';
+      stateEl.classList.toggle('is-on', armed);
+      stateEl.classList.toggle('is-off', !armed);
+      stateEl.title = armed
+        ? 'Scheduler activ — rulează joburile programate (enabled) în acest tab'
+        : 'Scheduler oprit — nu rulează tick programat; Acum (manual) merge';
+    }
+    if (powerBtn) {
+      powerBtn.textContent = armed ? 'Oprește' : 'Pornește';
+      powerBtn.className = armed ? 'btn-rosu btn-inline' : 'btn-albastru btn-inline';
+      powerBtn.title = armed
+        ? 'Oprește tick-ul programat (joburile rămân cu Activ on/off ca înainte)'
+        : 'SCAN + registry + pornește scheduler (ca vechiul login)';
+    }
+  }
+
+  function wireSchedulerPower() {
+    const powerBtn = document.getElementById('btn-cron-power');
+    if (!powerBtn || powerBtn._cronPowerWired) return;
+    powerBtn._cronPowerWired = true;
+    powerBtn.addEventListener('click', () => {
+      if (!deps.onToggleSchedulerPower) return;
+      const prev = powerBtn.textContent;
+      powerBtn.disabled = true;
+      powerBtn.textContent = '…';
+      Promise.resolve(deps.onToggleSchedulerPower())
+        .catch((e) => alert(e.message || String(e)))
+        .finally(() => {
+          powerBtn.disabled = false;
+          syncSchedulerPowerUi();
+        });
+    });
+    syncSchedulerPowerUi();
+  }
+
   function wireTabs() {
     document.querySelectorAll('#cron-panel-tabs [data-cron-tab]').forEach((btn) => {
       if (btn._cronTabWired) return;
@@ -333,6 +377,7 @@
 
   function render() {
     wireTabs();
+    wireSchedulerPower();
     syncTabUi();
     if (activeTab === 'jobs') renderJobs();
     else renderRuns();
@@ -345,7 +390,22 @@
   function show() {
     const el = document.getElementById('ecran-cron');
     if (el) el.style.display = 'block';
-    render();
+    syncSchedulerPowerUi();
+    if (typeof deps.onPanelShow === 'function') {
+      const reg = deps.getRegistry();
+      const needsLoad = !reg || reg.size === 0;
+      if (needsLoad && activeTab === 'jobs') {
+        const host = document.getElementById('cron-panel-list');
+        if (host) {
+          host.innerHTML = '<p class="prog-live-stub">Se încarcă joburile…</p>';
+        }
+      }
+      Promise.resolve(deps.onPanelShow())
+        .catch((e) => alert(e.message || String(e)))
+        .finally(() => render());
+    } else {
+      render();
+    }
   }
 
   function ascunde() {
@@ -357,6 +417,7 @@
     setDeps,
     render,
     refreshFromRegistry,
+    syncSchedulerPowerUi,
     show,
     ascunde,
     setActiveTab,
