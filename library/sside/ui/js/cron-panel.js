@@ -34,6 +34,25 @@
     }
   }
 
+  /** Următor run — programare + tick client când diferă. */
+  function fmtNextRun(date, schedule) {
+    if (!date) return '—';
+    const Sched = root.SsideCronSchedule;
+    const d = date instanceof Date ? date : new Date(date);
+    if (Number.isNaN(d.getTime())) return '—';
+    const sch =
+      schedule && typeof schedule === 'object'
+        ? schedule
+        : { timezone: schedule || (Sched && Sched.DEFAULT_TZ) };
+    if (Sched && typeof Sched.formatFireLineWithClientTick === 'function') {
+      return Sched.formatFireLineWithClientTick(d, sch);
+    }
+    if (Sched && typeof Sched.formatFireForSchedule === 'function') {
+      return Sched.formatFireForSchedule(d, sch).slice(0, 16);
+    }
+    return fmtTime(date, sch.timezone).slice(0, 16);
+  }
+
   function statusBadge(status) {
     const s = String(status || '—');
     let cls = 'cron-badge-neutral';
@@ -122,7 +141,7 @@
       name.textContent = entry.cronKey;
       const next = document.createElement('div');
       next.className = 'cron-job-next';
-      next.textContent = 'Următor: ' + fmtTime(entry.nextRunAt, tz);
+      next.textContent = 'Următor: ' + fmtNextRun(entry.nextRunAt, cfg.schedule);
       head.appendChild(name);
       head.appendChild(next);
 

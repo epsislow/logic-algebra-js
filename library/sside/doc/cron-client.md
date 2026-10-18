@@ -59,9 +59,16 @@ Interpretat în **`schedule.timezone`** (nu ora device-ului). Aceeași valoare �
 
 **Cron vs interval:** pentru `0/25 * * * *` folosește **`kind: cron`**. Pentru „la fiecare 25 min de la data X” folosește **`kind: interval`** + `startAt`.
 
-**Timezone:** la cron, ora din expr = fusul ales. `UTC` = UTC+0.
+**Timezone:** ora din expr / `startAt` = **wall clock** în fusul ales.
 
-**Validare:** expr cu fire la **&lt; 5 minute** respinsă; `interval.minutes` multiplu de 5, ≥ 5.
+| Mod JSON | Câmpuri | DST |
+|----------|---------|-----|
+| **IANA** | `timezone`: `"Europe/Bucharest"`, `"UTC"`, … (ID validat cu `Intl`) | da |
+| **Offset fix** | `timezone`: `"Fixed"`, `utcOffset`: `"+02:00"` / `"-05:30"` | nu |
+
+Cheie nouă: UI precompletează **fusul device-ului** (IANA). Tick scheduler rămâne grila **:00/:05/…** în `Europe/Bucharest`.
+
+**Validare:** expr cu fire la **&lt; 5 minute** respinsă; `interval.minutes` multiplu de 5, ≥ 5; fus IANA sau `Fixed` + offset.
 
 ### Primul run
 

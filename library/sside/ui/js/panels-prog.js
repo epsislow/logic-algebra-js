@@ -3854,13 +3854,28 @@
 
   function randeazaEditCron(host, obj) {
     const Sched = root.SsideCronSchedule;
+    const TIMEZONE_FIXED = (Sched && Sched.TIMEZONE_FIXED) || 'Fixed';
+
+    function deviceIanaTimezone() {
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (Sched && Sched.isValidIanaTimeZone && Sched.isValidIanaTimeZone(tz)) return tz;
+      } catch (e) {
+        /* ignore */
+      }
+      return Sched ? Sched.DEFAULT_TZ : 'Europe/Bucharest';
+    }
+
     if (!obj.schedule || typeof obj.schedule !== 'object') {
       obj.schedule = {
         kind: 'interval',
         minutes: 15,
-        timezone: 'Europe/Bucharest',
+        timezone: '',
         startAt: '',
       };
+    }
+    if (!obj.schedule.timezone || String(obj.schedule.timezone).trim() === '') {
+      obj.schedule.timezone = deviceIanaTimezone();
     }
     if (obj.mode == null) obj.mode = 'client';
     if (obj.enabled == null) obj.enabled = false;
@@ -3948,18 +3963,127 @@
     intMinInp.value = String(obj.schedule.minutes || 15);
     row('Interval (minute, multiplu de 5)', intMinInp);
 
-    const tzSel = document.createElement('select');
+    const initFixed = String(obj.schedule.timezone || '').trim() === TIMEZONE_FIXED;
+    let initOffSign = '+';
+    let initOffH = 0;
+    let initOffM = 0;
+    const offM = initFixed && Sched ? Sched.parseUtcOffsetToMinutes(obj.schedule.utcOffset) : NaN;
+    if (Number.isFinite(offM)) {
+      initOffSign = offM < 0 ? '-' : '+';
+      const abs = Math.abs(offM);
+      initOffH = Math.floor(abs / 60);
+      initOffM = abs % 60;
+    }
+
+    const tzTypeLab = document.createElement('label');
+    tzTypeLab.className = 'prog-edit-field-label';
+    tzTypeLab.textContent = 'Fus orar — tip';
+    card.appendChild(tzTypeLab);
+    const tzTypeSel = document.createElement('select');
     [
-      { v: 'Europe/Bucharest', l: 'București (Europe/Bucharest)' },
-      { v: 'UTC', l: 'UTC (+00:00)' },
+      { v: 'iana', l: 'IANA (DST automat)' },
+      { v: 'fixed', l: 'Offset UTC (fix, fără DST)' },
     ].forEach((t) => {
       const o = document.createElement('option');
       o.value = t.v;
       o.textContent = t.l;
-      tzSel.appendChild(o);
+      tzTypeSel.appendChild(o);
     });
-    tzSel.value = obj.schedule.timezone || 'Europe/Bucharest';
-    row('Fus orar (schedule.timezone)', tzSel);
+    tzTypeSel.value = initFixed ? 'fixed' : 'iana';
+    card.appendChild(tzTypeSel);
+
+    const tzIanaLab = document.createElement('label');
+    tzIanaLab.className = 'prog-edit-field-label';
+    tzIanaLab.textContent = 'Fus IANA (schedule.timezone)';
+    card.appendChild(tzIanaLab);
+    const tzIanaInp = document.createElement('input');
+    tzIanaInp.type = 'text';
+    tzIanaInp.spellcheck = false;
+    tzIanaInp.autocomplete = 'off';
+    tzIanaInp.placeholder = deviceIanaTimezone();
+    tzIanaInp.value = initFixed ? deviceIanaTimezone() : obj.schedule.timezone || deviceIanaTimezone();
+    card.appendChild(tzIanaInp);
+    const tzIanaHint = document.createElement('p');
+    tzIanaHint.className = 'prog-live-stub';
+    tzIanaHint.style.fontSize = '12px';
+    tzIanaHint.style.margin = '0 0 8px';
+    tzIanaHint.textContent =
+      'La cheie nouă: fusul device-ului. Poți scrie orice ID IANA valid (ex. UTC, Europe/Berlin).';
+    card.appendChild(tzIanaHint);
+
+    const tzFixedLab = document.createElement('label');
+    tzFixedLab.className = 'prog-edit-field-label';
+    tzFixedLab.textContent = 'Offset față de UTC';
+    card.appendChild(tzFixedLab);
+    const tzFixedWrap = document.createElement('div');
+    tzFixedWrap.className = 'cron-tz-fixed-row';
+    const tzFixedSign = document.createElement('select');
+    ['+', '-'].forEach((sg) => {
+      const o = document.createElement('option');
+      o.value = sg;
+      o.textContent = sg;
+      tzFixedSign.appendChild(o);
+    });
+    tzFixedSign.value = initOffSign;
+    const tzFixedHour = document.createElement('select');
+    for (let h = 0; h <= 14; h++) {
+      const o = document.createElement('option');
+      o.value = String(h);
+      o.textContent = String(h).padStart(2, '0') + ' h';
+      tzFixedHour.appendChild(o);
+    }
+    tzFixedHour.value = String(initOffH);
+    const tzFixedMin = document.createElement('select');
+    [0, 15, 30, 45].forEach((m) => {
+      const o = document.createElement('option');
+      o.value = String(m);
+      o.textContent = ':' + String(m).padStart(2, '0');
+      tzFixedMin.appendChild(o);
+    });
+    tzFixedMin.value = String(initOffM);
+    tzFixedWrap.appendChild(tzFixedSign);
+    tzFixedWrap.appendChild(tzFixedHour);
+    tzFixedWrap.appendChild(tzFixedMin);
+    card.appendChild(tzFixedWrap);
+    const tzFixedHint = document.createElement('p');
+    tzFixedHint.className = 'prog-live-stub';
+    tzFixedHint.style.fontSize = '12px';
+    tzFixedHint.style.margin = '0 0 8px';
+    tzFixedHint.textContent =
+      'Salvat ca timezone «Fixed» + utcOffset (ex. +02:00). Nu urmează ora de vară.';
+    card.appendChild(tzFixedHint);
+
+    function readUtcOffsetFromUi() {
+      const sign = tzFixedSign.value === '-' ? -1 : 1;
+      const h = parseInt(tzFixedHour.value, 10) || 0;
+      const m = parseInt(tzFixedMin.value, 10) || 0;
+      if (Sched && typeof Sched.formatUtcOffsetMinutes === 'function') {
+        return Sched.formatUtcOffsetMinutes(sign * (h * 60 + m));
+      }
+      return (sign < 0 ? '-' : '+') + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+
+    function applyTimezoneFields(sched) {
+      if (!sched || typeof sched !== 'object') return;
+      if (tzTypeSel.value === 'fixed') {
+        sched.timezone = TIMEZONE_FIXED;
+        sched.utcOffset = readUtcOffsetFromUi();
+      } else {
+        const id = tzIanaInp.value.trim() || deviceIanaTimezone();
+        sched.timezone = id;
+        delete sched.utcOffset;
+      }
+    }
+
+    function syncTzVisibility() {
+      const fixed = tzTypeSel.value === 'fixed';
+      tzIanaLab.style.display = fixed ? 'none' : '';
+      tzIanaInp.style.display = fixed ? 'none' : '';
+      tzIanaHint.style.display = fixed ? 'none' : '';
+      tzFixedLab.style.display = fixed ? '' : 'none';
+      tzFixedWrap.style.display = fixed ? '' : 'none';
+      tzFixedHint.style.display = fixed ? '' : 'none';
+    }
 
     function wallStartAtToDatetimeLocal(wall) {
       const s = String(wall || '').trim();
@@ -4004,21 +4128,47 @@
     timeoutInp.value = String(obj.timeoutSeconds || 300);
     row('Timeout (sec) — TTL lock max 240', timeoutInp);
 
+    const previewHead = document.createElement('div');
+    previewHead.className = 'cron-preview-head';
+    previewHead.appendChild(document.createTextNode('Următoarele '));
+    const previewCountSel = document.createElement('select');
+    previewCountSel.className = 'cron-preview-count-sel';
+    previewCountSel.title = 'Câte fire afișăm în preview';
+    [5, 10, 15, 20].forEach((n) => {
+      const o = document.createElement('option');
+      o.value = String(n);
+      o.textContent = String(n);
+      previewCountSel.appendChild(o);
+    });
+    try {
+      const saved = parseInt(localStorage.getItem('sside-cron-preview-count'), 10);
+      if ([5, 10, 15, 20].indexOf(saved) >= 0) previewCountSel.value = String(saved);
+    } catch (e) {
+      /* ignore */
+    }
+    previewHead.appendChild(previewCountSel);
+    const previewHeadTail = document.createElement('span');
+    previewHeadTail.className = 'cron-preview-head-tail';
+    previewHead.appendChild(previewHeadTail);
+    card.appendChild(previewHead);
+
     const preview = document.createElement('p');
-    preview.className = 'prog-live-stub';
+    preview.className = 'prog-live-stub cron-edit-preview';
     preview.style.fontSize = '12px';
     card.appendChild(preview);
 
+    function previewFireCount() {
+      const n = parseInt(previewCountSel.value, 10);
+      return n === 10 || n === 15 || n === 20 ? n : 5;
+    }
+
     function defaultIntervalStartAt() {
       if (!Sched) return '';
-      const tz = tzSel.value || 'Europe/Bucharest';
-      const next = Sched.getNextFireAfter(
-        { kind: 'cron', expr: '0/5 * * * *', timezone: tz },
-        new Date(),
-        { strictFuture: true }
-      );
+      const sch = { kind: 'cron', expr: '0/5 * * * *' };
+      applyTimezoneFields(sch);
+      const next = Sched.getNextFireAfter(sch, new Date(), { strictFuture: true });
       if (!next) return '';
-      return Sched.formatFireInTz(next, tz).slice(0, 16);
+      return Sched.formatFireForSchedule(next, sch).slice(0, 16);
     }
 
     function syncCronVisibility() {
@@ -4059,25 +4209,40 @@
             ? {
                 kind: 'cron',
                 expr: currentCronExpr(),
-                timezone: tzSel.value,
                 ...(startAtVal ? { startAt: startAtVal } : {}),
               }
             : {
                 kind: 'interval',
                 minutes: parseInt(intMinInp.value, 10) || 15,
-                timezone: tzSel.value,
                 startAt: startAtVal || defaultIntervalStartAt(),
               };
-        const fires = Sched.getNextFires(sch, new Date(), 5, { strictFuture: true });
+        applyTimezoneFields(sch);
+        const count = previewFireCount();
+        const tzLabel =
+          typeof Sched.scheduleTimezoneLabel === 'function'
+            ? Sched.scheduleTimezoneLabel(sch)
+            : sch.timezone;
+        const deviceTz = deviceIanaTimezone();
+        const schedIana =
+          sch.timezone !== TIMEZONE_FIXED ? String(sch.timezone || '').trim() : '';
+        const sameAsDevice = schedIana !== '' && schedIana === deviceTz;
+        previewHeadTail.textContent = sameAsDevice
+          ? ' rulări (' + tzLabel + '):'
+          : ' rulări (' + tzLabel + ' la timezone device: ' + deviceTz + '):';
+        const fires = Sched.getNextFires(sch, new Date(), count, { strictFuture: true });
         if (!fires.length) {
-          preview.textContent = 'Următoarele 5 rulări: —';
+          preview.textContent = '—';
           return;
         }
-        preview.textContent =
-          'Următoarele 5 rulări (' +
-          tzSel.value +
-          '): ' +
-          fires.map((d) => Sched.formatFireInTz(d, tzSel.value)).join(' · ');
+        const lines =
+          typeof Sched.formatPreviewFireLines === 'function'
+            ? Sched.formatPreviewFireLines(fires, sch)
+            : fires.map((d) =>
+                typeof Sched.formatFireLineWithClientTick === 'function'
+                  ? Sched.formatFireLineWithClientTick(d, sch)
+                  : Sched.formatFireForSchedule(d, sch).slice(0, 16)
+              );
+        preview.textContent = lines.join('\n');
       } catch (e) {
         preview.textContent = String(e.message || e);
       }
@@ -4095,8 +4260,8 @@
           obj.schedule = {
             kind: 'cron',
             expr: currentCronExpr(),
-            timezone: tzSel.value,
           };
+          applyTimezoneFields(obj.schedule);
           if (startAtVal) obj.schedule.startAt = startAtVal;
           else delete obj.schedule.startAt;
         } else {
@@ -4105,9 +4270,9 @@
           obj.schedule = {
             kind: 'interval',
             minutes: parseInt(intMinInp.value, 10) || 15,
-            timezone: tzSel.value,
             startAt: st,
           };
+          applyTimezoneFields(obj.schedule);
         }
         scrieRaw(obj);
       }
@@ -4122,7 +4287,30 @@
       syncCronVisibility();
       syncFromDom();
     });
-    [titleInp, enChk, intMinInp, startAtInp, tzSel, algSel, timeoutInp].forEach((el) => {
+    tzTypeSel.addEventListener('change', () => {
+      syncTzVisibility();
+      syncFromDom();
+    });
+    previewCountSel.addEventListener('change', () => {
+      try {
+        localStorage.setItem('sside-cron-preview-count', previewCountSel.value);
+      } catch (e) {
+        /* ignore */
+      }
+      updatePreview();
+    });
+    [
+      titleInp,
+      enChk,
+      intMinInp,
+      startAtInp,
+      tzIanaInp,
+      tzFixedSign,
+      tzFixedHour,
+      tzFixedMin,
+      algSel,
+      timeoutInp,
+    ].forEach((el) => {
       el.addEventListener('input', () => syncFromDom());
       el.addEventListener('change', () => syncFromDom());
     });
@@ -4132,6 +4320,7 @@
     });
 
     syncCronVisibility();
+    syncTzVisibility();
     host.appendChild(card);
     syncFromDom();
   }

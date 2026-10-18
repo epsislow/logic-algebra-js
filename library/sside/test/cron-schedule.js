@@ -171,6 +171,86 @@ module.exports = {
       },
     },
     {
+      id: 12,
+      desc: 'preview — același tick, un singur run',
+      run() {
+        const sched = { kind: 'cron', expr: '* * * * *', timezone: 'Europe/Bucharest' };
+        const fires = [
+          new Date('2026-10-18T14:51:00.000Z'),
+          new Date('2026-10-18T14:52:00.000Z'),
+          new Date('2026-10-18T14:53:00.000Z'),
+        ];
+        const lines = S.formatPreviewFireLines(fires, sched);
+        assertEq(lines.length, 3);
+        assert(lines[0].indexOf('același tick 17:55') >= 0);
+        assert(lines[1].indexOf('același tick 17:55') >= 0);
+        assert(lines[2].indexOf('rulează la 17:55') >= 0);
+      },
+    },
+    {
+      id: 11,
+      desc: 'Fixed UTC+2 — expr wall 14:30',
+      run() {
+        const sched = {
+          kind: 'cron',
+          expr: '30 14 * * *',
+          timezone: 'Fixed',
+          utcOffset: '+02:00',
+        };
+        assert(S.validateScheduleTimezone(sched).ok);
+        const next = S.getNextFireAfter(
+          sched,
+          new Date('2026-03-16T11:00:00.000Z'),
+          { strictFuture: true }
+        );
+        assert(next);
+        assertEq(S.formatFireForSchedule(next, sched).slice(11, 16), '14:30');
+      },
+    },
+    {
+      id: 10,
+      desc: 'tick client — 10/7 off-grid → rulează la :20/:25',
+      run() {
+        const sched = { kind: 'cron', expr: '10/7 * * * *', timezone: 'Europe/Bucharest' };
+        const from = new Date('2026-10-18T14:16:00.000Z');
+        const fires = S.getNextFires(sched, from, 5, { strictFuture: true });
+        assert(fires.length >= 3, 'fires');
+        assertEq(S.formatFireInTz(fires[0], 'Europe/Bucharest').slice(0, 16), '2026-10-18 17:17');
+        assertEq(
+          S.formatFireInTz(S.getClientExecutionTickAtOrAfter(fires[0]), 'Europe/Bucharest').slice(
+            0,
+            16
+          ),
+          '2026-10-18 17:20'
+        );
+        assertEq(S.formatFireInTz(fires[1], 'Europe/Bucharest').slice(11, 16), '17:24');
+        assertEq(
+          S.formatFireInTz(S.getClientExecutionTickAtOrAfter(fires[1]), 'Europe/Bucharest').slice(
+            11,
+            16
+          ),
+          '17:25'
+        );
+        const onGrid = S.getNextFireAfter(
+          sched,
+          new Date('2026-10-18T14:09:00.000Z'),
+          { strictFuture: true }
+        );
+        assertEq(S.formatFireInTz(onGrid, 'Europe/Bucharest').slice(11, 16), '17:10');
+        assertEq(
+          S.formatFireInTz(S.getClientExecutionTickAtOrAfter(onGrid), 'Europe/Bucharest').slice(
+            11,
+            16
+          ),
+          '17:10'
+        );
+        assertEq(
+          S.formatFireLineWithClientTick(fires[1], 'Europe/Bucharest'),
+          '2026-10-18 17:24  (rulează la 17:25)'
+        );
+      },
+    },
+    {
       id: 9,
       desc: 'expr imposibil (minut 99) — fără scan lung',
       run() {

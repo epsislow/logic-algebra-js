@@ -170,7 +170,7 @@
         default: {
           kind: 'interval',
           minutes: 15,
-          timezone: 'Europe/Bucharest',
+          timezone: '',
           startAt: '',
         },
       },
@@ -190,7 +190,7 @@
       schedule: {
         kind: 'interval',
         minutes: 15,
-        timezone: 'Europe/Bucharest',
+        timezone: '',
         startAt: '',
       },
       alg: '',

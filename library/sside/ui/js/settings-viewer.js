@@ -482,9 +482,12 @@
   }
 
   function ascunde() {
+    const wasOpen =
+      document.body.classList.contains('sside-settings-open') || esteDeschis();
     document.body.classList.remove('sside-settings-open');
     const panel = document.getElementById('ecran-setari');
     if (panel) panel.style.display = 'none';
+    if (!wasOpen) return;
     if (settingsReturnToRuntime) {
       const runtimeEl = document.getElementById('ecran-ui-runtime');
       if (runtimeEl) runtimeEl.style.display = 'block';

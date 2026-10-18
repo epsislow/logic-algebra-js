@@ -189,6 +189,8 @@
         let infoCheieCurenta = null;
         /** Stivă Înapoi: ui→form/list→schema (push la ↗ / Deschide schema). */
         let navProvenientaStack = [];
+        /** Edit deschis din panoul Cron → Înapoi revine la Cron, nu la listă. */
+        let navInapoiLaCron = false;
         let redisTipCurent = 'string';
         let modEditare = 'text'; // form | text | json
         let modalCheieMod = 'create'; // create | duplicate
@@ -2468,6 +2470,14 @@ function translateUpstashSearchResults(date) {
                 });
                 return;
             }
+            if (navInapoiLaCron) {
+                navInapoiLaCron = false;
+                document.getElementById('ecran-detaliu').style.display = 'none';
+                if (typeof window.deschidePanouCron === 'function') {
+                    window.deschidePanouCron();
+                }
+                return;
+            }
             inapoiLaLista();
         }
 
@@ -2486,6 +2496,9 @@ function translateUpstashSearchResults(date) {
                 const prevCheie = cheieDinNavFrame(navProvenientaStack[navProvenientaStack.length - 1]);
                 btn.textContent = etichetaInapoiPentruCheie(prevCheie);
                 btn.title = prevCheie || '';
+            } else if (navInapoiLaCron) {
+                btn.textContent = '← Înapoi la Cron';
+                btn.title = 'Panou Cron';
             } else {
                 btn.textContent = '← Înapoi la listă';
                 btn.title = '';
@@ -2612,6 +2625,7 @@ function translateUpstashSearchResults(date) {
             cheieCurenta = null;
             infoCheieCurenta = null;
             navProvenientaStack = [];
+            navInapoiLaCron = false;
             redisTipCurent = 'string';
             valoareBaseline = '';
             ttlMsRemaining = null;
@@ -3991,6 +4005,7 @@ function translateUpstashSearchResults(date) {
 
             if (!opts.keepNav && !opts.fromNavBack) {
                 navProvenientaStack = [];
+                if (!opts.fromCronPanel) navInapoiLaCron = false;
             }
 
             cheieCurenta = cheie;
@@ -4012,6 +4027,12 @@ function translateUpstashSearchResults(date) {
 
             document.getElementById('ecran-lista').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            if (window.SsideCronPanel) SsideCronPanel.ascunde();
+            const ecCronDet = document.getElementById('ecran-cron');
+            if (ecCronDet) ecCronDet.style.display = 'none';
+            if (window.SsideDocs) SsideDocs.ascunde();
+            if (window.SsideSettings) SsideSettings.ascunde();
+            document.getElementById('ecran-lista').style.display = 'none';
             ascundeEcranUiRuntime(); /* scoate și class sside-runtime-active */
             document.getElementById('ecran-detaliu').style.display = 'block';
             document.getElementById('detail-key-name').textContent = cheie;
@@ -4782,7 +4803,11 @@ function translateUpstashSearchResults(date) {
                         ssideCronScheduler ? ssideCronScheduler.getRegistry() : new Map(),
                     onRefresh: () => reincarcaRegistruCron(),
                     onOpenEdit: async (cronKey) => {
-                        await deschideDetaliu(cronKey);
+                        navInapoiLaCron = true;
+                        await deschideDetaliu(cronKey, {
+                            fromCronPanel: true,
+                            preferProgMod: 'edit',
+                        });
                     },
                     onToggleEnabled: async (cronKey, enabled) => {
                         try {

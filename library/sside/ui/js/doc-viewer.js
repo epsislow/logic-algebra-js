@@ -257,9 +257,12 @@
   }
 
   function ascunde() {
+    const wasOpen =
+      document.body.classList.contains('sside-docs-open') || esteDeschis();
     document.body.classList.remove('sside-docs-open');
     const panel = document.getElementById('ecran-docs');
     if (panel) panel.style.display = 'none';
+    if (!wasOpen) return;
     if (docsReturnToRuntime) {
       const runtimeEl = document.getElementById('ecran-ui-runtime');
       if (runtimeEl) runtimeEl.style.display = 'block';

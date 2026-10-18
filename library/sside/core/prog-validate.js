@@ -507,12 +507,13 @@
     if (!sched || !sched.kind) {
       return err('schedule obligatoriu (kind: cron sau interval)');
     }
+    if (CronSched && typeof CronSched.validateScheduleTimezone === 'function') {
+      const tzv = CronSched.validateScheduleTimezone(sched);
+      if (!tzv.ok) return tzv;
+    }
     if (sched.kind === 'cron') {
       if (!sched.expr || !String(sched.expr).trim()) {
         return err('schedule.expr obligatoriu');
-      }
-      if (!sched.timezone || !String(sched.timezone).trim()) {
-        return err('schedule.timezone obligatoriu (IANA, ex. Europe/Bucharest sau UTC)');
       }
       if (CronSched) {
         const g = CronSched.validateMinuteGranularity(sched.expr);
@@ -525,7 +526,7 @@
       }
       if (sched.startAt != null && String(sched.startAt).trim() !== '') {
         if (CronSched) {
-          const sa = CronSched.validateScheduleStartAt(sched.startAt, sched.timezone);
+          const sa = CronSched.validateScheduleStartAt(sched.startAt, sched);
           if (!sa.ok) return sa;
         }
       }
@@ -539,12 +540,11 @@
           return err('interval.minutes trebuie multiplu de 5, minim 5');
         }
       }
-      if (!sched.timezone) sched.timezone = CronSched ? CronSched.DEFAULT_TZ : 'Europe/Bucharest';
       if (!sched.startAt || !String(sched.startAt).trim()) {
         return err('interval.startAt obligatoriu (YYYY-MM-DD HH:MM în schedule.timezone)');
       }
       if (CronSched) {
-        const sa = CronSched.validateScheduleStartAt(sched.startAt, sched.timezone);
+        const sa = CronSched.validateScheduleStartAt(sched.startAt, sched);
         if (!sa.ok) return sa;
       }
     } else {
