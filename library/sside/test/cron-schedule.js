@@ -65,6 +65,39 @@ module.exports = {
       },
     },
     {
+      id: 6,
+      desc: 'msUntilNextScheduleTick — login 15:12 → tick 15:15',
+      run() {
+        const sched = { kind: 'interval', minutes: 5, timezone: 'Europe/Bucharest' };
+        const from = new Date('2026-10-18T12:12:00.000Z');
+        const ms = S.msUntilNextScheduleTick(from, sched);
+        assertEq(ms, 3 * 60 * 1000);
+        const next = new Date(from.getTime() + ms);
+        assertEq(S.formatFireInTz(next, 'Europe/Bucharest'), '2026-10-18 15:15:00');
+      },
+    },
+    {
+      id: 7,
+      desc: 'msUntilNextScheduleTick — la 15:15 următorul tick 15:20',
+      run() {
+        const sched = { kind: 'interval', minutes: 5, timezone: 'Europe/Bucharest' };
+        const from = new Date('2026-10-18T12:15:00.000Z');
+        const ms = S.msUntilNextScheduleTick(from, sched);
+        assertEq(ms, 5 * 60 * 1000);
+      },
+    },
+    {
+      id: 5,
+      desc: 'getLastFireAtOrBefore interval 5 min',
+      run() {
+        const sched = { kind: 'interval', minutes: 5, timezone: 'Europe/Bucharest' };
+        const at = new Date('2026-10-18T12:16:00.000Z');
+        const slot = S.getLastFireAtOrBefore(sched, at);
+        assert(slot, 'slot');
+        assertEq(S.formatFireInTz(slot, 'Europe/Bucharest'), '2026-10-18 15:15:00');
+      },
+    },
+    {
       id: 4,
       desc: 'UTC timezone — ora wall = expr',
       run() {

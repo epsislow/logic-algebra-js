@@ -12,6 +12,8 @@
   const JOURNAL_CAP = 200;
   const TICK_MS = 5 * 60 * 1000;
   const POLL_MS = 2 * 60 * 1000;
+  /** Grila tick-ului global (aliniat la minute 0/5/10/… în fusul de referință). */
+  const TICK_GRID_MINUTES = 5;
   const LOCK_TTL_MAX = 240;
   const RECENT_RUNS_CAP = 10;
 
@@ -92,10 +94,23 @@
     }
     const nextRunAt = Schedule.getNextFireAfter(sched, n, { strictFuture: true });
     let dueAt = nextRunAt;
-    if (config.enabled && state && state.nextRunAt) {
-      const prev = new Date(state.nextRunAt);
-      if (!Number.isNaN(prev.getTime()) && prev.getTime() <= n.getTime()) {
-        dueAt = prev;
+    if (config.enabled) {
+      const lastSlot =
+        typeof Schedule.getLastFireAtOrBefore === 'function'
+          ? Schedule.getLastFireAtOrBefore(sched, n)
+          : null;
+      let lastRunMs = 0;
+      if (state && state.lastRunAt) {
+        const lr = new Date(state.lastRunAt);
+        if (!Number.isNaN(lr.getTime())) lastRunMs = lr.getTime();
+      }
+      if (lastSlot && lastSlot.getTime() <= n.getTime() && lastSlot.getTime() > lastRunMs) {
+        dueAt = lastSlot;
+      } else if (state && state.nextRunAt) {
+        const prev = new Date(state.nextRunAt);
+        if (!Number.isNaN(prev.getTime()) && prev.getTime() <= n.getTime()) {
+          dueAt = prev;
+        }
       }
     }
     const upcomingFires = nextRunAt
@@ -250,9 +265,13 @@
       return { ok: false, reason: 'disabled' };
     }
     if (trigger === 'scheduled') {
-      const now = Date.now();
-      const dueRef = entry.dueAt || entry.nextRunAt;
-      if (!dueRef || dueRef.getTime() > now) {
+      const now = new Date();
+      const times = computeRegistryTimes(cfg, entry.state, now);
+      entry.dueAt = times.dueAt;
+      entry.nextRunAt = times.nextRunAt;
+      entry.upcomingFires = times.upcomingFires;
+      const dueRef = times.dueAt || times.nextRunAt;
+      if (!dueRef || dueRef.getTime() > now.getTime()) {
         return { ok: false, reason: 'not_due' };
       }
     }
@@ -376,6 +395,14 @@
     return out;
   }
 
+  function tickGridSchedule() {
+    return {
+      kind: 'interval',
+      minutes: TICK_GRID_MINUTES,
+      timezone: Schedule.DEFAULT_TZ || 'Europe/Bucharest',
+    };
+  }
+
   function createScheduler(deps) {
     const ctx = {
       deps: Object.assign(
@@ -390,6 +417,7 @@
       registry: new Map(),
       logCursor: 0,
       timers: [],
+      gridTimerId: null,
     };
 
     async function tickFull() {
@@ -401,15 +429,40 @@
       await syncFromJournal(ctx);
     }
 
+    function stopTimers() {
+      ctx.timers.forEach((id) => {
+        clearInterval(id);
+        clearTimeout(id);
+      });
+      ctx.timers = [];
+      if (ctx.gridTimerId != null) {
+        clearTimeout(ctx.gridTimerId);
+        ctx.gridTimerId = null;
+      }
+    }
+
+    function scheduleGridTick() {
+      if (ctx.gridTimerId != null) {
+        clearTimeout(ctx.gridTimerId);
+        ctx.gridTimerId = null;
+      }
+      const delay = Schedule.msUntilNextScheduleTick(new Date(), tickGridSchedule());
+      ctx.gridTimerId = setTimeout(() => {
+        ctx.gridTimerId = null;
+        tickFull()
+          .catch(() => {})
+          .finally(() => scheduleGridTick());
+      }, delay);
+    }
+
     function start() {
-      stop();
+      stopTimers();
       ctx.timers.push(setInterval(() => pollJournal().catch(() => {}), POLL_MS));
-      ctx.timers.push(setInterval(() => tickFull().catch(() => {}), TICK_MS));
+      scheduleGridTick();
     }
 
     function stop() {
-      ctx.timers.forEach(clearInterval);
-      ctx.timers = [];
+      stopTimers();
       ctx.registry.clear();
       ctx.logCursor = 0;
     }
@@ -432,6 +485,7 @@
     JOURNAL_KEY,
     TICK_MS,
     POLL_MS,
+    TICK_GRID_MINUTES,
     RECENT_RUNS_CAP,
     prependRecentRuns,
     cronSuffix,

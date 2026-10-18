@@ -4746,6 +4746,18 @@ function translateUpstashSearchResults(date) {
                 window.ssideCronScheduler = ssideCronScheduler;
                 await ssideCronScheduler.reloadAll();
                 ssideCronScheduler.start();
+                if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+            }
+
+            if (!window._ssideCronVisibilityWired) {
+                window._ssideCronVisibilityWired = true;
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState !== 'visible') return;
+                    if (!ssideCronScheduler || !localStorage.getItem('session_token')) return;
+                    ssideCronScheduler.syncFromJournal().catch(() => {});
+                    ssideCronScheduler.runDueJobs().catch(() => {});
+                    if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
+                });
             }
 
             async function reincarcaRegistruCron() {

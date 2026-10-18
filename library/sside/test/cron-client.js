@@ -123,6 +123,35 @@ module.exports = {
       },
     },
     {
+      id: 6,
+      desc: 'reloadAll apoi start păstrează registry',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec([
+          'JSON.SET',
+          'cron:keep',
+          '$',
+          JSON.stringify({
+            v: 1,
+            mode: 'client',
+            enabled: true,
+            schedule: { kind: 'interval', minutes: 5, timezone: 'UTC' },
+            alg: 'alg:_k',
+          }),
+        ]);
+        const sched = Cron.createScheduler({
+          redis,
+          listCronKeys: async () => ['cron:keep'],
+          onRunAlg: async () => ({ msg: 'ok' }),
+        });
+        await sched.reloadAll();
+        assert(sched.getRegistry().has('cron:keep'), 'după reloadAll');
+        sched.start();
+        assert(sched.getRegistry().has('cron:keep'), 'după start');
+        sched.stop();
+      },
+    },
+    {
       id: 4,
       desc: 'journal reloadOne',
       async run() {

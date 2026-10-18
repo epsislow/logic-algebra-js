@@ -222,6 +222,27 @@
     return { ok: true };
   }
 
+  /** Ultima fire a schedule-ului la sau înainte de `beforeDate` (granularitate minut). */
+  function getLastFireAtOrBefore(schedule, beforeDate) {
+    const s = normalizeSchedule(schedule);
+    if (!s) return null;
+    const tz = scheduleTimezone(s);
+    const expr = cronExprFromSchedule(s);
+    if (!expr) return null;
+    const fields = parseExpr(expr);
+    let end = beforeDate instanceof Date ? new Date(beforeDate.getTime()) : new Date(beforeDate);
+    if (Number.isNaN(end.getTime())) end = new Date();
+    end.setUTCSeconds(0, 0);
+    const maxSteps = 400 * 24 * 60;
+    let t = end.getTime();
+    for (let i = 0; i < maxSteps; i++) {
+      const d = new Date(t);
+      if (cronFieldsMatch(fields, d, tz)) return d;
+      t -= 60000;
+    }
+    return null;
+  }
+
   function getNextFireAfter(schedule, fromDate, opts) {
     opts = opts || {};
     const s = normalizeSchedule(schedule);
@@ -244,6 +265,14 @@
       t += 60000;
     }
     return null;
+  }
+
+  /** Millisecunde până la următorul slot strict viitor al schedule-ului (pentru setTimeout aliniat). */
+  function msUntilNextScheduleTick(fromDate, schedule) {
+    const from = fromDate instanceof Date ? fromDate : new Date(fromDate);
+    const next = getNextFireAfter(schedule, from, { strictFuture: true });
+    if (!next) return 5 * 60 * 1000;
+    return Math.max(0, next.getTime() - from.getTime());
   }
 
   function getNextFires(schedule, fromDate, count, opts) {
@@ -290,6 +319,8 @@
     minMinuteGap,
     validateMinuteGranularity,
     getNextFireAfter,
+    getLastFireAtOrBefore,
+    msUntilNextScheduleTick,
     getNextFires,
     getWallParts,
     formatFireInTz,

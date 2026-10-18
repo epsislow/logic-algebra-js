@@ -63,10 +63,12 @@ La creare / save: **`nextRunAt`** = prima fire **strict viitoare** (nu rulează 
 
 | Timer | Acțiune |
 |-------|---------|
-| **2 min** | Citește journal → `reloadOne` pentru chei modificate |
-| **5 min** | Journal + rulează joburi due |
+| **grilă 5 min** | La **:00, :05, :10, :15…** (fus `Europe/Bucharest`, ca intervalul minim) — journal + joburi due. **Nu** pornește de la login; login la 15:12 → primul tick la **15:15**. Login la 15:14–15:15 → e OK să sari peste 15:15, următorul tick **15:20**. |
+| **2 min** | Citește journal → `reloadOne` (relativ la pornire; sync config între tab-uri) |
 
-Due = `now >= nextRunAt` (precomputat în registry). Catch-up: max **1** run dacă ai ratat tick-uri.
+Tab reactivat după throttling → due + sync journal (catch-up).
+
+Due = ultimul slot din schedule **≤ momentul tick-ului** neacoperit de `lastRunAt` (max **1** run per tick).
 
 Lock: `ttl = min(timeoutSeconds, 240)` secunde.
 
