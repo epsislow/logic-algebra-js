@@ -523,12 +523,30 @@
           return err(e.message || String(e));
         }
       }
+      if (sched.startAt != null && String(sched.startAt).trim() !== '') {
+        if (CronSched) {
+          const sa = CronSched.validateScheduleStartAt(sched.startAt, sched.timezone);
+          if (!sa.ok) return sa;
+        }
+      }
     } else if (sched.kind === 'interval') {
-      const m = parseInt(sched.minutes, 10);
-      if (!Number.isFinite(m) || m < 5 || m > 60 || m % 5 !== 0) {
-        return err('interval.minutes trebuie multiplu de 5, între 5 și 60');
+      if (CronSched) {
+        const im = CronSched.validateIntervalMinutes(sched.minutes);
+        if (!im.ok) return im;
+      } else {
+        const m = parseInt(sched.minutes, 10);
+        if (!Number.isFinite(m) || m < 5 || m % 5 !== 0) {
+          return err('interval.minutes trebuie multiplu de 5, minim 5');
+        }
       }
       if (!sched.timezone) sched.timezone = CronSched ? CronSched.DEFAULT_TZ : 'Europe/Bucharest';
+      if (!sched.startAt || !String(sched.startAt).trim()) {
+        return err('interval.startAt obligatoriu (YYYY-MM-DD HH:MM în schedule.timezone)');
+      }
+      if (CronSched) {
+        const sa = CronSched.validateScheduleStartAt(sched.startAt, sched.timezone);
+        if (!sa.ok) return sa;
+      }
     } else {
       return err('schedule.kind necunoscut');
     }

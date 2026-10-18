@@ -167,7 +167,12 @@
       enabled: { type: 'boolean', default: false },
       schedule: {
         type: 'object',
-        default: { kind: 'interval', minutes: 15, timezone: 'Europe/Bucharest' },
+        default: {
+          kind: 'interval',
+          minutes: 15,
+          timezone: 'Europe/Bucharest',
+          startAt: '',
+        },
       },
       alg: { type: 'string', default: '', description: 'alg:_…' },
       vars: { type: 'object', default: {} },
@@ -182,7 +187,12 @@
       title: title || '',
       mode: 'client',
       enabled: false,
-      schedule: { kind: 'interval', minutes: 15, timezone: 'Europe/Bucharest' },
+      schedule: {
+        kind: 'interval',
+        minutes: 15,
+        timezone: 'Europe/Bucharest',
+        startAt: '',
+      },
       alg: '',
       vars: {},
       timeoutSeconds: 300,

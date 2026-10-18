@@ -971,6 +971,28 @@
             margin-bottom: 10px; background: var(--bg-panel);
         }
         .prog-edit-card h4 { margin: 0 0 10px; font-size: 14px; }
+        .prog-edit-card > label.prog-edit-field-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 8px 0 2px;
+        }
+        .prog-check-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0 10px;
+            font-size: 13px;
+            font-weight: normal;
+            cursor: pointer;
+            width: auto;
+        }
+        .prog-check-label input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+            display: inline-block;
+            flex: 0 0 auto;
+        }
         .prog-row {
             display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 8px;
         }

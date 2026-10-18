@@ -31,8 +31,9 @@ Convenție nume: **`cron:` + nume** (underscore **nu** e obligatoriu), ex. `cron
   "enabled": true,
   "schedule": {
     "kind": "cron",
-    "expr": "10/30 2/2 * * 1-5",
-    "timezone": "Europe/Bucharest"
+    "expr": "0/25 * * * *",
+    "timezone": "Europe/Bucharest",
+    "startAt": "2026-11-01 00:00"
   },
   "alg": "alg:_sync_stock",
   "vars": {},
@@ -44,12 +45,23 @@ Convenție nume: **`cron:` + nume** (underscore **nu** e obligatoriu), ex. `cron
 
 | `kind` | Câmpuri |
 |--------|---------|
-| `cron` | `expr` (5 câmpuri Unix), `timezone` (IANA: `Europe/Bucharest`, `UTC`, …) |
-| `interval` | `minutes` (multiplu de **5**, 5–60), `timezone` opțional (default București) |
+| `cron` | `expr` (5 câmpuri Unix, ex. `0/25 * * * *`), `timezone`, `startAt` opțional |
+| `interval` | `minutes` (multiplu de **5**, minim 5, **fără plafon 60**), `timezone`, **`startAt` obligatoriu** |
 
-**Timezone:** ora din expr = ora în fusul ales (nu ora device-ului). `UTC` = UTC+0.
+### `startAt` (YYYY-MM-DD HH:MM)
 
-**Validare:** expresii cu fire la **&lt; 5 minute** (ex. `*/2`) sunt **respise** la save — tick-ul global e la 5 minute.
+Interpretat în **`schedule.timezone`** (nu ora device-ului). Aceeași valoare → aceleași fire pe toate device-urile.
+
+| `kind` | Semnificație |
+|--------|----------------|
+| **interval** | **Ancoră:** prima rulare = `startAt`, apoi la fiecare **`minutes`** (start + k·X). Obligatoriu la save. |
+| **cron** | **Activ de la:** expr-ul rămâne sursa orelor (ex. `0/25` → :00, :25, :50); sloturile **înainte** de `startAt` sunt ignorate. Opțional. |
+
+**Cron vs interval:** pentru `0/25 * * * *` folosește **`kind: cron`**. Pentru „la fiecare 25 min de la data X” folosește **`kind: interval`** + `startAt`.
+
+**Timezone:** la cron, ora din expr = fusul ales. `UTC` = UTC+0.
+
+**Validare:** expr cu fire la **&lt; 5 minute** respinsă; `interval.minutes` multiplu de 5, ≥ 5.
 
 ### Primul run
 
@@ -63,10 +75,9 @@ La creare / save: **`nextRunAt`** = prima fire **strict viitoare** (nu rulează 
 
 | Timer | Acțiune |
 |-------|---------|
-| **grilă 5 min** | La **:00, :05, :10, :15…** (fus `Europe/Bucharest`, ca intervalul minim) — journal + joburi due. **Nu** pornește de la login; login la 15:12 → primul tick la **15:15**. Login la 15:14–15:15 → e OK să sari peste 15:15, următorul tick **15:20**. |
-| **2 min** | Citește journal → `reloadOne` (relativ la pornire; sync config între tab-uri) |
-
-Tab reactivat după throttling → due + sync journal (catch-up).
+| **execuție due** | La **:00, :05, :10, :15…** (`Europe/Bucharest`) — doar joburi due. **Nu** depinde de login (login 15:12 → primul tick **15:15**). |
+| **journal** | La **:03, :08, :13, :18…** (cu **2 min** înainte de execuție) — `syncFromJournal` / `reloadOne` dacă s-a modificat config în alt tab. **Nu** e legat de login. |
+| **login** · **Reîncarcă** (panou) | O dată: `reloadAll` + `syncFromJournal`. Reîncarcă face și `SCAN` **`cron:*`** în cache chei. |
 
 Due = ultimul slot din schedule **≤ momentul tick-ului** neacoperit de `lastRunAt` (max **1** run per tick).
 
@@ -85,7 +96,7 @@ Panou **Cron** — două tab-uri:
 | **Cronuri** | Joburi: schedule, enabled, următor / 2–3 fire, ultima rulare (badge ok/err), **Edit**, **Acum**, **Rulari** (sare la tab filtrat) |
 | **Rulari** | Istoric rulari (toate joburile sau filtrat), coloană lată **Mesaj / eroare** |
 
-Buton **Reîncarcă** (sus): `SCAN` **`cron:*`**, merge chei în cache, **`syncFromJournal`** + **`reloadAll`** pe scheduler (ca după login, la cerere).
+Buton **Reîncarcă** (sus): `SCAN` **`cron:*`**, apoi același flux ca la login — **`reloadAll`** + **`syncFromJournal`**.
 
 ### Istoric în `cron:state:…`
 

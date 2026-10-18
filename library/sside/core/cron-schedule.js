@@ -129,6 +129,27 @@
     return field.values.has(value);
   }
 
+  /** Câmp restricționat fără niciun număr valid (ex. minut 99). */
+  function fieldIsEmptyRestriction(field) {
+    return !field.all && field.values.size === 0;
+  }
+
+  /** Expr parsabil dar fără niciun minut care poate satisface toate câmpurile. */
+  function scheduleFieldsNeverFire(fields) {
+    if (fieldIsEmptyRestriction(fields.minute)) return true;
+    if (fieldIsEmptyRestriction(fields.hour)) return true;
+    if (fieldIsEmptyRestriction(fields.month)) return true;
+    const domRestricted = !fields.dom.all;
+    const dowRestricted = !fields.dow.all;
+    if (domRestricted && fieldIsEmptyRestriction(fields.dom)) {
+      if (!dowRestricted || fieldIsEmptyRestriction(fields.dow)) return true;
+    }
+    if (dowRestricted && fieldIsEmptyRestriction(fields.dow)) {
+      if (!domRestricted || fieldIsEmptyRestriction(fields.dom)) return true;
+    }
+    return false;
+  }
+
   function cronFieldsMatch(fields, date, timeZone) {
     const w = getWallParts(date, timeZone);
     if (!fieldMatches(fields.minute, w.minute)) return false;
@@ -158,6 +179,11 @@
       if (s.kind === 'cron') {
         s.timezone = s.timezone || DEFAULT_TZ;
       }
+      if (s.startAt != null && String(s.startAt).trim() !== '') {
+        s.startAt = String(s.startAt).trim();
+      } else {
+        delete s.startAt;
+      }
       return s;
     }
     if (legacyIntervalMinutes != null) {
@@ -180,12 +206,111 @@
     const s = normalizeSchedule(schedule);
     if (!s) return null;
     if (s.kind === 'cron') return String(s.expr || '').trim();
-    if (s.kind === 'interval') {
-      const m = parseInt(s.minutes, 10);
-      if (!Number.isFinite(m)) return null;
-      return '*/' + m + ' * * * *';
+    return null;
+  }
+
+  function wallTimeToInstant(y, mo, dom, hour, minute, timeZone) {
+    let guess = Date.UTC(y, mo - 1, dom, hour, minute, 0);
+    for (let i = 0; i < 96; i++) {
+      const w = getWallParts(new Date(guess), timeZone);
+      if (
+        w.year === y &&
+        w.month === mo &&
+        w.dom === dom &&
+        w.hour === hour &&
+        w.minute === minute
+      ) {
+        return new Date(guess);
+      }
+      const want = Date.UTC(y, mo - 1, dom, hour, minute, 0);
+      const got = Date.UTC(w.year, w.month - 1, w.dom, w.hour, w.minute, 0);
+      guess += want - got;
     }
     return null;
+  }
+
+  /** startAt: YYYY-MM-DD HH:MM[:SS] în schedule.timezone sau ISO cu offset/Z. */
+  function parseScheduleStartAt(text, timeZone) {
+    const s = String(text || '').trim();
+    if (!s) return null;
+    if (/[zZ]$|[+-]\d{2}:?\d{2}$/.test(s)) {
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?$/);
+    if (!m) return null;
+    const y = parseInt(m[1], 10);
+    const mo = parseInt(m[2], 10);
+    const dom = parseInt(m[3], 10);
+    const hour = parseInt(m[4], 10);
+    const minute = parseInt(m[5], 10);
+    if (!Number.isFinite(y + mo + dom + hour + minute)) return null;
+    return wallTimeToInstant(y, mo, dom, hour, minute, timeZone || DEFAULT_TZ);
+  }
+
+  function scheduleStartAtInstant(schedule) {
+    const s = normalizeSchedule(schedule);
+    if (!s || !s.startAt) return null;
+    return parseScheduleStartAt(s.startAt, scheduleTimezone(s));
+  }
+
+  function validateScheduleStartAt(text, timeZone) {
+    if (text == null || String(text).trim() === '') {
+      return { ok: false, err: 'startAt obligatoriu pentru interval; opțional pentru cron (activ de la)' };
+    }
+    const d = parseScheduleStartAt(String(text).trim(), timeZone);
+    if (!d) {
+      return {
+        ok: false,
+        err: 'startAt invalid — folosește YYYY-MM-DD HH:MM în schedule.timezone',
+      };
+    }
+    return { ok: true, date: d };
+  }
+
+  function validateIntervalMinutes(minutes) {
+    const m = parseInt(minutes, 10);
+    if (!Number.isFinite(m) || m < 5) {
+      return { ok: false, err: 'interval.minutes minim 5' };
+    }
+    if (m % 5 !== 0) {
+      return { ok: false, err: 'interval.minutes trebuie multiplu de 5' };
+    }
+    return { ok: true };
+  }
+
+  function floorToMinuteUtc(d) {
+    const x = d instanceof Date ? d.getTime() : new Date(d).getTime();
+    return Math.floor(x / 60000) * 60000;
+  }
+
+  function getNextIntervalFire(schedule, fromDate, opts) {
+    const s = normalizeSchedule(schedule);
+    if (!s || s.kind !== 'interval') return null;
+    const step = parseInt(s.minutes, 10);
+    const start = scheduleStartAtInstant(s);
+    if (!start || !Number.isFinite(step) || step < 1) return null;
+    const startMs = floorToMinuteUtc(start);
+    let fromMs = floorToMinuteUtc(fromDate instanceof Date ? fromDate : new Date(fromDate));
+    if (Number.isNaN(fromMs)) fromMs = floorToMinuteUtc(new Date());
+    if (opts && opts.strictFuture) fromMs += 60000;
+    if (fromMs <= startMs) return new Date(startMs);
+    const k = Math.ceil((fromMs - startMs) / (step * 60000));
+    return new Date(startMs + k * step * 60000);
+  }
+
+  function getLastIntervalFireAtOrBefore(schedule, beforeDate) {
+    const s = normalizeSchedule(schedule);
+    if (!s || s.kind !== 'interval') return null;
+    const step = parseInt(s.minutes, 10);
+    const start = scheduleStartAtInstant(s);
+    if (!start || !Number.isFinite(step) || step < 1) return null;
+    const startMs = floorToMinuteUtc(start);
+    let endMs = floorToMinuteUtc(beforeDate instanceof Date ? beforeDate : new Date(beforeDate));
+    if (Number.isNaN(endMs)) endMs = floorToMinuteUtc(new Date());
+    if (endMs < startMs) return null;
+    const k = Math.floor((endMs - startMs) / (step * 60000));
+    return new Date(startMs + k * step * 60000);
   }
 
   function minMinuteGap(expr) {
@@ -226,10 +351,16 @@
   function getLastFireAtOrBefore(schedule, beforeDate) {
     const s = normalizeSchedule(schedule);
     if (!s) return null;
+    if (s.kind === 'interval') {
+      return getLastIntervalFireAtOrBefore(s, beforeDate);
+    }
     const tz = scheduleTimezone(s);
     const expr = cronExprFromSchedule(s);
     if (!expr) return null;
     const fields = parseExpr(expr);
+    if (scheduleFieldsNeverFire(fields)) return null;
+    const startAt = scheduleStartAtInstant(s);
+    const startMs = startAt ? floorToMinuteUtc(startAt) : null;
     let end = beforeDate instanceof Date ? new Date(beforeDate.getTime()) : new Date(beforeDate);
     if (Number.isNaN(end.getTime())) end = new Date();
     end.setUTCSeconds(0, 0);
@@ -237,6 +368,7 @@
     let t = end.getTime();
     for (let i = 0; i < maxSteps; i++) {
       const d = new Date(t);
+      if (startMs != null && d.getTime() < startMs) break;
       if (cronFieldsMatch(fields, d, tz)) return d;
       t -= 60000;
     }
@@ -247,10 +379,16 @@
     opts = opts || {};
     const s = normalizeSchedule(schedule);
     if (!s) return null;
+    if (s.kind === 'interval') {
+      return getNextIntervalFire(s, fromDate, opts);
+    }
     const tz = scheduleTimezone(s);
     const expr = cronExprFromSchedule(s);
     if (!expr) return null;
     const fields = parseExpr(expr);
+    if (scheduleFieldsNeverFire(fields)) return null;
+    const startAt = scheduleStartAtInstant(s);
+    const startMs = startAt ? floorToMinuteUtc(startAt) : null;
     let from = fromDate instanceof Date ? new Date(fromDate.getTime()) : new Date(fromDate);
     if (Number.isNaN(from.getTime())) from = new Date();
     from.setUTCSeconds(0, 0);
@@ -261,7 +399,9 @@
     let t = from.getTime();
     for (let i = 0; i < maxSteps; i++) {
       const d = new Date(t);
-      if (cronFieldsMatch(fields, d, tz)) return d;
+      if (cronFieldsMatch(fields, d, tz)) {
+        if (startMs == null || d.getTime() >= startMs) return d;
+      }
       t += 60000;
     }
     return null;
@@ -311,6 +451,7 @@
   const api = {
     DEFAULT_TZ,
     parseExpr,
+    scheduleFieldsNeverFire,
     partsFromExpr,
     exprFromParts,
     normalizeSchedule,
@@ -318,6 +459,10 @@
     cronExprFromSchedule,
     minMinuteGap,
     validateMinuteGranularity,
+    validateIntervalMinutes,
+    parseScheduleStartAt,
+    scheduleStartAtInstant,
+    validateScheduleStartAt,
     getNextFireAfter,
     getLastFireAtOrBefore,
     msUntilNextScheduleTick,

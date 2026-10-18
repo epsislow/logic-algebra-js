@@ -4731,6 +4731,13 @@ function translateUpstashSearchResults(date) {
                 }
             }
 
+            /** Ca la login: registry din Redis + journal (înainte de due / după SCAN manual). */
+            async function reincarcaRegistryCronDinRedis() {
+                if (!ssideCronScheduler) return;
+                await ssideCronScheduler.reloadAll();
+                await ssideCronScheduler.syncFromJournal();
+            }
+
             async function pornesteCronSchedulerClient() {
                 opresteCronSchedulerClient();
                 if (!window.SsideCronClient || !localStorage.getItem('session_token')) return;
@@ -4744,20 +4751,9 @@ function translateUpstashSearchResults(date) {
                     },
                 });
                 window.ssideCronScheduler = ssideCronScheduler;
-                await ssideCronScheduler.reloadAll();
+                await reincarcaRegistryCronDinRedis();
                 ssideCronScheduler.start();
                 if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
-            }
-
-            if (!window._ssideCronVisibilityWired) {
-                window._ssideCronVisibilityWired = true;
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState !== 'visible') return;
-                    if (!ssideCronScheduler || !localStorage.getItem('session_token')) return;
-                    ssideCronScheduler.syncFromJournal().catch(() => {});
-                    ssideCronScheduler.runDueJobs().catch(() => {});
-                    if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
-                });
             }
 
             async function reincarcaRegistruCron() {
@@ -4771,8 +4767,7 @@ function translateUpstashSearchResults(date) {
                     if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
                     return;
                 }
-                await ssideCronScheduler.syncFromJournal();
-                await ssideCronScheduler.reloadAll();
+                await reincarcaRegistryCronDinRedis();
                 if (window.SsideCronPanel) SsideCronPanel.refreshFromRegistry();
             }
 

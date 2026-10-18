@@ -3855,7 +3855,12 @@
   function randeazaEditCron(host, obj) {
     const Sched = root.SsideCronSchedule;
     if (!obj.schedule || typeof obj.schedule !== 'object') {
-      obj.schedule = { kind: 'interval', minutes: 15, timezone: 'Europe/Bucharest' };
+      obj.schedule = {
+        kind: 'interval',
+        minutes: 15,
+        timezone: 'Europe/Bucharest',
+        startAt: '',
+      };
     }
     if (obj.mode == null) obj.mode = 'client';
     if (obj.enabled == null) obj.enabled = false;
@@ -3869,6 +3874,7 @@
 
     function row(labelText, el) {
       const lab = document.createElement('label');
+      lab.className = 'prog-edit-field-label';
       lab.textContent = labelText;
       card.appendChild(lab);
       card.appendChild(el);
@@ -3880,11 +3886,12 @@
     row('Titlu', titleInp);
 
     const enLab = document.createElement('label');
+    enLab.className = 'prog-check-label';
     const enChk = document.createElement('input');
     enChk.type = 'checkbox';
     enChk.checked = !!obj.enabled;
     enLab.appendChild(enChk);
-    enLab.appendChild(document.createTextNode(' Activ (enabled)'));
+    enLab.appendChild(document.createTextNode('Activ (enabled)'));
     card.appendChild(enLab);
 
     const kindSel = document.createElement('select');
@@ -3898,6 +3905,7 @@
     row('Planificare', kindSel);
 
     const cronExprLab = document.createElement('label');
+    cronExprLab.className = 'prog-edit-field-label';
     cronExprLab.textContent = 'Expr cron (min · oră · zi lună · lună · zi săpt.)';
     card.appendChild(cronExprLab);
     const cronExprWrap = document.createElement('div');
@@ -3933,15 +3941,12 @@
       return exprPartInputs.map((inp) => (inp.value.trim() === '' ? '*' : inp.value.trim())).join(' ');
     }
 
-    const intSel = document.createElement('select');
-    [5, 10, 15, 20, 30, 45, 60].forEach((m) => {
-      const o = document.createElement('option');
-      o.value = String(m);
-      o.textContent = m + ' min';
-      intSel.appendChild(o);
-    });
-    intSel.value = String(obj.schedule.minutes || 15);
-    row('Interval', intSel);
+    const intMinInp = document.createElement('input');
+    intMinInp.type = 'number';
+    intMinInp.min = '5';
+    intMinInp.step = '5';
+    intMinInp.value = String(obj.schedule.minutes || 15);
+    row('Interval (minute, multiplu de 5)', intMinInp);
 
     const tzSel = document.createElement('select');
     [
@@ -3955,6 +3960,38 @@
     });
     tzSel.value = obj.schedule.timezone || 'Europe/Bucharest';
     row('Fus orar (schedule.timezone)', tzSel);
+
+    function wallStartAtToDatetimeLocal(wall) {
+      const s = String(wall || '').trim();
+      const m = s.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/);
+      if (!m) return '';
+      return m[1] + 'T' + m[2];
+    }
+
+    function datetimeLocalToWallStartAt(localVal) {
+      const s = String(localVal || '').trim();
+      if (!s) return '';
+      const m = s.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+      if (!m) return '';
+      return m[1] + ' ' + m[2];
+    }
+
+    function readStartAtFromInput() {
+      return datetimeLocalToWallStartAt(startAtInp.value);
+    }
+
+    const startAtInp = document.createElement('input');
+    startAtInp.type = 'datetime-local';
+    startAtInp.step = '60';
+    startAtInp.value = wallStartAtToDatetimeLocal(obj.schedule.startAt || '');
+    row('startAt', startAtInp);
+    const startAtHint = document.createElement('p');
+    startAtHint.className = 'prog-live-stub';
+    startAtHint.style.fontSize = '12px';
+    startAtHint.style.margin = '0 0 8px';
+    startAtHint.textContent =
+      'Ora de mai sus e în fusul selectat. Interval: obligatoriu (ancoră + pas). Cron: opțional (activ de la).';
+    card.appendChild(startAtHint);
 
     const algSel = document.createElement('select');
     fillKeySelect(algSel, 'alg', obj.alg || '');
@@ -3972,14 +4009,28 @@
     preview.style.fontSize = '12px';
     card.appendChild(preview);
 
+    function defaultIntervalStartAt() {
+      if (!Sched) return '';
+      const tz = tzSel.value || 'Europe/Bucharest';
+      const next = Sched.getNextFireAfter(
+        { kind: 'cron', expr: '0/5 * * * *', timezone: tz },
+        new Date(),
+        { strictFuture: true }
+      );
+      if (!next) return '';
+      return Sched.formatFireInTz(next, tz).slice(0, 16);
+    }
+
     function syncCronVisibility() {
       const isCron = kindSel.value === 'cron';
       cronExprWrap.style.display = isCron ? '' : 'none';
       cronExprLab.style.display = isCron ? '' : 'none';
-      intSel.style.display = isCron ? 'none' : '';
-      const intLab = intSel.previousElementSibling;
+      intMinInp.style.display = isCron ? 'none' : '';
+      const intLab = intMinInp.previousElementSibling;
       if (intLab) intLab.style.display = isCron ? 'none' : '';
     }
+
+    let cronPreviewTimer = null;
 
     function updatePreview() {
       if (!Sched) {
@@ -3987,13 +4038,35 @@
         return;
       }
       try {
+        const startAtVal = readStartAtFromInput();
+        if (kindSel.value === 'cron') {
+          const expr = currentCronExpr();
+          let fields;
+          try {
+            fields = Sched.parseExpr(expr);
+          } catch (parseErr) {
+            preview.textContent = 'Expr invalid: ' + String(parseErr.message || parseErr);
+            return;
+          }
+          if (Sched.scheduleFieldsNeverFire && Sched.scheduleFieldsNeverFire(fields)) {
+            preview.textContent =
+              'Expr: niciun moment nu se potrivește (valori în afara intervalului sau câmp gol).';
+            return;
+          }
+        }
         const sch =
           kindSel.value === 'cron'
-            ? { kind: 'cron', expr: currentCronExpr(), timezone: tzSel.value }
+            ? {
+                kind: 'cron',
+                expr: currentCronExpr(),
+                timezone: tzSel.value,
+                ...(startAtVal ? { startAt: startAtVal } : {}),
+              }
             : {
                 kind: 'interval',
-                minutes: parseInt(intSel.value, 10),
+                minutes: parseInt(intMinInp.value, 10) || 15,
                 timezone: tzSel.value,
+                startAt: startAtVal || defaultIntervalStartAt(),
               };
         const fires = Sched.getNextFires(sch, new Date(), 5, { strictFuture: true });
         if (!fires.length) {
@@ -4017,34 +4090,46 @@
         obj.mode = 'client';
         obj.alg = algSel.value.trim();
         obj.timeoutSeconds = parseInt(timeoutInp.value, 10) || 300;
+        const startAtVal = readStartAtFromInput();
         if (kindSel.value === 'cron') {
           obj.schedule = {
             kind: 'cron',
             expr: currentCronExpr(),
             timezone: tzSel.value,
           };
+          if (startAtVal) obj.schedule.startAt = startAtVal;
+          else delete obj.schedule.startAt;
         } else {
+          const st = startAtVal || defaultIntervalStartAt();
+          if (st && !startAtVal) startAtInp.value = wallStartAtToDatetimeLocal(st);
           obj.schedule = {
             kind: 'interval',
-            minutes: parseInt(intSel.value, 10) || 15,
+            minutes: parseInt(intMinInp.value, 10) || 15,
             timezone: tzSel.value,
+            startAt: st,
           };
         }
         scrieRaw(obj);
       }
-      updatePreview();
+      if (cronPreviewTimer) clearTimeout(cronPreviewTimer);
+      cronPreviewTimer = setTimeout(() => {
+        cronPreviewTimer = null;
+        updatePreview();
+      }, 120);
     }
 
     kindSel.addEventListener('change', () => {
       syncCronVisibility();
       syncFromDom();
     });
-    [titleInp, enChk, intSel, tzSel, algSel, timeoutInp]
-      .concat(exprPartInputs)
-      .forEach((el) => {
-        el.addEventListener('input', () => syncFromDom());
-        el.addEventListener('change', () => syncFromDom());
-      });
+    [titleInp, enChk, intMinInp, startAtInp, tzSel, algSel, timeoutInp].forEach((el) => {
+      el.addEventListener('input', () => syncFromDom());
+      el.addEventListener('change', () => syncFromDom());
+    });
+    exprPartInputs.forEach((el) => {
+      el.addEventListener('input', () => syncFromDom());
+      el.addEventListener('change', () => syncFromDom());
+    });
 
     syncCronVisibility();
     host.appendChild(card);

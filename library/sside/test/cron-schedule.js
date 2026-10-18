@@ -2,6 +2,7 @@
 
 const S = require('../core/cron-schedule.js');
 const V = require('../core/prog-validate.js');
+const INT5 = require('./cron-schedule-interval-fixture.js');
 
 function assert(cond, msg) {
   if (!cond) throw new Error(msg || 'assertion failed');
@@ -58,17 +59,74 @@ module.exports = {
           v: 1,
           mode: 'client',
           enabled: true,
-          schedule: { kind: 'interval', minutes: 15, timezone: 'UTC' },
+          schedule: {
+            kind: 'interval',
+            minutes: 15,
+            timezone: 'UTC',
+            startAt: '2026-01-01 00:00',
+          },
           alg: 'alg:_x',
         });
         assert(good.ok);
       },
     },
     {
+      id: 10,
+      desc: 'interval 25 + startAt — grilă ancorată',
+      run() {
+        const sched = {
+          kind: 'interval',
+          minutes: 25,
+          timezone: 'Europe/Bucharest',
+          startAt: '2026-10-18 13:00',
+        };
+        const fires = S.getNextFires(sched, new Date('2026-10-18T10:00:00.000Z'), 4, {
+          strictFuture: true,
+        });
+        const fmt = fires.map((d) => S.formatFireInTz(d, 'Europe/Bucharest'));
+        assertEq(fmt[0], '2026-10-18 13:25:00');
+        assertEq(fmt[1], '2026-10-18 13:50:00');
+        assertEq(fmt[2], '2026-10-18 14:15:00');
+        assertEq(fmt[3], '2026-10-18 14:40:00');
+      },
+    },
+    {
+      id: 11,
+      desc: 'interval 90 min + startAt',
+      run() {
+        const sched = {
+          kind: 'interval',
+          minutes: 90,
+          timezone: 'UTC',
+          startAt: '2026-01-01 00:00',
+        };
+        const next = S.getNextFireAfter(sched, new Date('2026-01-01T02:00:00.000Z'), {
+          strictFuture: true,
+        });
+        assertEq(S.formatFireInTz(next, 'UTC'), '2026-01-01 03:00:00');
+      },
+    },
+    {
+      id: 12,
+      desc: 'cron startAt — activ de la',
+      run() {
+        const sched = {
+          kind: 'cron',
+          expr: '0/5 * * * *',
+          timezone: 'Europe/Bucharest',
+          startAt: '2026-10-18 15:30',
+        };
+        const next = S.getNextFireAfter(sched, new Date('2026-10-18T12:00:00.000Z'), {
+          strictFuture: true,
+        });
+        assertEq(S.formatFireInTz(next, 'Europe/Bucharest'), '2026-10-18 15:30:00');
+      },
+    },
+    {
       id: 6,
       desc: 'msUntilNextScheduleTick — login 15:12 → tick 15:15',
       run() {
-        const sched = { kind: 'interval', minutes: 5, timezone: 'Europe/Bucharest' };
+        const sched = INT5;
         const from = new Date('2026-10-18T12:12:00.000Z');
         const ms = S.msUntilNextScheduleTick(from, sched);
         assertEq(ms, 3 * 60 * 1000);
@@ -77,10 +135,25 @@ module.exports = {
       },
     },
     {
+      id: 8,
+      desc: 'journal sync grid 3/5 — :03, :08',
+      run() {
+        const sched = { kind: 'cron', expr: '3/5 * * * *', timezone: 'Europe/Bucharest' };
+        const a = S.getNextFireAfter(sched, new Date('2026-10-18T12:01:00.000Z'), {
+          strictFuture: true,
+        });
+        assertEq(S.formatFireInTz(a, 'Europe/Bucharest'), '2026-10-18 15:03:00');
+        const b = S.getNextFireAfter(sched, new Date('2026-10-18T12:04:00.000Z'), {
+          strictFuture: true,
+        });
+        assertEq(S.formatFireInTz(b, 'Europe/Bucharest'), '2026-10-18 15:08:00');
+      },
+    },
+    {
       id: 7,
       desc: 'msUntilNextScheduleTick — la 15:15 următorul tick 15:20',
       run() {
-        const sched = { kind: 'interval', minutes: 5, timezone: 'Europe/Bucharest' };
+        const sched = INT5;
         const from = new Date('2026-10-18T12:15:00.000Z');
         const ms = S.msUntilNextScheduleTick(from, sched);
         assertEq(ms, 5 * 60 * 1000);
@@ -90,11 +163,27 @@ module.exports = {
       id: 5,
       desc: 'getLastFireAtOrBefore interval 5 min',
       run() {
-        const sched = { kind: 'interval', minutes: 5, timezone: 'Europe/Bucharest' };
+        const sched = INT5;
         const at = new Date('2026-10-18T12:16:00.000Z');
         const slot = S.getLastFireAtOrBefore(sched, at);
         assert(slot, 'slot');
         assertEq(S.formatFireInTz(slot, 'Europe/Bucharest'), '2026-10-18 15:15:00');
+      },
+    },
+    {
+      id: 9,
+      desc: 'expr imposibil (minut 99) — fără scan lung',
+      run() {
+        const t0 = Date.now();
+        const fires = S.getNextFires(
+          { kind: 'cron', expr: '99 * * * *', timezone: 'UTC' },
+          new Date('2026-01-01T00:00:00.000Z'),
+          5,
+          { strictFuture: true }
+        );
+        assertEq(fires.length, 0);
+        assert(Date.now() - t0 < 500, 'getNextFires prea lent pentru expr imposibil');
+        assert(S.scheduleFieldsNeverFire(S.parseExpr('99 * * * *')), 'never fire');
       },
     },
     {

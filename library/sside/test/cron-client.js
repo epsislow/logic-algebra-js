@@ -24,7 +24,12 @@ module.exports = {
             v: 1,
             mode: 'client',
             enabled: false,
-            schedule: { kind: 'interval', minutes: 5, timezone: 'UTC' },
+            schedule: {
+              kind: 'interval',
+              minutes: 5,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
             alg: 'alg:_t',
           }),
         ]);
@@ -54,7 +59,12 @@ module.exports = {
             v: 1,
             mode: 'client',
             enabled: true,
-            schedule: { kind: 'interval', minutes: 5, timezone: 'UTC' },
+            schedule: {
+              kind: 'interval',
+              minutes: 5,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
             alg: 'alg:_a',
             timeoutSeconds: 300,
           }),
@@ -85,7 +95,12 @@ module.exports = {
             v: 1,
             mode: 'client',
             enabled: true,
-            schedule: { kind: 'interval', minutes: 60, timezone: 'UTC' },
+            schedule: {
+              kind: 'interval',
+              minutes: 60,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
             alg: 'alg:_hi',
           }),
         ]);
@@ -135,7 +150,12 @@ module.exports = {
             v: 1,
             mode: 'client',
             enabled: true,
-            schedule: { kind: 'interval', minutes: 5, timezone: 'UTC' },
+            schedule: {
+              kind: 'interval',
+              minutes: 5,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
             alg: 'alg:_k',
           }),
         ]);
@@ -164,7 +184,12 @@ module.exports = {
             v: 1,
             mode: 'client',
             enabled: true,
-            schedule: { kind: 'interval', minutes: 5, timezone: 'UTC' },
+            schedule: {
+              kind: 'interval',
+              minutes: 5,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
             alg: 'alg:_x',
           }),
         ]);

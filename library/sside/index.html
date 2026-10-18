@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=duplicate-btn1">
+    <link rel="stylesheet" href="ui/css/app.css?v=cron-check1">
 </head>
 <body>
 
@@ -101,10 +101,10 @@
             <div class="box">
                 <div class="cron-panel-head">
                     <h3 style="margin: 0;">Cronuri (browser)</h3>
-                    <button type="button" id="btn-cron-refresh" class="btn-gri btn-inline" title="SCAN cron:* + reîncarcă registry (ca la login)">Reîncarcă</button>
+                    <button type="button" id="btn-cron-refresh" class="btn-gri btn-inline" title="SCAN cron:* + reloadAll + sync journal (ca la login)">Reîncarcă</button>
                 </div>
                 <p style="font-size: 13px; margin: 8px 0 12px; color: var(--text-muted);">
-                    Rulează cât timp sside e deschis. Tick 5 min · sync config 2 min. Docs → <strong>Cron client</strong>.
+                    Rulează cât timp sside e deschis. Execuție :00/:05/… · journal :03/:08/… (București). Docs → <strong>Cron client</strong>.
                 </p>
                 <div id="cron-panel-tabs" class="cron-panel-tabs list-view-mode-seg" role="tablist" style="margin-bottom: 12px;">
                     <button type="button" class="list-view-mode-btn is-active" data-cron-tab="jobs">Cronuri</button>
@@ -638,16 +638,16 @@
     <script src="core/ui-runtime-nav.js?v=ua1"></script>
     <script src="core/redis.js"></script>
     <script src="core/alg-runner.js?v=recover3"></script>
-    <script src="core/prog-validate.js?v=recover3"></script>
-    <script src="core/cron-schedule.js?v=cron-grid1"></script>
-    <script src="core/cron-client.js?v=cron-grid1"></script>
+    <script src="core/prog-validate.js?v=cron-startAt1"></script>
+    <script src="core/cron-schedule.js?v=cron-expr-guard1"></script>
+    <script src="core/cron-client.js?v=cron-journal1"></script>
     <script src="ui/js/cron-panel.js?v=cron-mobile1"></script>
     <script src="ui/js/doc-data_generated.js?v=kincr2"></script>
     <script src="ui/js/doc-viewer.js?v=settings1"></script>
     <script src="ui/js/settings-viewer.js?v=dosare-tint1"></script>
     <script src="ui/js/panels-live.js?v=schema-dates3"></script>
-    <script src="ui/js/panels-prog.js?v=cron-edit2"></script>
+    <script src="ui/js/panels-prog.js?v=cron-expr-guard1"></script>
     <script src="ui/js/api-inspector.js?v=api-inspector2"></script>
-    <script src="ui/js/app.js?v=dup-membru1"></script>
+    <script src="ui/js/app.js?v=cron-reload1"></script>
 </body>
 </html>

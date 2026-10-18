@@ -11,9 +11,10 @@
   const JOURNAL_SEQ = 'cronlog:scheduler:seq';
   const JOURNAL_CAP = 200;
   const TICK_MS = 5 * 60 * 1000;
-  const POLL_MS = 2 * 60 * 1000;
-  /** Grila tick-ului global (aliniat la minute 0/5/10/… în fusul de referință). */
+  /** Grila execuție due (aliniat la minute 0/5/10/… în fusul de referință). */
   const TICK_GRID_MINUTES = 5;
+  /** Journal sync cu 2 min înainte de execuție → :03, :08, :13, … (București). */
+  const JOURNAL_SYNC_CRON_EXPR = '3/5 * * * *';
   const LOCK_TTL_MAX = 240;
   const RECENT_RUNS_CAP = 10;
 
@@ -403,6 +404,14 @@
     };
   }
 
+  function journalSyncSchedule() {
+    return {
+      kind: 'cron',
+      expr: JOURNAL_SYNC_CRON_EXPR,
+      timezone: Schedule.DEFAULT_TZ || 'Europe/Bucharest',
+    };
+  }
+
   function createScheduler(deps) {
     const ctx = {
       deps: Object.assign(
@@ -418,16 +427,8 @@
       logCursor: 0,
       timers: [],
       gridTimerId: null,
+      journalTimerId: null,
     };
-
-    async function tickFull() {
-      await syncFromJournal(ctx);
-      await runDueJobs(ctx);
-    }
-
-    async function pollJournal() {
-      await syncFromJournal(ctx);
-    }
 
     function stopTimers() {
       ctx.timers.forEach((id) => {
@@ -439,6 +440,10 @@
         clearTimeout(ctx.gridTimerId);
         ctx.gridTimerId = null;
       }
+      if (ctx.journalTimerId != null) {
+        clearTimeout(ctx.journalTimerId);
+        ctx.journalTimerId = null;
+      }
     }
 
     function scheduleGridTick() {
@@ -449,15 +454,29 @@
       const delay = Schedule.msUntilNextScheduleTick(new Date(), tickGridSchedule());
       ctx.gridTimerId = setTimeout(() => {
         ctx.gridTimerId = null;
-        tickFull()
+        runDueJobs(ctx)
           .catch(() => {})
           .finally(() => scheduleGridTick());
       }, delay);
     }
 
+    function scheduleJournalSync() {
+      if (ctx.journalTimerId != null) {
+        clearTimeout(ctx.journalTimerId);
+        ctx.journalTimerId = null;
+      }
+      const delay = Schedule.msUntilNextScheduleTick(new Date(), journalSyncSchedule());
+      ctx.journalTimerId = setTimeout(() => {
+        ctx.journalTimerId = null;
+        syncFromJournal(ctx)
+          .catch(() => {})
+          .finally(() => scheduleJournalSync());
+      }, delay);
+    }
+
     function start() {
       stopTimers();
-      ctx.timers.push(setInterval(() => pollJournal().catch(() => {}), POLL_MS));
+      scheduleJournalSync();
       scheduleGridTick();
     }
 
@@ -484,8 +503,8 @@
   const api = {
     JOURNAL_KEY,
     TICK_MS,
-    POLL_MS,
     TICK_GRID_MINUTES,
+    JOURNAL_SYNC_CRON_EXPR,
     RECENT_RUNS_CAP,
     prependRecentRuns,
     cronSuffix,
