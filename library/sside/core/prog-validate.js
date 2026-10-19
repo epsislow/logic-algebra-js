@@ -498,8 +498,8 @@
   function validateCron(obj) {
     const ve = checkV(obj);
     if (ve) return ve;
-    if (obj.mode != null && obj.mode !== 'client') {
-      return err('mode trebuie să fie "client" în v1');
+    if (obj.mode != null && obj.mode !== 'client' && obj.mode !== 'edge') {
+      return err('mode trebuie să fie "client" sau "edge"');
     }
     const sched = CronSched
       ? CronSched.normalizeSchedule(obj.schedule, obj.intervalMinutes)

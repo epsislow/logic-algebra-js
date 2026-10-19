@@ -1,6 +1,13 @@
 # Cron client (browser)
 
-Joburi **`cron:nume`** cu **`mode: "client"`** — algoritmul rulează în **sside** (browser) cât timp aplicația e deschisă și utilizatorul e autentificat. Nu rulează pe Cloudflare Worker.
+Joburi **`cron:nume`** cu **`mode: "client"`** sau **`mode: "edge"`**:
+
+| mode | Unde rulează programat |
+|------|-------------------------|
+| **client** | Browser sside (panou Cron → **Pornește**) |
+| **edge** | Supabase Edge (pg_cron la 5 min) — vezi [`cron-supabase-edge.md`](cron-supabase-edge.md) |
+
+Nu rulează pe Cloudflare Worker (doar Redis/API).
 
 Panou dedicat: buton **Cron** în bara de sus (lângă Lista / Docs).
 

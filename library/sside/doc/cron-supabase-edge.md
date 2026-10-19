@@ -6,11 +6,13 @@ Cod: [`extern/supabase/`](../extern/supabase/README.md)
 
 ---
 
-## Ce face spike-ul v0
+## Ce face funcția
 
-- `POST /functions/v1/sside-cron-run` + **`Authorization: Bearer CRON_SECRET`**
-- Citește `cron:testPing` (sau `cronKey` din body) + `alg:…` din Redis
-- **Nu** rulează încă algoritmul — confirmă conectivitatea și numărul de `ops` din alg
+- **`mode: "tick"`** (implicit, pg_cron) — la fiecare 5 min: reload registry + journal sync + **due** pentru joburi **`mode: "edge"`** + `enabled` (0..N rulări; alg pe Edge via Upstash)
+- **`mode: "smoke"`** — citește un `cronKey` + alg (debug)
+- **`mode: "ping"`** — health
+
+Joburile rămân **`mode: "client"`** pentru panoul Cron din browser; **`edge`** doar pe Supabase.
 
 ---
 

@@ -120,9 +120,10 @@
     return { nextRunAt, dueAt, upcomingFires };
   }
 
-  function buildRegistryEntry(config, state, now) {
+  function buildRegistryEntry(config, state, now, cronHost) {
     const cfg = normalizeConfig(config);
     if (!cfg) return null;
+    const host = cronHost || 'client';
     const times = computeRegistryTimes(cfg, state, now);
     return {
       cronKey: null,
@@ -131,7 +132,7 @@
       nextRunAt: times.nextRunAt,
       dueAt: times.dueAt,
       upcomingFires: times.upcomingFires,
-      enabledEffective: !!cfg.enabled && cfg.mode === 'client',
+      enabledEffective: !!cfg.enabled && cfg.mode === host,
     };
   }
 
@@ -197,7 +198,7 @@
       return;
     }
     const st = await jsonGet(ctx.deps.redis, stateKey(cronKey));
-    const entry = buildRegistryEntry(cfg, st, new Date());
+    const entry = buildRegistryEntry(cfg, st, new Date(), ctx.deps.cronHost || 'client');
     if (entry) {
       entry.cronKey = cronKey;
       ctx.registry.set(cronKey, entry);
@@ -276,7 +277,8 @@
         return { ok: false, reason: 'not_due' };
       }
     }
-    if (cfg.mode !== 'client') {
+    const host = ctx.deps.cronHost || 'client';
+    if (cfg.mode !== host) {
       return { ok: false, reason: 'mode' };
     }
     if (!cfg.alg) {
@@ -412,6 +414,27 @@
     };
   }
 
+  /** Tick server Supabase Edge — reload + journal + due (mode edge). Fără timere browser. */
+  async function runEdgeSchedulerTick(deps) {
+    const sched = createScheduler(Object.assign({ cronHost: 'edge' }, deps || {}));
+    await sched.reloadAll();
+    await sched.syncFromJournal();
+    const executions = await runDueJobs(sched.ctx);
+    const registry = sched.getRegistry();
+    let edgeJobs = 0;
+    registry.forEach((entry) => {
+      if (entry.config && entry.config.mode === 'edge') edgeJobs++;
+    });
+    return {
+      ok: true,
+      tickAt: new Date().toISOString(),
+      cronHost: 'edge',
+      jobsInRegistry: registry.size,
+      edgeJobs,
+      executions,
+    };
+  }
+
   function createScheduler(deps) {
     const ctx = {
       deps: Object.assign(
@@ -420,6 +443,7 @@
           listCronKeys: async () => [],
           onRunAlg: null,
           onRegistryChange: null,
+          cronHost: 'client',
         },
         deps || {}
       ),
@@ -515,6 +539,7 @@
     buildRegistryEntry,
     appendJournal,
     createScheduler,
+    runEdgeSchedulerTick,
     runOnce,
     jsonGet,
     jsonSet,

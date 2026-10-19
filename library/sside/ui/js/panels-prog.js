@@ -3885,7 +3885,7 @@
     host.innerHTML = '';
     const card = document.createElement('div');
     card.className = 'prog-edit-card';
-    card.innerHTML = '<h4>Cron (client)</h4>';
+    card.innerHTML = '<h4>Cron (client / edge)</h4>';
 
     function row(labelText, el) {
       const lab = document.createElement('label');
@@ -3899,6 +3899,19 @@
     titleInp.type = 'text';
     titleInp.value = obj.title || '';
     row('Titlu', titleInp);
+
+    const modeSel = document.createElement('select');
+    [
+      { value: 'client', label: 'client — browser (panou Cron, Pornește)' },
+      { value: 'edge', label: 'edge — Supabase (pg_cron la 5 min)' },
+    ].forEach((opt) => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      modeSel.appendChild(o);
+    });
+    modeSel.value = obj.mode === 'edge' ? 'edge' : 'client';
+    row('Mod (mode)', modeSel);
 
     const enLab = document.createElement('label');
     enLab.className = 'prog-check-label';
@@ -4252,7 +4265,7 @@
       if (writeRaw !== false) {
         obj.title = titleInp.value.trim();
         obj.enabled = enChk.checked;
-        obj.mode = 'client';
+        obj.mode = modeSel.value === 'edge' ? 'edge' : 'client';
         obj.alg = algSel.value.trim();
         obj.timeoutSeconds = parseInt(timeoutInp.value, 10) || 300;
         const startAtVal = readStartAtFromInput();

@@ -43,9 +43,12 @@ Prioritate: dacă există `UPSTASH_*`, se folosește **Upstash direct**; altfel 
 
 ---
 
-## 4. Deploy funcție
+## 4. Sync vendor + deploy funcție
+
+După modificări în `core/` (cron, alg):
 
 ```bash
+node node/sync-edge-vendor.js
 cd extern/supabase
 supabase functions deploy sside-cron-run --no-verify-jwt
 ```

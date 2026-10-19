@@ -24,7 +24,7 @@ select cron.schedule(
         limit 1
       )
     ),
-    body := '{"mode":"smoke","cronKey":"cron:testPing"}'::jsonb
+    body := '{"mode":"tick"}'::jsonb
   ) as request_id;
   $$
 );

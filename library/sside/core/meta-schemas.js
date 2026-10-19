@@ -157,13 +157,13 @@
 
   const META_CRON = {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    title: 'Cron job (client)',
+    title: 'Cron job (client / edge)',
     type: 'object',
     required: ['v', 'mode', 'schedule', 'alg'],
     properties: {
       v: { type: 'integer', const: 1, default: 1 },
       title: { type: 'string', default: '' },
-      mode: { type: 'string', enum: ['client'], default: 'client' },
+      mode: { type: 'string', enum: ['client', 'edge'], default: 'client' },
       enabled: { type: 'boolean', default: false },
       schedule: {
         type: 'object',

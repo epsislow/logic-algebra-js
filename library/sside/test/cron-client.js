@@ -206,6 +206,77 @@ module.exports = {
         sched.stop();
       },
     },
+    {
+      id: 10,
+      desc: 'client scheduler ignoră job mode edge',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec([
+          'JSON.SET',
+          'cron:edgeOnly',
+          '$',
+          JSON.stringify({
+            v: 1,
+            mode: 'edge',
+            enabled: true,
+            schedule: {
+              kind: 'interval',
+              minutes: 5,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
+            alg: 'alg:_e',
+          }),
+        ]);
+        const sched = Cron.createScheduler({
+          redis,
+          listCronKeys: async () => ['cron:edgeOnly'],
+          onRunAlg: async () => ({ msg: 'ok' }),
+        });
+        await sched.reloadAll();
+        const entry = sched.getRegistry().get('cron:edgeOnly');
+        entry.nextRunAt = new Date(Date.now() - 60000);
+        const r = await sched.runOnce('cron:edgeOnly', 'scheduled');
+        assert(!r.ok && r.reason === 'mode');
+        sched.stop();
+      },
+    },
+    {
+      id: 11,
+      desc: 'runEdgeSchedulerTick — edge job due rulează',
+      async run() {
+        const redis = createMemoryRedis();
+        await redis.exec([
+          'JSON.SET',
+          'cron:edgeJob',
+          '$',
+          JSON.stringify({
+            v: 1,
+            mode: 'edge',
+            enabled: true,
+            schedule: {
+              kind: 'interval',
+              minutes: 5,
+              timezone: 'UTC',
+              startAt: '2020-01-01 00:00',
+            },
+            alg: 'alg:_e',
+          }),
+        ]);
+        let ran = false;
+        const summary = await Cron.runEdgeSchedulerTick({
+          redis,
+          listCronKeys: async () => ['cron:edgeJob'],
+          onRunAlg: async () => {
+            ran = true;
+            return { msg: 'edge-ok' };
+          },
+        });
+        assert(summary.ok === true);
+        assert(summary.edgeJobs === 1);
+        assert(ran, 'onRunAlg apelat');
+      },
+    },
   ],
 };
 
