@@ -2,6 +2,9 @@
 
 const {
   evalWhen,
+  evalWhenInput,
+  coerceWhenExpr,
+  tryCoerceWhenExpr,
   printWhenExpr,
   parseWhenExpr,
   tryParseWhenExpr,
@@ -222,6 +225,40 @@ module.exports = {
         assert(unclosed.error.indexOf(')') !== -1);
         const empty = tryParseWhenExpr('   ');
         assert(!empty.ok);
+      },
+    },
+    {
+      id: 15,
+      desc: 'coerceWhenExpr — AST, string, boolean',
+      run() {
+        assertDeep(coerceWhenExpr(['eq', 'a', 1]), ['eq', 'a', 1]);
+        assertDeep(coerceWhenExpr('a == 1'), ['eq', 'a', 1]);
+        assertEq(coerceWhenExpr(true), true);
+        assertEq(coerceWhenExpr(false), false);
+        assertDeep(coerceWhenExpr('["lte","qty",0]'), ['lte', 'qty', 0]);
+        const bad = tryCoerceWhenExpr({ x: 1 });
+        assert(!bad.ok);
+        assert(bad.error.indexOf('boolean') !== -1);
+      },
+    },
+    {
+      id: 16,
+      desc: 'evalWhenInput — string la run ca AST',
+      run() {
+        const Ops = require('../core/alg-ops.js');
+        const ctx = { vars: { qty: 3, tickHour: '03', tickMin: '00' }, form: {}, list: {} };
+        const getVal = (t) => Ops.resolveRef(t, ctx);
+        assert(!evalWhenInput('qty >= 4032', getVal));
+        assert(evalWhenInput('qty <= 5', getVal));
+        ctx.vars.qty = 5000;
+        assert(
+          evalWhenInput(
+            'tickHour == "03" and tickMin == "00" and qty >= 4032',
+            getVal
+          )
+        );
+        ctx.vars.qty = 3;
+        assert(evalWhenInput(['eq', 'qty', 3], getVal));
       },
     },
   ],

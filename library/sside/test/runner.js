@@ -2336,5 +2336,29 @@ module.exports = {
         assert(!r.err);
       },
     },
+    {
+      id: 117,
+      desc: 'if when string expresie (evalWhenInput)',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'qty', val: 2 },
+              {
+                op: 'if',
+                when: 'qty <= 0',
+                then: [{ op: 'end', type: 'err', value: 'bad' }],
+                else: [{ op: 'end', type: 'msg', value: 'ok-string' }],
+              },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.msg, 'ok-string');
+        assert(!r.err);
+      },
+    },
   ],
 };

@@ -2,7 +2,17 @@
 
 Expresii condiționale pentru `if`.
 
-Forma pe disc (JSON) = **array** nested. În **Edit** alg (F2-alg-C): câmp **text** care se parsează ↔ același AST (`print` / `parse`).
+Pe disc (JSON) poți folosi **două forme evaluabile** la `if`:
+
+| Formă | Exemplu | Notă |
+|-------|---------|------|
+| **AST** (array nested) | `["lte", "qty", 0]` | Canonical; UI salvează adesea AST după Edit |
+| **String expresie** | `"qty <= 0 or form.id == \"\""` | Aceleași reguli ca textul din Edit (`parseWhenExpr`) |
+| **Boolean** | `true` / `false` | Rar; ramură fixă |
+
+La **run**, motorul normalizează string → AST (`coerceWhenExpr` / `evalWhenInput`), apoi evaluează ca înainte. String invalid → eroare (mesaj + poziție ca la parse).
+
+În **Edit** alg (F2-alg-C): câmp **text** ↔ AST (`printWhenExpr` / `parseWhenExpr`).
 
 ## Atomic (JSON)
 
@@ -57,3 +67,17 @@ qty <= 0 or (form.id == "" and not truthy(form.ok))
 - Fallback: poți lipi un **JSON array** valid în câmpul text (detectat dacă începe cu `[`)
 
 Parse invalid → mesaj + poziție; AST-ul vechi din `progObj` **nu** se suprascrie până e valid.
+
+## API (`core/when.js`)
+
+| Funcție | Rol |
+|---------|-----|
+| `parseWhenExpr(text)` | text → AST (throw) |
+| `tryParseWhenExpr(text)` | text → `{ ok, ast? \| error, index? }` |
+| `printWhenExpr(ast)` | AST → text Edit |
+| `evalWhen(ast, getVal)` | AST/boolean → bool |
+| `coerceWhenExpr(when)` | boolean \| array \| string → AST (throw) |
+| `tryCoerceWhenExpr(when)` | ca mai sus, fără throw |
+| `evalWhenInput(when, getVal)` | boolean \| array \| string → bool |
+
+**Validare alg** (`prog-validate`): la `if`, `when` trebuie să treacă `tryCoerceWhenExpr`.

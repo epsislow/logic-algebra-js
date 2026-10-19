@@ -23,6 +23,8 @@
   const CronSched =
     root.SsideCronSchedule ||
     (typeof require !== 'undefined' ? require('./cron-schedule.js') : null);
+  const When =
+    root.SsideWhen || (typeof require !== 'undefined' ? require('./when.js') : null);
 
   function err(msg) {
     return { ok: false, err: msg };
@@ -340,6 +342,18 @@
         }
       }
       if (s.op === 'if') {
+        if (
+          When &&
+          typeof When.tryCoerceWhenExpr === 'function' &&
+          Object.prototype.hasOwnProperty.call(s, 'when')
+        ) {
+          const wc = When.tryCoerceWhenExpr(s.when);
+          if (!wc.ok) {
+            const pos =
+              typeof wc.index === 'number' ? ' (pos ' + wc.index + ')' : '';
+            return err(p + '.when: ' + (wc.error || 'invalid') + pos);
+          }
+        }
         if (Array.isArray(s.then)) {
           const e1 = validateAlgSteps(s.then, p + '.then');
           if (e1) return e1;

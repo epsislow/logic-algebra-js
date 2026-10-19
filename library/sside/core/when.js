@@ -520,8 +520,47 @@
     }
   }
 
+  /**
+   * Normalizează `when` din JSON alg: boolean, AST (array) sau string expresie.
+   * String: aceleași reguli ca Edit / parseWhenExpr (inclusiv JSON array cu `[`).
+   */
+  function tryCoerceWhenExpr(when) {
+    if (when === true || when === false) {
+      return { ok: true, ast: when };
+    }
+    if (Array.isArray(when)) {
+      return { ok: true, ast: when };
+    }
+    if (typeof when === 'string') {
+      return tryParseWhenExpr(when);
+    }
+    return {
+      ok: false,
+      error: 'when trebuie boolean, array (AST) sau string expresie',
+      index: 0,
+    };
+  }
+
+  function coerceWhenExpr(when) {
+    const r = tryCoerceWhenExpr(when);
+    if (!r.ok) {
+      const err = new Error(r.error || 'when invalid');
+      if (typeof r.index === 'number') err.index = r.index;
+      throw err;
+    }
+    return r.ast;
+  }
+
+  /** Evaluare `when` la run: acceptă boolean, AST sau string (ca tryCoerceWhenExpr). */
+  function evalWhenInput(when, getVal) {
+    return evalWhen(coerceWhenExpr(when), getVal);
+  }
+
   const api = {
     evalWhen,
+    evalWhenInput,
+    coerceWhenExpr,
+    tryCoerceWhenExpr,
     printWhenExpr: function (ast) {
       return printWhenExpr(ast, 0);
     },

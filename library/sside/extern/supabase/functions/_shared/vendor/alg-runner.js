@@ -591,7 +591,7 @@
     }
 
     if (op === 'if') {
-      const ok = When.evalWhen(step.when, (t) => getVal(ctx, t));
+      const ok = When.evalWhenInput(step.when, (t) => getVal(ctx, t));
       if (ok) {
         if (step.thenOff !== true) {
           await runSteps(step.then || [], ctx, env, stepPath + '.then', {

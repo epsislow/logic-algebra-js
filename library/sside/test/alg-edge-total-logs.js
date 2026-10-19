@@ -1,15 +1,12 @@
 'use strict';
 
 const Alg = require('../core/alg-runner.js');
-const When = require('../core/when.js');
 const { createMemoryRedis } = require('../core/redis.js');
 
 const COUNTER_KEY = 'info:edge:totalLogs';
 
-/** Runner evaluă doar AST `when`, nu text (UI salvează AST la Edit). */
-const RESET_WHEN = When.parseWhenExpr(
-  'tickHour == "03" and tickMin == "00" and totalLogs >= 4032'
-);
+const RESET_WHEN =
+  'tickHour == "03" and tickMin == "00" and totalLogs >= 4032';
 
 /** Alg prod (alg:_edge_total_logs) — cheie contor info:edge:totalLogs */
 const EDGE_TOTAL_LOGS_ALG = {
@@ -132,7 +129,6 @@ module.exports = {
   name: 'alg-edge-total-logs',
   EDGE_TOTAL_LOGS_ALG,
   COUNTER_KEY,
-  RESET_WHEN,
   tests: [
     {
       id: 1,

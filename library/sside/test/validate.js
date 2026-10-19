@@ -137,5 +137,29 @@ module.exports = {
         assert(/mutual/i.test(r.err || ''));
       },
     },
+    {
+      id: 9,
+      desc: 'if when string valid + invalid',
+      run() {
+        assert(
+          V.validateAlg({
+            v: 1,
+            steps: [
+              {
+                op: 'if',
+                when: 'qty <= 0 or form.id == ""',
+                then: [],
+              },
+            ],
+          }).ok
+        );
+        const bad = V.validateAlg({
+          v: 1,
+          steps: [{ op: 'if', when: 'qty < = 0', then: [] }],
+        });
+        assert(!bad.ok);
+        assert((bad.err || '').indexOf('.when:') !== -1);
+      },
+    },
   ],
 };

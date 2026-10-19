@@ -342,9 +342,13 @@ Gestionează mecanismul de blocare distribuită (*Distributed Locks*) pentru a p
 ```
 
 ### if
-`{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`
+`{ "op": "if", "when": ["lte", "qty", 0], "then": [...], "else": [...] }`  
+sau (string, evaluat la run cu aceleași reguli ca Edit):  
+`{ "op": "if", "when": "qty <= 0 or form.id == \"\"", "then": [...], "else": [...] }`
 
-`else` e opțional. În **Edit** (F2-alg-B/D): `if` e un **bloc** — Deschide → panou cu `when` (text expresie, F2-alg-C) + carduri **then** / **else** (drill-in). Pașii din liste: **view** text → click editează un pas; **👁** înapoi la view.
+`else` e opțional. **`when`**: array AST, **string expresie**, sau boolean — vezi Docs → **when**.
+
+În **Edit** (F2-alg-B/D): `if` e un **bloc** — Deschide → panou cu `when` (text expresie, F2-alg-C) + carduri **then** / **else** (drill-in). Pașii din liste: **view** text → click editează un pas; **👁** înapoi la view.
 
 Exemplu `when` text: `qty <= 0 or form.id == ""` (vezi Docs → **when**).
 
@@ -462,7 +466,7 @@ Escape / click pe fundal = **no**. Confirm imbricate: câte un modal, secvenția
 
 ## when
 
-Tupluri nested pe disc; în Edit = **text expresie** (parse/print 1:1).
+Pe disc: **array AST** sau **string expresie** (ambele evaluabile la run); în Edit = **text** (parse/print 1:1 cu AST).
 
 - atomic: `eq` `neq` `gt` `gte` `lt` `lte` `truthy` `empty`
 - `["and", …]` `["or", …]` `["not", cond]`
