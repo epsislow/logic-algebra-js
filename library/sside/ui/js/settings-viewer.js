@@ -21,12 +21,20 @@
   let currentSectionId = 'cont';
 
   function hideOtherScreens() {
-    ['ecran-lista', 'ecran-detaliu', 'ecran-cautari-salvate', 'ecran-ui-runtime', 'ecran-docs'].forEach(
-      function (id) {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-      }
-    );
+    [
+      'ecran-lista',
+      'ecran-detaliu',
+      'ecran-cautari-salvate',
+      'ecran-ui-runtime',
+      'ecran-docs',
+      'ecran-cron',
+    ].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (root.SsideCronPanel && typeof root.SsideCronPanel.ascunde === 'function') {
+      root.SsideCronPanel.ascunde();
+    }
     document.body.classList.remove('sside-docs-open');
     const docsPanel = document.getElementById('ecran-docs');
     if (docsPanel) docsPanel.style.display = 'none';

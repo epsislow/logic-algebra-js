@@ -277,7 +277,7 @@
         return { ok: false, reason: 'not_due' };
       }
     }
-    const host = ctx.deps.cronHost || 'client';
+    const host = ctx.deps.cronHost === 'edge' ? 'edge' : 'client';
     if (cfg.mode !== host) {
       return { ok: false, reason: 'mode' };
     }
@@ -307,6 +307,7 @@
           runAt: skipAt,
           status: 'skipped',
           trigger,
+          runHost: host,
           runId,
           durationMs: 0,
           msg: null,
@@ -367,6 +368,7 @@
         lastRunId: runId,
         lastAlgKey: cfg.alg,
         lastTrigger: trigger,
+        lastRunHost: host,
         runningSince: null,
         lastSkipReason: null,
         nextRunAt: nextRunAt ? nextRunAt.toISOString() : null,
@@ -375,6 +377,7 @@
         runAt: lastRunAt,
         status: lastStatus,
         trigger,
+        runHost: host,
         runId,
         durationMs,
         msg: lastMsg,

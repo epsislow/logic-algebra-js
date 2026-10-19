@@ -120,7 +120,9 @@ module.exports = {
         const st = await Cron.jsonGet(redis, 'cron:state:manual');
         assert(st.lastMsg === 'hi' || st.lastStatus === 'ok');
         assert(st.lastTrigger === 'manual');
+        assert(st.lastRunHost === 'client');
         assert(Array.isArray(st.recentRuns) && st.recentRuns.length >= 1);
+        assert(st.recentRuns[0].runHost === 'client');
         assert(st.recentRuns[0].msg === 'hi' || st.recentRuns[0].status === 'ok');
         sched.stop();
       },
@@ -275,6 +277,9 @@ module.exports = {
         assert(summary.ok === true);
         assert(summary.edgeJobs === 1);
         assert(ran, 'onRunAlg apelat');
+        const st = await Cron.jsonGet(redis, 'cron:state:edgeJob');
+        assert(st.lastRunHost === 'edge');
+        assert(st.recentRuns[0].runHost === 'edge');
       },
     },
   ],

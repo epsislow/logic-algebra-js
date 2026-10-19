@@ -428,6 +428,11 @@
         html[data-theme="dark"] .cron-host-badge-icon {
             box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
         }
+        .cron-run-card-top .cron-host-badge--run {
+            font-size: 10px;
+            padding: 2px 6px;
+            vertical-align: middle;
+        }
         .cron-job-name,
         .cron-run-key {
             font-size: 13px;
@@ -445,7 +450,15 @@
             border-top: 1px solid var(--border);
         }
         .cron-job-enabled { font-size: 13px; display: flex; align-items: center; gap: 6px; }
-        .cron-run-card-top { font-size: 13px; line-height: 1.4; margin-bottom: 4px; }
+        .cron-run-card-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
         .cron-run-time { font-weight: 500; }
         .cron-run-msg {
             margin-top: 4px;

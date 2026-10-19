@@ -114,6 +114,7 @@
             runAt: st.lastRunAt,
             status: st.lastStatus,
             trigger: st.lastTrigger,
+            runHost: st.lastRunHost,
             durationMs: st.lastDurationMs,
             msg: st.lastMsg,
             err: st.lastErr,
@@ -284,6 +285,12 @@
         (run.trigger
           ? ' <span class="cron-panel-sub">' + escapeHtml(run.trigger) + '</span>'
           : '');
+      if (run.runHost === 'edge' || run.runHost === 'client') {
+        const hostBadge = mountCronHostBadge({ mode: run.runHost });
+        hostBadge.classList.add('cron-host-badge--run');
+        top.appendChild(document.createTextNode(' '));
+        top.appendChild(hostBadge);
+      }
       const keyEl = document.createElement('code');
       keyEl.className = 'cron-run-key';
       keyEl.textContent = cronKey;
