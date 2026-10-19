@@ -2614,7 +2614,14 @@
             next.push(step);
           }
         } else {
-          next.push(readFlatStep(el));
+          const parsed = readFlatStep(el);
+          if (el._stepRef && typeof el._stepRef === 'object') {
+            if (Object.prototype.hasOwnProperty.call(el._stepRef, 'recover')) {
+              parsed.recover = el._stepRef.recover;
+            }
+          }
+          el._stepRef = parsed;
+          next.push(parsed);
         }
       } catch (e) {
         if (ta) ta.classList.add('json-invalid');
@@ -3064,7 +3071,7 @@
         } else {
           renderFlatFields(body, step, syncAll);
           appendNoteField(body, step, syncAll);
-          mountOptionalRecoverBranch(body, step);
+          mountOptionalRecoverBranch(body, step, index);
         }
 
         stepsHost.appendChild(el);
@@ -3124,7 +3131,7 @@
 
     const OP_NO_OPTIONAL_RECOVER_UI = new Set(['fail', 'scope', 'if', 'comment', 'end']);
 
-    function mountOptionalRecoverBranch(parent, step) {
+    function mountOptionalRecoverBranch(parent, step, stepIndex) {
       if (!step || OP_NO_OPTIONAL_RECOVER_UI.has(step.op)) return;
       const has = Object.prototype.hasOwnProperty.call(step, 'recover');
       if (has && Array.isArray(step.recover)) {
@@ -3164,9 +3171,18 @@
         addRec.type = 'button';
         addRec.className = 'btn-albastru btn-inline';
         addRec.textContent = 'Adaugă recover';
-        addRec.onclick = () => {
+        addRec.onclick = (ev) => {
+          ev.stopPropagation();
           flushCurrentView();
-          step.recover = [];
+          const fr = currentFrame();
+          const target =
+            fr.kind === 'steps' &&
+            Array.isArray(fr.steps) &&
+            typeof stepIndex === 'number' &&
+            fr.steps[stepIndex]
+              ? fr.steps[stepIndex]
+              : step;
+          if (target && typeof target === 'object') target.recover = [];
           renderView();
           scrieRaw(obj);
         };
@@ -3436,7 +3452,7 @@
           flushCurrentView();
           pushNav({ kind: 'steps', label: 'do', steps: step.do });
         });
-        mountOptionalRecoverBranch(wrap, step);
+        mountOptionalRecoverBranch(wrap, step, null);
         return;
       }
 

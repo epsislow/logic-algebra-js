@@ -378,6 +378,56 @@
             box-sizing: border-box;
         }
         .cron-job-card-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .cron-job-name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+        .cron-host-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            letter-spacing: 0.02em;
+        }
+        .cron-host-badge-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+        }
+        .cron-host-badge--client {
+            color: #0a58ca;
+            background: rgba(13, 110, 253, 0.14);
+            border-color: rgba(13, 110, 253, 0.45);
+        }
+        .cron-host-badge--edge {
+            color: #5a32a3;
+            background: rgba(111, 66, 193, 0.16);
+            border-color: rgba(111, 66, 193, 0.5);
+        }
+        html[data-theme="dark"] .cron-host-badge--client {
+            color: #b8daff;
+            background: rgba(107, 176, 255, 0.28);
+            border-color: rgba(158, 202, 255, 0.65);
+        }
+        html[data-theme="dark"] .cron-host-badge--edge {
+            color: #e4d9ff;
+            background: rgba(167, 139, 250, 0.32);
+            border-color: rgba(196, 181, 253, 0.7);
+        }
+        html[data-theme="dark"] .cron-host-badge-icon {
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+        }
         .cron-job-name,
         .cron-run-key {
             font-size: 13px;

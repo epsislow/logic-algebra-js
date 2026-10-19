@@ -66,6 +66,26 @@
     return '<span class="cron-badge ' + cls + '">' + s + '</span>';
   }
 
+  /** Badge client (browser) vs edge (Supabase) lângă numele jobului. */
+  function mountCronHostBadge(cfg) {
+    const mode = cfg && cfg.mode === 'edge' ? 'edge' : 'client';
+    const span = document.createElement('span');
+    span.className = 'cron-host-badge cron-host-badge--' + mode;
+    span.title =
+      mode === 'edge'
+        ? 'Mod edge — Supabase (pg_cron la 5 min)'
+        : 'Mod client — browser (panou Cron → Pornește)';
+    const icon = document.createElement('span');
+    icon.className = 'cron-host-badge-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    span.appendChild(icon);
+    const lab = document.createElement('span');
+    lab.className = 'cron-host-badge-label';
+    lab.textContent = mode;
+    span.appendChild(lab);
+    return span;
+  }
+
   function collectRunRows(reg) {
     const rows = [];
     reg.forEach((entry) => {
@@ -139,13 +159,17 @@
 
       const head = document.createElement('div');
       head.className = 'cron-job-card-main';
+      const nameRow = document.createElement('div');
+      nameRow.className = 'cron-job-name-row';
+      nameRow.appendChild(mountCronHostBadge(cfg));
       const name = document.createElement('code');
       name.className = 'cron-job-name';
       name.textContent = entry.cronKey;
+      nameRow.appendChild(name);
       const next = document.createElement('div');
       next.className = 'cron-job-next';
       next.textContent = 'Următor: ' + fmtNextRun(entry.nextRunAt, cfg.schedule);
-      head.appendChild(name);
+      head.appendChild(nameRow);
       head.appendChild(next);
 
       const foot = document.createElement('div');
