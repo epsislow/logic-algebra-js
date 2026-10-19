@@ -34,3 +34,7 @@ from cron.job_run_details
 where jobid = (select jobid from cron.job where jobname = 'sside-cron-every-5-min' limit 1)
 order by start_time desc
 limit 10;
+
+
+-- Numărul de rulări pg_cron
+select count(*) from cron.job_run_details;
