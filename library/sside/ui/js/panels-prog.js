@@ -4314,6 +4314,7 @@
     });
     [
       titleInp,
+      modeSel,
       enChk,
       intMinInp,
       startAtInp,

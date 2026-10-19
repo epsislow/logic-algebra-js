@@ -43,11 +43,26 @@
     return /^cron:(?!state:|lock:)[^:]+$/.test(key || '');
   }
 
-  function isCronAuxRedisKey(key) {
+  function isCronStateRedisKey(key) {
+    return /^cron:state:[^:]+$/.test(key || '');
+  }
+
+  function isCronLockRedisKey(key) {
+    return /^cron:lock:[^:]+$/.test(key || '');
+  }
+
+  function isCronJournalRedisKey(key) {
     const k = key || '';
-    if (k.startsWith('cron:state:') || k.startsWith('cron:lock:')) return true;
-    if (k === 'cronlog:scheduler' || k.startsWith('cronlog:scheduler:')) return true;
-    return false;
+    return k === 'cronlog:scheduler' || k.startsWith('cronlog:scheduler:');
+  }
+
+  /** state / lock / journal — nu sunt chei config `cron:nume` */
+  function isCronAuxRedisKey(key) {
+    return (
+      isCronStateRedisKey(key) ||
+      isCronLockRedisKey(key) ||
+      isCronJournalRedisKey(key)
+    );
   }
 
   function parseDataJsonPeSchema(key) {
@@ -68,7 +83,8 @@
       k.startsWith('session:') ||
       k.startsWith('settings:') ||
       isCheieSearchIndexRedisKey(k) ||
-      isCronAuxRedisKey(k)
+      isCronLockRedisKey(k) ||
+      isCronJournalRedisKey(k)
     );
   }
 
@@ -100,8 +116,9 @@
     if (isCronRedisKey(key)) {
       return { tip: 'cron', name: key.slice('cron:'.length), cronKey: key };
     }
-    if (isCronAuxRedisKey(key)) {
-      return { tip: 'liber', cronAux: true, sistem: true };
+    if (isCronStateRedisKey(key)) {
+      const job = key.slice('cron:state:'.length);
+      return { tip: 'liber', cronState: true, name: job, cronKey: 'cron:' + job };
     }
 
     const dj = parseDataJsonPeSchema(key);
@@ -211,6 +228,13 @@
         note: '(user/session/settings/idx_)',
       });
     }
+    if (info.cronState) {
+      return withRowTint({
+        badge: 'cron·state',
+        cls: 'badge-cron',
+        note: info.cronKey ? '→ ' + info.cronKey : '(runtime scheduler)',
+      });
+    }
     if (info.tip === 'schema') {
       return withRowTint({ badge: 'schemă', cls: 'badge-schema', note: '' });
     }
@@ -274,6 +298,9 @@
     isUiRedisKey,
     isListRedisKey,
     isCronRedisKey,
+    isCronStateRedisKey,
+    isCronLockRedisKey,
+    isCronJournalRedisKey,
     isCronAuxRedisKey,
     parseDataJsonPeSchema,
     isCheieSearchIndexRedisKey,

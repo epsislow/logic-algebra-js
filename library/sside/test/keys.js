@@ -181,6 +181,12 @@ module.exports = {
         assert(Keys.isCronRedisKey('cron:sync'));
         assert(!Keys.isCronRedisKey('cron:state:sync'));
         assert(Keys.isCronAuxRedisKey('cron:state:sync'));
+        assert(Keys.isCronStateRedisKey('cron:state:testPing'));
+        assert(!Keys.isCheieSistemAscunsa('cron:state:testPing'));
+        assert(Keys.isCheieSistemAscunsa('cron:lock:testPing'));
+        const stInfo = Keys.clasificaCheie('cron:state:testPing', new Set());
+        assert(stInfo.cronState === true);
+        assertEq(stInfo.cronKey, 'cron:testPing');
         assertEq(Keys.clasificaCheie('cron:sync', new Set()).tip, 'cron');
         assertEq(Keys.cheieProgDinNume('cron', 'sync_stoc'), 'cron:sync_stoc');
       },
