@@ -1,0 +1,1 @@
+-- DEPRECATED: folosește pașii 00 → 01_vault → 02_pg_cron_schedule → 03_verify_runs.sql

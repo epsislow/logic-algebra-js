@@ -4,6 +4,8 @@ Joburi **`cron:nume`** cu **`mode: "client"`** — algoritmul rulează în **ssi
 
 Panou dedicat: buton **Cron** în bara de sus (lângă Lista / Docs).
 
+**Cron server-side (experimental):** Supabase Edge + pg_cron — [`cron-supabase-edge.md`](cron-supabase-edge.md), cod în `extern/supabase/`.
+
 ---
 
 ## Chei Redis

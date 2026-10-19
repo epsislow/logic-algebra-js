@@ -1,0 +1,10 @@
+# Supabase local / deploy — vezi README.md
+# https://supabase.com/docs/guides/functions/function-configuration
+
+project_id = "sside-cron-spike"
+
+[api]
+enabled = true
+
+[functions.sside-cron-run]
+verify_jwt = false
