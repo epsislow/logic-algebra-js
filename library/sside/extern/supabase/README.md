@@ -1,109 +1,159 @@
-# Supabase Edge — cron server-side (spike)
+# Supabase Edge — cron server-side
 
-Rulează la **5 minute** (pg_cron) o **Edge Function** Deno care poate face **multe apeluri Redis** (10–20+) fără limita subrequest Cloudflare Workers **per invocare alg**.
+Rulează la **5 minute** (pg_cron) funcția **`sside-cron-run`**: reload registry + journal + **due** pentru joburi `cron:…` cu **`mode: "edge"`**, execută alg via Upstash (vendor din `core/`).
 
-**Stare actuală:** funcția `sside-cron-run` face **smoke test** — citește `cron:…` + `alg:…` din Redis. Următorul pas: integrare `SsideAlg.run` pe Edge.
+Panou sside: job **`mode: client`** (browser) vs **`mode: edge`** (acest stack). Doc: [`../../doc/cron-supabase-edge.md`](../../doc/cron-supabase-edge.md).
 
 ---
 
 ## 1. Cerințe
 
-- Cont [Supabase](https://supabase.com) (free)
-- [Supabase CLI](https://supabase.com/docs/guides/cli) (`npm i -g supabase` sau standalone)
-- Token Upstash (aceleași `UPSTASH_*` ca pe Worker) **sau** user Redis pentru login Worker
+- Cont [Supabase](https://supabase.com)
+- CLI: `npm i -g supabase` sau `npx supabase` din `extern/supabase`
+- Redis: **Upstash** (`UPSTASH_URL` / `UPSTASH_TOKEN` sau `UPSTASH_REDIS_REST_*`) — aceleași ca pe Worker
+- Proiect link-uit: `supabase link --project-ref PROIECT_REF`
 
 ---
 
-## 2. Proiect Supabase
+## 2. Proiect Supabase (prima dată)
 
 ```bash
 cd extern/supabase
-supabase login
-supabase projects create sside-cron   # sau link la proiect existent
-supabase link --project-ref PROIECT_REF
+npx supabase login
+npx supabase link --project-ref PROIECT_REF
 ```
+
+(`PROIECT_REF` = ID din URL Dashboard, ex. `zbfooybgkhrngyiwdxal`.)
 
 ---
 
 ## 3. Secrete Edge Function
 
-Din `.env.example` — în Dashboard **Project Settings → Edge Functions → Secrets** sau:
+Dashboard → **Project Settings → Edge Functions → Secrets**, sau:
 
 ```bash
-supabase secrets set CRON_SECRET="..." 
-supabase secrets set UPSTASH_REDIS_REST_URL="..."
-supabase secrets set UPSTASH_REDIS_REST_TOKEN="..."
-# opțional:
-supabase secrets set CRON_DEFAULT_KEY="cron:testPing"
-```
-
-**Variantă Worker** (fără Upstash pe Edge): setează `SSIDE_WORKER_URL`, `SSIDE_CRON_USERNAME`, `SSIDE_CRON_PASSWORD` (user creat în Redis `user:nume` + parolă ca la login sside).
-
-Prioritate: dacă există `UPSTASH_*`, se folosește **Upstash direct**; altfel **Worker**.
-
----
-
-## 4. Sync vendor + deploy funcție
-
-După modificări în `core/` (cron, alg):
-
-```bash
-node node/sync-edge-vendor.js
 cd extern/supabase
-supabase functions deploy sside-cron-run --no-verify-jwt
+npx supabase secrets set CRON_SECRET="..."
+npx supabase secrets set UPSTASH_URL="..."
+npx supabase secrets set UPSTASH_TOKEN="..."
+# opțional:
+npx supabase secrets set CRON_DEFAULT_KEY="cron:testPing"
 ```
 
-(`verify_jwt = false` e setat și în `config.toml` — cron-ul trimite `Bearer CRON_SECRET`, nu JWT user.)
+Alias acceptate în cod: `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`.
+
+**Variantă Worker** (fără Upstash pe Edge): `SSIDE_WORKER_URL`, `SSIDE_CRON_USERNAME`, `SSIDE_CRON_PASSWORD`.
+
+Prioritate: dacă există Upstash → **direct**; altfel Worker.
+
+**pg_cron + Vault:** același valoare ca `CRON_SECRET`, fără prefix `Bearer`, nume secret **`sside_cron_secret`** — vezi `sql/01_vault_cron_secret.sql`.
 
 ---
 
-## 5. Test manual (curl)
+## 4. Deploy Edge (flux obișnuit)
 
-```bash
-curl -s -X POST "https://PROIECT_REF.supabase.co/functions/v1/sside-cron-run" \
-  -H "Authorization: Bearer CRON_SECRET_TAU" \
-  -H "Content-Type: application/json" \
+Rulezi din **rădăcina repo sside** (`library/sside`), nu doar din `extern/supabase`.
+
+### Pas A — copiere `core/` → vendor Deno
+
+Obligatoriu **înainte** de fiecare deploy dacă ai modificat `core/cron-client.js`, `cron-schedule.js`, `alg-*.js`, `when.js`, etc.
+
+```cmd
+cd D:\wamp64\www\logic\library\sside
+node node\sync-edge-vendor.js
+```
+
+Așteptat: linii `copiat …` și `OK → …\extern\supabase\functions\_shared\vendor`.
+
+### Pas B — deploy funcție
+
+```cmd
+cd extern\supabase
+npx supabase functions deploy sside-cron-run --no-verify-jwt
+```
+
+- **`WARNING: Docker is not running`** — normal; upload-ul merge pe Supabase.
+- Succes: `Deployed Functions on project PROIECT_REF: sside-cron-run`
+- Logs: [Dashboard → Edge Functions → sside-cron-run → Logs](https://supabase.com/dashboard/project/PROIECT_REF/functions)
+
+`--no-verify-jwt` + `config.toml`: cron apelează cu **`Authorization: Bearer CRON_SECRET`**, nu JWT user.
+
+### Pas C — verificare după deploy
+
+**Health (fără Redis):**
+
+```cmd
+curl -s -X POST "https://PROIECT_REF.supabase.co/functions/v1/sside-cron-run" ^
+  -H "Authorization: Bearer CRON_SECRET_TAU" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"mode\":\"ping\"}"
+```
+
+**Tick (ca pg_cron):**
+
+```cmd
+curl -s -X POST "https://PROIECT_REF.supabase.co/functions/v1/sside-cron-run" ^
+  -H "Authorization: Bearer CRON_SECRET_TAU" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"mode\":\"tick\"}"
+```
+
+Caută: `"ok": true`, `"cronHost": "edge"`, `"edgeJobs"` ≥ 0, `"executions"` (rulări dacă job edge e due).
+
+**Smoke (config + alg):**
+
+```cmd
+curl -s -X POST "https://PROIECT_REF.supabase.co/functions/v1/sside-cron-run" ^
+  -H "Authorization: Bearer CRON_SECRET_TAU" ^
+  -H "Content-Type: application/json" ^
   -d "{\"mode\":\"smoke\",\"cronKey\":\"cron:testPing\"}"
 ```
 
-Răspuns așteptat: `{ "ok": true, "mode": "smoke", "backend": "upstash", "algOps": ... }`.
-
-`mode: "ping"` — fără Redis, doar health.
+În sside: job **`mode: edge`**, **Activ**; panou Cron → **Reîncarcă** → tab **Rulari** (badge **edge**, câmp `runHost` în `cron:state:…`).
 
 ---
 
-## 6. Programare la 5 minute (pg_cron)
+## 5. Programare la 5 minute (pg_cron)
 
-1. Dashboard → **Database → Extensions** — activează `pg_cron`, `pg_net`, `supabase_vault` (dacă apar).
-2. **Vault:** rulează o dată (înlocuiește secretul):
+1. **Extensions:** `pg_cron`, `pg_net`, Vault — `sql/00_enable_extensions.sql`
+2. **Vault secret:** `sql/01_vault_cron_secret.sql` (sau fallback `01_vault_or_fallback.sql`)
+3. **Job HTTP tick:** rulează **`sql/02_pg_cron_schedule.sql`** în SQL Editor (body `{"mode":"tick"}`)
 
-```sql
-select vault.create_secret('CRON_SECRET_TAU', 'sside_cron_secret');
+Verificare răspunsuri HTTP: **`sql/03_verify_runs.sql`** (inclusiv `executions` JSON).
+
+Re-rulează `02_pg_cron_schedule.sql` dacă schimbi URL funcție sau secret Vault.
+
+---
+
+## 6. Rezumat comenzi (copy-paste)
+
+```cmd
+cd D:\wamp64\www\logic\library\sside
+node node\sync-edge-vendor.js
+cd extern\supabase
+npx supabase functions deploy sside-cron-run --no-verify-jwt
 ```
 
-3. Editează `sql/01_pg_cron_schedule.sql` — URL funcție + rulează în SQL Editor.
+---
 
-Verifică joburi: `select * from cron.job;`  
-Loguri funcție: Dashboard → **Edge Functions → sside-cron-run → Logs**.
+## 7. Arhitectură vs browser
+
+| | Browser (`mode: client`) | Edge (`mode: edge`) |
+|--|--------------------------|---------------------|
+| Trigger | Panou Cron → **Pornește** | pg_cron → `sside-cron-run` tick |
+| Alg | tab deschis + login | Upstash pe Deno |
+| State | `cron:state:…`, `runHost: client` | același chei, `runHost: edge` |
+
+Worker Cloudflare rămâne pentru UI; cron server lovește **Edge** + Redis Upstash.
 
 ---
 
-## 7. Arhitectură vs Cloudflare
+## Fișiere utile
 
-| | Worker (sside UI) | Supabase Edge |
-|--|-------------------|---------------|
-| Alg cu 10–20 Redis | ❌ multe subrequest / invocare | ✅ multe fetch / invocare |
-| Cron 5 min | browser client (tab deschis) | pg_cron → HTTP |
-| Secrete | env Worker | Supabase secrets + Vault |
-
-**Worker** rămâne pentru UI. Cron server-side lovește **Edge**; Redis fie **direct Upstash**, fie **câte un `/api/comanda` per comandă** (alg pe Edge, Worker doar proxy).
-
----
-
-## 8. Următorii pași (în repo)
-
-1. Port `core/alg-runner.js` + deps pe Deno sau bundle esbuild → `runOnce` server.
-2. `mode: "edge"` pe `cron:…` + validare în `prog-validate`.
-3. Lock / state / journal ca la `cron-client.js` (reuse logică).
-
-Doc detaliat: [`../../doc/cron-supabase-edge.md`](../../doc/cron-supabase-edge.md).
+| Path | Rol |
+|------|-----|
+| `functions/sside-cron-run/index.ts` | Entry POST: `tick` \| `smoke` \| `ping` |
+| `functions/_shared/edgeCronTick.ts` | `runEdgeSchedulerTick` |
+| `functions/_shared/vendor/*` | Generat — **nu edita manual**; sync din `core/` |
+| `node/sync-edge-vendor.js` | Script sync (repo root) |
+| `sql/*.sql` | Extensions, Vault, pg_cron, verificare |
