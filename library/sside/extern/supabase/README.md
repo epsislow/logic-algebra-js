@@ -121,6 +121,8 @@ curl -s -X POST "https://PROIECT_REF.supabase.co/functions/v1/sside-cron-run" ^
 
 Verificare răspunsuri HTTP: **`sql/03_verify_runs.sql`** (inclusiv `executions` JSON).
 
+4. **Curățare istoric pg_cron (opțional):** **`sql/04_purge_job_run_details.sql`** — job zilnic 03:00 UTC, șterge din `cron.job_run_details` rânduri mai vechi de **14 zile**. (`net._http_response` se curăță singur ~6h via `pg_net.ttl`.)
+
 Re-rulează `02_pg_cron_schedule.sql` dacă schimbi URL funcție sau secret Vault.
 
 ---
@@ -156,4 +158,4 @@ Worker Cloudflare rămâne pentru UI; cron server lovește **Edge** + Redis Upst
 | `functions/_shared/edgeCronTick.ts` | `runEdgeSchedulerTick` |
 | `functions/_shared/vendor/*` | Generat — **nu edita manual**; sync din `core/` |
 | `node/sync-edge-vendor.js` | Script sync (repo root) |
-| `sql/*.sql` | Extensions, Vault, pg_cron, verificare |
+| `sql/*.sql` | Extensions, Vault, pg_cron, verificare, purge `job_run_details` |
