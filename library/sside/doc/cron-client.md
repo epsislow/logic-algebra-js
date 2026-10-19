@@ -99,6 +99,21 @@ La creare / save: **`nextRunAt`** = prima fire **strict viitoare** (nu rulează 
 
 Due = ultimul slot din schedule **≤ momentul tick-ului** neacoperit de `lastRunAt` (max **1** run per tick).
 
+### Ordinea joburilor la tick
+
+La fiecare tick (browser **`runDueJobs`** sau Edge **`runEdgeSchedulerTick`** → același `runDueJobs`):
+
+1. **Registry** — toate cheile config `cron:…` (fără `cron:state:` / `cron:lock:`), încărcate cu **`listCronKeys`**, sortate **alfabetic** (`String.localeCompare` pe numele complet al cheii, ex. `cron:aaa` înainte de `cron:sync_stoc`).
+2. **Filtru host** — rulează doar joburi cu **`mode`** egal cu host-ul scheduler-ului: **`client`** în browser, **`edge`** pe Supabase. Celelalte sunt sărite (`reason: mode`).
+3. **Due** — pentru fiecare cheie rămasă, în ordinea de mai sus: dacă nu e **`enabled`** (scheduled) sau nu e **due**, se sare (`not_due` / `disabled`).
+4. **Execuție** — joburile due rulează **unul după altul** (secvențial, `await`), nu în paralel. Un alg lent întârzie joburile următoare din **același** tick.
+
+**Nu există** câmp de prioritate sau ordine manuală în config — doar sortarea lexicografică a cheii Redis.
+
+**Edge:** `listCronKeys` folosește `KEYS cron:*` + filtru; ordinea finală tot **`sort()`** în `reloadAll` / `runDueJobs`.
+
+**Exemplu:** `cron:testPing` înainte de `cron:testPong`; dacă ambele sunt `mode: edge`, due și active la `:00`, Ping termină (inclusiv lock + alg) înainte de Pong.
+
 Lock: `ttl = min(timeoutSeconds, 240)` secunde.
 
 Execuție alg: ca Live, dar `confirm` → refuz, `ui` → eroare (`confirm blocat în cron` / `ui blocat în cron`). Rezultat în `cron:state:…` (`lastMsg`, `lastErr`, `lastRunAt`, …).
@@ -124,7 +139,8 @@ Câmp **`recentRuns`** — ultimele **10** rulari per job (cel mai recent primul
 {
   "runAt": "2026-10-16T17:17:27.727Z",
   "status": "ok",
-  "trigger": "manual",
+  "trigger": "scheduled",
+  "runHost": "edge",
   "runId": "...",
   "durationMs": 643,
   "msg": "Ping",
@@ -132,6 +148,8 @@ Câmp **`recentRuns`** — ultimele **10** rulari per job (cel mai recent primul
   "skipReason": null
 }
 ```
+
+`runHost`: **`client`** (browser / **Acum**) sau **`edge`** (Supabase tick). `lastRunHost` pe același model în rădăcina state-ului.
 
 Dacă lipsește `recentRuns` (job vechi), tab **Rulari** poate afișa totuși **ultima** rulare din `lastRunAt` / `lastMsg`.
 

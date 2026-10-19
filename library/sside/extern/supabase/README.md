@@ -145,6 +145,7 @@ npx supabase functions deploy sside-cron-run --no-verify-jwt
 | Trigger | Panou Cron → **Pornește** | pg_cron → `sside-cron-run` tick |
 | Alg | tab deschis + login | Upstash pe Deno |
 | State | `cron:state:…`, `runHost: client` | același chei, `runHost: edge` |
+| Ordine tick (N job due) | alfabetic pe `cron:…`, **secvențial** | la fel — [`doc/cron-client.md`](../../doc/cron-client.md#ordinea-joburilor-la-tick) |
 
 Worker Cloudflare rămâne pentru UI; cron server lovește **Edge** + Redis Upstash.
 

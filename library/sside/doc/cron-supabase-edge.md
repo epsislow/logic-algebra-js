@@ -8,7 +8,7 @@ Cod: [`extern/supabase/`](../extern/supabase/README.md)
 
 ## Ce face funcția
 
-- **`mode: "tick"`** (implicit, pg_cron) — la fiecare 5 min: reload registry + journal sync + **due** pentru joburi **`mode: "edge"`** + `enabled` (0..N rulări; alg pe Edge via Upstash)
+- **`mode: "tick"`** (implicit, pg_cron) — la fiecare 5 min: reload registry + journal sync + **due** pentru joburi **`mode: "edge"`** + `enabled` (0..N rulări; alg pe Edge via Upstash). **Ordinea** mai multor job due: alfabetic pe cheie, secvențial — vezi [cron-client.md → Ordinea joburilor la tick](cron-client.md#ordinea-joburilor-la-tick).
 - **`mode: "smoke"`** — citește un `cronKey` + alg (debug)
 - **`mode: "ping"`** — health
 
@@ -36,11 +36,12 @@ User Redis dedicat (`SSIDE_CRON_*`) dacă treci prin Worker — același model c
 
 ## Relație cu cron client (browser)
 
-| | Browser (`mode: client`) | Edge (viitor `mode: edge`) |
-|--|--------------------------|----------------------------|
-| Tick | Pornește manual în panou | pg_cron |
-| Alg | `SsideAlg.run` în tab | Deno (de portat) |
+| | Browser (`mode: client`) | Edge (`mode: edge`) |
+|--|--------------------------|---------------------|
+| Tick | Pornește manual în panou | pg_cron → `sside-cron-run` |
+| Alg | `SsideAlg.run` în tab | vendor `core/` pe Deno |
 | Lock / state | `cron:lock:`, `cron:state:` | aceleași chei |
+| Ordine la tick | alfabetic + secvențial | la fel (`runDueJobs`) |
 
 Journal `cronlog:scheduler` poate rămâne comun pentru sync config între tab și server.
 
