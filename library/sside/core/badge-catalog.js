@@ -42,10 +42,10 @@
     { tip: 'ui', badge: 'ui', cls: 'badge-ui', rule: 'Prefix `ui:_` + nume.', example: 'ui:_warehouse' },
     { tip: 'list', badge: 'list', cls: 'badge-list', rule: 'Prefix `list:_` + nume (prog list, nu TYPE Redis list).', example: 'list:_stock' },
     { tip: 'cron', badge: 'cron', cls: 'badge-cron', rule: 'Config job `cron:nume` (fără `cron:state:` / `cron:lock:`).', example: 'cron:sync_stoc' },
-    { tip: 'queue', badge: 'queue', cls: 'badge-queue', rule: 'Prefix `queue:` — convenție utilizator.', example: 'queue:jobs' },
-    { tip: 'stack', badge: 'stack', cls: 'badge-stack', rule: 'Prefix `stack:` — convenție utilizator.', example: 'stack:undo' },
-    { tip: 'events', badge: 'events', cls: 'badge-events', rule: 'Prefix `events:` — convenție utilizator.', example: 'events:orders' },
-    { tip: 'cache', badge: 'cache', cls: 'badge-cache', rule: 'Prefix `cache:` — cheie Redis numită de user (≠ cache TYPE din Setări).', example: 'cache:myValuesHere' },
+    { tip: 'queue', badge: 'queue', cls: 'badge-queue', rule: 'Prefix `queue:`.', example: 'queue:jobs' },
+    { tip: 'stack', badge: 'stack', cls: 'badge-stack', rule: 'Prefix `stack:`.', example: 'stack:undo' },
+    { tip: 'events', badge: 'events', cls: 'badge-events', rule: 'Prefix `events:`.', example: 'events:orders' },
+    { tip: 'cache', badge: 'cache', cls: 'badge-cache', rule: 'Prefix `cache:`.', example: 'cache:myValuesHere' },
     { tip: 'log', badge: 'log', cls: 'badge-log', rule: 'Prefix `log:`.', example: 'log:audit' },
     { tip: 'info', badge: 'info', cls: 'badge-info', rule: 'Prefix `info:`.', example: 'info:_meta' },
     { tip: 'json', badge: 'json', cls: 'badge-json', rule: 'Prefix `json:` (aux, nu TYPE).', example: 'json:_blob' },
@@ -274,7 +274,7 @@
     });
     md += '\n';
 
-    md += '---\n\n*Secțiune generată din `core/badge-catalog.js` la `node node/gen_doc_data.js`.*\n';
+    md += '---\n\n*Secțiune autogenerată din registrul de badge-uri.*\n';
     return md;
   }
 
