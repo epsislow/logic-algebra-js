@@ -27,8 +27,16 @@
   function cmpNum(a, b) {
     const na = Number(a);
     const nb = Number(b);
-    if (Number.isNaN(na) || Number.isNaN(nb)) return null;
-    return na - nb;
+    if (!Number.isNaN(na) && !Number.isNaN(nb)) return na - nb;
+    if (typeof a === 'string' && typeof b === 'string') {
+      const iso = /^\d{4}-\d{2}-\d{2}/;
+      if (iso.test(a) && iso.test(b)) {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      }
+    }
+    return null;
   }
 
   function same(a, b) {

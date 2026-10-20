@@ -58,6 +58,12 @@
     if (ref.charAt(0) === '$') {
       return getPath(ctx.vars, ref.slice(1));
     }
+    if (ref.indexOf('.') >= 0) {
+      const root = ref.split('.')[0];
+      if (Object.prototype.hasOwnProperty.call(ctx.vars, root)) {
+        return getPath(ctx.vars, ref);
+      }
+    }
     if (isIdent(ref)) {
       if (Object.prototype.hasOwnProperty.call(ctx.vars, ref)) {
         return getPath(ctx.vars, ref);

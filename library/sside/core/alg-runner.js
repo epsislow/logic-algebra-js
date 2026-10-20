@@ -439,8 +439,11 @@
     if (op === 'assign') {
       let val;
       if (Object.prototype.hasOwnProperty.call(step, 'val')) {
-        // val = literal (nu se rezolvă ca ref)
+        // val = literal (nu se rezolvă ca ref); clone ca să nu se refolosească același {} în foreach
         val = step.val;
+        if (val !== null && typeof val === 'object') {
+          val = cloneData(val);
+        }
       } else if (Object.prototype.hasOwnProperty.call(step, 'from')) {
         val = getVal(ctx, step.from);
       } else {

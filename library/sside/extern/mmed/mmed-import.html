@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mmed — import Redis (fără Apache)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 520px; margin: 2rem auto; padding: 0 1rem; }
+    label { display: block; margin-top: 0.75rem; font-size: 14px; }
+    input { width: 100%; box-sizing: border-box; padding: 0.4rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
+    #log { margin-top: 1rem; font-size: 13px; white-space: pre-wrap; background: #f4f4f4; padding: 0.75rem; border-radius: 6px; }
+    a { color: #0366d6; }
+  </style>
+</head>
+<body>
+  <h1>Import mmed v1</h1>
+  <p>Funcționează de pe <code>file://</code> — apelează același Worker ca sside.</p>
+  <label>Worker URL<input id="worker" type="text" value="https://little-darkness-9133.ady25626.workers.dev"></label>
+  <label>Utilizator<input id="user" type="text" autocomplete="username"></label>
+  <label>Parolă<input id="pass" type="password" autocomplete="current-password"></label>
+  <button type="button" id="go">Login + import chei prog + date goale</button>
+  <p style="font-size: 13px;">Apoi deschide <a id="appLink" href="../../index.html">sside index.html</a> → <code>ui:_mmed</code> → Live.</p>
+  <div id="log"></div>
+  <script src="mmed-import-data.js"></script>
+  <script>
+    (function () {
+      var appLink = document.getElementById('appLink');
+      appLink.href = new URL('../../index.html', location.href).href;
+
+      function log(s) {
+        var el = document.getElementById('log');
+        el.textContent += s + '\n';
+      }
+
+      async function post(base, path, body, token) {
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers.Authorization = 'Bearer ' + token;
+        var res = await fetch(base.replace(/\/$/, '') + path, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(body),
+        });
+        var text = await res.text();
+        var json;
+        try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
+        if (!res.ok || (json && json.succes === false)) {
+          throw new Error((json && json.eroare) || text || res.statusText);
+        }
+        return json;
+      }
+
+      function todayIso() {
+        var d = new Date();
+        var p = function (n) { return String(n).padStart(2, '0'); };
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      }
+
+      document.getElementById('go').onclick = async function () {
+        document.getElementById('log').textContent = '';
+        if (!window.MMED_IMPORT_KEYS) {
+          log('Lipsește mmed-import-data.js — rulează: node extern/mmed/build-import-data.js');
+          return;
+        }
+        var base = document.getElementById('worker').value.trim();
+        var user = document.getElementById('user').value.trim();
+        var pass = document.getElementById('pass').value;
+        if (!user || !pass) { log('Completează user și parolă.'); return; }
+        try {
+          log('Login…');
+          var login = await post(base, '/api/login', { username: user, password: pass });
+          var token = login.token;
+          if (!token) throw new Error('Fără token');
+          localStorage.setItem('session_token', token);
+          localStorage.setItem('session_user', user);
+          log('OK — token salvat în localStorage (sside îl refolosește).');
+
+          var keys = Object.keys(window.MMED_IMPORT_KEYS).sort();
+          log('Import ' + keys.length + ' chei…');
+          for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            await post(base, '/api/comanda', {
+              comandaRedis: ['JSON.SET', key, '$', JSON.stringify(window.MMED_IMPORT_KEYS[key])],
+            }, token);
+          }
+          var iso = todayIso();
+          await post(base, '/api/comanda', {
+            comandaRedis: ['JSON.SET', 'data:_mmed_person:default', '$', JSON.stringify({ v: 1, name: 'Eu', todayIso: iso })],
+          }, token);
+          await post(base, '/api/comanda', { comandaRedis: ['JSON.SET', 'data:_mmed_plan:default', '$', '[]'] }, token);
+          await post(base, '/api/comanda', { comandaRedis: ['JSON.SET', 'data:_mmed_plan_today:default', '$', '[]'] }, token);
+          await post(base, '/api/comanda', { comandaRedis: ['JSON.SET', 'data:_mmed_med_index:default', '$', '[]'] }, token);
+          try {
+            await post(base, '/api/comanda', { comandaRedis: ['DEL', 'list:_mmed_inventory_index:default'] }, token);
+          } catch (e) { /* ok dacă lipsește */ }
+          log('Gata. todayIso=' + iso);
+          log('Deschide sside (link de sus) → ui:_mmed → Live.');
+        } catch (err) {
+          log('Eroare: ' + (err.message || err));
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
