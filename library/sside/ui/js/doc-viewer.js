@@ -157,6 +157,13 @@
         continue;
       }
 
+      if (/^\s*<a\s+/i.test(line)) {
+        closeList();
+        html.push(line.trim());
+        i++;
+        continue;
+      }
+
       closeList();
       html.push('<p>' + inlineFormat(line) + '</p>');
       i++;
