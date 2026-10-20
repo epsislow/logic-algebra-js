@@ -20,6 +20,14 @@ După import, deschide aplicația:
 
 ---
 
+## Persoane (v1)
+
+Nu există încă tab „Persoane” în UI. Totul merge pe **`personId: default`** — cheia `data:_mmed_person:default` (nume „Eu”, `todayIso` pentru plan).
+
+Mai multe persoane = fază 2 (settings + `activePersonId`). **Nu trebuie să alegi persoana** ca să folosești app-ul acum.
+
+---
+
 ## Tab-uri
 
 | Tab | Rol |

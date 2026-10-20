@@ -103,7 +103,12 @@ const SCHEMA_MED_FORM = {
     name: { type: 'string', title: 'Nume medicament' },
     unit: { type: 'string', title: 'Unitate', enum: ['caps', 'ml', 'mg'], default: 'caps' },
     initialQty: { type: 'number', title: 'Cantitate inițială (stoc)', default: 30 },
-    startDate: { type: 'string', format: 'date', title: 'Program de la data' },
+    startDate: {
+      type: 'string',
+      format: 'date',
+      title: 'Program de la data',
+      description: 'Obligatoriu — alege data în calendar (dacă lași gol, se folosește azi).',
+    },
     freqType: {
       type: 'string',
       title: 'Frecvență',
@@ -245,7 +250,22 @@ const ALG_SAVE_MED = {
     { op: 'jset', to: 'payload', path: 'name', from: 'form.name' },
     { op: 'jset', to: 'payload', path: 'unit', from: 'form.unit' },
     { op: 'jset', to: 'payload', path: 'initialQty', from: 'form.initialQty' },
-    { op: 'jset', to: 'payload', path: 'startDate', from: 'form.startDate' },
+    { op: 'cat', to: 'personKey', parts: ['data:_mmed_person:', 'personId'] },
+    { op: 'kget', key: 'personKey', to: 'person', as: 'json' },
+    {
+      op: 'if',
+      when: ['or', ['eq', 'form.startDate', ''], ['eq', 'form.startDate', null]],
+      then: [
+        {
+          op: 'if',
+          when: ['truthy', 'person.todayIso'],
+          then: [{ op: 'assign', to: 'startDateVal', from: 'person.todayIso' }],
+          else: [{ op: 'fdate', val: 'now', format: 'YYYY-MM-DD', to: 'startDateVal' }],
+        },
+      ],
+      else: [{ op: 'assign', to: 'startDateVal', from: 'form.startDate' }],
+    },
+    { op: 'jset', to: 'payload', path: 'startDate', from: 'startDateVal' },
     { op: 'jset', to: 'payload', path: 'freqType', from: 'form.freqType' },
     {
       op: 'if',

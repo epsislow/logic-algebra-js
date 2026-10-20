@@ -19,6 +19,8 @@ function pushRowSteps(period) {
       then: [
         { op: 'assign', to: 'row', val: {} },
         { op: 'jset', to: 'row', path: 'date', from: 'dateIso' },
+        { op: 'fdate', from: 'dateIso', format: 'DD.MM.YYYY', to: 'dateLabel' },
+        { op: 'jset', to: 'row', path: 'dateLabel', from: 'dateLabel' },
         { op: 'jset', to: 'row', path: 'period', val: p },
         { op: 'jset', to: 'row', path: 'periodOrd', val: period.ord },
         { op: 'jset', to: 'row', path: 'periodLabel', val: period.label },
@@ -49,10 +51,14 @@ function pushRowSteps(period) {
 
 function buildRebuildPlanSteps() {
   const medDaySteps = [
-    { op: 'kget', key: '$medKey', to: 'med', as: 'json' },
+    { op: 'kget', key: 'medKey', to: 'med', as: 'json' },
     {
       op: 'if',
-      when: ['and', ['gte', 'dateIso', 'med.startDate'], ['eq', 'med.freqType', 'daily']],
+      when: [
+        'and',
+        ['eq', 'med.freqType', 'daily'],
+        ['or', ['empty', 'med.startDate'], ['gte', 'dateIso', 'med.startDate']],
+      ],
       then: PERIODS.reduce(function (acc, period) {
         return acc.concat(pushRowSteps(period));
       }, []),
@@ -72,13 +78,13 @@ function buildRebuildPlanSteps() {
     { op: 'cat', to: 'planKey', parts: ['data:_mmed_plan:', 'personId'] },
     { op: 'cat', to: 'todayKey', parts: ['data:_mmed_plan_today:', 'personId'] },
     { op: 'cat', to: 'indexKey', parts: ['data:_mmed_med_index:', 'personId'] },
-    { op: 'kget', key: '$planKey', to: 'oldPlan', as: 'json' },
+    { op: 'kget', key: 'planKey', to: 'oldPlan', as: 'json' },
     {
       op: 'if',
       when: ['eq', 'oldPlan', null],
       then: [{ op: 'assign', to: 'oldPlan', val: [] }],
     },
-    { op: 'kget', key: '$indexKey', to: 'medKeys', as: 'json' },
+    { op: 'kget', key: 'indexKey', to: 'medKeys', as: 'json' },
     {
       op: 'if',
       when: ['eq', 'medKeys', null],
@@ -127,7 +133,7 @@ function buildRebuildPlanSteps() {
         },
       ],
     },
-    { op: 'ksave', key: '$planKey', val: 'rows', as: 'json' },
+    { op: 'ksave', key: 'planKey', val: 'rows', as: 'json' },
     { op: 'assign', to: 'todayRows', val: [] },
     {
       op: 'foreach',
@@ -141,7 +147,7 @@ function buildRebuildPlanSteps() {
         },
       ],
     },
-    { op: 'ksave', key: '$todayKey', val: 'todayRows', as: 'json' },
+    { op: 'ksave', key: 'todayKey', val: 'todayRows', as: 'json' },
     { op: 'end', msg: 'Plan reîmprospătat' },
   ];
 }
