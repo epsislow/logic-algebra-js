@@ -45,8 +45,10 @@
         /** Path segmente în mod Dosare (reset la căutare nouă). */
         let dosarePathSegments = [];
 
-        /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără badge Redis/idx în listă). */
+        /** Dacă false, scaneazaToateCampurile nu apelează TYPE (fără TYPE la Caută; badge din cache tot posibil). */
         let listareCuType = false;
+        /** Preferință: persistă tipuri în localStorage (typeKeyCache). */
+        let typeKeyCacheEnabledFlag = false;
         /** Dosare: tentă convenție (schema/data/admin…) pe tile dosar. */
         let listDosareTintConventie = false;
         /** TTL pe cheia din detaliu: ms rămase; -1 = no expire; -2 = cheie lipsă; null = necunoscut. */
@@ -227,7 +229,8 @@
 
         (function bootstrapUserPrefs() {
             if (window.SsideUserPrefs && typeof SsideUserPrefs.applyAll === 'function') {
-                SsideUserPrefs.applyAll();
+                const p = SsideUserPrefs.applyAll();
+                if (p) typeKeyCacheEnabledFlag = !!p.typeKeyCache;
             }
         })();
 
@@ -238,8 +241,13 @@
                 {};
             const prevListareType = listareCuType;
             const prevDosareTint = listDosareTintConventie;
+            const prevTypeKeyCache = typeKeyCacheEnabledFlag;
             listareCuType = !!p.listareType;
             listDosareTintConventie = !!p.dosareTintConventie;
+            typeKeyCacheEnabledFlag = !!p.typeKeyCache;
+            if (!prevTypeKeyCache && typeKeyCacheEnabledFlag) {
+                rehydrateTipRedisCheiDinStorage();
+            }
             if (
                 p.listKeysView === 'tiles' ||
                 p.listKeysView === 'tree' ||
@@ -264,6 +272,12 @@
                 return;
             }
             if (prevDosareTint !== listDosareTintConventie && appVizibil) {
+                if (Array.isArray(toateCheile) && toateCheile.length && listaEl && listaEl.style.display !== 'none') {
+                    randeazaListaChei(toateCheile, ultimulFiltruLista);
+                }
+                return;
+            }
+            if (prevTypeKeyCache !== typeKeyCacheEnabledFlag && appVizibil) {
                 if (Array.isArray(toateCheile) && toateCheile.length && listaEl && listaEl.style.display !== 'none') {
                     randeazaListaChei(toateCheile, ultimulFiltruLista);
                 }
@@ -343,10 +357,15 @@
                 const exists = await SsideSettings.settingsPrefsKeyExists();
                 if (!exists) return { ok: false, message: 'Cheia nu există în Redis.' };
                 await apeleazaServerul('/api/comanda', { comandaRedis: ['DEL', key] });
-                delete tipuriRedisChei[key];
+                forgetTipRedisCheie(key);
                 return { ok: true, key };
             };
+            SsideSettings.clearTypeKeyCache = function () {
+                golestCacheTipuriRedisChei();
+            };
         }
+
+        window.syncUiFromPrefs = syncUiFromPrefs;
 
         (function initUserSettingsButton() {
             const btn = document.getElementById('btn-user-settings');
@@ -623,6 +642,10 @@
             seteazaVizibilitateStatisticiApi(true);
             actualizeazaUiStatisticiApi();
             pornesteCronRefreshSesiune();
+            if (window.SsideUserPrefs) {
+                typeKeyCacheEnabledFlag = !!SsideUserPrefs.loadFromLocalStorage().typeKeyCache;
+            }
+            rehydrateTipRedisCheiDinStorage();
             inapoiLaLista();
             scaneazaToateCampurile()
                 .then(() => {
@@ -765,7 +788,7 @@
 
         function adaugaSchemaInCache(cheie, tipRedis) {
             if (!isSchemaRedisKey(cheie)) return;
-            if (tipRedis) tipuriRedisChei[cheie] = normalizeazaTipRedis(tipRedis);
+            if (tipRedis) setTipRedisCheie(cheie, normalizeazaTipRedis(tipRedis));
             if (!schemeCacheKeys.includes(cheie)) {
                 schemeCacheKeys.push(cheie);
                 schemeCacheKeys.sort();
@@ -812,7 +835,7 @@
         function marcheazaSchemaVerificata(schemaKey, tipRedis) {
             if (!schemaKey || !isSchemaRedisKey(schemaKey)) return;
             schemeKeysVerificate.add(schemaKey);
-            if (tipRedis) tipuriRedisChei[schemaKey] = normalizeazaTipRedis(tipRedis);
+            if (tipRedis) setTipRedisCheie(schemaKey, normalizeazaTipRedis(tipRedis));
             if (!schemeCacheKeys.includes(schemaKey)) {
                 schemeCacheKeys.push(schemaKey);
                 schemeCacheKeys.sort();
@@ -1151,6 +1174,58 @@
             return t;
         }
 
+        function sessionUsername() {
+            return localStorage.getItem('session_user') || '';
+        }
+
+        function typeKeyCachePrefEnabled() {
+            return !!typeKeyCacheEnabledFlag;
+        }
+
+        function setTipRedisCheie(cheie, tip) {
+            const t = normalizeazaTipRedis(tip);
+            tipuriRedisChei[cheie] = t;
+            const RTC = window.SsideRedisTypeCache;
+            if (RTC && typeKeyCachePrefEnabled()) {
+                RTC.noteType(sessionUsername(), cheie, t, { enabled: true });
+            }
+        }
+
+        function forgetTipRedisCheie(cheie) {
+            delete tipuriRedisChei[cheie];
+            const RTC = window.SsideRedisTypeCache;
+            if (RTC) {
+                RTC.forgetKey(sessionUsername(), cheie, {});
+            }
+        }
+
+        function rehydrateTipRedisCheiDinStorage() {
+            const RTC = window.SsideRedisTypeCache;
+            if (!RTC || !typeKeyCachePrefEnabled()) return;
+            RTC.loadIntoMap(sessionUsername(), tipuriRedisChei);
+        }
+
+        function tipRedisAfisatPentruCheie(cheie) {
+            const t = tipuriRedisChei[cheie];
+            if (!t || t === 'unknown') return null;
+            return t;
+        }
+
+        function golestCacheTipuriRedisChei() {
+            const RTC = window.SsideRedisTypeCache;
+            const u = sessionUsername();
+            if (RTC && u) RTC.clearAll(u);
+            tipuriRedisChei = {};
+        }
+
+        (function rehydrateTypeCacheDacaAutentificat() {
+            if (!localStorage.getItem('session_token')) return;
+            if (window.SsideUserPrefs) {
+                typeKeyCacheEnabledFlag = !!SsideUserPrefs.loadFromLocalStorage().typeKeyCache;
+            }
+            rehydrateTipRedisCheiDinStorage();
+        })();
+
         function esteTipRedisJson(tip) {
             return normalizeazaTipRedis(tip) === 'json';
         }
@@ -1375,10 +1450,10 @@
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["TYPE", cheie] });
                 const tip = normalizeazaTipRedis(date.rezultat || 'none');
-                tipuriRedisChei[cheie] = tip;
+                setTipRedisCheie(cheie, tip);
                 return tip;
             } catch (e) {
-                tipuriRedisChei[cheie] = 'unknown';
+                setTipRedisCheie(cheie, 'unknown');
                 return 'unknown';
             }
         }
@@ -1417,7 +1492,7 @@
                 if (tip === 'json' && text === '') {
                     const tipFresh = await aflaTipRedis(cheie, { force: true });
                     if (tipFresh === 'none' || tipFresh === 'unknown') {
-                        tipuriRedisChei[cheie] = 'json';
+                        setTipRedisCheie(cheie, 'json');
                         return { text: '', tip: 'json', stearsa: true };
                     }
                     if (tipFresh !== 'json') {
@@ -1429,14 +1504,14 @@
             } catch (e1) {
                 const tipFresh = await aflaTipRedis(cheie, { force: true });
                 if (tipFresh === 'none' || tipFresh === 'unknown') {
-                    tipuriRedisChei[cheie] = tip; // păstrăm tipul intenționat pt. Salvează / recreare
+                    setTipRedisCheie(cheie, tip); // păstrăm tipul intenționat pt. Salvează / recreare
                     return { text: '', tip, stearsa: true };
                 }
                 try {
                     const text = await citesteValoareDupaTip(cheie, tipFresh);
                     return { text, tip: tipFresh, stearsa: false };
                 } catch (e2) {
-                    tipuriRedisChei[cheie] = tipFresh;
+                    setTipRedisCheie(cheie, tipFresh);
                     return { text: '', tip: tipFresh, stearsa: true };
                 }
             }
@@ -1452,13 +1527,13 @@
                 }
                 const jsonString = JSON.stringify(payload);
                 await apeleazaServerul("/api/comanda", { comandaRedis: ["JSON.SET", cheie, "$", jsonString] });
-                tipuriRedisChei[cheie] = 'json';
+                setTipRedisCheie(cheie, 'json');
                 return JSON.stringify(payload, null, 2);
             }
             const textBrut = typeof textSauObj === 'string' ? textSauObj : JSON.stringify(textSauObj);
             // KEEPTTL: salvează conținutul fără a reseta expirarea (Upstash suportă)
             await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, textBrut, "KEEPTTL"] });
-            tipuriRedisChei[cheie] = 'string';
+            setTipRedisCheie(cheie, 'string');
             return textBrut;
         }
 
@@ -1904,14 +1979,15 @@ function translateUpstashSearchResults(date) {
             conv.className = 'badge key-tile-badge ' + et.cls;
             conv.textContent = et.badge;
             meta.appendChild(conv);
-            if (listareCuType && tipuriRedisChei[cheie]) {
-                const er = etichetaRedisTip(tipuriRedisChei[cheie]);
+            const tipAfis = tipRedisAfisatPentruCheie(cheie);
+            if (tipAfis) {
+                const er = etichetaRedisTip(tipAfis);
                 const redisBadge = document.createElement('span');
                 redisBadge.className = 'badge key-tile-badge ' + er.cls;
                 redisBadge.textContent = er.badge;
                 meta.appendChild(redisBadge);
             }
-            if (listareCuType && esteCheieIdx(cheie, tipuriRedisChei[cheie])) {
+            if (tipAfis && esteCheieIdx(cheie, tipAfis)) {
                 const idxBadge = document.createElement('span');
                 idxBadge.className = 'badge badge-idx key-tile-badge';
                 idxBadge.textContent = 'idx';
@@ -1946,16 +2022,18 @@ function translateUpstashSearchResults(date) {
                 const row = document.createElement('div');
                 row.className = 'key-row';
                 if (et.rowTint) row.classList.add(et.rowTint);
-                if (listareCuType) {
-                    const er = etichetaRedisTip(tipuriRedisChei[cheie]);
-                    const eIdx = esteCheieIdx(cheie, tipuriRedisChei[cheie]);
+                const tipAfis = tipRedisAfisatPentruCheie(cheie);
+                const showRedisCol = !!tipAfis || listareCuType;
+                if (showRedisCol) {
+                    const er = etichetaRedisTip(tipAfis || 'none');
+                    const eIdx = tipAfis && esteCheieIdx(cheie, tipAfis);
                     row.innerHTML =
                         '<span class="badge ' + er.cls + '" data-role="redis"></span>' +
                         '<span class="key-name"></span>' +
                         '<span class="badge ' + et.cls + '" data-role="conv"></span>' +
                         (eIdx ? '<span class="badge badge-idx" data-role="idx">idx</span>' : '') +
                         '<button type="button" class="btn-albastru btn-inline"></button>';
-                    row.querySelector('[data-role="redis"]').textContent = er.badge;
+                    row.querySelector('[data-role="redis"]').textContent = tipAfis ? er.badge : '';
                 } else {
                     row.innerHTML =
                         '<span class="key-name"></span>' +
@@ -2312,6 +2390,7 @@ function translateUpstashSearchResults(date) {
             try {
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheie] });
                 if (date.rezultat > 0) {
+                    forgetTipRedisCheie(cheie);
                     alert(`Câmpul "${cheie}" a fost eliminat.`);
                     scaneazaToateCampurile();
                 } else {
@@ -2841,7 +2920,7 @@ function translateUpstashSearchResults(date) {
                 if (setMembri.length === 0) {
                     const tipFresh = await aflaTipRedis(cheie, { force: true });
                     if (tipFresh === 'none' || tipFresh === 'unknown' || tipFresh !== 'set') {
-                        tipuriRedisChei[cheie] = 'set';
+                        setTipRedisCheie(cheie, 'set');
                         setMembruEditIndex = -1;
                         randeazaListaMembriSet();
                         actualizeazaVizualizareSet();
@@ -2856,7 +2935,7 @@ function translateUpstashSearchResults(date) {
             } catch (e) {
                 const tipFresh = await aflaTipRedis(cheie, { force: true });
                 if (tipFresh === 'none' || tipFresh === 'unknown' || tipFresh !== 'set') {
-                    tipuriRedisChei[cheie] = 'set';
+                    setTipRedisCheie(cheie, 'set');
                     setMembri = [];
                     setMembruEditIndex = -1;
                     randeazaListaMembriSet();
@@ -3021,7 +3100,7 @@ function translateUpstashSearchResults(date) {
                 } else {
                     return;
                 }
-                tipuriRedisChei[cheieCurenta] = 'set';
+                setTipRedisCheie(cheieCurenta, 'set');
                 await incarcaSetMembri(cheieCurenta);
                 anuleazaEditMembruSet();
                 if (!toateCheile.includes(cheieCurenta)) {
@@ -3042,7 +3121,7 @@ function translateUpstashSearchResults(date) {
                 // dacă Set-ul a rămas gol, cheia dispare din Redis
                 const tip = await aflaTipRedis(cheieCurenta, { force: true });
                 if (tip === 'none') {
-                    tipuriRedisChei[cheieCurenta] = 'set';
+                    setTipRedisCheie(cheieCurenta, 'set');
                     alert('Cheie stearsa. Salveaza pt recreare!');
                     // rămânem pe listă membri goală — + Membru recreează Set-ul
                 }
@@ -3201,20 +3280,20 @@ function translateUpstashSearchResults(date) {
                 if (colItems.length === 0) {
                     const tipFresh = await aflaTipRedis(cheie, { force: true });
                     if (tipFresh === 'none' || tipFresh === 'unknown' || tipFresh !== kind) {
-                        tipuriRedisChei[cheie] = kind;
+                        setTipRedisCheie(cheie, kind);
                         randeazaListaCol();
                         actualizeazaVizualizareCol();
                         return { stearsa: true };
                     }
                 }
-                tipuriRedisChei[cheie] = kind;
+                setTipRedisCheie(cheie, kind);
                 randeazaListaCol();
                 actualizeazaVizualizareCol();
                 return { stearsa: false };
             } catch (e) {
                 const tipFresh = await aflaTipRedis(cheie, { force: true });
                 if (tipFresh === 'none' || tipFresh === 'unknown' || tipFresh !== kind) {
-                    tipuriRedisChei[cheie] = kind;
+                    setTipRedisCheie(cheie, kind);
                     colItems = [];
                     randeazaListaCol();
                     actualizeazaVizualizareCol();
@@ -3610,7 +3689,7 @@ function translateUpstashSearchResults(date) {
                     return;
                 }
 
-                tipuriRedisChei[cheieCurenta] = colKind;
+                setTipRedisCheie(cheieCurenta, colKind);
                 await incarcaColItems(cheieCurenta, colKind);
                 anuleazaEditColItem();
                 if (!toateCheile.includes(cheieCurenta)) {
@@ -3644,7 +3723,7 @@ function translateUpstashSearchResults(date) {
                 anuleazaEditColItem();
                 const tip = await aflaTipRedis(cheieCurenta, { force: true });
                 if (tip === 'none') {
-                    tipuriRedisChei[cheieCurenta] = colKind;
+                    setTipRedisCheie(cheieCurenta, colKind);
                     alert('Cheie stearsa. Salveaza pt recreare!');
                 }
             } catch (err) {
@@ -4080,7 +4159,7 @@ function translateUpstashSearchResults(date) {
             if (redisTip === 'none') {
                 // cheie dispărută — păstrăm string ca tip de recreare implicit
                 redisTip = 'string';
-                tipuriRedisChei[cheie] = 'string';
+                setTipRedisCheie(cheie, 'string');
             }
             redisTipCurent = redisTip;
             actualizeazaButonInapoiDetaliu();
@@ -4147,7 +4226,7 @@ function translateUpstashSearchResults(date) {
                 if (citire.tip && citire.tip !== redisTip) {
                     redisTip = citire.tip;
                     redisTipCurent = redisTip;
-                    tipuriRedisChei[cheie] = redisTip;
+                    setTipRedisCheie(cheie, redisTip);
                     const er2 = etichetaRedisTip(redisTip);
                     redisBadge.className = 'badge ' + er2.cls;
                     redisBadge.textContent = er2.badge;
@@ -5344,6 +5423,7 @@ function translateUpstashSearchResults(date) {
                 }
                 const date = await apeleazaServerul("/api/comanda", { comandaRedis: ["DEL", cheieSterse] });
                 if (date.rezultat > 0) {
+                    forgetTipRedisCheie(cheieSterse);
                     if (isSchemaRedisKey(cheieSterse)) stergeSchemaDinCache(cheieSterse);
                     invalidateProgJsonCache(cheieSterse);
                     alert('Șters: ' + cheieSterse);
@@ -5655,7 +5735,7 @@ function translateUpstashSearchResults(date) {
             }
             try {
                 await apeleazaServerul('/api/comanda', cmdWrap);
-                tipuriRedisChei[cheieDest] = redisType;
+                setTipRedisCheie(cheieDest, redisType);
                 inchideModalDuplicaMembru();
                 if (sameContainer) {
                     if (redisType === 'set') {
@@ -5936,9 +6016,9 @@ function translateUpstashSearchResults(date) {
             for (let i = 0; i < cmds.length; i++) {
                 await apeleazaServerul('/api/comanda', cmds[i]);
             }
-            tipuriRedisChei[cheieNoua] = redisType;
+            setTipRedisCheie(cheieNoua, redisType);
             if (cmds.length === 0) {
-                tipuriRedisChei[cheieNoua] = redisType;
+                setTipRedisCheie(cheieNoua, redisType);
             }
         }
 
@@ -6244,7 +6324,7 @@ function translateUpstashSearchResults(date) {
                 return false;
             }
             await apeleazaServerul('/api/comanda', { comandaRedis: ['DEL', cheie] });
-            delete tipuriRedisChei[cheie];
+            forgetTipRedisCheie(cheie);
             if (isSchemaRedisKey(cheie)) stergeSchemaDinCache(cheie);
             invalidateProgJsonCache(cheie);
             return true;
@@ -6276,27 +6356,27 @@ function translateUpstashSearchResults(date) {
                 if (redisType === 'json') {
                     const jsonString = typeof payload === 'string' ? payload : JSON.stringify(payload);
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["JSON.SET", cheie, "$", jsonString] });
-                    tipuriRedisChei[cheie] = 'json';
+                    setTipRedisCheie(cheie, 'json');
                 } else if (redisType === 'set') {
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["SADD", cheie, payload] });
-                    tipuriRedisChei[cheie] = 'set';
+                    setTipRedisCheie(cheie, 'set');
                 } else if (redisType === 'hash') {
                     await apeleazaServerul("/api/comanda", {
                         comandaRedis: ["HSET", cheie, payload.field, payload.value]
                     });
-                    tipuriRedisChei[cheie] = 'hash';
+                    setTipRedisCheie(cheie, 'hash');
                 } else if (redisType === 'list') {
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["RPUSH", cheie, payload] });
-                    tipuriRedisChei[cheie] = 'list';
+                    setTipRedisCheie(cheie, 'list');
                 } else if (redisType === 'zset') {
                     await apeleazaServerul("/api/comanda", {
                         comandaRedis: ["ZADD", cheie, String(payload.score), payload.member]
                     });
-                    tipuriRedisChei[cheie] = 'zset';
+                    setTipRedisCheie(cheie, 'zset');
                 } else {
                     const text = typeof payload === 'string' ? payload : JSON.stringify(payload);
                     await apeleazaServerul("/api/comanda", { comandaRedis: ["SET", cheie, text] });
-                    tipuriRedisChei[cheie] = 'string';
+                    setTipRedisCheie(cheie, 'string');
                 }
                 inchideModalCheieNoua();
                 if (isSchemaRedisKey(cheie)) {

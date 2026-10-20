@@ -165,6 +165,11 @@
           '<label class="settings-check"><input type="checkbox" id="settings-chk-type"' +
           (p.listareType ? ' checked' : '') +
           '> Type la listare (implicit)</label>' +
+          '<label class="settings-check"><input type="checkbox" id="settings-chk-type-cache"' +
+          (p.typeKeyCache ? ' checked' : '') +
+          '> Cache pt tipuri chei</label>' +
+          '<p class="settings-hint">Tipurile rămân în localStorage pe acest browser (nu în Save Setări Redis).</p>' +
+          '<p><button type="button" class="btn-gri btn-inline" id="settings-btn-clear-type-cache">Golește cache tipuri</button></p>' +
           '<label class="settings-check"><input type="checkbox" id="settings-chk-dosare-tint"' +
           (p.dosareTintConventie ? ' checked' : '') +
           '> Dosare — tentă convenție pe foldere (schema, data, admin…)</label>' +
@@ -263,6 +268,24 @@
       if (chk) {
         chk.onchange = function () {
           persistAndApply({ listareType: chk.checked });
+        };
+      }
+      const chkCache = content.querySelector('#settings-chk-type-cache');
+      if (chkCache) {
+        chkCache.onchange = function () {
+          persistAndApply({ typeKeyCache: chkCache.checked });
+        };
+      }
+      const btnClearCache = content.querySelector('#settings-btn-clear-type-cache');
+      if (btnClearCache) {
+        btnClearCache.onclick = function () {
+          if (!window.confirm('Ștergi toate tipurile memorate local pentru acest utilizator?')) return;
+          if (root.SsideSettings && typeof root.SsideSettings.clearTypeKeyCache === 'function') {
+            root.SsideSettings.clearTypeKeyCache();
+          }
+          if (typeof root.syncUiFromPrefs === 'function') {
+            root.syncUiFromPrefs();
+          }
         };
       }
       const chkDosare = content.querySelector('#settings-chk-dosare-tint');

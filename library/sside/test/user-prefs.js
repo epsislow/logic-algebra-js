@@ -78,6 +78,20 @@ module.exports = {
       },
     },
     {
+      id: 8,
+      desc: 'typeKeyCache default false + snapshot',
+      run() {
+        const p = Prefs.readFromStorage(() => null);
+        assertEq(p.typeKeyCache, false);
+        const snap = Prefs.buildRedisSnapshot({ typeKeyCache: true, theme: 'light' });
+        const ok = Prefs.parseRedisSnapshot(snap);
+        assertEq(ok.ok, true);
+        assertEq(ok.prefs.typeKeyCache, true);
+        const entries = Prefs.prefsToStorageEntries({ typeKeyCache: true });
+        assertEq(entries[Prefs.KEYS.typeKeyCache], '1');
+      },
+    },
+    {
       id: 7,
       desc: 'dosareTintConventie în snapshot',
       run() {

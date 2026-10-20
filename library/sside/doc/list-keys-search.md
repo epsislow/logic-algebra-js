@@ -88,6 +88,16 @@ KEYS și `=` se salvează **exact** ca introduse.
 
 ---
 
+## Badge tip Redis în listă
+
+| Setare | Efect la **Caută** |
+|--------|---------------------|
+| **Type la listare** off, **Cache pt tipuri chei** off | Fără apeluri TYPE; fără badge Redis din cache |
+| **Cache** on | Badge pentru chei deja cunoscute (fără TYPE obligatoriu) — [Cache tipuri chei](redis-type-cache.md) |
+| **Type** on | TYPE pentru cheile din rezultat (+ actualizare cache dacă e activ) |
+
+---
+
 ## Implementare (cod)
 
 - Parser: `core/scan-filter.js`

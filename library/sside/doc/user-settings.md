@@ -17,7 +17,7 @@ Temă **Light/Dark** — doar în **Setări → Aspect** (nu mai există toggle 
 | **Cont** | Utilizator (read-only), Deconectare |
 | **Aspect** | Temă light / dark |
 | **Interfață generală** | Mărime text: bară căutare, toolbar, căutări salvate |
-| **Listă chei** | Mod implicit Listă/Plăci/Arbore/Dosare, Type implicit, **Dosare — tentă convenție** (foldere colorate ca tipul cheilor: schema, data, admin…), mărime text listă |
+| **Listă chei** | Mod implicit Listă/Plăci/Arbore/Dosare, Type implicit, **Cache pt tipuri chei** (+ Golește cache), **Dosare — tentă convenție**, mărime text listă — vezi [Cache tipuri chei](redis-type-cache.md) |
 | **SCAN** | Limit și Batch implicite pentru `>pattern` fără `limit:`/`batch:` |
 | **Documentație** | Mărime text Docs |
 | **Footer API** | Mărime text footer statistici |
@@ -27,7 +27,7 @@ Mărimi: **Mic** = valorile implicite inițiale; **Mediu** / **Mare** măresc fo
 
 ## Persistență
 
-Preferințele sunt în `localStorage` (chei `sside-*`), vezi **Despre** în Setări.
+Preferințele sunt în `localStorage` (chei `sside-*`), vezi **Despre** în Setări. Map-ul cheie → TYPE (când cache-ul e activ) folosește `sside-redis-type-cache:<username>` — **nu** intră în Save Setări Redis; doar bifa on/off intră.
 
 **Copie Redis (manual):** în **Despre**, orice utilizator autentificat vede **Save** / **Load** / **Șterge** pentru cheia proprie `settings:<username>`. **Load** și **Șterge** sunt active (Load verde) doar dacă cheia există în Redis. Nu e salvare automată. La Load eșuat (non-JSON, structură invalidă): mesaj *Format invalid! salveaza pentru corectare!*
 
