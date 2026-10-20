@@ -12,6 +12,12 @@ function assertEq(a, b, msg) {
   if (a !== b) throw new Error((msg || 'eq') + ': ' + JSON.stringify(a) + ' !== ' + JSON.stringify(b));
 }
 
+function assertDeep(a, b, msg) {
+  const sa = JSON.stringify(a);
+  const sb = JSON.stringify(b);
+  if (sa !== sb) throw new Error((msg || 'deep') + ': ' + sa + ' !== ' + sb);
+}
+
 module.exports = {
   name: 'kops',
   tests: [
@@ -370,6 +376,79 @@ module.exports = {
           steps: [{ op: 'kincr', key: 'k', as: 'double' }],
         });
         assert(!bad.ok);
+      },
+    },
+    {
+      id: 18,
+      desc: 'resolveRef vars dotted path (med.pranz)',
+      run() {
+        const ctx = {
+          form: {},
+          vars: { med: { pranz: 1, startDate: '2026-10-01' } },
+          list: {},
+        };
+        assertEq(Ops.resolveRef('med.pranz', ctx), 1);
+        assertEq(Ops.resolveRef('med.startDate', ctx), '2026-10-01');
+      },
+    },
+    {
+      id: 19,
+      desc: 'castValue date ISO YYYY-MM-DD + formatDateValue (regresie mmed dateLabel)',
+      run() {
+        const d20 = Ops.castValue('2026-10-20', 'date');
+        const d21 = Ops.castValue('2026-10-21', 'date');
+        assertEq(Ops.formatDateValue(d20, 'DD.MM.YYYY'), '20.10.2026');
+        assertEq(Ops.formatDateValue(d21, 'DD.MM.YYYY'), '21.10.2026');
+      },
+    },
+    {
+      id: 20,
+      desc: 'assign val {} în foreach — obiecte distincte (push array)',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'rows', val: [] },
+              { op: 'assign', to: 'nums', val: [0, 1, 2] },
+              {
+                op: 'foreach',
+                in: 'nums',
+                as: 'di',
+                do: [
+                  { op: 'assign', to: 'row', val: {} },
+                  { op: 'jset', to: 'row', path: 'di', from: 'di' },
+                  { op: 'array', fn: 'push', from: 'rows', values: 'row', to: 'rows' },
+                ],
+              },
+              { op: 'end', msg: 'ok' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertDeep(r.vars.rows, [{ di: 0 }, { di: 1 }, { di: 2 }]);
+      },
+    },
+    {
+      id: 21,
+      desc: 'fdate from ISO dateIso → DD.MM.YYYY (alg rebuild plan)',
+      async run() {
+        const redis = createMemoryRedis();
+        const r = await Alg.run(
+          {
+            v: 1,
+            steps: [
+              { op: 'assign', to: 'dateIso', val: '2026-10-20' },
+              { op: 'fdate', from: 'dateIso', format: 'DD.MM.YYYY', to: 'dateLabel' },
+              { op: 'assign', to: 'dateIso', val: '2026-10-21' },
+              { op: 'fdate', from: 'dateIso', format: 'DD.MM.YYYY', to: 'dateLabel2' },
+            ],
+          },
+          { form: {}, redis }
+        );
+        assertEq(r.vars.dateLabel, '20.10.2026');
+        assertEq(r.vars.dateLabel2, '21.10.2026');
       },
     },
   ],

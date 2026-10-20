@@ -404,15 +404,24 @@
     if (str === 'now' || str === '+0' || str === '-0') {
       return new Date();
     }
+    /** ISO calendar day — evită confuzia „2026-10-20” cu suffixul „-20”. */
+    function dateFromIsoDay(iso) {
+      const m = String(iso).trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return null;
+      const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
     if (str.startsWith('+') || str.startsWith('-')) {
       dateObj = new Date();
       modifiersIdx = 0;
     } else {
       const parts = str.split(/\s+(?=[\+\-])/);
       if (parts.length > 1) {
-        dateObj = new Date(parts[0]);
+        dateObj = dateFromIsoDay(parts[0]) || new Date(parts[0]);
         modifiersIdx = parts[0].length;
       } else {
+        const isoOnly = dateFromIsoDay(str);
+        if (isoOnly) return isoOnly;
         const lastSignMatch = str.match(/\s*([\+\-]\d+[a-zA-Z]*)$/);
         if (lastSignMatch) {
           const basePart = str.substring(0, lastSignMatch.index).trim();

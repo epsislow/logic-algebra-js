@@ -261,5 +261,22 @@ module.exports = {
         assert(evalWhenInput(['eq', 'qty', 3], getVal));
       },
     },
+    {
+      id: 17,
+      desc: 'gte/lte pe string ISO YYYY-MM-DD',
+      run() {
+        const Ops = require('../core/alg-ops.js');
+        const ctx = {
+          vars: { dateIso: '2026-10-20', med: { startDate: '2026-10-01' } },
+          form: {},
+          list: {},
+        };
+        const gv = (t) => Ops.resolveRef(t, ctx);
+        assert(evalWhen(['gte', 'dateIso', 'med.startDate'], gv));
+        assert(!evalWhen(['lt', 'dateIso', 'med.startDate'], gv));
+        assert(evalWhen(['gte', '2026-10-21', '2026-10-20'], lit));
+        assert(evalWhen(['lte', '2026-10-01', '2026-10-20'], lit));
+      },
+    },
   ],
 };

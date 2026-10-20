@@ -442,7 +442,11 @@
         // val = literal (nu se rezolvă ca ref); clone ca să nu se refolosească același {} în foreach
         val = step.val;
         if (val !== null && typeof val === 'object') {
-          val = cloneData(val);
+          if (val instanceof Date) {
+            val = new Date(val.getTime());
+          } else {
+            val = cloneData(val);
+          }
         }
       } else if (Object.prototype.hasOwnProperty.call(step, 'from')) {
         val = getVal(ctx, step.from);
