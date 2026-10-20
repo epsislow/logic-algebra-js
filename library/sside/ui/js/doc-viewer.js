@@ -13,8 +13,27 @@
       .replace(/"/g, '&quot;');
   }
 
+  function renderDocBadgeSpan(label, cls) {
+    let c = String(cls || 'badge-liber').trim();
+    if (c.indexOf('badge ') !== 0 && c.indexOf('cron-') !== 0 && c.indexOf('badge-') === 0) {
+      c = 'badge ' + c;
+    }
+    return '<span class="' + escapeHtml(c) + '">' + escapeHtml(label) + '</span>';
+  }
+
   function inlineFormat(text) {
-    let s = escapeHtml(text);
+    const badgeSlots = [];
+    let s = String(text);
+    s = s.replace(/\{\{badge:([^:]+)::([^}]+)\}\}/g, function (_, label, cls) {
+      const id = badgeSlots.length;
+      badgeSlots.push({ label: label.trim(), cls: cls.trim() });
+      return '\x00DOCBADGE' + id + '\x00';
+    });
+    s = escapeHtml(s);
+    s = s.replace(/\x00DOCBADGE(\d+)\x00/g, function (_, id) {
+      const b = badgeSlots[Number(id)];
+      return b ? renderDocBadgeSpan(b.label, b.cls) : '';
+    });
     s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function (_, label, href) {
@@ -43,7 +62,12 @@
     }
 
     while (i < lines.length) {
-      const line = lines[i];
+      let line = lines[i];
+
+      if (/^\s*<!--[\s\S]*?-->\s*$/.test(line)) {
+        i++;
+        continue;
+      }
 
       if (inCode) {
         if (/^```/.test(line)) {

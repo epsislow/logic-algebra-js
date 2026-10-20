@@ -144,6 +144,10 @@
     }
 
     const k = key || '';
+    if (k.indexOf('queue:') === 0) return { tip: 'queue' };
+    if (k.indexOf('stack:') === 0) return { tip: 'stack' };
+    if (k.indexOf('events:') === 0) return { tip: 'events' };
+    if (k.indexOf('cache:') === 0) return { tip: 'cache' };
     if (k.indexOf('log:') === 0) return { tip: 'log' };
     if (k.indexOf('info:') === 0) return { tip: 'info' };
     if (k.indexOf('json:') === 0) return { tip: 'json' };
@@ -194,6 +198,10 @@
         case 'session':
           probe = 'settings:user';
           break;
+        case 'queue':
+        case 'stack':
+        case 'events':
+        case 'cache':
         case 'log':
         case 'info':
         case 'json':
@@ -219,55 +227,57 @@
     return out;
   }
 
+  function catalogConvention() {
+    return root.SsideBadgeCatalog || null;
+  }
+
   function etichetaTip(info) {
-    if (!info) return withRowTint({ badge: 'liber', cls: 'badge-liber', note: '' });
+    const BC = catalogConvention();
+    const liber =
+      BC && BC.conventionByTip
+        ? BC.conventionByTip('liber')
+        : { badge: 'liber', cls: 'badge-liber' };
+    if (!info) return withRowTint({ badge: liber.badge, cls: liber.cls, note: '' });
     if (info.sistem) {
+      const adm = BC && BC.conventionSpecial ? BC.conventionSpecial('admin') : null;
       return withRowTint({
-        badge: 'admin',
-        cls: 'badge-admin',
-        note: '(user/session/settings/idx_)',
+        badge: adm ? adm.badge : 'admin',
+        cls: adm ? adm.cls : 'badge-admin',
+        note: adm ? adm.noteDefault : '(user/session/settings/idx_)',
       });
     }
     if (info.cronState) {
+      const cs = BC && BC.conventionSpecial ? BC.conventionSpecial('cronState') : null;
       return withRowTint({
-        badge: 'cron·state',
-        cls: 'badge-cron',
-        note: info.cronKey ? '→ ' + info.cronKey : '(runtime scheduler)',
+        badge: cs ? cs.badge : 'cronst',
+        cls: cs ? cs.cls : 'badge-cron-state',
+        note: info.cronKey ? '→ ' + info.cronKey : cs ? cs.noteDefault : '(runtime scheduler)',
       });
     }
-    if (info.tip === 'schema') {
-      return withRowTint({ badge: 'schemă', cls: 'badge-schema', note: '' });
-    }
     if (info.tip === 'data') {
+      const dataLbl = BC && BC.conventionByTip ? BC.conventionByTip('data') : { badge: 'data', cls: 'badge-data' };
       let note = '→ ' + (info.schemaKey || '');
       if (info.schemaInSet === false) {
         note += ' (schema neîn listă)';
       }
       return withRowTint({
-        badge: 'data',
-        cls: 'badge-data',
+        badge: dataLbl.badge,
+        cls: dataLbl.cls,
         note: note,
       });
     }
-    if (info.tip === 'alg') return withRowTint({ badge: 'alg', cls: 'badge-alg', note: '' });
-    if (info.tip === 'form') return withRowTint({ badge: 'form', cls: 'badge-form', note: '' });
-    if (info.tip === 'ui') return withRowTint({ badge: 'ui', cls: 'badge-ui', note: '' });
-    if (info.tip === 'list') return withRowTint({ badge: 'list', cls: 'badge-list', note: '' });
-    if (info.tip === 'cron') return withRowTint({ badge: 'cron', cls: 'badge-cron', note: '' });
-    if (info.tip === 'log') return withRowTint({ badge: 'log', cls: 'badge-log', note: '' });
-    if (info.tip === 'info') return withRowTint({ badge: 'info', cls: 'badge-info', note: '' });
-    if (info.tip === 'json') return withRowTint({ badge: 'json', cls: 'badge-json', note: '' });
-    if (info.tip === 'search') return withRowTint({ badge: 'search', cls: 'badge-search', note: '' });
-    if (info.tip === 'set') return withRowTint({ badge: 'set', cls: 'badge-set', note: '' });
-    if (info.tip === 's') return withRowTint({ badge: 's', cls: 'badge-s', note: '' });
     if (info.missingSchema) {
       return withRowTint({
-        badge: 'liber',
-        cls: 'badge-liber',
+        badge: liber.badge,
+        cls: liber.cls,
         note: '(lipsa schema ' + info.missingSchema + ')',
       });
     }
-    return withRowTint({ badge: 'liber', cls: 'badge-liber', note: '' });
+    if (BC && BC.conventionByTip && info.tip) {
+      const row = BC.conventionByTip(info.tip);
+      if (row) return withRowTint({ badge: row.badge, cls: row.cls, note: '' });
+    }
+    return withRowTint({ badge: liber.badge, cls: liber.cls, note: '' });
   }
 
   function cheieProgDinNume(kind, name) {

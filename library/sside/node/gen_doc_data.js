@@ -12,6 +12,23 @@ const ROOT = path.join(__dirname, '..');
 const DOC_DIR = path.join(ROOT, 'doc');
 const OUT = path.join(ROOT, 'ui', 'js', 'doc-data_generated.js');
 
+const BADGE_GEN_START = '<!-- BADGE_CATALOG_GENERATED_START -->';
+const BADGE_GEN_END = '<!-- BADGE_CATALOG_GENERATED_END -->';
+
+function injectBadgeCatalogMarkdown(markdown) {
+  if (!markdown.includes(BADGE_GEN_START) || !markdown.includes(BADGE_GEN_END)) {
+    return markdown;
+  }
+  const BadgeCatalog = require(path.join(ROOT, 'core', 'badge-catalog.js'));
+  const generated = BadgeCatalog.buildDocsMarkdown();
+  const re = new RegExp(
+    BADGE_GEN_START.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+      '[\\s\\S]*?' +
+      BADGE_GEN_END.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  );
+  return markdown.replace(re, '\n\n' + generated + '\n');
+}
+
 function main() {
   const indexPath = path.join(DOC_DIR, 'index.json');
   if (!fs.existsSync(indexPath)) {
@@ -33,7 +50,10 @@ function main() {
       console.error('Missing md:', mdPath);
       process.exit(1);
     }
-    const markdown = fs.readFileSync(mdPath, 'utf8');
+    let markdown = fs.readFileSync(mdPath, 'utf8');
+    if (sec.id === 'key-badges') {
+      markdown = injectBadgeCatalogMarkdown(markdown);
+    }
     outSections.push({
       id: sec.id,
       label: sec.label || sec.id,

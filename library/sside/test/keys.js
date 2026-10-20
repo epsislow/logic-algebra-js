@@ -1,5 +1,6 @@
 'use strict';
 
+require('../core/badge-catalog.js');
 const Keys = require('../core/keys.js');
 const Meta = require('../core/meta-schemas.js');
 
@@ -129,6 +130,13 @@ module.exports = {
       desc: 'clasificaCheie prefix log/info/json/search/set/s + etichetaTip rowTint',
       run() {
         const empty = new Set();
+        assertEq(Keys.clasificaCheie('queue:jobs', empty).tip, 'queue');
+        assertEq(Keys.etichetaTip({ tip: 'queue' }).badge, 'queue');
+        assertEq(Keys.etichetaTip({ tip: 'queue' }).cls, 'badge-queue');
+        assertEq(Keys.clasificaCheie('stack:undo', empty).tip, 'stack');
+        assertEq(Keys.clasificaCheie('events:orders', empty).tip, 'events');
+        assertEq(Keys.clasificaCheie('cache:myValuesHere', empty).tip, 'cache');
+        assertEq(Keys.clasificaDosar([], 'cache', empty).tip, 'cache');
         assertEq(Keys.clasificaCheie('log:test', empty).tip, 'log');
         assertEq(Keys.etichetaTip({ tip: 'log' }).cls, 'badge-log');
         assertEq(Keys.etichetaTip({ tip: 'log' }).rowTint, 'key-row--log');
@@ -187,6 +195,9 @@ module.exports = {
         const stInfo = Keys.clasificaCheie('cron:state:testPing', new Set());
         assert(stInfo.cronState === true);
         assertEq(stInfo.cronKey, 'cron:testPing');
+        const stLbl = Keys.etichetaTip(stInfo);
+        assertEq(stLbl.badge, 'cronst');
+        assertEq(stLbl.cls, 'badge-cron-state');
         assertEq(Keys.clasificaCheie('cron:sync', new Set()).tip, 'cron');
         assertEq(Keys.cheieProgDinNume('cron', 'sync_stoc'), 'cron:sync_stoc');
       },

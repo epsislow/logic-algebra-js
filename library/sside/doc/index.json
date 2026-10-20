@@ -2,6 +2,7 @@
   "title": "sside docs",
   "sections": [
     { "id": "keys", "label": "Chei", "file": "keys.md" },
+    { "id": "key-badges", "label": "Badge-uri chei", "file": "key-badges.md" },
     { "id": "list-keys-search", "label": "Listă — căutare chei", "file": "list-keys-search.md" },
     { "id": "redis-type-cache", "label": "Cache tipuri chei", "file": "redis-type-cache.md" },
     { "id": "prog", "label": "Prog (alg/form/list/ui)", "file": "prog.md" },

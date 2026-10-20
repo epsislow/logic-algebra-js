@@ -13,6 +13,9 @@ Prefixuri Redis folosite de sside:
 | `cron:` | `cron:sync_stoc` | job planificat — vezi [cron-client.md](cron-client.md) |
 | `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |
 | `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |
+| `queue:` / `stack:` / `events:` / `cache:` | ex. `cache:myValuesHere` | convenții utilizator (≠ cache TYPE din Setări) |
+
+**Toate badge-urile (vizual + reguli):** [Badge-uri chei](key-badges.md).
 
 Forme JSON + comportament: Docs → **Prog (alg/form/list/ui)**.  
 Chei **`ui:`** — utilizare: **UI Runtime (Live)**; `form:` / `list:` — tab Live în Edit.

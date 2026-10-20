@@ -1156,13 +1156,9 @@
 
         function etichetaRedisTip(redisTip) {
             const t = normalizeazaTipRedis(redisTip);
-            if (t === 'set') return { badge: 'set', cls: 'badge-redis-set' };
-            if (t === 'hash') return { badge: 'hash', cls: 'badge-redis-hash' };
-            if (t === 'list') return { badge: 'list', cls: 'badge-redis-list' };
-            if (t === 'zset') return { badge: 'zset', cls: 'badge-redis-zset' };
-            if (t === 'string') return { badge: 'string', cls: 'badge-redis' };
-            if (t === 'json') return { badge: 'json', cls: 'badge-redis-json' };
-            if (t === 'searchindex') return { badge: 'Search Index', cls: 'badge-redis-searchindex' };
+            if (window.SsideBadgeCatalog && typeof SsideBadgeCatalog.etichetaRedisTip === 'function') {
+                return SsideBadgeCatalog.etichetaRedisTip(t);
+            }
             return { badge: t, cls: 'badge-redis-other' };
         }
 
@@ -2088,8 +2084,12 @@ function translateUpstashSearchResults(date) {
                 const meta = document.createElement('div');
                 meta.className = 'folder-tile-meta key-tile-meta';
                 const badge = document.createElement('span');
-                badge.className = 'badge badge-folder key-tile-badge';
-                badge.textContent = 'dosar';
+                const folderBadge =
+                    window.SsideBadgeCatalog && SsideBadgeCatalog.folderPrimaryBadge
+                        ? SsideBadgeCatalog.folderPrimaryBadge()
+                        : { badge: 'dosar', cls: 'badge badge-folder' };
+                badge.className = folderBadge.cls + ' key-tile-badge';
+                badge.textContent = folderBadge.badge;
                 meta.appendChild(badge);
                 tile.appendChild(meta);
                 const lab = document.createElement('span');

@@ -89,13 +89,13 @@
 
   function mountStatusBadge(status) {
     const s = String(status || '—').toLowerCase();
-    let cls = 'cron-badge-neutral';
-    if (s === 'ok') cls = 'cron-badge-ok';
-    else if (s === 'err') cls = 'cron-badge-err';
-    else if (s === 'skipped') cls = 'cron-badge-skip';
-    else if (s === 'running') cls = 'cron-badge-run';
+    const BC = root.SsideBadgeCatalog;
+    const cls =
+      BC && typeof BC.cronStatusClass === 'function'
+        ? BC.cronStatusClass(s)
+        : 'cron-badge cron-badge-neutral';
     const span = document.createElement('span');
-    span.className = 'cron-badge ' + cls;
+    span.className = cls;
     span.textContent = s;
     return span;
   }
@@ -149,8 +149,12 @@
   /** Badge client (browser) vs edge (Supabase) — panou Edit / legacy. */
   function mountCronHostBadge(cfg) {
     const mode = cfg && cfg.mode === 'edge' ? 'edge' : 'client';
+    const BC = root.SsideBadgeCatalog;
     const span = document.createElement('span');
-    span.className = 'cron-host-badge cron-host-badge--' + mode;
+    span.className =
+      BC && typeof BC.cronHostModeClass === 'function'
+        ? BC.cronHostModeClass(mode)
+        : 'cron-host-badge cron-host-badge--' + mode;
     span.title =
       mode === 'edge'
         ? 'Mod edge — Supabase (pg_cron la 5 min)'

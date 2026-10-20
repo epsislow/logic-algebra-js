@@ -25,6 +25,11 @@
             --badge-ui: #d63384;
             --badge-list: #fd7e14;
             --badge-cron: #9333ea;
+            --badge-cron-state: #d87ad7;
+            --badge-queue: #be185d;
+            --badge-stack: #be185d;
+            --badge-events: #be185d;
+            --badge-cache: #be185d;
             --badge-liber: #6c757d;
             --badge-admin: #fd7e14;
             --badge-log: #b45309;
@@ -66,6 +71,11 @@
             --badge-ui: #f472b6;
             --badge-list: #fb923c;
             --badge-cron: #c084fc;
+            --badge-cron-state: #d87ad7;
+            --badge-queue: #be185d;
+            --badge-stack: #be185d;
+            --badge-events: #be185d;
+            --badge-cache: #be185d;
             --badge-liber: #6b7280;
             --badge-admin: #f59e0b;
             --badge-log: #fbbf24;
@@ -172,6 +182,11 @@
         .badge-ui { background: var(--badge-ui); }
         .badge-list { background: var(--badge-list); color: #1a0a00; }
         .badge-cron { background: var(--badge-cron); }
+        .badge-cron-state { background: var(--badge-cron-state); }
+        .badge-queue { background: var(--badge-queue); }
+        .badge-stack { background: var(--badge-stack); }
+        .badge-events { background: var(--badge-events); }
+        .badge-cache { background: var(--badge-cache); }
         .badge-log { background: var(--badge-log); color: #1a0a00; }
         .badge-info { background: var(--badge-info); }
         .badge-json { background: var(--badge-json); color: #042f2e; }
@@ -319,6 +334,11 @@
         .key-row--ui { --key-row-tint: var(--badge-ui); }
         .key-row--list { --key-row-tint: var(--badge-list); }
         .key-row--cron { --key-row-tint: var(--badge-cron); }
+        .key-row--cron-state { --key-row-tint: var(--badge-cron-state); }
+        .key-row--queue { --key-row-tint: var(--badge-queue); }
+        .key-row--stack { --key-row-tint: var(--badge-stack); }
+        .key-row--events { --key-row-tint: var(--badge-events); }
+        .key-row--cache { --key-row-tint: var(--badge-cache); }
 
         .cron-panel-table { width: 100%; border-collapse: collapse; font-size: 13px; }
         .cron-panel-table th,
