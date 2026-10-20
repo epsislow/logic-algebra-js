@@ -203,6 +203,32 @@
     renderRuns();
   }
 
+  function applyRunsFilterForCronKey(cronKey) {
+    const suffix =
+      typeof Ui.cronNameFilterFromCronKey === 'function'
+        ? Ui.cronNameFilterFromCronKey(cronKey)
+        : String(cronKey || '').replace(/^cron:/i, '');
+    runFilters = createEmptyRunFilters();
+    runFilters.name = suffix;
+    expandedRunId = '';
+  }
+
+  function showRunsForCronKeyInPanel(cronKey) {
+    applyRunsFilterForCronKey(cronKey);
+    setActiveTab('runs');
+  }
+
+  function openRunsForCronKey(cronKey) {
+    applyRunsFilterForCronKey(cronKey);
+    activeTab = 'runs';
+    if (typeof root.deschidePanouCron === 'function') {
+      root.deschidePanouCron();
+    } else {
+      syncTabUi();
+      show();
+    }
+  }
+
   function appendSelect(parent, labelText, value, options, onChange) {
     const wrap = document.createElement('label');
     wrap.className = 'cron-filter-field';
@@ -541,11 +567,7 @@
       btnRuns.setAttribute('aria-label', 'Rulari filtrate');
       btnRuns.addEventListener('click', (ev) => {
         ev.stopPropagation();
-        const suffix = String(entry.cronKey || '').replace(/^cron:/i, '');
-        runFilters = createEmptyRunFilters();
-        runFilters.name = suffix;
-        expandedRunId = '';
-        setActiveTab('runs');
+        showRunsForCronKeyInPanel(entry.cronKey);
       });
       act.appendChild(btnRun);
       act.appendChild(btnRuns);
@@ -799,6 +821,9 @@
     show,
     ascunde,
     setActiveTab,
+    openRunsForCronKey,
+    showRunsForCronKeyInPanel,
+    applyRunsFilterForCronKey,
     /** @internal test / debug */
     cronRunExpandId,
   };

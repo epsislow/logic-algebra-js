@@ -1162,8 +1162,17 @@
             gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
         }
         .detail-head-row .btn-inline { margin: 0; width: auto; }
+        .detail-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        #ecran-detaliu .detail-cron-runs-btn {
+            --cron-ctrl-size: 26px;
+            --cron-ctrl-icon-font: 19px;
+        }
         .detail-refresh-btn {
-            margin-left: auto !important;
             font-weight: 600;
         }
         .detail-refresh-btn:disabled { opacity: 0.55; cursor: wait; }

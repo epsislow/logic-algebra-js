@@ -19,6 +19,13 @@
    * - `blabla` → prefix `cron:blabla…` (fără `*` la final)
    * - `*nume` → conține `nume` în cheie (`cron:…*nume*…`)
    */
+  /** Suffix job din cheie config `cron:…` — valoare filtru Nume (prefix implicit). */
+  function cronNameFilterFromCronKey(cronKey) {
+    const k = String(cronKey || '').trim();
+    if (!k) return '';
+    return k.replace(/^cron:/i, '');
+  }
+
   function parseCronNameFilter(input) {
     const raw = String(input || '').trim();
     if (!raw || raw === '*') return { kind: 'any' };
@@ -119,6 +126,7 @@
 
   const api = {
     cronRunExpandId,
+    cronNameFilterFromCronKey,
     parseCronNameFilter,
     cronNamePrefixFromFilter,
     matchCronNameFilter,

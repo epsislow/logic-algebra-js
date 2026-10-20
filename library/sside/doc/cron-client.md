@@ -136,6 +136,8 @@ Deasupra fiecărei liste, **filtre** (slot fix dreapta: **☐** galben când nu 
 
 **☰** pe un job deschide tab **Rulari** cu filtru nume presetat (prefix pe acel job).
 
+**Edit** pe o cheie **`cron:…`** (config job): în header, lângă **↻ Reîncarcă**, buton **☰** — același flux (panou **Cronuri** → tab **Rulari**, filtru **Nume** = suffix job, celelalte filtre reset). Nu apare pe `cron:state:…`, `cron:lock:…` etc.
+
 Sus în panou: **`client OFF` / `client ON`** (scheduler tick **mode client** în acest tab) + **Pornește** / **Oprește** + **Reîncarcă** (`SCAN` + registry; nu pornește scheduler-ul dacă e OFF). Joburile **edge** rulează pe Supabase indiferent de starea client.
 
 ### Istoric în `cron:state:…`
@@ -160,7 +162,7 @@ Câmp **`recentRuns`** — ultimele **10** rulari per job (cel mai recent primul
 
 Dacă lipsește `recentRuns` (job vechi), tab **Rulari** poate afișa totuși **ultima** rulare din `lastRunAt` / `lastMsg`.
 
-- **Edit** — click pe numele `cron:…` în tab Lista (schedule, alg, timezone, preview fire).
+- **Edit** — click pe numele `cron:…` în tab Lista (schedule, alg, timezone, preview fire), sau din lista principală de chei.
 
 Creare: **+ Cheie nouă** → rol **Cron** → JSON seed `v:1`.
 

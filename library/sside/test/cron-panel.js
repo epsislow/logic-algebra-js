@@ -49,6 +49,15 @@ module.exports = {
       },
     },
     {
+      id: 4,
+      desc: 'cronNameFilterFromCronKey',
+      run() {
+        assertEq(Ui.cronNameFilterFromCronKey('cron:totalLogs'), 'totalLogs');
+        assertEq(Ui.cronNameFilterFromCronKey('CRON:Foo'), 'Foo');
+        assertEq(Ui.cronNameFilterFromCronKey(''), '');
+      },
+    },
+    {
       id: 3,
       desc: 'filterJobEntries + filterRunRows',
       run() {

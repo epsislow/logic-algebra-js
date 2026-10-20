@@ -2623,6 +2623,7 @@ function translateUpstashSearchResults(date) {
             seteazaVizibilitateIdxLegenda(false);
             cheieCurenta = null;
             infoCheieCurenta = null;
+            syncDetailCronRunsButton();
             navProvenientaStack = [];
             navInapoiLaCron = false;
             redisTipCurent = 'string';
@@ -3995,6 +3996,18 @@ function translateUpstashSearchResults(date) {
             }
         }
 
+        function syncDetailCronRunsButton() {
+            const btn = document.getElementById('btn-cron-runs-from-edit');
+            if (!btn) return;
+            const Keys = window.SsideKeys;
+            const show =
+                !!cheieCurenta &&
+                Keys &&
+                typeof Keys.isCronRedisKey === 'function' &&
+                Keys.isCronRedisKey(cheieCurenta);
+            btn.style.display = show ? 'inline-flex' : 'none';
+        }
+
         async function deschideDetaliu(cheie, opts) {
             opts = opts || {};
             const info = clasificaCheie(cheie, setCheiPentruClasificare(toateCheile));
@@ -4035,6 +4048,7 @@ function translateUpstashSearchResults(date) {
             ascundeEcranUiRuntime(); /* scoate și class sside-runtime-active */
             document.getElementById('ecran-detaliu').style.display = 'block';
             document.getElementById('detail-key-name').textContent = cheie;
+            syncDetailCronRunsButton();
 
             await incarcaTtlLaDeschidere();
 
@@ -4863,6 +4877,21 @@ function translateUpstashSearchResults(date) {
             window.incarcaCronPanouDacaLipsa = incarcaCronPanouDacaLipsa;
             window.notifyCronJournal = notifyCronJournal;
             window.reincarcaRegistruCron = reincarcaRegistruCron;
+
+            const btnCronRunsEdit = document.getElementById('btn-cron-runs-from-edit');
+            if (btnCronRunsEdit && !btnCronRunsEdit._cronRunsEditWired) {
+                btnCronRunsEdit._cronRunsEditWired = true;
+                btnCronRunsEdit.addEventListener('click', () => {
+                    if (!cheieCurenta || !window.SsideKeys) return;
+                    if (!SsideKeys.isCronRedisKey(cheieCurenta)) return;
+                    if (
+                        window.SsideCronPanel &&
+                        typeof SsideCronPanel.openRunsForCronKey === 'function'
+                    ) {
+                        SsideCronPanel.openRunsForCronKey(cheieCurenta);
+                    }
+                });
+            }
 
             if (window.SsideCronPanel) {
                 SsideCronPanel.setDeps({
