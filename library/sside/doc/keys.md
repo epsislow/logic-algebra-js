@@ -10,7 +10,7 @@ Prefixuri Redis folosite de sside:
 | `form:` | `form:_item_edit` | formular: schemă + butoane → alg |
 | `list:` | `list:_stock` | tabel: sursă + coloane + paginare |
 | `ui:` | `ui:_warehouse` | pagină: taburi → blocks (form / list) |
-| `cron:` | `cron:sync_stoc` | job planificat (client browser) — vezi [cron-client.md](cron-client.md) |
+| `cron:` | `cron:sync_stoc` | job planificat — vezi [cron-client.md](cron-client.md) |
 | `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |
 | `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |
 

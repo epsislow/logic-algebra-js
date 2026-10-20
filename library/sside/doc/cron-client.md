@@ -1,4 +1,4 @@
-# Cron client (browser)
+# Cronuri
 
 Joburi **`cron:nume`** cu **`mode: "client"`** sau **`mode: "edge"`**:
 
