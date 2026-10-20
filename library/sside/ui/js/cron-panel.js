@@ -5,7 +5,24 @@
   'use strict';
 
   let activeTab = 'jobs';
-  let filterCronKey = '';
+  /** Id rând Rulari expandat (un singur mesaj deschis). */
+  let expandedRunId = '';
+
+  const Ui = root.SsideCronPanelUi || {};
+  const createEmptyJobFilters =
+    typeof Ui.createEmptyJobFilters === 'function'
+      ? Ui.createEmptyJobFilters
+      : function () {
+          return { name: '', mode: '', enabled: '' };
+        };
+  const createEmptyRunFilters =
+    typeof Ui.createEmptyRunFilters === 'function'
+      ? Ui.createEmptyRunFilters
+      : function () {
+          return { name: '', mode: '', trigger: '', status: '' };
+        };
+  let jobFilters = createEmptyJobFilters();
+  let runFilters = createEmptyRunFilters();
 
   let deps = {
     getRegistry: () => new Map(),
@@ -56,17 +73,80 @@
     return fmtTime(date, sch.timezone).slice(0, 16);
   }
 
-  function statusBadge(status) {
-    const s = String(status || '—');
+  const PanelUi = root.SsideCronPanelUi || {};
+  const cronRunExpandId =
+    typeof PanelUi.cronRunExpandId === 'function'
+      ? PanelUi.cronRunExpandId
+      : function cronRunExpandIdFallback(cronKey, run) {
+          return (
+            String(cronKey || '') +
+            '::' +
+            String((run && run.runAt) || '') +
+            '::' +
+            String((run && run.runId) || '')
+          );
+        };
+
+  function mountStatusBadge(status) {
+    const s = String(status || '—').toLowerCase();
     let cls = 'cron-badge-neutral';
     if (s === 'ok') cls = 'cron-badge-ok';
     else if (s === 'err') cls = 'cron-badge-err';
     else if (s === 'skipped') cls = 'cron-badge-skip';
     else if (s === 'running') cls = 'cron-badge-run';
-    return '<span class="cron-badge ' + cls + '">' + s + '</span>';
+    const span = document.createElement('span');
+    span.className = 'cron-badge ' + cls;
+    span.textContent = s;
+    return span;
   }
 
-  /** Badge client (browser) vs edge (Supabase) lângă numele jobului. */
+  function mountTriggerBadge(trigger) {
+    const t = String(trigger || '').toLowerCase();
+    if (!t) return null;
+    const span = document.createElement('span');
+    const kind = t === 'scheduled' || t === 'manual' ? t : 'other';
+    span.className = 'cron-trigger-badge cron-trigger-badge--' + kind;
+    if (t === 'scheduled') {
+      span.classList.add('cron-trigger-badge--icon');
+      span.textContent = '\u23F0';
+      span.setAttribute('aria-label', 'Programat (scheduled)');
+      span.title = 'Programat — tick / schedule';
+    } else if (t === 'manual') {
+      span.classList.add('cron-trigger-badge--icon');
+      span.textContent = '\u25B6';
+      span.setAttribute('aria-label', 'Manual (Acum)');
+      span.title = 'Manual — Rulează acum';
+    } else {
+      span.textContent = t;
+      span.title = 'trigger: ' + t;
+    }
+    return span;
+  }
+
+  function mountEnabledPill(entry, cfg) {
+    const lab = document.createElement('label');
+    lab.className =
+      'cron-job-pill' + (cfg.enabled ? ' is-on' : ' is-off');
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.className = 'cron-job-pill-input';
+    chk.checked = !!cfg.enabled;
+    chk.setAttribute('aria-label', 'Activ job ' + entry.cronKey);
+    const txt = document.createElement('span');
+    txt.className = 'cron-job-pill-text';
+    txt.textContent = cfg.enabled ? 'ON' : 'OFF';
+    chk.addEventListener('change', () => {
+      lab.classList.toggle('is-on', chk.checked);
+      lab.classList.toggle('is-off', !chk.checked);
+      txt.textContent = chk.checked ? 'ON' : 'OFF';
+      if (deps.onToggleEnabled) deps.onToggleEnabled(entry.cronKey, chk.checked);
+    });
+    lab.appendChild(chk);
+    lab.appendChild(txt);
+    return lab;
+  }
+
+  /** Badge client (browser) vs edge (Supabase) — panou Edit / legacy. */
   function mountCronHostBadge(cfg) {
     const mode = cfg && cfg.mode === 'edge' ? 'edge' : 'client';
     const span = document.createElement('span');
@@ -84,6 +164,253 @@
     lab.textContent = mode;
     span.appendChild(lab);
     return span;
+  }
+
+  function filterJobs(entries) {
+    if (typeof Ui.filterJobEntries === 'function') {
+      return Ui.filterJobEntries(entries, jobFilters);
+    }
+    return entries;
+  }
+
+  function filterRuns(rows) {
+    if (typeof Ui.filterRunRows === 'function') {
+      return Ui.filterRunRows(rows, runFilters);
+    }
+    return rows;
+  }
+
+  function jobFiltersActiveNow() {
+    return typeof Ui.jobFiltersActive === 'function'
+      ? Ui.jobFiltersActive(jobFilters)
+      : false;
+  }
+
+  function runFiltersActiveNow() {
+    return typeof Ui.runFiltersActive === 'function'
+      ? Ui.runFiltersActive(runFilters)
+      : false;
+  }
+
+  function clearJobFilters() {
+    jobFilters = createEmptyJobFilters();
+    renderJobs();
+  }
+
+  function clearRunFilters() {
+    runFilters = createEmptyRunFilters();
+    expandedRunId = '';
+    renderRuns();
+  }
+
+  function appendSelect(parent, labelText, value, options, onChange) {
+    const wrap = document.createElement('label');
+    wrap.className = 'cron-filter-field';
+    const lab = document.createElement('span');
+    lab.className = 'cron-filter-label';
+    lab.textContent = labelText;
+    const sel = document.createElement('select');
+    sel.className = 'cron-filter-select';
+    options.forEach((o) => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.label;
+      if (o.value === value) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => onChange(sel.value));
+    wrap.appendChild(lab);
+    wrap.appendChild(sel);
+    parent.appendChild(wrap);
+  }
+
+  function renderJobsToolbar() {
+    const host = document.getElementById('cron-panel-jobs-toolbar');
+    if (!host) return;
+    host.innerHTML = '';
+    const bar = document.createElement('div');
+    bar.className = 'cron-panel-filters';
+
+    const nameWrap = document.createElement('label');
+    nameWrap.className = 'cron-filter-field cron-filter-field--grow';
+    const nameLab = document.createElement('span');
+    nameLab.className = 'cron-filter-label';
+    nameLab.textContent = 'Nume';
+    const nameIn = document.createElement('input');
+    nameIn.type = 'text';
+    nameIn.className = 'cron-filter-input';
+    nameIn.placeholder = 'blabla* → cron:blabla…';
+    nameIn.value = jobFilters.name;
+    nameIn.addEventListener('input', () => {
+      jobFilters.name = nameIn.value;
+      renderJobsList();
+      updateJobFilterActions();
+    });
+    nameWrap.appendChild(nameLab);
+    nameWrap.appendChild(nameIn);
+    bar.appendChild(nameWrap);
+
+    appendSelect(
+      bar,
+      'Mode',
+      jobFilters.mode,
+      [
+        { value: '', label: 'Toate' },
+        { value: 'client', label: 'client' },
+        { value: 'edge', label: 'edge' },
+      ],
+      (v) => {
+        jobFilters.mode = v;
+        renderJobsList();
+        updateJobFilterActions();
+      }
+    );
+
+    appendSelect(
+      bar,
+      'Activ',
+      jobFilters.enabled,
+      [
+        { value: '', label: 'Toate' },
+        { value: 'on', label: 'ON' },
+        { value: 'off', label: 'OFF' },
+      ],
+      (v) => {
+        jobFilters.enabled = v;
+        renderJobsList();
+        updateJobFilterActions();
+      }
+    );
+
+    const actions = document.createElement('div');
+    actions.className = 'cron-filter-actions';
+    actions.id = 'cron-panel-jobs-filter-actions';
+    bar.appendChild(actions);
+    host.appendChild(bar);
+    updateJobFilterActions();
+  }
+
+  function updateJobFilterActions() {
+    const actions = document.getElementById('cron-panel-jobs-filter-actions');
+    if (!actions) return;
+    actions.innerHTML = '';
+    if (jobFiltersActiveNow()) {
+      const clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'btn-gri btn-inline';
+      clear.textContent = 'Toate joburile';
+      clear.addEventListener('click', clearJobFilters);
+      actions.appendChild(clear);
+    } else {
+      const hint = document.createElement('span');
+      hint.className = 'cron-panel-sub';
+      hint.textContent = 'Filtre deasupra listei';
+      actions.appendChild(hint);
+    }
+  }
+
+  function updateRunFilterActions() {
+    const actions = document.getElementById('cron-panel-runs-filter-actions');
+    if (!actions) return;
+    actions.innerHTML = '';
+    if (runFiltersActiveNow()) {
+      const clear = document.createElement('button');
+      clear.type = 'button';
+      clear.className = 'btn-gri btn-inline';
+      clear.textContent = 'Toate joburile';
+      clear.addEventListener('click', clearRunFilters);
+      actions.appendChild(clear);
+    } else {
+      const cap =
+        (root.SsideCronClient && root.SsideCronClient.RECENT_RUNS_CAP) || 10;
+      const hint = document.createElement('span');
+      hint.className = 'cron-panel-sub';
+      hint.textContent =
+        'Ultimele rulari (max ' + cap + ' per job, cele mai recente sus)';
+      actions.appendChild(hint);
+    }
+  }
+
+  function renderRunsToolbar() {
+    const host = document.getElementById('cron-panel-runs-toolbar');
+    if (!host) return;
+    host.innerHTML = '';
+    const bar = document.createElement('div');
+    bar.className = 'cron-panel-filters';
+
+    const nameWrap = document.createElement('label');
+    nameWrap.className = 'cron-filter-field cron-filter-field--grow';
+    const nameLab = document.createElement('span');
+    nameLab.className = 'cron-filter-label';
+    nameLab.textContent = 'Nume';
+    const nameIn = document.createElement('input');
+    nameIn.type = 'text';
+    nameIn.className = 'cron-filter-input';
+    nameIn.placeholder = 'blabla* → cron:blabla…';
+    nameIn.value = runFilters.name;
+    nameIn.addEventListener('input', () => {
+      runFilters.name = nameIn.value;
+      renderRunsList();
+      updateRunFilterActions();
+    });
+    nameWrap.appendChild(nameLab);
+    nameWrap.appendChild(nameIn);
+    bar.appendChild(nameWrap);
+
+    appendSelect(
+      bar,
+      'Mode',
+      runFilters.mode,
+      [
+        { value: '', label: 'Toate' },
+        { value: 'client', label: 'client' },
+        { value: 'edge', label: 'edge' },
+      ],
+      (v) => {
+        runFilters.mode = v;
+        renderRunsList();
+        updateRunFilterActions();
+      }
+    );
+
+    appendSelect(
+      bar,
+      'Trigger',
+      runFilters.trigger,
+      [
+        { value: '', label: 'Toate' },
+        { value: 'scheduled', label: 'scheduled' },
+        { value: 'manual', label: 'manual' },
+      ],
+      (v) => {
+        runFilters.trigger = v;
+        renderRunsList();
+        updateRunFilterActions();
+      }
+    );
+
+    appendSelect(
+      bar,
+      'Status',
+      runFilters.status,
+      [
+        { value: '', label: 'Toate' },
+        { value: 'ok', label: 'ok' },
+        { value: 'not_ok', label: 'nu ok' },
+      ],
+      (v) => {
+        runFilters.status = v;
+        renderRunsList();
+        updateRunFilterActions();
+      }
+    );
+
+    const actions = document.createElement('div');
+    actions.className = 'cron-filter-actions';
+    actions.id = 'cron-panel-runs-filter-actions';
+    bar.appendChild(actions);
+    host.appendChild(bar);
+    updateRunFilterActions();
   }
 
   function collectRunRows(reg) {
@@ -132,138 +459,114 @@
     return rows;
   }
 
-  function renderJobs() {
+  function renderJobsList() {
     const host = document.getElementById('cron-panel-list');
     if (!host) return;
     const reg = deps.getRegistry();
-    const rows = Array.from(reg.values()).sort((a, b) =>
+    let rows = Array.from(reg.values()).sort((a, b) =>
       String(a.cronKey || '').localeCompare(String(b.cronKey || ''))
     );
+    rows = filterJobs(rows);
+    host.innerHTML = '';
     if (!rows.length) {
-      host.innerHTML =
-        '<p class="prog-live-stub">Niciun job <code>cron:…</code>. Creează cheie rol Cron sau SCAN <code>cron:*</code>.</p>';
+      const p = document.createElement('p');
+      p.className = 'prog-live-stub';
+      p.textContent = jobFiltersActiveNow()
+        ? 'Niciun job nu potrivește filtrelor.'
+        : 'Niciun job cron:…. Creează cheie rol Cron sau SCAN cron:*.';
+      host.appendChild(p);
       return;
     }
-    host.innerHTML = '';
     const list = document.createElement('div');
     list.className = 'cron-job-list';
 
     rows.forEach((entry) => {
       const cfg = entry.config || {};
-      const tz =
-        (cfg.schedule && cfg.schedule.timezone) ||
-        (root.SsideCronSchedule && root.SsideCronSchedule.DEFAULT_TZ) ||
-        'Europe/Bucharest';
+      const row = document.createElement('div');
+      row.className = 'cron-job-row';
 
-      const card = document.createElement('div');
-      card.className = 'cron-job-card';
+      const main = document.createElement('div');
+      main.className = 'cron-job-row-main';
 
-      const head = document.createElement('div');
-      head.className = 'cron-job-card-main';
-      const nameRow = document.createElement('div');
-      nameRow.className = 'cron-job-name-row';
-      nameRow.appendChild(mountCronHostBadge(cfg));
-      const name = document.createElement('code');
-      name.className = 'cron-job-name';
-      name.textContent = entry.cronKey;
-      nameRow.appendChild(name);
-      const next = document.createElement('div');
-      next.className = 'cron-job-next';
-      next.textContent = 'Următor: ' + fmtNextRun(entry.nextRunAt, cfg.schedule);
-      head.appendChild(nameRow);
-      head.appendChild(next);
+      main.appendChild(mountEnabledPill(entry, cfg));
+      main.appendChild(mountCronHostBadge(cfg));
 
-      const foot = document.createElement('div');
-      foot.className = 'cron-job-card-foot';
-
-      const enLab = document.createElement('label');
-      enLab.className = 'cron-job-enabled';
-      const chk = document.createElement('input');
-      chk.type = 'checkbox';
-      chk.checked = !!cfg.enabled;
-      chk.addEventListener('change', () => {
-        if (deps.onToggleEnabled) deps.onToggleEnabled(entry.cronKey, chk.checked);
+      const nameBtn = document.createElement('button');
+      nameBtn.type = 'button';
+      nameBtn.className = 'cron-job-name-btn';
+      nameBtn.title = 'Editare cron';
+      const nameCode = document.createElement('code');
+      nameCode.className = 'cron-job-name';
+      nameCode.textContent = entry.cronKey;
+      nameBtn.appendChild(nameCode);
+      nameBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (deps.onOpenEdit) deps.onOpenEdit(entry.cronKey);
       });
-      enLab.appendChild(chk);
-      enLab.appendChild(document.createTextNode(' Activ'));
+      main.appendChild(nameBtn);
+
+      const next = document.createElement('span');
+      next.className = 'cron-job-next-inline';
+      const nextText = fmtNextRun(entry.nextRunAt, cfg.schedule);
+      next.textContent = nextText;
+      next.title = nextText;
+      main.appendChild(next);
 
       const act = document.createElement('div');
-      act.className = 'cron-panel-actions';
-      const btnEdit = document.createElement('button');
-      btnEdit.type = 'button';
-      btnEdit.className = 'btn-gri btn-inline';
-      btnEdit.textContent = 'Edit';
-      btnEdit.onclick = () => deps.onOpenEdit && deps.onOpenEdit(entry.cronKey);
+      act.className = 'cron-job-row-actions';
       const btnRun = document.createElement('button');
       btnRun.type = 'button';
-      btnRun.className = 'btn-albastru btn-inline';
-      btnRun.textContent = 'Acum';
-      btnRun.onclick = () => deps.onRunNow && deps.onRunNow(entry.cronKey);
+      btnRun.className = 'cron-icon-btn cron-icon-btn--run';
+      btnRun.textContent = '\u25B6';
+      btnRun.title = 'Rulează acum (Acum)';
+      btnRun.setAttribute('aria-label', 'Rulează acum');
+      btnRun.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (deps.onRunNow) deps.onRunNow(entry.cronKey);
+      });
       const btnRuns = document.createElement('button');
       btnRuns.type = 'button';
-      btnRuns.className = 'btn-gri btn-inline';
-      btnRuns.textContent = 'Rulari';
-      btnRuns.title = 'Tab Rulari filtrat pe acest job';
-      btnRuns.onclick = () => {
-        filterCronKey = entry.cronKey;
+      btnRuns.className = 'cron-icon-btn cron-icon-btn--runs';
+      btnRuns.textContent = '\u2630';
+      btnRuns.title = 'Rulari pentru acest job';
+      btnRuns.setAttribute('aria-label', 'Rulari filtrate');
+      btnRuns.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const suffix = String(entry.cronKey || '').replace(/^cron:/i, '');
+        runFilters = createEmptyRunFilters();
+        runFilters.name = suffix + '*';
+        expandedRunId = '';
         setActiveTab('runs');
-      };
-      act.appendChild(btnEdit);
+      });
       act.appendChild(btnRun);
       act.appendChild(btnRuns);
+      main.appendChild(act);
 
-      foot.appendChild(enLab);
-      foot.appendChild(act);
-      card.appendChild(head);
-      card.appendChild(foot);
-      list.appendChild(card);
+      row.appendChild(main);
+      list.appendChild(row);
     });
 
     host.appendChild(list);
   }
 
-  function renderRuns() {
-    const host = document.getElementById('cron-panel-runs');
+  function renderJobs() {
+    renderJobsToolbar();
+    renderJobsList();
+  }
+
+  function renderRunsList() {
+    const host = document.getElementById('cron-panel-runs-list');
     if (!host) return;
     const reg = deps.getRegistry();
-    let rows = collectRunRows(reg);
-    if (filterCronKey) {
-      rows = rows.filter((r) => r.cronKey === filterCronKey);
-    }
+    let rows = filterRuns(collectRunRows(reg));
 
     host.innerHTML = '';
-
-    const toolbar = document.createElement('div');
-    toolbar.className = 'cron-runs-toolbar';
-    if (filterCronKey) {
-      const lab = document.createElement('span');
-      lab.className = 'cron-panel-sub';
-      lab.textContent = 'Filtru: ' + filterCronKey + ' ';
-      const clear = document.createElement('button');
-      clear.type = 'button';
-      clear.className = 'btn-gri btn-inline';
-      clear.textContent = 'Toate joburile';
-      clear.onclick = () => {
-        filterCronKey = '';
-        renderRuns();
-      };
-      toolbar.appendChild(lab);
-      toolbar.appendChild(clear);
-    } else {
-      const cap =
-        (root.SsideCronClient && root.SsideCronClient.RECENT_RUNS_CAP) || 10;
-      toolbar.innerHTML =
-        '<span class="cron-panel-sub">Ultimele rulari (max ' +
-        cap +
-        ' per job, cele mai recente sus)</span>';
-    }
-    host.appendChild(toolbar);
 
     if (!rows.length) {
       const p = document.createElement('p');
       p.className = 'prog-live-stub';
-      p.textContent = filterCronKey
-        ? 'Nicio rulare înregistrată pentru acest job (încearcă „Acum”).'
+      p.textContent = runFiltersActiveNow()
+        ? 'Nicio rulare nu potrivește filtrelor.'
         : 'Nicio rulare încă. Rulează un cron (Acum) sau așteaptă tick-ul.';
       host.appendChild(p);
       return;
@@ -273,40 +576,75 @@
     list.className = 'cron-run-list';
 
     rows.slice(0, 80).forEach(({ cronKey, tz, run }) => {
-      const card = document.createElement('div');
-      card.className = 'cron-run-card';
-      const top = document.createElement('div');
-      top.className = 'cron-run-card-top';
-      top.innerHTML =
-        statusBadge(run.status) +
-        ' <span class="cron-run-time">' +
-        escapeHtml(fmtTime(run.runAt, tz)) +
-        '</span>' +
-        (run.trigger
-          ? ' <span class="cron-panel-sub">' + escapeHtml(run.trigger) + '</span>'
-          : '');
-      if (run.runHost === 'edge' || run.runHost === 'client') {
-        const hostBadge = mountCronHostBadge({ mode: run.runHost });
-        hostBadge.classList.add('cron-host-badge--run');
-        top.appendChild(document.createTextNode(' '));
-        top.appendChild(hostBadge);
-      }
+      const expandId = cronRunExpandId(cronKey, run);
+      const isOpen = expandedRunId === expandId;
+      const text =
+        run.err ||
+        run.msg ||
+        (run.skipReason ? 'skip: ' + run.skipReason : '');
+      const runHostMode =
+        run.runHost === 'edge' || run.runHost === 'client' ? run.runHost : '';
+      const trigger = run.trigger ? String(run.trigger) : '';
+
+      const item = document.createElement('div');
+      item.className = 'cron-run-item' + (isOpen ? ' is-open' : '');
+
+      const rowBtn = document.createElement('button');
+      rowBtn.type = 'button';
+      rowBtn.className = 'cron-run-row';
+      rowBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+      const parts = document.createElement('span');
+      parts.className = 'cron-run-row-parts';
+
+      parts.appendChild(mountStatusBadge(run.status));
+
+      const tm = document.createElement('span');
+      tm.className = 'cron-run-time';
+      tm.textContent = fmtTime(run.runAt, tz);
+      parts.appendChild(tm);
+
       const keyEl = document.createElement('code');
       keyEl.className = 'cron-run-key';
       keyEl.textContent = cronKey;
-      const text = run.err || run.msg || (run.skipReason ? 'skip: ' + run.skipReason : '');
-      card.appendChild(top);
-      card.appendChild(keyEl);
-      if (text) {
-        const msg = document.createElement('div');
-        msg.className = 'cron-run-msg';
-        msg.textContent = text;
-        card.appendChild(msg);
+      parts.appendChild(keyEl);
+
+      if (runHostMode) {
+        const hb = mountCronHostBadge({ mode: runHostMode });
+        hb.classList.add('cron-host-badge--run');
+        parts.appendChild(hb);
       }
-      list.appendChild(card);
+      const trBadge = mountTriggerBadge(trigger);
+      if (trBadge) parts.appendChild(trBadge);
+
+      rowBtn.appendChild(parts);
+      rowBtn.addEventListener('click', () => {
+        expandedRunId = expandedRunId === expandId ? '' : expandId;
+        renderRunsList();
+      });
+
+      item.appendChild(rowBtn);
+
+      if (isOpen) {
+        const detail = document.createElement('div');
+        detail.className = 'cron-run-detail';
+        detail.textContent = text || '—';
+        if (run.durationMs != null && !Number.isNaN(Number(run.durationMs))) {
+          detail.textContent +=
+            (text ? '\n' : '') + 'Durată: ' + run.durationMs + ' ms';
+        }
+        item.appendChild(detail);
+      }
+
+      list.appendChild(item);
     });
 
     host.appendChild(list);
+  }
+
+  function renderRuns() {
+    renderRunsToolbar();
+    renderRunsList();
   }
 
   function escapeHtml(s) {
@@ -322,9 +660,9 @@
       const on = btn.getAttribute('data-cron-tab') === activeTab;
       btn.classList.toggle('is-active', on);
     });
-    const listEl = document.getElementById('cron-panel-list');
+    const jobsEl = document.getElementById('cron-panel-jobs');
     const runsEl = document.getElementById('cron-panel-runs');
-    if (listEl) listEl.style.display = activeTab === 'jobs' ? 'block' : 'none';
+    if (jobsEl) jobsEl.style.display = activeTab === 'jobs' ? 'block' : 'none';
     if (runsEl) runsEl.style.display = activeTab === 'runs' ? 'block' : 'none';
   }
 
@@ -341,12 +679,12 @@
     const stateEl = document.getElementById('cron-scheduler-state');
     const powerBtn = document.getElementById('btn-cron-power');
     if (stateEl) {
-      stateEl.textContent = armed ? 'ON' : 'OFF';
+      stateEl.textContent = armed ? 'client ON' : 'client OFF';
       stateEl.classList.toggle('is-on', armed);
       stateEl.classList.toggle('is-off', !armed);
       stateEl.title = armed
-        ? 'Scheduler activ — rulează joburile programate (enabled) în acest tab'
-        : 'Scheduler oprit — nu rulează tick programat; Acum (manual) merge';
+        ? 'Scheduler client activ — tick programat pentru joburi mode client în acest tab'
+        : 'Scheduler client oprit — fără tick programat; Acum (manual) merge; edge pe server separat';
     }
     if (powerBtn) {
       powerBtn.textContent = armed ? 'Oprește' : 'Pornește';
@@ -452,6 +790,8 @@
     show,
     ascunde,
     setActiveTab,
+    /** @internal test / debug */
+    cronRunExpandId,
   };
 
   root.deschidePanouCron = function deschidePanouCron() {

@@ -17,7 +17,7 @@
     </script>
 
     <script src="ui/vendor/jsoneditor.min.js"></script>
-    <link rel="stylesheet" href="ui/css/app.css?v=run-host1">
+    <link rel="stylesheet" href="ui/css/app.css?v=cron-filters1">
 </head>
 <body>
 
@@ -100,19 +100,25 @@
         <div id="ecran-cron" style="display: none;">
             <div class="box">
                 <div class="cron-panel-head">
-                    <h3 style="margin: 0;">Cronuri (browser)</h3>
+                    <h3 style="margin: 0;">Cronuri</h3>
                     <div class="cron-panel-head-actions">
-                        <span id="cron-scheduler-state" class="cron-scheduler-state" title="Scheduler programat (tick + journal sync)">OFF</span>
+                        <span id="cron-scheduler-state" class="cron-scheduler-state" title="Scheduler client în acest tab (tick + journal) — doar joburi mode client">client OFF</span>
                         <button type="button" id="btn-cron-power" class="btn-albastru btn-inline" title="Pornește execuția programată în acest tab">Pornește</button>
                         <button type="button" id="btn-cron-refresh" class="btn-gri btn-inline" title="SCAN cron:* + reload registry (fără a porni scheduler-ul dacă e OFF)">Reîncarcă</button>
                     </div>
                 </div>
                 <div id="cron-panel-tabs" class="cron-panel-tabs list-view-mode-seg" role="tablist" style="margin-bottom: 12px;">
-                    <button type="button" class="list-view-mode-btn is-active" data-cron-tab="jobs">Cronuri</button>
+                    <button type="button" class="list-view-mode-btn is-active" data-cron-tab="jobs">Lista</button>
                     <button type="button" class="list-view-mode-btn" data-cron-tab="runs">Rulari</button>
                 </div>
-                <div id="cron-panel-list"></div>
-                <div id="cron-panel-runs" style="display: none;"></div>
+                <div id="cron-panel-jobs">
+                    <div id="cron-panel-jobs-toolbar"></div>
+                    <div id="cron-panel-list"></div>
+                </div>
+                <div id="cron-panel-runs" style="display: none;">
+                    <div id="cron-panel-runs-toolbar"></div>
+                    <div id="cron-panel-runs-list"></div>
+                </div>
             </div>
         </div>
 
@@ -642,7 +648,8 @@
     <script src="core/prog-validate.js?v=cron-edge1"></script>
     <script src="core/cron-schedule.js?v=cron-preview-dedupe2"></script>
     <script src="core/cron-client.js?v=run-host1"></script>
-    <script src="ui/js/cron-panel.js?v=run-host1"></script>
+    <script src="core/cron-panel-ui.js?v=cron-ui-compact2"></script>
+    <script src="ui/js/cron-panel.js?v=cron-filters1"></script>
     <script src="ui/js/doc-data_generated.js?v=kincr2"></script>
     <script src="ui/js/doc-viewer.js?v=ascunde-noop1"></script>
     <script src="ui/js/settings-viewer.js?v=hide-cron1"></script>

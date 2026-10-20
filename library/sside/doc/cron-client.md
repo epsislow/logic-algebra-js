@@ -122,14 +122,21 @@ Execuție alg: ca Live, dar `confirm` → refuz, `ui` → eroare (`confirm bloca
 
 ## UI
 
-Panou **Cron** — două tab-uri:
+Panou **Cron** — titlu **Cronuri**, două tab-uri:
 
 | Tab | Conținut |
 |-----|----------|
-| **Cronuri** | Joburi: schedule, enabled, următor / 2–3 fire, ultima rulare (badge ok/err), **Edit**, **Acum**, **Rulari** (sare la tab filtrat) |
-| **Rulari** | Istoric rulari (toate joburile sau filtrat), coloană lată **Mesaj / eroare** |
+| **Lista** | Rând: pill **ON/OFF**, badge **client/edge**, cheie (click → Edit), dată următoare fire, **▶** / **☰** |
+| **Rulari** | Badge **ok/err/…**, dată, cheie, badge **client/edge**, trigger **⏰** programat / **▶** manual (alt trigger = text) — click deschide mesajul |
 
-Sus în panou: **OFF/ON** + **Pornește** / **Oprește** + **Reîncarcă** (`SCAN` + registry; nu pornește scheduler-ul dacă e OFF).
+Deasupra fiecărei liste, **filtre** (când e activ cel puțin un filtru apare **Toate joburile** — reset):
+
+- **Lista** — **Nume** (`blabla*` → chei care încep cu `cron:blabla`); **Mode** client/edge; **Activ** ON/OFF.
+- **Rulari** — același **Nume**; **Mode** (după `runHost`); **Trigger** scheduled/manual; **Status** ok / **nu ok** (orice status ≠ `ok`, ex. `err`, `skipped`, `running`).
+
+**☰** pe un job deschide tab **Rulari** cu filtru nume presetat (`suffix*`).
+
+Sus în panou: **`client OFF` / `client ON`** (scheduler tick **mode client** în acest tab) + **Pornește** / **Oprește** + **Reîncarcă** (`SCAN` + registry; nu pornește scheduler-ul dacă e OFF). Joburile **edge** rulează pe Supabase indiferent de starea client.
 
 ### Istoric în `cron:state:…`
 
@@ -153,7 +160,7 @@ Câmp **`recentRuns`** — ultimele **10** rulari per job (cel mai recent primul
 
 Dacă lipsește `recentRuns` (job vechi), tab **Rulari** poate afișa totuși **ultima** rulare din `lastRunAt` / `lastMsg`.
 
-- **Edit** cheie `cron:…` — tab Edit (schedule, alg, timezone, preview fire).
+- **Edit** — click pe numele `cron:…` în tab Lista (schedule, alg, timezone, preview fire).
 
 Creare: **+ Cheie nouă** → rol **Cron** → JSON seed `v:1`.
 

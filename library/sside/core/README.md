@@ -7,6 +7,7 @@ Logică partajată (testabilă din Node + încărcată în browser).
 | `keys.js` | Clasificare chei, badge tip, `alg:`/`form:`/`ui:_` |
 | `meta-schemas.js` | Meta JSON Schema + seed `v:1` pentru alg/form/ui |
 | `when.js` | `when`: eval AST/string, `printWhenExpr` / `parseWhenExpr`, `evalWhenInput` (F2-alg-C) |
+| `cron-panel-ui.js` | Id expand rulari panou Cron (`cronRunExpandId`) |
 | `alg-ops.js` | Refs, scheck/sgen helpers, whitelist redis, argv k* |
 | `search-query.js` | Parse query `=`… + unwrap SEARCH.QUERY |
 | `form-options.js` | Form `fields.*.options` → enum overlay (F4k) |
