@@ -26,9 +26,17 @@
   }
 
   function matchCronNameFilter(cronKey, nameInput) {
-    const prefix = cronNamePrefixFromFilter(nameInput);
-    if (!prefix) return true;
-    return String(cronKey || '').toLowerCase().startsWith(prefix);
+    const raw = String(nameInput || '').trim();
+    if (!raw) return true;
+    const key = String(cronKey || '').toLowerCase();
+    if (raw.endsWith('*')) {
+      const prefix = cronNamePrefixFromFilter(raw);
+      if (!prefix) return true;
+      return key.startsWith(prefix);
+    }
+    let exact = raw;
+    if (!/^cron:/i.test(exact)) exact = 'cron:' + exact;
+    return key === exact.toLowerCase();
   }
 
   function createEmptyJobFilters() {

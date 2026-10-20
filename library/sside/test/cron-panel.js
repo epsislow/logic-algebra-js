@@ -42,6 +42,8 @@ module.exports = {
         assertEq(Ui.cronNamePrefixFromFilter('cron:foo'), 'cron:foo');
         assertEq(Ui.matchCronNameFilter('cron:blabla_x', 'blabla*'), true);
         assertEq(Ui.matchCronNameFilter('cron:other', 'blabla*'), false);
+        assertEq(Ui.matchCronNameFilter('cron:blabla_x', 'blabla_x'), true);
+        assertEq(Ui.matchCronNameFilter('cron:blabla_extra', 'blabla_x'), false);
       },
     },
     {

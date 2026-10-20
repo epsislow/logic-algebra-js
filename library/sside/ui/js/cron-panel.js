@@ -282,53 +282,55 @@
       }
     );
 
-    const actions = document.createElement('div');
-    actions.className = 'cron-filter-actions';
-    actions.id = 'cron-panel-jobs-filter-actions';
-    bar.appendChild(actions);
+    bar.appendChild(createFilterClearField('cron-panel-jobs-filter-actions'));
     host.appendChild(bar);
     updateJobFilterActions();
   }
 
-  function updateJobFilterActions() {
-    const actions = document.getElementById('cron-panel-jobs-filter-actions');
+  function createFilterClearField(actionsId) {
+    const wrap = document.createElement('div');
+    wrap.className = 'cron-filter-field cron-filter-field--clear';
+    const lab = document.createElement('span');
+    lab.className = 'cron-filter-label cron-filter-label--spacer';
+    lab.setAttribute('aria-hidden', 'true');
+    lab.textContent = '\u00a0';
+    const actions = document.createElement('div');
+    actions.className = 'cron-filter-actions';
+    actions.id = actionsId;
+    wrap.appendChild(lab);
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  function mountFilterClearButton(actions, isActive, onClear) {
     if (!actions) return;
     actions.innerHTML = '';
-    if (jobFiltersActiveNow()) {
-      const clear = document.createElement('button');
-      clear.type = 'button';
-      clear.className = 'btn-gri btn-inline';
-      clear.textContent = 'Toate joburile';
-      clear.addEventListener('click', clearJobFilters);
-      actions.appendChild(clear);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'cron-filter-clear-btn';
+    if (isActive) {
+      btn.classList.add('cron-filter-clear-btn--active', 'btn-rosu');
+      btn.textContent = '\u00D7';
+      btn.title = 'Șterge filtrele';
+      btn.setAttribute('aria-label', 'Șterge filtrele');
+      btn.addEventListener('click', onClear);
     } else {
-      const hint = document.createElement('span');
-      hint.className = 'cron-panel-sub';
-      hint.textContent = 'Filtre deasupra listei';
-      actions.appendChild(hint);
+      btn.classList.add('cron-filter-clear-btn--idle', 'btn-galben');
+      btn.disabled = true;
+      btn.textContent = '\u2610';
+      btn.setAttribute('aria-label', 'Filtre inactive');
     }
+    actions.appendChild(btn);
+  }
+
+  function updateJobFilterActions() {
+    const actions = document.getElementById('cron-panel-jobs-filter-actions');
+    mountFilterClearButton(actions, jobFiltersActiveNow(), clearJobFilters);
   }
 
   function updateRunFilterActions() {
     const actions = document.getElementById('cron-panel-runs-filter-actions');
-    if (!actions) return;
-    actions.innerHTML = '';
-    if (runFiltersActiveNow()) {
-      const clear = document.createElement('button');
-      clear.type = 'button';
-      clear.className = 'btn-gri btn-inline';
-      clear.textContent = 'Toate joburile';
-      clear.addEventListener('click', clearRunFilters);
-      actions.appendChild(clear);
-    } else {
-      const cap =
-        (root.SsideCronClient && root.SsideCronClient.RECENT_RUNS_CAP) || 10;
-      const hint = document.createElement('span');
-      hint.className = 'cron-panel-sub';
-      hint.textContent =
-        'Ultimele rulari (max ' + cap + ' per job, cele mai recente sus)';
-      actions.appendChild(hint);
-    }
+    mountFilterClearButton(actions, runFiltersActiveNow(), clearRunFilters);
   }
 
   function renderRunsToolbar() {
@@ -405,10 +407,7 @@
       }
     );
 
-    const actions = document.createElement('div');
-    actions.className = 'cron-filter-actions';
-    actions.id = 'cron-panel-runs-filter-actions';
-    bar.appendChild(actions);
+    bar.appendChild(createFilterClearField('cron-panel-runs-filter-actions'));
     host.appendChild(bar);
     updateRunFilterActions();
   }
@@ -534,7 +533,7 @@
         ev.stopPropagation();
         const suffix = String(entry.cronKey || '').replace(/^cron:/i, '');
         runFilters = createEmptyRunFilters();
-        runFilters.name = suffix + '*';
+        runFilters.name = suffix;
         expandedRunId = '';
         setActiveTab('runs');
       });
