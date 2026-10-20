@@ -224,12 +224,19 @@
     parent.appendChild(wrap);
   }
 
+  function createFiltersInner(kind) {
+    const inner = document.createElement('div');
+    inner.className = 'cron-panel-filters-inner cron-panel-filters-inner--' + kind;
+    return inner;
+  }
+
   function renderJobsToolbar() {
     const host = document.getElementById('cron-panel-jobs-toolbar');
     if (!host) return;
     host.innerHTML = '';
     const bar = document.createElement('div');
-    bar.className = 'cron-panel-filters';
+    bar.className = 'cron-panel-filters cron-panel-filters--jobs';
+    const inner = createFiltersInner('jobs');
 
     const nameWrap = document.createElement('label');
     nameWrap.className = 'cron-filter-field cron-filter-field--grow';
@@ -239,7 +246,7 @@
     const nameIn = document.createElement('input');
     nameIn.type = 'text';
     nameIn.className = 'cron-filter-input';
-    nameIn.placeholder = 'blabla* → cron:blabla…';
+    nameIn.placeholder = 'blabla → cron:blabla… · *nume → conține';
     nameIn.value = jobFilters.name;
     nameIn.addEventListener('input', () => {
       jobFilters.name = nameIn.value;
@@ -248,10 +255,10 @@
     });
     nameWrap.appendChild(nameLab);
     nameWrap.appendChild(nameIn);
-    bar.appendChild(nameWrap);
+    inner.appendChild(nameWrap);
 
     appendSelect(
-      bar,
+      inner,
       'Mode',
       jobFilters.mode,
       [
@@ -267,7 +274,7 @@
     );
 
     appendSelect(
-      bar,
+      inner,
       'Activ',
       jobFilters.enabled,
       [
@@ -282,6 +289,7 @@
       }
     );
 
+    bar.appendChild(inner);
     bar.appendChild(createFilterClearField('cron-panel-jobs-filter-actions'));
     host.appendChild(bar);
     updateJobFilterActions();
@@ -289,7 +297,7 @@
 
   function createFilterClearField(actionsId) {
     const wrap = document.createElement('div');
-    wrap.className = 'cron-filter-field cron-filter-field--clear';
+    wrap.className = 'cron-filter-field-clear';
     const lab = document.createElement('span');
     lab.className = 'cron-filter-label cron-filter-label--spacer';
     lab.setAttribute('aria-hidden', 'true');
@@ -338,7 +346,8 @@
     if (!host) return;
     host.innerHTML = '';
     const bar = document.createElement('div');
-    bar.className = 'cron-panel-filters';
+    bar.className = 'cron-panel-filters cron-panel-filters--runs';
+    const inner = createFiltersInner('runs');
 
     const nameWrap = document.createElement('label');
     nameWrap.className = 'cron-filter-field cron-filter-field--grow';
@@ -348,7 +357,7 @@
     const nameIn = document.createElement('input');
     nameIn.type = 'text';
     nameIn.className = 'cron-filter-input';
-    nameIn.placeholder = 'blabla* → cron:blabla…';
+    nameIn.placeholder = 'blabla → cron:blabla… · *nume → conține';
     nameIn.value = runFilters.name;
     nameIn.addEventListener('input', () => {
       runFilters.name = nameIn.value;
@@ -357,10 +366,10 @@
     });
     nameWrap.appendChild(nameLab);
     nameWrap.appendChild(nameIn);
-    bar.appendChild(nameWrap);
+    inner.appendChild(nameWrap);
 
     appendSelect(
-      bar,
+      inner,
       'Mode',
       runFilters.mode,
       [
@@ -376,7 +385,7 @@
     );
 
     appendSelect(
-      bar,
+      inner,
       'Trigger',
       runFilters.trigger,
       [
@@ -392,7 +401,7 @@
     );
 
     appendSelect(
-      bar,
+      inner,
       'Status',
       runFilters.status,
       [
@@ -407,6 +416,7 @@
       }
     );
 
+    bar.appendChild(inner);
     bar.appendChild(createFilterClearField('cron-panel-runs-filter-actions'));
     host.appendChild(bar);
     updateRunFilterActions();

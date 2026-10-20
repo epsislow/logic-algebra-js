@@ -131,10 +131,10 @@ Panou **Cron** — titlu **Cronuri**, două tab-uri:
 
 Deasupra fiecărei liste, **filtre** (slot fix dreapta: **☐** galben când nu filtrezi, **×** roșu șterge filtrele):
 
-- **Lista** — **Nume** (`blabla*` → chei care încep cu `cron:blabla`); **Mode** client/edge; **Activ** ON/OFF.
+- **Lista** — **Nume** (`blabla` → prefix `cron:blabla…`; `*nume` → chei care **conțin** `nume`); **Mode** client/edge; **Activ** ON/OFF.
 - **Rulari** — același **Nume**; **Mode** (după `runHost`); **Trigger** scheduled/manual; **Status** ok / **nu ok** (orice status ≠ `ok`, ex. `err`, `skipped`, `running`).
 
-**☰** pe un job deschide tab **Rulari** cu filtru nume exact (`suffix`, fără `*`).
+**☰** pe un job deschide tab **Rulari** cu filtru nume presetat (prefix pe acel job).
 
 Sus în panou: **`client OFF` / `client ON`** (scheduler tick **mode client** în acest tab) + **Pornește** / **Oprește** + **Reîncarcă** (`SCAN` + registry; nu pornește scheduler-ul dacă e OFF). Joburile **edge** rulează pe Supabase indiferent de starea client.
 

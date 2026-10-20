@@ -34,16 +34,18 @@ module.exports = {
     },
     {
       id: 2,
-      desc: 'cronNamePrefixFromFilter — wildcard prefix cron:',
+      desc: 'parseCronNameFilter — prefix implicit și *conține',
       run() {
-        assertEq(Ui.cronNamePrefixFromFilter(''), null);
-        assertEq(Ui.cronNamePrefixFromFilter('  '), null);
-        assertEq(Ui.cronNamePrefixFromFilter('blabla*'), 'cron:blabla');
-        assertEq(Ui.cronNamePrefixFromFilter('cron:foo'), 'cron:foo');
+        assertEq(Ui.parseCronNameFilter('').kind, 'any');
+        assertEq(Ui.parseCronNameFilter('blabla').kind, 'prefix');
+        assertEq(Ui.parseCronNameFilter('blabla').prefix, 'cron:blabla');
+        assertEq(Ui.cronNamePrefixFromFilter('blabla'), 'cron:blabla');
+        assertEq(Ui.cronNamePrefixFromFilter('*nume'), null);
+        assertEq(Ui.matchCronNameFilter('cron:blabla_x', 'blabla'), true);
+        assertEq(Ui.matchCronNameFilter('cron:other', 'blabla'), false);
+        assertEq(Ui.matchCronNameFilter('cron:foo_nume_bar', '*nume'), true);
+        assertEq(Ui.matchCronNameFilter('cron:testPing', '*nume'), false);
         assertEq(Ui.matchCronNameFilter('cron:blabla_x', 'blabla*'), true);
-        assertEq(Ui.matchCronNameFilter('cron:other', 'blabla*'), false);
-        assertEq(Ui.matchCronNameFilter('cron:blabla_x', 'blabla_x'), true);
-        assertEq(Ui.matchCronNameFilter('cron:blabla_extra', 'blabla_x'), false);
       },
     },
     {

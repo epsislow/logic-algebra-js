@@ -14,29 +14,42 @@
     );
   }
 
-  /** Prefix Redis din câmp filtru (ex. blabla* → cron:blabla). */
-  function cronNamePrefixFromFilter(input) {
+  /**
+   * Interpretare filtru Nume:
+   * - `blabla` → prefix `cron:blabla…` (fără `*` la final)
+   * - `*nume` → conține `nume` în cheie (`cron:…*nume*…`)
+   */
+  function parseCronNameFilter(input) {
     const raw = String(input || '').trim();
-    if (!raw) return null;
+    if (!raw || raw === '*') return { kind: 'any' };
+
+    if (raw.startsWith('*')) {
+      let inner = raw.slice(1);
+      if (inner.endsWith('*')) inner = inner.slice(0, -1);
+      inner = inner.trim();
+      if (!inner) return { kind: 'any' };
+      return { kind: 'contains', needle: inner.toLowerCase() };
+    }
+
     let p = raw;
-    if (p.endsWith('*')) p = p.slice(0, -1);
-    if (!p) return null;
+    if (p.endsWith('*')) p = p.slice(0, -1).trim();
+    if (!p) return { kind: 'any' };
     if (!/^cron:/i.test(p)) p = 'cron:' + p;
-    return p.toLowerCase();
+    return { kind: 'prefix', prefix: p.toLowerCase() };
+  }
+
+  /** @deprecated test — doar mod prefix */
+  function cronNamePrefixFromFilter(input) {
+    const f = parseCronNameFilter(input);
+    return f.kind === 'prefix' ? f.prefix : null;
   }
 
   function matchCronNameFilter(cronKey, nameInput) {
-    const raw = String(nameInput || '').trim();
-    if (!raw) return true;
+    const f = parseCronNameFilter(nameInput);
+    if (f.kind === 'any') return true;
     const key = String(cronKey || '').toLowerCase();
-    if (raw.endsWith('*')) {
-      const prefix = cronNamePrefixFromFilter(raw);
-      if (!prefix) return true;
-      return key.startsWith(prefix);
-    }
-    let exact = raw;
-    if (!/^cron:/i.test(exact)) exact = 'cron:' + exact;
-    return key === exact.toLowerCase();
+    if (f.kind === 'prefix') return key.startsWith(f.prefix);
+    return key.includes(f.needle);
   }
 
   function createEmptyJobFilters() {
@@ -106,6 +119,7 @@
 
   const api = {
     cronRunExpandId,
+    parseCronNameFilter,
     cronNamePrefixFromFilter,
     matchCronNameFilter,
     createEmptyJobFilters,
