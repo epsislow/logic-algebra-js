@@ -14,6 +14,7 @@ Prefixuri Redis folosite de sside:
 | `log:` | `log:audit` | jurnal evenimente (LIST, `op: log`) |
 | `info:` / `json:` / `search:` / `set:` / `s:` | diverse | aux / index search (badge pe lista principală) |
 | `queue:` / `stack:` / `events:` / `cache:` | ex. `cache:myValuesHere` | convenții utilizator (≠ cache TYPE din Setări) |
+| `scan:prefixes` | ZSET | registry prefixe pentru listă — **doar admin**; vezi [list-keys-search.md](list-keys-search.md) |
 
 **Toate badge-urile (vizual + reguli):** [Badge-uri chei](key-badges.md).
 

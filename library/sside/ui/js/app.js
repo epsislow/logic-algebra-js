@@ -41,7 +41,7 @@
 
         const LIST_KEYS_VIEW_STORAGE = 'sside-list-keys-view';
         let cheiListaViewMode = 'list';
-        let ultimulFiltruLista = '*';
+        let ultimulFiltruLista = '';
         /** Path segmente în mod Dosare (reset la căutare nouă). */
         let dosarePathSegments = [];
 
@@ -647,13 +647,16 @@
             }
             rehydrateTipRedisCheiDinStorage();
             inapoiLaLista();
-            scaneazaToateCampurile()
-                .then(() => {
-                    if (typeof window.incarcaCronClientLaLogin === 'function') {
-                        return window.incarcaCronClientLaLogin();
-                    }
-                })
-                .catch(() => {});
+            // Fără search automat cu * — userul alege pattern-ul (registry scan:prefixes / Caută).
+            const listaLogin = document.getElementById('lista-chei');
+            if (listaLogin) {
+                listaLogin.innerHTML =
+                    '<div class="key-row"><span class="key-name">Introdu un pattern (ex. data:* sau &gt;data:*) și apasă Caută.</span></div>';
+            }
+            actualizeazaStatusLista(0, null);
+            if (typeof window.incarcaCronClientLaLogin === 'function') {
+                Promise.resolve(window.incarcaCronClientLaLogin()).catch(() => {});
+            }
         }
 
         function executaLogout() {
@@ -2227,10 +2230,20 @@ function translateUpstashSearchResults(date) {
             }
 
             resetDosareNavigare();
-            const filtru = document.getElementById('input-search').value.trim() || '*';
+            const filtru = document.getElementById('input-search').value.trim();
             const dropdown = document.getElementById('select-citire');
             const lista = document.getElementById('lista-chei');
             let scanMeta = null;
+
+            if (!filtru) {
+                lista.innerHTML =
+                    '<div class="key-row"><span class="key-name">Introdu un pattern (ex. data:* , &gt;data:* sau =…) și apasă Caută. Evită * pe volume mari.</span></div>';
+                if (dropdown) dropdown.innerHTML = '<option>—</option>';
+                toateCheile = [];
+                ultimulFiltruLista = '';
+                actualizeazaStatusLista(0, null);
+                return;
+            }
 
             lista.innerHTML = '<div class="key-row"><span class="key-name">Se încarcă…</span></div>';
             dropdown.innerHTML = '<option>Se încarcă lista...</option>';

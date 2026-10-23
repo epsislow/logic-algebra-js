@@ -76,6 +76,11 @@
     return (key || '').startsWith('idx_');
   }
 
+  /** Registry prefixe SCAN — vizibil doar admin (ca settings: / idx_). */
+  function isScanPrefixesRedisKey(key) {
+    return (key || '') === 'scan:prefixes';
+  }
+
   function isCheieSistemAscunsa(key) {
     const k = key || '';
     return (
@@ -83,6 +88,7 @@
       k.startsWith('session:') ||
       k.startsWith('settings:') ||
       isCheieSearchIndexRedisKey(k) ||
+      isScanPrefixesRedisKey(k) ||
       isCronLockRedisKey(k) ||
       isCronJournalRedisKey(k)
     );
@@ -314,6 +320,7 @@
     isCronAuxRedisKey,
     parseDataJsonPeSchema,
     isCheieSearchIndexRedisKey,
+    isScanPrefixesRedisKey,
     isCheieSistemAscunsa,
     clasificaCheie,
     clasificaDosar,

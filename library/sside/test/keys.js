@@ -153,6 +153,10 @@ module.exports = {
         assert(!Keys.isCheieSearchIndexRedisKey('search:idx'));
         assertEq(Keys.clasificaCheie('idx_search_tags', new Set()).sistem, true);
         assertEq(Keys.etichetaTip({ tip: 'liber', sistem: true }).cls, 'badge-admin');
+        assert(Keys.isScanPrefixesRedisKey('scan:prefixes'));
+        assert(!Keys.isScanPrefixesRedisKey('scan:other'));
+        assert(Keys.isCheieSistemAscunsa('scan:prefixes'));
+        assertEq(Keys.clasificaCheie('scan:prefixes', new Set()).sistem, true);
       },
     },
     {

@@ -8,12 +8,30 @@ Filtrul din **Lista** (`#input-search` + **Caută**) suportă trei moduri.
 | **Search index** | `=…` (text sau JSON) | `SEARCH.QUERY` | Nu |
 | **SCAN** | `>…` (DSL mai jos) | `SCAN` iterativ | Da |
 
+**La login / deschiderea Listei nu se rulează automat `*`.** Introdu un pattern și apasă **Caută**. Pe volume mari preferă un prefix (`data:*`) sau SCAN `>data:*` în loc de `*`.
+
+---
+
+## Registry prefixe (`scan:prefixes`)
+
+ZSET Redis menținut de **worker** după create/delete reușite (inclusiv `tranzactie` / MULTI).
+
+| | |
+|--|--|
+| **Cheie** | `scan:prefixes` |
+| **Member** | un prefix per cheie scrisă: tot path-ul **fără** ultimul segment + `:` (ex. `mydata:test:blabla` → `mydata:test:`; **nu** se adaugă și `mydata:`) |
+| **Create** | `ZADD scan:prefixes 0 <prefix>` |
+| **Delete** | `SCAN MATCH <prefix>*` (stop la primul hit); dacă gol → `ZREM` |
+| **Vizibilitate** | cheie **sistem** — apare în listă **doar pentru admin** (ca `settings:` / `idx_*`) |
+
+Cod: `core/scan-prefixes.js` (UI), sync în `extern/worker/src/index.js`. Plan: `.cursor/plans/scan-prefixes-registry.plan.md`.
+
 ---
 
 ## KEYS (implicit)
 
 - Glob: `*`, `?` (ca până acum).
-- Potrivire pe **tot** keyspace-ul dintr-un apel — evită pe volume foarte mari în producție.
+- Potrivire pe **tot** keyspace-ul dintr-un apel — **evită `*` pe volume foarte mari** în producție.
 
 ---
 
@@ -22,7 +40,7 @@ Filtrul din **Lista** (`#input-search` + **Caută**) suportă trei moduri.
 - `=s_prefix:stock` sau query JSON (vezi **Form / UI** — filtru listă vs `list.source`).
 - Rezultate din index **`idx_search_tags`**, nu din parcurgerea tuturor cheilor.
 
-Cheile **`idx_*`** (tip Redis **Search Index**) — doar **admin** în listă; la Edit: panou **doar citire** (`SEARCH.LISTINDEXES`, `SEARCH.DESCRIBE` + convenții sside pentru `idx_search_tags`). Modificarea indexului se face în Upstash.
+Cheile **`idx_*`** (tip Redis **Search Index**) și **`scan:prefixes`** — doar **admin** în listă. La Edit pe `idx_*`: panou **doar citire** (`SEARCH.LISTINDEXES`, `SEARCH.DESCRIBE` + convenții sside pentru `idx_search_tags`). Modificarea indexului se face în Upstash.
 
 ---
 

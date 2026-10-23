@@ -69,9 +69,9 @@
       id: 'admin',
       badge: 'admin',
       cls: 'badge-admin',
-      rule: 'Chei sistem: `user:`, `session:`, `settings:`, `idx_*` (admin).',
+      rule: 'Chei sistem: `user:`, `session:`, `settings:`, `idx_*`, `scan:prefixes` (admin).',
       example: 'settings:admin',
-      noteDefault: '(user/session/settings/idx_)',
+      noteDefault: '(user/session/settings/idx_/scan:prefixes)',
       probeKey: 'settings:admin',
     },
     {

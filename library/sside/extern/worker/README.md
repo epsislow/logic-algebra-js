@@ -17,7 +17,11 @@ Backend HTTP folosit de **sside** (`WORKER_URL` în `ui/js/app.js`): login, Redi
 
 Fără `tranzactie`, `tdo` din alg primea `{}` și scrierile din tranzacție nu ajungeau pe Redis.
 
-Sursă: `src/index.js` — copie/deploy pe platforma aleasă (variabile `UPSTASH_URL`, `UPSTASH_TOKEN`, opțional `DB`).
+### Deploy Cloudflare Dashboard
+
+Un singur fișier sursă: **`src/index.js`** (cu `scan:prefixes` inline, fără `import`).
+
+Lipește tot conținutul în editorul Cloudflare (`worker.js` pe Dashboard) — variabile `UPSTASH_URL`, `UPSTASH_TOKEN`, opțional `DB`.
 
 ## Securitate / sesiune
 

@@ -31,6 +31,6 @@ Preferințele sunt în `localStorage` (chei `sside-*`), vezi **Despre** în Set�
 
 **Copie Redis (manual):** în **Despre**, orice utilizator autentificat vede **Save** / **Load** / **Șterge** pentru cheia proprie `settings:<username>`. **Load** și **Șterge** sunt active (Load verde) doar dacă cheia există în Redis. Nu e salvare automată. La Load eșuat (non-JSON, structură invalidă): mesaj *Format invalid! salveaza pentru corectare!*
 
-Cheile `settings:*` și **`idx_*`** (Search Index Redis) **nu** apar în lista principală / KEYS pentru utilizatori obișnuiți; doar **admin** le vede (ca `user:` / `session:`). Badge **admin** + tentă portocalie în listă/plăci/arbore.
+Cheile `settings:*`, **`idx_*`** (Search Index Redis) și **`scan:prefixes`** **nu** apar în lista principală / KEYS pentru utilizatori obișnuiți; doar **admin** le vede (ca `user:` / `session:`). Badge **admin** + tentă portocalie în listă/plăci/arbore.
 
 SCAN: default-urile din Setări alimentează `SsideScanFilter` la încărcare; filtrele salvate materializează limit/batch la salvare ca înainte.
