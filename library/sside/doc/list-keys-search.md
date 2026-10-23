@@ -23,8 +23,9 @@ ZSET Redis menținut de **worker** după create/delete reușite (inclusiv `tranz
 | **Create** | `ZADD scan:prefixes 0 <prefix>` |
 | **Delete** | `SCAN MATCH <prefix>*` (stop la primul hit); dacă gol → `ZREM` |
 | **Vizibilitate** | cheie **sistem** — apare în listă **doar pentru admin** (ca `settings:` / `idx_*`) |
+| **UI** | **★ Căutări → tab Prefixe** — listă din `ZRANGE`; click → SCAN `><prefix>* limit:L batch:B` (**L/B** din Setări → SCAN). **Reconstruiește** = bootstrap din cheile deja existente (SCAN `*` → rescrie ZSET) |
 
-Cod: `core/scan-prefixes.js` (UI), sync în `extern/worker/src/index.js`. Plan: `.cursor/plans/scan-prefixes-registry.plan.md`.
+Cod: `core/scan-prefixes.js` (UI), sync în `extern/worker/src/index.js`, ecran în `ui/js/app.js`. Plan: `.cursor/plans/scan-prefixes-registry.plan.md`.
 
 ---
 
@@ -92,6 +93,13 @@ Tokenii opționali pot apărea în orice ordine după pattern.
 - **`type`** și **`timeout`** nu apar în bara de status; rămân în câmpul de filtru / căutare salvată.
 - În timpul SCAN, **Caută** devine **Stop**; Stop păstrează cheile deja adunate și actualizează **Afișate: N**.
 - Toggle **Type** (badge Redis): după colectare, ca la KEYS; cu **`type:`** în filtru SCAN, serverul poate filtra înainte (mai puține apeluri TYPE).
+
+### ★ Căutări — taburi
+
+| Tab | Sursă | Click |
+|-----|--------|--------|
+| **Salvate** | `localStorage` (ca înainte) | aplică filtrul salvat + Caută |
+| **Prefixe** | `ZRANGE scan:prefixes` | SCAN `><prefix>* limit:L batch:B` — **L/B din Setări → SCAN** |
 
 ### Căutări salvate (doar SCAN)
 

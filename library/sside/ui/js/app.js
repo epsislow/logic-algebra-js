@@ -23,6 +23,10 @@
         let idxLegendaDebounce = null;
 
         const CAUTARI_STORAGE_KEY = 'sside-cautari-salvate';
+        /** Tab activ pe ecranul Căutări: 'salvate' | 'prefixe'. */
+        let cautariTabActiv = 'salvate';
+        /** Cache members din ZRANGE scan:prefixes (null = încă neîncărcat). */
+        let cachePrefixeRegistry = null;
 
         function creeazaSeedCautari() {
             const now = Date.now();
@@ -30,6 +34,26 @@
                 { id: 'seed-toate', name: 'Toate', filter: '*', updatedAt: now },
                 { id: 'seed-idx-loc-stock', name: 'idx prefix locatie + stock', filter: '=s_prefix:location OR s_prefix:stock', updatedAt: now - 1 }
             ];
+        }
+
+        function obtineScanLimitBatchDinSetari() {
+            if (window.SsideUserPrefs && typeof SsideUserPrefs.loadFromLocalStorage === 'function') {
+                const p = SsideUserPrefs.loadFromLocalStorage();
+                return {
+                    limit: p.scanLimit,
+                    batch: p.scanBatch,
+                };
+            }
+            return { limit: 50000, batch: 100 };
+        }
+
+        /** Prefix registry (ex. mydata:test:) → SCAN cu limit/batch din Setări → SCAN. */
+        function filtruScanDinPrefixRegistry(prefix) {
+            const raw = String(prefix == null ? '' : prefix).trim();
+            if (!raw) return '>*';
+            const match = raw.endsWith('*') ? raw : raw + '*';
+            const { limit, batch } = obtineScanLimitBatchDinSetari();
+            return '>' + match + ' limit:' + limit + ' batch:' + batch;
         }
 
         // --- stare UI nouă ---
@@ -473,6 +497,26 @@
                 randeazaListaCautariSalvate();
             }
         });
+        (function initCautariTabs() {
+            const tabs = document.getElementById('cautari-tabs');
+            if (tabs) {
+                tabs.addEventListener('click', (ev) => {
+                    const btn = ev.target.closest('[data-cautari-tab]');
+                    if (!btn) return;
+                    seteazaTabCautari(btn.getAttribute('data-cautari-tab'));
+                });
+            }
+            const filtruPref = document.getElementById('input-filtru-prefixe');
+            if (filtruPref) {
+                filtruPref.addEventListener('input', randeazaListaPrefixeRegistry);
+                filtruPref.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        randeazaListaPrefixeRegistry();
+                    }
+                });
+            }
+        })();
         document.getElementById('edit-cautare-name').addEventListener('keydown', (ev) => {
             if (ev.key === 'Enter') {
                 ev.preventDefault();
@@ -1797,11 +1841,207 @@ function translateUpstashSearchResults(date) {
             scaneazaToateCampurile();
         }
 
+        function aplicaPrefixRegistry(prefix) {
+            const filter = filtruScanDinPrefixRegistry(prefix);
+            document.getElementById('input-search').value = filter;
+            document.getElementById('ecran-cautari-salvate').style.display = 'none';
+            document.getElementById('ecran-lista').style.display = 'block';
+            actualizeazaStelutaCautare();
+            scaneazaToateCampurile();
+        }
+
+        function seteazaTabCautari(tab) {
+            const t = tab === 'prefixe' ? 'prefixe' : 'salvate';
+            cautariTabActiv = t;
+            const panelSalvate = document.getElementById('panel-cautari-salvate');
+            const panelPrefixe = document.getElementById('panel-cautari-prefixe');
+            if (panelSalvate) panelSalvate.style.display = t === 'salvate' ? '' : 'none';
+            if (panelPrefixe) panelPrefixe.style.display = t === 'prefixe' ? '' : 'none';
+            const tabs = document.querySelectorAll('#cautari-tabs [data-cautari-tab]');
+            tabs.forEach((btn) => {
+                const on = btn.getAttribute('data-cautari-tab') === t;
+                btn.classList.toggle('is-active', on);
+                btn.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            if (t === 'salvate') {
+                randeazaListaCautariSalvate();
+            } else {
+                incarcaPrefixeRegistry(true);
+            }
+        }
+
+        async function incarcaPrefixeRegistry(force) {
+            const listaEl = document.getElementById('lista-cautari-prefixe');
+            const totalEl = document.getElementById('total-cautari-prefixe');
+            if (!listaEl) return;
+            if (!force && Array.isArray(cachePrefixeRegistry)) {
+                randeazaListaPrefixeRegistry();
+                return;
+            }
+            listaEl.innerHTML = '<div class="key-row"><span class="key-name">Se încarcă prefixele…</span></div>';
+            if (totalEl) totalEl.textContent = '…';
+            try {
+                const key =
+                    (window.SsideScanPrefixes && SsideScanPrefixes.SCAN_PREFIXES_KEY) ||
+                    'scan:prefixes';
+                const date = await apeleazaServerul('/api/comanda', {
+                    comandaRedis: ['ZRANGE', key, '0', '-1'],
+                });
+                let members = date && date.rezultat;
+                if (!Array.isArray(members)) members = [];
+                cachePrefixeRegistry = members.map((m) => String(m == null ? '' : m)).filter(Boolean);
+                randeazaListaPrefixeRegistry();
+            } catch (err) {
+                cachePrefixeRegistry = null;
+                if (totalEl) totalEl.textContent = '0';
+                listaEl.innerHTML =
+                    '<div class="key-row"><span class="key-name">Eroare la citirea scan:prefixes: ' +
+                    String((err && err.message) || err) +
+                    '</span></div>';
+            }
+        }
+
+        /**
+         * Bootstrap / refresh: SCAN pe keyspace → extrage prefixe → rescrie ZSET scan:prefixes.
+         * Pentru chei create înainte de sync-ul din worker.
+         */
+        async function reconstruiesteScanPrefixes() {
+            if (!window.SsideScanPrefixes || !window.SsideScanFilter || !window.SsideScanKeys) {
+                alert('Modulele scan-prefixes / scan-filter / scan-keys nu sunt încărcate.');
+                return;
+            }
+            if (
+                !confirm(
+                    'Reconstruiești scan:prefixes din cheile existente?\n' +
+                        '(SCAN pe *, apoi ZADD prefixe unice — poate dura pe volume mari.)'
+                )
+            ) {
+                return;
+            }
+            const listaEl = document.getElementById('lista-cautari-prefixe');
+            const totalEl = document.getElementById('total-cautari-prefixe');
+            const Sp = SsideScanPrefixes;
+            const key = Sp.SCAN_PREFIXES_KEY;
+            const { limit, batch } = obtineScanLimitBatchDinSetari();
+            if (listaEl) {
+                listaEl.innerHTML =
+                    '<div class="key-row"><span class="key-name">Rebuild: SCAN în curs…</span></div>';
+            }
+            if (totalEl) totalEl.textContent = '…';
+            try {
+                const filtru = '>* limit:' + limit + ' batch:' + batch;
+                const parsed = SsideScanFilter.parseScanFilter(filtru);
+                const exec = async (argv) => {
+                    const date = await apeleazaServerul('/api/comanda', { comandaRedis: argv });
+                    return date && date.rezultat;
+                };
+                const result = await SsideScanKeys.collectKeysViaScan(exec, parsed, {
+                    onProgress: (n) => {
+                        if (listaEl) {
+                            listaEl.innerHTML =
+                                '<div class="key-row"><span class="key-name">Rebuild: SCAN… ' +
+                                n +
+                                ' chei</span></div>';
+                        }
+                    },
+                });
+                const chei = (result && result.keys) || [];
+                const prefs = Object.create(null);
+                for (let i = 0; i < chei.length; i++) {
+                    const k = String(chei[i]);
+                    if (!Sp.shouldTrackKeyForPrefixes(k)) continue;
+                    const p = Sp.extragePrefixDinCheie(k);
+                    if (p) prefs[p] = true;
+                }
+                const unice = Object.keys(prefs).sort();
+                if (listaEl) {
+                    listaEl.innerHTML =
+                        '<div class="key-row"><span class="key-name">Rebuild: scriu ' +
+                        unice.length +
+                        ' prefixe…</span></div>';
+                }
+                await apeleazaServerul('/api/comanda', { comandaRedis: ['DEL', key] });
+                const CHUNK = 64;
+                for (let i = 0; i < unice.length; i += CHUNK) {
+                    const slice = unice.slice(i, i + CHUNK);
+                    const argv = ['ZADD', key];
+                    for (let j = 0; j < slice.length; j++) {
+                        argv.push('0', slice[j]);
+                    }
+                    await apeleazaServerul('/api/comanda', { comandaRedis: argv });
+                }
+                cachePrefixeRegistry = unice;
+                randeazaListaPrefixeRegistry();
+                alert(
+                    'scan:prefixes reconstruit: ' +
+                        unice.length +
+                        ' prefixe din ' +
+                        chei.length +
+                        ' chei' +
+                        (result.stopped ? ' (SCAN oprit: ' + (result.reason || '?') + ')' : '') +
+                        '.'
+                );
+            } catch (err) {
+                if (listaEl) {
+                    listaEl.innerHTML =
+                        '<div class="key-row"><span class="key-name">Eroare rebuild: ' +
+                        String((err && err.message) || err) +
+                        '</span></div>';
+                }
+                alert('Rebuild eșuat: ' + ((err && err.message) || err));
+            }
+        }
+        window.reconstruiesteScanPrefixes = reconstruiesteScanPrefixes;
+
+        function randeazaListaPrefixeRegistry() {
+            const listaEl = document.getElementById('lista-cautari-prefixe');
+            const totalEl = document.getElementById('total-cautari-prefixe');
+            if (!listaEl) return;
+            if (!Array.isArray(cachePrefixeRegistry)) {
+                listaEl.innerHTML =
+                    '<div class="key-row"><span class="key-name">Prefixele nu sunt încărcate.</span></div>';
+                if (totalEl) totalEl.textContent = '0';
+                return;
+            }
+            const filtruEl = document.getElementById('input-filtru-prefixe');
+            const pattern = filtruEl ? filtruEl.value : '*';
+            const pat =
+                pattern == null || String(pattern).trim() === '' ? '*' : String(pattern);
+            const { limit, batch } = obtineScanLimitBatchDinSetari();
+            let items = cachePrefixeRegistry
+                .filter((p) => matchWildcardText(p, pat))
+                .slice()
+                .sort((a, b) => a.localeCompare(b));
+            if (totalEl) totalEl.textContent = String(items.length);
+            listaEl.innerHTML = '';
+            if (items.length === 0) {
+                listaEl.innerHTML =
+                    '<div class="key-row"><span class="key-name">Niciun prefix pentru filtru.</span></div>';
+                return;
+            }
+            items.forEach((prefix) => {
+                const filter = filtruScanDinPrefixRegistry(prefix);
+                const row = document.createElement('div');
+                row.className = 'cautare-row';
+                row.title = 'Rulează SCAN: ' + filter;
+                row.innerHTML =
+                    '<div class="cautare-main">' +
+                        '<div class="cautare-name"></div>' +
+                        '<div class="cautare-filter"></div>' +
+                    '</div>';
+                row.querySelector('.cautare-name').textContent = prefix;
+                row.querySelector('.cautare-filter').textContent =
+                    'SCAN · limit:' + limit + ' · batch:' + batch;
+                row.addEventListener('click', () => aplicaPrefixRegistry(prefix));
+                listaEl.appendChild(row);
+            });
+        }
+
         function deschideEcranCautariSalvate() {
             document.getElementById('ecran-lista').style.display = 'none';
             document.getElementById('ecran-detaliu').style.display = 'none';
             document.getElementById('ecran-cautari-salvate').style.display = 'block';
-            randeazaListaCautariSalvate();
+            seteazaTabCautari(cautariTabActiv || 'salvate');
         }
 
         function reseteazaCautariSalvate() {
